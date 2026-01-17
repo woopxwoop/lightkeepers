@@ -1,8 +1,11 @@
 <script lang="ts">
 	import favicon from "$lib/assets/favicon.svg";
+	import { page } from "$app/state";
 	import { resolve } from "$app/paths";
 
 	let { children } = $props();
+	const homePath = resolve("/");
+	const abyssPath = resolve("/abyss");
 </script>
 
 <svelte:head>
@@ -10,7 +13,7 @@
 </svelte:head>
 
 <nav>
-	<div><a href={resolve("/")}> home </a></div>
-	<div><a href={resolve("/abyss")}> abyss </a></div>
+	<a href={homePath} aria-current={page.url.pathname === homePath}> home </a>
+	<a href={abyssPath} aria-current={page.url.pathname === abyssPath}> abyss </a>
 </nav>
 {@render children()}
