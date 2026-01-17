@@ -4,6 +4,8 @@
 	import { resolve } from "$app/paths";
 
 	let { children } = $props();
+
+	// paths
 	const homePath = resolve("/");
 	const abyssPath = resolve("/abyss");
 </script>
