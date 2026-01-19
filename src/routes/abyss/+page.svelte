@@ -43,7 +43,8 @@
   const getTopAbyssTeams = async () => {
     const { data, error: err } = await db
       .from("top_100_abyss_teams")
-      .select("*");
+      .select("*")
+      .order("usage_total", { ascending: false });
     if (err) {
       throw new Error(err.message);
     } else {

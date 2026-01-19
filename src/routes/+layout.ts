@@ -26,7 +26,7 @@ export async function load() {
       });
     }
     console.log("got mapping");
-    console.log(mapping);
+    // console.log(mapping);
   };
 
   await getCharacterMapping();
