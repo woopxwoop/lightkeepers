@@ -1,1 +1,0 @@
-import{q as o,u,t as e,v as a,w as c}from"./sNgFwgPC.js";function f(n){e===null&&o(),a&&e.l!==null?l(e).m.push(n):u(()=>{const t=c(n);if(typeof t=="function")return t})}function l(n){var t=n.l;return t.u??={a:[],b:[],m:[]}}export{f as o};

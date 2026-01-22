@@ -6,11 +6,13 @@ import { db } from "$lib/supabaseClient";
 import type { Tables } from "$lib/types/database.types";
 
 type CharacterMapping = Tables<"url_to_character_mapping">;
+type Character = Tables<"characters">;
 
 export const prerender = true;
 
 export async function load() {
   let mapping: Map<string, string> = new Map<string, string>();
+  let characters: Character[] = [];
 
   const getCharacterMapping = async () => {
     console.log("getting mapping");
@@ -29,9 +31,29 @@ export async function load() {
     // console.log(mapping);
   };
 
-  await getCharacterMapping();
+  const getCharacterData = async () => {
+    console.log("getting data");
+    const { data, error: err } = await db
+      .from("characters")
+      .select("*");
+    if (err) {
+      throw new Error(err.message);
+    } else {
+      characters = data as Character[];
+    }
+    console.log("got data");
+    console.log(characters);
+  };
+
+  try {
+    await getCharacterMapping();
+    await getCharacterData();
+  } catch (e){
+    console.log("unexpected error");
+  }
+
 
   return {
-    mapping
+    mapping, characters
   };
 }
