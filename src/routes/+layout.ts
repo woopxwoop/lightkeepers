@@ -5,6 +5,10 @@ import { building } from "$app/environment";
 
 import { db } from "$lib/supabaseClient";
 import type { Tables } from "$lib/types/database.types";
+import {
+  writeLatestAbyssVersion,
+  writeLatestStygianVersion,
+} from "$lib/stores";
 
 type CharacterMapping = Tables<"url_to_character_mapping">;
 type Character = Tables<"characters">;
@@ -48,8 +52,12 @@ export async function load() {
 
   if (!building) {
     try {
-      await getCharacterMapping();
-      await getCharacterData();
+      await Promise.all([
+        writeLatestAbyssVersion(),
+        writeLatestStygianVersion(),
+        getCharacterMapping(),
+        getCharacterData(),
+      ]);
     } catch (e) {
       console.log("unexpected error");
       console.log(e);

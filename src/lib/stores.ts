@@ -8,10 +8,17 @@ import type {
 } from "$lib/definitions";
 
 //#region versions
-export let latestAbyssVersion: Version;
-export let latestStygianVersion: Version;
+export let latestAbyssVersion: Version = {
+  version: "getting latest version",
+  version_number: -1,
+};
 
-async function getLatestAbyssVersion() {
+export let latestStygianVersion: Version = {
+  version: "getting latest version",
+  version_number: -1,
+};
+
+export async function writeLatestAbyssVersion() {
   const { data, error: err } = await db
     .from("versions")
     .select("*")
@@ -25,7 +32,7 @@ async function getLatestAbyssVersion() {
       version_number: -1,
     };
 }
-async function getLatestStygianVersion() {
+export async function writeLatestStygianVersion() {
   const { data, error: err } = await db
     .from("stygian_versions")
     .select("*")
@@ -38,11 +45,7 @@ async function getLatestStygianVersion() {
       version: "unable to get latest version",
       version_number: -1,
     };
-  console.log(latestStygianVersion);
 }
-
-await getLatestAbyssVersion();
-await getLatestStygianVersion();
 //#endregion
 
 //#region abyss
