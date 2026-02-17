@@ -4,3 +4,4 @@ export type Character = Tables<"characters">;
 export type CharacterOwned = Character & { isOwned: boolean };
 export type AbyssTeam = Tables<"top_100_abyss_teams">;
 export type StygianTeam = Tables<"top_100_stygian_teams">;
+export type Version = Tables<"versions">;

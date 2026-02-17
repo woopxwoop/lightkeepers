@@ -1,6 +1,49 @@
 import { writable, derived, type Writable } from "svelte/store";
 import { db } from "$lib/supabaseClient";
-import type { CharacterOwned, AbyssTeam, StygianTeam } from "$lib/definitions";
+import type {
+  CharacterOwned,
+  AbyssTeam,
+  StygianTeam,
+  Version,
+} from "$lib/definitions";
+
+//#region versions
+export let latestAbyssVersion: Version;
+export let latestStygianVersion: Version;
+
+async function getLatestAbyssVersion() {
+  const { data, error: err } = await db
+    .from("versions")
+    .select("*")
+    .order("version_number", { ascending: false })
+    .limit(1);
+
+  if (data) latestAbyssVersion = data[0];
+  else
+    latestAbyssVersion = {
+      version: "unable to get latest version",
+      version_number: -1,
+    };
+}
+async function getLatestStygianVersion() {
+  const { data, error: err } = await db
+    .from("stygian_versions")
+    .select("*")
+    .order("version_number", { ascending: false })
+    .limit(1);
+
+  if (data) latestStygianVersion = data[0];
+  else
+    latestStygianVersion = {
+      version: "unable to get latest version",
+      version_number: -1,
+    };
+  console.log(latestStygianVersion);
+}
+
+await getLatestAbyssVersion();
+await getLatestStygianVersion();
+//#endregion
 
 //#region abyss
 export const charactersOwned = writable<CharacterOwned[]>([]);
@@ -32,7 +75,7 @@ export async function writeTopAbyssTeamsOwned(
       p_character_names: charactersOwned
         .filter((character) => character.isOwned)
         .map((character) => character.name),
-      p_version_number: 54,
+      p_version_number: latestAbyssVersion.version_number,
     },
   );
   if (err) {
@@ -81,7 +124,7 @@ export async function writeTopStygianTeamsOwned(
       p_character_names: charactersOwned
         .filter((character) => character.isOwned)
         .map((character) => character.name),
-      p_version_number: 4,
+      p_version_number: latestStygianVersion.version_number,
     },
   );
   if (err) {
