@@ -1,1 +1,220 @@
-<p>Go to settings to configure which characters can be used</p>
+<script lang="ts">
+  import { resolve } from "$app/paths";
+  import { onMount } from "svelte";
+  import { teamsOwned, teamsOwnedStygian, charactersOwned } from "$lib/stores";
+  import { solveAbyss, solveStygian } from "$lib/solver";
+  import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
+  import Team from "$lib/components/Team.svelte";
+
+  let { data } = $props();
+  let mapping: Map<string, string> = $derived(data.mapping);
+
+  // null = still reading localStorage (prevents onboarding flash)
+  let hasRoster = $state<boolean | null>(null);
+
+  onMount(() => {
+    const cached = localStorage.getItem("charactersOwned");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        hasRoster =
+          Array.isArray(parsed) &&
+          parsed.some((c: { isOwned: boolean }) => c.isOwned);
+      } catch {
+        hasRoster = false;
+      }
+    } else {
+      hasRoster = false;
+    }
+  });
+
+  let abyssSolution = $derived(solveAbyss($teamsOwned, 1)[0] ?? null);
+  let stygianSolution = $derived(
+    solveStygian($teamsOwnedStygian, 1)[0] ?? null,
+  );
+
+  let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
+
+  let loading = $derived(
+    hasRoster && ($teamsOwned.length === 0 || $teamsOwnedStygian.length === 0),
+  );
+
+  const settingsPath = resolve("/settings");
+  const abyssPath = resolve("/abyss");
+  const stygianPath = resolve("/stygian");
+
+  // Maps internal slot keys to badge CSS classes defined in app.css
+  const abyssSlotClass: Record<string, string> = {
+    top: "slot-badge-1",
+    bottom: "slot-badge-3",
+  };
+  const stygianSlotClass: Record<string, string> = {
+    top: "slot-badge-1",
+    middle: "slot-badge-2",
+    bottom: "slot-badge-3",
+  };
+</script>
+
+<main class="w-[80%] pb-20">
+  {#if hasRoster === null}
+    <!-- Intentionally empty — waiting for localStorage read to avoid flash -->
+  {:else if !hasRoster}
+    <!-- ── Onboarding ──────────────────────────────────────────────────── -->
+    <div
+      class="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center"
+    >
+      <!-- Lantern glyph -->
+      <div
+        class="w-14 h-14 rounded-2xl flex items-center justify-center"
+        style="border: 1px solid color-mix(in srgb, var(--secondary-color) 30%, transparent);
+               background: color-mix(in srgb, var(--secondary-color) 7%, transparent);"
+      >
+        <div
+          class="w-6 h-6 rounded-full"
+          style="border: 1px solid color-mix(in srgb, var(--secondary-color) 45%, transparent);
+                 background: color-mix(in srgb, var(--secondary-color) 18%, transparent);"
+        ></div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <h1>Welcome to Lightkeepers</h1>
+        <p class="text-(--intermediate-color) max-w-sm leading-relaxed mx-auto">
+          Pick which characters you own and we'll find the best non-overlapping
+          teams for Spiral Abyss and Stygian Onslaught.
+        </p>
+      </div>
+
+      <a
+        href={settingsPath}
+        class="mt-2 px-6 py-2.5 rounded-lg font-medium hover:opacity-80 transition-opacity"
+        style="background: color-mix(in srgb, var(--secondary-color) 10%, transparent);
+               border: 0.5px solid color-mix(in srgb, var(--secondary-color) 35%, transparent);
+               color: var(--secondary-color);"
+      >
+        Set up your roster →
+      </a>
+
+      <p class="text-(--faint-color)">Saved locally · no account needed</p>
+    </div>
+  {:else if loading}
+    <div class="flex items-center justify-center min-h-[60vh]">
+      <p class="text-(--intermediate-color)">Loading teams…</p>
+    </div>
+  {:else}
+    <!-- ── Dashboard ──────────────────────────────────────────────────── -->
+    <div class="flex flex-col gap-8">
+      <p class="text-xs tracking-widest uppercase text-(--intermediate-color)">
+        Best teams for your
+        <span class="text-(--foreground-color)">{ownedCount} characters</span>
+      </p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Abyss -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-baseline justify-between">
+            <h2 class="tracking-widest uppercase text-(--intermediate-color)">
+              Spiral Abyss
+            </h2>
+            <a
+              href={abyssPath}
+              class="text-(--secondary-color) hover:opacity-75"
+            >
+              all options →
+            </a>
+          </div>
+
+          {#if !abyssSolution}
+            <p class="text-(--intermediate-color)">
+              No valid teams found for your roster.
+            </p>
+          {:else}
+            <div
+              class="rounded-2xl p-4 flex flex-col gap-4"
+              style="border: 0.5px solid var(--surface-border); background: var(--surface-color);"
+            >
+              {#each abyssSolution.assignments as { team, slot }}
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="slot-badge {abyssSlotClass[slot]}"
+                      >{abyssSlotLabel[slot]}</span
+                    >
+                    <span class="text-xs text-(--faint-color)"
+                      >{team.usage_total?.toFixed(1)}% usage</span
+                    >
+                  </div>
+                  <Team {team} {mapping} />
+                </div>
+              {/each}
+
+              {#if abyssSolution.unfilled.length > 0}
+                <p class="text-xs text-red-400">
+                  ⚠ Couldn't fill: {abyssSolution.unfilled
+                    .map((s) => abyssSlotLabel[s])
+                    .join(", ")}
+                </p>
+              {/if}
+            </div>
+          {/if}
+        </div>
+
+        <!-- Stygian -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-baseline justify-between">
+            <h2 class="tracking-widest uppercase text-(--intermediate-color)">
+              Stygian Onslaught
+            </h2>
+            <a
+              href={stygianPath}
+              class="text-(--secondary-color) hover:opacity-75"
+            >
+              all options →
+            </a>
+          </div>
+
+          {#if !stygianSolution}
+            <p class="text-(--intermediate-color)">
+              No valid teams found for your roster.
+            </p>
+          {:else}
+            <div
+              class="rounded-2xl p-4 flex flex-col gap-4"
+              style="border: 0.5px solid var(--surface-border); background: var(--surface-color);"
+            >
+              {#each stygianSolution.assignments as { team, slot }}
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="slot-badge {stygianSlotClass[slot]}"
+                      >{stygianSlotLabel[slot]}</span
+                    >
+                    <span class="text-xs text-(--faint-color)"
+                      >{team.usage_total?.toFixed(1)}% usage</span
+                    >
+                  </div>
+                  <Team {team} {mapping} />
+                </div>
+              {/each}
+
+              {#if stygianSolution.unfilled.length > 0}
+                <p class="text-xs text-red-400">
+                  ⚠ Couldn't fill: {stygianSolution.unfilled
+                    .map((s) => stygianSlotLabel[s])
+                    .join(", ")}
+                </p>
+              {/if}
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <p class="text-xs text-(--faint-color) text-center">
+        adjust your roster in
+        <a
+          href={settingsPath}
+          class="text-(--intermediate-color) hover:text-(--secondary-color) transition-colors"
+        >
+          settings
+        </a>
+      </p>
+    </div>
+  {/if}
+</main>

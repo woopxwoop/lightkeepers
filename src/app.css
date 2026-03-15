@@ -1,20 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --background-color: #001e33ff;
-  --foreground-color: #eeeeffff;
-  --intermediate-color: rgb(158, 163, 171);
-  --secondary-color: #9071e7ff;
-  --tertiary-color: #314bceff;
-  --quaternary-color: rgb(166, 214, 254);
+@media (min-width: 1024px) {
+  .slot-badge-inactive {
+    background-color: unset !important;
+    color: unset !important;
+  }
 }
 
-/* Dark theme variables */
+:root {
+  /* Base */
+  --background-color: #1c2133;
+  --foreground-color: #e8ebf5;
+  --intermediate-color: #8a95b0;
+  --faint-color: #4a5270;
+
+  /* Accents — full strength for text on dark bg */
+  --secondary-color: #e8a83a; /* lantern amber */
+  --tertiary-color: #8bafc7; /* frost blue */
+  --quaternary-color: #9b7ab5; /* dusk violet */
+
+  /* Accents — muted versions for borders / subtle UI */
+  --secondary-muted: #7a5820;
+  --tertiary-muted: #3d607a;
+  --quaternary-muted: #4e3d62;
+
+  /* Slot badge text (must clear 4.5:1 on their bg) */
+  --slot-1-color: #f0c060; /* amber — Field 1 / Top Side */
+  --slot-2-color: #a8c8e0; /* frost blue — Field 2 / Middle */
+  --slot-3-color: #c0a0d8; /* dusk violet — Field 3 / Bottom */
+
+  /* Slot badge backgrounds (semi-transparent in CSS, declared for reference) */
+  --slot-1-bg: #3a2e10;
+  --slot-2-bg: #1a2e3a;
+  --slot-3-bg: #2a1e3a;
+
+  /* Surfaces */
+  --surface-color: #252b3d;
+  --surface-border: #2e3550;
+}
+
 [data-theme="light"] {
-  --background-color: #eeeeffff;
-  --foreground-color: #001e33ff;
-  --secondary-color: #314bceff;
-  --tertiary-color: #9071e7ff;
+  --background-color: #f2f0eb;
+  --foreground-color: #1c2133;
+  --intermediate-color: #6e6a63;
+  --faint-color: #b0aca4;
+
+  --secondary-color: #c07828;
+  --tertiary-color: #2c3a5a;
+  --quaternary-color: #6b3a5a;
+
+  --secondary-muted: #f0d9b0;
+  --tertiary-muted: #c0cce0;
+  --quaternary-muted: #e0c8d8;
+
+  --slot-1-color: #a06018;
+  --slot-2-color: #2c3a5a;
+  --slot-3-color: #6b3a5a;
+
+  --slot-1-bg: #fef3e2;
+  --slot-2-bg: #e8eff8;
+  --slot-3-bg: #f2eaf0;
+
+  --surface-color: #fdfcf9;
+  --surface-border: #e0ddd6;
 }
 
 body {
@@ -22,28 +70,20 @@ body {
   color: var(--foreground-color);
   transition:
     background-color 0.3s,
-    color 0.3s; /* Smooth transition */
+    color 0.3s;
 }
 
 h1 {
-  font-size: clamp(0.5rem /* 8px */, 3vw + 0.25rem /* 4px */, 6rem /* 96px */);
+  font-size: clamp(0.5rem, 3vw + 0.25rem, 6rem);
 }
 
 h2 {
-  font-size: clamp(
-    0.5rem /* 8px */,
-    1.5vw + 0.2rem /* 3.2px */,
-    4rem /* 64px */
-  );
+  font-size: clamp(0.5rem, 1.5vw + 0.2rem, 4rem);
 }
 
 p,
 a {
-  font-size: clamp(
-    0.5rem /* 8px */,
-    1.25vw + 0.2rem /* 3.2px */,
-    4rem /* 64px */
-  );
+  font-size: clamp(0.5rem, 1.25vw + 0.2rem, 4rem);
 }
 
 @layer components {
@@ -58,5 +98,56 @@ a {
   .invert-theme {
     @apply text-(--background-color);
     @apply bg-(--foreground-color);
+  }
+
+  /* Nav */
+  .nav-bar {
+    background: color-mix(in srgb, var(--background-color) 80%, transparent);
+    border-bottom: 0.5px solid var(--surface-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .nav-logo {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--secondary-color);
+    text-decoration: none;
+  }
+  .nav-link {
+    font-size: 13px;
+    color: var(--intermediate-color);
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid transparent;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
+  }
+  .nav-link:hover {
+    color: var(--foreground-color);
+  }
+  .nav-link[aria-current="page"] {
+    color: var(--secondary-color);
+    border-bottom-color: var(--secondary-color);
+  }
+
+  .slot-badge-inactive {
+    background-color: var(--surface-border) !important;
+    color: var(--intermediate-color) !important;
+  }
+
+  /* Slot badges — all use the same amber accent */
+  .slot-badge {
+    @apply text-xs font-medium px-2 py-0.5 rounded uppercase tracking-wider;
+    background: color-mix(in srgb, var(--secondary-color) 12%, transparent);
+    color: var(--secondary-color);
+  }
+  .slot-badge-1,
+  .slot-badge-2,
+  .slot-badge-3,
+  .slot-badge-active {
+    background: color-mix(in srgb, var(--secondary-color) 12%, transparent);
+    color: var(--secondary-color);
   }
 }

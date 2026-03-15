@@ -270,6 +270,21 @@ export type Database = {
       };
     };
     Views: {
+      stygian_team_avg_usage: {
+        Row: {
+          avg_usage_total: number | null;
+          team_id: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "stygian_team_stats_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "stygian_teams";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       top_100_abyss_teams: {
         Row: {
           members: string[] | null;
@@ -295,6 +310,20 @@ export type Database = {
       };
     };
     Functions: {
+      get_near_miss_stygian_teams: {
+        Args: { p_character_names: string[]; p_version_number: number };
+        Returns: {
+          avg_usage_total: number;
+          members: string[];
+          missing_character: string;
+          ret_version_number: number;
+          team_key: string;
+          usage_rate_bottom: number;
+          usage_rate_middle: number;
+          usage_rate_top: number;
+          usage_total: number;
+        }[];
+      };
       get_teams_by_character: {
         Args: { p_character_name: string; p_version_number: number };
         Returns: {
@@ -320,6 +349,7 @@ export type Database = {
       get_teams_with_characters_subset_stygian: {
         Args: { p_character_names: string[]; p_version_number: number };
         Returns: {
+          avg_usage_total: number;
           members: string[];
           team_key: string;
           usage_rate_bottom: number;
@@ -329,7 +359,8 @@ export type Database = {
           version_number: number;
         }[];
       };
-      refresh_top_100_abyss_teams: { Args: never; Returns: undefined };
+      refresh_abyss_views: { Args: never; Returns: undefined };
+      refresh_stygian_views: { Args: never; Returns: undefined };
       upsert_abyss_team: {
         Args: {
           p_character_names: string[];

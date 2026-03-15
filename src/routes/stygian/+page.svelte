@@ -1,116 +1,101 @@
 <script lang="ts">
-  import type { Tables } from "$lib/types/database.types";
-  import CharacterIcon from "$lib/components/CharacterIcon.svelte";
   import Team from "$lib/components/Team.svelte";
-  import {
-    teamsOwnedStygianTop,
-    teamsOwnedStygianMiddle,
-    teamsOwnedStygianBottom,
-  } from "$lib/stores";
+  import { teamsOwnedStygian } from "$lib/stores";
+  import { solveStygian } from "$lib/solver";
+  import { stygianSlotLabel } from "$lib/slotLabels";
 
   let { data } = $props();
-
   let mapping: Map<string, string> = $derived(data.mapping);
+
   let loading = $state(true);
 
-  let showTop = $state(true);
-  let showMid = $state(false);
-  let showBot = $state(false);
+  let stygianSolutions = $derived(solveStygian($teamsOwnedStygian, 3));
 
-  $inspect(showTop);
-  $inspect(showMid);
-  $inspect(showBot);
-
-  function switchTab(tab: string) {
-    switch (tab) {
-      case "mid":
-        showTop = false;
-        showMid = true;
-        showBot = false;
-        break;
-      case "bot":
-        showTop = false;
-        showMid = false;
-        showBot = true;
-        break;
-      default:
-        showTop = true;
-        showMid = false;
-        showBot = false;
+  let activeSlots: string[] = $state([]);
+  $effect(() => {
+    if (stygianSolutions.length > 0 && activeSlots.length === 0) {
+      activeSlots = stygianSolutions.map(
+        (s) => s.assignments[0]?.slot ?? "top",
+      );
     }
-  }
+  });
 
   $effect(() => {
-    loading =
-      $teamsOwnedStygianTop.length == 0 ||
-      $teamsOwnedStygianMiddle.length == 0 ||
-      $teamsOwnedStygianBottom.length == 0;
+    loading = $teamsOwnedStygian.length === 0;
   });
 </script>
 
-<main class="w-[80%]">
+<main class="w-[80%] pb-20 flex flex-col gap-6">
   {#if loading}
-    <div>loading teams data</div>
+    <p class="text-(--intermediate-color)">Loading teams…</p>
   {:else}
-    <div class="w-full flex flex-col justify-center items-center">
-      <div class="lg:hidden w-full flex flex-row text-center">
-        <button
-          class="flex-1 cursor-pointer rounded-t-xl"
-          onclick={() => switchTab("top")}
-          class:invert-theme={showTop}>Field 1</button
-        >
-        <button
-          class="flex-1 cursor-pointer rounded-t-xl"
-          onclick={() => switchTab("mid")}
-          class:invert-theme={showMid}>Field 2</button
-        >
-        <button
-          class="flex-1 cursor-pointer rounded-t-xl"
-          onclick={() => switchTab("bot")}
-          class:invert-theme={showBot}>Field 3</button
-        >
-      </div>
-
-      <div class="hidden lg:flex w-full flex-row text-center mb-2 gap-x-10">
-        <h2 class="flex-1">Field 1</h2>
-        <h2 class="flex-1">Field 2</h2>
-        <h2 class="flex-1">Field 3</h2>
-      </div>
-
+    {#each stygianSolutions as solution, i}
       <div
-        class="grid lg:grid-cols-3 gap-x-10 w-full text-center place-items-start"
+        class="rounded-2xl p-4 flex flex-col gap-4"
+        class:opacity-60={i > 0}
+        style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
       >
-        <div
-          class="lg:flex col-span-1 justify-center flex-col bg-(--foreground-color)"
-          class:hidden={!showTop}
+        <p
+          class="text-xs font-medium text-(--intermediate-color) tracking-widest uppercase"
         >
-          <div class="grid grid-cols-1 gap-y-1">
-            {#each ($teamsOwnedStygianTop ?? []).slice(0, 25) as team}
-              <Team {team} {mapping}></Team>
-            {/each}
-          </div>
+          {i === 0 ? "Best Match" : `Option ${i + 1}`}
+        </p>
+
+        {#if solution.unfilled.length > 0}
+          <p class="text-xs text-red-400">
+            ⚠ Couldn't fill: {solution.unfilled
+              .map((s) => stygianSlotLabel[s])
+              .join(", ")}
+          </p>
+        {/if}
+
+        <!-- Tag/tab row — matches team grid so tags align with their teams -->
+        <div class="flex gap-2 lg:grid lg:grid-cols-3">
+          {#each solution.assignments as { team, slot }}
+            <div class="flex items-center gap-2">
+              <!-- Large screens: plain colored tag, no interaction -->
+              <span
+                class="slot-badge slot-badge-{slot === 'top'
+                  ? 1
+                  : slot === 'middle'
+                    ? 2
+                    : 3} hidden lg:inline-block"
+              >
+                {stygianSlotLabel[slot]}
+              </span>
+              <!-- Small screens: acts as tab -->
+              <button
+                class="slot-badge lg:hidden transition-colors"
+                class:slot-badge-1={slot === "top" && activeSlots[i] === slot}
+                class:slot-badge-2={slot === "middle" &&
+                  activeSlots[i] === slot}
+                class:slot-badge-3={slot === "bottom" &&
+                  activeSlots[i] === slot}
+                style={activeSlots[i] !== slot
+                  ? "background: color-mix(in srgb, var(--secondary-color) 5%, transparent); color: color-mix(in srgb, var(--secondary-color) 40%, transparent);"
+                  : ""}
+                onclick={() => {
+                  activeSlots[i] = slot;
+                }}
+              >
+                {stygianSlotLabel[slot]}
+              </button>
+              <span class="text-xs text-(--faint-color) hidden lg:inline">
+                {team.usage_total?.toFixed(1)}% usage
+              </span>
+            </div>
+          {/each}
         </div>
-        <div
-          class="lg:flex col-span-1 justify-center flex-col bg-(--foreground-color)"
-          class:hidden={!showMid}
-        >
-          <div class="grid grid-cols-1 gap-y-1">
-            {#each ($teamsOwnedStygianMiddle ?? []).slice(0, 25) as team}
-              <Team {team} {mapping}></Team>
-            {/each}
-          </div>
-        </div>
-        <div
-          class="lg:flex col-span-1 justify-center flex-col bg-(--foreground-color)"
-          class:hidden={!showBot}
-        >
-          <div class="grid grid-cols-1 gap-y-1">
-            {#each ($teamsOwnedStygianBottom ?? []).slice(0, 25) as team}
-              <Team {team} {mapping}></Team>
-            {/each}
-          </div>
+
+        <!-- Team row — all visible on large, only active on small -->
+        <div class="grid lg:grid-cols-3 gap-4">
+          {#each solution.assignments as { team, slot }}
+            <div class:hidden={activeSlots[i] !== slot} class="lg:block">
+              <Team {team} {mapping} />
+            </div>
+          {/each}
         </div>
       </div>
-    </div>
+    {/each}
   {/if}
 </main>

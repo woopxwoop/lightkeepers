@@ -1,70 +1,95 @@
 <script lang="ts">
-  import CharacterIcon from "$lib/components/CharacterIcon.svelte";
   import Team from "$lib/components/Team.svelte";
-  import { teamsOwnedTop, teamsOwnedBottom } from "$lib/stores";
+  import { teamsOwned } from "$lib/stores";
+  import { solveAbyss } from "$lib/solver";
+  import { abyssSlotLabel } from "$lib/slotLabels";
 
   let { data } = $props();
-
   let mapping: Map<string, string> = $derived(data.mapping);
+
   let loading = $state(true);
 
-  let showTop = $state(true);
-  function switchTab(tab: string) {
-    showTop = !showTop;
-  }
+  let abyssSolutions = $derived(solveAbyss($teamsOwned, 3));
+
+  let activeSlots: string[] = $state([]);
+  $effect(() => {
+    if (abyssSolutions.length > 0 && activeSlots.length === 0) {
+      activeSlots = abyssSolutions.map((s) => s.assignments[0]?.slot ?? "top");
+    }
+  });
 
   $effect(() => {
-    loading = $teamsOwnedTop.length == 0 || $teamsOwnedBottom.length == 0;
+    loading = $teamsOwned.length === 0;
   });
 </script>
 
-<main class="w-[80%]">
+<main class="w-[80%] pb-20 flex flex-col gap-6">
   {#if loading}
-    <div>loading teams data</div>
+    <p class="text-(--intermediate-color)">Loading teams…</p>
   {:else}
-    <div class="w-full flex flex-col justify-center items-center">
-      <div class="md:hidden w-full flex flex-row text-center">
-        <button
-          class="flex-1 cursor-pointer rounded-t-xl"
-          onclick={() => switchTab("top")}
-          class:invert-theme={showTop}>Top Side</button
-        >
-        <button
-          class="flex-1 cursor-pointer rounded-t-xl"
-          onclick={() => switchTab("bot")}
-          class:invert-theme={!showTop}>Bottom Side</button
-        >
-      </div>
-
-      <div class="hidden md:flex w-full flex-row text-center mb-2 gap-x-10">
-        <h2 class="flex-1">Top Side</h2>
-        <h2 class="flex-1">Bottom Side</h2>
-      </div>
-
+    {#each abyssSolutions as solution, i}
       <div
-        class="grid md:grid-cols-2 gap-x-10 w-full text-center place-items-start"
+        class="rounded-2xl p-4 flex flex-col gap-4"
+        class:opacity-60={i > 0}
+        style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
       >
-        <div
-          class="md:flex col-span-1 justify-center flex-col bg-(--foreground-color)"
-          class:hidden={!showTop}
+        <p
+          class="text-xs font-medium text-(--intermediate-color) tracking-widest uppercase"
         >
-          <div class="grid grid-cols-1 gap-y-1">
-            {#each ($teamsOwnedTop ?? []).slice(0, 25) as team}
-              <Team {team} {mapping} />
-            {/each}
-          </div>
+          {i === 0 ? "Best Match" : `Option ${i + 1}`}
+        </p>
+
+        {#if solution.unfilled.length > 0}
+          <p class="text-xs text-red-400">
+            ⚠ Couldn't fill: {solution.unfilled
+              .map((s) => abyssSlotLabel[s])
+              .join(", ")}
+          </p>
+        {/if}
+
+        <!-- Tag/tab row — matches team grid so tags align with their teams -->
+        <div class="flex gap-2 md:grid md:grid-cols-2">
+          {#each solution.assignments as { team, slot }}
+            <div class="flex items-center gap-2">
+              <!-- Large screens: plain colored tag, no interaction -->
+              <span
+                class="slot-badge slot-badge-{slot === 'top'
+                  ? 1
+                  : 3} hidden md:inline-block"
+              >
+                {abyssSlotLabel[slot]}
+              </span>
+              <!-- Small screens: acts as tab -->
+              <button
+                class="slot-badge md:hidden transition-colors"
+                class:slot-badge-1={slot === "top" && activeSlots[i] === slot}
+                class:slot-badge-3={slot === "bottom" &&
+                  activeSlots[i] === slot}
+                style={activeSlots[i] !== slot
+                  ? "background: color-mix(in srgb, var(--secondary-color) 5%, transparent); color: color-mix(in srgb, var(--secondary-color) 40%, transparent);"
+                  : ""}
+                onclick={() => {
+                  activeSlots[i] = slot;
+                }}
+              >
+                {abyssSlotLabel[slot]}
+              </button>
+              <span class="text-xs text-(--faint-color) hidden md:inline">
+                {team.usage_total?.toFixed(1)}% usage
+              </span>
+            </div>
+          {/each}
         </div>
-        <div
-          class="md:flex col-span-1 justify-center flex-col bg-(--foreground-color)"
-          class:hidden={showTop}
-        >
-          <div class="grid grid-cols-1 gap-y-1">
-            {#each ($teamsOwnedBottom ?? []).slice(0, 25) as team}
+
+        <!-- Team row — all visible on large, only active on small -->
+        <div class="grid md:grid-cols-2 gap-4">
+          {#each solution.assignments as { team, slot }}
+            <div class:hidden={activeSlots[i] !== slot} class="md:block">
               <Team {team} {mapping} />
-            {/each}
-          </div>
+            </div>
+          {/each}
         </div>
       </div>
-    </div>
+    {/each}
   {/if}
 </main>

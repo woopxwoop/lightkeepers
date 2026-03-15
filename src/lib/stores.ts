@@ -6,6 +6,9 @@ import type {
   StygianTeam,
   Version,
 } from "$lib/definitions";
+import { computePullSuggestions } from "$lib/pullSuggestions";
+import type { NearMissStygianTeam } from "$lib/pullSuggestions";
+import { solveStygian } from "$lib/solver";
 
 //#region versions
 export let latestAbyssVersion: Version = {
@@ -136,4 +139,28 @@ export async function writeTopStygianTeamsOwned(
     teamsOwnedStygian.set(data ?? []);
   }
 }
+
+// Raw near-miss teams from RPC
+export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
+
+// Fetch near-miss teams — call this alongside writeTopStygianTeamsOwned
+export async function writeNearMissStygianTeams(
+  charactersOwned: CharacterOwned[],
+) {
+  const { data, error: err } = await db.rpc("get_near_miss_stygian_teams", {
+    p_character_names: charactersOwned
+      .filter((c) => c.isOwned)
+      .map((c) => c.name),
+    p_version_number: latestStygianVersion.version_number,
+  });
+  if (err) return;
+  nearMissStygianTeams.set(data ?? []);
+}
+
+// Derived pull suggestions — reactive to near-miss teams only
+export const stygianPullSuggestions = derived(
+  [teamsOwnedStygian, nearMissStygianTeams],
+  ([$teamsOwnedStygian, $nearMissStygianTeams]) =>
+    computePullSuggestions($nearMissStygianTeams, $teamsOwnedStygian),
+);
 //#endregion
