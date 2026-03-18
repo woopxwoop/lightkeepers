@@ -4,6 +4,7 @@
     writeTopAbyssTeamsOwned,
     writeTopStygianTeamsOwned,
     writeNearMissStygianTeams,
+    writeNearMissPairTeams,
   } from "$lib/stores";
   import { onMount } from "svelte";
   import CharacterIcon from "$lib/components/CharacterIcon.svelte";
@@ -36,6 +37,8 @@
     writeTopAbyssTeamsOwned(tempCharactersOwned);
     writeTopStygianTeamsOwned(tempCharactersOwned);
     writeNearMissStygianTeams(tempCharactersOwned);
+    writeNearMissPairTeams(tempCharactersOwned);
+
     showSaved = true;
     setTimeout(() => {
       showSaved = false;

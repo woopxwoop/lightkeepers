@@ -7,6 +7,7 @@
     writeTopAbyssTeamsOwned,
     writeTopStygianTeamsOwned,
     writeNearMissStygianTeams,
+    writeNearMissPairTeams,
   } from "$lib/stores";
   import { onMount } from "svelte";
   import type { Character, CharacterOwned } from "$lib/definitions";
@@ -56,6 +57,7 @@
       writeTopAbyssTeamsOwned(finalList),
       writeTopStygianTeamsOwned(finalList),
       writeNearMissStygianTeams(finalList),
+      writeNearMissPairTeams(finalList),
     ]);
   });
 
