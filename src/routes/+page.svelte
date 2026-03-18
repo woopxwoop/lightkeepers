@@ -12,6 +12,7 @@
 
   // null = still reading localStorage (prevents onboarding flash)
   let hasRoster = $state<boolean | null>(null);
+  let loadingTimedOut = $state(false);
 
   onMount(() => {
     const cached = localStorage.getItem("charactersOwned");
@@ -27,6 +28,12 @@
     } else {
       hasRoster = false;
     }
+
+    // If teams haven't loaded after 8 seconds, stop showing the spinner
+    // so the user can at least see the onboarding prompt or an empty state
+    setTimeout(() => {
+      loadingTimedOut = true;
+    }, 8000);
   });
 
   let abyssSolution = $derived(solveAbyss($teamsOwned, 1)[0] ?? null);
@@ -37,7 +44,9 @@
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
 
   let loading = $derived(
-    hasRoster && ($teamsOwned.length === 0 || $teamsOwnedStygian.length === 0),
+    !loadingTimedOut &&
+      hasRoster &&
+      ($teamsOwned.length === 0 || $teamsOwnedStygian.length === 0),
   );
 
   const settingsPath = resolve("/settings");
