@@ -4,6 +4,7 @@
     writeTopAbyssTeamsOwned,
     writeTopStygianTeamsOwned,
     writeNearMissStygianTeams,
+    writeNearMissPairTeams,
   } from "$lib/stores";
   import { onMount } from "svelte";
   import CharacterIcon from "$lib/components/CharacterIcon.svelte";
@@ -68,6 +69,7 @@
     writeTopAbyssTeamsOwned(tempCharactersOwned);
     writeTopStygianTeamsOwned(tempCharactersOwned);
     writeNearMissStygianTeams(tempCharactersOwned);
+    writeNearMissPairTeams(tempCharactersOwned);
     hasUnsavedChanges = false;
     showSaved = true;
     setTimeout(() => {
@@ -96,7 +98,7 @@
   );
 </script>
 
-<main class="w-[80%] pb-20 flex flex-col gap-6">
+<main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-6">
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div class="flex flex-col gap-1">
@@ -128,7 +130,7 @@
 
   {#if synced}
     <!-- Search + bulk actions row -->
-    <div class="flex items-center gap-3">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
       <input
         type="text"
         placeholder="Search characters…"
@@ -137,25 +139,27 @@
         style="background: var(--surface-color); border: 0.5px solid var(--surface-border);
                color: var(--foreground-color); outline: none;"
       />
-      <button
-        onclick={selectAll}
-        class="text-xs px-3 py-2 rounded-lg whitespace-nowrap transition-opacity hover:opacity-75"
-        style="background: var(--surface-color); border: 0.5px solid var(--surface-border);
-               color: var(--intermediate-color);"
-      >
-        Select all
-        {#if rarityFilter !== "all" || search}
-          ({visibleOwnedCount}/{visibleCharacters.length})
-        {/if}
-      </button>
-      <button
-        onclick={deselectAll}
-        class="text-xs px-3 py-2 rounded-lg whitespace-nowrap transition-opacity hover:opacity-75"
-        style="background: var(--surface-color); border: 0.5px solid var(--surface-border);
-               color: var(--intermediate-color);"
-      >
-        Deselect all
-      </button>
+      <div class="flex gap-2">
+        <button
+          onclick={selectAll}
+          class="flex-1 sm:flex-none text-xs px-3 py-2 rounded-lg whitespace-nowrap transition-opacity hover:opacity-75"
+          style="background: var(--surface-color); border: 0.5px solid var(--surface-border);
+                 color: var(--intermediate-color);"
+        >
+          Select all
+          {#if rarityFilter !== "all" || search}
+            ({visibleOwnedCount}/{visibleCharacters.length})
+          {/if}
+        </button>
+        <button
+          onclick={deselectAll}
+          class="flex-1 sm:flex-none text-xs px-3 py-2 rounded-lg whitespace-nowrap transition-opacity hover:opacity-75"
+          style="background: var(--surface-color); border: 0.5px solid var(--surface-border);
+                 color: var(--intermediate-color);"
+        >
+          Deselect all
+        </button>
+      </div>
     </div>
 
     <!-- Floating save bar — only appears when there are unsaved changes -->

@@ -108,17 +108,20 @@
 
 <div class="w-full flex flex-col items-center">
   <nav
-    class="nav-bar w-full fixed top-0 z-10 flex items-center justify-between px-8 h-12"
+    class="nav-bar w-full fixed top-0 z-10 flex items-center justify-between px-4 md:px-8 h-12"
   >
     <a
       href={homePath}
-      class="nav-logo"
+      class="nav-logo shrink-0"
       aria-current={page.url.pathname === homePath ? "page" : undefined}
     >
       LIGHTKEEPERS
     </a>
 
-    <div class="flex items-center gap-6 relative" bind:this={linksContainer}>
+    <div
+      class="flex items-center gap-3 md:gap-6 relative"
+      bind:this={linksContainer}
+    >
       <a
         href={abyssPath}
         class="nav-link"
@@ -160,7 +163,7 @@
   </nav>
 
   <div class="h-12 w-full"></div>
-  <div class="w-full flex flex-col items-center pt-8">
+  <div class="w-full flex flex-col items-center pt-6 md:pt-8">
     {#key page.url.pathname}
       <div
         class="w-full flex flex-col items-center"

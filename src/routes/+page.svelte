@@ -1,11 +1,11 @@
 <script lang="ts">
-  import favicon from "$lib/assets/favicon.svg";
   import { resolve } from "$app/paths";
   import { onMount } from "svelte";
   import { teamsOwned, teamsOwnedStygian, charactersOwned } from "$lib/stores";
   import { solveAbyss, solveStygian } from "$lib/solver";
   import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
   import Team from "$lib/components/Team.svelte";
+  import favicon from "$lib/assets/favicon.svg";
 
   let { data } = $props();
   let mapping: Map<string, string> = $derived(data.mapping);
@@ -56,7 +56,7 @@
   };
 </script>
 
-<main class="w-[80%] pb-20">
+<main class="w-[92%] md:w-[80%] pb-20">
   {#if hasRoster === null}
     <!-- Intentionally empty — waiting for localStorage read to avoid flash -->
   {:else if !hasRoster}

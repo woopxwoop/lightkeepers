@@ -57,7 +57,7 @@
   let maxPairScore = $derived(pairSuggestions[0]?.avgUsage ?? 1);
 </script>
 
-<main class="w-[80%] pb-20 flex flex-col gap-8">
+<main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-8">
   <div class="flex flex-col gap-1">
     <h2 class="tracking-widest uppercase text-(--intermediate-color)">
       Pull Suggestions
@@ -73,6 +73,7 @@
       style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
     >
       <img src={favicon} alt="Lightkeepers" class="w-14 h-14" />
+
       <div class="flex flex-col gap-2 max-w-sm">
         <p class="text-(--foreground-color) font-medium">
           Which characters are worth pulling?
@@ -290,10 +291,10 @@
               <div class="h-[2px]" style="background: {rankAccent[i]};"></div>
               <div class="p-3 flex flex-col gap-3">
                 <!-- Two portraits + name -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                   <div class="flex gap-1 flex-shrink-0">
                     <div
-                      class="w-11 h-11 rounded-lg overflow-hidden relative"
+                      class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg overflow-hidden relative"
                       style="background: var(--background-color);"
                     >
                       <CharacterIcon
@@ -303,7 +304,7 @@
                       />
                     </div>
                     <div
-                      class="w-11 h-11 rounded-lg overflow-hidden relative"
+                      class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg overflow-hidden relative"
                       style="background: var(--background-color);"
                     >
                       <CharacterIcon
@@ -315,11 +316,11 @@
                   </div>
                   <div class="flex flex-col gap-0.5 min-w-0">
                     <span
-                      class="text-sm font-medium text-(--foreground-color) truncate"
+                      class="text-xs sm:text-sm font-medium text-(--foreground-color) truncate"
                     >
                       {suggestion.charA} + {suggestion.charB}
                     </span>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1 flex-wrap">
                       <span class="text-xs text-(--faint-color)">
                         {suggestion.unlocksTeams}
                         {suggestion.unlocksTeams === 1 ? "team" : "teams"}
