@@ -159,12 +159,6 @@ export async function writeNearMissStygianTeams(
   nearMissStygianTeams.set(data ?? []);
 }
 
-export const stygianPullSuggestions = derived(
-  [teamsOwnedStygian, nearMissStygianTeams],
-  ([$teamsOwnedStygian, $nearMissStygianTeams]) =>
-    computePullSuggestions($nearMissStygianTeams, $teamsOwnedStygian),
-);
-
 export const nearMissPairTeams = writable<NearMissPairTeam[]>([]);
 
 export async function writeNearMissPairTeams(
@@ -175,16 +169,14 @@ export async function writeNearMissPairTeams(
       .filter((c) => c.isOwned)
       .map((c) => c.name),
     p_version_number: latestStygianVersion.version_number,
+    p_min_pmi: 0.3,
   });
   if (err) {
     console.error("pair near-miss error:", err);
     return;
   }
+  console.log(data);
   nearMissPairTeams.set(data ?? []);
 }
 
-export const stygianPairSuggestions = derived(
-  nearMissPairTeams,
-  ($nearMissPairTeams) => computePairSuggestions($nearMissPairTeams),
-);
 //#endregion

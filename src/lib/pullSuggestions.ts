@@ -13,10 +13,12 @@ export type PairSuggestion = {
   charA: string;
   charB: string;
   pmi: number;
-  avgUsage: number; // avg_usage_total of best unlocked team — primary signal
+  avgUsage: number;
+  improvement: number;
   unlocksTeams: number;
   bestTeam: StygianTeam;
-  score: number; // avgUsage * pmi — used for ranking
+  currentBestTeam: StygianTeam | null;
+  score: number;
 };
 
 /**
@@ -76,8 +78,10 @@ export function computePullSuggestions(
 
     if (improvement <= 0) continue;
 
-    // Geometric mean
-    const score = improvement * unlockedUsage;
+    const score =
+      improvement *
+      Math.pow(unlockedUsage / 100, 0.3) *
+      Math.log1p(unlocked.length);
 
     const bestTeam: StygianTeam = {
       team_key: topNearMiss.team_key,
@@ -132,14 +136,21 @@ export type NearMissPairTeam = {
 };
 
 /**
- * Ranks pair pull suggestions by avg_usage_total of the best team they
- * unlock, weighted by PMI so high-synergy pairs rank above coincidental ones.
- * No improvement comparison — pairs unlock new archetypes, not incremental upgrades.
+ * Ranks pair pull suggestions by:
+ *   score = (avgUsage + improvement) * log(1 + unlocksTeams) * pmi^0.3
+ *
+ * Adding improvement alongside avgUsage means niche pairs (e.g. Lauma+Nefer
+ * for players without Columbina) still surface even when population usage is
+ * suppressed by better alternatives other players have.
  */
 export function computePairSuggestions(
   nearMissPairs: NearMissPairTeam[],
+  ownedTeams: StygianTeam[],
+  singleSuggestions: PullSuggestion[] = [],
   maxSuggestions = 3,
 ): PairSuggestion[] {
+  const singleChars = new Set(singleSuggestions.map((s) => s.character));
+
   const byPair = new Map<string, NearMissPairTeam[]>();
   for (const team of nearMissPairs) {
     if (!team.missing_char_a || !team.missing_char_b) continue;
@@ -160,12 +171,55 @@ export function computePairSuggestions(
 
     const charA = topTeam.missing_char_a!;
     const charB = topTeam.missing_char_b!;
+
+    if (singleChars.has(charA) || singleChars.has(charB)) continue;
+
     const avgUsage = topTeam.avg_usage_total ?? topTeam.usage_total ?? 0;
     const pmi = topTeam.pmi ?? 0;
 
-    // Rank by team quality weighted by synergy — avoids surfacing weak teams
-    // just because the pair happens to appear together often
-    const score = avgUsage * (1 + pmi);
+    const ownedMembers = (topTeam.members ?? []).filter(
+      (m) => m !== charA && m !== charB,
+    );
+
+    // Best team with ownedMembers + charA (one half of the pair)
+    const bestWithA = ownedTeams
+      .filter((t) =>
+        [...ownedMembers, charA].every((m) => (t.members ?? []).includes(m)),
+      )
+      .sort(
+        (a, b) =>
+          (b.avg_usage_total ?? b.usage_total ?? 0) -
+          (a.avg_usage_total ?? a.usage_total ?? 0),
+      )[0];
+
+    // Best team with ownedMembers + charB (other half of the pair)
+    const bestWithB = ownedTeams
+      .filter((t) =>
+        [...ownedMembers, charB].every((m) => (t.members ?? []).includes(m)),
+      )
+      .sort(
+        (a, b) =>
+          (b.avg_usage_total ?? b.usage_total ?? 0) -
+          (a.avg_usage_total ?? a.usage_total ?? 0),
+      )[0];
+
+    // Best single-character alternative — pulling either one alone
+    const bestCurrentAlternative =
+      (bestWithA?.avg_usage_total ?? bestWithA?.usage_total ?? 0) >=
+      (bestWithB?.avg_usage_total ?? bestWithB?.usage_total ?? 0)
+        ? (bestWithA ?? bestWithB ?? null)
+        : (bestWithB ?? bestWithA ?? null);
+
+    const alternativeUsage =
+      bestCurrentAlternative?.avg_usage_total ??
+      bestCurrentAlternative?.usage_total ??
+      0;
+    const improvement = avgUsage - alternativeUsage;
+
+    if (improvement <= 0) continue;
+
+    const score =
+      (avgUsage + improvement) * Math.log1p(teams.length) * Math.pow(pmi, 0.3);
 
     const bestTeam: StygianTeam = {
       team_key: topTeam.team_key,
@@ -183,11 +237,16 @@ export function computePairSuggestions(
       charB,
       pmi,
       avgUsage,
+      improvement,
       unlocksTeams: teams.length,
       bestTeam,
+      currentBestTeam: bestCurrentAlternative ?? null,
       score,
     });
   }
 
-  return suggestions.sort((a, b) => b.score - a.score).slice(0, maxSuggestions);
+  return suggestions
+    .sort((a, b) => b.score - a.score)
+    .filter((a) => a.avgUsage >= 10)
+    .slice(0, maxSuggestions);
 }
