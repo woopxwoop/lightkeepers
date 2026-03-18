@@ -144,7 +144,6 @@ button:hover {
   }
   .nav-link[aria-current="page"] {
     color: var(--secondary-color);
-    border-bottom-color: var(--secondary-color);
   }
 
   .slot-badge-inactive {

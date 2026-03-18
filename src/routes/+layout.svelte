@@ -9,12 +9,13 @@
     writeNearMissStygianTeams,
     writeNearMissPairTeams,
   } from "$lib/stores";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
+  import { fly } from "svelte/transition";
+  import { cubicOut } from "svelte/easing";
   import type { Character, CharacterOwned } from "$lib/definitions";
   import "../app.css";
 
   let { data, children } = $props();
-
   let characters: Character[] = $derived(data.characters);
 
   $inspect($charactersOwned);
@@ -27,7 +28,6 @@
         : undefined;
 
     let finalList: CharacterOwned[];
-
     if (cachedCharactersOwned) {
       finalList = characters.map((c) => {
         let cachedChar = cachedCharactersOwned!.find((c2) => c2.id === c.id);
@@ -50,15 +50,15 @@
       }));
     }
 
-    // Set store first, then pass finalList directly to avoid reading $store
     charactersOwned.set(finalList);
-
     await Promise.all([
       writeTopAbyssTeamsOwned(finalList),
       writeTopStygianTeamsOwned(finalList),
       writeNearMissStygianTeams(finalList),
       writeNearMissPairTeams(finalList),
     ]);
+
+    updateUnderline();
   });
 
   const homePath = resolve("/");
@@ -66,6 +66,40 @@
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
   const settingsPath = resolve("/settings");
+
+  // ── Sliding underline ──────────────────────────────────────────────────
+  let navLinks: Record<string, HTMLElement | null> = {
+    abyss: null,
+    stygian: null,
+    pulls: null,
+    settings: null,
+  };
+  let linksContainer: HTMLElement | null = $state(null);
+  let underlineLeft = $state(0);
+  let underlineWidth = $state(0);
+  let underlineReady = $state(false);
+
+  async function updateUnderline() {
+    await tick();
+    if (!linksContainer) return;
+    const active = Object.values(navLinks).find(
+      (el) => el?.getAttribute("aria-current") === "page",
+    );
+    if (!active) {
+      underlineReady = false;
+      return;
+    }
+    const containerRect = linksContainer.getBoundingClientRect();
+    const rect = active.getBoundingClientRect();
+    underlineLeft = rect.left - containerRect.left;
+    underlineWidth = rect.width;
+    underlineReady = true;
+  }
+
+  $effect(() => {
+    page.url.pathname;
+    updateUnderline();
+  });
 </script>
 
 <svelte:head>
@@ -83,36 +117,57 @@
     >
       LIGHTKEEPERS
     </a>
-    <div class="flex items-center gap-6">
+
+    <div class="flex items-center gap-6 relative" bind:this={linksContainer}>
       <a
         href={abyssPath}
         class="nav-link"
         aria-current={page.url.pathname === abyssPath ? "page" : undefined}
-        >Abyss</a
+        bind:this={navLinks.abyss}>Abyss</a
       >
       <a
         href={stygianPath}
         class="nav-link"
         aria-current={page.url.pathname === stygianPath ? "page" : undefined}
-        >Stygian</a
+        bind:this={navLinks.stygian}>Stygian</a
       >
       <a
         href={pullsPath}
         class="nav-link"
         aria-current={page.url.pathname === pullsPath ? "page" : undefined}
-        >Pulls</a
+        bind:this={navLinks.pulls}>Pulls</a
       >
       <a
         href={settingsPath}
         class="nav-link"
         aria-current={page.url.pathname === settingsPath ? "page" : undefined}
-        >Settings</a
+        bind:this={navLinks.settings}>Settings</a
       >
+
+      {#if underlineReady}
+        <span
+          class="absolute bottom-0 h-[1.5px] pointer-events-none"
+          style="
+            left: {underlineLeft}px;
+            width: {underlineWidth}px;
+            background: var(--secondary-color);
+            transition: left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          "
+        ></span>
+      {/if}
     </div>
   </nav>
 
   <div class="h-12 w-full"></div>
   <div class="w-full flex flex-col items-center pt-8">
-    {@render children()}
+    {#key page.url.pathname}
+      <div
+        class="w-full flex flex-col items-center"
+        in:fly={{ y: 12, duration: 280, easing: cubicOut }}
+      >
+        {@render children()}
+      </div>
+    {/key}
   </div>
 </div>
