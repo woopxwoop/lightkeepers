@@ -73,6 +73,17 @@ body {
     color 0.3s;
 }
 
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 h1 {
   font-size: clamp(0.5rem, 3vw + 0.25rem, 6rem);
 }
@@ -86,18 +97,22 @@ a {
   font-size: clamp(0.5rem, 1.25vw + 0.2rem, 4rem);
 }
 
+button:hover {
+  cursor: pointer;
+}
+
 @layer components {
   .secondary-color {
-    @apply text-(--secondary-color);
+    color: var(--secondary-color);
   }
 
   .tertiary-color {
-    @apply text-(--tertiary-color);
+    color: var(--tertiary-color);
   }
 
   .invert-theme {
-    @apply text-(--background-color);
-    @apply bg-(--foreground-color);
+    color: var(--background-color);
+    background-color: var(--foreground-color);
   }
 
   /* Nav */
@@ -139,7 +154,12 @@ a {
 
   /* Slot badges — all use the same amber accent */
   .slot-badge {
-    @apply text-xs font-medium px-2 py-0.5 rounded uppercase tracking-wider;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     background: color-mix(in srgb, var(--secondary-color) 12%, transparent);
     color: var(--secondary-color);
   }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import favicon from "$lib/assets/favicon.svg";
   import { resolve } from "$app/paths";
   import { onMount } from "svelte";
   import { teamsOwned, teamsOwnedStygian, charactersOwned } from "$lib/stores";
@@ -63,18 +64,7 @@
     <div
       class="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center"
     >
-      <!-- Lantern glyph -->
-      <div
-        class="w-14 h-14 rounded-2xl flex items-center justify-center"
-        style="border: 1px solid color-mix(in srgb, var(--secondary-color) 30%, transparent);
-               background: color-mix(in srgb, var(--secondary-color) 7%, transparent);"
-      >
-        <div
-          class="w-6 h-6 rounded-full"
-          style="border: 1px solid color-mix(in srgb, var(--secondary-color) 45%, transparent);
-                 background: color-mix(in srgb, var(--secondary-color) 18%, transparent);"
-        ></div>
-      </div>
+      <img src={favicon} alt="Lightkeepers" class="w-14 h-14" />
 
       <div class="flex flex-col gap-2">
         <h1>Welcome to Lightkeepers</h1>
