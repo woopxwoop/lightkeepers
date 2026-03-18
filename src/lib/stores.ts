@@ -8,7 +8,8 @@ import type {
 } from "$lib/definitions";
 import { computePullSuggestions } from "$lib/pullSuggestions";
 import type { NearMissStygianTeam } from "$lib/pullSuggestions";
-import { solveStygian } from "$lib/solver";
+import { computePairSuggestions } from "$lib/pullSuggestions";
+import type { NearMissPairTeam } from "$lib/pullSuggestions";
 
 //#region versions
 export let latestAbyssVersion: Version = {
@@ -35,6 +36,7 @@ export async function writeLatestAbyssVersion() {
       version_number: -1,
     };
 }
+
 export async function writeLatestStygianVersion() {
   const { data, error: err } = await db
     .from("stygian_versions")
@@ -56,39 +58,41 @@ export const charactersOwned = writable<CharacterOwned[]>([]);
 export const teamsOwned = writable<AbyssTeam[]>([]);
 export const teamsOwnedTop = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
   teamsOwned,
-  ($teamsOwned) => {
-    return $teamsOwned.filter(
+  ($teamsOwned) =>
+    $teamsOwned.filter(
       (team) =>
         (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length == 4,
-    );
-  },
+    ),
 );
 export const teamsOwnedBottom = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
   teamsOwned,
-  ($teamsOwned) => {
-    return $teamsOwned.filter(
+  ($teamsOwned) =>
+    $teamsOwned.filter(
       (team) =>
         (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length == 4,
-    );
-  },
+    ),
 );
+
+// Request ID counters — discard responses from superseded requests
+let abyssRequestId = 0;
+let stygianRequestId = 0;
+let nearMissRequestId = 0;
+
 export async function writeTopAbyssTeamsOwned(
   charactersOwned: CharacterOwned[],
 ) {
+  const id = ++abyssRequestId;
   const { data, error: err } = await db.rpc(
     "get_teams_with_characters_subset",
     {
       p_character_names: charactersOwned
-        .filter((character) => character.isOwned)
-        .map((character) => character.name),
+        .filter((c) => c.isOwned)
+        .map((c) => c.name),
       p_version_number: latestAbyssVersion.version_number,
     },
   );
-  if (err) {
-    return;
-  } else {
-    teamsOwned.set(data ?? []);
-  }
+  if (err || id !== abyssRequestId) return;
+  teamsOwned.set(data ?? []);
 }
 //#endregion
 
@@ -97,70 +101,90 @@ export const teamsOwnedStygian = writable<StygianTeam[]>([]);
 export const teamsOwnedStygianTop = derived<
   Writable<StygianTeam[]>,
   StygianTeam[]
->(teamsOwnedStygian, ($teamsOwnedStygian) => {
-  return $teamsOwnedStygian.filter(
+>(teamsOwnedStygian, ($teamsOwnedStygian) =>
+  $teamsOwnedStygian.filter(
     (team) =>
       (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length == 4,
-  );
-});
+  ),
+);
 export const teamsOwnedStygianMiddle = derived<
   Writable<StygianTeam[]>,
   StygianTeam[]
->(teamsOwnedStygian, ($teamsOwnedStygian) => {
-  return $teamsOwnedStygian.filter(
+>(teamsOwnedStygian, ($teamsOwnedStygian) =>
+  $teamsOwnedStygian.filter(
     (team) =>
       (team.usage_rate_middle ?? 0) > 40 && (team.members ?? []).length == 4,
-  );
-});
+  ),
+);
 export const teamsOwnedStygianBottom = derived<
   Writable<StygianTeam[]>,
   StygianTeam[]
->(teamsOwnedStygian, ($teamsOwnedStygian) => {
-  return $teamsOwnedStygian.filter(
+>(teamsOwnedStygian, ($teamsOwnedStygian) =>
+  $teamsOwnedStygian.filter(
     (team) =>
       (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length == 4,
-  );
-});
+  ),
+);
+
 export async function writeTopStygianTeamsOwned(
   charactersOwned: CharacterOwned[],
 ) {
+  const id = ++stygianRequestId;
   const { data, error: err } = await db.rpc(
     "get_teams_with_characters_subset_stygian",
     {
       p_character_names: charactersOwned
-        .filter((character) => character.isOwned)
-        .map((character) => character.name),
+        .filter((c) => c.isOwned)
+        .map((c) => c.name),
       p_version_number: latestStygianVersion.version_number,
     },
   );
-  if (err) {
-    return;
-  } else {
-    teamsOwnedStygian.set(data ?? []);
-  }
+  if (err || id !== stygianRequestId) return;
+  teamsOwnedStygian.set(data ?? []);
 }
 
-// Raw near-miss teams from RPC
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
 
-// Fetch near-miss teams — call this alongside writeTopStygianTeamsOwned
 export async function writeNearMissStygianTeams(
   charactersOwned: CharacterOwned[],
 ) {
+  const id = ++nearMissRequestId;
   const { data, error: err } = await db.rpc("get_near_miss_stygian_teams", {
     p_character_names: charactersOwned
       .filter((c) => c.isOwned)
       .map((c) => c.name),
     p_version_number: latestStygianVersion.version_number,
   });
-  if (err) return;
+  if (err || id !== nearMissRequestId) return;
   nearMissStygianTeams.set(data ?? []);
 }
 
-// Derived pull suggestions — reactive to near-miss teams only
 export const stygianPullSuggestions = derived(
   [teamsOwnedStygian, nearMissStygianTeams],
   ([$teamsOwnedStygian, $nearMissStygianTeams]) =>
     computePullSuggestions($nearMissStygianTeams, $teamsOwnedStygian),
+);
+
+export const nearMissPairTeams = writable<NearMissPairTeam[]>([]);
+
+export async function writeNearMissPairTeams(
+  charactersOwned: CharacterOwned[],
+) {
+  const { data, error: err } = await db.rpc("get_near_miss_stygian_pairs", {
+    p_character_names: charactersOwned
+      .filter((c) => c.isOwned)
+      .map((c) => c.name),
+    p_version_number: latestStygianVersion.version_number,
+  });
+  if (err) {
+    console.error("pair near-miss error:", err);
+    return;
+  }
+  nearMissPairTeams.set(data ?? []);
+}
+
+export const stygianPairSuggestions = derived(
+  nearMissPairTeams,
+  ($nearMissPairTeams) => computePairSuggestions($nearMissPairTeams),
 );
 //#endregion

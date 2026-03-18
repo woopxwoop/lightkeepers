@@ -31,9 +31,11 @@
       JSON.stringify(tempCharactersOwned),
     );
     charactersOwned.set(tempCharactersOwned);
-    writeTopAbyssTeamsOwned($charactersOwned);
-    writeTopStygianTeamsOwned($charactersOwned);
-    writeNearMissStygianTeams($charactersOwned);
+    // Pass tempCharactersOwned directly — avoids reading $store after .set()
+    // and ensures the request ID counters discard any in-flight stale responses
+    writeTopAbyssTeamsOwned(tempCharactersOwned);
+    writeTopStygianTeamsOwned(tempCharactersOwned);
+    writeNearMissStygianTeams(tempCharactersOwned);
     showSaved = true;
     setTimeout(() => {
       showSaved = false;
@@ -105,8 +107,8 @@
           onclick={() => toggleOwned(character.id)}
           class="cursor-pointer rounded-xl w-full overflow-hidden relative
                  transition-all duration-75 hover:-translate-y-1"
-          style="border: 2px solid {character.isOwned
-            ? 'color-mix(in srgb, var(--foreground-color) 80%, transparent)'
+          style="border: 0.5px solid {character.isOwned
+            ? 'color-mix(in srgb, var(--secondary-color) 40%, transparent)'
             : 'var(--surface-border)'};
                  opacity: {character.isOwned ? '1' : '0.35'};"
         >

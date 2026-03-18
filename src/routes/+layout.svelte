@@ -25,9 +25,11 @@
         ? JSON.parse(cachedCharactersOwnedJSON)
         : undefined;
 
+    let finalList: CharacterOwned[];
+
     if (cachedCharactersOwned) {
-      let finalList: CharacterOwned[] = characters.map((c) => {
-        let cachedChar = cachedCharactersOwned.find((c2) => c2.id === c.id);
+      finalList = characters.map((c) => {
+        let cachedChar = cachedCharactersOwned!.find((c2) => c2.id === c.id);
         if (cachedChar) return cachedChar;
         return {
           icon: c.icon,
@@ -37,22 +39,23 @@
           isOwned: true,
         };
       });
-      charactersOwned.set(finalList);
     } else {
-      charactersOwned.set(
-        characters.map((c) => ({
-          icon: c.icon,
-          id: c.id,
-          name: c.name,
-          rarity: c.rarity,
-          isOwned: true,
-        })),
-      );
+      finalList = characters.map((c) => ({
+        icon: c.icon,
+        id: c.id,
+        name: c.name,
+        rarity: c.rarity,
+        isOwned: true,
+      }));
     }
+
+    // Set store first, then pass finalList directly to avoid reading $store
+    charactersOwned.set(finalList);
+
     await Promise.all([
-      writeTopAbyssTeamsOwned($charactersOwned),
-      writeTopStygianTeamsOwned($charactersOwned),
-      writeNearMissStygianTeams($charactersOwned),
+      writeTopAbyssTeamsOwned(finalList),
+      writeTopStygianTeamsOwned(finalList),
+      writeNearMissStygianTeams(finalList),
     ]);
   });
 
@@ -71,7 +74,6 @@
   <nav
     class="nav-bar w-full fixed top-0 z-10 flex items-center justify-between px-8 h-12"
   >
-    <!-- Logo = home link -->
     <a
       href={homePath}
       class="nav-logo"
@@ -79,8 +81,6 @@
     >
       LIGHTKEEPERS
     </a>
-
-    <!-- Page links -->
     <div class="flex items-center gap-6">
       <a
         href={abyssPath}
@@ -109,7 +109,6 @@
     </div>
   </nav>
 
-  <!-- Offset for fixed nav + breathing room -->
   <div class="h-12 w-full"></div>
   <div class="w-full flex flex-col items-center pt-8">
     {@render children()}

@@ -33,12 +33,27 @@ function preferredStygianSlot(team: StygianTeam): StygianSlot {
   return "bottom";
 }
 
+// ---- Slot viability -------------------------------------------------------
+// Minimum usage rate on a given slot for a team to be considered for it.
+// Teams below this threshold on a slot are treated as if that slot doesn't exist.
+const MIN_SLOT_RATE = 10; // 10% — teams below this on a slot won't be assigned there
+
+function slotRate<TTeam extends Record<string, any>>(
+  team: TTeam,
+  slot: string,
+): number {
+  const key = `usage_rate_${slot}`;
+  return team[key] ?? 0;
+}
+
 // ---- Core greedy pass -----------------------------------------------------
 
 function greedyPass<
-  TTeam extends {
+  TTeam extends Record<string, unknown> & {
     members: string[] | null;
     usage_total: number | null;
+    usage_rate_top: number | null;
+    usage_rate_bottom: number | null;
     team_key: string | null;
   },
   TSlot extends string,
@@ -54,9 +69,12 @@ function greedyPass<
 
   const assign = (team: TTeam): boolean => {
     const preferred = getPreferredSlot(team);
-    const slot = !filledSlots.has(preferred)
-      ? preferred
-      : allSlots.find((s) => !filledSlots.has(s));
+    // Only consider slots where this team has meaningful usage
+    const viableSlots = allSlots.filter(
+      (s) => !filledSlots.has(s) && slotRate(team, s) >= MIN_SLOT_RATE,
+    );
+    // Prefer natural slot if viable, otherwise first viable open slot
+    const slot = viableSlots.includes(preferred) ? preferred : viableSlots[0];
     if (!slot) return false;
 
     assignments.push({ team, slot });
@@ -76,7 +94,17 @@ function greedyPass<
 
   return {
     assignments,
-    score: assignments.reduce((sum, a) => sum + (a.team.usage_total ?? 0), 0),
+    score: (() => {
+      if (assignments.length === 0) return 0;
+      const weighted = assignments.map(
+        (a) => (a.team.usage_total ?? 0) * slotAffinityRate(a.team, a.slot),
+      );
+      const min = Math.min(...weighted);
+      const mean = weighted.reduce((s, v) => s + v, 0) / weighted.length;
+      // 60% weakest-link, 40% average — penalises lopsided solutions
+      // without ignoring the strength of the other teams
+      return 0.6 * min + 0.4 * mean;
+    })(),
     unfilled: allSlots.filter((s) => !filledSlots.has(s)),
   };
 }
@@ -98,7 +126,63 @@ function deduplicateSolutions<
   });
 }
 
-// ---- Public API -----------------------------------------------------------
+function slotAffinityRate(
+  team: {
+    usage_rate_top: number | null;
+    usage_rate_bottom: number | null;
+    [key: string]: unknown;
+  },
+  slot: string,
+): number {
+  const t = team.usage_rate_top ?? 0;
+  const b = team.usage_rate_bottom ?? 0;
+  const m =
+    typeof team.usage_rate_middle === "number" ? team.usage_rate_middle : 0;
+  const total = t + b + m;
+  if (total === 0) return 1;
+  if (slot === "top") return t / total;
+  if (slot === "bottom") return b / total;
+  if (slot === "middle") return m / total;
+  return 1;
+}
+// After the greedy pass, check if any two teams would both prefer each
+// other's slots and swap them. Handles the case where forcedFirst grabs
+// a slot that a later team would prefer, even though both could swap happily.
+
+function optimizeSlots<
+  TTeam extends Record<string, unknown>,
+  TSlot extends string,
+>(
+  assignments: { team: TTeam; slot: TSlot }[],
+  getPreferredSlot: (team: TTeam) => TSlot,
+): { team: TTeam; slot: TSlot }[] {
+  const result = assignments.map((a) => ({ ...a }));
+  let swapped = true;
+  // Keep iterating until no more beneficial swaps exist
+  while (swapped) {
+    swapped = false;
+    for (let i = 0; i < result.length; i++) {
+      for (let j = i + 1; j < result.length; j++) {
+        const a = result[i];
+        const b = result[j];
+        const aPref = getPreferredSlot(a.team);
+        const bPref = getPreferredSlot(b.team);
+        // Swap only if both prefer each other's slot AND both are viable there
+        if (
+          aPref === b.slot &&
+          bPref === a.slot &&
+          slotRate(a.team, b.slot as string) >= MIN_SLOT_RATE &&
+          slotRate(b.team, a.slot as string) >= MIN_SLOT_RATE
+        ) {
+          result[i] = { ...a, slot: b.slot };
+          result[j] = { ...b, slot: a.slot };
+          swapped = true;
+        }
+      }
+    }
+  }
+  return result;
+}
 
 /** How many teams to try as forced first pick when exploring solutions */
 const CANDIDATE_DEPTH = 20;
@@ -131,7 +215,8 @@ export function solveAbyss(
       preferredAbyssSlot,
       forcedFirst,
     );
-    return { ...sol, assignments: sortAssignments(sol.assignments, allSlots) };
+    const optimized = optimizeSlots(sol.assignments, preferredAbyssSlot);
+    return { ...sol, assignments: sortAssignments(optimized, allSlots) };
   });
 
   return deduplicateSolutions(solutions)
@@ -154,7 +239,8 @@ export function solveStygian(
       preferredStygianSlot,
       forcedFirst,
     );
-    return { ...sol, assignments: sortAssignments(sol.assignments, allSlots) };
+    const optimized = optimizeSlots(sol.assignments, preferredStygianSlot);
+    return { ...sol, assignments: sortAssignments(optimized, allSlots) };
   });
 
   return deduplicateSolutions(solutions)

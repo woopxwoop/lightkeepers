@@ -270,6 +270,17 @@ export type Database = {
       };
     };
     Views: {
+      stygian_character_pair_pmi: {
+        Row: {
+          char_a: string | null;
+          char_b: string | null;
+          p_a: number | null;
+          p_ab: number | null;
+          p_b: number | null;
+          pmi: number | null;
+        };
+        Relationships: [];
+      };
       stygian_team_avg_usage: {
         Row: {
           avg_usage_total: number | null;
@@ -310,6 +321,26 @@ export type Database = {
       };
     };
     Functions: {
+      get_near_miss_stygian_pairs: {
+        Args: {
+          p_character_names: string[];
+          p_min_pmi?: number;
+          p_version_number: number;
+        };
+        Returns: {
+          avg_usage_total: number;
+          members: string[];
+          missing_char_a: string;
+          missing_char_b: string;
+          pmi: number;
+          ret_version_number: number;
+          team_key: string;
+          usage_rate_bottom: number;
+          usage_rate_middle: number;
+          usage_rate_top: number;
+          usage_total: number;
+        }[];
+      };
       get_near_miss_stygian_teams: {
         Args: { p_character_names: string[]; p_version_number: number };
         Returns: {
@@ -360,6 +391,7 @@ export type Database = {
         }[];
       };
       refresh_abyss_views: { Args: never; Returns: undefined };
+      refresh_stygian_pair_pmi: { Args: never; Returns: undefined };
       refresh_stygian_views: { Args: never; Returns: undefined };
       upsert_abyss_team: {
         Args: {
