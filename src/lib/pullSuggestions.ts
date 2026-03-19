@@ -53,6 +53,8 @@ export function computePullSuggestions(
         (a.avg_usage_total ?? a.usage_total ?? 0),
     )[0];
 
+    if (topNearMiss.members.length !== 4) continue;
+
     const unlockedUsage =
       topNearMiss.avg_usage_total ?? topNearMiss.usage_total ?? 0;
 

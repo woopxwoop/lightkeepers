@@ -2,7 +2,11 @@
   import { resolve } from "$app/paths";
   import { onMount } from "svelte";
   import { teamsOwned, teamsOwnedStygian, charactersOwned } from "$lib/stores";
-  import { solveAbyss, solveStygian } from "$lib/solver";
+  import {
+    solveAbyssWithFallback,
+    solveStygianWithFallback,
+  } from "$lib/solver";
+  import { allTeamsAbyss, allTeamsStygian } from "$lib/stores";
   import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
   import Team from "$lib/components/Team.svelte";
   import favicon from "$lib/assets/favicon.svg";
@@ -36,17 +40,20 @@
     }, 8000);
   });
 
-  let abyssSolution = $derived(solveAbyss($teamsOwned, 1)[0] ?? null);
+  let abyssSolution = $derived(
+    solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, 1)[0] ?? null,
+  );
   let stygianSolution = $derived(
-    solveStygian($teamsOwnedStygian, 1)[0] ?? null,
+    solveStygianWithFallback($teamsOwnedStygian, $allTeamsStygian, 1)[0] ??
+      null,
   );
 
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
-
   let loading = $derived(
     !loadingTimedOut &&
       hasRoster &&
-      ($teamsOwned.length === 0 || $teamsOwnedStygian.length === 0),
+      ($teamsOwned.length === 0 || $teamsOwnedStygian.length === 0) &&
+      ($allTeamsAbyss.length === 0 || $allTeamsStygian.length === 0),
   );
 
   const settingsPath = resolve("/settings");
@@ -127,6 +134,12 @@
               No valid teams found for your roster.
             </p>
           {:else}
+            {#if abyssSolution.isFallback}
+              <p class="text-xs text-(--intermediate-color) mb-1">
+                Your roster couldn't fill all slots — showing best teams if you
+                owned everyone.
+              </p>
+            {/if}
             <div
               class="rounded-2xl p-4 flex flex-col gap-4"
               style="border: 0.5px solid var(--surface-border); background: var(--surface-color);"
@@ -175,6 +188,12 @@
               No valid teams found for your roster.
             </p>
           {:else}
+            {#if stygianSolution.isFallback}
+              <p class="text-xs text-(--intermediate-color) mb-1">
+                Your roster couldn't fill all slots — showing best teams if you
+                owned everyone.
+              </p>
+            {/if}
             <div
               class="rounded-2xl p-4 flex flex-col gap-4"
               style="border: 0.5px solid var(--surface-border); background: var(--surface-color);"

@@ -122,9 +122,7 @@
       class="rounded-2xl p-8 text-center"
       style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
     >
-      <p class="text-(--intermediate-color)">
-        No suggestions found — your roster already covers the top Stygian teams.
-      </p>
+      <p class="text-(--intermediate-color)">No suggestions found.</p>
     </div>
   {:else}
     <!-- ── Single pull suggestions ──────────────────────────────────── -->

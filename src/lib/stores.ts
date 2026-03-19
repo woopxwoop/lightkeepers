@@ -180,3 +180,28 @@ export async function writeNearMissPairTeams(
 }
 
 //#endregion
+
+export const allTeamsAbyss = writable<AbyssTeam[]>([]);
+export const allTeamsStygian = writable<StygianTeam[]>([]);
+
+export async function writeAllAbyssTeams() {
+  const { data, error } = await db.rpc("get_teams_with_characters_subset", {
+    p_character_names: [],
+    p_version_number: latestAbyssVersion.version_number,
+  });
+  if (error) return;
+  allTeamsAbyss.set(data ?? []);
+}
+
+export async function writeAllStygianTeams() {
+  const { data, error } = await db.rpc(
+    "get_teams_with_characters_subset_stygian",
+    {
+      p_character_names: [],
+      p_version_number: latestStygianVersion.version_number,
+    },
+  );
+
+  if (error) return;
+  allTeamsStygian.set(data ?? []);
+}

@@ -1,15 +1,18 @@
 <script lang="ts">
   import Team from "$lib/components/Team.svelte";
   import { teamsOwned } from "$lib/stores";
-  import { solveAbyss } from "$lib/solver";
   import { abyssSlotLabel } from "$lib/slotLabels";
+  import { solveAbyssWithFallback } from "$lib/solver";
+  import { allTeamsAbyss } from "$lib/stores";
 
   let { data } = $props();
   let mapping: Map<string, string> = $derived(data.mapping);
 
   let loading = $state(true);
 
-  let abyssSolutions = $derived(solveAbyss($teamsOwned, 3));
+  let abyssSolutions = $derived(
+    solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, 3),
+  );
 
   let activeSlots: string[] = $state([]);
   $effect(() => {
@@ -19,7 +22,7 @@
   });
 
   $effect(() => {
-    loading = $teamsOwned.length === 0;
+    loading = $teamsOwned.length === 0 && $allTeamsAbyss.length === 0;
   });
 </script>
 
@@ -27,6 +30,13 @@
   {#if loading}
     <p class="text-(--intermediate-color)">Loading teams…</p>
   {:else}
+    {#if abyssSolutions[0]?.isFallback}
+      <p class="text-xs text-(--intermediate-color)">
+        Your roster couldn't fill all slots — showing optimal teams as if you
+        owned everyone.
+      </p>
+    {/if}
+
     {#each abyssSolutions as solution, i}
       <div
         class="rounded-2xl p-4 flex flex-col gap-4"

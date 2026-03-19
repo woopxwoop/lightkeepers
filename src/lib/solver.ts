@@ -10,10 +10,9 @@ export type StygianAssignment = { team: StygianTeam; slot: StygianSlot };
 
 export type Solution<T> = {
   assignments: T[];
-  /** Sum of usage_total across all assigned teams — used to rank solutions */
   score: number;
-  /** Slots we couldn't fill given the owned roster */
   unfilled: string[];
+  isFallback: boolean; // true = solved with full roster, not owned roster
 };
 
 // ---- Slot preference ------------------------------------------------------
@@ -106,6 +105,7 @@ function greedyPass<
       return 0.6 * min + 0.4 * mean;
     })(),
     unfilled: allSlots.filter((s) => !filledSlots.has(s)),
+    isFallback: false,
   };
 }
 
@@ -246,4 +246,29 @@ export function solveStygian(
   return deduplicateSolutions(solutions)
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
+}
+
+export function solveAbyssWithFallback(
+  ownedTeams: AbyssTeam[],
+  allTeams: AbyssTeam[],
+  count = 3,
+): Solution<AbyssAssignment>[] {
+  const owned = solveAbyss(ownedTeams, count);
+  if (owned.length > 0 && owned[0].unfilled.length === 0) {
+    return owned.map((s) => ({ ...s, isFallback: false }));
+  }
+  // Fallback: solve with full roster
+  return solveAbyss(allTeams, count).map((s) => ({ ...s, isFallback: true }));
+}
+
+export function solveStygianWithFallback(
+  ownedTeams: StygianTeam[],
+  allTeams: StygianTeam[],
+  count = 3,
+): Solution<StygianAssignment>[] {
+  const owned = solveStygian(ownedTeams, count);
+  if (owned.length > 0 && owned[0].unfilled.length === 0) {
+    return owned.map((s) => ({ ...s, isFallback: false }));
+  }
+  return solveStygian(allTeams, count).map((s) => ({ ...s, isFallback: true }));
 }

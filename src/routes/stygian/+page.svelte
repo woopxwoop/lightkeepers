@@ -1,15 +1,18 @@
 <script lang="ts">
   import Team from "$lib/components/Team.svelte";
   import { teamsOwnedStygian } from "$lib/stores";
-  import { solveStygian } from "$lib/solver";
   import { stygianSlotLabel } from "$lib/slotLabels";
+  import { solveStygianWithFallback } from "$lib/solver";
+  import { allTeamsStygian } from "$lib/stores";
 
   let { data } = $props();
   let mapping: Map<string, string> = $derived(data.mapping);
 
   let loading = $state(true);
 
-  let stygianSolutions = $derived(solveStygian($teamsOwnedStygian, 3));
+  let stygianSolutions = $derived(
+    solveStygianWithFallback($teamsOwnedStygian, $allTeamsStygian, 3),
+  );
 
   let activeSlots: string[] = $state([]);
   $effect(() => {
@@ -21,14 +24,27 @@
   });
 
   $effect(() => {
-    loading = $teamsOwnedStygian.length === 0;
+    loading = $teamsOwnedStygian.length === 0 && $allTeamsStygian.length === 0;
   });
+
+  const medalAccent = [
+    "#7EB8D4", // VI — blue crystal
+    "#D4789C", // V — pink
+    "#D4A832", // IV — gold
+  ];
 </script>
 
 <main class="w-[80%] pb-20 flex flex-col gap-6">
   {#if loading}
     <p class="text-(--intermediate-color)">Loading teams…</p>
   {:else}
+    {#if stygianSolutions[0]?.isFallback}
+      <p class="text-xs text-(--intermediate-color)">
+        Your roster couldn't fill all slots — showing optimal teams as if you
+        owned everyone.
+      </p>
+    {/if}
+
     {#each stygianSolutions as solution, i}
       <div
         class="rounded-2xl p-4 flex flex-col gap-4"

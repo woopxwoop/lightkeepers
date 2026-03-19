@@ -8,6 +8,8 @@ import type { Tables } from "$lib/types/database.types";
 import {
   writeLatestAbyssVersion,
   writeLatestStygianVersion,
+  writeAllAbyssTeams,
+  writeAllStygianTeams,
 } from "$lib/stores";
 
 type CharacterMapping = Tables<"url_to_character_mapping">;
@@ -58,6 +60,7 @@ export async function load() {
         getCharacterMapping(),
         getCharacterData(),
       ]);
+      await Promise.all([writeAllStygianTeams(), writeAllAbyssTeams()]);
     } catch (e) {
       console.log("unexpected error");
       console.log(e);
