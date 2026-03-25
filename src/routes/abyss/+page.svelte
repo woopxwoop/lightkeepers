@@ -1,17 +1,22 @@
 <script lang="ts">
   import Team from "$lib/components/Team.svelte";
-  import { teamsOwned } from "$lib/stores";
+  import CharacterIcon from "$lib/components/CharacterIcon.svelte";
+  import avatarImg from "$lib/assets/default-avatar.jpg";
+  import { teamsOwned, allTeamsAbyss, charactersOwned } from "$lib/stores";
   import { abyssSlotLabel } from "$lib/slotLabels";
   import { solveAbyssWithFallback } from "$lib/solver";
-  import { allTeamsAbyss } from "$lib/stores";
 
   let { data } = $props();
   let mapping: Map<string, string> = $derived(data.mapping);
 
   let loading = $state(true);
 
+  let ownedNames = $derived(
+    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name)),
+  );
+
   let abyssSolutions = $derived(
-    solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, 3),
+    solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, ownedNames, 3),
   );
 
   let activeSlots: string[] = $state([]);
@@ -31,10 +36,32 @@
     <p class="text-(--intermediate-color)">Loading teams…</p>
   {:else}
     {#if abyssSolutions[0]?.isFallback}
-      <p class="text-xs text-(--intermediate-color)">
-        Your roster couldn't fill all slots — showing optimal teams as if you
-        owned everyone.
-      </p>
+      {@const needed = abyssSolutions[0].neededCharacters}
+      <div class="flex flex-col gap-2">
+        <p class="text-xs text-(--intermediate-color)">
+          Your roster couldn't fill all slots — showing best teams needing the
+          fewest additions{needed.length === 0 ? "." : ":"}
+        </p>
+        {#if needed.length > 0}
+          <div class="flex flex-wrap gap-3">
+            {#each needed as char}
+              <div class="flex items-center gap-1.5">
+                <div
+                  class="w-6 h-6 rounded-md overflow-hidden flex-shrink-0"
+                  style="background: var(--surface-color); outline: 1px dashed color-mix(in srgb, var(--secondary-color) 55%, transparent);"
+                >
+                  <CharacterIcon
+                    name={char}
+                    icon={mapping.get(char) ?? avatarImg}
+                    rarity={null}
+                  />
+                </div>
+                <span class="text-xs text-(--secondary-color)">{char}</span>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
     {/if}
 
     {#each abyssSolutions as solution, i}
@@ -57,11 +84,9 @@
           </p>
         {/if}
 
-        <!-- Tag/tab row — matches team grid so tags align with their teams -->
         <div class="flex gap-2 md:grid md:grid-cols-2">
           {#each solution.assignments as { team, slot }}
             <div class="flex items-center gap-2">
-              <!-- Large screens: plain colored tag, no interaction -->
               <span
                 class="slot-badge slot-badge-{slot === 'top'
                   ? 1
@@ -69,7 +94,6 @@
               >
                 {abyssSlotLabel[slot]}
               </span>
-              <!-- Small screens: acts as tab -->
               <button
                 class="slot-badge md:hidden transition-colors"
                 class:slot-badge-1={slot === "top" && activeSlots[i] === slot}
@@ -85,17 +109,16 @@
                 {abyssSlotLabel[slot]}
               </button>
               <span class="text-xs text-(--faint-color) hidden md:inline">
-                {team.usage_total?.toFixed(1)}% usage
+                {team.usage_total?.toFixed(2)}% usage
               </span>
             </div>
           {/each}
         </div>
 
-        <!-- Team row — all visible on large, only active on small -->
         <div class="grid md:grid-cols-2 gap-4">
-          {#each solution.assignments as { team, slot }}
+          {#each solution.assignments as { team, slot, missingCharacters }}
             <div class:hidden={activeSlots[i] !== slot} class="md:block">
-              <Team {team} {mapping} />
+              <Team {team} {mapping} {missingCharacters} />
             </div>
           {/each}
         </div>

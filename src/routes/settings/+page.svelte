@@ -13,6 +13,7 @@
   let tempCharactersOwned: CharacterOwned[] = $state([]);
   let synced = $state(false);
   let showSaved = $state(false);
+  let isSaving = $state(false);
   let hasUnsavedChanges = $state(false);
 
   // Rarity filter: "all" | "5" | "4"
@@ -59,19 +60,25 @@
     hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
   }
 
-  function saveCharacters() {
+  async function saveCharacters() {
+    if (isSaving) return;
+    isSaving = true;
     localStorage.setItem(
       "charactersOwned",
       JSON.stringify(tempCharactersOwned),
     );
     savedSnapshot = JSON.stringify(tempCharactersOwned);
     charactersOwned.set(tempCharactersOwned);
-    writeTopAbyssTeamsOwned(tempCharactersOwned);
-    writeTopStygianTeamsOwned(tempCharactersOwned);
-    writeNearMissStygianTeams(tempCharactersOwned);
-    writeNearMissPairTeams(tempCharactersOwned);
-    hasUnsavedChanges = false;
+    await Promise.all([
+      writeTopAbyssTeamsOwned(tempCharactersOwned),
+      writeTopStygianTeamsOwned(tempCharactersOwned),
+      writeNearMissStygianTeams(tempCharactersOwned),
+      writeNearMissPairTeams(tempCharactersOwned),
+    ]);
+
     showSaved = true;
+    hasUnsavedChanges = false;
+    isSaving = false;
     setTimeout(() => {
       showSaved = false;
     }, 2000);
@@ -163,7 +170,7 @@
     </div>
 
     <!-- Floating save bar — only appears when there are unsaved changes -->
-    {#if hasUnsavedChanges}
+    {#if hasUnsavedChanges || isSaving || showSaved}
       <div
         class="fixed bottom-6 left-0 right-0 mx-auto w-fit z-20 flex items-center gap-4
                px-5 py-3 rounded-2xl"
@@ -171,15 +178,21 @@
                border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);
                animation: slide-up 0.2s ease-out;"
       >
-        <span class="text-sm text-(--intermediate-color)">Unsaved changes</span>
+        <span class="text-sm text-(--intermediate-color)">
+          {isSaving ? "Saving…" : showSaved ? "Saved!" : "Unsaved changes"}
+        </span>
         <button
           onclick={saveCharacters}
+          disabled={isSaving || showSaved || !hasUnsavedChanges}
           class="text-sm font-medium px-4 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+          style:opacity={isSaving || showSaved || !hasUnsavedChanges
+            ? "0.7"
+            : "1"}
           style="background: color-mix(in srgb, var(--secondary-color) 15%, transparent);
                  border: 0.5px solid color-mix(in srgb, var(--secondary-color) 45%, transparent);
                  color: var(--secondary-color);"
         >
-          {showSaved ? "Saved ✓" : "Save"}
+          {isSaving ? "Saving…" : showSaved ? "Saved ✓" : "Save"}
         </button>
       </div>
     {/if}

@@ -15,50 +15,127 @@
   import type { Character, CharacterOwned } from "$lib/definitions";
   import "../app.css";
 
+  type DebugWindow = Window & {
+    __lkDebugHitTest?: {
+      enable: () => void;
+      disable: () => void;
+      status: () => boolean;
+    };
+  };
+
   let { data, children } = $props();
   let characters: Character[] = $derived(data.characters);
 
   $inspect($charactersOwned);
 
-  onMount(async () => {
-    let cachedCharactersOwnedJSON = localStorage.getItem("charactersOwned");
-    let cachedCharactersOwned: CharacterOwned[] | undefined =
-      cachedCharactersOwnedJSON
-        ? JSON.parse(cachedCharactersOwnedJSON)
-        : undefined;
+  onMount(() => {
+    const debugWindow = window as DebugWindow;
+    const attachHitTestLogging = () => {
+      const clickHandler = (event: MouseEvent) => {
+        const target = event.target as Element | null;
+        const elementAtPoint = document.elementFromPoint(
+          event.clientX,
+          event.clientY,
+        );
+        console.log("[LK HITTEST]", {
+          x: event.clientX,
+          y: event.clientY,
+          target,
+          elementAtPoint,
+          targetPath: target?.closest("[class]")?.className ?? null,
+          atPointPath: elementAtPoint?.closest("[class]")?.className ?? null,
+        });
+      };
 
-    let finalList: CharacterOwned[];
-    if (cachedCharactersOwned) {
-      finalList = characters.map((c) => {
-        let cachedChar = cachedCharactersOwned!.find((c2) => c2.id === c.id);
-        if (cachedChar) return cachedChar;
-        return {
+      document.addEventListener("click", clickHandler, true);
+      console.info("[LK HITTEST] enabled");
+      return () => {
+        document.removeEventListener("click", clickHandler, true);
+        console.info("[LK HITTEST] disabled");
+      };
+    };
+
+    let detachHitTestLogging: (() => void) | null = null;
+    const isEnabled = () => localStorage.getItem("lk_debug_hit_test") === "1";
+    const syncDebug = () => {
+      if (isEnabled() && !detachHitTestLogging) {
+        detachHitTestLogging = attachHitTestLogging();
+      }
+      if (!isEnabled() && detachHitTestLogging) {
+        detachHitTestLogging();
+        detachHitTestLogging = null;
+      }
+    };
+
+    debugWindow.__lkDebugHitTest = {
+      enable: () => {
+        localStorage.setItem("lk_debug_hit_test", "1");
+        syncDebug();
+      },
+      disable: () => {
+        localStorage.setItem("lk_debug_hit_test", "0");
+        syncDebug();
+      },
+      status: () => isEnabled(),
+    };
+
+    syncDebug();
+
+    const bootstrap = async () => {
+      let cachedCharactersOwnedJSON = localStorage.getItem("charactersOwned");
+      let cachedCharactersOwned: CharacterOwned[] | undefined =
+        cachedCharactersOwnedJSON
+          ? JSON.parse(cachedCharactersOwnedJSON)
+          : undefined;
+
+      let finalList: CharacterOwned[];
+      if (cachedCharactersOwned) {
+        finalList = characters.map((c) => {
+          let cachedChar = cachedCharactersOwned!.find((c2) => c2.id === c.id);
+          if (cachedChar) return cachedChar;
+          return {
+            icon: c.icon,
+            id: c.id,
+            name: c.name,
+            rarity: c.rarity,
+            isOwned: true,
+            element: c.element,
+            tags: c.tags,
+            weapon_type: c.weapon_type,
+          };
+        });
+      } else {
+        finalList = characters.map((c) => ({
           icon: c.icon,
           id: c.id,
           name: c.name,
           rarity: c.rarity,
           isOwned: true,
-        };
-      });
-    } else {
-      finalList = characters.map((c) => ({
-        icon: c.icon,
-        id: c.id,
-        name: c.name,
-        rarity: c.rarity,
-        isOwned: true,
-      }));
-    }
+          element: c.element,
+          tags: c.tags,
+          weapon_type: c.weapon_type,
+        }));
+      }
 
-    charactersOwned.set(finalList);
-    await Promise.all([
-      writeTopAbyssTeamsOwned(finalList),
-      writeTopStygianTeamsOwned(finalList),
-      writeNearMissStygianTeams(finalList),
-      writeNearMissPairTeams(finalList),
-    ]);
+      charactersOwned.set(finalList);
+      await Promise.all([
+        writeTopAbyssTeamsOwned(finalList),
+        writeTopStygianTeamsOwned(finalList),
+        writeNearMissStygianTeams(finalList),
+        writeNearMissPairTeams(finalList),
+      ]);
 
-    updateUnderline();
+      updateUnderline();
+    };
+
+    void bootstrap();
+
+    return () => {
+      if (detachHitTestLogging) {
+        detachHitTestLogging();
+        detachHitTestLogging = null;
+      }
+    };
   });
 
   const homePath = resolve("/");

@@ -89,22 +89,31 @@ export type Database = {
       };
       characters: {
         Row: {
+          element: string | null;
           icon: string | null;
           id: string;
           name: string;
           rarity: number | null;
+          tags: string[] | null;
+          weapon_type: string | null;
         };
         Insert: {
+          element?: string | null;
           icon?: string | null;
           id?: string;
           name: string;
           rarity?: number | null;
+          tags?: string[] | null;
+          weapon_type?: string | null;
         };
         Update: {
+          element?: string | null;
           icon?: string | null;
           id?: string;
           name?: string;
           rarity?: number | null;
+          tags?: string[] | null;
+          weapon_type?: string | null;
         };
         Relationships: [];
       };
@@ -140,27 +149,33 @@ export type Database = {
       };
       stygian_team_stats: {
         Row: {
+          has: number | null;
           team_id: string;
           usage_rate_bottom: number | null;
           usage_rate_middle: number | null;
           usage_rate_top: number | null;
           usage_total: number | null;
+          use: number | null;
           version_number: number;
         };
         Insert: {
+          has?: number | null;
           team_id: string;
           usage_rate_bottom?: number | null;
           usage_rate_middle?: number | null;
           usage_rate_top?: number | null;
           usage_total?: number | null;
+          use?: number | null;
           version_number: number;
         };
         Update: {
+          has?: number | null;
           team_id?: string;
           usage_rate_bottom?: number | null;
           usage_rate_middle?: number | null;
           usage_rate_top?: number | null;
           usage_total?: number | null;
+          use?: number | null;
           version_number?: number;
         };
         Relationships: [
@@ -208,24 +223,30 @@ export type Database = {
       };
       team_stats: {
         Row: {
+          has: number | null;
           team_id: string;
           usage_rate_bottom: number | null;
           usage_rate_top: number | null;
           usage_total: number | null;
+          use: number | null;
           version_number: number;
         };
         Insert: {
+          has?: number | null;
           team_id: string;
           usage_rate_bottom?: number | null;
           usage_rate_top?: number | null;
           usage_total?: number | null;
+          use?: number | null;
           version_number: number;
         };
         Update: {
+          has?: number | null;
           team_id?: string;
           usage_rate_bottom?: number | null;
           usage_rate_top?: number | null;
           usage_total?: number | null;
+          use?: number | null;
           version_number?: number;
         };
         Relationships: [
@@ -321,6 +342,31 @@ export type Database = {
       };
     };
     Functions: {
+      get_character_substitutes_stygian: {
+        Args: { p_character_name: string; p_version_number: number };
+        Returns: {
+          avg_original_usage: number;
+          avg_substitute_usage: number;
+          example_core: string[];
+          observed_cores: number;
+          substitute_character: string;
+          usage_ratio: number;
+        }[];
+      };
+      get_element_substitutes: {
+        Args: {
+          p_limit?: number;
+          p_missing_character: string;
+          p_owned_characters: string[];
+          p_version_number: number;
+        };
+        Returns: {
+          appearances: number;
+          avg_usage: number;
+          element: string;
+          substitute_character: string;
+        }[];
+      };
       get_near_miss_stygian_pairs: {
         Args: {
           p_character_names: string[];
@@ -348,6 +394,28 @@ export type Database = {
           members: string[];
           missing_character: string;
           ret_version_number: number;
+          team_key: string;
+          usage_rate_bottom: number;
+          usage_rate_middle: number;
+          usage_rate_top: number;
+          usage_total: number;
+        }[];
+      };
+      get_pmi_core_teams_stygian: {
+        Args: {
+          p_character_names: string[];
+          p_min_pmi?: number;
+          p_top_pairs?: number;
+          p_version_number: number;
+        };
+        Returns: {
+          char_a: string;
+          char_b: string;
+          members: string[];
+          missing_member: string;
+          owned_member_count: number;
+          pair_frequency: number;
+          pmi: number;
           team_key: string;
           usage_rate_bottom: number;
           usage_rate_middle: number;

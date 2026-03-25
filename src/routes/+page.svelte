@@ -40,12 +40,22 @@
     }, 8000);
   });
 
+  // replace the two $derived solver calls with:
+  let ownedNames = $derived(
+    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name)),
+  );
+
   let abyssSolution = $derived(
-    solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, 1)[0] ?? null,
+    solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, ownedNames, 1)[0] ??
+      null,
   );
   let stygianSolution = $derived(
-    solveStygianWithFallback($teamsOwnedStygian, $allTeamsStygian, 1)[0] ??
-      null,
+    solveStygianWithFallback(
+      $teamsOwnedStygian,
+      $allTeamsStygian,
+      ownedNames,
+      1,
+    )[0] ?? null,
   );
 
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
@@ -135,26 +145,27 @@
             </p>
           {:else}
             {#if abyssSolution.isFallback}
+              {@const needed = abyssSolution.neededCharacters}
               <p class="text-xs text-(--intermediate-color) mb-1">
-                Your roster couldn't fill all slots — showing best teams if you
-                owned everyone.
+                Needs {needed.length > 0 ? needed.join(", ") : "characters"} to fill
+                all slots.
               </p>
             {/if}
             <div
               class="rounded-2xl p-4 flex flex-col gap-4"
               style="border: 0.5px solid var(--surface-border); background: var(--surface-color);"
             >
-              {#each abyssSolution.assignments as { team, slot }}
+              {#each abyssSolution.assignments as { team, slot, missingCharacters }}
                 <div class="flex flex-col gap-2">
                   <div class="flex items-center gap-2">
                     <span class="slot-badge {abyssSlotClass[slot]}"
                       >{abyssSlotLabel[slot]}</span
                     >
                     <span class="text-xs text-(--faint-color)"
-                      >{team.usage_total?.toFixed(1)}% usage</span
+                      >{team.usage_total?.toFixed(2)}% usage</span
                     >
                   </div>
-                  <Team {team} {mapping} />
+                  <Team {team} {mapping} {missingCharacters} />
                 </div>
               {/each}
 
@@ -189,26 +200,27 @@
             </p>
           {:else}
             {#if stygianSolution.isFallback}
+              {@const needed = stygianSolution.neededCharacters}
               <p class="text-xs text-(--intermediate-color) mb-1">
-                Your roster couldn't fill all slots — showing best teams if you
-                owned everyone.
+                Needs {needed.length > 0 ? needed.join(", ") : "characters"} to fill
+                all slots.
               </p>
             {/if}
             <div
               class="rounded-2xl p-4 flex flex-col gap-4"
               style="border: 0.5px solid var(--surface-border); background: var(--surface-color);"
             >
-              {#each stygianSolution.assignments as { team, slot }}
+              {#each stygianSolution.assignments as { team, slot, missingCharacters }}
                 <div class="flex flex-col gap-2">
                   <div class="flex items-center gap-2">
                     <span class="slot-badge {stygianSlotClass[slot]}"
                       >{stygianSlotLabel[slot]}</span
                     >
                     <span class="text-xs text-(--faint-color)"
-                      >{team.usage_total?.toFixed(1)}% usage</span
+                      >{team.usage_total?.toFixed(2)}% usage</span
                     >
                   </div>
-                  <Team {team} {mapping} />
+                  <Team {team} {mapping} {missingCharacters} />
                 </div>
               {/each}
 

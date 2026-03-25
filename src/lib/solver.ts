@@ -5,14 +5,23 @@ import type { AbyssTeam, StygianTeam } from "$lib/definitions";
 type AbyssSlot = "top" | "bottom";
 type StygianSlot = "top" | "middle" | "bottom";
 
-export type AbyssAssignment = { team: AbyssTeam; slot: AbyssSlot };
-export type StygianAssignment = { team: StygianTeam; slot: StygianSlot };
+export type AbyssAssignment = {
+  team: AbyssTeam;
+  slot: AbyssSlot;
+  missingCharacters: string[];
+};
+export type StygianAssignment = {
+  team: StygianTeam;
+  slot: StygianSlot;
+  missingCharacters: string[];
+};
 
 export type Solution<T> = {
   assignments: T[];
   score: number;
   unfilled: string[];
-  isFallback: boolean; // true = solved with full roster, not owned roster
+  isFallback: boolean;
+  neededCharacters: string[];
 };
 
 // ---- Slot preference ------------------------------------------------------
@@ -106,6 +115,7 @@ function greedyPass<
     })(),
     unfilled: allSlots.filter((s) => !filledSlots.has(s)),
     isFallback: false,
+    neededCharacters: [],
   };
 }
 
@@ -189,6 +199,7 @@ const CANDIDATE_DEPTH = 20;
 
 const ABYSS_SLOT_ORDER: AbyssSlot[] = ["top", "bottom"];
 const STYGIAN_SLOT_ORDER: StygianSlot[] = ["top", "middle", "bottom"];
+const MIN_ABYSS_USAGE_TOTAL = 0.001;
 
 function sortAssignments<T extends { slot: TSlot }, TSlot extends string>(
   assignments: T[],
@@ -204,7 +215,11 @@ export function solveAbyss(
   count = 3,
 ): Solution<AbyssAssignment>[] {
   // Ignore sub-4-member teams — those are high-constellation flex plays, not general suggestions
-  const validTeams = teams.filter((t) => (t.members ?? []).length === 4);
+  const validTeams = teams.filter(
+    (t) =>
+      (t.members ?? []).length === 4 &&
+      (t.usage_total ?? 0) >= MIN_ABYSS_USAGE_TOTAL,
+  );
   const allSlots = ABYSS_SLOT_ORDER;
   const candidates = validTeams.slice(0, CANDIDATE_DEPTH);
 
@@ -216,12 +231,19 @@ export function solveAbyss(
       forcedFirst,
     );
     const optimized = optimizeSlots(sol.assignments, preferredAbyssSlot);
-    return { ...sol, assignments: sortAssignments(optimized, allSlots) };
+    return {
+      ...sol,
+      assignments: sortAssignments(optimized, allSlots).map((a) => ({
+        ...a,
+        missingCharacters: [] as string[],
+      })),
+    };
   });
 
-  return deduplicateSolutions(solutions)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, count);
+  return sortSolutionsByMissingThenScore(deduplicateSolutions(solutions)).slice(
+    0,
+    count,
+  );
 }
 
 export function solveStygian(
@@ -240,35 +262,183 @@ export function solveStygian(
       forcedFirst,
     );
     const optimized = optimizeSlots(sol.assignments, preferredStygianSlot);
-    return { ...sol, assignments: sortAssignments(optimized, allSlots) };
+    return {
+      ...sol,
+      assignments: sortAssignments(optimized, allSlots).map((a) => ({
+        ...a,
+        missingCharacters: [] as string[],
+      })),
+    };
   });
 
-  return deduplicateSolutions(solutions)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, count);
+  return sortSolutionsByMissingThenScore(deduplicateSolutions(solutions)).slice(
+    0,
+    count,
+  );
 }
 
 export function solveAbyssWithFallback(
   ownedTeams: AbyssTeam[],
   allTeams: AbyssTeam[],
+  ownedNames: Set<string>,
   count = 3,
 ): Solution<AbyssAssignment>[] {
   const owned = solveAbyss(ownedTeams, count);
   if (owned.length > 0 && owned[0].unfilled.length === 0) {
     return owned.map((s) => ({ ...s, isFallback: false }));
   }
-  // Fallback: solve with full roster
-  return solveAbyss(allTeams, count).map((s) => ({ ...s, isFallback: true }));
+  return buildMinMissingAbyssSolutions(allTeams, ownedNames, count);
 }
 
 export function solveStygianWithFallback(
   ownedTeams: StygianTeam[],
   allTeams: StygianTeam[],
+  ownedNames: Set<string>,
   count = 3,
 ): Solution<StygianAssignment>[] {
   const owned = solveStygian(ownedTeams, count);
   if (owned.length > 0 && owned[0].unfilled.length === 0) {
     return owned.map((s) => ({ ...s, isFallback: false }));
   }
-  return solveStygian(allTeams, count).map((s) => ({ ...s, isFallback: true }));
+  return buildMinMissingStygianSolutions(allTeams, ownedNames, count);
+}
+
+// ---- Missing character helpers --------------------------------------------
+
+function getMissingForTeam(
+  team: { members: string[] | null },
+  ownedNames: Set<string>,
+): string[] {
+  return (team.members ?? []).filter((member) => !ownedNames.has(member));
+}
+
+function annotateSolutionMissing<
+  TTeam extends { members: string[] | null },
+  TSlot extends string,
+>(
+  solution: Solution<{ team: TTeam; slot: TSlot }>,
+  ownedNames: Set<string>,
+): Solution<{ team: TTeam; slot: TSlot; missingCharacters: string[] }> {
+  const assignments = solution.assignments.map((assignment) => ({
+    ...assignment,
+    missingCharacters: getMissingForTeam(assignment.team, ownedNames),
+  }));
+
+  return {
+    ...solution,
+    assignments,
+    neededCharacters: [
+      ...new Set(
+        assignments.flatMap((assignment) => assignment.missingCharacters),
+      ),
+    ],
+  };
+}
+
+function totalMissingCount<T extends { missingCharacters: string[] }>(
+  assignments: T[],
+): number {
+  return assignments.reduce(
+    (sum, assignment) => sum + assignment.missingCharacters.length,
+    0,
+  );
+}
+
+function sortSolutionsByMissingThenScore<
+  T extends { missingCharacters: string[] },
+>(solutions: Solution<T>[]): Solution<T>[] {
+  return [...solutions].sort((a, b) => {
+    const aTotalMissing = totalMissingCount(a.assignments);
+    const bTotalMissing = totalMissingCount(b.assignments);
+    if (aTotalMissing !== bTotalMissing) return aTotalMissing - bTotalMissing;
+
+    const aUniqueMissing = a.neededCharacters.length;
+    const bUniqueMissing = b.neededCharacters.length;
+    if (aUniqueMissing !== bUniqueMissing)
+      return aUniqueMissing - bUniqueMissing;
+
+    return b.score - a.score;
+  });
+}
+
+// ---- Min-missing fallback helpers -----------------------------------------
+
+function buildMinMissingAbyssSolutions(
+  allTeams: AbyssTeam[],
+  ownedNames: Set<string>,
+  count: number,
+): Solution<AbyssAssignment>[] {
+  const teamsWithMissing = allTeams.map((team) => ({
+    team,
+    missing: getMissingForTeam(team, ownedNames),
+  }));
+
+  for (let budget = 0; budget <= 4; budget++) {
+    const pool = teamsWithMissing
+      .filter((entry) => entry.missing.length <= budget)
+      .sort(
+        (a, b) =>
+          a.missing.length - b.missing.length ||
+          (b.team.usage_total ?? 0) - (a.team.usage_total ?? 0),
+      )
+      .map((entry) => entry.team);
+
+    const solutions = solveAbyss(pool, count);
+    if (solutions.length > 0 && solutions[0].unfilled.length === 0) {
+      return sortSolutionsByMissingThenScore(
+        solutions.map((solution) =>
+          annotateSolutionMissing(
+            { ...solution, isFallback: true },
+            ownedNames,
+          ),
+        ),
+      );
+    }
+  }
+
+  return sortSolutionsByMissingThenScore(
+    solveAbyss(allTeams, count).map((solution) =>
+      annotateSolutionMissing({ ...solution, isFallback: true }, ownedNames),
+    ),
+  );
+}
+
+function buildMinMissingStygianSolutions(
+  allTeams: StygianTeam[],
+  ownedNames: Set<string>,
+  count: number,
+): Solution<StygianAssignment>[] {
+  const teamsWithMissing = allTeams.map((team) => ({
+    team,
+    missing: getMissingForTeam(team, ownedNames),
+  }));
+
+  for (let budget = 0; budget <= 4; budget++) {
+    const pool = teamsWithMissing
+      .filter((entry) => entry.missing.length <= budget)
+      .sort(
+        (a, b) =>
+          a.missing.length - b.missing.length ||
+          (b.team.usage_total ?? 0) - (a.team.usage_total ?? 0),
+      )
+      .map((entry) => entry.team);
+
+    const solutions = solveStygian(pool, count);
+    if (solutions.length > 0 && solutions[0].unfilled.length === 0) {
+      return sortSolutionsByMissingThenScore(
+        solutions.map((solution) =>
+          annotateSolutionMissing(
+            { ...solution, isFallback: true },
+            ownedNames,
+          ),
+        ),
+      );
+    }
+  }
+
+  return sortSolutionsByMissingThenScore(
+    solveStygian(allTeams, count).map((solution) =>
+      annotateSolutionMissing({ ...solution, isFallback: true }, ownedNames),
+    ),
+  );
 }

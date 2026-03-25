@@ -121,6 +121,7 @@ button:hover {
     border-bottom: 0.5px solid var(--surface-border);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    pointer-events: none;
   }
   .nav-logo {
     font-size: 13px;
@@ -128,6 +129,7 @@ button:hover {
     letter-spacing: 0.1em;
     color: var(--secondary-color);
     text-decoration: none;
+    pointer-events: auto;
   }
   .nav-link {
     font-size: 13px;
@@ -138,6 +140,10 @@ button:hover {
     transition:
       color 0.15s,
       border-color 0.15s;
+    pointer-events: auto;
+  }
+  .nav-bar > div {
+    pointer-events: auto;
   }
   .nav-link:hover {
     color: var(--foreground-color);

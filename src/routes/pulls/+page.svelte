@@ -4,6 +4,8 @@
     teamsOwnedStygian,
     nearMissStygianTeams,
     nearMissPairTeams,
+    nearMissStygianLoaded,
+    nearMissPairLoaded,
   } from "$lib/stores";
   import {
     computePullSuggestions,
@@ -21,6 +23,7 @@
   let pageState: PageState = $state("idle");
   let suggestions: PullSuggestion[] = $state([]);
   let pairSuggestions: PairSuggestion[] = $state([]);
+  let calculationError: string | null = $state(null);
 
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
 
@@ -41,47 +44,67 @@
   }
 
   let nearMissReady = $derived(
-    $nearMissStygianTeams.length > 0 || $teamsOwnedStygian.length === 0,
+    ($nearMissStygianLoaded && $nearMissPairLoaded) ||
+      $teamsOwnedStygian.length === 0,
   );
 
   async function calculate() {
-    console.log(
-      "calculate called, nearMissReady:",
-      nearMissReady,
-      "nearMiss length:",
-      $nearMissStygianTeams.length,
-    );
-
     if (!nearMissReady) return;
-    pageState = "loading";
+    console.log("[CALCULATE] Starting...");
 
-    await new Promise((r) => setTimeout(r, 50));
-    const singles = computePullSuggestions(
-      $nearMissStygianTeams,
-      $teamsOwnedStygian,
-    );
-    const pairs = computePairSuggestions(
-      $nearMissPairTeams,
-      $teamsOwnedStygian,
-      singles,
-    );
-    suggestions = singles;
-    pairSuggestions = pairs;
-    pageState = singles.length > 0 || pairs.length > 0 ? "done" : "empty";
+    pageState = "loading";
+    calculationError = null;
+
+    try {
+      const singles = computePullSuggestions(
+        $nearMissStygianTeams,
+        $teamsOwnedStygian,
+      );
+      const pairs = computePairSuggestions(
+        $nearMissPairTeams,
+        $teamsOwnedStygian,
+        singles,
+      );
+      suggestions = singles;
+      pairSuggestions = pairs;
+      pageState = singles.length > 0 || pairs.length > 0 ? "done" : "empty";
+    } catch (error) {
+      suggestions = [];
+      pairSuggestions = [];
+      pageState = "empty";
+      calculationError = "Could not calculate suggestions right now.";
+      console.error("pull suggestion calculation failed:", error);
+    }
   }
 
   let maxScore = $derived(suggestions[0]?.score ?? 1);
   let maxPairScore = $derived(pairSuggestions[0]?.avgUsage ?? 1);
+
+  // Debug: show state
+  let debugVisible = import.meta.env.DEV;
 </script>
 
 <main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-8">
   <div class="flex flex-col gap-1">
-    <h2 class="tracking-widest uppercase text-(--intermediate-color)">
-      Pull Suggestions
-    </h2>
-    <p class="text-(--intermediate-color)">
-      Based on your {ownedCount} characters — Stygian Onslaught
-    </p>
+    <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-1">
+        <h2 class="tracking-widest uppercase text-(--intermediate-color)">
+          Pull Suggestions
+        </h2>
+        <p class="text-(--intermediate-color)">
+          Based on your {ownedCount} characters — Stygian Onslaught
+        </p>
+      </div>
+      <div
+        class="text-xs px-2 py-1 rounded bg-red-900/40 text-red-300 font-mono"
+        style="display: {import.meta.env.DEV ? 'block' : 'none'};"
+      >
+        <div>ready: {nearMissReady}</div>
+        <div>single: {$nearMissStygianLoaded}</div>
+        <div>pair: {$nearMissPairLoaded}</div>
+        <div>state: {pageState}</div>
+      </div>
+    </div>
   </div>
 
   {#if pageState === "idle"}
@@ -122,7 +145,9 @@
       class="rounded-2xl p-8 text-center"
       style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
     >
-      <p class="text-(--intermediate-color)">No suggestions found.</p>
+      <p class="text-(--intermediate-color)">
+        {calculationError ?? "No suggestions found."}
+      </p>
     </div>
   {:else}
     <!-- ── Single pull suggestions ──────────────────────────────────── -->

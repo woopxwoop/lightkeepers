@@ -144,26 +144,36 @@ export async function writeTopStygianTeamsOwned(
 }
 
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
+export const nearMissStygianLoaded = writable(false);
 
 export async function writeNearMissStygianTeams(
   charactersOwned: CharacterOwned[],
 ) {
   const id = ++nearMissRequestId;
+  nearMissStygianLoaded.set(false);
   const { data, error: err } = await db.rpc("get_near_miss_stygian_teams", {
     p_character_names: charactersOwned
       .filter((c) => c.isOwned)
       .map((c) => c.name),
     p_version_number: latestStygianVersion.version_number,
   });
-  if (err || id !== nearMissRequestId) return;
+  if (id !== nearMissRequestId) return;
+  if (err) {
+    nearMissStygianTeams.set([]);
+    nearMissStygianLoaded.set(true);
+    return;
+  }
   nearMissStygianTeams.set(data ?? []);
+  nearMissStygianLoaded.set(true);
 }
 
 export const nearMissPairTeams = writable<NearMissPairTeam[]>([]);
+export const nearMissPairLoaded = writable(false);
 
 export async function writeNearMissPairTeams(
   charactersOwned: CharacterOwned[],
 ) {
+  nearMissPairLoaded.set(false);
   const { data, error: err } = await db.rpc("get_near_miss_stygian_pairs", {
     p_character_names: charactersOwned
       .filter((c) => c.isOwned)
@@ -173,10 +183,12 @@ export async function writeNearMissPairTeams(
   });
   if (err) {
     console.error("pair near-miss error:", err);
+    nearMissPairTeams.set([]);
+    nearMissPairLoaded.set(true);
     return;
   }
-  console.log(data);
   nearMissPairTeams.set(data ?? []);
+  nearMissPairLoaded.set(true);
 }
 
 //#endregion
