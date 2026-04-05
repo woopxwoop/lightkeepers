@@ -24,6 +24,15 @@ export type Solution<T> = {
   neededCharacters: string[];
 };
 
+function solutionTeamKey<T extends { team: { team_key: string | null } }>(
+  solution: Solution<T>,
+): string {
+  return solution.assignments
+    .map((assignment) => assignment.team.team_key ?? "")
+    .sort()
+    .join("|");
+}
+
 // ---- Slot preference ------------------------------------------------------
 
 function preferredAbyssSlot(team: AbyssTeam): AbyssSlot {
@@ -283,11 +292,40 @@ export function solveAbyssWithFallback(
   ownedNames: Set<string>,
   count = 3,
 ): Solution<AbyssAssignment>[] {
-  const owned = solveAbyss(ownedTeams, count);
-  if (owned.length > 0 && owned[0].unfilled.length === 0) {
-    return owned.map((s) => ({ ...s, isFallback: false }));
+  const owned = solveAbyss(ownedTeams, count).map((solution) => ({
+    ...solution,
+    isFallback: false,
+  }));
+
+  const completeOwned = owned.filter(
+    (solution) => solution.unfilled.length === 0,
+  );
+
+  if (completeOwned.length === 0) {
+    return buildMinMissingAbyssSolutions(allTeams, ownedNames, count);
   }
-  return buildMinMissingAbyssSolutions(allTeams, ownedNames, count);
+
+  if (completeOwned.length >= count) {
+    return completeOwned.slice(0, count);
+  }
+
+  const fallbackSolutions = buildMinMissingAbyssSolutions(
+    allTeams,
+    ownedNames,
+    count,
+  ).filter((solution) => solution.unfilled.length === 0);
+
+  const seen = new Set(
+    completeOwned.map((solution) => solutionTeamKey(solution)),
+  );
+  const supplemental = fallbackSolutions.filter((solution) => {
+    const key = solutionTeamKey(solution);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return [...completeOwned, ...supplemental].slice(0, count);
 }
 
 export function solveStygianWithFallback(
@@ -296,11 +334,40 @@ export function solveStygianWithFallback(
   ownedNames: Set<string>,
   count = 3,
 ): Solution<StygianAssignment>[] {
-  const owned = solveStygian(ownedTeams, count);
-  if (owned.length > 0 && owned[0].unfilled.length === 0) {
-    return owned.map((s) => ({ ...s, isFallback: false }));
+  const owned = solveStygian(ownedTeams, count).map((solution) => ({
+    ...solution,
+    isFallback: false,
+  }));
+
+  const completeOwned = owned.filter(
+    (solution) => solution.unfilled.length === 0,
+  );
+
+  if (completeOwned.length === 0) {
+    return buildMinMissingStygianSolutions(allTeams, ownedNames, count);
   }
-  return buildMinMissingStygianSolutions(allTeams, ownedNames, count);
+
+  if (completeOwned.length >= count) {
+    return completeOwned.slice(0, count);
+  }
+
+  const fallbackSolutions = buildMinMissingStygianSolutions(
+    allTeams,
+    ownedNames,
+    count,
+  ).filter((solution) => solution.unfilled.length === 0);
+
+  const seen = new Set(
+    completeOwned.map((solution) => solutionTeamKey(solution)),
+  );
+  const supplemental = fallbackSolutions.filter((solution) => {
+    const key = solutionTeamKey(solution);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return [...completeOwned, ...supplemental].slice(0, count);
 }
 
 // ---- Missing character helpers --------------------------------------------
