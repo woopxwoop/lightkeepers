@@ -4,10 +4,11 @@
   import { resolve } from "$app/paths";
   import {
     charactersOwned,
-    writeTopAbyssTeamsOwned,
-    writeTopStygianTeamsOwned,
-    writeNearMissStygianTeams,
-    writeNearMissPairTeams,
+    allTeamsAbyss,
+    allTeamsStygian,
+    setVersionNumbers,
+    writeTeamsOwned,
+    writeNearMissTeams,
   } from "$lib/stores";
   import { onMount, tick } from "svelte";
   import { fly } from "svelte/transition";
@@ -29,6 +30,14 @@
   $inspect($charactersOwned);
 
   onMount(() => {
+    // ── Wire up version numbers from server data ────────────────────────
+    setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber);
+
+    // ── Pre-populate all-teams stores from SSR data (no extra fetch) ───
+    allTeamsAbyss.set(data.allTeamsAbyss);
+    allTeamsStygian.set(data.allTeamsStygian);
+
+    // ── Debug hit-test helper ──────────────────────────────────────────
     const debugWindow = window as DebugWindow;
     const attachHitTestLogging = () => {
       const clickHandler = (event: MouseEvent) => {
@@ -81,18 +90,18 @@
 
     syncDebug();
 
+    // ── Bootstrap roster + owned teams ────────────────────────────────
     const bootstrap = async () => {
-      let cachedCharactersOwnedJSON = localStorage.getItem("charactersOwned");
-      let cachedCharactersOwned: CharacterOwned[] | undefined =
-        cachedCharactersOwnedJSON
-          ? JSON.parse(cachedCharactersOwnedJSON)
-          : undefined;
+      const cachedJSON = localStorage.getItem("charactersOwned");
+      const cachedOwned: CharacterOwned[] | undefined = cachedJSON
+        ? JSON.parse(cachedJSON)
+        : undefined;
 
       let finalList: CharacterOwned[];
-      if (cachedCharactersOwned) {
+      if (cachedOwned) {
         finalList = characters.map((c) => {
-          let cachedChar = cachedCharactersOwned!.find((c2) => c2.id === c.id);
-          if (cachedChar) return cachedChar;
+          const cached = cachedOwned.find((c2) => c2.id === c.id);
+          if (cached) return cached;
           return {
             icon: c.icon,
             id: c.id,
@@ -118,12 +127,13 @@
       }
 
       charactersOwned.set(finalList);
-      await Promise.all([
-        writeTopAbyssTeamsOwned(finalList),
-        writeTopStygianTeamsOwned(finalList),
-        writeNearMissStygianTeams(finalList),
-        writeNearMissPairTeams(finalList),
-      ]);
+
+      // Single round-trip for both abyss + stygian owned teams
+      await writeTeamsOwned(finalList);
+
+      // Near-miss data loads separately (only needed on Pulls page,
+      // but we prefetch here so it's ready when the user navigates there)
+      writeNearMissTeams(finalList).catch(console.error);
 
       updateUnderline();
     };

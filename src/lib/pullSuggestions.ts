@@ -66,16 +66,20 @@ export function computePullSuggestions(
     // Best currently-owned team that contains all 3 of those members
     const bestCurrentAlternative = ownedTeams
       .filter((t) => ownedMembers.every((m) => (t.members ?? []).includes(m)))
+      .filter((t) => t.members.length == 4)
       .sort(
         (a, b) =>
           (b.avg_usage_total ?? b.usage_total ?? 0) -
           (a.avg_usage_total ?? a.usage_total ?? 0),
       )[0];
 
+    console.log(ownedTeams);
+
     const alternativeUsage =
       bestCurrentAlternative?.avg_usage_total ??
       bestCurrentAlternative?.usage_total ??
       0;
+
     const improvement = unlockedUsage - alternativeUsage;
 
     if (improvement <= 0) continue;

@@ -1,10 +1,8 @@
 <script lang="ts">
   import {
     charactersOwned,
-    writeTopAbyssTeamsOwned,
-    writeTopStygianTeamsOwned,
-    writeNearMissStygianTeams,
-    writeNearMissPairTeams,
+    writeTeamsOwned,
+    writeNearMissTeams,
   } from "$lib/stores";
   import { onMount } from "svelte";
   import CharacterIcon from "$lib/components/CharacterIcon.svelte";
@@ -16,7 +14,6 @@
   let isSaving = $state(false);
   let hasUnsavedChanges = $state(false);
 
-  // Rarity filter: "all" | "5" | "4"
   let rarityFilter = $state<"all" | "5" | "4">("all");
   let search = $state("");
 
@@ -32,7 +29,6 @@
     }),
   );
 
-  // Saved snapshot to detect unsaved changes
   let savedSnapshot = $state<string>("");
 
   function toggleOwned(id: string) {
@@ -69,12 +65,11 @@
     );
     savedSnapshot = JSON.stringify(tempCharactersOwned);
     charactersOwned.set(tempCharactersOwned);
-    await Promise.all([
-      writeTopAbyssTeamsOwned(tempCharactersOwned),
-      writeTopStygianTeamsOwned(tempCharactersOwned),
-      writeNearMissStygianTeams(tempCharactersOwned),
-      writeNearMissPairTeams(tempCharactersOwned),
-    ]);
+
+    // Single server round-trip for both abyss + stygian owned teams
+    await writeTeamsOwned(tempCharactersOwned);
+    // Near-miss updates in the background
+    writeNearMissTeams(tempCharactersOwned).catch(console.error);
 
     showSaved = true;
     hasUnsavedChanges = false;
@@ -106,7 +101,6 @@
 </script>
 
 <main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-6">
-  <!-- Header -->
   <div class="flex items-center justify-between">
     <div class="flex flex-col gap-1">
       <h2 class="tracking-widest uppercase text-(--intermediate-color)">
@@ -117,7 +111,6 @@
       </p>
     </div>
 
-    <!-- Rarity filter buttons -->
     <div class="flex items-center gap-1">
       {#each [["all", "All"], ["5", "5★"], ["4", "4★"]] as [val, label]}
         <button
@@ -136,7 +129,6 @@
   </div>
 
   {#if synced}
-    <!-- Search + bulk actions row -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
       <input
         type="text"
@@ -169,7 +161,6 @@
       </div>
     </div>
 
-    <!-- Floating save bar — only appears when there are unsaved changes -->
     {#if hasUnsavedChanges || isSaving || showSaved}
       <div
         class="fixed bottom-6 left-0 right-0 mx-auto w-fit z-20 flex items-center gap-4
@@ -197,7 +188,6 @@
       </div>
     {/if}
 
-    <!-- Character grid -->
     <div
       class="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-3 pb-24"
     >
@@ -226,7 +216,6 @@
       {/if}
     </div>
 
-    <!-- Spacer so last row of portraits doesn't hide behind floating bar -->
     {#if hasUnsavedChanges}
       <div class="h-16"></div>
     {/if}

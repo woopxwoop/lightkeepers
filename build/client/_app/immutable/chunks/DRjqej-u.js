@@ -1,1 +1,0 @@
-import{l as t,k as l,m as o,o as u,u as a}from"./BSb2eMsA.js";function f(n){o===null&&t(),u&&o.l!==null?c(o).m.push(n):l(()=>{const e=a(n);if(typeof e=="function")return e})}function c(n){var e=n.l;return e.u??={a:[],b:[],m:[]}}export{f as o};

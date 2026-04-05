@@ -1,67 +1,42 @@
+/**
+ * stores.ts
+ *
+ * All Supabase calls now go through SvelteKit API routes instead of
+ * hitting Supabase directly from the browser. Benefits:
+ *   - Server-side in-memory LRU cache cuts duplicate Supabase round-trips
+ *   - Static data (all teams) is Cloudflare-edge-cached via /api/static
+ *   - Per-user data (/api/teams, /api/nearmiss) is cached by character list
+ *   - Service-role key stays server-side only
+ */
+
 import { writable, derived, type Writable } from "svelte/store";
-import { db } from "$lib/supabaseClient";
+import type { CharacterOwned, AbyssTeam, StygianTeam } from "$lib/definitions";
 import type {
-  CharacterOwned,
-  AbyssTeam,
-  StygianTeam,
-  Version,
-} from "$lib/definitions";
-import { computePullSuggestions } from "$lib/pullSuggestions";
-import type { NearMissStygianTeam } from "$lib/pullSuggestions";
-import { computePairSuggestions } from "$lib/pullSuggestions";
-import type { NearMissPairTeam } from "$lib/pullSuggestions";
+  NearMissStygianTeam,
+  NearMissPairTeam,
+} from "$lib/pullSuggestions";
 
-//#region versions
-export let latestAbyssVersion: Version = {
-  version: "getting latest version",
-  version_number: -1,
-};
+// ── Version numbers ────────────────────────────────────────────────────────
+// Populated from layout server data — no client-side fetch needed.
+export let abyssVersionNumber = -1;
+export let stygianVersionNumber = -1;
 
-export let latestStygianVersion: Version = {
-  version: "getting latest version",
-  version_number: -1,
-};
-
-export async function writeLatestAbyssVersion() {
-  const { data, error: err } = await db
-    .from("versions")
-    .select("*")
-    .order("version_number", { ascending: false })
-    .limit(1);
-
-  if (data) latestAbyssVersion = data[0];
-  else
-    latestAbyssVersion = {
-      version: "unable to get latest version",
-      version_number: -1,
-    };
+export function setVersionNumbers(abyss: number, stygian: number) {
+  abyssVersionNumber = abyss;
+  stygianVersionNumber = stygian;
 }
 
-export async function writeLatestStygianVersion() {
-  const { data, error: err } = await db
-    .from("stygian_versions")
-    .select("*")
-    .order("version_number", { ascending: false })
-    .limit(1);
-
-  if (data) latestStygianVersion = data[0];
-  else
-    latestStygianVersion = {
-      version: "unable to get latest version",
-      version_number: -1,
-    };
-}
-//#endregion
-
-//#region abyss
+// ── Character store ────────────────────────────────────────────────────────
 export const charactersOwned = writable<CharacterOwned[]>([]);
+
+// ── Abyss stores ──────────────────────────────────────────────────────────
 export const teamsOwned = writable<AbyssTeam[]>([]);
 export const teamsOwnedTop = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
   teamsOwned,
   ($teamsOwned) =>
     $teamsOwned.filter(
       (team) =>
-        (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length == 4,
+        (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length === 4,
     ),
 );
 export const teamsOwnedBottom = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
@@ -69,151 +44,160 @@ export const teamsOwnedBottom = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
   ($teamsOwned) =>
     $teamsOwned.filter(
       (team) =>
-        (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length == 4,
+        (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length === 4,
     ),
 );
 
-// Request ID counters — discard responses from superseded requests
-let abyssRequestId = 0;
-let stygianRequestId = 0;
-let nearMissRequestId = 0;
-
-export async function writeTopAbyssTeamsOwned(
-  charactersOwned: CharacterOwned[],
-) {
-  const id = ++abyssRequestId;
-  const { data, error: err } = await db.rpc(
-    "get_teams_with_characters_subset",
-    {
-      p_character_names: charactersOwned
-        .filter((c) => c.isOwned)
-        .map((c) => c.name),
-      p_version_number: latestAbyssVersion.version_number,
-    },
-  );
-  if (err || id !== abyssRequestId) return;
-  teamsOwned.set(data ?? []);
-}
-//#endregion
-
-//#region stygian
+// ── Stygian stores ─────────────────────────────────────────────────────────
 export const teamsOwnedStygian = writable<StygianTeam[]>([]);
 export const teamsOwnedStygianTop = derived<
   Writable<StygianTeam[]>,
   StygianTeam[]
->(teamsOwnedStygian, ($teamsOwnedStygian) =>
-  $teamsOwnedStygian.filter(
+>(teamsOwnedStygian, ($t) =>
+  $t.filter(
     (team) =>
-      (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length == 4,
+      (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length === 4,
   ),
 );
 export const teamsOwnedStygianMiddle = derived<
   Writable<StygianTeam[]>,
   StygianTeam[]
->(teamsOwnedStygian, ($teamsOwnedStygian) =>
-  $teamsOwnedStygian.filter(
+>(teamsOwnedStygian, ($t) =>
+  $t.filter(
     (team) =>
-      (team.usage_rate_middle ?? 0) > 40 && (team.members ?? []).length == 4,
+      (team.usage_rate_middle ?? 0) > 40 && (team.members ?? []).length === 4,
   ),
 );
 export const teamsOwnedStygianBottom = derived<
   Writable<StygianTeam[]>,
   StygianTeam[]
->(teamsOwnedStygian, ($teamsOwnedStygian) =>
-  $teamsOwnedStygian.filter(
+>(teamsOwnedStygian, ($t) =>
+  $t.filter(
     (team) =>
-      (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length == 4,
+      (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length === 4,
   ),
 );
 
-export async function writeTopStygianTeamsOwned(
-  charactersOwned: CharacterOwned[],
-) {
-  const id = ++stygianRequestId;
-  const { data, error: err } = await db.rpc(
-    "get_teams_with_characters_subset_stygian",
-    {
-      p_character_names: charactersOwned
-        .filter((c) => c.isOwned)
-        .map((c) => c.name),
-      p_version_number: latestStygianVersion.version_number,
-    },
-  );
-  if (err || id !== stygianRequestId) return;
-  teamsOwnedStygian.set(data ?? []);
-}
-
-export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
-export const nearMissStygianLoaded = writable(false);
-
-export async function writeNearMissStygianTeams(
-  charactersOwned: CharacterOwned[],
-) {
-  const id = ++nearMissRequestId;
-  nearMissStygianLoaded.set(false);
-  const { data, error: err } = await db.rpc("get_near_miss_stygian_teams", {
-    p_character_names: charactersOwned
-      .filter((c) => c.isOwned)
-      .map((c) => c.name),
-    p_version_number: latestStygianVersion.version_number,
-  });
-  if (id !== nearMissRequestId) return;
-  if (err) {
-    nearMissStygianTeams.set([]);
-    nearMissStygianLoaded.set(true);
-    return;
-  }
-  nearMissStygianTeams.set(data ?? []);
-  nearMissStygianLoaded.set(true);
-}
-
-export const nearMissPairTeams = writable<NearMissPairTeam[]>([]);
-export const nearMissPairLoaded = writable(false);
-
-export async function writeNearMissPairTeams(
-  charactersOwned: CharacterOwned[],
-) {
-  nearMissPairLoaded.set(false);
-  const { data, error: err } = await db.rpc("get_near_miss_stygian_pairs", {
-    p_character_names: charactersOwned
-      .filter((c) => c.isOwned)
-      .map((c) => c.name),
-    p_version_number: latestStygianVersion.version_number,
-    p_min_pmi: 0.3,
-  });
-  if (err) {
-    console.error("pair near-miss error:", err);
-    nearMissPairTeams.set([]);
-    nearMissPairLoaded.set(true);
-    return;
-  }
-  nearMissPairTeams.set(data ?? []);
-  nearMissPairLoaded.set(true);
-}
-
-//#endregion
-
+// ── All-teams stores (pre-populated from layout server data) ───────────────
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
 export const allTeamsStygian = writable<StygianTeam[]>([]);
 
-export async function writeAllAbyssTeams() {
-  const { data, error } = await db.rpc("get_teams_with_characters_subset", {
-    p_character_names: [],
-    p_version_number: latestAbyssVersion.version_number,
+// ── Near-miss stores ───────────────────────────────────────────────────────
+export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
+export const nearMissStygianLoaded = writable(false);
+export const nearMissPairTeams = writable<NearMissPairTeam[]>([]);
+export const nearMissPairLoaded = writable(false);
+
+// ── Request ID counters ────────────────────────────────────────────────────
+// Discard responses from superseded requests (fast roster changes).
+let teamsRequestId = 0;
+let nearMissRequestId = 0;
+
+// ── API helpers ────────────────────────────────────────────────────────────
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
-  if (error) return;
-  allTeamsAbyss.set(data ?? []);
+  if (!res.ok) throw new Error(`${url} returned ${res.status}`);
+  return res.json() as Promise<T>;
 }
 
-export async function writeAllStygianTeams() {
-  const { data, error } = await db.rpc(
-    "get_teams_with_characters_subset_stygian",
-    {
-      p_character_names: [],
-      p_version_number: latestStygianVersion.version_number,
-    },
-  );
+// ── Write functions ────────────────────────────────────────────────────────
 
-  if (error) return;
-  allTeamsStygian.set(data ?? []);
+/**
+ * Fetches both abyss and stygian owned-team lists in a single server round-trip.
+ * The server caches results by character list so rapid re-calls are cheap.
+ */
+export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
+  const id = ++teamsRequestId;
+  const characters = owned.filter((c) => c.isOwned).map((c) => c.name);
+
+  try {
+    const { abyssTeams, stygianTeams } = await postJson<{
+      abyssTeams: AbyssTeam[];
+      stygianTeams: StygianTeam[];
+    }>("/api/teams", {
+      characters,
+      abyssVersion: abyssVersionNumber,
+      stygianVersion: stygianVersionNumber,
+    });
+
+    if (id !== teamsRequestId) return; // superseded
+    teamsOwned.set(abyssTeams);
+    teamsOwnedStygian.set(stygianTeams);
+  } catch (err) {
+    console.error("[stores] writeTeamsOwned failed:", err);
+  }
+}
+
+/**
+ * Fetches near-miss data for the Pulls page.
+ * Combines single + pair into one server call.
+ */
+export async function writeNearMissTeams(
+  owned: CharacterOwned[],
+): Promise<void> {
+  const id = ++nearMissRequestId;
+  const characters = owned.filter((c) => c.isOwned).map((c) => c.name);
+
+  nearMissStygianLoaded.set(false);
+  nearMissPairLoaded.set(false);
+
+  try {
+    const { nearMissTeams, nearMissPairs } = await postJson<{
+      nearMissTeams: NearMissStygianTeam[];
+      nearMissPairs: NearMissPairTeam[];
+    }>("/api/nearmiss", {
+      characters,
+      stygianVersion: stygianVersionNumber,
+      minPmi: 0.3,
+    });
+
+    if (id !== nearMissRequestId) return; // superseded
+    nearMissStygianTeams.set(nearMissTeams);
+    nearMissPairTeams.set(nearMissPairs);
+  } catch (err) {
+    console.error("[stores] writeNearMissTeams failed:", err);
+    nearMissStygianTeams.set([]);
+    nearMissPairTeams.set([]);
+  } finally {
+    if (id === nearMissRequestId) {
+      nearMissStygianLoaded.set(true);
+      nearMissPairLoaded.set(true);
+    }
+  }
+}
+
+// ── Legacy shims ───────────────────────────────────────────────────────────
+// Keep old function names so existing callers don't need updating immediately.
+
+/** @deprecated Use writeTeamsOwned() instead */
+export async function writeTopAbyssTeamsOwned(
+  owned: CharacterOwned[],
+): Promise<void> {
+  return writeTeamsOwned(owned);
+}
+
+/** @deprecated Use writeTeamsOwned() instead */
+export async function writeTopStygianTeamsOwned(
+  owned: CharacterOwned[],
+): Promise<void> {
+  // Already triggered by writeTeamsOwned — no-op to avoid double calls.
+}
+
+/** @deprecated Use writeNearMissTeams() instead */
+export async function writeNearMissStygianTeams(
+  owned: CharacterOwned[],
+): Promise<void> {
+  return writeNearMissTeams(owned);
+}
+
+/** @deprecated Use writeNearMissTeams() instead */
+export async function writeNearMissPairTeams(
+  owned: CharacterOwned[],
+): Promise<void> {
+  // Already triggered by writeNearMissTeams — no-op to avoid double calls.
 }

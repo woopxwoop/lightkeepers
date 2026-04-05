@@ -1,74 +1,32 @@
-// If you're using a fallback (i.e. SPA mode) you don't need to prerender all
-// pages by setting this here, but should prerender as many as possible to
-// avoid large performance and SEO impacts
-import { building } from "$app/environment";
+/**
+ * +layout.ts
+ *
+ * Thin pass-through — the heavy lifting moved to +layout.server.ts.
+ * This file keeps the `mapping` serialization that the client needs
+ * (Maps don't survive JSON serialization, so we rebuild it here).
+ */
 
-import { db } from "$lib/supabaseClient";
+import type { LayoutLoad } from "./$types";
 import type { Tables } from "$lib/types/database.types";
-import {
-  writeLatestAbyssVersion,
-  writeLatestStygianVersion,
-  writeAllAbyssTeams,
-  writeAllStygianTeams,
-} from "$lib/stores";
+import type { AbyssTeam, StygianTeam } from "$lib/definitions";
 
-type CharacterMapping = Tables<"url_to_character_mapping">;
 type Character = Tables<"characters">;
 
-export async function load() {
-  let mapping: Map<string, string> = new Map<string, string>();
-  let characters: Character[] = [];
-
-  const getCharacterMapping = async () => {
-    // console.log("getting mapping");
-    const { data, error: err } = await db
-      .from("url_to_character_mapping")
-      .select("*");
-
-    if (err) {
-      throw new Error(err.message);
-    } else {
-      let arr = data as CharacterMapping[];
-      arr.forEach((m) => {
-        mapping.set(m.character_name, m.url);
-      });
-    }
-    console.log("got mapping");
-    // console.log(mapping);
-  };
-
-  const getCharacterData = async () => {
-    // console.log("getting data");
-    const { data, error: err } = await db
-      .from("characters")
-      .select("*")
-      .order("name", { ascending: true });
-    if (err) {
-      throw new Error(err.message);
-    } else {
-      characters = data as Character[];
-    }
-    console.log("got data");
-    // console.log(characters);
-  };
-
-  if (!building) {
-    try {
-      await Promise.all([
-        writeLatestAbyssVersion(),
-        writeLatestStygianVersion(),
-        getCharacterMapping(),
-        getCharacterData(),
-      ]);
-      await Promise.all([writeAllStygianTeams(), writeAllAbyssTeams()]);
-    } catch (e) {
-      console.log("unexpected error");
-      console.log(e);
-    }
-  }
+export const load: LayoutLoad = ({ data }) => {
+  // Rebuild the Map from the plain object the server sends.
+  // SvelteKit serializes Map → plain object on the wire; we restore it here.
+  const mapping = new Map<string, string>(
+    data.mapping instanceof Map
+      ? data.mapping
+      : Object.entries(data.mapping ?? {}),
+  );
 
   return {
     mapping,
-    characters,
+    characters: data.characters as Character[],
+    abyssVersionNumber: data.abyssVersionNumber as number,
+    stygianVersionNumber: data.stygianVersionNumber as number,
+    allTeamsAbyss: data.allTeamsAbyss as AbyssTeam[],
+    allTeamsStygian: data.allTeamsStygian as StygianTeam[],
   };
-}
+};
