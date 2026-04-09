@@ -182,6 +182,11 @@
 
 <svelte:head>
   <link rel="icon" href={favicon} type="image/svg+xml" />
+  <title>Lightkeepers</title>
+  <meta
+    name="description"
+    content="Genshin Impact team and character recommendations"
+  />
 </svelte:head>
 
 <div class="w-full flex flex-col items-center">
