@@ -117,6 +117,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      ranked_combinations: {
+        Row: {
+          game_type: string;
+          id: string;
+          rank: number;
+          score: number;
+          slot_assignments: Json;
+          version_number: number;
+        };
+        Insert: {
+          game_type: string;
+          id?: string;
+          rank: number;
+          score: number;
+          slot_assignments: Json;
+          version_number: number;
+        };
+        Update: {
+          game_type?: string;
+          id?: string;
+          rank?: number;
+          score?: number;
+          slot_assignments?: Json;
+          version_number?: number;
+        };
+        Relationships: [];
+      };
       stygian_team_members: {
         Row: {
           character_id: string;
@@ -421,6 +448,22 @@ export type Database = {
           usage_rate_middle: number;
           usage_rate_top: number;
           usage_total: number;
+        }[];
+      };
+      get_ranked_combinations_abyss: {
+        Args: { p_version_number: number };
+        Returns: {
+          rank: number;
+          score: number;
+          slot_assignments: Json;
+        }[];
+      };
+      get_ranked_combinations_stygian: {
+        Args: { p_version_number: number };
+        Returns: {
+          rank: number;
+          score: number;
+          slot_assignments: Json;
         }[];
       };
       get_teams_by_character: {

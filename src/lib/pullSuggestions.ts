@@ -153,8 +153,6 @@ export function computePairSuggestions(
   singleSuggestions: PullSuggestion[] = [],
   maxSuggestions = 3,
 ): PairSuggestion[] {
-  const singleChars = new Set(singleSuggestions.map((s) => s.character));
-
   const byPair = new Map<string, NearMissPairTeam[]>();
   for (const team of nearMissPairs) {
     if (!team.missing_char_a || !team.missing_char_b) continue;
@@ -175,8 +173,6 @@ export function computePairSuggestions(
 
     const charA = topTeam.missing_char_a!;
     const charB = topTeam.missing_char_b!;
-
-    if (singleChars.has(charA) || singleChars.has(charB)) continue;
 
     const avgUsage = topTeam.avg_usage_total ?? topTeam.usage_total ?? 0;
     const pmi = topTeam.pmi ?? 0;
@@ -222,8 +218,7 @@ export function computePairSuggestions(
 
     if (improvement <= 0) continue;
 
-    const score =
-      (avgUsage + improvement) * Math.log1p(teams.length) * Math.pow(pmi, 0.3);
+    const score = (avgUsage + improvement) * Math.pow(pmi, 0.3);
 
     const bestTeam: StygianTeam = {
       team_key: topTeam.team_key,

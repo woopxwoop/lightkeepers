@@ -142,15 +142,13 @@
   });
 
   const homePath = resolve("/");
-  const abyssPath = resolve("/abyss");
-  const stygianPath = resolve("/stygian");
+  const recommendationsPath = "/recommendations";
   const pullsPath = resolve("/pulls");
   const settingsPath = resolve("/settings");
 
   // ── Sliding underline ──────────────────────────────────────────────────
   let navLinks: Record<string, HTMLElement | null> = {
-    abyss: null,
-    stygian: null,
+    recommendations: null,
     pulls: null,
     settings: null,
   };
@@ -203,16 +201,12 @@
       bind:this={linksContainer}
     >
       <a
-        href={abyssPath}
+        href={recommendationsPath}
         class="nav-link"
-        aria-current={page.url.pathname === abyssPath ? "page" : undefined}
-        bind:this={navLinks.abyss}>Abyss</a
-      >
-      <a
-        href={stygianPath}
-        class="nav-link"
-        aria-current={page.url.pathname === stygianPath ? "page" : undefined}
-        bind:this={navLinks.stygian}>Stygian</a
+        aria-current={(page.url.pathname as string) === recommendationsPath
+          ? "page"
+          : undefined}
+        bind:this={navLinks.recommendations}>Recommendations</a
       >
       <a
         href={pullsPath}

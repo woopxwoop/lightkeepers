@@ -10,6 +10,12 @@ import type { LayoutLoad } from "./$types";
 import type { Tables } from "$lib/types/database.types";
 import type { AbyssTeam, StygianTeam } from "$lib/definitions";
 
+export type RankedCombination = {
+  rank: number;
+  score: number;
+  slot_assignments: { slot: string; team: AbyssTeam | StygianTeam }[];
+};
+
 type Character = Tables<"characters">;
 
 export const load: LayoutLoad = ({ data }) => {

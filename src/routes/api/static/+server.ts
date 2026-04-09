@@ -58,7 +58,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
     version_number: -1,
   };
 
-  // Fetch all teams in parallel now that we have version numbers
+  // Fetch all teams + ranked combinations in parallel
   const [abyssTeamsRes, stygianTeamsRes] = await Promise.all([
     serverDb.rpc("get_teams_with_characters_subset", {
       p_character_names: [],

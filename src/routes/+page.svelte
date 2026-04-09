@@ -67,8 +67,7 @@
   );
 
   const settingsPath = resolve("/settings");
-  const abyssPath = resolve("/abyss");
-  const stygianPath = resolve("/stygian");
+  const recommendationsPath = "/recommendations";
 
   // Maps internal slot keys to badge CSS classes defined in app.css
   const abyssSlotClass: Record<string, string> = {
@@ -132,7 +131,7 @@
               Spiral Abyss
             </h2>
             <a
-              href={abyssPath}
+              href={recommendationsPath}
               class="text-(--secondary-color) hover:opacity-75"
             >
               all options →
@@ -187,7 +186,7 @@
               Stygian Onslaught
             </h2>
             <a
-              href={stygianPath}
+              href={recommendationsPath}
               class="text-(--secondary-color) hover:opacity-75"
             >
               all options →

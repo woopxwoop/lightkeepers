@@ -5,7 +5,8 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/build
+build
+scripts
 /.svelte-kit
 
 # OS
@@ -21,3 +22,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+.claude
+DOCKER.md
