@@ -100,17 +100,11 @@
       let finalList: CharacterOwned[];
       if (cachedOwned) {
         finalList = characters.map((c) => {
-          const cached = cachedOwned.find((c2) => c2.id === c.id);
-          if (cached && cached.enka_icon) return cached;
-          if (cached) {
-            let char = cached;
-            char.enka_icon = c.enka_icon;
-            return char;
-          }
-          return {
-            ...c,
-            isOwned: true,
-          };
+          let cached: CharacterOwned = { ...c, isOwned: true };
+          cached.isOwned =
+            cachedOwned.find((cached) => cached.id == c.id)?.isOwned ?? true;
+
+          return cached;
         });
       } else {
         finalList = characters.map((c) => ({

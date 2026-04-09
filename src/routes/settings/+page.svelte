@@ -16,7 +16,22 @@
   let hasUnsavedChanges = $state(false);
 
   let rarityFilter = $state<"all" | "5" | "4">("all");
+  let elementFilter = $state("all");
+  let weaponFilter = $state("all");
   let search = $state("");
+
+  const elements = [
+    "Dendro",
+    "Cryo",
+    "Hydro",
+    "Anemo",
+    "Pyro",
+    "Geo",
+    "Electro",
+  ];
+  const weaponTypes = ["Sword", "Catalyst", "Bow", "Claymore", "Polearm"];
+
+  $inspect(tempCharactersOwned);
 
   let visibleCharacters = $derived(
     tempCharactersOwned.filter((c) => {
@@ -24,9 +39,13 @@
         rarityFilter === "all" ||
         (rarityFilter === "5" && c.rarity === 5) ||
         (rarityFilter === "4" && c.rarity === 4);
+      const matchesElement =
+        elementFilter === "all" || c.element === elementFilter;
+      const matchesWeapon =
+        weaponFilter === "all" || c.weapon_type === weaponFilter;
       const matchesSearch =
         search === "" || c.name.toLowerCase().includes(search.toLowerCase());
-      return matchesRarity && matchesSearch;
+      return matchesRarity && matchesElement && matchesWeapon && matchesSearch;
     }),
   );
 
@@ -102,30 +121,84 @@
 </script>
 
 <main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-6">
-  <div class="flex items-center justify-between">
-    <div class="flex flex-col gap-1">
-      <h2 class="tracking-widest uppercase text-(--intermediate-color)">
-        Roster
-      </h2>
-      <p class="text-xs text-(--faint-color)">
-        {ownedCount} of {totalCount} characters selected
-      </p>
+  <div class="flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-1">
+        <h2 class="tracking-widest uppercase text-(--intermediate-color)">
+          Roster
+        </h2>
+        <p class="text-xs text-(--faint-color)">
+          {ownedCount} of {totalCount} characters selected
+        </p>
+      </div>
+
+      <div class="flex items-center gap-1">
+        {#each [["all", "All"], ["5", "5★"], ["4", "4★"]] as [val, label]}
+          <button
+            class="text-xs px-3 py-1 rounded-lg transition-colors"
+            style={rarityFilter === val
+              ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
+              : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
+            onclick={() => {
+              rarityFilter = val as "all" | "5" | "4";
+            }}
+          >
+            {label}
+          </button>
+        {/each}
+      </div>
     </div>
 
-    <div class="flex items-center gap-1">
-      {#each [["all", "All"], ["5", "5★"], ["4", "4★"]] as [val, label]}
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-xs text-(--faint-color) w-16 shrink-0">Element</span>
+      <div class="flex items-center gap-1 flex-wrap">
         <button
           class="text-xs px-3 py-1 rounded-lg transition-colors"
-          style={rarityFilter === val
+          style={elementFilter === "all"
             ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
             : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
-          onclick={() => {
-            rarityFilter = val as "all" | "5" | "4";
-          }}
+          onclick={() => (elementFilter = "all")}
         >
-          {label}
+          All
         </button>
-      {/each}
+        {#each elements as el}
+          <button
+            class="text-xs px-3 py-1 rounded-lg transition-colors"
+            style={elementFilter === el
+              ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
+              : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
+            onclick={() => (elementFilter = el)}
+          >
+            {el}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-xs text-(--faint-color) w-16 shrink-0">Weapon</span>
+      <div class="flex items-center gap-1 flex-wrap">
+        <button
+          class="text-xs px-3 py-1 rounded-lg transition-colors"
+          style={weaponFilter === "all"
+            ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
+            : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
+          onclick={() => (weaponFilter = "all")}
+        >
+          All
+        </button>
+        {#each weaponTypes as wt}
+          <button
+            class="text-xs px-3 py-1 rounded-lg transition-colors"
+            style={weaponFilter === wt
+              ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
+              : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
+            onclick={() => (weaponFilter = wt)}
+          >
+            {wt}
+          </button>
+        {/each}
+      </div>
     </div>
   </div>
 
@@ -147,7 +220,7 @@
                  color: var(--intermediate-color);"
         >
           Select all
-          {#if rarityFilter !== "all" || search}
+          {#if rarityFilter !== "all" || elementFilter !== "all" || weaponFilter !== "all" || search}
             ({visibleOwnedCount}/{visibleCharacters.length})
           {/if}
         </button>
