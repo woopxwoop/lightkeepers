@@ -90,29 +90,29 @@ export type Database = {
       characters: {
         Row: {
           element: string | null;
+          enka_icon: string | null;
           icon: string | null;
           id: string;
           name: string;
           rarity: number | null;
-          tags: string[] | null;
           weapon_type: string | null;
         };
         Insert: {
           element?: string | null;
+          enka_icon?: string | null;
           icon?: string | null;
           id?: string;
           name: string;
           rarity?: number | null;
-          tags?: string[] | null;
           weapon_type?: string | null;
         };
         Update: {
           element?: string | null;
+          enka_icon?: string | null;
           icon?: string | null;
           id?: string;
           name?: string;
           rarity?: number | null;
-          tags?: string[] | null;
           weapon_type?: string | null;
         };
         Relationships: [];

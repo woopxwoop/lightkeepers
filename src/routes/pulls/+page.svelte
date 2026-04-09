@@ -13,11 +13,10 @@
   } from "$lib/pullSuggestions";
   import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
   import CharacterIcon from "$lib/components/CharacterIcon.svelte";
-  import avatarImg from "$lib/assets/default-avatar.jpg";
   import favicon from "$lib/assets/favicon.svg";
 
   let { data } = $props();
-  let mapping: Map<string, string> = $derived(data.mapping);
+  let mapping = $derived(data.mapping);
 
   type PageState = "idle" | "loading" | "done" | "empty";
   let pageState: PageState = $state("idle");
@@ -174,9 +173,7 @@
                     style="background: var(--background-color);"
                   >
                     <CharacterIcon
-                      name={suggestion.character}
-                      icon={mapping.get(suggestion.character) ?? avatarImg}
-                      rarity={null}
+                      character={mapping.get(suggestion.character)}
                     />
                   </div>
                   <div class="flex flex-col gap-0.5 min-w-0">
@@ -231,11 +228,7 @@
                             ? 'outline: 1px solid var(--faint-color);'
                             : ''}"
                         >
-                          <CharacterIcon
-                            name={member}
-                            icon={mapping.get(member) ?? avatarImg}
-                            rarity={null}
-                          />
+                          <CharacterIcon character={mapping.get(member)} />
                         </div>
                       {/each}
                     </div>
@@ -259,11 +252,7 @@
                             ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
                             : ''}"
                         >
-                          <CharacterIcon
-                            name={member}
-                            icon={mapping.get(member) ?? avatarImg}
-                            rarity={null}
-                          />
+                          <CharacterIcon character={mapping.get(member)} />
                         </div>
                       {/each}
                     </div>
@@ -286,11 +275,7 @@
                             ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
                             : ''}"
                         >
-                          <CharacterIcon
-                            name={member}
-                            icon={mapping.get(member) ?? avatarImg}
-                            rarity={null}
-                          />
+                          <CharacterIcon character={mapping.get(member)} />
                         </div>
                       {/each}
                     </div>
@@ -341,9 +326,7 @@
                       style="background: var(--background-color);"
                     >
                       <CharacterIcon
-                        name={suggestion.charA}
-                        icon={mapping.get(suggestion.charA) ?? avatarImg}
-                        rarity={null}
+                        character={mapping.get(suggestion.charA)}
                       />
                     </div>
                     <div
@@ -351,9 +334,7 @@
                       style="background: var(--background-color);"
                     >
                       <CharacterIcon
-                        name={suggestion.charB}
-                        icon={mapping.get(suggestion.charB) ?? avatarImg}
-                        rarity={null}
+                        character={mapping.get(suggestion.charB)}
                       />
                     </div>
                   </div>
@@ -411,11 +392,7 @@
                           ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
                           : ''}"
                       >
-                        <CharacterIcon
-                          name={member}
-                          icon={mapping.get(member) ?? avatarImg}
-                          rarity={null}
-                        />
+                        <CharacterIcon character={mapping.get(member)} />
                       </div>
                     {/each}
                   </div>

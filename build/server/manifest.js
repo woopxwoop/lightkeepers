@@ -10,15 +10,15 @@ return {
 	assets: new Set(["flins.png","robots.txt","thumbnail.png"]),
 	mimeTypes: {".png":"image/png",".txt":"text/plain"},
 	_: {
-		client: {start:"_app/immutable/entry/start.BWIqpNP1.js",app:"_app/immutable/entry/app.eQDjmmxN.js",imports:["_app/immutable/entry/start.BWIqpNP1.js","_app/immutable/chunks/mHdhyLiY.js","_app/immutable/chunks/BjVHow7k.js","_app/immutable/chunks/CdO4tD-R.js","_app/immutable/chunks/CZBCpV8R.js","_app/immutable/entry/app.eQDjmmxN.js","_app/immutable/chunks/BjVHow7k.js","_app/immutable/chunks/DCqgLpfE.js","_app/immutable/chunks/CZBCpV8R.js","_app/immutable/chunks/CPZxMTfN.js","_app/immutable/chunks/BW1RHa-F.js","_app/immutable/chunks/VFqGNdSS.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+		client: {start:"_app/immutable/entry/start.DyS7WRAc.js",app:"_app/immutable/entry/app.RWcae2il.js",imports:["_app/immutable/entry/start.DyS7WRAc.js","_app/immutable/chunks/DoiE4aLz.js","_app/immutable/chunks/BjVHow7k.js","_app/immutable/chunks/3vHQkJd4.js","_app/immutable/chunks/CZBCpV8R.js","_app/immutable/entry/app.RWcae2il.js","_app/immutable/chunks/BjVHow7k.js","_app/immutable/chunks/DCqgLpfE.js","_app/immutable/chunks/CZBCpV8R.js","_app/immutable/chunks/CPZxMTfN.js","_app/immutable/chunks/BW1RHa-F.js","_app/immutable/chunks/VFqGNdSS.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 		nodes: [
-			__memo(() => import('./chunks/0-BSA6cMsS.js')),
-			__memo(() => import('./chunks/1-Dz5qIw81.js')),
-			__memo(() => import('./chunks/2-m16jYuiR.js')),
-			__memo(() => import('./chunks/3-B57ZX9wY.js')),
-			__memo(() => import('./chunks/4-I8tbAG9H.js')),
-			__memo(() => import('./chunks/5-BKSBTr6S.js')),
-			__memo(() => import('./chunks/6-HZAjU1n1.js'))
+			__memo(() => import('./chunks/0-vPP3rhWB.js')),
+			__memo(() => import('./chunks/1-BLUoLCYU.js')),
+			__memo(() => import('./chunks/2-WFHjkq9U.js')),
+			__memo(() => import('./chunks/3-DBqYl4Ld.js')),
+			__memo(() => import('./chunks/4-DyrNHDff.js')),
+			__memo(() => import('./chunks/5-8lwR1YkC.js')),
+			__memo(() => import('./chunks/6-CNdaxTix.js'))
 		],
 		remotes: {
 			

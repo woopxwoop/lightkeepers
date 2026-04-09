@@ -15,7 +15,7 @@ type Character = Tables<"characters">;
 export const load: LayoutLoad = ({ data }) => {
   // Rebuild the Map from the plain object the server sends.
   // SvelteKit serializes Map → plain object on the wire; we restore it here.
-  const mapping = new Map<string, string>(
+  const mapping = new Map<string, Character>(
     data.mapping instanceof Map
       ? data.mapping
       : Object.entries(data.mapping ?? {}),

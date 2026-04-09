@@ -12,7 +12,7 @@
   import favicon from "$lib/assets/favicon.svg";
 
   let { data } = $props();
-  let mapping: Map<string, string> = $derived(data.mapping);
+  let mapping = $derived(data.mapping);
 
   // null = still reading localStorage (prevents onboarding flash)
   let hasRoster = $state<boolean | null>(null);

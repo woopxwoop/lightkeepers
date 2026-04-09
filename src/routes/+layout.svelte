@@ -101,28 +101,21 @@
       if (cachedOwned) {
         finalList = characters.map((c) => {
           const cached = cachedOwned.find((c2) => c2.id === c.id);
-          if (cached) return cached;
+          if (cached && cached.enka_icon) return cached;
+          if (cached) {
+            let char = cached;
+            char.enka_icon = c.enka_icon;
+            return char;
+          }
           return {
-            icon: c.icon,
-            id: c.id,
-            name: c.name,
-            rarity: c.rarity,
+            ...c,
             isOwned: true,
-            element: c.element,
-            tags: c.tags,
-            weapon_type: c.weapon_type,
           };
         });
       } else {
         finalList = characters.map((c) => ({
-          icon: c.icon,
-          id: c.id,
-          name: c.name,
-          rarity: c.rarity,
+          ...c,
           isOwned: true,
-          element: c.element,
-          tags: c.tags,
-          weapon_type: c.weapon_type,
         }));
       }
 

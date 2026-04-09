@@ -73,8 +73,6 @@ export function computePullSuggestions(
           (a.avg_usage_total ?? a.usage_total ?? 0),
       )[0];
 
-    console.log(ownedTeams);
-
     const alternativeUsage =
       bestCurrentAlternative?.avg_usage_total ??
       bestCurrentAlternative?.usage_total ??

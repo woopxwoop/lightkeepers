@@ -7,7 +7,7 @@
   import { solveAbyssWithFallback } from "$lib/solver";
 
   let { data } = $props();
-  let mapping: Map<string, string> = $derived(data.mapping);
+  let mapping = $derived(data.mapping);
 
   let loading = $state(true);
 
@@ -50,11 +50,7 @@
                   class="w-6 h-6 rounded-md overflow-hidden flex-shrink-0"
                   style="background: var(--surface-color); outline: 1px dashed color-mix(in srgb, var(--secondary-color) 55%, transparent);"
                 >
-                  <CharacterIcon
-                    name={char}
-                    icon={mapping.get(char) ?? avatarImg}
-                    rarity={null}
-                  />
+                  <CharacterIcon character={mapping.get(char)} />
                 </div>
                 <span class="text-xs text-(--secondary-color)">{char}</span>
               </div>

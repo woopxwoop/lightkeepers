@@ -13,7 +13,6 @@ import type { LayoutServerLoad } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import type { Tables } from "$lib/types/database.types";
 
-type CharacterMapping = Tables<"url_to_character_mapping">;
 type Character = Tables<"characters">;
 
 export const load: LayoutServerLoad = async ({ fetch }) => {
@@ -24,14 +23,14 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
   const staticData = staticRes.ok ? await staticRes.json() : null;
 
   // ── Fetch character data + mapping directly (small, infrequently changes) ─
-  const [mappingRes, charactersRes] = await Promise.all([
-    serverDb.from("url_to_character_mapping").select("*"),
-    serverDb.from("characters").select("*").order("name", { ascending: true }),
-  ]);
+  const charactersRes = await serverDb
+    .from("characters")
+    .select("*")
+    .order("name", { ascending: true });
 
-  const mapping = new Map<string, string>();
-  (mappingRes.data ?? []).forEach((m: CharacterMapping) => {
-    mapping.set(m.character_name, m.url);
+  const mapping = new Map<string, Character>();
+  (charactersRes.data ?? []).forEach((c: Character) => {
+    mapping.set(c.name, c);
   });
 
   const characters: Character[] = (charactersRes.data ?? []) as Character[];

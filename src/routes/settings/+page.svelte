@@ -201,11 +201,7 @@
             : 'var(--surface-border)'};
                  opacity: {character.isOwned ? '1' : '0.35'};"
         >
-          <CharacterIcon
-            icon={character.icon}
-            name={character.name}
-            rarity={character.rarity}
-          />
+          <CharacterIcon {character} />
         </button>
       {/each}
 

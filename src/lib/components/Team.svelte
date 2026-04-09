@@ -1,8 +1,9 @@
 <script lang="ts">
   import CharacterIcon from "$lib/components/CharacterIcon.svelte";
-  import avatarImg from "$lib/assets/default-avatar.jpg";
   import type { AbyssTeam, StygianTeam } from "$lib/definitions";
-  import { charactersOwned } from "$lib/stores";
+  import type { Tables } from "$lib/types/database.types";
+
+  type Character = Tables<"characters">;
 
   let {
     team,
@@ -10,13 +11,9 @@
     missingCharacters = [],
   }: {
     team: AbyssTeam | StygianTeam;
-    mapping: Map<string, string>;
+    mapping: Map<string, Character>;
     missingCharacters?: string[];
   } = $props();
-
-  let rarityMapping = $derived(
-    new Map($charactersOwned.map((c) => [c.name, c.rarity ?? 4])),
-  );
 
   let missingSet = $derived(new Set(missingCharacters));
 </script>
@@ -31,11 +28,7 @@
         ? 'opacity: 0.6; outline: 1.5px dashed color-mix(in srgb, var(--secondary-color) 55%, transparent); outline-offset: -1.5px;'
         : ''}"
     >
-      <CharacterIcon
-        name={member}
-        icon={mapping.get(member) ?? avatarImg}
-        rarity={rarityMapping.get(member) ?? null}
-      />
+      <CharacterIcon character={mapping.get(member)} />
       {#if isMissing}
         <div
           class="absolute bottom-0 left-0 right-0 flex items-center justify-center"
