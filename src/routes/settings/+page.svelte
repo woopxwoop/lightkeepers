@@ -7,6 +7,7 @@
   import { onMount } from "svelte";
   import CharacterIcon from "$lib/components/CharacterIcon.svelte";
   import type { CharacterOwned } from "$lib/definitions";
+  import { fly } from "svelte/transition";
 
   let tempCharactersOwned: CharacterOwned[] = $state([]);
   let synced = $state(false);
@@ -166,8 +167,8 @@
         class="fixed bottom-6 left-0 right-0 mx-auto w-fit z-20 flex items-center gap-4
                px-5 py-3 rounded-2xl"
         style="background: var(--surface-color);
-               border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);
-               animation: slide-up 0.2s ease-out;"
+               border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
+        transition:fly={{ y: 200, duration: 500 }}
       >
         <span class="text-sm text-(--intermediate-color)">
           {isSaving ? "Saving…" : showSaved ? "Saved!" : "Unsaved changes"}
@@ -195,10 +196,8 @@
         <button
           onclick={() => toggleOwned(character.id)}
           class="cursor-pointer rounded-xl w-full overflow-hidden relative
-                 transition-all duration-75 hover:-translate-y-1"
-          style="border: 0.5px solid {character.isOwned
-            ? 'color-mix(in srgb, var(--secondary-color) 40%, transparent)'
-            : 'var(--surface-border)'};
+                 transition-all duration-75 character-icon-button"
+          style="border: 2px solid var(--foreground-color);
                  opacity: {character.isOwned ? '1' : '0.35'};"
         >
           <CharacterIcon {character} />
@@ -221,3 +220,13 @@
     </div>
   {/if}
 </main>
+
+<style>
+  .character-icon-button :global(*) {
+    transition-duration: 0.5s;
+  }
+
+  .character-icon-button:hover :global(img) {
+    transform: scale(1.2);
+  }
+</style>

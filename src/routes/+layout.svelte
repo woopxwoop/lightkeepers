@@ -142,13 +142,13 @@
   });
 
   const homePath = resolve("/");
-  const recommendationsPath = "/recommendations";
+  const teamsPath = "/teams";
   const pullsPath = resolve("/pulls");
   const settingsPath = resolve("/settings");
 
   // ── Sliding underline ──────────────────────────────────────────────────
   let navLinks: Record<string, HTMLElement | null> = {
-    recommendations: null,
+    teams: null,
     pulls: null,
     settings: null,
   };
@@ -182,10 +182,11 @@
 
 <svelte:head>
   <link rel="icon" href={favicon} type="image/svg+xml" />
-  <title>Lightkeepers</title>
+  <title>{page.data.seo?.title ?? "Lightkeepers"}</title>
   <meta
     name="description"
-    content="Genshin Impact team and character recommendations"
+    content={page.data.seo?.description ??
+      "Genshin Impact team and character recommendations"}
   />
 </svelte:head>
 
@@ -206,12 +207,12 @@
       bind:this={linksContainer}
     >
       <a
-        href={recommendationsPath}
+        href={teamsPath}
         class="nav-link"
-        aria-current={(page.url.pathname as string) === recommendationsPath
+        aria-current={(page.url.pathname as string) === teamsPath
           ? "page"
           : undefined}
-        bind:this={navLinks.recommendations}>Recommendations</a
+        bind:this={navLinks.teams}>Teams</a
       >
       <a
         href={pullsPath}

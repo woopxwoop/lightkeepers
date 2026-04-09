@@ -9,7 +9,10 @@
     charactersOwned,
   } from "$lib/stores";
   import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
-  import { solveAbyssWithFallback, solveStygianWithFallback } from "$lib/solver";
+  import {
+    solveAbyssWithFallback,
+    solveStygianWithFallback,
+  } from "$lib/solver";
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -24,7 +27,12 @@
     solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, ownedNames, 3),
   );
   let stygianSolutions = $derived(
-    solveStygianWithFallback($teamsOwnedStygian, $allTeamsStygian, ownedNames, 3),
+    solveStygianWithFallback(
+      $teamsOwnedStygian,
+      $allTeamsStygian,
+      ownedNames,
+      3,
+    ),
   );
 
   let abyssActiveSlots: string[] = $state([]);
@@ -32,13 +40,17 @@
 
   $effect(() => {
     if (abyssSolutions.length > 0 && abyssActiveSlots.length === 0) {
-      abyssActiveSlots = abyssSolutions.map((s) => s.assignments[0]?.slot ?? "top");
+      abyssActiveSlots = abyssSolutions.map(
+        (s) => s.assignments[0]?.slot ?? "top",
+      );
     }
   });
 
   $effect(() => {
     if (stygianSolutions.length > 0 && stygianActiveSlots.length === 0) {
-      stygianActiveSlots = stygianSolutions.map((s) => s.assignments[0]?.slot ?? "top");
+      stygianActiveSlots = stygianSolutions.map(
+        (s) => s.assignments[0]?.slot ?? "top",
+      );
     }
   });
 
@@ -110,13 +122,17 @@
         class:opacity-60={i > 0}
         style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
       >
-        <p class="text-xs font-medium text-(--intermediate-color) tracking-widest uppercase">
+        <p
+          class="text-xs font-medium text-(--intermediate-color) tracking-widest uppercase"
+        >
           {i === 0 ? "Best Match" : `Option ${i + 1}`}
         </p>
 
         {#if solution.unfilled.length > 0}
           <p class="text-xs text-red-400">
-            ⚠ Couldn't fill: {solution.unfilled.map((s) => abyssSlotLabel[s]).join(", ")}
+            ⚠ Couldn't fill: {solution.unfilled
+              .map((s) => abyssSlotLabel[s])
+              .join(", ")}
           </p>
         {/if}
 
@@ -124,18 +140,24 @@
           {#each solution.assignments as { team, slot }}
             <div class="flex items-center gap-2">
               <span
-                class="slot-badge slot-badge-{slot === 'top' ? 1 : 3} hidden md:inline-block"
+                class="slot-badge slot-badge-{slot === 'top'
+                  ? 1
+                  : 3} hidden md:inline-block"
               >
                 {abyssSlotLabel[slot]}
               </span>
               <button
                 class="slot-badge md:hidden transition-colors"
-                class:slot-badge-1={slot === "top" && abyssActiveSlots[i] === slot}
-                class:slot-badge-3={slot === "bottom" && abyssActiveSlots[i] === slot}
+                class:slot-badge-1={slot === "top" &&
+                  abyssActiveSlots[i] === slot}
+                class:slot-badge-3={slot === "bottom" &&
+                  abyssActiveSlots[i] === slot}
                 style={abyssActiveSlots[i] !== slot
                   ? "background: color-mix(in srgb, var(--secondary-color) 5%, transparent); color: color-mix(in srgb, var(--secondary-color) 40%, transparent);"
                   : ""}
-                onclick={() => { abyssActiveSlots[i] = slot; }}
+                onclick={() => {
+                  abyssActiveSlots[i] = slot;
+                }}
               >
                 {abyssSlotLabel[slot]}
               </button>
@@ -188,13 +210,17 @@
         class:opacity-60={i > 0}
         style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
       >
-        <p class="text-xs font-medium text-(--intermediate-color) tracking-widest uppercase">
+        <p
+          class="text-xs font-medium text-(--intermediate-color) tracking-widest uppercase"
+        >
           {i === 0 ? "Best Match" : `Option ${i + 1}`}
         </p>
 
         {#if solution.unfilled.length > 0}
           <p class="text-xs text-red-400">
-            ⚠ Couldn't fill: {solution.unfilled.map((s) => stygianSlotLabel[s]).join(", ")}
+            ⚠ Couldn't fill: {solution.unfilled
+              .map((s) => stygianSlotLabel[s])
+              .join(", ")}
           </p>
         {/if}
 
@@ -202,19 +228,28 @@
           {#each solution.assignments as { team, slot }}
             <div class="flex items-center gap-2">
               <span
-                class="slot-badge slot-badge-{slot === 'top' ? 1 : slot === 'middle' ? 2 : 3} hidden lg:inline-block"
+                class="slot-badge slot-badge-{slot === 'top'
+                  ? 1
+                  : slot === 'middle'
+                    ? 2
+                    : 3} hidden lg:inline-block"
               >
                 {stygianSlotLabel[slot]}
               </span>
               <button
                 class="slot-badge lg:hidden transition-colors"
-                class:slot-badge-1={slot === "top" && stygianActiveSlots[i] === slot}
-                class:slot-badge-2={slot === "middle" && stygianActiveSlots[i] === slot}
-                class:slot-badge-3={slot === "bottom" && stygianActiveSlots[i] === slot}
+                class:slot-badge-1={slot === "top" &&
+                  stygianActiveSlots[i] === slot}
+                class:slot-badge-2={slot === "middle" &&
+                  stygianActiveSlots[i] === slot}
+                class:slot-badge-3={slot === "bottom" &&
+                  stygianActiveSlots[i] === slot}
                 style={stygianActiveSlots[i] !== slot
                   ? "background: color-mix(in srgb, var(--secondary-color) 5%, transparent); color: color-mix(in srgb, var(--secondary-color) 40%, transparent);"
                   : ""}
-                onclick={() => { stygianActiveSlots[i] = slot; }}
+                onclick={() => {
+                  stygianActiveSlots[i] = slot;
+                }}
               >
                 {stygianSlotLabel[slot]}
               </button>
