@@ -130,12 +130,6 @@
             <h2 class="tracking-widest uppercase text-(--intermediate-color)">
               Spiral Abyss
             </h2>
-            <a
-              href={recommendationsPath}
-              class="text-(--secondary-color) hover:opacity-75"
-            >
-              all options →
-            </a>
           </div>
 
           {#if !abyssSolution}
@@ -185,12 +179,6 @@
             <h2 class="tracking-widest uppercase text-(--intermediate-color)">
               Stygian Onslaught
             </h2>
-            <a
-              href={recommendationsPath}
-              class="text-(--secondary-color) hover:opacity-75"
-            >
-              all options →
-            </a>
           </div>
 
           {#if !stygianSolution}

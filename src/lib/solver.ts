@@ -415,6 +415,9 @@ function sortSolutionsByMissingThenScore<
   T extends { missingCharacters: string[] },
 >(solutions: Solution<T>[]): Solution<T>[] {
   return [...solutions].sort((a, b) => {
+    if (a.unfilled.length !== b.unfilled.length)
+      return a.unfilled.length - b.unfilled.length;
+
     const aTotalMissing = totalMissingCount(a.assignments);
     const bTotalMissing = totalMissingCount(b.assignments);
     if (aTotalMissing !== bTotalMissing) return aTotalMissing - bTotalMissing;

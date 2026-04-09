@@ -192,7 +192,7 @@
 
 <div class="w-full flex flex-col items-center">
   <nav
-    class="nav-bar w-full fixed top-0 z-10 flex items-center justify-between px-4 md:px-8 h-12"
+    class="nav-bar w-full fixed top-0 z-10 flex items-center justify-between px-4 md:px-8 h-16"
   >
     <a
       href={homePath}
