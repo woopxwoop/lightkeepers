@@ -114,12 +114,8 @@ export const metrics = {
     fields: Record<string, string> = {},
   ): void {
     // Always write to stdout — visible in `docker compose logs`.
-    const line = JSON.stringify({
-      level,
-      msg: message,
-      service: SERVICE,
-      ...fields,
-    });
+    const line = `[${level.toUpperCase()}] ${message} ${JSON.stringify(fields)}`;
+
     console[level === "error" ? "error" : level === "warn" ? "warn" : "log"](
       line,
     );
@@ -129,8 +125,8 @@ export const metrics = {
     logQueue.push({
       timeUnixNano: nowNano(),
       severityText: level.toUpperCase(),
-      body: { stringValue: message },
-      attributes: toAttributes({ service: SERVICE, ...fields }),
+      body: { stringValue: message }, // just the msg string, not the whole JSON
+      attributes: toAttributes({ level, service: SERVICE, ...fields }),
     });
   },
 
