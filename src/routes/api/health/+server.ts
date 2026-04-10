@@ -40,9 +40,6 @@ export const GET: RequestHandler = async () => {
     ...checks,
   });
 
-  // Secondary flush — belt-and-suspenders alongside the setInterval.
-  metrics.flush().catch(console.error);
-
   return json(
     {
       status: healthy ? "ok" : "degraded",

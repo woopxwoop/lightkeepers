@@ -1,9 +1,28 @@
+/**
+ * src/hooks.server.ts
+ */
+
 import { sequence } from "@sveltejs/kit/hooks";
 import { handleErrorWithSentry, sentryHandle } from "@sentry/sveltekit";
+import { metrics } from "$lib/server/metrics";
+import type { Handle } from "@sveltejs/kit";
 
+const metricsHandle: Handle = async ({ event, resolve }) => {
+  const start = Date.now();
+  const response = await resolve(event);
 
-// If you have custom handlers, make sure to place them after `sentryHandle()` in the `sequence` function.
-export const handle = sequence(sentryHandle());
+  // Skip recording the /metrics endpoint itself to avoid self-referential noise
+  if (event.url.pathname !== "/metrics") {
+    metrics.recordRequest({
+      path: event.url.pathname,
+      method: event.request.method,
+      status: response.status,
+      durationMs: Date.now() - start,
+    });
+  }
 
-// If you have a custom error handler, pass it to `handleErrorWithSentry`
+  return response;
+};
+
+export const handle = sequence(sentryHandle(), metricsHandle);
 export const handleError = handleErrorWithSentry();
