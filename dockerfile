@@ -16,14 +16,15 @@ ENV PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL
 ENV PUBLIC_SUPABASE_KEY=$PUBLIC_SUPABASE_KEY
 ENV SENTRY_DSN=$SENTRY_DSN
 
-RUN echo "PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL" > .env && \
-    echo "PUBLIC_SUPABASE_KEY=$PUBLIC_SUPABASE_KEY" >> .env && \
-    echo "PUBLIC_SENTRY_DSN=$SENTRY_DSN" >> .env
-
 RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-    SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) \
-    pnpm build
+    --mount=type=secret,id=PRIVATE_SUPABASE_KEY \
+    echo "PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL" > .env && \
+    echo "PUBLIC_SUPABASE_KEY=$PUBLIC_SUPABASE_KEY" >> .env && \
+    echo "SENTRY_DSN=$SENTRY_DSN" >> .env && \
+    echo "PRIVATE_SUPABASE_KEY=$(cat /run/secrets/PRIVATE_SUPABASE_KEY)" >> .env && \
+    SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) pnpm build
 
+RUN pnpm build
 RUN pnpm prune --prod
 
 FROM node:22-alpine AS runner
