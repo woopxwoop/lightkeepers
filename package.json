@@ -24,6 +24,7 @@
 	},
 	"dependencies": {
 		"@google/generative-ai": "^0.24.1",
+		"@sentry/sveltekit": "^10.48.0",
 		"@supabase/supabase-js": "^2.90.1",
 		"@sveltejs/adapter-node": "^5.5.4",
 		"@tailwindcss/vite": "^4.1.18",

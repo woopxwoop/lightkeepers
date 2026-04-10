@@ -3,6 +3,9 @@ import adapter from "@sveltejs/adapter-node";
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   kit: {
+    // paths: {
+    //   base: process.argv.includes("dev") ? "" : process.env.BASE_PATH,
+    // },
     adapter: adapter({
       // default options are shown. On some platforms
       // these options are set automatically — see below
@@ -12,9 +15,16 @@ const config = {
       precompress: false,
       strict: true,
     }),
-    // paths: {
-    //   base: process.argv.includes("dev") ? "" : process.env.BASE_PATH,
-    // },
+
+    experimental: {
+      tracing: {
+        server: true,
+      },
+
+      instrumentation: {
+        server: true,
+      },
+    },
   },
   compilerOptions: {
     experimental: {
