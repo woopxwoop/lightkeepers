@@ -12,6 +12,7 @@
   import {
     solveAbyssWithFallback,
     solveStygianWithFallback,
+    slotAffinityRate,
   } from "$lib/solver";
 
   let { data } = $props();
@@ -162,7 +163,7 @@
                 {abyssSlotLabel[slot]}
               </button>
               <span class="text-xs text-(--faint-color) hidden md:inline">
-                {team.usage_total?.toFixed(2)}% usage
+                {((team.usage_total ?? 0) * slotAffinityRate(team, slot)).toFixed(2)}% usage
               </span>
             </div>
           {/each}
@@ -254,7 +255,7 @@
                 {stygianSlotLabel[slot]}
               </button>
               <span class="text-xs text-(--faint-color) hidden lg:inline">
-                {team.usage_total?.toFixed(2)}% usage
+                {((team.usage_total ?? 0) * slotAffinityRate(team, slot)).toFixed(2)}% usage
               </span>
             </div>
           {/each}

@@ -5,6 +5,7 @@
   import {
     solveAbyssWithFallback,
     solveStygianWithFallback,
+    slotAffinityRate,
   } from "$lib/solver";
   import { allTeamsAbyss, allTeamsStygian } from "$lib/stores";
   import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
@@ -155,7 +156,9 @@
                       >{abyssSlotLabel[slot]}</span
                     >
                     <span class="text-xs text-(--faint-color)"
-                      >{team.usage_total?.toFixed(2)}% usage</span
+                      >{(
+                        (team.usage_total ?? 0) * slotAffinityRate(team, slot)
+                      ).toFixed(2)}% usage</span
                     >
                   </div>
                   <Team {team} {mapping} {missingCharacters} />
@@ -204,7 +207,9 @@
                       >{stygianSlotLabel[slot]}</span
                     >
                     <span class="text-xs text-(--faint-color)"
-                      >{team.usage_total?.toFixed(2)}% usage</span
+                      >{(
+                        (team.usage_total ?? 0) * slotAffinityRate(team, slot)
+                      ).toFixed(2)}% usage</span
                     >
                   </div>
                   <Team {team} {mapping} {missingCharacters} />

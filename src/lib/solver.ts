@@ -145,7 +145,7 @@ function deduplicateSolutions<
   });
 }
 
-function slotAffinityRate(
+export function slotAffinityRate(
   team: {
     usage_rate_top: number | null;
     usage_rate_bottom: number | null;

@@ -373,11 +373,11 @@
   }
 
   .character-icon-button:hover {
-    opacity: 1;
+    opacity: 0.67;
   }
 
   .character-icon-button {
     transition-duration: 0.5s;
-    opacity: 0.35;
+    opacity: 0.33;
   }
 </style>

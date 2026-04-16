@@ -2,6 +2,7 @@
   import {
     charactersOwned,
     teamsOwnedStygian,
+    allTeamsStygian,
     nearMissStygianTeams,
     nearMissPairTeams,
     nearMissStygianLoaded,
@@ -78,6 +79,45 @@
 
   let maxScore = $derived(suggestions[0]?.score ?? 1);
   let maxPairScore = $derived(pairSuggestions[0]?.avgUsage ?? 1);
+
+  // Top teams the user doesn't own — filtered and deduplicated
+  let topMissingTeams = $derived.by(() => {
+    const ownedNames = new Set(
+      $charactersOwned.filter((c) => c.isOwned).map((c) => c.name),
+    );
+    const all = $allTeamsStygian;
+
+    // Candidates: 4-member teams with avg_usage_total > 20% where user is missing at least one member
+    const candidates = all
+      .filter((team) => {
+        const members = team.members ?? [];
+        if (members.length !== 4) return false;
+        if ((team.avg_usage_total ?? 0) <= 20) return false;
+        return members.some((m) => !ownedNames.has(m));
+      })
+      .sort((a, b) => (b.avg_usage_total ?? 0) - (a.avg_usage_total ?? 0));
+
+    // Remove any team that is dominated by a higher-usage team differing by exactly 1 character
+    const result: typeof candidates = [];
+    for (const team of candidates) {
+      const members = team.members ?? [];
+      const dominated = all.some((other) => {
+        if ((other.avg_usage_total ?? 0) <= (team.avg_usage_total ?? 0))
+          return false;
+        const otherMembers = other.members ?? [];
+        if (otherMembers.length !== 4) return false;
+        const shared = members.filter((m) => otherMembers.includes(m));
+        return shared.length === 3;
+      });
+      if (!dominated) result.push(team);
+      if (result.length === 3) break;
+    }
+
+    return result.map((team) => ({
+      team,
+      missingCharacters: (team.members ?? []).filter((m) => !ownedNames.has(m)),
+    }));
+  });
 
   // Debug: show state
   let debugVisible = import.meta.env.DEV;
@@ -406,12 +446,51 @@
         </div>
       </section>
     {/if}
+  {/if}
 
-    <button
-      onclick={calculate}
-      class="text-xs text-(--faint-color) hover:text-(--intermediate-color) transition-colors self-center"
-    >
-      Recalculate
-    </button>
+  <!-- ── Top teams you don't have ─────────────────────────────────────── -->
+  {#if topMissingTeams.length > 0}
+    <section class="flex flex-col gap-3">
+      <p class="text-xs tracking-widest uppercase text-(--intermediate-color)">
+        Best Teams You Don't Have
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {#each topMissingTeams as { team, missingCharacters }, i}
+          <div
+            class="rounded-xl overflow-hidden flex flex-col"
+            style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+          >
+            <div class="h-0.5" style="background: {rankAccent[i]};"></div>
+            <div class="p-3 flex flex-col gap-3">
+              <!-- Team grid -->
+              <div class="grid grid-cols-4 gap-0.5">
+                {#each team.members ?? [] as member}
+                  {@const isMissing = missingCharacters.includes(member)}
+                  <div
+                    class="aspect-3/4 rounded-[5px] overflow-hidden relative"
+                    style="background: var(--background-color);
+                           {isMissing
+                      ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px; opacity: 0.7;`
+                      : ''}"
+                  >
+                    <CharacterIcon character={mapping.get(member)} />
+                  </div>
+                {/each}
+              </div>
+
+              <!-- Usage + missing -->
+              <div class="flex flex-col gap-1">
+                <p class="text-xs text-(--faint-color)">
+                  {(team.avg_usage_total ?? 0).toFixed(1)}% avg usage
+                </p>
+                <p class="text-xs" style="color: {rankAccent[i]};">
+                  missing: {missingCharacters.join(", ")}
+                </p>
+              </div>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </section>
   {/if}
 </main>
