@@ -47,7 +47,7 @@
     return next;
   }
 
-  $inspect(tempCharactersOwned);
+  // $inspect(tempCharactersOwned);
 
   let visibleCharacters = $derived(
     tempCharactersOwned.filter((c) => {

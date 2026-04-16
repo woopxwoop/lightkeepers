@@ -29,27 +29,22 @@
 
   const SOLUTIONS_COUNT = 6;
 
-  // Roster: best you can run right now (existing fallback logic)
-  let abyssRosterSolutions = $derived(
-    solveAbyssWithFallback(
-      $teamsOwned,
-      $allTeamsAbyss,
-      ownedNames,
-      SOLUTIONS_COUNT,
-    ),
-  );
-  let stygianRosterSolutions = $derived(
-    solveStygianWithFallback(
-      $teamsOwnedStygian,
-      $allTeamsStygian,
-      ownedNames,
-      SOLUTIONS_COUNT,
-    ),
-  );
+  // NOTE: These solver calls can be expensive when the team lists are large.
+  // Compute only what is currently visible so the UI stays responsive.
+  let abyssSolutions = $derived.by(() => {
+    if (activeMode !== "abyss") return [];
 
-  // Meta: best global comps annotated with your missing chars
-  let abyssMetaSolutions = $derived.by(() =>
-    solveAbyss($allTeamsAbyss, SOLUTIONS_COUNT).map((sol) => ({
+    if (teamsMode === "roster") {
+      return solveAbyssWithFallback(
+        $teamsOwned,
+        $allTeamsAbyss,
+        ownedNames,
+        SOLUTIONS_COUNT,
+      );
+    }
+
+    // Meta: best global comps annotated with your missing chars
+    return solveAbyss($allTeamsAbyss, SOLUTIONS_COUNT).map((sol) => ({
       ...sol,
       isFallback: false as const,
       assignments: sol.assignments.map((a) => ({
@@ -65,10 +60,23 @@
           ),
         ),
       ],
-    })),
-  );
-  let stygianMetaSolutions = $derived.by(() =>
-    solveStygian($allTeamsStygian, SOLUTIONS_COUNT).map((sol) => ({
+    }));
+  });
+
+  let stygianSolutions = $derived.by(() => {
+    if (activeMode !== "stygian") return [];
+
+    if (teamsMode === "roster") {
+      return solveStygianWithFallback(
+        $teamsOwnedStygian,
+        $allTeamsStygian,
+        ownedNames,
+        SOLUTIONS_COUNT,
+      );
+    }
+
+    // Meta: best global comps annotated with your missing chars
+    return solveStygian($allTeamsStygian, SOLUTIONS_COUNT).map((sol) => ({
       ...sol,
       isFallback: false as const,
       assignments: sol.assignments.map((a) => ({
@@ -84,15 +92,8 @@
           ),
         ),
       ],
-    })),
-  );
-
-  let abyssSolutions = $derived(
-    teamsMode === "roster" ? abyssRosterSolutions : abyssMetaSolutions,
-  );
-  let stygianSolutions = $derived(
-    teamsMode === "roster" ? stygianRosterSolutions : stygianMetaSolutions,
-  );
+    }));
+  });
 
   let abyssActiveSlots: string[] = $state([]);
   let stygianActiveSlots: string[] = $state([]);
