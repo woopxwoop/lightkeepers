@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Team from "$lib/components/Team.svelte";
-  import CharacterIcon from "$lib/components/CharacterIcon.svelte";
+  import Team from "$lib/ui/components/Team.svelte";
+  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import {
     teamsOwned,
     teamsOwnedStygian,
@@ -189,7 +189,7 @@
             {#each needed as char}
               <div class="flex items-center gap-1.5">
                 <div
-                  class="w-6 h-6 rounded-md overflow-hidden flex-shrink-0"
+                  class="w-6 h-6 rounded-md overflow-hidden shrink-0"
                   style="background: var(--surface-color); outline: 1px dashed color-mix(in srgb, var(--secondary-color) 55%, transparent);"
                 >
                   <CharacterIcon character={mapping.get(char)} />
@@ -279,7 +279,7 @@
             {#each needed as char}
               <div class="flex items-center gap-1.5">
                 <div
-                  class="w-6 h-6 rounded-md overflow-hidden flex-shrink-0"
+                  class="w-6 h-6 rounded-md overflow-hidden shrink-0"
                   style="background: var(--surface-color); outline: 1px dashed color-mix(in srgb, var(--secondary-color) 55%, transparent);"
                 >
                   <CharacterIcon character={mapping.get(char)} />

@@ -5,7 +5,7 @@
     writeNearMissTeams,
   } from "$lib/stores";
   import { onMount } from "svelte";
-  import CharacterIcon from "$lib/components/CharacterIcon.svelte";
+  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import type { CharacterOwned } from "$lib/definitions";
   import { fly, slide } from "svelte/transition";
 

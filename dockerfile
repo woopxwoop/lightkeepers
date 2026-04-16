@@ -23,8 +23,6 @@ RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
     echo "PUBLIC_SENTRY_DSN=$SENTRY_DSN" >> .env && \
     echo "PRIVATE_SUPABASE_KEY=$(cat /run/secrets/PRIVATE_SUPABASE_KEY)" >> .env && \
     SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) pnpm build
-
-RUN pnpm build
 RUN pnpm prune --prod
 
 FROM node:22-alpine AS runner

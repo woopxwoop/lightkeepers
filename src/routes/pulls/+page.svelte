@@ -13,7 +13,7 @@
     computePairSuggestions,
   } from "$lib/pullSuggestions";
   import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
-  import CharacterIcon from "$lib/components/CharacterIcon.svelte";
+  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import favicon from "$lib/assets/favicon.svg";
 
   let { data } = $props();
@@ -206,7 +206,7 @@
                 <!-- Portrait + name -->
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 relative"
+                    class="w-11 h-11 rounded-lg overflow-hidden shrink-0 relative"
                     style="background: var(--background-color);"
                   >
                     <CharacterIcon
@@ -259,7 +259,7 @@
                     <div class="grid grid-cols-4 gap-[2px] opacity-50">
                       {#each aligned.currentAligned as member, j}
                         <div
-                          class="aspect-[3/4] rounded-[5px] overflow-hidden relative"
+                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {j === 3
                             ? 'outline: 1px solid var(--faint-color);'
@@ -283,7 +283,7 @@
                     <div class="grid grid-cols-4 gap-[2px]">
                       {#each aligned.bestAligned as member, j}
                         <div
-                          class="aspect-[3/4] rounded-[5px] overflow-hidden relative"
+                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {j === 3
                             ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
@@ -306,7 +306,7 @@
                     <div class="grid grid-cols-4 gap-[2px]">
                       {#each suggestion.bestTeam.members ?? [] as member}
                         <div
-                          class="aspect-[3/4] rounded-[5px] overflow-hidden relative"
+                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {member === suggestion.character
                             ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
@@ -357,7 +357,7 @@
               <div class="p-3 flex flex-col gap-3">
                 <!-- Two portraits + name -->
                 <div class="flex items-center gap-2">
-                  <div class="flex gap-1 flex-shrink-0">
+                  <div class="flex gap-1 shrink-0">
                     <div
                       class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg overflow-hidden relative"
                       style="background: var(--background-color);"
@@ -423,7 +423,7 @@
                         member === suggestion.charA ||
                         member === suggestion.charB}
                       <div
-                        class="aspect-[3/4] rounded-[5px] overflow-hidden relative"
+                        class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                         style="background: var(--background-color);
                                {isMissing
                           ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`

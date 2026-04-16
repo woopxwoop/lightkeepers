@@ -1,38 +1,60 @@
-# sv
+# Lightkeepers (frontend)
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit frontend for **Lightkeepers** — roster-based team recommendations for **Spiral Abyss** and **Stygian Onslaught**.
 
-## Creating a project
+This repository is intended to be **deployed** (not as an end-user local install guide).
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Tech stack
 
-```sh
-# create a new project in the current directory
-npx sv create
+- **SvelteKit** (Svelte 5) + **Vite**
+- **Tailwind v4**
+- **Supabase** (server-side RPC; browser uses API routes only)
+- **Sentry** (optional; production observability)
+- **Prometheus metrics** at `GET /metrics` (optional; ops-only)
 
-# create a new project in my-app
-npx sv create my-app
-```
+## Project structure (high-level)
 
-## Developing
+- `src/routes/`: pages + API routes
+- `src/lib/app/`: app bootstrap + dev tooling
+- `src/lib/ui/`: UI shell + reusable UI components
+- `src/lib/server/`: server-only utilities (Supabase server client, caching, metrics)
+- `src/lib/api/`: client-side API helpers
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Data flow
 
-```sh
-npm run dev
+- **Browser never calls Supabase directly** for data that needs caching or service role access.
+- `src/routes/api/*` are the boundary:
+  - `POST /api/teams`: roster → owned teams (abyss + stygian), cached + rate-limited
+  - `POST /api/nearmiss`: roster → pull suggestions data, cached + rate-limited
+  - `GET /api/static`: edge-cache-friendly “slow changing” payload (versions + all teams)
+- `src/routes/+layout.server.ts` fetches `GET /api/static` and character list once per SSR render and passes it to the client for hydration.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Environment variables
 
-## Building
+Required:
 
-To create a production version of your app:
+- **`PUBLIC_SUPABASE_URL`**
+- **`PUBLIC_SUPABASE_KEY`**
 
-```sh
-npm run build
-```
+Recommended for production:
 
-You can preview the production build with `npm run preview`.
+- **`PRIVATE_SUPABASE_KEY`** (service role; server-only)
+- **`PUBLIC_SENTRY_DSN`** (optional)
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Build-time (if using Sentry source maps upload):
+
+- **`SENTRY_AUTH_TOKEN`** (used by the Vite Sentry plugin)
+
+## Docker build
+
+The `dockerfile` expects build args for public env and secrets for private keys/tokens.
+
+- **Build args**: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_KEY`, `SENTRY_DSN`
+- **Secrets**: `PRIVATE_SUPABASE_KEY`, `SENTRY_AUTH_TOKEN`
+
+## Observability
+
+- **Metrics endpoint**: `GET /metrics` (Prometheus scrape)
+- **Implementation**: `src/lib/server/metrics.ts`
+- **Security**: restrict access at your reverse proxy / network boundary (do not expose publicly)
+- **Sentry**: enabled via env + build token; intended for production deployments

@@ -15,6 +15,7 @@ import type {
   NearMissStygianTeam,
   NearMissPairTeam,
 } from "$lib/pullSuggestions";
+import { postJson } from "$lib/api/http";
 
 // ── Version numbers ────────────────────────────────────────────────────────
 // Populated from layout server data — no client-side fetch needed.
@@ -100,16 +101,6 @@ let teamsRequestId = 0;
 let nearMissRequestId = 0;
 
 // ── API helpers ────────────────────────────────────────────────────────────
-
-async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`${url} returned ${res.status}`);
-  return res.json() as Promise<T>;
-}
 
 // ── Write functions ────────────────────────────────────────────────────────
 

@@ -9,7 +9,7 @@
   } from "$lib/solver";
   import { allTeamsAbyss, allTeamsStygian } from "$lib/stores";
   import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
-  import Team from "$lib/components/Team.svelte";
+  import Team from "$lib/ui/components/Team.svelte";
   import favicon from "$lib/assets/favicon.svg";
 
   let { data } = $props();

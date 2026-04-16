@@ -386,6 +386,25 @@ export type Database = {
           usage_ratio: number;
         }[];
       };
+      get_character_substitutes_stygian_v2: {
+        Args: {
+          p_character_name: string;
+          p_limit?: number;
+          p_min_cores?: number;
+          p_version_number: number;
+        };
+        Returns: {
+          avg_original_usage: number;
+          avg_substitute_usage: number;
+          coverage: number;
+          example_core: string[];
+          observed_cores: number;
+          source_character: string;
+          substitute_character: string;
+          substitute_score: number;
+          usage_ratio: number;
+        }[];
+      };
       get_element_substitutes: {
         Args: {
           p_limit?: number;
