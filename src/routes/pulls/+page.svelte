@@ -13,8 +13,6 @@
     computePairSuggestions,
   } from "$lib/pullSuggestions";
   import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
-  import { slotAffinityRate } from "$lib/solver";
-  import type { StygianTeam } from "$lib/definitions";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import favicon from "$lib/assets/favicon.svg";
 
@@ -30,74 +28,6 @@
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
 
   const rankAccent = ["#e8a83a", "#8a95b0", "#4a5270"];
-  const SUBSTITUTE_WEIGHT_FLOOR = 8;
-
-  type SubstituteCandidate = {
-    character: string;
-    weightedUsage: number;
-    avgUsage: number;
-    appearances: number;
-  };
-
-  function bestTeamSlotAffinity(team: StygianTeam): number {
-    return Math.max(
-      slotAffinityRate(team, "top"),
-      slotAffinityRate(team, "middle"),
-      slotAffinityRate(team, "bottom"),
-    );
-  }
-
-  function substituteCandidatesForSlot(
-    teamMembers: string[],
-    slotIndex: number,
-    limit = 5,
-  ): SubstituteCandidate[] {
-    if (teamMembers.length !== 4 || slotIndex < 0 || slotIndex >= teamMembers.length) {
-      return [];
-    }
-
-    const target = teamMembers[slotIndex];
-    const core = teamMembers.filter((_, i) => i !== slotIndex);
-    const grouped = new Map<
-      string,
-      { weightedUsageTotal: number; avgUsageTotal: number; appearances: number }
-    >();
-
-    for (const team of $allTeamsStygian) {
-      const members = team.members ?? [];
-      if (members.length !== 4) continue;
-      if (!core.every((m) => members.includes(m))) continue;
-
-      const substitutes = members.filter((m) => !core.includes(m));
-      if (substitutes.length !== 1) continue;
-      const substitute = substitutes[0];
-      if (!substitute || substitute === target) continue;
-
-      const avgUsage = team.avg_usage_total ?? team.usage_total ?? 0;
-      const weightedUsage = avgUsage * bestTeamSlotAffinity(team);
-      const current = grouped.get(substitute) ?? {
-        weightedUsageTotal: 0,
-        avgUsageTotal: 0,
-        appearances: 0,
-      };
-
-      current.weightedUsageTotal += weightedUsage;
-      current.avgUsageTotal += avgUsage;
-      current.appearances += 1;
-      grouped.set(substitute, current);
-    }
-
-    return [...grouped.entries()]
-      .map(([character, stats]) => ({
-        character,
-        weightedUsage: stats.weightedUsageTotal / stats.appearances,
-        avgUsage: stats.avgUsageTotal / stats.appearances,
-        appearances: stats.appearances,
-      }))
-      .filter((c) => c.weightedUsage >= SUBSTITUTE_WEIGHT_FLOOR)
-      .sort((a, b) => b.weightedUsage - a.weightedUsage || b.appearances - a.appearances)
-      .slice(0, limit);
-  }
 
   // Align single-missing: swap slot always last
   function alignMembers(
@@ -328,41 +258,14 @@
                     </p>
                     <div class="grid grid-cols-4 gap-[2px] opacity-50">
                       {#each aligned.currentAligned as member, j}
-                        {@const substitutes = substituteCandidatesForSlot(
-                          aligned.currentAligned,
-                          j,
-                        )}
                         <div
-                          class="group aspect-3/4 rounded-[5px] overflow-hidden relative"
+                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {j === 3
                             ? 'outline: 1px solid var(--faint-color);'
                             : ''}"
                         >
                           <CharacterIcon character={mapping.get(member)} />
-                          <div
-                            class="hidden group-hover:flex absolute z-20 left-1/2 -translate-x-1/2 bottom-[calc(100%+4px)] w-44 max-h-32 overflow-auto rounded-md p-2 flex-col gap-1 text-[10px]"
-                            style="background: color-mix(in srgb, var(--background-color) 94%, transparent);
-                                   border: 0.5px solid var(--surface-border);"
-                          >
-                            <p class="text-(--faint-color)">
-                              substitutes with same core
-                            </p>
-                            {#if substitutes.length === 0}
-                              <p class="text-(--intermediate-color)">
-                                no strong substitutes
-                              </p>
-                            {:else}
-                              {#each substitutes as substitute}
-                                <p class="flex items-center justify-between gap-2">
-                                  <span class="truncate">{substitute.character}</span>
-                                  <span class="text-(--faint-color)"
-                                    >{substitute.weightedUsage.toFixed(1)}</span
-                                  >
-                                </p>
-                              {/each}
-                            {/if}
-                          </div>
                         </div>
                       {/each}
                     </div>
@@ -379,41 +282,14 @@
                     </p>
                     <div class="grid grid-cols-4 gap-[2px]">
                       {#each aligned.bestAligned as member, j}
-                        {@const substitutes = substituteCandidatesForSlot(
-                          aligned.bestAligned,
-                          j,
-                        )}
                         <div
-                          class="group aspect-3/4 rounded-[5px] overflow-hidden relative"
+                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {j === 3
                             ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
                             : ''}"
                         >
                           <CharacterIcon character={mapping.get(member)} />
-                          <div
-                            class="hidden group-hover:flex absolute z-20 left-1/2 -translate-x-1/2 bottom-[calc(100%+4px)] w-44 max-h-32 overflow-auto rounded-md p-2 flex-col gap-1 text-[10px]"
-                            style="background: color-mix(in srgb, var(--background-color) 94%, transparent);
-                                   border: 0.5px solid var(--surface-border);"
-                          >
-                            <p class="text-(--faint-color)">
-                              substitutes with same core
-                            </p>
-                            {#if substitutes.length === 0}
-                              <p class="text-(--intermediate-color)">
-                                no strong substitutes
-                              </p>
-                            {:else}
-                              {#each substitutes as substitute}
-                                <p class="flex items-center justify-between gap-2">
-                                  <span class="truncate">{substitute.character}</span>
-                                  <span class="text-(--faint-color)"
-                                    >{substitute.weightedUsage.toFixed(1)}</span
-                                  >
-                                </p>
-                              {/each}
-                            {/if}
-                          </div>
                         </div>
                       {/each}
                     </div>
@@ -428,42 +304,15 @@
                       with {suggestion.character}
                     </p>
                     <div class="grid grid-cols-4 gap-[2px]">
-                      {#each suggestion.bestTeam.members ?? [] as member, j}
-                        {@const substitutes = substituteCandidatesForSlot(
-                          suggestion.bestTeam.members ?? [],
-                          j,
-                        )}
+                      {#each suggestion.bestTeam.members ?? [] as member}
                         <div
-                          class="group aspect-3/4 rounded-[5px] overflow-hidden relative"
+                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {member === suggestion.character
                             ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
                             : ''}"
                         >
                           <CharacterIcon character={mapping.get(member)} />
-                          <div
-                            class="hidden group-hover:flex absolute z-20 left-1/2 -translate-x-1/2 bottom-[calc(100%+4px)] w-44 max-h-32 overflow-auto rounded-md p-2 flex-col gap-1 text-[10px]"
-                            style="background: color-mix(in srgb, var(--background-color) 94%, transparent);
-                                   border: 0.5px solid var(--surface-border);"
-                          >
-                            <p class="text-(--faint-color)">
-                              substitutes with same core
-                            </p>
-                            {#if substitutes.length === 0}
-                              <p class="text-(--intermediate-color)">
-                                no strong substitutes
-                              </p>
-                            {:else}
-                              {#each substitutes as substitute}
-                                <p class="flex items-center justify-between gap-2">
-                                  <span class="truncate">{substitute.character}</span>
-                                  <span class="text-(--faint-color)"
-                                    >{substitute.weightedUsage.toFixed(1)}</span
-                                  >
-                                </p>
-                              {/each}
-                            {/if}
-                          </div>
                         </div>
                       {/each}
                     </div>
@@ -569,45 +418,18 @@
                     best unlocked team
                   </p>
                   <div class="grid grid-cols-4 gap-[2px]">
-                    {#each suggestion.bestTeam.members ?? [] as member, j}
-                      {@const substitutes = substituteCandidatesForSlot(
-                        suggestion.bestTeam.members ?? [],
-                        j,
-                      )}
+                    {#each suggestion.bestTeam.members ?? [] as member}
                       {@const isMissing =
                         member === suggestion.charA ||
                         member === suggestion.charB}
                       <div
-                        class="group aspect-3/4 rounded-[5px] overflow-hidden relative"
+                        class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                         style="background: var(--background-color);
                                {isMissing
                           ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
                           : ''}"
                       >
                         <CharacterIcon character={mapping.get(member)} />
-                        <div
-                          class="hidden group-hover:flex absolute z-20 left-1/2 -translate-x-1/2 bottom-[calc(100%+4px)] w-44 max-h-32 overflow-auto rounded-md p-2 flex-col gap-1 text-[10px]"
-                          style="background: color-mix(in srgb, var(--background-color) 94%, transparent);
-                                 border: 0.5px solid var(--surface-border);"
-                        >
-                          <p class="text-(--faint-color)">
-                            substitutes with same core
-                          </p>
-                          {#if substitutes.length === 0}
-                            <p class="text-(--intermediate-color)">
-                              no strong substitutes
-                            </p>
-                          {:else}
-                            {#each substitutes as substitute}
-                              <p class="flex items-center justify-between gap-2">
-                                <span class="truncate">{substitute.character}</span>
-                                <span class="text-(--faint-color)"
-                                  >{substitute.weightedUsage.toFixed(1)}</span
-                                >
-                              </p>
-                            {/each}
-                          {/if}
-                        </div>
                       </div>
                     {/each}
                   </div>
@@ -639,43 +461,16 @@
             <div class="h-0.5" style="background: {accent};"></div>
             <div class="p-3 flex flex-col gap-3">
               <div class="grid grid-cols-4 gap-0.5">
-                {#each team.members ?? [] as member, j}
-                  {@const substitutes = substituteCandidatesForSlot(
-                    team.members ?? [],
-                    j,
-                  )}
+                {#each team.members ?? [] as member}
                   {@const isMissing = missingCharacters.includes(member)}
                   <div
-                    class="group aspect-3/4 rounded-[5px] overflow-hidden relative"
+                    class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                     style="background: var(--background-color);
                            {isMissing
                       ? `outline: 1.5px solid ${accent}; outline-offset: -1.5px; opacity: 0.7;`
                       : ''}"
                   >
                     <CharacterIcon character={mapping.get(member)} />
-                    <div
-                      class="hidden group-hover:flex absolute z-20 left-1/2 -translate-x-1/2 bottom-[calc(100%+4px)] w-44 max-h-32 overflow-auto rounded-md p-2 flex-col gap-1 text-[10px]"
-                      style="background: color-mix(in srgb, var(--background-color) 94%, transparent);
-                             border: 0.5px solid var(--surface-border);"
-                    >
-                      <p class="text-(--faint-color)">
-                        substitutes with same core
-                      </p>
-                      {#if substitutes.length === 0}
-                        <p class="text-(--intermediate-color)">
-                          no strong substitutes
-                        </p>
-                      {:else}
-                        {#each substitutes as substitute}
-                          <p class="flex items-center justify-between gap-2">
-                            <span class="truncate">{substitute.character}</span>
-                            <span class="text-(--faint-color)"
-                              >{substitute.weightedUsage.toFixed(1)}</span
-                            >
-                          </p>
-                        {/each}
-                      {/if}
-                    </div>
                   </div>
                 {/each}
               </div>

@@ -7,7 +7,9 @@
     allTeamsAbyss,
     allTeamsStygian,
     charactersOwned,
+    stygianVersionNumber,
   } from "$lib/stores";
+  import { postJson } from "$lib/api/http";
   import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
   import {
     solveAbyssWithFallback,
@@ -114,6 +116,113 @@
       ? $teamsOwned.length === 0 && $allTeamsAbyss.length === 0
       : $teamsOwnedStygian.length === 0 && $allTeamsStygian.length === 0,
   );
+
+  type RpcSubstitute = {
+    substitute_character: string;
+    usage_ratio: number;
+    observed_cores: number;
+  };
+
+  type SlotSubstitute = {
+    character: string;
+    score: number;
+  };
+
+  const SLOT_SUBSTITUTE_FLOOR = 8;
+  const SLOT_SUBSTITUTE_LIMIT = 5;
+
+  let rpcSubstitutesByCharacter = $state<Record<string, RpcSubstitute[]>>({});
+  let rpcSubstitutePending = $state<Set<string>>(new Set());
+
+  async function loadRpcSubstitutes(characterName: string) {
+    const cacheKey = `${stygianVersionNumber}:${characterName}`;
+    if (rpcSubstitutesByCharacter[cacheKey] || rpcSubstitutePending.has(cacheKey)) return;
+
+    rpcSubstitutePending.add(cacheKey);
+    rpcSubstitutePending = new Set(rpcSubstitutePending);
+
+    try {
+      const res = await postJson<{ substitutes: RpcSubstitute[] }>("/api/substitutes", {
+        characterName,
+        versionNumber: stygianVersionNumber,
+      });
+      rpcSubstitutesByCharacter[cacheKey] = res.substitutes ?? [];
+      rpcSubstitutesByCharacter = { ...rpcSubstitutesByCharacter };
+    } catch (error) {
+      console.error("[teams] failed to load rpc substitutes:", error);
+      rpcSubstitutesByCharacter[cacheKey] = [];
+      rpcSubstitutesByCharacter = { ...rpcSubstitutesByCharacter };
+    } finally {
+      rpcSubstitutePending.delete(cacheKey);
+      rpcSubstitutePending = new Set(rpcSubstitutePending);
+    }
+  }
+
+  $effect(() => {
+    if (activeMode !== "stygian") return;
+    const chars = new Set<string>();
+    for (const solution of stygianSolutions) {
+      for (const assignment of solution.assignments) {
+        for (const member of assignment.team.members ?? []) chars.add(member);
+      }
+    }
+    for (const characterName of chars) {
+      loadRpcSubstitutes(characterName);
+    }
+  });
+
+  function slotSubstitutesForTeam(
+    teamMembers: string[],
+    slot: "top" | "middle" | "bottom",
+  ): SlotSubstitute[][] {
+    return teamMembers.map((target, idx) => {
+      const core = teamMembers.filter((_, i) => i !== idx);
+      const candidates = new Map<
+        string,
+        { weightedUsageTotal: number; appearances: number }
+      >();
+
+      for (const team of $allTeamsStygian) {
+        const members = team.members ?? [];
+        if (members.length !== 4) continue;
+        if (!core.every((m) => members.includes(m))) continue;
+
+        const substitutes = members.filter((m) => !core.includes(m));
+        if (substitutes.length !== 1) continue;
+        const substitute = substitutes[0];
+        if (!substitute || substitute === target) continue;
+
+        const weightedUsage =
+          (team.avg_usage_total ?? team.usage_total ?? 0) * slotAffinityRate(team, slot);
+        const current = candidates.get(substitute) ?? {
+          weightedUsageTotal: 0,
+          appearances: 0,
+        };
+        current.weightedUsageTotal += weightedUsage;
+        current.appearances += 1;
+        candidates.set(substitute, current);
+      }
+
+      const rpcKey = `${stygianVersionNumber}:${target}`;
+      const rpcRows = rpcSubstitutesByCharacter[rpcKey] ?? [];
+      const rpcRatio = new Map(
+        rpcRows.map((row) => [row.substitute_character, row.usage_ratio]),
+      );
+
+      return [...candidates.entries()]
+        .map(([character, stats]) => {
+          const localScore = stats.weightedUsageTotal / stats.appearances;
+          const ratio = rpcRatio.get(character) ?? 0.5;
+          return {
+            character,
+            score: localScore * Math.max(0.5, Math.min(1.5, ratio)),
+          };
+        })
+        .filter((candidate) => candidate.score >= SLOT_SUBSTITUTE_FLOOR)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, SLOT_SUBSTITUTE_LIMIT);
+    });
+  }
 </script>
 
 <main class="w-[80%] pb-20 flex flex-col gap-6">
@@ -353,7 +462,12 @@
         <div class="grid lg:grid-cols-3 gap-4">
           {#each solution.assignments as { team, slot, missingCharacters }}
             <div class:hidden={stygianActiveSlots[i] !== slot} class="lg:block">
-              <Team {team} {mapping} {missingCharacters} />
+              <Team
+                {team}
+                {mapping}
+                {missingCharacters}
+                substitutesByIndex={slotSubstitutesForTeam(team.members ?? [], slot)}
+              />
             </div>
           {/each}
         </div>
