@@ -26,6 +26,12 @@ export function setVersionNumbers(abyss: number, stygian: number) {
   stygianVersionNumber = stygian;
 }
 
+export let isIconCompact: boolean = false;
+
+export function setIconCompact(compact: boolean) {
+  isIconCompact = compact;
+}
+
 // ── Character store ────────────────────────────────────────────────────────
 export const charactersOwned = writable<CharacterOwned[]>([]);
 
@@ -169,35 +175,4 @@ export async function writeNearMissTeams(
       nearMissPairLoaded.set(true);
     }
   }
-}
-
-// ── Legacy shims ───────────────────────────────────────────────────────────
-// Keep old function names so existing callers don't need updating immediately.
-
-/** @deprecated Use writeTeamsOwned() instead */
-export async function writeTopAbyssTeamsOwned(
-  owned: CharacterOwned[],
-): Promise<void> {
-  return writeTeamsOwned(owned);
-}
-
-/** @deprecated Use writeTeamsOwned() instead */
-export async function writeTopStygianTeamsOwned(
-  owned: CharacterOwned[],
-): Promise<void> {
-  // Already triggered by writeTeamsOwned — no-op to avoid double calls.
-}
-
-/** @deprecated Use writeNearMissTeams() instead */
-export async function writeNearMissStygianTeams(
-  owned: CharacterOwned[],
-): Promise<void> {
-  return writeNearMissTeams(owned);
-}
-
-/** @deprecated Use writeNearMissTeams() instead */
-export async function writeNearMissPairTeams(
-  owned: CharacterOwned[],
-): Promise<void> {
-  // Already triggered by writeNearMissTeams — no-op to avoid double calls.
 }

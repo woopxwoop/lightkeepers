@@ -35,7 +35,10 @@
     "Electro",
   ];
   const weaponTypes = ["Sword", "Catalyst", "Bow", "Claymore", "Polearm"];
-  const rarities = [["5", "5★"], ["4", "4★"]];
+  const rarities = [
+    ["5", "5★"],
+    ["4", "4★"],
+  ];
 
   function toggleFilter(set: Set<string>, value: string): Set<string> {
     const next = new Set(set);
@@ -53,9 +56,11 @@
         (rarityFilter.has("5") && c.rarity === 5) ||
         (rarityFilter.has("4") && c.rarity === 4);
       const matchesElement =
-        elementFilter.size === 0 || (c.element != null && elementFilter.has(c.element));
+        elementFilter.size === 0 ||
+        (c.element != null && elementFilter.has(c.element));
       const matchesWeapon =
-        weaponFilter.size === 0 || (c.weapon_type != null && weaponFilter.has(c.weapon_type));
+        weaponFilter.size === 0 ||
+        (c.weapon_type != null && weaponFilter.has(c.weapon_type));
       const matchesSearch =
         search === "" || c.name.toLowerCase().includes(search.toLowerCase());
       return matchesRarity && matchesElement && matchesWeapon && matchesSearch;
@@ -181,7 +186,9 @@
             stroke-width="2.5"
             stroke-linecap="round"
             stroke-linejoin="round"
-            style="transition: transform 200ms; transform: rotate({filtersOpen ? 180 : 0}deg);"
+            style="transition: transform 200ms; transform: rotate({filtersOpen
+              ? 180
+              : 0}deg);"
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -206,7 +213,9 @@
         >
           <!-- Elements -->
           <div class="flex flex-col gap-2">
-            <span class="text-xs uppercase tracking-widest text-(--faint-color)">Elements</span>
+            <span class="text-xs uppercase tracking-widest text-(--faint-color)"
+              >Elements</span
+            >
             <div class="flex items-center gap-1 flex-wrap">
               {#each elements as el}
                 <button
@@ -214,7 +223,8 @@
                   style={elementFilter.has(el)
                     ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
                     : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
-                  onclick={() => (elementFilter = toggleFilter(elementFilter, el))}
+                  onclick={() =>
+                    (elementFilter = toggleFilter(elementFilter, el))}
                 >
                   {el}
                 </button>
@@ -224,7 +234,9 @@
 
           <!-- Rarity -->
           <div class="flex flex-col gap-2">
-            <span class="text-xs uppercase tracking-widest text-(--faint-color)">Rarity</span>
+            <span class="text-xs uppercase tracking-widest text-(--faint-color)"
+              >Rarity</span
+            >
             <div class="flex items-center gap-1">
               {#each rarities as [val, label]}
                 <button
@@ -232,7 +244,8 @@
                   style={rarityFilter.has(val)
                     ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
                     : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
-                  onclick={() => (rarityFilter = toggleFilter(rarityFilter, val))}
+                  onclick={() =>
+                    (rarityFilter = toggleFilter(rarityFilter, val))}
                 >
                   {label}
                 </button>
@@ -242,7 +255,9 @@
 
           <!-- Weapon Type -->
           <div class="flex flex-col gap-2">
-            <span class="text-xs uppercase tracking-widest text-(--faint-color)">Weapon Type</span>
+            <span class="text-xs uppercase tracking-widest text-(--faint-color)"
+              >Weapon Type</span
+            >
             <div class="flex items-center gap-1 flex-wrap">
               {#each weaponTypes as wt}
                 <button
@@ -250,7 +265,8 @@
                   style={weaponFilter.has(wt)
                     ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color); border: 0.5px solid color-mix(in srgb, var(--secondary-color) 40%, transparent);"
                     : "background: transparent; color: var(--faint-color); border: 0.5px solid var(--surface-border);"}
-                  onclick={() => (weaponFilter = toggleFilter(weaponFilter, wt))}
+                  onclick={() =>
+                    (weaponFilter = toggleFilter(weaponFilter, wt))}
                 >
                   {wt}
                 </button>
@@ -317,10 +333,10 @@
       {#each visibleCharacters as character (character.id)}
         <button
           onclick={() => toggleOwned(character.id)}
-          class="cursor-pointer rounded-xl w-full overflow-hidden relative
+          class="cursor-pointer rounded-xl w-full h-fit overflow-hidden relative
                  transition-all duration-75 character-icon-button"
           style="border: 2px solid var(--foreground-color);
-                 opacity: {character.isOwned ? '1' : '0.35'};"
+                 opacity: {character.isOwned ? '1' : ''};"
         >
           <CharacterIcon {character} />
         </button>
@@ -348,7 +364,20 @@
     transition-duration: 0.5s;
   }
 
-  .character-icon-button:hover :global(img) {
+  .character-icon-button:hover :global(.icon-container-compact img) {
     transform: scale(1.2);
+  }
+
+  .character-icon-button:hover :global(.icon-container-coop img) {
+    transform: scale(2.5);
+  }
+
+  .character-icon-button:hover {
+    opacity: 1;
+  }
+
+  .character-icon-button {
+    transition-duration: 0.5s;
+    opacity: 0.35;
   }
 </style>

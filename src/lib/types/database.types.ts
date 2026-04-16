@@ -89,29 +89,35 @@ export type Database = {
       };
       characters: {
         Row: {
+          character_id: number | null;
           element: string | null;
           enka_icon: string | null;
           icon: string | null;
           id: string;
           name: string;
+          name_id: string | null;
           rarity: number | null;
           weapon_type: string | null;
         };
         Insert: {
+          character_id?: number | null;
           element?: string | null;
           enka_icon?: string | null;
           icon?: string | null;
           id?: string;
           name: string;
+          name_id?: string | null;
           rarity?: number | null;
           weapon_type?: string | null;
         };
         Update: {
+          character_id?: number | null;
           element?: string | null;
           enka_icon?: string | null;
           icon?: string | null;
           id?: string;
           name?: string;
+          name_id?: string | null;
           rarity?: number | null;
           weapon_type?: string | null;
         };
