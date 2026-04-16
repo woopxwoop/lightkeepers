@@ -12,6 +12,8 @@
   import {
     solveAbyssWithFallback,
     solveStygianWithFallback,
+    solveAbyss,
+    solveStygian,
     slotAffinityRate,
   } from "$lib/solver";
 
@@ -19,40 +21,91 @@
   let mapping = $derived(data.mapping);
 
   let activeMode = $state<"abyss" | "stygian">("abyss");
+  let teamsMode = $state<"roster" | "meta">("roster");
 
   let ownedNames = $derived(
     new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name)),
   );
 
-  let abyssSolutions = $derived(
-    solveAbyssWithFallback($teamsOwned, $allTeamsAbyss, ownedNames, 3),
+  const SOLUTIONS_COUNT = 6;
+
+  // Roster: best you can run right now (existing fallback logic)
+  let abyssRosterSolutions = $derived(
+    solveAbyssWithFallback(
+      $teamsOwned,
+      $allTeamsAbyss,
+      ownedNames,
+      SOLUTIONS_COUNT,
+    ),
   );
-  let stygianSolutions = $derived(
+  let stygianRosterSolutions = $derived(
     solveStygianWithFallback(
       $teamsOwnedStygian,
       $allTeamsStygian,
       ownedNames,
-      3,
+      SOLUTIONS_COUNT,
     ),
+  );
+
+  // Meta: best global comps annotated with your missing chars
+  let abyssMetaSolutions = $derived.by(() =>
+    solveAbyss($allTeamsAbyss, SOLUTIONS_COUNT).map((sol) => ({
+      ...sol,
+      isFallback: false as const,
+      assignments: sol.assignments.map((a) => ({
+        ...a,
+        missingCharacters: (a.team.members ?? []).filter(
+          (m) => !ownedNames.has(m),
+        ),
+      })),
+      neededCharacters: [
+        ...new Set(
+          sol.assignments.flatMap((a) =>
+            (a.team.members ?? []).filter((m) => !ownedNames.has(m)),
+          ),
+        ),
+      ],
+    })),
+  );
+  let stygianMetaSolutions = $derived.by(() =>
+    solveStygian($allTeamsStygian, SOLUTIONS_COUNT).map((sol) => ({
+      ...sol,
+      isFallback: false as const,
+      assignments: sol.assignments.map((a) => ({
+        ...a,
+        missingCharacters: (a.team.members ?? []).filter(
+          (m) => !ownedNames.has(m),
+        ),
+      })),
+      neededCharacters: [
+        ...new Set(
+          sol.assignments.flatMap((a) =>
+            (a.team.members ?? []).filter((m) => !ownedNames.has(m)),
+          ),
+        ),
+      ],
+    })),
+  );
+
+  let abyssSolutions = $derived(
+    teamsMode === "roster" ? abyssRosterSolutions : abyssMetaSolutions,
+  );
+  let stygianSolutions = $derived(
+    teamsMode === "roster" ? stygianRosterSolutions : stygianMetaSolutions,
   );
 
   let abyssActiveSlots: string[] = $state([]);
   let stygianActiveSlots: string[] = $state([]);
 
   $effect(() => {
-    if (abyssSolutions.length > 0 && abyssActiveSlots.length === 0) {
-      abyssActiveSlots = abyssSolutions.map(
-        (s) => s.assignments[0]?.slot ?? "top",
-      );
-    }
+    abyssActiveSlots = abyssSolutions.map(
+      (s) => s.assignments[0]?.slot ?? "top",
+    );
   });
-
   $effect(() => {
-    if (stygianSolutions.length > 0 && stygianActiveSlots.length === 0) {
-      stygianActiveSlots = stygianSolutions.map(
-        (s) => s.assignments[0]?.slot ?? "top",
-      );
-    }
+    stygianActiveSlots = stygianSolutions.map(
+      (s) => s.assignments[0]?.slot ?? "top",
+    );
   });
 
   let loading = $derived(
@@ -63,29 +116,60 @@
 </script>
 
 <main class="w-[80%] pb-20 flex flex-col gap-6">
-  <!-- Tab toggle -->
-  <div
-    class="flex gap-1 p-1 rounded-xl self-start"
-    style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
-  >
-    <button
-      class="px-4 py-1.5 rounded-lg text-xs font-medium tracking-widest uppercase transition-colors"
-      style={activeMode === "abyss"
-        ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color);"
-        : "color: var(--faint-color);"}
-      onclick={() => (activeMode = "abyss")}
+  <!-- Tab toggles -->
+  <div class="flex items-center justify-between flex-wrap gap-2">
+    <div
+      class="flex gap-1 p-1 rounded-xl"
+      style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
     >
-      Abyss
-    </button>
-    <button
-      class="px-4 py-1.5 rounded-lg text-xs font-medium tracking-widest uppercase transition-colors"
-      style={activeMode === "stygian"
-        ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color);"
-        : "color: var(--faint-color);"}
-      onclick={() => (activeMode = "stygian")}
+      <button
+        class="px-4 py-1.5 rounded-lg text-xs font-medium tracking-widest uppercase transition-colors"
+        style={activeMode === "abyss"
+          ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color);"
+          : "color: var(--faint-color);"}
+        onclick={() => (activeMode = "abyss")}
+      >
+        Abyss
+      </button>
+      <button
+        class="px-4 py-1.5 rounded-lg text-xs font-medium tracking-widest uppercase transition-colors"
+        style={activeMode === "stygian"
+          ? "background: color-mix(in srgb, var(--secondary-color) 15%, transparent); color: var(--secondary-color);"
+          : "color: var(--faint-color);"}
+        onclick={() => (activeMode = "stygian")}
+      >
+        Stygian
+      </button>
+    </div>
+    <div
+      class="flex text-xs rounded-lg overflow-hidden"
+      style="border: 0.5px solid var(--surface-border);"
     >
-      Stygian
-    </button>
+      <button
+        class="px-3 py-1.5 transition-colors"
+        style="background: {teamsMode === 'roster'
+          ? 'var(--surface-color)'
+          : 'transparent'};
+               color: {teamsMode === 'roster'
+          ? 'var(--foreground-color)'
+          : 'var(--faint-color)'};"
+        onclick={() => (teamsMode = "roster")}
+      >
+        Roster
+      </button>
+      <button
+        class="px-3 py-1.5 transition-colors"
+        style="background: {teamsMode === 'meta'
+          ? 'var(--surface-color)'
+          : 'transparent'};
+               color: {teamsMode === 'meta'
+          ? 'var(--foreground-color)'
+          : 'var(--faint-color)'};"
+        onclick={() => (teamsMode = "meta")}
+      >
+        Meta
+      </button>
+    </div>
   </div>
 
   {#if loading}
@@ -163,7 +247,9 @@
                 {abyssSlotLabel[slot]}
               </button>
               <span class="text-xs text-(--faint-color) hidden md:inline">
-                {((team.usage_total ?? 0) * slotAffinityRate(team, slot)).toFixed(2)}% usage
+                {(
+                  (team.usage_total ?? 0) * slotAffinityRate(team, slot)
+                ).toFixed(2)}% usage
               </span>
             </div>
           {/each}
@@ -255,7 +341,9 @@
                 {stygianSlotLabel[slot]}
               </button>
               <span class="text-xs text-(--faint-color) hidden lg:inline">
-                {((team.usage_total ?? 0) * slotAffinityRate(team, slot)).toFixed(2)}% usage
+                {(
+                  (team.usage_total ?? 0) * slotAffinityRate(team, slot)
+                ).toFixed(2)}% usage
               </span>
             </div>
           {/each}

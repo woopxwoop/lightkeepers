@@ -80,14 +80,13 @@
   let maxScore = $derived(suggestions[0]?.score ?? 1);
   let maxPairScore = $derived(pairSuggestions[0]?.avgUsage ?? 1);
 
-  // Top teams the user doesn't own — filtered and deduplicated
+  // Top 3 best teams the user doesn't have (pulls page section)
   let topMissingTeams = $derived.by(() => {
     const ownedNames = new Set(
       $charactersOwned.filter((c) => c.isOwned).map((c) => c.name),
     );
     const all = $allTeamsStygian;
 
-    // Candidates: 4-member teams with avg_usage_total > 20% where user is missing at least one member
     const candidates = all
       .filter((team) => {
         const members = team.members ?? [];
@@ -97,7 +96,6 @@
       })
       .sort((a, b) => (b.avg_usage_total ?? 0) - (a.avg_usage_total ?? 0));
 
-    // Remove any team that is dominated by a higher-usage team differing by exactly 1 character
     const result: typeof candidates = [];
     for (const team of candidates) {
       const members = team.members ?? [];
@@ -106,8 +104,7 @@
           return false;
         const otherMembers = other.members ?? [];
         if (otherMembers.length !== 4) return false;
-        const shared = members.filter((m) => otherMembers.includes(m));
-        return shared.length === 3;
+        return members.filter((m) => otherMembers.includes(m)).length === 3;
       });
       if (!dominated) result.push(team);
       if (result.length === 3) break;
@@ -448,7 +445,7 @@
     {/if}
   {/if}
 
-  <!-- ── Top teams you don't have ─────────────────────────────────────── -->
+  <!-- ── Best teams you don't have ────────────────────────────────────── -->
   {#if topMissingTeams.length > 0}
     <section class="flex flex-col gap-3">
       <p class="text-xs tracking-widest uppercase text-(--intermediate-color)">
@@ -456,13 +453,13 @@
       </p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {#each topMissingTeams as { team, missingCharacters }, i}
+          {@const accent = rankAccent[i]}
           <div
             class="rounded-xl overflow-hidden flex flex-col"
             style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
           >
-            <div class="h-0.5" style="background: {rankAccent[i]};"></div>
+            <div class="h-0.5" style="background: {accent};"></div>
             <div class="p-3 flex flex-col gap-3">
-              <!-- Team grid -->
               <div class="grid grid-cols-4 gap-0.5">
                 {#each team.members ?? [] as member}
                   {@const isMissing = missingCharacters.includes(member)}
@@ -470,20 +467,18 @@
                     class="aspect-3/4 rounded-[5px] overflow-hidden relative"
                     style="background: var(--background-color);
                            {isMissing
-                      ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px; opacity: 0.7;`
+                      ? `outline: 1.5px solid ${accent}; outline-offset: -1.5px; opacity: 0.7;`
                       : ''}"
                   >
                     <CharacterIcon character={mapping.get(member)} />
                   </div>
                 {/each}
               </div>
-
-              <!-- Usage + missing -->
               <div class="flex flex-col gap-1">
                 <p class="text-xs text-(--faint-color)">
                   {(team.avg_usage_total ?? 0).toFixed(1)}% avg usage
                 </p>
-                <p class="text-xs" style="color: {rankAccent[i]};">
+                <p class="text-xs" style="color: {accent};">
                   missing: {missingCharacters.join(", ")}
                 </p>
               </div>
