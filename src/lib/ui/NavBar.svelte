@@ -42,10 +42,22 @@
     page.url.pathname;
     updateUnderline();
   });
+
+  let scrolled = $state(false);
+
+  $effect(() => {
+    const onScroll = () => {
+      scrolled = window.scrollY > 80;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  });
 </script>
 
 <nav
-  class="nav-bar w-full fixed top-0 z-10 flex items-center justify-between px-4 md:px-8 h-16"
+  class="nav-bar w-full pl-[10%] pr-[10%] fixed top-0 z-10 flex items-center justify-between h-16 border-none transition-colors duration-300 {scrolled
+    ? 'opaque-bg'
+    : 'bg-black/10'}"
 >
   <a
     href={homePath}
@@ -62,23 +74,22 @@
     <a
       href={teamsPath}
       class="nav-link"
-      aria-current={(page.url.pathname as string) === teamsPath ? "page" : undefined}
-      bind:this={navLinks.teams}
-      >Teams</a
+      aria-current={(page.url.pathname as string) === teamsPath
+        ? "page"
+        : undefined}
+      bind:this={navLinks.teams}>Teams</a
     >
     <a
       href={pullsPath}
       class="nav-link"
       aria-current={page.url.pathname === pullsPath ? "page" : undefined}
-      bind:this={navLinks.pulls}
-      >Pulls</a
+      bind:this={navLinks.pulls}>Pulls</a
     >
     <a
       href={settingsPath}
       class="nav-link"
       aria-current={page.url.pathname === settingsPath ? "page" : undefined}
-      bind:this={navLinks.settings}
-      >Settings</a
+      bind:this={navLinks.settings}>Settings</a
     >
 
     {#if underlineReady}
@@ -96,3 +107,39 @@
   </div>
 </nav>
 
+<style>
+  .nav-bar {
+    pointer-events: none;
+    transition: background-color 0.4s ease; /* Smooth transition */
+  }
+
+  .opaque-bg {
+    background: color-mix(in srgb, var(--background-color) 80%, black 19%);
+  }
+
+  .nav-logo {
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--secondary-color);
+    text-decoration: none;
+    pointer-events: auto;
+  }
+  .nav-link {
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid transparent;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
+    pointer-events: auto;
+  }
+  .nav-bar > div {
+    pointer-events: auto;
+  }
+  .nav-link:hover {
+    color: var(--secondary-color);
+  }
+  .nav-link[aria-current="page"] {
+    color: var(--secondary-color);
+  }
+</style>

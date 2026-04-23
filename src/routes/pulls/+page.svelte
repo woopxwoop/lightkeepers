@@ -120,7 +120,7 @@
   let debugVisible = import.meta.env.DEV;
 </script>
 
-<main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-8">
+<main class="w-[80%] pb-20 flex flex-col gap-8">
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-1">

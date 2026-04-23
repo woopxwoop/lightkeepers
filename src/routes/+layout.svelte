@@ -38,7 +38,12 @@
   />
 </svelte:head>
 
-<div class="w-full flex flex-col items-center">
+<div class="relative min-h-screen w-full flex flex-col items-center">
+  <div
+    class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+    style="background-image: url('/lightkeepers_dark.png')"
+  ></div>
+  <div class="fixed inset-0 -z-10 bg-black/80 backdrop-blur-xs"></div>
   <NavBar />
 
   <div class="h-12 w-full"></div>

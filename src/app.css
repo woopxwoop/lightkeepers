@@ -115,43 +115,6 @@ button:hover {
     background-color: var(--foreground-color);
   }
 
-  /* Nav */
-  .nav-bar {
-    background: color-mix(in srgb, var(--background-color) 80%, transparent);
-    border-bottom: 0.5px solid var(--surface-border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    pointer-events: none;
-  }
-  .nav-logo {
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    color: var(--secondary-color);
-    text-decoration: none;
-    pointer-events: auto;
-  }
-  .nav-link {
-    font-size: 13px;
-    color: var(--intermediate-color);
-    text-decoration: none;
-    padding-bottom: 2px;
-    border-bottom: 1.5px solid transparent;
-    transition:
-      color 0.15s,
-      border-color 0.15s;
-    pointer-events: auto;
-  }
-  .nav-bar > div {
-    pointer-events: auto;
-  }
-  .nav-link:hover {
-    color: var(--foreground-color);
-  }
-  .nav-link[aria-current="page"] {
-    color: var(--secondary-color);
-  }
-
   .slot-badge-inactive {
     background-color: var(--surface-border) !important;
     color: var(--intermediate-color) !important;

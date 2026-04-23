@@ -138,7 +138,7 @@
   );
 </script>
 
-<main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-6">
+<main class="w-[80%] pb-20 flex flex-col gap-6">
   <div class="flex items-center justify-between">
     <div class="flex flex-col gap-1">
       <h2 class="tracking-widest uppercase text-(--intermediate-color)">
@@ -328,7 +328,7 @@
     {/if}
 
     <div
-      class="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-3 pb-24"
+      class="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-2 md:gap-3 pb-24"
     >
       {#each visibleCharacters as character (character.id)}
         <button
