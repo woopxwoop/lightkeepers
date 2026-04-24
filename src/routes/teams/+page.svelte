@@ -1,21 +1,21 @@
 <script lang="ts">
-  import Team from "$lib/ui/components/Team.svelte";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import {
-    teamsOwned,
-    teamsOwnedStygian,
     allTeamsAbyss,
     allTeamsStygian,
     charactersOwned,
+    teamsOwned,
+    teamsOwnedStygian,
   } from "$lib/stores";
-  import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
   import {
-    solveAbyssWithFallback,
-    solveStygianWithFallback,
-    solveAbyss,
-    solveStygian,
     slotAffinityRate,
+    solveAbyss,
+    solveAbyssWithFallback,
+    solveStygian,
+    solveStygianWithFallback,
   } from "$lib/solver";
+  import { abyssSlotLabel, stygianSlotLabel } from "$lib/slotLabels";
+  import Team from "$lib/ui/components/Team.svelte";
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -29,11 +29,13 @@
 
   const SOLUTIONS_COUNT = 6;
 
-  // NOTE: These solver calls can be expensive when the team lists are large.
-  // Compute only what is currently visible so the UI stays responsive.
-  let abyssSolutions = $derived.by(() => {
-    if (activeMode !== "abyss") return [];
+  let abyssSolutions = $state<ReturnType<typeof solveAbyssWithFallback>>([]);
+  let stygianSolutions = $state<ReturnType<typeof solveStygianWithFallback>>([]);
+  let abyssNeedsCompute = $state(true);
+  let stygianNeedsCompute = $state(true);
+  let isComputing = $state(false);
 
+  function computeAbyssSolutions() {
     if (teamsMode === "roster") {
       return solveAbyssWithFallback(
         $teamsOwned,
@@ -43,29 +45,24 @@
       );
     }
 
-    // Meta: best global comps annotated with your missing chars
     return solveAbyss($allTeamsAbyss, SOLUTIONS_COUNT).map((sol) => ({
       ...sol,
       isFallback: false as const,
       assignments: sol.assignments.map((a) => ({
         ...a,
-        missingCharacters: (a.team.members ?? []).filter(
-          (m) => !ownedNames.has(m),
-        ),
+        missingCharacters: (a.team.members ?? []).filter((m: string) => !ownedNames.has(m)),
       })),
       neededCharacters: [
         ...new Set(
           sol.assignments.flatMap((a) =>
-            (a.team.members ?? []).filter((m) => !ownedNames.has(m)),
+            (a.team.members ?? []).filter((m: string) => !ownedNames.has(m)),
           ),
         ),
       ],
     }));
-  });
+  }
 
-  let stygianSolutions = $derived.by(() => {
-    if (activeMode !== "stygian") return [];
-
+  function computeStygianSolutions() {
     if (teamsMode === "roster") {
       return solveStygianWithFallback(
         $teamsOwnedStygian,
@@ -75,34 +72,70 @@
       );
     }
 
-    // Meta: best global comps annotated with your missing chars
     return solveStygian($allTeamsStygian, SOLUTIONS_COUNT).map((sol) => ({
       ...sol,
       isFallback: false as const,
       assignments: sol.assignments.map((a) => ({
         ...a,
-        missingCharacters: (a.team.members ?? []).filter(
-          (m) => !ownedNames.has(m),
-        ),
+        missingCharacters: (a.team.members ?? []).filter((m: string) => !ownedNames.has(m)),
       })),
       neededCharacters: [
         ...new Set(
           sol.assignments.flatMap((a) =>
-            (a.team.members ?? []).filter((m) => !ownedNames.has(m)),
+            (a.team.members ?? []).filter((m: string) => !ownedNames.has(m)),
           ),
         ),
       ],
     }));
+  }
+
+  async function computeActiveMode() {
+    if (isComputing) return;
+    isComputing = true;
+
+    // Let the button/loading state paint before heavy sync solver work begins.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    if (activeMode === "abyss") {
+      abyssSolutions = computeAbyssSolutions();
+      abyssNeedsCompute = false;
+    } else {
+      stygianSolutions = computeStygianSolutions();
+      stygianNeedsCompute = false;
+    }
+
+    isComputing = false;
+  }
+
+  // Mark recommendations stale when roster/static team data changes.
+  $effect(() => {
+    $teamsOwned;
+    $allTeamsAbyss;
+    ownedNames;
+    abyssNeedsCompute = true;
+  });
+
+  $effect(() => {
+    $teamsOwnedStygian;
+    $allTeamsStygian;
+    ownedNames;
+    stygianNeedsCompute = true;
+  });
+
+  // Switching between roster/meta means a different solve strategy.
+  $effect(() => {
+    teamsMode;
+    abyssNeedsCompute = true;
+    stygianNeedsCompute = true;
   });
 
   let abyssActiveSlots: string[] = $state([]);
   let stygianActiveSlots: string[] = $state([]);
 
   $effect(() => {
-    abyssActiveSlots = abyssSolutions.map(
-      (s) => s.assignments[0]?.slot ?? "top",
-    );
+    abyssActiveSlots = abyssSolutions.map((s) => s.assignments[0]?.slot ?? "top");
   });
+
   $effect(() => {
     stygianActiveSlots = stygianSolutions.map(
       (s) => s.assignments[0]?.slot ?? "top",
@@ -113,6 +146,13 @@
     activeMode === "abyss"
       ? $teamsOwned.length === 0 && $allTeamsAbyss.length === 0
       : $teamsOwnedStygian.length === 0 && $allTeamsStygian.length === 0,
+  );
+
+  let activeSolutions = $derived(
+    activeMode === "abyss" ? abyssSolutions : stygianSolutions,
+  );
+  let activeNeedsCompute = $derived(
+    activeMode === "abyss" ? abyssNeedsCompute : stygianNeedsCompute,
   );
 </script>
 
@@ -173,10 +213,49 @@
     </div>
   </div>
 
+  <div
+    class="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
+    style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+  >
+    <p class="text-xs text-(--intermediate-color)">
+      {#if isComputing}
+        Calculating {activeMode} recommendations…
+      {:else if activeNeedsCompute}
+        Recommendations are stale. Recompute when you're ready.
+      {:else}
+        Recommendations are up to date.
+      {/if}
+    </p>
+    <button
+      class="px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity"
+      disabled={isComputing || loading}
+      style="background: color-mix(in srgb, var(--secondary-color) 12%, transparent);
+             border: 0.5px solid color-mix(in srgb, var(--secondary-color) 35%, transparent);
+             color: var(--secondary-color);
+             opacity: {isComputing || loading ? '0.55' : '1'};
+             cursor: {isComputing || loading ? 'default' : 'pointer'};"
+      onclick={computeActiveMode}
+    >
+      {isComputing
+        ? "Computing…"
+        : activeNeedsCompute
+          ? `Compute ${activeMode} teams`
+          : `Recompute ${activeMode} teams`}
+    </button>
+  </div>
+
   {#if loading}
     <p class="text-(--intermediate-color)">Loading teams…</p>
+  {:else if activeSolutions.length === 0 && activeNeedsCompute}
+    <div
+      class="rounded-2xl p-6 text-center"
+      style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+    >
+      <p class="text-(--intermediate-color)">
+        Compute recommendations to view your {activeMode} teams.
+      </p>
+    </div>
   {:else if activeMode === "abyss"}
-    <!-- Abyss recommendations -->
     {#if abyssSolutions[0]?.isFallback}
       {@const needed = abyssSolutions[0].neededCharacters}
       <div class="flex flex-col gap-2">
@@ -226,18 +305,14 @@
           {#each solution.assignments as { team, slot }}
             <div class="flex items-center gap-2">
               <span
-                class="slot-badge slot-badge-{slot === 'top'
-                  ? 1
-                  : 3} hidden md:inline-block"
+                class="slot-badge slot-badge-{slot === 'top' ? 1 : 3} hidden md:inline-block"
               >
                 {abyssSlotLabel[slot]}
               </span>
               <button
                 class="slot-badge md:hidden transition-colors"
-                class:slot-badge-1={slot === "top" &&
-                  abyssActiveSlots[i] === slot}
-                class:slot-badge-3={slot === "bottom" &&
-                  abyssActiveSlots[i] === slot}
+                class:slot-badge-1={slot === "top" && abyssActiveSlots[i] === slot}
+                class:slot-badge-3={slot === "bottom" && abyssActiveSlots[i] === slot}
                 style={abyssActiveSlots[i] !== slot
                   ? "background: color-mix(in srgb, var(--secondary-color) 5%, transparent); color: color-mix(in srgb, var(--secondary-color) 40%, transparent);"
                   : ""}
@@ -248,9 +323,8 @@
                 {abyssSlotLabel[slot]}
               </button>
               <span class="text-xs text-(--faint-color) hidden md:inline">
-                {(
-                  (team.usage_total ?? 0) * slotAffinityRate(team, slot)
-                ).toFixed(2)}% usage
+                {((team.usage_total ?? 0) * slotAffinityRate(team, slot)).toFixed(2)}%
+                usage
               </span>
             </div>
           {/each}
@@ -266,7 +340,6 @@
       </div>
     {/each}
   {:else}
-    <!-- Stygian recommendations -->
     {#if stygianSolutions[0]?.isFallback}
       {@const needed = stygianSolutions[0].neededCharacters}
       <div class="flex flex-col gap-2">
@@ -326,8 +399,7 @@
               </span>
               <button
                 class="slot-badge lg:hidden transition-colors"
-                class:slot-badge-1={slot === "top" &&
-                  stygianActiveSlots[i] === slot}
+                class:slot-badge-1={slot === "top" && stygianActiveSlots[i] === slot}
                 class:slot-badge-2={slot === "middle" &&
                   stygianActiveSlots[i] === slot}
                 class:slot-badge-3={slot === "bottom" &&
@@ -342,9 +414,8 @@
                 {stygianSlotLabel[slot]}
               </button>
               <span class="text-xs text-(--faint-color) hidden lg:inline">
-                {(
-                  (team.usage_total ?? 0) * slotAffinityRate(team, slot)
-                ).toFixed(2)}% usage
+                {((team.usage_total ?? 0) * slotAffinityRate(team, slot)).toFixed(2)}%
+                usage
               </span>
             </div>
           {/each}
