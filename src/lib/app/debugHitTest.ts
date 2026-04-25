@@ -7,25 +7,39 @@ type DebugWindow = Window & {
 };
 
 function attachHitTestLogging(): () => void {
-  const clickHandler = (event: MouseEvent) => {
+  const logEvent = (event: MouseEvent | PointerEvent) => {
     const target = event.target as Element | null;
     const elementAtPoint = document.elementFromPoint(event.clientX, event.clientY);
 
     console.log("[LK HITTEST]", {
+      type: event.type,
       x: event.clientX,
       y: event.clientY,
+      button: event.button,
+      buttons: event.buttons,
+      defaultPrevented: event.defaultPrevented,
+      pointerType: event instanceof PointerEvent ? event.pointerType : null,
       target,
       elementAtPoint,
       targetPath: target?.closest("[class]")?.className ?? null,
       atPointPath: elementAtPoint?.closest("[class]")?.className ?? null,
+      activeRoute: location.pathname,
     });
   };
 
-  document.addEventListener("click", clickHandler, true);
+  const errorHandler = (event: ErrorEvent) => {
+    console.error("[LK HITTEST ERROR]", event.error ?? event.message);
+  };
+
+  document.addEventListener("pointerdown", logEvent, true);
+  document.addEventListener("click", logEvent, true);
+  window.addEventListener("error", errorHandler);
   console.info("[LK HITTEST] enabled");
 
   return () => {
-    document.removeEventListener("click", clickHandler, true);
+    document.removeEventListener("pointerdown", logEvent, true);
+    document.removeEventListener("click", logEvent, true);
+    window.removeEventListener("error", errorHandler);
     console.info("[LK HITTEST] disabled");
   };
 }
@@ -73,4 +87,3 @@ export function installDebugHitTest(): () => void {
     detach = null;
   };
 }
-

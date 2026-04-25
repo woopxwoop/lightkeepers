@@ -26,5 +26,10 @@ vite.config.ts.timestamp-*
 .claude
 DOCKER.md
 cache
+CLAUDE.md
+AGENTS.md
+
 # Sentry Config File
 .env.sentry-build-plugin
+
+*.*.log

@@ -34,5 +34,10 @@ export const load: LayoutLoad = ({ data }) => {
     stygianVersionNumber: data.stygianVersionNumber as number,
     allTeamsAbyss: data.allTeamsAbyss as AbyssTeam[],
     allTeamsStygian: data.allTeamsStygian as StygianTeam[],
+    stygianEnemies: data.stygianEnemies as {
+      top: Tables<"enemies"> | null;
+      middle: Tables<"enemies"> | null;
+      bottom: Tables<"enemies"> | null;
+    },
   };
 };

@@ -73,6 +73,17 @@ body {
     color 0.3s;
 }
 
+@keyframes flip-in {
+  from {
+    transform: rotateY(-90deg);
+    opacity: 0;
+  }
+  to {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
 @keyframes slide-up {
   from {
     opacity: 0;

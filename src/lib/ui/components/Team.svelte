@@ -18,12 +18,13 @@
   let missingSet = $derived(new Set(missingCharacters));
 </script>
 
-<div class="grid grid-cols-4 gap-0.75">
-  {#each team.members as member}
+<div class="grid grid-cols-4 gap-0.75" style="perspective: 600px;">
+  {#each team.members as member, idx}
     {@const isMissing = missingSet.has(member)}
     <div
       class="relative rounded-lg overflow-hidden bg-(--surface-color)"
-      style="aspect-ratio: 3/4;
+      style="aspect-ratio: 3/4; animation: flip-in 0.35s ease-out both; animation-delay: {idx *
+        60}ms;
              {isMissing
         ? 'opacity: 0.6; outline: 1.5px dashed color-mix(in srgb, var(--secondary-color) 55%, transparent); outline-offset: -1.5px;'
         : ''}"
@@ -45,4 +46,3 @@
     </div>
   {/each}
 </div>
-

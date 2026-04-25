@@ -4,13 +4,15 @@
   import { tick } from "svelte";
 
   const homePath = resolve("/");
-  const teamsPath = "/teams";
+  const abyssPath = resolve("/abyss");
+  const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
   const settingsPath = resolve("/settings");
 
   // ── Sliding underline ──────────────────────────────────────────────────
   let navLinks: Record<string, HTMLElement | null> = {
-    teams: null,
+    abyss: null,
+    stygian: null,
     pulls: null,
     settings: null,
   };
@@ -18,6 +20,7 @@
   let underlineLeft = $state(0);
   let underlineWidth = $state(0);
   let underlineReady = $state(false);
+  let underlineFrame = 0;
 
   async function updateUnderline() {
     await tick();
@@ -43,11 +46,39 @@
     updateUnderline();
   });
 
+  function scheduleUnderlineUpdate() {
+    if (underlineFrame) cancelAnimationFrame(underlineFrame);
+    underlineFrame = requestAnimationFrame(() => {
+      underlineFrame = 0;
+      updateUnderline();
+    });
+  }
+
+  $effect(() => {
+    if (!linksContainer) return;
+
+    const observer = new ResizeObserver(scheduleUnderlineUpdate);
+    observer.observe(linksContainer);
+
+    const onResize = () => scheduleUnderlineUpdate();
+    window.addEventListener("resize", onResize, { passive: true });
+    scheduleUnderlineUpdate();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", onResize);
+      if (underlineFrame) {
+        cancelAnimationFrame(underlineFrame);
+        underlineFrame = 0;
+      }
+    };
+  });
+
   let scrolled = $state(false);
 
   $effect(() => {
     const onScroll = () => {
-      scrolled = window.scrollY > 80;
+      scrolled = window.scrollY > 30;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -72,12 +103,16 @@
     bind:this={linksContainer}
   >
     <a
-      href={teamsPath}
+      href={abyssPath}
       class="nav-link"
-      aria-current={(page.url.pathname as string) === teamsPath
-        ? "page"
-        : undefined}
-      bind:this={navLinks.teams}>Teams</a
+      aria-current={page.url.pathname === abyssPath ? "page" : undefined}
+      bind:this={navLinks.abyss}>Abyss</a
+    >
+    <a
+      href={stygianPath}
+      class="nav-link"
+      aria-current={page.url.pathname === stygianPath ? "page" : undefined}
+      bind:this={navLinks.stygian}>Stygian</a
     >
     <a
       href={pullsPath}

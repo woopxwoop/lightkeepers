@@ -23,12 +23,20 @@ import type { Tables } from "$lib/types/database.types";
 
 type Version = Tables<"versions">;
 type StygianVersion = Tables<"stygian_versions">;
+type Enemy = Tables<"enemies">;
+
+type StygianEnemies = {
+  top: Enemy | null;
+  middle: Enemy | null;
+  bottom: Enemy | null;
+};
 
 type StaticPayload = {
   latestAbyssVersion: Version;
   latestStygianVersion: StygianVersion;
   allTeamsAbyss: unknown[];
   allTeamsStygian: unknown[];
+  stygianEnemies: StygianEnemies;
 };
 
 // Single-entry cache — we only ever need the most recent fetch.
@@ -53,9 +61,14 @@ async function fetchStaticData(): Promise<StaticPayload> {
     version: "unknown",
     version_number: -1,
   };
+
   const latestStygianVersion: StygianVersion = stygianVerRes.data?.[0] ?? {
     version: "unknown",
     version_number: -1,
+    schedule_id: null,
+    enemy_id_1: null,
+    enemy_id_2: null,
+    enemy_id_3: null,
   };
 
   // Fetch all teams + ranked combinations in parallel
@@ -70,11 +83,33 @@ async function fetchStaticData(): Promise<StaticPayload> {
     }),
   ]);
 
+  const enemyIds = [
+    latestStygianVersion.enemy_id_1,
+    latestStygianVersion.enemy_id_2,
+    latestStygianVersion.enemy_id_3,
+  ].filter((id): id is number => id !== null);
+
+  const enemiesRes =
+    enemyIds.length > 0
+      ? await serverDb.from("enemies").select("*").in("id", enemyIds)
+      : { data: [] };
+
+  const enemyMap = new Map(
+    (enemiesRes.data ?? []).map((e: Enemy) => [e.id, e]),
+  );
+
+  const stygianEnemies: StygianEnemies = {
+    top: enemyMap.get(latestStygianVersion.enemy_id_1 ?? -1) ?? null,
+    middle: enemyMap.get(latestStygianVersion.enemy_id_2 ?? -1) ?? null,
+    bottom: enemyMap.get(latestStygianVersion.enemy_id_3 ?? -1) ?? null,
+  };
+
   return {
     latestAbyssVersion,
     latestStygianVersion,
     allTeamsAbyss: abyssTeamsRes.data ?? [],
     allTeamsStygian: stygianTeamsRes.data ?? [],
+    stygianEnemies,
   };
 }
 

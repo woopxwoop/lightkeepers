@@ -47,5 +47,10 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
     // without making an extra network request on first load.
     allTeamsAbyss: staticData?.allTeamsAbyss ?? [],
     allTeamsStygian: staticData?.allTeamsStygian ?? [],
+    stygianEnemies: staticData?.stygianEnemies ?? {
+      top: null,
+      middle: null,
+      bottom: null,
+    },
   };
 };

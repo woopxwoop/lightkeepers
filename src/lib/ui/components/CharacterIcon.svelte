@@ -37,7 +37,7 @@
   .icon-container-coop img {
     transform-origin: 50% 15%;
     object-position: center 30%;
-    transform: scale(1.8);
+    transform: scale(2);
   }
 
   .icon-container-coop {
