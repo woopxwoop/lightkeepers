@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { fly, fade } from "svelte/transition";
 
   const homePath = resolve("/");
@@ -97,10 +97,12 @@
 
   $effect(() => {
     page.url.pathname;
-    if (mobileOpen) {
-      closedByNavigation = true;
-      mobileOpen = false;
-    }
+    untrack(() => {
+      if (mobileOpen) {
+        closedByNavigation = true;
+        mobileOpen = false;
+      }
+    });
   });
 
   $effect(() => {
