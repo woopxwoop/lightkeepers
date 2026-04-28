@@ -87,6 +87,11 @@
 
   // ── Mobile drawer ──────────────────────────────────────────────────────
   let mobileOpen = $state(false);
+  let drawerEl: HTMLElement | null = $state(null);
+  let hamburgerEl: HTMLButtonElement | null = $state(null);
+  // Tracks whether the drawer was previously open so focus is only restored
+  // after a real close, not on the initial render where mobileOpen is false.
+  let drawerWasOpen = false;
 
   $effect(() => {
     page.url.pathname;
@@ -98,6 +103,49 @@
     return () => {
       document.body.style.overflow = "";
     };
+  });
+
+  $effect(() => {
+    if (mobileOpen) {
+      drawerWasOpen = true;
+
+      // Move focus to the first link once the drawer is in the DOM.
+      tick().then(() => {
+        drawerEl?.querySelector<HTMLElement>("a[href]")?.focus();
+      });
+
+      function onKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") {
+          mobileOpen = false;
+          return;
+        }
+        if (e.key !== "Tab" || !drawerEl) return;
+
+        const focusable = Array.from(
+          drawerEl.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (focusable.length < 2) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+
+      window.addEventListener("keydown", onKeydown);
+      return () => window.removeEventListener("keydown", onKeydown);
+    } else if (drawerWasOpen) {
+      drawerWasOpen = false;
+      hamburgerEl?.focus();
+    }
   });
 </script>
 
@@ -163,6 +211,7 @@
     class="hamburger md:hidden"
     aria-label={mobileOpen ? "Close menu" : "Open menu"}
     aria-expanded={mobileOpen}
+    bind:this={hamburgerEl}
     onclick={() => (mobileOpen = !mobileOpen)}
   >
     <span class="bar" class:open={mobileOpen}></span>
@@ -183,10 +232,13 @@
 
 <!-- Side drawer -->
 {#if mobileOpen}
-  <aside
+  <div
     class="drawer fixed top-0 right-0 h-full z-50 flex flex-col pt-24 px-8 gap-8"
-    transition:fly={{ x: 280, duration: 260 }}
+    role="dialog"
+    aria-modal="true"
     aria-label="Navigation menu"
+    bind:this={drawerEl}
+    transition:fly={{ x: 280, duration: 260 }}
   >
     <a
       href={abyssPath}
@@ -212,7 +264,7 @@
       aria-current={page.url.pathname === settingsPath ? "page" : undefined}
       >Settings</a
     >
-  </aside>
+  </div>
 {/if}
 
 <style>
@@ -297,7 +349,7 @@
 
   /* ── Drawer ── */
   .drawer {
-    width: min(280px, 30vw);
+    width: min(240px, 80vw);
     background: color-mix(in srgb, var(--background-color) 97%, transparent);
     backdrop-filter: blur(16px);
     border-left: 1px solid color-mix(in srgb, var(--accent-1) 25%, transparent);

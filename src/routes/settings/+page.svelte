@@ -230,6 +230,7 @@
                     <button
                       type="button"
                       onclick={() => (filtersOpen = !filtersOpen)}
+                      aria-expanded={filtersOpen}
                       class="flex items-center gap-1.5 text-xs py-2 shrink-0 transition-opacity hover:opacity-75"
                       style={isFiltered
                         ? "color: var(--accent-1);"
@@ -257,6 +258,7 @@
                     <input
                       type="text"
                       placeholder="Search characters..."
+                      aria-label="Search characters"
                       bind:value={search}
                       class="flex-1 text-xs py-2 bg-transparent outline-none"
                       style="color: var(--foreground-color);"
@@ -277,6 +279,7 @@
                               type="button"
                               class="filter-chip"
                               class:is-selected={elementFilter.has(el)}
+                              aria-pressed={elementFilter.has(el)}
                               onclick={() =>
                                 (elementFilter = toggleFilter(
                                   elementFilter,
@@ -297,6 +300,7 @@
                               type="button"
                               class="filter-chip"
                               class:is-selected={rarityFilter.has(val)}
+                              aria-pressed={rarityFilter.has(val)}
                               onclick={() =>
                                 (rarityFilter = toggleFilter(
                                   rarityFilter,
@@ -317,6 +321,7 @@
                               type="button"
                               class="filter-chip"
                               class:is-selected={weaponFilter.has(wt)}
+                              aria-pressed={weaponFilter.has(wt)}
                               onclick={() =>
                                 (weaponFilter = toggleFilter(weaponFilter, wt))}
                             >
@@ -388,6 +393,8 @@
                     <button
                       type="button"
                       onclick={() => toggleOwned(character.id)}
+                      aria-pressed={character.isOwned}
+                      aria-label="{character.name}, {character.isOwned ? 'owned' : 'not owned'}"
                       class="cursor-pointer rounded-lg w-full h-fit overflow-hidden relative transition-all duration-75 character-icon-button"
                       style="border: 2px solid var(--foreground-color); opacity: {character.isOwned
                         ? '1'
