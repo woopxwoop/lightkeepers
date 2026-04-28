@@ -18,9 +18,21 @@
   let mapping = $derived(data.mapping);
   let enemies = $derived(
     data.stygianEnemies as {
-      top: { id: number; lunaris_asset: string | null; name: string | null } | null;
-      middle: { id: number; lunaris_asset: string | null; name: string | null } | null;
-      bottom: { id: number; lunaris_asset: string | null; name: string | null } | null;
+      top: {
+        id: number;
+        lunaris_asset: string | null;
+        name: string | null;
+      } | null;
+      middle: {
+        id: number;
+        lunaris_asset: string | null;
+        name: string | null;
+      } | null;
+      bottom: {
+        id: number;
+        lunaris_asset: string | null;
+        name: string | null;
+      } | null;
     },
   );
 
@@ -182,15 +194,19 @@
         ></div>
       {:else}
         <div class="w-full h-full flex items-center justify-center">
-          <span class="text-xs" style="color: var(--foreground-mid);">No enemy image</span>
+          <span class="text-xs" style="color: var(--foreground-mid);"
+            >No enemy image</span
+          >
         </div>
       {/if}
-
     </div>
 
     <!-- Team content -->
     <div class="p-4 flex flex-col gap-3">
-      <p class="text-xs uppercase tracking-widest" style="color: var(--foreground-mid);">
+      <p
+        class="text-xs uppercase tracking-widest"
+        style="color: var(--foreground-mid);"
+      >
         {enemy?.name ?? stygianSlotLabel[slot]}
       </p>
 
@@ -235,7 +251,10 @@
 <main class="w-[80%] pb-20 flex flex-col gap-6">
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="flex items-center justify-between gap-4 flex-wrap">
-    <h2 class="tracking-widest uppercase" style="color: var(--foreground-color);">
+    <h2
+      class="tracking-widest uppercase"
+      style="color: var(--foreground-color);"
+    >
       Stygian Onslaught
     </h2>
 
@@ -265,7 +284,7 @@
   <div
     role="tablist"
     aria-label="Stygian field"
-    class="relative z-[1] lg:hidden flex rounded-xl overflow-hidden"
+    class="relative z-1 lg:hidden flex rounded-xl overflow-hidden"
     style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
   >
     <span
@@ -288,7 +307,7 @@
           handlePointerAction(event, () => setActiveSlot(slotIndex))}
         onclick={(event) =>
           handleKeyboardClick(event, () => setActiveSlot(slotIndex))}
-        class="relative z-[1] flex-1 py-2.5 text-xs font-medium transition-colors pointer-events-auto touch-manipulation"
+        class="relative z-1 flex-1 py-2.5 text-xs font-medium transition-colors pointer-events-auto touch-manipulation"
         style="color: {activeSlot === slot ? accent : 'var(--foreground-mid)'};"
       >
         {stygianSlotLabel[slot]}
