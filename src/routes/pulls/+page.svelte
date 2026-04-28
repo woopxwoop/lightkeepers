@@ -136,10 +136,9 @@
       </div>
       <div
         class="text-xs px-2 py-1 rounded font-mono"
-        style="background: color-mix(in srgb, darkred 40%, transparent); color: #fca5a5; display: {import.meta
-          .env.DEV
-          ? 'block'
-          : 'none'};"
+        class:pulls-debug-visible={import.meta.env.DEV}
+        class:pulls-debug-hidden={!import.meta.env.DEV}
+        style="background: color-mix(in srgb, darkred 40%, transparent); color: #fca5a5;"
       >
         <div>ready: {nearMissReady}</div>
         <div>single: {$nearMissStygianLoaded}</div>
@@ -168,12 +167,11 @@
       <button
         onclick={calculate}
         disabled={!nearMissReady}
-        class="px-6 py-2.5 rounded-lg font-medium transition-opacity"
+        class="calculate-button px-6 py-2.5 rounded-lg font-medium transition-opacity"
+        class:calculate-button-disabled={!nearMissReady}
         style="background: color-mix(in srgb, var(--accent-1) 10%, transparent);
                border: 0.5px solid color-mix(in srgb, var(--accent-1) 35%, transparent);
-               color: var(--accent-1);
-               opacity: {nearMissReady ? '1' : '0.45'};
-               cursor: {nearMissReady ? 'pointer' : 'default'};"
+           color: var(--accent-1);"
       >
         {nearMissReady ? "Calculate suggestions" : "Loading data…"}
       </button>
@@ -208,7 +206,7 @@
               class="rounded-xl overflow-hidden flex flex-col"
               style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
             >
-              <div class="h-[2px]" style="background: {rankAccent[i]};"></div>
+              <div class="h-0.5" style="background: {rankAccent[i]};"></div>
               <div class="p-3 flex flex-col gap-3">
                 <!-- Portrait + name -->
                 <div class="flex items-center gap-3">
@@ -237,7 +235,7 @@
                 <!-- Bar -->
                 <div class="flex items-center gap-2">
                   <div
-                    class="flex-1 h-[4px] rounded-full overflow-hidden"
+                    class="flex-1 h-1 rounded-full overflow-hidden"
                     style="background: var(--background-color);"
                   >
                     <div
@@ -264,14 +262,12 @@
                     <p class="text-xs" style="color: var(--foreground-mid);">
                       currently running
                     </p>
-                    <div class="grid grid-cols-4 gap-[2px] opacity-50">
+                    <div class="grid grid-cols-4 gap-0.5 opacity-50">
                       {#each aligned.currentAligned as member, j}
                         <div
-                          class="rounded-[5px] overflow-hidden relative"
-                          style="background: var(--background-color);
-                                 {j === 3
-                            ? 'outline: 1px solid var(--foreground-mid);'
-                            : ''}"
+                          class="team-slot rounded-[5px] overflow-hidden relative"
+                          class:team-slot-current-highlight={j === 3}
+                          style="background: var(--background-color);"
                         >
                           <CharacterIcon character={mapping.get(member)} />
                         </div>
@@ -285,14 +281,14 @@
                     </p>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <div class="grid grid-cols-4 gap-[2px]">
+                    <div class="grid grid-cols-4 gap-0.5">
                       {#each aligned.bestAligned as member, j}
                         <div
-                          class="rounded-[5px] overflow-hidden relative"
-                          style="background: var(--background-color);
-                                 {j === 3
-                            ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1px;`
-                            : ''}"
+                          class="team-slot rounded-[5px] overflow-hidden relative"
+                          class:team-slot-best-highlight={j === 3}
+                          style="background: var(--background-color); --team-slot-accent: {rankAccent[
+                            i
+                          ]};"
                         >
                           <CharacterIcon character={mapping.get(member)} />
                         </div>
@@ -305,7 +301,7 @@
                   </div>
                 {:else}
                   <div class="flex flex-col gap-1.5">
-                    <div class="grid grid-cols-4 gap-[2px]">
+                    <div class="grid grid-cols-4 gap-0.5">
                       {#each suggestion.bestTeam.members ?? [] as member}
                         <div
                           class="rounded-[5px] overflow-hidden relative"
@@ -350,7 +346,7 @@
               class="rounded-xl overflow-hidden flex flex-col"
               style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
             >
-              <div class="h-[2px]" style="background: {rankAccent[i]};"></div>
+              <div class="h-0.5" style="background: {rankAccent[i]};"></div>
               <div class="p-3 flex flex-col gap-3">
                 <!-- Two portraits + name -->
                 <div class="flex items-center gap-2">
@@ -395,7 +391,7 @@
                 <!-- Bar driven by avg usage -->
                 <div class="flex items-center gap-2">
                   <div
-                    class="flex-1 h-[4px] rounded-full overflow-hidden"
+                    class="flex-1 h-1 rounded-full overflow-hidden"
                     style="background: var(--background-color);"
                   >
                     <div
@@ -416,17 +412,17 @@
                   <p class="text-xs" style="color: var(--foreground-mid);">
                     best unlocked team
                   </p>
-                  <div class="grid grid-cols-4 gap-[2px]">
+                  <div class="grid grid-cols-4 gap-0.5">
                     {#each suggestion.bestTeam.members ?? [] as member}
                       {@const isMissing =
                         member === suggestion.charA ||
                         member === suggestion.charB}
                       <div
-                        class="rounded-[5px] overflow-hidden relative"
-                        style="background: var(--background-color);
-                               {isMissing
-                          ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1px;`
-                          : ''}"
+                        class="team-slot rounded-[5px] overflow-hidden relative"
+                        class:team-slot-best-highlight={isMissing}
+                        style="background: var(--background-color); --team-slot-accent: {rankAccent[
+                          i
+                        ]};"
                       >
                         <CharacterIcon character={mapping.get(member)} />
                       </div>
@@ -466,11 +462,9 @@
                 {#each team.members ?? [] as member}
                   {@const isMissing = missingCharacters.includes(member)}
                   <div
-                    class="rounded-[5px] overflow-hidden relative"
-                    style="background: var(--background-color);
-                           {isMissing
-                      ? `outline: 1.5px solid ${accent}; outline-offset: -1px; opacity: 0.33;`
-                      : ''}"
+                    class="team-slot rounded-[5px] overflow-hidden relative"
+                    class:team-slot-missing={isMissing}
+                    style="background: var(--background-color); --team-slot-accent: {accent};"
                   >
                     <CharacterIcon character={mapping.get(member)} />
                   </div>
@@ -491,3 +485,34 @@
     </section>
   {/if}
 </main>
+
+<style>
+  .pulls-debug-hidden {
+    display: none;
+  }
+
+  .pulls-debug-visible {
+    display: block;
+  }
+
+  .calculate-button-disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .team-slot-current-highlight {
+    outline: 1px solid var(--foreground-mid);
+    outline-offset: -1px;
+  }
+
+  .team-slot-best-highlight {
+    outline: 1.5px solid var(--team-slot-accent);
+    outline-offset: -1px;
+  }
+
+  .team-slot-missing {
+    outline: 1.5px solid var(--team-slot-accent);
+    outline-offset: -1px;
+    opacity: 0.33;
+  }
+</style>

@@ -232,10 +232,8 @@
                       type="button"
                       onclick={() => (filtersOpen = !filtersOpen)}
                       aria-expanded={filtersOpen}
-                      class="flex items-center gap-1.5 text-xs py-2 shrink-0 transition-opacity hover:opacity-75"
-                      style={isFiltered
-                        ? "color: var(--accent-1);"
-                        : "color: var(--foreground-mid);"}
+                      class="settings-filter-button flex items-center gap-1.5 text-xs py-2 shrink-0 transition-opacity hover:opacity-75"
+                      class:settings-filter-button-active={isFiltered}
                     >
                       <svg
                         width="13"
@@ -395,7 +393,9 @@
                       type="button"
                       onclick={() => toggleOwned(character.id)}
                       aria-pressed={character.isOwned}
-                      aria-label="{character.name}, {character.isOwned ? 'owned' : 'not owned'}"
+                      aria-label="{character.name}, {character.isOwned
+                        ? 'owned'
+                        : 'not owned'}"
                       class="cursor-pointer rounded-lg w-full h-fit overflow-hidden relative transition-all duration-75 character-icon-button"
                       style="border: 2px solid var(--foreground-color); opacity: {character.isOwned
                         ? '1'
@@ -422,7 +422,7 @@
             </div>
           {:else if activeSection === "sync"}
             <div
-              class="settings-panel p-6 min-h-[340px] flex flex-col justify-between"
+              class="settings-panel settings-sync-panel p-6 flex flex-col justify-between"
             >
               <div class="flex flex-col gap-3 max-w-xl">
                 <span class="panel-kicker">Upcoming</span>
@@ -582,6 +582,10 @@
       inset 0 -1px 0 color-mix(in srgb, black 18%, transparent);
   }
 
+  .settings-sync-panel {
+    min-height: 340px;
+  }
+
   .settings-panel h3 {
     font-size: 1rem;
     line-height: 1.3;
@@ -642,6 +646,14 @@
     color: var(--accent-1);
     border-color: color-mix(in srgb, var(--accent-1) 40%, transparent);
     background: color-mix(in srgb, var(--accent-1) 15%, transparent);
+  }
+
+  .settings-filter-button {
+    color: var(--foreground-mid);
+  }
+
+  .settings-filter-button-active {
+    color: var(--accent-1);
   }
 
   .secondary-action {

@@ -269,10 +269,8 @@
             handlePointerAction(event, () => setTeamsMode(mode))}
           onclick={(event) =>
             handleKeyboardClick(event, () => setTeamsMode(mode))}
-          class="px-3 py-1.5 text-xs capitalize transition-colors"
-          style={teamsMode === mode
-            ? "background: color-mix(in srgb, var(--accent-1) 12%, var(--background-mid)); color: var(--accent-1);"
-            : "background: var(--background-mid); color: var(--foreground-mid);"}
+          class="mode-button px-3 py-1.5 text-xs capitalize transition-colors"
+          class:mode-button-active={teamsMode === mode}
         >
           {mode}
         </button>
@@ -296,7 +294,6 @@
       style="left: {activeSlotLeft}; width: calc(100% / {SLOTS.length}); background: {activeSlotAccent};"
     ></span>
     {#each SLOTS as slot, slotIndex (slot)}
-      {@const accent = slotAccent[slot]}
       <button
         type="button"
         role="tab"
@@ -307,8 +304,8 @@
           handlePointerAction(event, () => setActiveSlot(slotIndex))}
         onclick={(event) =>
           handleKeyboardClick(event, () => setActiveSlot(slotIndex))}
-        class="relative z-1 flex-1 py-2.5 text-xs font-medium transition-colors pointer-events-auto touch-manipulation"
-        style="color: {activeSlot === slot ? accent : 'var(--foreground-mid)'};"
+        class="slot-tab relative z-1 flex-1 py-2.5 text-xs font-medium transition-colors pointer-events-auto touch-manipulation"
+        class:slot-tab-active={activeSlot === slot}
       >
         {stygianSlotLabel[slot]}
       </button>
@@ -329,10 +326,8 @@
           class="w-6 h-6 flex items-center justify-center"
         >
           <span
-            class="rounded-full block transition-all duration-150"
-            style={safeIndex === i
-              ? "width: 7px; height: 7px; background: var(--accent-1);"
-              : "width: 5px; height: 5px; background: var(--foreground-mid); opacity: 0.6;"}
+            class="solution-dot rounded-full block transition-all duration-150"
+            class:solution-dot-active={safeIndex === i}
           ></span>
         </button>
       {/each}
@@ -367,3 +362,37 @@
     {/if}
   {/if}
 </main>
+
+<style>
+  .mode-button {
+    background: var(--background-mid);
+    color: var(--foreground-mid);
+  }
+
+  .mode-button-active {
+    background: color-mix(in srgb, var(--accent-1) 12%, var(--background-mid));
+    color: var(--accent-1);
+  }
+
+  .slot-tab {
+    color: var(--foreground-mid);
+  }
+
+  .slot-tab-active {
+    color: var(--accent-1);
+  }
+
+  .solution-dot {
+    width: 5px;
+    height: 5px;
+    background: var(--foreground-mid);
+    opacity: 0.6;
+  }
+
+  .solution-dot-active {
+    width: 7px;
+    height: 7px;
+    background: var(--accent-1);
+    opacity: 1;
+  }
+</style>
