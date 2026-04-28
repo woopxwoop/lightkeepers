@@ -219,266 +219,277 @@
     <section class="min-w-0">
       {#key activeSection}
         <div in:fly={{ y: 6, duration: 180 }}>
-        {#if activeSection === "roster"}
-          <div class="flex flex-col gap-4">
-            {#if synced}
-              <div class="flex flex-col gap-0">
-                <div
-                  class="flex items-center gap-2 rounded-lg px-3"
-                  style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-                >
-                  <button
-                    type="button"
-                    onclick={() => (filtersOpen = !filtersOpen)}
-                    class="flex items-center gap-1.5 text-xs py-2 shrink-0 transition-opacity hover:opacity-75"
-                    style={isFiltered
-                      ? "color: var(--accent-1);"
-                      : "color: var(--foreground-mid);"}
-                  >
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <polygon
-                        points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
-                      />
-                    </svg>
-                    Filter
-                  </button>
+          {#if activeSection === "roster"}
+            <div class="flex flex-col gap-4">
+              {#if synced}
+                <div class="flex flex-col gap-0">
                   <div
-                    style="width: 0.5px; height: 16px; background: color-mix(in srgb, var(--accent-1) 22%, transparent);"
-                  ></div>
-                  <input
-                    type="text"
-                    placeholder="Search characters..."
-                    bind:value={search}
-                    class="flex-1 text-xs py-2 bg-transparent outline-none"
-                    style="color: var(--foreground-color);"
-                  />
+                    class="flex items-center gap-2 rounded-lg px-3"
+                    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
+                  >
+                    <button
+                      type="button"
+                      onclick={() => (filtersOpen = !filtersOpen)}
+                      class="flex items-center gap-1.5 text-xs py-2 shrink-0 transition-opacity hover:opacity-75"
+                      style={isFiltered
+                        ? "color: var(--accent-1);"
+                        : "color: var(--foreground-mid);"}
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polygon
+                          points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+                        />
+                      </svg>
+                      Filter
+                    </button>
+                    <div
+                      style="width: 0.5px; height: 16px; background: color-mix(in srgb, var(--accent-1) 22%, transparent);"
+                    ></div>
+                    <input
+                      type="text"
+                      placeholder="Search characters..."
+                      bind:value={search}
+                      class="flex-1 text-xs py-2 bg-transparent outline-none"
+                      style="color: var(--foreground-color);"
+                    />
+                  </div>
+
+                  {#if filtersOpen}
+                    <div
+                      class="flex flex-col gap-3 px-4 py-4 rounded-b-lg"
+                      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent); border-top: none;"
+                      transition:slide={{ duration: 200 }}
+                    >
+                      <div class="filter-group">
+                        <span>Elements</span>
+                        <div>
+                          {#each elements as el}
+                            <button
+                              type="button"
+                              class="filter-chip"
+                              class:is-selected={elementFilter.has(el)}
+                              onclick={() =>
+                                (elementFilter = toggleFilter(
+                                  elementFilter,
+                                  el,
+                                ))}
+                            >
+                              {el}
+                            </button>
+                          {/each}
+                        </div>
+                      </div>
+
+                      <div class="filter-group">
+                        <span>Rarity</span>
+                        <div>
+                          {#each rarities as [val, label]}
+                            <button
+                              type="button"
+                              class="filter-chip"
+                              class:is-selected={rarityFilter.has(val)}
+                              onclick={() =>
+                                (rarityFilter = toggleFilter(
+                                  rarityFilter,
+                                  val,
+                                ))}
+                            >
+                              {label}
+                            </button>
+                          {/each}
+                        </div>
+                      </div>
+
+                      <div class="filter-group">
+                        <span>Weapon Type</span>
+                        <div>
+                          {#each weaponTypes as wt}
+                            <button
+                              type="button"
+                              class="filter-chip"
+                              class:is-selected={weaponFilter.has(wt)}
+                              onclick={() =>
+                                (weaponFilter = toggleFilter(weaponFilter, wt))}
+                            >
+                              {wt}
+                            </button>
+                          {/each}
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
                 </div>
 
-                {#if filtersOpen}
-                  <div
-                    class="flex flex-col gap-3 px-4 py-4 rounded-b-lg"
-                    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent); border-top: none;"
-                    transition:slide={{ duration: 200 }}
+                <div class="flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onclick={selectAll}
+                    class="secondary-action"
                   >
-                    <div class="filter-group">
-                      <span>Elements</span>
-                      <div>
-                        {#each elements as el}
-                          <button
-                            type="button"
-                            class="filter-chip"
-                            class:is-selected={elementFilter.has(el)}
-                            onclick={() =>
-                              (elementFilter = toggleFilter(elementFilter, el))}
-                          >
-                            {el}
-                          </button>
-                        {/each}
-                      </div>
-                    </div>
+                    Select all
+                    {#if isFiltered || search}
+                      ({visibleOwnedCount}/{visibleCharacters.length})
+                    {/if}
+                  </button>
+                  <button
+                    type="button"
+                    onclick={deselectAll}
+                    class="secondary-action"
+                  >
+                    Deselect all
+                  </button>
+                  <div class="ml-auto">
+                    <span class="text-sm" style="color: var(--foreground-mid);">
+                      {ownedCount} / {totalCount}
+                    </span>
+                  </div>
+                </div>
 
-                    <div class="filter-group">
-                      <span>Rarity</span>
-                      <div>
-                        {#each rarities as [val, label]}
-                          <button
-                            type="button"
-                            class="filter-chip"
-                            class:is-selected={rarityFilter.has(val)}
-                            onclick={() =>
-                              (rarityFilter = toggleFilter(rarityFilter, val))}
-                          >
-                            {label}
-                          </button>
-                        {/each}
-                      </div>
-                    </div>
-
-                    <div class="filter-group">
-                      <span>Weapon Type</span>
-                      <div>
-                        {#each weaponTypes as wt}
-                          <button
-                            type="button"
-                            class="filter-chip"
-                            class:is-selected={weaponFilter.has(wt)}
-                            onclick={() =>
-                              (weaponFilter = toggleFilter(weaponFilter, wt))}
-                          >
-                            {wt}
-                          </button>
-                        {/each}
-                      </div>
-                    </div>
+                {#if hasUnsavedChanges || isSaving || showSaved}
+                  <div
+                    class="fixed bottom-6 left-0 right-0 mx-auto w-fit z-20 flex items-center gap-4 px-5 py-3 rounded-lg"
+                    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 40%, transparent);"
+                    transition:fly={{ y: 200, duration: 500 }}
+                  >
+                    <span class="text-sm" style="color: var(--foreground-mid);">
+                      {isSaving
+                        ? "Saving..."
+                        : showSaved
+                          ? "Saved!"
+                          : "Unsaved changes"}
+                    </span>
+                    <button
+                      type="button"
+                      onclick={saveCharacters}
+                      disabled={isSaving || showSaved || !hasUnsavedChanges}
+                      class="primary-action"
+                      style:opacity={isSaving || showSaved || !hasUnsavedChanges
+                        ? "0.7"
+                        : "1"}
+                    >
+                      {isSaving ? "Saving..." : showSaved ? "Saved" : "Save"}
+                    </button>
                   </div>
                 {/if}
-              </div>
 
-              <div class="flex gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onclick={selectAll}
-                  class="secondary-action"
-                >
-                  Select all
-                  {#if isFiltered || search}
-                    ({visibleOwnedCount}/{visibleCharacters.length})
-                  {/if}
-                </button>
-                <button
-                  type="button"
-                  onclick={deselectAll}
-                  class="secondary-action"
-                >
-                  Deselect all
-                </button>
-                <div class="ml-auto">
-                  <span class="text-sm" style="color: var(--foreground-mid);">
-                    {ownedCount} / {totalCount}
-                  </span>
-                </div>
-              </div>
-
-              {#if hasUnsavedChanges || isSaving || showSaved}
                 <div
-                  class="fixed bottom-6 left-0 right-0 mx-auto w-fit z-20 flex items-center gap-4 px-5 py-3 rounded-lg"
-                  style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 40%, transparent);"
-                  transition:fly={{ y: 200, duration: 500 }}
+                  class="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3 pb-24"
                 >
-                  <span class="text-sm" style="color: var(--foreground-mid);">
-                    {isSaving
-                      ? "Saving..."
-                      : showSaved
-                        ? "Saved!"
-                        : "Unsaved changes"}
-                  </span>
-                  <button
-                    type="button"
-                    onclick={saveCharacters}
-                    disabled={isSaving || showSaved || !hasUnsavedChanges}
-                    class="primary-action"
-                    style:opacity={isSaving || showSaved || !hasUnsavedChanges
-                      ? "0.7"
-                      : "1"}
-                  >
-                    {isSaving ? "Saving..." : showSaved ? "Saved" : "Save"}
-                  </button>
+                  {#each visibleCharacters as character (character.id)}
+                    <button
+                      type="button"
+                      onclick={() => toggleOwned(character.id)}
+                      class="cursor-pointer rounded-lg w-full h-fit overflow-hidden relative transition-all duration-75 character-icon-button"
+                      style="border: 2px solid var(--foreground-color); opacity: {character.isOwned
+                        ? '1'
+                        : '.33'};"
+                    >
+                      <CharacterIcon {character} />
+                    </button>
+                  {/each}
+
+                  {#if visibleCharacters.length === 0}
+                    <p
+                      class="col-span-full text-xs"
+                      style="color: var(--foreground-mid);"
+                    >
+                      No characters match.
+                    </p>
+                  {/if}
+                </div>
+              {:else}
+                <div class="flex items-center justify-center min-h-[40vh]">
+                  <p style="color: var(--foreground-mid);">Loading...</p>
                 </div>
               {/if}
+            </div>
+          {:else if activeSection === "sync"}
+            <div
+              class="settings-panel p-6 min-h-[340px] flex flex-col justify-between"
+            >
+              <div class="flex flex-col gap-3 max-w-xl">
+                <span class="panel-kicker">Upcoming</span>
+                <h3>Account / Sync</h3>
+                <p>
+                  Cloud roster sync is not wired up yet. For now, your character
+                  roster and display settings stay on this device.
+                </p>
+              </div>
+              <div class="sync-preview rounded-lg p-4">
+                <span>Planned</span>
+                <p>
+                  Account login, roster backup, and cross-device preferences.
+                </p>
+              </div>
+            </div>
+          {:else}
+            <div class="settings-panel p-6">
+              <div class="flex flex-col gap-1 mb-6">
+                <h3>Display</h3>
+                <p>Adjust animation and character portrait preferences.</p>
+              </div>
 
-              <div
-                class="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3 pb-24"
-              >
-                {#each visibleCharacters as character (character.id)}
+              <div class="preference-list">
+                <div class="preference-row">
+                  <div>
+                    <span>Animations</span>
+                    <p>Enable card flip and motion effects.</p>
+                  </div>
                   <button
                     type="button"
-                    onclick={() => toggleOwned(character.id)}
-                    class="cursor-pointer rounded-lg w-full h-fit overflow-hidden relative transition-all duration-75 character-icon-button"
-                    style="border: 2px solid var(--foreground-color); opacity: {character.isOwned
-                      ? '1'
-                      : '.33'};"
+                    class="toggle"
+                    class:is-on={$displayPreferences.animationsEnabled}
+                    aria-label="Toggle animations"
+                    aria-pressed={$displayPreferences.animationsEnabled}
+                    onclick={() =>
+                      setDisplayPreferences({
+                        animationsEnabled:
+                          !$displayPreferences.animationsEnabled,
+                      })}
                   >
-                    <CharacterIcon {character} />
+                    <span></span>
                   </button>
-                {/each}
-
-                {#if visibleCharacters.length === 0}
-                  <p
-                    class="col-span-full text-xs"
-                    style="color: var(--foreground-mid);"
-                  >
-                    No characters match.
-                  </p>
-                {/if}
-              </div>
-            {:else}
-              <div class="flex items-center justify-center min-h-[40vh]">
-                <p style="color: var(--foreground-mid);">Loading...</p>
-              </div>
-            {/if}
-          </div>
-        {:else if activeSection === "sync"}
-          <div
-            class="settings-panel p-6 min-h-[340px] flex flex-col justify-between"
-          >
-            <div class="flex flex-col gap-3 max-w-xl">
-              <span class="panel-kicker">Upcoming</span>
-              <h3>Account / Sync</h3>
-              <p>
-                Cloud roster sync is not wired up yet. For now, your character
-                roster and display settings stay on this device.
-              </p>
-            </div>
-            <div class="sync-preview rounded-lg p-4">
-              <span>Planned</span>
-              <p>Account login, roster backup, and cross-device preferences.</p>
-            </div>
-          </div>
-        {:else}
-          <div class="settings-panel p-6">
-            <div class="flex flex-col gap-1 mb-6">
-              <h3>Display</h3>
-              <p>Adjust animation and character portrait preferences.</p>
-            </div>
-
-            <div class="preference-list">
-              <div class="preference-row">
-                <div>
-                  <span>Animations</span>
-                  <p>Enable card flip and motion effects.</p>
                 </div>
-                <button
-                  type="button"
-                  class="toggle"
-                  class:is-on={$displayPreferences.animationsEnabled}
-                  aria-label="Toggle animations"
-                  aria-pressed={$displayPreferences.animationsEnabled}
-                  onclick={() =>
-                    setDisplayPreferences({
-                      animationsEnabled: !$displayPreferences.animationsEnabled,
-                    })}
-                >
-                  <span></span>
-                </button>
-              </div>
 
-              <div class="preference-row items-start">
-                <div>
-                  <span>Character Portraits</span>
-                  <p>
-                    Choose between stylized coop art and front-facing Enka
-                    icons.
-                  </p>
-                </div>
-                <div class="segmented-control">
-                  <button
-                    type="button"
-                    class:is-selected={$displayPreferences.iconStyle === "coop"}
-                    onclick={() => setIconStyle("coop")}
-                  >
-                    Coop
-                  </button>
-                  <button
-                    type="button"
-                    class:is-selected={$displayPreferences.iconStyle === "enka"}
-                    onclick={() => setIconStyle("enka")}
-                  >
-                    Enka
-                  </button>
+                <div class="preference-row items-start">
+                  <div>
+                    <span>Character Portraits</span>
+                    <p>
+                      Choose between stylized coop art and front-facing Enka
+                      icons.
+                    </p>
+                  </div>
+                  <div class="segmented-control">
+                    <button
+                      type="button"
+                      class:is-selected={$displayPreferences.iconStyle ===
+                        "coop"}
+                      onclick={() => setIconStyle("coop")}
+                    >
+                      Coop
+                    </button>
+                    <button
+                      type="button"
+                      class:is-selected={$displayPreferences.iconStyle ===
+                        "enka"}
+                      onclick={() => setIconStyle("enka")}
+                    >
+                      Enka
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        {/if}
+          {/if}
         </div>
       {/key}
     </section>
@@ -528,18 +539,6 @@
     box-shadow:
       inset 1px 0 0 var(--accent-1),
       inset 0 0 0 0.5px color-mix(in srgb, var(--accent-1) 20%, transparent);
-  }
-
-  .settings-nav-item.is-active::after {
-    content: "✦";
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--accent-1);
-    font-size: 1rem;
-    line-height: 1;
-    text-shadow: 0 0 14px color-mix(in srgb, var(--accent-1) 80%, transparent);
   }
 
   .settings-nav-icon {

@@ -124,7 +124,10 @@
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-1">
-        <h2 class="tracking-widest uppercase" style="color: var(--foreground-color);">
+        <h2
+          class="tracking-widest uppercase"
+          style="color: var(--foreground-color);"
+        >
           Pull Suggestions
         </h2>
         <p style="color: var(--foreground-mid);">
@@ -282,9 +285,6 @@
                     </p>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <p class="text-xs" style="color: var(--foreground-mid);">
-                      with {suggestion.character}
-                    </p>
                     <div class="grid grid-cols-4 gap-[2px]">
                       {#each aligned.bestAligned as member, j}
                         <div
@@ -305,9 +305,6 @@
                   </div>
                 {:else}
                   <div class="flex flex-col gap-1.5">
-                    <p class="text-xs" style="color: var(--foreground-mid);">
-                      with {suggestion.character}
-                    </p>
                     <div class="grid grid-cols-4 gap-[2px]">
                       {#each suggestion.bestTeam.members ?? [] as member}
                         <div
@@ -349,12 +346,6 @@
               (suggestion.avgUsage / maxPairScore) *
               100
             ).toFixed(1)}
-            {@const synLabel =
-              suggestion.pmi > 1.5
-                ? "core pair"
-                : suggestion.pmi > 0.8
-                  ? "high synergy"
-                  : "synergy pair"}
             <div
               class="rounded-xl overflow-hidden flex flex-col"
               style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
@@ -389,13 +380,14 @@
                       {suggestion.charA} + {suggestion.charB}
                     </span>
                     <div class="flex items-center gap-1 flex-wrap">
-                      <span class="text-xs" style="color: var(--foreground-mid);">
+                      <span
+                        class="text-xs"
+                        style="color: var(--foreground-mid);"
+                      >
+                        unlocks
                         {suggestion.unlocksTeams}
                         {suggestion.unlocksTeams === 1 ? "team" : "teams"}
                       </span>
-                      <span class="text-xs" style="color: var(--foreground-mid);"
-                        >· {synLabel}</span
-                      >
                     </div>
                   </div>
                 </div>
@@ -477,7 +469,7 @@
                     class="rounded-[5px] overflow-hidden relative"
                     style="background: var(--background-color);
                            {isMissing
-                      ? `outline: 1.5px solid ${accent}; outline-offset: -1px; opacity: 0.7;`
+                      ? `outline: 1.5px solid ${accent}; outline-offset: -1px; opacity: 0.33;`
                       : ''}"
                   >
                     <CharacterIcon character={mapping.get(member)} />
