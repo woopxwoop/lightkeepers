@@ -1,7 +1,7 @@
 <script lang="ts">
   import avatarImg from "$lib/assets/default-avatar.jpg";
   import type { CharacterOwned, Character } from "$lib/definitions";
-  import { isIconCompact } from "$lib/stores";
+  import { displayPreferences } from "$lib/stores";
 
   let { character }: { character: CharacterOwned | Character | undefined } =
     $props();
@@ -16,18 +16,20 @@
       return `https://api.lunaris.moe/data/assets/coopimg/UI_CoopImg_${name_id}.webp`;
     return null;
   }
+
+  let useEnkaIcon = $derived($displayPreferences.iconStyle === "enka");
 </script>
 
 <div
-  class="relative {character?.name_id && !isIconCompact
-    ? `icon-container-coop`
-    : `icon-container-compact`}"
+  class="relative"
+  class:icon-container-coop={character?.name_id && !useEnkaIcon}
+  class:icon-container-compact={!character?.name_id || useEnkaIcon}
 >
   {#if character}
     <img
-      src={!isIconCompact && character.name_id
+      src={!useEnkaIcon && character.name_id
         ? makeCoopImg(character.name_id)
-        : (character.icon ?? avatarImg)}
+        : (character.enka_icon ?? character.icon ?? avatarImg)}
       alt={character.name}
     />
   {/if}
@@ -45,7 +47,7 @@
   }
 
   .icon-container-compact {
-    height: 100%;
     width: 100%;
+    aspect-ratio: 1;
   }
 </style>

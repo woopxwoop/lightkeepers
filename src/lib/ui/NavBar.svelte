@@ -88,7 +88,7 @@
 <nav
   class="nav-bar w-full pl-[10%] pr-[10%] fixed top-0 z-10 flex items-center justify-between h-16 border-none transition-colors duration-300 {scrolled
     ? 'opaque-bg'
-    : 'bg-black/10'}"
+    : 'nav-initial'}"
 >
   <a
     href={homePath}
@@ -133,7 +133,7 @@
         style="
           left: {underlineLeft}px;
           width: {underlineWidth}px;
-          background: var(--secondary-color);
+          background: var(--accent-1);
           transition: left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
                       width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
         "
@@ -145,7 +145,11 @@
 <style>
   .nav-bar {
     pointer-events: none;
-    transition: background-color 0.4s ease; /* Smooth transition */
+    transition: background-color 0.4s ease;
+  }
+
+  .nav-initial {
+    background: color-mix(in srgb, black 10%, transparent);
   }
 
   .opaque-bg {
@@ -153,14 +157,14 @@
   }
 
   .nav-logo {
-    font-weight: 500;
     letter-spacing: 0.1em;
-    color: var(--secondary-color);
-    text-decoration: none;
+    font-size: var(--h2-size);
+    font-family: "Bonobo";
+    font-weight: 700;
+    color: var(--accent-1);
     pointer-events: auto;
   }
   .nav-link {
-    text-decoration: none;
     padding-bottom: 2px;
     border-bottom: 1.5px solid transparent;
     transition:
@@ -172,9 +176,9 @@
     pointer-events: auto;
   }
   .nav-link:hover {
-    color: var(--secondary-color);
+    color: var(--accent-1);
   }
   .nav-link[aria-current="page"] {
-    color: var(--secondary-color);
+    color: var(--accent-1);
   }
 </style>

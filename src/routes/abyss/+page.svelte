@@ -114,8 +114,8 @@
   }
 
   const slotAccent: Record<Slot, string> = {
-    top: "var(--slot-1-color)",
-    bottom: "var(--slot-2-color)",
+    top: "var(--accent-1)",
+    bottom: "var(--accent-1)",
   };
 
   let activeSlotAccent = $derived(slotAccent[activeSlot]);
@@ -141,7 +141,7 @@
 
   <div
     class="rounded-2xl overflow-hidden flex flex-col"
-    style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
   >
     <!-- Team content -->
     <div class="p-4 flex flex-col gap-3">
@@ -155,32 +155,6 @@
         {abyssSlotLabel[slot]}
       </span>
       {#if assignment}
-        {#if assignment.missingCharacters.length > 0}
-          <div
-            class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
-            style="background: color-mix(in srgb, var(--secondary-color) 8%, transparent);
-                   border: 0.5px solid color-mix(in srgb, var(--secondary-color) 20%, transparent);
-                   color: var(--secondary-color);"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="shrink-0"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <span>Need: {assignment.missingCharacters.join(", ")}</span>
-          </div>
-        {/if}
-
         <Team
           team={assignment.team}
           {mapping}
@@ -188,7 +162,7 @@
         />
 
         <div class="flex items-center justify-between">
-          <span class="text-xs text-(--faint-color)">
+          <span class="text-xs" style="color: var(--foreground-mid);">
             {(assignment.team.usage_total ?? 0).toFixed(1)}% usage
           </span>
           <span class="text-xs" style="color: {accent};">
@@ -197,13 +171,13 @@
         </div>
       {:else if solution}
         <div class="flex items-center justify-center py-8">
-          <p class="text-xs text-(--faint-color)">
+          <p class="text-xs" style="color: var(--foreground-mid);">
             No team available for this side
           </p>
         </div>
       {:else}
         <div class="flex items-center justify-center py-8">
-          <p class="text-xs text-(--faint-color)">
+          <p class="text-xs" style="color: var(--foreground-mid);">
             {teamsMode === "roster"
               ? "Set up your roster in Settings"
               : "No data available"}
@@ -214,16 +188,16 @@
   </div>
 {/snippet}
 
-<main class="w-[92%] md:w-[80%] pb-20 flex flex-col gap-6">
+<main class="w-[80%] pb-20 flex flex-col gap-6">
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="flex items-center justify-between gap-4 flex-wrap">
-    <h2 class="tracking-widest uppercase text-(--intermediate-color)">
+    <h2 class="tracking-widest uppercase" style="color: var(--foreground-color);">
       Spiral Abyss
     </h2>
 
     <div
       class="flex rounded-lg overflow-hidden"
-      style="border: 0.5px solid var(--surface-border);"
+      style="border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
     >
       {#each modes as mode}
         <button
@@ -234,8 +208,8 @@
             handleKeyboardClick(event, () => setTeamsMode(mode))}
           class="px-3 py-1.5 text-xs capitalize transition-colors"
           style={teamsMode === mode
-            ? "background: color-mix(in srgb, var(--secondary-color) 12%, var(--surface-color)); color: var(--secondary-color);"
-            : "background: var(--surface-color); color: var(--intermediate-color);"}
+            ? "background: color-mix(in srgb, var(--accent-1) 12%, var(--background-mid)); color: var(--accent-1);"
+            : "background: var(--background-mid); color: var(--foreground-mid);"}
         >
           {mode}
         </button>
@@ -248,11 +222,11 @@
     role="tablist"
     aria-label="Abyss side"
     class="relative z-[1] lg:hidden flex rounded-xl overflow-hidden"
-    style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
   >
     <span
       class="absolute inset-y-0 pointer-events-none transition-[left,background-color] duration-150"
-      style="left: {activeSlotLeft}; width: calc(100% / {SLOTS.length}); background: color-mix(in srgb, {activeSlotAccent} 10%, var(--surface-color));"
+      style="left: {activeSlotLeft}; width: calc(100% / {SLOTS.length}); background: color-mix(in srgb, {activeSlotAccent} 10%, var(--background-mid));"
     ></span>
     <span
       class="absolute bottom-0 h-[1.5px] pointer-events-none transition-[left,background-color] duration-150"
@@ -271,9 +245,7 @@
         onclick={(event) =>
           handleKeyboardClick(event, () => setActiveSlot(slotIndex))}
         class="relative z-[1] flex-1 py-2.5 text-xs font-medium transition-colors pointer-events-auto touch-manipulation"
-        style:--active-slot-accent={accent}
-        class:text-(--intermediate-color)={activeSlot !== slot}
-        class:text-(--active-slot-accent)={activeSlot === slot}
+        style="color: {activeSlot === slot ? accent : 'var(--foreground-mid)'};"
       >
         {abyssSlotLabel[slot]}
       </button>
@@ -296,8 +268,8 @@
           <span
             class="rounded-full block transition-all duration-150"
             style={safeIndex === i
-              ? "width: 7px; height: 7px; background: var(--secondary-color);"
-              : "width: 5px; height: 5px; background: var(--faint-color); opacity: 0.6;"}
+              ? "width: 7px; height: 7px; background: var(--accent-1);"
+              : "width: 5px; height: 5px; background: var(--foreground-mid); opacity: 0.6;"}
           ></span>
         </button>
       {/each}
@@ -307,13 +279,16 @@
   <!-- ── Side panels ────────────────────────────────────────────────────── -->
   {#if loading}
     <div class="flex items-center justify-center min-h-[40vh]">
-      <p class="text-(--intermediate-color)">Loading…</p>
+      <p style="color: var(--foreground-mid);">Loading…</p>
     </div>
   {:else}
     <div class="grid lg:grid-cols-2 gap-4 items-start">
       {#each SLOTS as slot, slotIndex (slot)}
         {#if isDesktop || slotIndex === activeSlotIndex}
-          <div data-panel-slot={slot} data-active-panel={slotIndex === activeSlotIndex}>
+          <div
+            data-panel-slot={slot}
+            data-active-panel={slotIndex === activeSlotIndex}
+          >
             {#key assignmentKey(slot)}
               {@render slotPanel(slot)}
             {/key}
@@ -323,7 +298,7 @@
     </div>
 
     {#if solution?.isFallback && solution.neededCharacters.length > 0}
-      <p class="text-xs text-(--faint-color) text-center">
+      <p class="text-xs text-center" style="color: var(--foreground-mid);">
         Some teams need characters not in your roster
       </p>
     {/if}

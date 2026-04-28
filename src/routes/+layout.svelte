@@ -7,6 +7,7 @@
   import type { Character } from "$lib/definitions";
   import { bootstrapClient } from "$lib/app/bootstrapClient";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
+  import { initDisplayPreferences } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
   import "../app.css";
 
@@ -15,6 +16,7 @@
 
   onMount(() => {
     const detachDebug = installDebugHitTest();
+    initDisplayPreferences();
 
     bootstrapClient({
       characters,
@@ -43,7 +45,11 @@
     class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
     style="background-image: url('/lightkeepers_dark.png')"
   ></div>
-  <div class="fixed inset-0 -z-10 bg-black/80 backdrop-blur-xs"></div>
+  <div
+    class="fixed inset-0 -z-10 backdrop-blur-xs bg-overlay"
+    class:bg-dark={page.url.pathname === `/`}
+    class:bg-darker={page.url.pathname !== `/`}
+  ></div>
   <NavBar />
 
   <div class="h-12 w-full"></div>
@@ -58,3 +64,16 @@
     {/key}
   </div>
 </div>
+
+<style>
+  .bg-overlay {
+    transition: background-color 0.5s ease-out;
+  }
+  .bg-dark {
+    background-color: color-mix(in oklab, black 75%, transparent);
+  }
+
+  .bg-darker {
+    background-color: color-mix(in oklab, black 80%, transparent);
+  }
+</style>

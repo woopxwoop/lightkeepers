@@ -27,7 +27,7 @@
 
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
 
-  const rankAccent = ["#e8a83a", "#8a95b0", "#4a5270"];
+  const rankAccent = ["var(--accent-1)", "var(--accent-1)", "var(--accent-1)"];
 
   // Align single-missing: swap slot always last
   function alignMembers(
@@ -124,16 +124,19 @@
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-1">
-        <h2 class="tracking-widest uppercase text-(--intermediate-color)">
+        <h2 class="tracking-widest uppercase" style="color: var(--foreground-color);">
           Pull Suggestions
         </h2>
-        <p class="text-(--intermediate-color)">
+        <p style="color: var(--foreground-mid);">
           Based on your {ownedCount} characters — Stygian Onslaught
         </p>
       </div>
       <div
-        class="text-xs px-2 py-1 rounded bg-red-900/40 text-red-300 font-mono"
-        style="display: {import.meta.env.DEV ? 'block' : 'none'};"
+        class="text-xs px-2 py-1 rounded font-mono"
+        style="background: color-mix(in srgb, darkred 40%, transparent); color: #fca5a5; display: {import.meta
+          .env.DEV
+          ? 'block'
+          : 'none'};"
       >
         <div>ready: {nearMissReady}</div>
         <div>single: {$nearMissStygianLoaded}</div>
@@ -146,15 +149,15 @@
   {#if pageState === "idle"}
     <div
       class="rounded-2xl p-8 flex flex-col items-center gap-6 text-center"
-      style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
     >
       <img src={favicon} alt="Lightkeepers" class="w-14 h-14" />
 
       <div class="flex flex-col gap-2 max-w-sm">
-        <p class="text-(--foreground-color) font-medium">
+        <p class="font-medium" style="color: var(--foreground-color);">
           Which characters are worth pulling?
         </p>
-        <p class="text-(--intermediate-color)">
+        <p style="color: var(--foreground-mid);">
           We'll find single characters and synergistic pairs you don't own that
           would most improve your Stygian teams.
         </p>
@@ -163,9 +166,9 @@
         onclick={calculate}
         disabled={!nearMissReady}
         class="px-6 py-2.5 rounded-lg font-medium transition-opacity"
-        style="background: color-mix(in srgb, var(--secondary-color) 10%, transparent);
-               border: 0.5px solid color-mix(in srgb, var(--secondary-color) 35%, transparent);
-               color: var(--secondary-color);
+        style="background: color-mix(in srgb, var(--accent-1) 10%, transparent);
+               border: 0.5px solid color-mix(in srgb, var(--accent-1) 35%, transparent);
+               color: var(--accent-1);
                opacity: {nearMissReady ? '1' : '0.45'};
                cursor: {nearMissReady ? 'pointer' : 'default'};"
       >
@@ -174,14 +177,14 @@
     </div>
   {:else if pageState === "loading"}
     <div class="flex items-center justify-center min-h-[30vh]">
-      <p class="text-(--intermediate-color)">Calculating…</p>
+      <p style="color: var(--foreground-mid);">Calculating…</p>
     </div>
   {:else if pageState === "empty"}
     <div
       class="rounded-2xl p-8 text-center"
-      style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
     >
-      <p class="text-(--intermediate-color)">
+      <p style="color: var(--foreground-mid);">
         {calculationError ?? "No suggestions found."}
       </p>
     </div>
@@ -190,7 +193,8 @@
     {#if suggestions.length > 0}
       <section class="flex flex-col gap-3">
         <p
-          class="text-xs tracking-widest uppercase text-(--intermediate-color)"
+          class="text-xs tracking-widest uppercase"
+          style="color: var(--foreground-mid);"
         >
           Single Pulls
         </p>
@@ -199,7 +203,7 @@
             {@const barWidth = ((suggestion.score / maxScore) * 100).toFixed(1)}
             <div
               class="rounded-xl overflow-hidden flex flex-col"
-              style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
             >
               <div class="h-[2px]" style="background: {rankAccent[i]};"></div>
               <div class="p-3 flex flex-col gap-3">
@@ -215,11 +219,12 @@
                   </div>
                   <div class="flex flex-col gap-0.5 min-w-0">
                     <span
-                      class="text-sm font-medium text-(--foreground-color) truncate"
+                      class="text-sm font-medium truncate"
+                      style="color: var(--foreground-color);"
                     >
                       {suggestion.character}
                     </span>
-                    <span class="text-xs text-(--faint-color)">
+                    <span class="text-xs" style="color: var(--foreground-mid);">
                       unlocks {suggestion.unlocksTeams}
                       {suggestion.unlocksTeams === 1 ? "team" : "teams"}
                     </span>
@@ -253,23 +258,23 @@
                     suggestion.character,
                   )}
                   <div class="flex flex-col gap-1.5">
-                    <p class="text-xs text-(--faint-color)">
+                    <p class="text-xs" style="color: var(--foreground-mid);">
                       currently running
                     </p>
                     <div class="grid grid-cols-4 gap-[2px] opacity-50">
                       {#each aligned.currentAligned as member, j}
                         <div
-                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
+                          class="rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {j === 3
-                            ? 'outline: 1px solid var(--faint-color);'
+                            ? 'outline: 1px solid var(--foreground-mid);'
                             : ''}"
                         >
                           <CharacterIcon character={mapping.get(member)} />
                         </div>
                       {/each}
                     </div>
-                    <p class="text-xs text-(--faint-color)">
+                    <p class="text-xs" style="color: var(--foreground-mid);">
                       {(
                         suggestion.currentBestTeam.avg_usage_total ??
                         suggestion.currentBestTeam.usage_total
@@ -277,46 +282,46 @@
                     </p>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <p class="text-xs" style="color: {rankAccent[i]};">
+                    <p class="text-xs" style="color: var(--foreground-mid);">
                       with {suggestion.character}
                     </p>
                     <div class="grid grid-cols-4 gap-[2px]">
                       {#each aligned.bestAligned as member, j}
                         <div
-                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
+                          class="rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {j === 3
-                            ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
+                            ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1px;`
                             : ''}"
                         >
                           <CharacterIcon character={mapping.get(member)} />
                         </div>
                       {/each}
                     </div>
-                    <p class="text-xs text-(--faint-color)">
+                    <p class="text-xs" style="color: var(--foreground-mid);">
                       {suggestion.bestTeam.avg_usage_total?.toFixed(1)}% avg
                       usage
                     </p>
                   </div>
                 {:else}
                   <div class="flex flex-col gap-1.5">
-                    <p class="text-xs" style="color: {rankAccent[i]};">
+                    <p class="text-xs" style="color: var(--foreground-mid);">
                       with {suggestion.character}
                     </p>
                     <div class="grid grid-cols-4 gap-[2px]">
                       {#each suggestion.bestTeam.members ?? [] as member}
                         <div
-                          class="aspect-3/4 rounded-[5px] overflow-hidden relative"
+                          class="rounded-[5px] overflow-hidden relative"
                           style="background: var(--background-color);
                                  {member === suggestion.character
-                            ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
+                            ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1px;`
                             : ''}"
                         >
                           <CharacterIcon character={mapping.get(member)} />
                         </div>
                       {/each}
                     </div>
-                    <p class="text-xs text-(--faint-color)">
+                    <p class="text-xs" style="color: var(--foreground-mid);">
                       {suggestion.bestTeam.avg_usage_total?.toFixed(1)}% avg
                       usage · no current alternative
                     </p>
@@ -333,7 +338,8 @@
     {#if pairSuggestions.length > 0}
       <section class="flex flex-col gap-3">
         <p
-          class="text-xs tracking-widest uppercase text-(--intermediate-color)"
+          class="text-xs tracking-widest uppercase"
+          style="color: var(--foreground-mid);"
         >
           Synergy Pairs
         </p>
@@ -351,7 +357,7 @@
                   : "synergy pair"}
             <div
               class="rounded-xl overflow-hidden flex flex-col"
-              style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
             >
               <div class="h-[2px]" style="background: {rankAccent[i]};"></div>
               <div class="p-3 flex flex-col gap-3">
@@ -377,16 +383,17 @@
                   </div>
                   <div class="flex flex-col gap-0.5 min-w-0">
                     <span
-                      class="text-xs sm:text-sm font-medium text-(--foreground-color) truncate"
+                      class="text-xs sm:text-sm font-medium truncate"
+                      style="color: var(--foreground-color);"
                     >
                       {suggestion.charA} + {suggestion.charB}
                     </span>
                     <div class="flex items-center gap-1 flex-wrap">
-                      <span class="text-xs text-(--faint-color)">
+                      <span class="text-xs" style="color: var(--foreground-mid);">
                         {suggestion.unlocksTeams}
                         {suggestion.unlocksTeams === 1 ? "team" : "teams"}
                       </span>
-                      <span class="text-xs" style="color: {rankAccent[i]};"
+                      <span class="text-xs" style="color: var(--foreground-mid);"
                         >· {synLabel}</span
                       >
                     </div>
@@ -414,7 +421,7 @@
 
                 <!-- Best unlocked team — both missing slots get accent ring -->
                 <div class="flex flex-col gap-1.5">
-                  <p class="text-xs" style="color: {rankAccent[i]};">
+                  <p class="text-xs" style="color: var(--foreground-mid);">
                     best unlocked team
                   </p>
                   <div class="grid grid-cols-4 gap-[2px]">
@@ -423,17 +430,17 @@
                         member === suggestion.charA ||
                         member === suggestion.charB}
                       <div
-                        class="aspect-3/4 rounded-[5px] overflow-hidden relative"
+                        class="rounded-[5px] overflow-hidden relative"
                         style="background: var(--background-color);
                                {isMissing
-                          ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1.5px;`
+                          ? `outline: 1.5px solid ${rankAccent[i]}; outline-offset: -1px;`
                           : ''}"
                       >
                         <CharacterIcon character={mapping.get(member)} />
                       </div>
                     {/each}
                   </div>
-                  <p class="text-xs text-(--faint-color)">
+                  <p class="text-xs" style="color: var(--foreground-mid);">
                     {suggestion.bestTeam.avg_usage_total?.toFixed(1)}% avg usage
                   </p>
                 </div>
@@ -448,7 +455,10 @@
   <!-- ── Best teams you don't have ────────────────────────────────────── -->
   {#if topMissingTeams.length > 0}
     <section class="flex flex-col gap-3">
-      <p class="text-xs tracking-widest uppercase text-(--intermediate-color)">
+      <p
+        class="text-xs tracking-widest uppercase"
+        style="color: var(--foreground-mid);"
+      >
         Best Teams You Don't Have
       </p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -456,7 +466,7 @@
           {@const accent = rankAccent[i]}
           <div
             class="rounded-xl overflow-hidden flex flex-col"
-            style="background: var(--surface-color); border: 0.5px solid var(--surface-border);"
+            style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
           >
             <div class="h-0.5" style="background: {accent};"></div>
             <div class="p-3 flex flex-col gap-3">
@@ -464,10 +474,10 @@
                 {#each team.members ?? [] as member}
                   {@const isMissing = missingCharacters.includes(member)}
                   <div
-                    class="aspect-3/4 rounded-[5px] overflow-hidden relative"
+                    class="rounded-[5px] overflow-hidden relative"
                     style="background: var(--background-color);
                            {isMissing
-                      ? `outline: 1.5px solid ${accent}; outline-offset: -1.5px; opacity: 0.7;`
+                      ? `outline: 1.5px solid ${accent}; outline-offset: -1px; opacity: 0.7;`
                       : ''}"
                   >
                     <CharacterIcon character={mapping.get(member)} />
@@ -475,7 +485,7 @@
                 {/each}
               </div>
               <div class="flex flex-col gap-1">
-                <p class="text-xs text-(--faint-color)">
+                <p class="text-xs" style="color: var(--foreground-mid);">
                   {(team.avg_usage_total ?? 0).toFixed(1)}% avg usage
                 </p>
                 <p class="text-xs" style="color: {accent};">

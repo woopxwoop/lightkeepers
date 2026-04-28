@@ -102,14 +102,17 @@ export type Database = {
         Row: {
           id: number;
           lunaris_asset: string | null;
+          name: string | null;
         };
         Insert: {
           id?: number;
           lunaris_asset?: string | null;
+          name?: string | null;
         };
         Update: {
           id?: number;
           lunaris_asset?: string | null;
+          name?: string | null;
         };
         Relationships: [];
       };

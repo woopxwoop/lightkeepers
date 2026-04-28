@@ -9,7 +9,7 @@
  *   - Service-role key stays server-side only
  */
 
-import { writable, derived, type Writable } from "svelte/store";
+import { writable, derived, get, type Writable } from "svelte/store";
 import type { CharacterOwned, AbyssTeam, StygianTeam } from "$lib/definitions";
 import type {
   NearMissStygianTeam,
@@ -27,10 +27,73 @@ export function setVersionNumbers(abyss: number, stygian: number) {
   stygianVersionNumber = stygian;
 }
 
-export let isIconCompact: boolean = false;
+export type IconStyle = "coop" | "enka";
+
+export type DisplayPreferences = {
+  animationsEnabled: boolean;
+  iconStyle: IconStyle;
+};
+
+const defaultDisplayPreferences: DisplayPreferences = {
+  animationsEnabled: true,
+  iconStyle: "coop",
+};
+
+export const displayPreferences = writable<DisplayPreferences>({
+  ...defaultDisplayPreferences,
+});
+
+export function initDisplayPreferences(): void {
+  try {
+    const saved = localStorage.getItem("displayPreferences");
+    if (!saved) return;
+
+    const parsed = JSON.parse(saved) as Partial<DisplayPreferences>;
+    displayPreferences.set({
+      animationsEnabled:
+        typeof parsed.animationsEnabled === "boolean"
+          ? parsed.animationsEnabled
+          : defaultDisplayPreferences.animationsEnabled,
+      iconStyle:
+        parsed.iconStyle === "enka" || parsed.iconStyle === "coop"
+          ? parsed.iconStyle
+          : defaultDisplayPreferences.iconStyle,
+    });
+  } catch {
+    displayPreferences.set({ ...defaultDisplayPreferences });
+  }
+}
+
+export function setDisplayPreferences(
+  next: Partial<DisplayPreferences>,
+): void {
+  displayPreferences.update((current) => {
+    const updated = { ...current, ...next };
+    try {
+      localStorage.setItem("displayPreferences", JSON.stringify(updated));
+    } catch {
+      // Ignore storage failures; the in-memory preference still applies.
+    }
+    return updated;
+  });
+}
+
+export const isIconCompact = derived(
+  displayPreferences,
+  ($preferences) => $preferences.iconStyle === "enka",
+);
 
 export function setIconCompact(compact: boolean) {
-  isIconCompact = compact;
+  setDisplayPreferences({ iconStyle: compact ? "enka" : "coop" });
+}
+
+export const animationsEnabled = derived(
+  displayPreferences,
+  ($preferences) => $preferences.animationsEnabled,
+);
+
+export function areAnimationsEnabled(): boolean {
+  return get(displayPreferences).animationsEnabled;
 }
 
 // ── Character store ────────────────────────────────────────────────────────

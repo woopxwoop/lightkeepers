@@ -1,5 +1,6 @@
 <script lang="ts">
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import { animationsEnabled } from "$lib/stores";
   import type { AbyssTeam, StygianTeam } from "$lib/definitions";
   import type { Tables } from "$lib/types/database.types";
 
@@ -22,14 +23,15 @@
   {#each team.members as member, idx}
     {@const isMissing = missingSet.has(member)}
     <div
-      class="relative rounded-lg overflow-hidden bg-(--surface-color)"
-      style="aspect-ratio: 3/4; animation: flip-in 0.35s ease-out both; animation-delay: {idx *
-        60}ms;
-             {isMissing
-        ? 'opacity: 0.6; outline: 1.5px dashed color-mix(in srgb, var(--secondary-color) 55%, transparent); outline-offset: -1.5px;'
+      class="relative rounded-lg overflow-hidden"
+      style="background: var(--background-mid);
+             {$animationsEnabled
+        ? `animation: flip-in 0.35s ease-out both; animation-delay: ${idx * 60}ms;`
         : ''}"
     >
-      <CharacterIcon character={mapping.get(member)} />
+      <div style="{isMissing ? 'opacity: 0.3;' : ''}">
+        <CharacterIcon character={mapping.get(member)} />
+      </div>
       {#if isMissing}
         <div
           class="absolute bottom-0 left-0 right-0 flex items-center justify-center"
@@ -38,9 +40,8 @@
         >
           <span
             style="font-size: 8px; font-weight: 600; letter-spacing: 0.06em;
-                   color: var(--secondary-color); text-transform: uppercase;"
-            >need</span
-          >
+                   color: var(--accent-1); text-transform: uppercase;"
+          >missing</span>
         </div>
       {/if}
     </div>
