@@ -92,22 +92,36 @@
   // Tracks whether the drawer was previously open so focus is only restored
   // after a real close, not on the initial render where mobileOpen is false.
   let drawerWasOpen = false;
+  // Track if close was triggered by navigation to skip focus restoration
+  let closedByNavigation = false;
 
   $effect(() => {
     page.url.pathname;
-    mobileOpen = false;
+    if (mobileOpen) {
+      closedByNavigation = true;
+      mobileOpen = false;
+    }
   });
 
   $effect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    let previousOverflow: string;
+    if (mobileOpen) {
+      previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    } else {
+      previousOverflow = "";
+    }
     return () => {
-      document.body.style.overflow = "";
+      if (mobileOpen) {
+        document.body.style.overflow = previousOverflow;
+      }
     };
   });
 
   $effect(() => {
     if (mobileOpen) {
       drawerWasOpen = true;
+      closedByNavigation = false;
 
       // Move focus to the first link once the drawer is in the DOM.
       tick().then(() => {
@@ -142,9 +156,12 @@
 
       window.addEventListener("keydown", onKeydown);
       return () => window.removeEventListener("keydown", onKeydown);
-    } else if (drawerWasOpen) {
+    } else if (drawerWasOpen && !closedByNavigation) {
       drawerWasOpen = false;
       hamburgerEl?.focus();
+    } else if (closedByNavigation) {
+      drawerWasOpen = false;
+      closedByNavigation = false;
     }
   });
 </script>

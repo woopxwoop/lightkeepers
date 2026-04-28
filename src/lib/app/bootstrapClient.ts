@@ -3,6 +3,7 @@ import {
   allTeamsAbyss,
   allTeamsStygian,
   charactersOwned,
+  charactersHydrated,
   setVersionNumbers,
   writeNearMissTeams,
   writeTeamsOwned,
@@ -81,6 +82,7 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   const cachedOwned = readOwnedCache();
   const roster = mergeOwnedFlags(data.characters, cachedOwned);
   charactersOwned.set(roster);
+  charactersHydrated.set(true);
 
   // Single round-trip for both abyss + stygian owned teams
   await writeTeamsOwned(roster);

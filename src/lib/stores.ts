@@ -98,6 +98,7 @@ export function areAnimationsEnabled(): boolean {
 
 // ── Character store ────────────────────────────────────────────────────────
 export const charactersOwned = writable<CharacterOwned[]>([]);
+export const charactersHydrated = writable<boolean>(false);
 
 // ── Abyss stores ──────────────────────────────────────────────────────────
 export const teamsOwned = writable<AbyssTeam[]>([]);

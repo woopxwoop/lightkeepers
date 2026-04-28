@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     charactersOwned,
+    charactersHydrated,
     displayPreferences,
     setDisplayPreferences,
     writeNearMissTeams,
@@ -155,7 +156,7 @@
   }
 
   $effect(() => {
-    if ($charactersOwned.length > 0 && !synced) {
+    if ($charactersHydrated && !synced) {
       tempCharactersOwned = [...$charactersOwned];
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       synced = true;
