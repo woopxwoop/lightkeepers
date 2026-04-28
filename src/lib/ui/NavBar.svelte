@@ -106,17 +106,12 @@
   });
 
   $effect(() => {
-    let previousOverflow: string;
+    const previousOverflow = document.body.style.overflow;
     if (mobileOpen) {
-      previousOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-    } else {
-      previousOverflow = "";
     }
     return () => {
-      if (mobileOpen) {
-        document.body.style.overflow = previousOverflow;
-      }
+      document.body.style.overflow = previousOverflow;
     };
   });
 
