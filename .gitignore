@@ -27,6 +27,7 @@ DOCKER.md
 cache
 CLAUDE.md
 AGENTS.md
+scripts/archive
 
 # Sentry Config File
 .env.sentry-build-plugin

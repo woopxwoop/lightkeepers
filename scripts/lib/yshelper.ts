@@ -1,0 +1,171 @@
+import { createHash } from 'node:crypto'
+
+// ─── Domain types ─────────────────────────────────────────────────────────────
+
+export interface Character {
+  name: string
+  rarity: number | null
+  icon: string | null
+}
+
+export interface AbyssTeam {
+  versionNumber: number
+  members: Character[]
+  usageRateTop: number | null
+  usageRateBottom: number | null
+  usageTotal: number
+  teamKey: string
+  has: number
+  use: number
+}
+
+export interface StygianTeam extends AbyssTeam {
+  usageRateMiddle: number | null
+}
+
+// ─── Raw API shapes ───────────────────────────────────────────────────────────
+
+interface RawRole {
+  avatar: string
+  star: number
+}
+
+interface RawTeamEntry {
+  role: RawRole[]
+  use: number
+  has: number
+  up_use: number | null
+  down_use: number | null
+  mid_use?: number | null
+}
+
+interface ApiCharacterTier {
+  list: { avatar: string; ename: string; star: number }[]
+}
+
+export interface ApiResponse {
+  has_list: { avatar: string; name: string }[]
+  history_list: { title: string; value: string }[]
+  result: ApiCharacterTier[][]
+  [key: string]: unknown
+}
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+
+const HEADERS = {
+  accept: '*/*',
+  'content-type': 'application/json',
+  origin: 'https://app.yshelper.com',
+  referer: 'https://app.yshelper.com/',
+  'user-agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+}
+
+export async function fetchYsHelper(
+  baseUrl: string,
+  role = 'all',
+  lang = 'en',
+  version?: number,
+): Promise<ApiResponse> {
+  const params = new URLSearchParams({ star: 'all', role, lang })
+  if (version !== undefined) params.set('version', String(version))
+  const res = await fetch(`${baseUrl}?${params}`, { headers: HEADERS })
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${baseUrl} role=${role}`)
+  return res.json() as Promise<ApiResponse>
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// ─── Parsing ──────────────────────────────────────────────────────────────────
+
+// Finds team objects by walking the nested-list structure of the API response.
+// Teams are identified by having a `role` key.
+export function extractTeams(data: ApiResponse): RawTeamEntry[] {
+  const teams: RawTeamEntry[] = []
+  for (const v of Object.values(data)) {
+    if (!Array.isArray(v)) continue
+    for (const item of v) {
+      if (!Array.isArray(item)) continue
+      for (const t of item) {
+        if (t && typeof t === 'object' && 'role' in t) {
+          teams.push(t as RawTeamEntry)
+        }
+      }
+    }
+  }
+  return teams
+}
+
+export function getCurrentVersion(data: ApiResponse): number {
+  return parseInt(data.history_list[0].value, 10)
+}
+
+export function extractVersionEntries(
+  data: ApiResponse,
+): { version: string; versionNumber: number }[] {
+  return data.history_list.map((e) => ({
+    version: e.title,
+    versionNumber: parseInt(e.value, 10),
+  }))
+}
+
+// Returns {name (English), rarity, icon} for all characters in result[0] tiers.
+export function extractCharacters(
+  data: ApiResponse,
+): { name: string; rarity: number; icon: string }[] {
+  const TRAVELER_ICON =
+    'https://upload-bbs.mihoyo.com/game_record/genshin/character_icon/UI_AvatarIcon_PlayerGirl.png'
+  return data.result[0].flatMap((tier) =>
+    tier.list.map((c) => ({
+      name: c.ename,
+      rarity: c.star,
+      icon: c.ename === 'Traveler' ? TRAVELER_ICON : c.avatar,
+    })),
+  )
+}
+
+// ─── Team mapping ─────────────────────────────────────────────────────────────
+
+function generateTeamKey(memberNames: string[]): string {
+  const sorted = [...memberNames].sort().join('-')
+  return createHash('sha256').update(sorted, 'utf8').digest('hex')
+}
+
+export function mapAbyssTeam(
+  raw: RawTeamEntry,
+  versionNumber: number,
+  charMapping: Map<string, string>,
+): AbyssTeam {
+  const members: Character[] = raw.role.map((r) => ({
+    name: charMapping.get(r.avatar) ?? 'Unknown',
+    rarity: r.star,
+    icon: r.avatar,
+  }))
+  return {
+    versionNumber,
+    members,
+    usageRateTop: raw.up_use ?? null,
+    usageRateBottom: raw.down_use ?? null,
+    usageTotal: raw.has > 0 ? (raw.use / raw.has) * 100 : 0,
+    teamKey: generateTeamKey(members.map((m) => m.name)),
+    has: raw.has,
+    use: raw.use,
+  }
+}
+
+export function mapStygianTeam(
+  raw: RawTeamEntry,
+  versionNumber: number,
+  charMapping: Map<string, string>,
+): StygianTeam {
+  return {
+    ...mapAbyssTeam(raw, versionNumber, charMapping),
+    usageRateMiddle: raw.mid_use ?? null,
+  }
+}
+
+export function getCharacterNames(charMapping: Map<string, string>): string[] {
+  return Array.from(new Set(charMapping.values()))
+}
