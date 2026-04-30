@@ -90,8 +90,10 @@ export function sleep(ms: number): Promise<void> {
 
 function isRawTeamEntry(t: unknown): t is RawTeamEntry {
   if (!t || typeof t !== 'object') return false
-  const { role } = t as Record<string, unknown>
+  const { role, use, has } = t as Record<string, unknown>
   return (
+    typeof use === 'number' && Number.isFinite(use) && use >= 0 &&
+    typeof has === 'number' && Number.isFinite(has) && has >= 0 &&
     Array.isArray(role) &&
     role.length > 0 &&
     role.every(
