@@ -11,7 +11,7 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "update-types": "npx supabase gen types --lang=typescript --project-id ysjscplavjuixuvsdile > ./src/lib/types/database.types.ts",
+    "update-types": "npx supabase gen types --lang=typescript --project-id oihiyebudfruomyzllql > ./src/lib/types/database.types.ts",
     "sync:enka": "tsx scripts/enka.ts",
     "sync:lunaris": "tsx scripts/lunaris.ts",
     "sync:images": "tsx scripts/sync-character-images-r2.ts",

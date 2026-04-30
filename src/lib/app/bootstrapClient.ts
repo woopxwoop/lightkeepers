@@ -1,4 +1,9 @@
-import type { AbyssTeam, Character, CharacterOwned, StygianTeam } from "$lib/definitions";
+import type {
+  AbyssTeam,
+  Character,
+  CharacterOwned,
+  StygianTeam,
+} from "$lib/definitions";
 import {
   allTeamsAbyss,
   allTeamsStygian,
@@ -17,7 +22,7 @@ type LayoutHydration = {
   allTeamsStygian: StygianTeam[];
 };
 
-type CachedOwnedEntry = { id: unknown; isOwned?: unknown };
+type CachedOwnedEntry = { name_id: unknown; isOwned?: unknown };
 
 /**
  * Reads and validates the cached roster from localStorage.
@@ -46,7 +51,8 @@ function readOwnedCache(): CachedOwnedEntry[] | undefined {
     const parsed = JSON.parse(cachedJSON);
     if (!Array.isArray(parsed)) return undefined;
     return parsed.filter(
-      (v): v is CachedOwnedEntry => typeof v === "object" && v !== null && "id" in v,
+      (v): v is CachedOwnedEntry =>
+        typeof v === "object" && v !== null && "name_id" in v,
     );
   } catch {
     return undefined;
@@ -62,8 +68,9 @@ function mergeOwnedFlags(
   }
 
   return characters.map((c) => {
-    const cached = cachedOwned.find((x) => x.id == c.id);
-    const isOwned = typeof cached?.isOwned === "boolean" ? cached.isOwned : true;
+    const cached = cachedOwned.find((x) => x.name_id === c.name_id);
+    const isOwned =
+      typeof cached?.isOwned === "boolean" ? cached.isOwned : true;
     return { ...c, isOwned };
   });
 }
@@ -90,4 +97,3 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   // Prefetch Pulls data (non-blocking)
   writeNearMissTeams(roster).catch(console.error);
 }
-

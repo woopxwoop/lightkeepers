@@ -21,7 +21,7 @@ export const GET: RequestHandler = async () => {
 
   try {
     const { error } = await serverDb
-      .from("versions")
+      .from("abyss_versions")
       .select("version_number")
       .limit(1)
       .single();

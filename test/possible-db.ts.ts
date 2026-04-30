@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5";
   };
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       abyss_versions: {
@@ -361,96 +386,10 @@ export type Database = {
       };
     };
     Views: {
-      stygian_character_pair_pmi: {
-        Row: {
-          char_a: string | null;
-          char_b: string | null;
-          p_a: number | null;
-          p_ab: number | null;
-          p_b: number | null;
-          pmi: number | null;
-        };
-        Relationships: [];
-      };
-      stygian_team_avg_usage: {
-        Row: {
-          avg_usage_rate: number | null;
-          team_key: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "team_stats_stygian_team_key_fkey";
-            columns: ["team_key"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["team_key"];
-          },
-        ];
-      };
+      [_ in never]: never;
     };
     Functions: {
-      get_near_miss_stygian_pairs: {
-        Args: {
-          p_min_pmi?: number;
-          p_name_ids: string[];
-          p_version_number: number;
-        };
-        Returns: {
-          avg_usage_rate: number;
-          field_1_rate: number;
-          field_2_rate: number;
-          field_3_rate: number;
-          members: string[];
-          missing_char_a: string;
-          missing_char_b: string;
-          pmi: number;
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-        }[];
-      };
-      get_near_miss_stygian_teams: {
-        Args: { p_name_ids: string[]; p_version_number: number };
-        Returns: {
-          avg_usage_rate: number;
-          field_1_rate: number;
-          field_2_rate: number;
-          field_3_rate: number;
-          members: string[];
-          missing_character: string;
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-        }[];
-      };
-      get_teams_with_characters_subset: {
-        Args: { p_name_ids: string[]; p_version_number: number };
-        Returns: {
-          field_1_rate: number;
-          field_2_rate: number;
-          has_total: number;
-          members: string[];
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-          version_number: number;
-        }[];
-      };
-      get_teams_with_characters_subset_stygian: {
-        Args: { p_name_ids: string[]; p_version_number: number };
-        Returns: {
-          field_1_rate: number;
-          field_2_rate: number;
-          field_3_rate: number;
-          has_total: number;
-          members: string[];
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-          version_number: number;
-        }[];
-      };
-      refresh_stygian_views: { Args: never; Returns: undefined };
+      [_ in never]: never;
     };
     Enums: {
       [_ in never]: never;
@@ -582,6 +521,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

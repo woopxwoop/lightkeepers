@@ -1,3 +1,11 @@
+export const WEAPON_TYPE_MAP: Record<string, string> = {
+  WEAPON_SWORD_ONE_HAND: "Sword",
+  WEAPON_CLAYMORE: "Claymore",
+  WEAPON_POLE: "Polearm",
+  WEAPON_CATALYST: "Catalyst",
+  WEAPON_BOW: "Bow",
+};
+
 const CHARACTERS_CDN_BASE = "https://images.lightkeepers.moe/characters";
 
 const ENEMIES_CDN_BASE = "https://images.lightkeepers.moe/enemies";

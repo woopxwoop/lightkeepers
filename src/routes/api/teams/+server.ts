@@ -56,7 +56,7 @@ export const POST: RequestHandler = async ({ request }) => {
       const { data, error: err } = await serverDb.rpc(
         "get_teams_with_characters_subset",
         {
-          p_character_names: characters,
+          p_name_ids: characters,
           p_version_number: abyssVersion,
         },
       );
@@ -68,7 +68,7 @@ export const POST: RequestHandler = async ({ request }) => {
       const { data, error: err } = await serverDb.rpc(
         "get_teams_with_characters_subset_stygian",
         {
-          p_character_names: characters,
+          p_name_ids: characters,
           p_version_number: stygianVersion,
         },
       );
