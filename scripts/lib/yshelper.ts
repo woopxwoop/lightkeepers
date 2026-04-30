@@ -88,12 +88,17 @@ export function sleep(ms: number): Promise<void> {
 
 // ─── Parsing ──────────────────────────────────────────────────────────────────
 
+function isNullableRate(v: unknown): boolean {
+  return v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0)
+}
+
 function isRawTeamEntry(t: unknown): t is RawTeamEntry {
   if (!t || typeof t !== 'object') return false
-  const { role, use, has } = t as Record<string, unknown>
+  const { role, use, has, up_use, down_use, mid_use } = t as Record<string, unknown>
   return (
     typeof use === 'number' && Number.isFinite(use) && use >= 0 &&
     typeof has === 'number' && Number.isFinite(has) && has >= 0 &&
+    isNullableRate(up_use) && isNullableRate(down_use) && isNullableRate(mid_use) &&
     Array.isArray(role) &&
     role.length > 0 &&
     role.every(
@@ -148,7 +153,8 @@ export function extractCharacters(
 ): { name: string; rarity: number; icon: string }[] {
   const TRAVELER_ICON =
     'https://upload-bbs.mihoyo.com/game_record/genshin/character_icon/UI_AvatarIcon_PlayerGirl.png'
-  return (Array.isArray(data.result) ? data.result[0] ?? [] : []).flatMap((tier) =>
+  const result0 = Array.isArray(data.result) ? data.result[0] : undefined
+  return (Array.isArray(result0) ? result0 : []).filter(Boolean).flatMap((tier) =>
     Array.isArray(tier.list) ? tier.list.map((c) => ({
       name: c.ename,
       rarity: c.star,
