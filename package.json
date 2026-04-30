@@ -11,10 +11,17 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "update-types": "npx supabase gen types --lang=typescript --project-id ysjscplavjuixuvsdile > ./src/lib/types/database.types.ts",
-    "sync:character-images": "node scripts/sync-character-images-r2.js"
+    "sync:enka": "tsx scripts/enka.ts",
+    "sync:lunaris": "tsx scripts/lunaris.ts",
+    "sync:images": "tsx scripts/sync-character-images-r2.ts",
+    "cron:abyss": "tsx scripts/cron-abyss.ts",
+    "cron:stygian": "tsx scripts/cron-stygian.ts",
+    "test:crons": "tsx scripts/test-crons.ts",
+    "test:syncs": "tsx scripts/test-syncs.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "tsx": "^4.19.2",
     "@sveltejs/adapter-auto": "^7.0.0",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/adapter-vercel": "^6.3.1",
@@ -27,7 +34,6 @@
     "vite": "^7.2.6"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1038.0",
     "@google/generative-ai": "^0.24.1",
     "@sentry/sveltekit": "^10.48.0",
     "@supabase/supabase-js": "^2.90.1",

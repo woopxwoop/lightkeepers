@@ -1,0 +1,32 @@
+name: Abyss Cron
+
+on:
+  # Runs ~every 4 days, with extra runs around the month-1 and month-16 resets.
+  # Approximates the original Vercel schedule: 0 14 1-15/4,16-17,18-31/4 * *
+  schedule:
+    - cron: '0 14 1,5,9,13,16,17,18,22,26,30 * *'
+  workflow_dispatch:
+
+jobs:
+  update-abyss:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run abyss update
+        run: pnpm exec tsx scripts/cron-abyss.ts
+        env:
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}
