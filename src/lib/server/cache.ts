@@ -109,7 +109,17 @@ export class RateLimiter {
 // ── Shared singletons ──────────────────────────────────────────────────────
 // These live in server memory for the lifetime of the Node process.
 
+import type { Tables } from "$lib/types/database.types";
+
+type Character = Tables<"characters">;
+
 const TTL_15_MIN = 15 * 60 * 1000;
+
+/**
+ * Cache for the characters table — changes only on patch day.
+ * Single entry; keyed by the constant string "characters".
+ */
+export const charactersCache = new LRUCache<Character[]>(1, TTL_15_MIN);
 
 /**
  * Cache for per-user Supabase RPC results.

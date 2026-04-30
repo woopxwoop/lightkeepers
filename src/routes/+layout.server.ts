@@ -11,6 +11,7 @@
 
 import type { LayoutServerLoad } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
+import { charactersCache } from "$lib/server/cache";
 import type { Tables } from "$lib/types/database.types";
 
 type Character = Tables<"characters">;
@@ -22,18 +23,17 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
   const staticRes = await fetch("/api/static");
   const staticData = staticRes.ok ? await staticRes.json() : null;
 
-  // ── Fetch character data + mapping directly (small, infrequently changes) ─
-  const charactersRes = await serverDb
-    .from("characters")
-    .select("*")
-    .order("name", { ascending: true });
-
-  const mapping = new Map<string, Character>();
-  (charactersRes.data ?? []).forEach((c: Character) => {
-    mapping.set(c.name, c);
+  // ── Fetch character data + mapping (cached 15 min — changes only on patch day) ─
+  const characters = await charactersCache.getOrSet("characters", async () => {
+    const { data } = await serverDb
+      .from("characters")
+      .select("*")
+      .order("name", { ascending: true });
+    return data ?? [];
   });
 
-  const characters: Character[] = (charactersRes.data ?? []) as Character[];
+  const mapping = new Map<string, Character>();
+  characters.forEach((c) => mapping.set(c.name, c));
 
   return {
     mapping,
