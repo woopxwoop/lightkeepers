@@ -53,13 +53,14 @@ async function getStygianInfo(
 }
 
 async function fillStygianEnemyInfo(numVersionsLimit: number): Promise<void> {
-  const { data: fill } = await db
+  const { data: fill, error } = await db
     .from("stygian_versions")
     .select("version_number")
     .order("version_number", { ascending: false })
     .limit(numVersionsLimit);
 
-  if (!fill) return;
+  if (error) throw error;
+  if (!fill || fill.length === 0) return;
 
   // Use for...of so each upsert is properly awaited
   for (const version of fill) {
@@ -67,7 +68,7 @@ async function fillStygianEnemyInfo(numVersionsLimit: number): Promise<void> {
 
     const FEARLESS_LEVEL = 4;
     const levelConfigs = info?.levels[FEARLESS_LEVEL]?.levelConfigs;
-    if (!levelConfigs) continue;
+    if (!Array.isArray(levelConfigs) || levelConfigs.length < 3) continue;
 
     for (const enemy of levelConfigs) {
       const { error } = await db.from("enemies").upsert({

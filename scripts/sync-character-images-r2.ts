@@ -136,7 +136,9 @@ async function existsInR2(key: string): Promise<boolean> {
     method: "HEAD",
     headers: { Authorization: `Bearer ${CF_API_TOKEN}` },
   });
-  return resp.ok;
+  if (resp.ok) return true;
+  if (resp.status === 404) return false;
+  throw new Error(`R2 existence check failed for "${key}": ${resp.status} ${resp.statusText}`);
 }
 
 async function getEnemiesFromDb() {
@@ -228,13 +230,12 @@ async function processCharacter(
   const portraitKey = `${R2_PREFIX}/${nameId}/portrait.webp`;
   const coopKey = `${R2_PREFIX}/${nameId}/coop.webp`;
 
-  const [portraitExists, coopExists] = await Promise.all([
-    existsInR2(portraitKey),
-    existsInR2(coopKey),
-  ]);
-
-  const needsPortrait = force || !portraitExists;
-  const needsCoop = force || !coopExists;
+  const [needsPortrait, needsCoop] = force
+    ? [true, true]
+    : await Promise.all([
+        existsInR2(portraitKey).then((e) => !e),
+        existsInR2(coopKey).then((e) => !e),
+      ]);
 
   if (!needsPortrait && !needsCoop) {
     console.log(`  skip (exists): ${portraitKey}, ${coopKey}`);

@@ -69,7 +69,15 @@ export async function fetchYsHelper(
 ): Promise<ApiResponse> {
   const params = new URLSearchParams({ star: 'all', role, lang })
   if (version !== undefined) params.set('version', String(version))
-  const res = await fetch(`${baseUrl}?${params}`, { headers: HEADERS })
+  const res = await fetch(`${baseUrl}?${params}`, {
+    headers: HEADERS,
+    signal: AbortSignal.timeout(20_000),
+  }).catch((e: unknown) => {
+    if (e instanceof Error && e.name === 'TimeoutError') {
+      throw new Error(`Timeout fetching ${baseUrl} role=${role} after 20s`)
+    }
+    throw e
+  })
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${baseUrl} role=${role}`)
   return res.json() as Promise<ApiResponse>
 }
@@ -99,16 +107,26 @@ export function extractTeams(data: ApiResponse): RawTeamEntry[] {
 }
 
 export function getCurrentVersion(data: ApiResponse): number {
-  return parseInt(data.history_list[0].value, 10)
+  if (!Array.isArray(data.history_list) || data.history_list.length === 0) {
+    throw new Error('getCurrentVersion: history_list is missing or empty')
+  }
+  const n = parseInt(data.history_list[0].value, 10)
+  if (!Number.isFinite(n)) {
+    throw new Error(`getCurrentVersion: invalid version value "${data.history_list[0].value}"`)
+  }
+  return n
 }
 
 export function extractVersionEntries(
   data: ApiResponse,
 ): { version: string; versionNumber: number }[] {
-  return data.history_list.map((e) => ({
-    version: e.title,
-    versionNumber: parseInt(e.value, 10),
-  }))
+  if (!Array.isArray(data.history_list)) {
+    throw new Error('extractVersionEntries: history_list is missing or not an array')
+  }
+  return data.history_list.flatMap((e) => {
+    const n = parseInt(e.value, 10)
+    return Number.isFinite(n) ? [{ version: e.title, versionNumber: n }] : []
+  })
 }
 
 // Returns {name (English), rarity, icon} for all characters in result[0] tiers.
@@ -117,7 +135,7 @@ export function extractCharacters(
 ): { name: string; rarity: number; icon: string }[] {
   const TRAVELER_ICON =
     'https://upload-bbs.mihoyo.com/game_record/genshin/character_icon/UI_AvatarIcon_PlayerGirl.png'
-  return data.result[0].flatMap((tier) =>
+  return (Array.isArray(data.result) ? data.result[0] ?? [] : []).flatMap((tier) =>
     tier.list.map((c) => ({
       name: c.ename,
       rarity: c.star,
@@ -149,7 +167,7 @@ export function mapAbyssTeam(
     usageRateTop: raw.up_use ?? null,
     usageRateBottom: raw.down_use ?? null,
     usageTotal: raw.has > 0 ? (raw.use / raw.has) * 100 : 0,
-    teamKey: generateTeamKey(members.map((m) => m.name)),
+    teamKey: generateTeamKey(raw.role.map((r) => r.avatar)),
     has: raw.has,
     use: raw.use,
   }

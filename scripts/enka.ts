@@ -1,15 +1,5 @@
 import { EnkaClient } from "enka-network-api";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../src/lib/types/database.types.js";
-import "dotenv/config";
-
-const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.PRIVATE_SUPABASE_KEY;
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  throw new Error("PUBLIC_SUPABASE_URL and PRIVATE_SUPABASE_KEY must be set");
-}
-
-const db = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
+import { supabase as db } from "./lib/supabase.js";
 
 const WEAPON_TYPE_MAP: Record<string, string> = {
   WEAPON_SWORD_ONE_HAND: "Sword",
