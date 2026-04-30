@@ -40,16 +40,13 @@ async function getVersion(): Promise<string | undefined> {
 async function getStygianInfo(
   versionOffset: number,
 ): Promise<StygianInfo | undefined> {
-  try {
-    const response = await fetch(
-      `${BASE_LUNARIS_STYGIAN_ROUTE}/${BASE_STYGIAN_ID + versionOffset}.json`,
-    );
-    if (!response.ok) return undefined;
-    return (await response.json()) as StygianInfo;
-  } catch (error) {
-    console.error("Network error:", error);
-    return undefined;
+  const url = `${BASE_LUNARIS_STYGIAN_ROUTE}/${BASE_STYGIAN_ID + versionOffset}.json`;
+  const response = await fetch(url);
+  if (response.status === 404) return undefined;
+  if (!response.ok) {
+    throw new Error(`getStygianInfo: HTTP ${response.status} fetching ${url}`);
   }
+  return (await response.json()) as StygianInfo;
 }
 
 async function fillStygianEnemyInfo(numVersionsLimit: number): Promise<void> {
@@ -65,9 +62,13 @@ async function fillStygianEnemyInfo(numVersionsLimit: number): Promise<void> {
   // Use for...of so each upsert is properly awaited
   for (const version of fill) {
     const info = await getStygianInfo(version.version_number + 1);
+    if (info === undefined) {
+      console.log(`  version ${version.version_number}: no Lunaris data yet, skipping`);
+      continue;
+    }
 
     const FEARLESS_LEVEL = 4;
-    const levelConfigs = info?.levels[FEARLESS_LEVEL]?.levelConfigs;
+    const levelConfigs = info.levels[FEARLESS_LEVEL]?.levelConfigs;
     if (!Array.isArray(levelConfigs) || levelConfigs.length < 3) continue;
 
     for (const enemy of levelConfigs) {

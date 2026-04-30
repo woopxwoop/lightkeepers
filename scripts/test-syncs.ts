@@ -22,18 +22,7 @@ const BASE_LUNARIS_STYGIAN_ROUTE = "https://lunaris.moe/data/leylinechallenge";
 const BASE_STYGIAN_ID = 5269001;
 const FEARLESS_LEVEL = 4;
 
-const WEAPON_TYPE_MAP: Record<string, string> = {
-  WEAPON_SWORD_ONE_HAND: "Sword",
-  WEAPON_CLAYMORE: "Claymore",
-  WEAPON_POLE: "Polearm",
-  WEAPON_CATALYST: "Catalyst",
-  WEAPON_BOW: "Bow",
-};
-
-const NAME_OVERRIDES: Record<string, string> = { Ambor: "Amber" };
-const DISPLAY_TO_DB = new Map(
-  Object.entries(NAME_OVERRIDES).map(([db, display]) => [display, db]),
-);
+import { WEAPON_TYPE_MAP, DISPLAY_TO_DB } from "./lib/enka-mappings.js";
 
 // ── Enka ──────────────────────────────────────────────────────────────────────
 
@@ -50,8 +39,14 @@ await check("Enka client initializes and fetches assets", async () => {
   await enka.cachedAssetsManager.fetchAllContents();
   enkaCharacters = [...enka.getAllCharacters()];
   enkaClose = () => enka.close();
-  assert(enkaCharacters.length > 50, `only ${enkaCharacters.length} characters returned — expected 50+`);
-  ok("Enka client initializes and fetches assets", `${enkaCharacters.length} characters`);
+  assert(
+    enkaCharacters.length > 50,
+    `only ${enkaCharacters.length} characters returned — expected 50+`,
+  );
+  ok(
+    "Enka client initializes and fetches assets",
+    `${enkaCharacters.length} characters`,
+  );
 });
 
 await check("all Enka characters have required fields", async () => {
@@ -62,15 +57,26 @@ await check("all Enka characters have required fields", async () => {
     .map((c) => c.weaponType)
     .filter((wt) => wt && !(wt in WEAPON_TYPE_MAP));
 
-  assert(missingNameId.length === 0, `${missingNameId.length} characters missing _nameId`);
-  assert(missingWeaponType.length === 0, `${missingWeaponType.length} characters missing weaponType`);
+  assert(
+    missingNameId.length === 0,
+    `${missingNameId.length} characters missing _nameId`,
+  );
+  assert(
+    missingWeaponType.length === 0,
+    `${missingWeaponType.length} characters missing weaponType`,
+  );
 
   if (unknownWeaponTypes.length > 0) {
     const unique = [...new Set(unknownWeaponTypes)];
-    throw new Error(`Unknown weapon types (add to WEAPON_TYPE_MAP): ${unique.join(", ")}`);
+    throw new Error(
+      `Unknown weapon types (add to WEAPON_TYPE_MAP): ${unique.join(", ")}`,
+    );
   }
 
-  ok("all Enka characters have required fields", `${relevant.length} non-mannequin chars checked`);
+  ok(
+    "all Enka characters have required fields",
+    `${relevant.length} non-mannequin chars checked`,
+  );
 });
 
 await check("Enka characters match DB names (cross-reference)", async () => {
@@ -80,7 +86,9 @@ await check("Enka characters match DB names (cross-reference)", async () => {
   if (error) throw error;
 
   const nameToId = new Map(dbChars.map((c) => [c.name, c.id]));
-  const relevant = enkaCharacters.filter((c) => c.element && !c.isMannequin && !c.isTraveler);
+  const relevant = enkaCharacters.filter(
+    (c) => c.element && !c.isMannequin && !c.isTraveler,
+  );
 
   const skipped: string[] = [];
   for (const char of relevant) {
@@ -92,7 +100,8 @@ await check("Enka characters match DB names (cross-reference)", async () => {
   // Traveler check separately
   if (!nameToId.has("Traveler")) skipped.push("Traveler");
 
-  const skipPct = relevant.length > 0 ? (skipped.length / relevant.length) * 100 : 0;
+  const skipPct =
+    relevant.length > 0 ? (skipped.length / relevant.length) * 100 : 0;
   if (skipped.length > 0) {
     console.log(`    unmatched: ${skipped.join(", ")}`);
   }
@@ -103,7 +112,10 @@ await check("Enka characters match DB names (cross-reference)", async () => {
     );
   }
 
-  ok("Enka characters match DB names", `${skipped.length} unmatched / ${relevant.length} total`);
+  ok(
+    "Enka characters match DB names",
+    `${skipped.length} unmatched / ${relevant.length} total`,
+  );
 });
 
 enkaClose();
@@ -118,7 +130,10 @@ await check("Lunaris version API is reachable", async () => {
   const res = await fetch(LUNARIS_VERSION_ROUTE);
   assert(res.ok, `HTTP ${res.status}`);
   const data = (await res.json()) as { version?: unknown };
-  assert(typeof data.version === "string" && data.version.length > 0, "version field missing or empty");
+  assert(
+    typeof data.version === "string" && data.version.length > 0,
+    "version field missing or empty",
+  );
   ok("Lunaris version API is reachable", `version: ${data.version}`);
 });
 
@@ -131,7 +146,10 @@ await check("stygian_versions table has at least one row", async () => {
   if (error) throw error;
   assert(data && data.length > 0, "stygian_versions table is empty");
   latestStygianVersion = data[0].version_number;
-  ok("stygian_versions table has at least one row", `latest: ${latestStygianVersion}`);
+  ok(
+    "stygian_versions table has at least one row",
+    `latest: ${latestStygianVersion}`,
+  );
 });
 
 if (latestStygianVersion !== null) {
@@ -141,22 +159,45 @@ if (latestStygianVersion !== null) {
     assert(res.ok, `HTTP ${res.status} for ${url}`);
     const data = (await res.json()) as {
       scheduleId?: unknown;
-      levels?: { levelConfigs?: { id: unknown; specialMonsterIcon: unknown; enLevelName: unknown }[] }[];
+      levels?: {
+        levelConfigs?: {
+          id: unknown;
+          specialMonsterIcon: unknown;
+          enLevelName: unknown;
+        }[];
+      }[];
     };
 
     assert(typeof data.scheduleId === "number", "scheduleId is not a number");
-    assert(Array.isArray(data.levels) && data.levels.length > FEARLESS_LEVEL, `levels array too short (need index ${FEARLESS_LEVEL})`);
+    assert(
+      Array.isArray(data.levels) && data.levels.length > FEARLESS_LEVEL,
+      `levels array too short (need index ${FEARLESS_LEVEL})`,
+    );
 
     const configs = data.levels![FEARLESS_LEVEL].levelConfigs;
-    assert(Array.isArray(configs) && configs.length >= 3, `levelConfigs needs at least 3 entries, got ${configs?.length ?? 0}`);
+    if (!Array.isArray(configs) || configs.length < 3) {
+      throw new Error(
+        `levelConfigs needs at least 3 entries, got ${configs?.length ?? 0}`,
+      );
+    }
 
     for (const [i, cfg] of configs.entries()) {
       assert(typeof cfg.id === "number", `configs[${i}].id is not a number`);
-      assert(typeof cfg.specialMonsterIcon === "string" && cfg.specialMonsterIcon.length > 0, `configs[${i}].specialMonsterIcon is empty`);
-      assert(typeof cfg.enLevelName === "string" && cfg.enLevelName.length > 0, `configs[${i}].enLevelName is empty`);
+      assert(
+        typeof cfg.specialMonsterIcon === "string" &&
+          cfg.specialMonsterIcon.length > 0,
+        `configs[${i}].specialMonsterIcon is empty`,
+      );
+      assert(
+        typeof cfg.enLevelName === "string" && cfg.enLevelName.length > 0,
+        `configs[${i}].enLevelName is empty`,
+      );
     }
 
-    ok("Lunaris stygian info has expected shape", `${configs.length} enemies at fearless level`);
+    ok(
+      "Lunaris stygian info has expected shape",
+      `${configs.length} enemies at fearless level`,
+    );
   });
 }
 
@@ -175,15 +216,22 @@ await check("characters in DB have name_id populated", async () => {
 
   const missing = data.filter((c) => !c.name_id);
   if (missing.length > 0) {
-    console.log(`    missing name_id: ${missing.map((c) => c.name).join(", ")}`);
+    console.log(
+      `    missing name_id: ${missing.map((c) => c.name).join(", ")}`,
+    );
   }
   // Warn but don't fail — new characters legitimately start without name_id
   if (missing.length > 3) {
-    throw new Error(`${missing.length} characters missing name_id — run pnpm sync:enka`);
+    throw new Error(
+      `${missing.length} characters missing name_id — run pnpm sync:enka`,
+    );
   }
 
   sampleNameId = data.find((c) => c.name_id)?.name_id ?? null;
-  ok("characters in DB have name_id populated", `${data.length - missing.length}/${data.length} populated`);
+  ok(
+    "characters in DB have name_id populated",
+    `${data.length - missing.length}/${data.length} populated`,
+  );
 });
 
 if (sampleNameId) {
@@ -191,14 +239,20 @@ if (sampleNameId) {
 
   await check("portrait URL is fetchable (sample character)", async () => {
     const url = `https://enka.network/ui/UI_AvatarIcon_${safe}.png`;
-    const res = await fetch(url, { method: "HEAD", headers: { "user-agent": "lightkeepers-test/1.0" } });
+    const res = await fetch(url, {
+      method: "HEAD",
+      headers: { "user-agent": "lightkeepers-test/1.0" },
+    });
     assert(res.ok, `HEAD ${url} returned ${res.status}`);
     ok("portrait URL is fetchable (sample character)", `${sampleNameId}`);
   });
 
   await check("coop image URL is fetchable (sample character)", async () => {
     const url = `https://api.lunaris.moe/data/assets/coopimg/UI_CoopImg_${safe}.webp`;
-    const res = await fetch(url, { method: "HEAD", headers: { "user-agent": "lightkeepers-test/1.0" } });
+    const res = await fetch(url, {
+      method: "HEAD",
+      headers: { "user-agent": "lightkeepers-test/1.0" },
+    });
     assert(res.ok, `HEAD ${url} returned ${res.status}`);
     ok("coop image URL is fetchable (sample character)", `${sampleNameId}`);
   });
@@ -217,7 +271,10 @@ await check("R2 credentials are configured and auth works", async () => {
     method: "HEAD",
     headers: { Authorization: `Bearer ${CF_API_TOKEN}` },
   });
-  assert(res.status !== 401 && res.status !== 403, `R2 auth failed: ${res.status} ${res.statusText}`);
+  assert(
+    res.status === 200 || res.status === 404,
+    `R2 probe failed: ${res.status} ${res.statusText}`,
+  );
 
   ok("R2 credentials are configured and auth works", `bucket: ${R2_BUCKET}`);
 });

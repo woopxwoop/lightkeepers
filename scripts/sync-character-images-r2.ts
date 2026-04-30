@@ -253,23 +253,24 @@ async function processCharacter(
 
   const coop = needsCoop ? await fetchFirstImageBuffer(templates.coop) : null;
 
-  if (needsPortrait && !portrait && needsCoop && !coop) {
-    console.warn(`- skip ${label}: no portrait/coop source found`);
-    return { ok: false, reason: "no-source" };
+  if (needsPortrait && !portrait) {
+    console.warn(`- skip ${label}: portrait source not found`);
+    return { ok: false, reason: "missing-portrait" };
+  }
+
+  if (needsCoop && !coop) {
+    console.warn(`- skip ${label}: coop source not found`);
+    return { ok: false, reason: "missing-coop" };
   }
 
   if (portrait) {
-    const optimized = await optimizeToWebp(portrait.buffer, {
-      sourceIsWebp: portrait.isWebp,
-    });
+    const optimized = await optimizeToWebp(portrait.buffer, { sourceIsWebp: portrait.isWebp });
     await uploadToR2(portraitKey, optimized);
     console.log(`  portrait -> ${portraitKey} (${portrait.sourceUrl})`);
   }
 
   if (coop) {
-    const optimized = await optimizeToWebp(coop.buffer, {
-      sourceIsWebp: coop.isWebp,
-    });
+    const optimized = await optimizeToWebp(coop.buffer, { sourceIsWebp: coop.isWebp });
     await uploadToR2(coopKey, optimized);
     console.log(`  coop -> ${coopKey} (${coop.sourceUrl})`);
   }

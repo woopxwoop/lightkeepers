@@ -1,22 +1,6 @@
 import { EnkaClient } from "enka-network-api";
 import { supabase as db } from "./lib/supabase.js";
-
-const WEAPON_TYPE_MAP: Record<string, string> = {
-  WEAPON_SWORD_ONE_HAND: "Sword",
-  WEAPON_CLAYMORE: "Claymore",
-  WEAPON_POLE: "Polearm",
-  WEAPON_CATALYST: "Catalyst",
-  WEAPON_BOW: "Bow",
-};
-
-// DB name -> Enka display name mismatches
-const NAME_OVERRIDES: Record<string, string> = {
-  Ambor: "Amber",
-};
-
-const DISPLAY_TO_DB = new Map(
-  Object.entries(NAME_OVERRIDES).map(([db, display]) => [display, db]),
-);
+import { WEAPON_TYPE_MAP, DISPLAY_TO_DB } from "./lib/enka-mappings.js";
 
 interface CharacterUpdate {
   id: string;
@@ -30,8 +14,9 @@ async function main() {
   const enka = new EnkaClient({ defaultLanguage: "en" });
   enka.cachedAssetsManager.cacheDirectoryPath = "./cache";
   enka.cachedAssetsManager.cacheDirectorySetup();
+  await enka.cachedAssetsManager.fetchAllContents();
   enka.cachedAssetsManager.activateAutoCacheUpdater({
-    instant: true,
+    instant: false,
     timeout: 60 * 60 * 1000,
     onUpdateStart: async () => {
       console.log("Updating Genshin Data...");

@@ -88,8 +88,21 @@ export function sleep(ms: number): Promise<void> {
 
 // ─── Parsing ──────────────────────────────────────────────────────────────────
 
+function isRawTeamEntry(t: unknown): t is RawTeamEntry {
+  if (!t || typeof t !== 'object') return false
+  const { role } = t as Record<string, unknown>
+  return (
+    Array.isArray(role) &&
+    role.length > 0 &&
+    role.every(
+      (r) => r && typeof r === 'object' &&
+        typeof (r as Record<string, unknown>).avatar === 'string' &&
+        typeof (r as Record<string, unknown>).star === 'number',
+    )
+  )
+}
+
 // Finds team objects by walking the nested-list structure of the API response.
-// Teams are identified by having a `role` key.
 export function extractTeams(data: ApiResponse): RawTeamEntry[] {
   const teams: RawTeamEntry[] = []
   for (const v of Object.values(data)) {
@@ -97,9 +110,7 @@ export function extractTeams(data: ApiResponse): RawTeamEntry[] {
     for (const item of v) {
       if (!Array.isArray(item)) continue
       for (const t of item) {
-        if (t && typeof t === 'object' && 'role' in t) {
-          teams.push(t as RawTeamEntry)
-        }
+        if (isRawTeamEntry(t)) teams.push(t)
       }
     }
   }
