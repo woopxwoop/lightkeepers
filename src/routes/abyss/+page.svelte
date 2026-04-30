@@ -163,7 +163,7 @@
 
         <div class="flex items-center justify-between">
           <span class="text-xs" style="color: var(--foreground-mid);">
-            {(assignment.team.usage_total ?? 0).toFixed(1)}% usage
+            {(assignment.team.usage_total ?? 0).toFixed(2)}% usage
           </span>
           <span class="text-xs" style="color: {accent};">
             {slotRate(assignment.team, slot).toFixed(0)}% on this side

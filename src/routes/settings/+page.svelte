@@ -506,13 +506,11 @@
 
 <style>
   .settings-sidebar {
-    position: relative;
+    position: sticky;
+    top: 80px;
+    z-index: 10;
     border-radius: 8px;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--background-mid) 96%, transparent),
-      color-mix(in srgb, var(--background-color) 42%, transparent)
-    );
+    background: var(--background-mid);
     border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);
     box-shadow:
       inset 0 1px 0 color-mix(in srgb, var(--accent-1) 16%, transparent),
@@ -540,8 +538,7 @@
         90deg,
         color-mix(in srgb, var(--accent-1) 56%, transparent),
         color-mix(in srgb, var(--accent-1) 32%, transparent),
-        color-mix(in srgb, var(--accent-1) 22%, transparent) 86%,
-        transparent
+        color-mix(in srgb, var(--accent-1) 12%, transparent)
       ),
       color-mix(in srgb, var(--background-mid) 88%, transparent);
     box-shadow:

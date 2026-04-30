@@ -2,6 +2,7 @@
   import avatarImg from "$lib/assets/default-avatar.jpg";
   import type { CharacterOwned, Character } from "$lib/definitions";
   import { displayPreferences } from "$lib/stores";
+  import { getCharacterPortrait, getCharacterCoop } from "$lib/utils";
 
   let { character }: { character: CharacterOwned | Character | undefined } =
     $props();
@@ -10,12 +11,6 @@
     if (!character)
       console.error("invalid character passed in as prop to CharacterIcon");
   });
-
-  function makeCoopImg(name_id: string | null) {
-    if (name_id)
-      return `https://api.lunaris.moe/data/assets/coopimg/UI_CoopImg_${name_id}.webp`;
-    return null;
-  }
 
   let useEnkaIcon = $derived($displayPreferences.iconStyle === "enka");
 </script>
@@ -27,9 +22,9 @@
 >
   {#if character}
     <img
-      src={!useEnkaIcon && character.name_id
-        ? makeCoopImg(character.name_id)
-        : (character.enka_icon ?? character.icon ?? avatarImg)}
+      src={character.name_id
+        ? (useEnkaIcon ? getCharacterPortrait(character.name_id) : getCharacterCoop(character.name_id))
+        : avatarImg}
       alt={character.name}
     />
   {/if}

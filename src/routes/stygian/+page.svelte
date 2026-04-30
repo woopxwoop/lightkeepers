@@ -9,6 +9,7 @@
   import Team from "$lib/ui/components/Team.svelte";
   import { onMount } from "svelte";
   import type { StygianTeam } from "$lib/definitions";
+  import { getEnemyAsset } from "$lib/utils";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -127,9 +128,6 @@
     if (event.detail === 0) action();
   }
 
-  function stygianAssetToURL(asset: string) {
-    return `https://api.lunaris.moe/data/assets/leyline/${asset}.png`;
-  }
 
   function slotRate(team: StygianTeam, slot: Slot): number {
     if (slot === "top") return team.usage_rate_top ?? 0;
@@ -183,7 +181,7 @@
     >
       {#if enemy?.lunaris_asset}
         <img
-          src={stygianAssetToURL(enemy.lunaris_asset)}
+          src={getEnemyAsset(enemy.lunaris_asset)}
           alt={stygianSlotLabel[slot]}
           class="w-full h-full object-contain"
           style="transform: scale(1.5) translateY(8%);"
@@ -219,11 +217,7 @@
 
         <div class="flex items-center justify-between">
           <span class="text-xs" style="color: var(--foreground-mid);">
-            {(
-              assignment.team.avg_usage_total ??
-              assignment.team.usage_total ??
-              0
-            ).toFixed(1)}% avg usage
+            {(assignment.team.usage_total ?? 0).toFixed(2)}% usage
           </span>
           <span class="text-xs" style="color: {accent};">
             {slotRate(assignment.team, slot).toFixed(0)}% in this field
