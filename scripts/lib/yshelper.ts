@@ -147,11 +147,11 @@ export function extractCharacters(
   const TRAVELER_ICON =
     'https://upload-bbs.mihoyo.com/game_record/genshin/character_icon/UI_AvatarIcon_PlayerGirl.png'
   return (Array.isArray(data.result) ? data.result[0] ?? [] : []).flatMap((tier) =>
-    tier.list.map((c) => ({
+    Array.isArray(tier.list) ? tier.list.map((c) => ({
       name: c.ename,
       rarity: c.star,
       icon: c.ename === 'Traveler' ? TRAVELER_ICON : c.avatar,
-    })),
+    })) : [],
   )
 }
 
