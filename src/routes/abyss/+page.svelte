@@ -22,7 +22,7 @@
   const SOLUTIONS_COUNT = 6;
 
   let ownedNames = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name)),
+    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
   );
 
   let solutions = $derived.by(() => {
@@ -102,8 +102,8 @@
   }
 
   function slotRate(team: AbyssTeam, slot: Slot): number {
-    if (slot === "top") return team.usage_rate_top ?? 0;
-    return team.usage_rate_bottom ?? 0;
+    if (slot === "top") return team.field_1_rate ?? 0;
+    return team.field_2_rate ?? 0;
   }
 
   function assignmentKey(slot: Slot): string {
@@ -163,7 +163,7 @@
 
         <div class="flex items-center justify-between">
           <span class="text-xs" style="color: var(--foreground-mid);">
-            {(assignment.team.usage_total ?? 0).toFixed(2)}% usage
+            {(assignment.team.usage_rate ?? 0).toFixed(1)}% usage
           </span>
           <span class="text-xs" style="color: {accent};">
             {slotRate(assignment.team, slot).toFixed(0)}% on this side

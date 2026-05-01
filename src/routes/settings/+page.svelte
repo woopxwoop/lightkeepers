@@ -11,6 +11,7 @@
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import type { CharacterOwned } from "$lib/definitions";
   import { fly, slide } from "svelte/transition";
+  import { WEAPON_TYPE_MAP } from "$lib/utils";
 
   const sections = [
     {
@@ -83,25 +84,26 @@
         (c.element != null && elementFilter.has(c.element));
       const matchesWeapon =
         weaponFilter.size === 0 ||
-        (c.weapon_type != null && weaponFilter.has(c.weapon_type));
+        (c.weapon_type != null &&
+          weaponFilter.has(WEAPON_TYPE_MAP[c.weapon_type] ?? c.weapon_type));
       const matchesSearch =
-        search === "" || c.name.toLowerCase().includes(search.toLowerCase());
+        search === "" || (c.name ?? "").toLowerCase().includes(search.toLowerCase());
       return matchesRarity && matchesElement && matchesWeapon && matchesSearch;
     }),
   );
 
   let savedSnapshot = $state<string>("");
 
-  function toggleOwned(id: string) {
+  function toggleOwned(name_id: string) {
     tempCharactersOwned = tempCharactersOwned.map((c) =>
-      c.id === id ? { ...c, isOwned: !c.isOwned } : c,
+      c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
     );
     hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
   }
 
   function selectAll() {
     tempCharactersOwned = tempCharactersOwned.map((c) =>
-      visibleCharacters.some((v) => v.id === c.id)
+      visibleCharacters.some((v) => v.name_id === c.name_id)
         ? { ...c, isOwned: true }
         : c,
     );
@@ -110,7 +112,7 @@
 
   function deselectAll() {
     tempCharactersOwned = tempCharactersOwned.map((c) =>
-      visibleCharacters.some((v) => v.id === c.id)
+      visibleCharacters.some((v) => v.name_id === c.name_id)
         ? { ...c, isOwned: false }
         : c,
     );
@@ -388,12 +390,12 @@
                 <div
                   class="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3 pb-24"
                 >
-                  {#each visibleCharacters as character (character.id)}
+                  {#each visibleCharacters as character (character.name_id)}
                     <button
                       type="button"
-                      onclick={() => toggleOwned(character.id)}
+                      onclick={() => toggleOwned(character.name_id)}
                       aria-pressed={character.isOwned}
-                      aria-label="{character.name}, {character.isOwned
+                      aria-label="{character.name ?? 'Unknown'}, {character.isOwned
                         ? 'owned'
                         : 'not owned'}"
                       class="cursor-pointer rounded-lg w-full h-fit overflow-hidden relative transition-all duration-75 character-icon-button"

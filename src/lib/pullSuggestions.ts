@@ -1,4 +1,4 @@
-import type { StygianTeam } from "$lib/definitions";
+import type { StygianTeam, NearMissStygianTeam, NearMissStygianPair } from "$lib/definitions";
 
 export type PullSuggestion = {
   character: string;
@@ -49,14 +49,14 @@ export function computePullSuggestions(
     // Best near-miss team for this character
     const topNearMiss = [...unlocked].sort(
       (a, b) =>
-        (b.avg_usage_total ?? b.usage_total ?? 0) -
-        (a.avg_usage_total ?? a.usage_total ?? 0),
+        (b.avg_usage_rate ?? b.usage_total ?? 0) -
+        (a.avg_usage_rate ?? a.usage_total ?? 0),
     )[0];
 
     if (topNearMiss.members.length !== 4) continue;
 
     const unlockedUsage =
-      topNearMiss.avg_usage_total ?? topNearMiss.usage_total ?? 0;
+      topNearMiss.avg_usage_rate ?? topNearMiss.usage_total ?? 0;
 
     // The 3 owned members in this near-miss team
     const ownedMembers = (topNearMiss.members ?? []).filter(
@@ -69,12 +69,12 @@ export function computePullSuggestions(
       .filter((t) => t.members.length == 4)
       .sort(
         (a, b) =>
-          (b.avg_usage_total ?? b.usage_total ?? 0) -
-          (a.avg_usage_total ?? a.usage_total ?? 0),
+          (b.usage_rate ?? b.usage_total ?? 0) -
+          (a.usage_rate ?? a.usage_total ?? 0),
       )[0];
 
     const alternativeUsage =
-      bestCurrentAlternative?.avg_usage_total ??
+      bestCurrentAlternative?.usage_rate ??
       bestCurrentAlternative?.usage_total ??
       0;
 
@@ -89,13 +89,14 @@ export function computePullSuggestions(
 
     const bestTeam: StygianTeam = {
       team_key: topNearMiss.team_key,
-      version_number: topNearMiss.ret_version_number,
+      version_number: 0,
       usage_total: topNearMiss.usage_total,
-      usage_rate_top: topNearMiss.usage_rate_top,
-      usage_rate_middle: topNearMiss.usage_rate_middle,
-      usage_rate_bottom: topNearMiss.usage_rate_bottom,
+      usage_rate: topNearMiss.usage_rate,
+      field_1_rate: topNearMiss.field_1_rate,
+      field_2_rate: topNearMiss.field_2_rate,
+      field_3_rate: topNearMiss.field_3_rate,
       members: topNearMiss.members,
-      avg_usage_total: topNearMiss.avg_usage_total,
+      has_total: 0,
     };
 
     suggestions.push({
@@ -111,33 +112,9 @@ export function computePullSuggestions(
   return suggestions.sort((a, b) => b.score - a.score).slice(0, maxSuggestions);
 }
 
-// Type returned by the Supabase RPC
-export type NearMissStygianTeam = {
-  team_key: string;
-  ret_version_number: number;
-  usage_total: number;
-  usage_rate_top: number;
-  usage_rate_middle: number;
-  usage_rate_bottom: number;
-  members: string[];
-  missing_character: string;
-  avg_usage_total: number;
-};
-
-// Type returned by the pair near-miss RPC
-export type NearMissPairTeam = {
-  team_key: string;
-  ret_version_number: number;
-  usage_total: number;
-  usage_rate_top: number;
-  usage_rate_middle: number;
-  usage_rate_bottom: number;
-  members: string[];
-  missing_char_a: string | null;
-  missing_char_b: string | null;
-  avg_usage_total: number;
-  pmi: number;
-};
+// Re-export the DB-generated near-miss types for consumers of this module
+export type { NearMissStygianTeam } from "$lib/definitions";
+export type NearMissPairTeam = NearMissStygianPair;
 
 /**
  * Ranks pair pull suggestions by:
@@ -167,14 +144,14 @@ export function computePairSuggestions(
   for (const [, teams] of byPair) {
     const topTeam = [...teams].sort(
       (a, b) =>
-        (b.avg_usage_total ?? b.usage_total ?? 0) -
-        (a.avg_usage_total ?? a.usage_total ?? 0),
+        (b.avg_usage_rate ?? b.usage_total ?? 0) -
+        (a.avg_usage_rate ?? a.usage_total ?? 0),
     )[0];
 
     const charA = topTeam.missing_char_a!;
     const charB = topTeam.missing_char_b!;
 
-    const avgUsage = topTeam.avg_usage_total ?? topTeam.usage_total ?? 0;
+    const avgUsage = topTeam.avg_usage_rate ?? topTeam.usage_total ?? 0;
     const pmi = topTeam.pmi ?? 0;
 
     const ownedMembers = (topTeam.members ?? []).filter(
@@ -188,8 +165,8 @@ export function computePairSuggestions(
       )
       .sort(
         (a, b) =>
-          (b.avg_usage_total ?? b.usage_total ?? 0) -
-          (a.avg_usage_total ?? a.usage_total ?? 0),
+          (b.usage_rate ?? b.usage_total ?? 0) -
+          (a.usage_rate ?? a.usage_total ?? 0),
       )[0];
 
     // Best team with ownedMembers + charB (other half of the pair)
@@ -199,19 +176,19 @@ export function computePairSuggestions(
       )
       .sort(
         (a, b) =>
-          (b.avg_usage_total ?? b.usage_total ?? 0) -
-          (a.avg_usage_total ?? a.usage_total ?? 0),
+          (b.usage_rate ?? b.usage_total ?? 0) -
+          (a.usage_rate ?? a.usage_total ?? 0),
       )[0];
 
     // Best single-character alternative — pulling either one alone
     const bestCurrentAlternative =
-      (bestWithA?.avg_usage_total ?? bestWithA?.usage_total ?? 0) >=
-      (bestWithB?.avg_usage_total ?? bestWithB?.usage_total ?? 0)
+      (bestWithA?.usage_rate ?? bestWithA?.usage_total ?? 0) >=
+      (bestWithB?.usage_rate ?? bestWithB?.usage_total ?? 0)
         ? (bestWithA ?? bestWithB ?? null)
         : (bestWithB ?? bestWithA ?? null);
 
     const alternativeUsage =
-      bestCurrentAlternative?.avg_usage_total ??
+      bestCurrentAlternative?.usage_rate ??
       bestCurrentAlternative?.usage_total ??
       0;
     const improvement = avgUsage - alternativeUsage;
@@ -222,13 +199,14 @@ export function computePairSuggestions(
 
     const bestTeam: StygianTeam = {
       team_key: topTeam.team_key,
-      version_number: topTeam.ret_version_number,
+      version_number: 0,
       usage_total: topTeam.usage_total,
-      usage_rate_top: topTeam.usage_rate_top,
-      usage_rate_middle: topTeam.usage_rate_middle,
-      usage_rate_bottom: topTeam.usage_rate_bottom,
+      usage_rate: topTeam.usage_rate,
+      field_1_rate: topTeam.field_1_rate,
+      field_2_rate: topTeam.field_2_rate,
+      field_3_rate: topTeam.field_3_rate,
       members: topTeam.members,
-      avg_usage_total: topTeam.avg_usage_total,
+      has_total: 0,
     };
 
     suggestions.push({

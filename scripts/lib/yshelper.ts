@@ -2,25 +2,24 @@ import { createHash } from "node:crypto";
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 
-export interface Character {
-  name: string;
-  rarity: number | null;
-  icon: string | null;
+export interface TeamMember {
+  game_id: number;
+  name_id: string;
 }
 
 export interface AbyssTeam {
   versionNumber: number;
-  members: Character[];
-  usageRateTop: number | null;
-  usageRateBottom: number | null;
+  members: TeamMember[];
+  field1Rate: number | null;
+  field2Rate: number | null;
+  usageRate: number;
   usageTotal: number;
+  hasTotal: number;
   teamKey: string;
-  has: number;
-  use: number;
 }
 
 export interface StygianTeam extends AbyssTeam {
-  usageRateMiddle: number | null;
+  field3Rate: number | null;
 }
 
 // ─── Raw API shapes ───────────────────────────────────────────────────────────
@@ -121,7 +120,6 @@ function isRawTeamEntry(t: unknown): t is RawTeamEntry {
   );
 }
 
-// Finds team objects by walking the nested-list structure of the API response.
 export function extractTeams(data: ApiResponse): RawTeamEntry[] {
   const teams: RawTeamEntry[] = [];
   for (const v of Object.values(data)) {
@@ -151,7 +149,7 @@ export function getCurrentVersion(data: ApiResponse): number {
 
 export function extractVersionEntries(
   data: ApiResponse,
-): { version: string; versionNumber: number }[] {
+): { versionName: string; versionNumber: number }[] {
   if (!Array.isArray(data.history_list)) {
     throw new Error(
       "extractVersionEntries: history_list is missing or not an array",
@@ -159,16 +157,41 @@ export function extractVersionEntries(
   }
   return data.history_list.flatMap((e) => {
     const n = parseInt(e.value, 10);
-    return Number.isFinite(n) ? [{ version: e.title, versionNumber: n }] : [];
+    return Number.isFinite(n) ? [{ versionName: e.title, versionNumber: n }] : [];
   });
 }
 
-// Returns {name (English), rarity, icon} for all characters in result[0] tiers.
-export function extractCharacters(
-  data: ApiResponse,
-): { name: string; rarity: number; icon: string }[] {
-  const TRAVELER_ICON =
-    "https://upload-bbs.mihoyo.com/game_record/genshin/character_icon/UI_AvatarIcon_PlayerGirl.png";
+// YSHelper uses different names for some characters than Enka does.
+const YSHELPER_NAME_OVERRIDES: Record<string, string> = {
+  Ambor: "Amber",
+};
+
+// Builds avatar URL → TeamMember from a pre-fetched characters list.
+// Accepts the characters table rows so callers control the DB fetch.
+export function buildCharMapping(
+  ysCharacters: { name: string; avatar: string }[],
+  dbChars: { game_id: number; name_id: string; name: string | null }[],
+): { mapping: Map<string, TeamMember>; unmapped: string[] } {
+  const nameToChar = new Map(
+    dbChars.map((c) => [c.name?.toLowerCase(), { game_id: c.game_id, name_id: c.name_id }]),
+  );
+  const mapping = new Map<string, TeamMember>();
+  const unmapped: string[] = [];
+  for (const { name, avatar } of ysCharacters) {
+    const corrected = YSHELPER_NAME_OVERRIDES[name] ?? name;
+    const member = nameToChar.get(corrected.toLowerCase());
+    if (member) mapping.set(avatar, member);
+    else unmapped.push(name);
+  }
+  return { mapping, unmapped };
+}
+
+// YSHelper uses this URL for Traveler in team role data, regardless of element.
+const TRAVELER_AVATAR =
+  "https://upload-bbs.mihoyo.com/game_record/genshin/character_icon/UI_AvatarIcon_PlayerGirl.png";
+
+// Returns character names from YSHelper result tiers (used to build the avatar→name mapping)
+export function extractCharacterNames(data: ApiResponse): { name: string; avatar: string }[] {
   const result0 = Array.isArray(data.result) ? data.result[0] : undefined;
   return (Array.isArray(result0) ? result0 : [])
     .filter(Boolean)
@@ -176,8 +199,7 @@ export function extractCharacters(
       Array.isArray(tier.list)
         ? tier.list.map((c) => ({
             name: c.ename,
-            rarity: c.star,
-            icon: c.ename === "Traveler" ? TRAVELER_ICON : c.avatar,
+            avatar: c.ename === "Traveler" ? TRAVELER_AVATAR : c.avatar,
           }))
         : [],
     );
@@ -185,44 +207,43 @@ export function extractCharacters(
 
 // ─── Team mapping ─────────────────────────────────────────────────────────────
 
-function generateTeamKey(memberNames: string[]): string {
-  const sorted = [...memberNames].sort().join("-");
+// Team key is a hash of sorted game_ids — stable across name changes.
+function generateTeamKey(gameIds: number[]): string {
+  const sorted = [...gameIds].sort((a, b) => a - b).join("-");
   return createHash("sha256").update(sorted, "utf8").digest("hex");
 }
 
 export function mapAbyssTeam(
   raw: RawTeamEntry,
   versionNumber: number,
-  charMapping: Map<string, string>,
-): AbyssTeam {
-  const members: Character[] = raw.role.map((r) => ({
-    name: charMapping.get(r.avatar) ?? "Unknown",
-    rarity: r.star,
-    icon: r.avatar,
-  }));
+  // avatar URL → {game_id, name_id} from the characters table
+  charMapping: Map<string, TeamMember>,
+): AbyssTeam | null {
+  const members: TeamMember[] = [];
+  for (const r of raw.role) {
+    const member = charMapping.get(r.avatar);
+    if (!member) return null; // skip teams with unrecognised characters
+    members.push(member);
+  }
+  const usageRate = raw.has > 0 ? (raw.use / raw.has) * 100 : 0;
   return {
     versionNumber,
     members,
-    usageRateTop: raw.up_use ?? null,
-    usageRateBottom: raw.down_use ?? null,
-    usageTotal: raw.has > 0 ? (raw.use / raw.has) * 100 : 0,
-    teamKey: generateTeamKey(members.map((m) => m.name)),
-    has: raw.has,
-    use: raw.use,
+    field1Rate: raw.up_use ?? null,
+    field2Rate: raw.down_use ?? null,
+    usageRate,
+    usageTotal: raw.use,
+    hasTotal: raw.has,
+    teamKey: generateTeamKey(members.map((m) => m.game_id)),
   };
 }
 
 export function mapStygianTeam(
   raw: RawTeamEntry,
   versionNumber: number,
-  charMapping: Map<string, string>,
-): StygianTeam {
-  return {
-    ...mapAbyssTeam(raw, versionNumber, charMapping),
-    usageRateMiddle: raw.mid_use ?? null,
-  };
-}
-
-export function getCharacterNames(charMapping: Map<string, string>): string[] {
-  return Array.from(new Set(charMapping.values()));
+  charMapping: Map<string, TeamMember>,
+): StygianTeam | null {
+  const base = mapAbyssTeam(raw, versionNumber, charMapping);
+  if (!base) return null;
+  return { ...base, field3Rate: raw.mid_use ?? null };
 }

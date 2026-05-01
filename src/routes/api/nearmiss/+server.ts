@@ -56,32 +56,44 @@ export const POST: RequestHandler = async ({ request }) => {
     characters,
   );
 
-  const [nearMissTeams, nearMissPairs] = await Promise.all([
-    rpcCache.getOrSet(singleKey, async () => {
-      const { data, error: err } = await serverDb.rpc(
-        "get_near_miss_stygian_teams",
-        {
-          p_character_names: characters,
-          p_version_number: stygianVersion,
-        },
-      );
-      if (err) throw new Error(err.message);
-      return data ?? [];
-    }),
+  let nearMissTeams: unknown, nearMissPairs: unknown;
+  try {
+    [nearMissTeams, nearMissPairs] = await Promise.all([
+      rpcCache.getOrSet(singleKey, async () => {
+        const { data, error: err } = await serverDb.rpc(
+          "get_near_miss_stygian_teams",
+          {
+            p_name_ids: characters,
+            p_version_number: stygianVersion,
+          },
+        );
+        if (err) {
+          console.error("[nearmiss] get_near_miss_stygian_teams error:", err);
+          throw new Error(err.message);
+        }
+        return data ?? [];
+      }),
 
-    rpcCache.getOrSet(pairKey, async () => {
-      const { data, error: err } = await serverDb.rpc(
-        "get_near_miss_stygian_pairs",
-        {
-          p_character_names: characters,
-          p_version_number: stygianVersion,
-          p_min_pmi: minPmi,
-        },
-      );
-      if (err) throw new Error(err.message);
-      return data ?? [];
-    }),
-  ]);
+      rpcCache.getOrSet(pairKey, async () => {
+        const { data, error: err } = await serverDb.rpc(
+          "get_near_miss_stygian_pairs",
+          {
+            p_name_ids: characters,
+            p_version_number: stygianVersion,
+            p_min_pmi: minPmi,
+          },
+        );
+        if (err) {
+          console.error("[nearmiss] get_near_miss_stygian_pairs error:", err);
+          throw new Error(err.message);
+        }
+        return data ?? [];
+      }),
+    ]);
+  } catch (e) {
+    console.error("[nearmiss] RPC failed:", e);
+    throw error(500, "Internal server error");
+  }
 
   return json({ nearMissTeams, nearMissPairs });
 };

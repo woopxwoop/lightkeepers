@@ -33,7 +33,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
   });
 
   const mapping = new Map<string, Character>();
-  characters.forEach((c) => mapping.set(c.name, c));
+  characters.forEach((c) => mapping.set(c.name_id, c));
 
   return {
     mapping,

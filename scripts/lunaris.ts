@@ -1,14 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../src/lib/types/database.types.js";
+import { supabase as db } from "./lib/supabase.js";
 import "dotenv/config";
-
-const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.PRIVATE_SUPABASE_KEY;
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  throw new Error("PUBLIC_SUPABASE_URL and PRIVATE_SUPABASE_KEY must be set");
-}
-
-const db = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
 
 const BASE_STYGIAN_ID = 5269001;
 const LUNARIS_VERSION_ROUTE = "https://api.lunaris.moe/data/version.json";
@@ -18,23 +9,12 @@ interface LevelConfig {
   id: number;
   specialMonsterIcon: string;
   enLevelName: string;
+  description?: string;
 }
 
 interface StygianInfo {
   scheduleId: number;
   levels: { levelConfigs: LevelConfig[] }[];
-}
-
-async function getVersion(): Promise<string | undefined> {
-  try {
-    const response = await fetch(LUNARIS_VERSION_ROUTE);
-    if (!response.ok) return undefined;
-    const data = (await response.json()) as { version: string };
-    return data.version;
-  } catch (error) {
-    console.error("Network error:", error);
-    return undefined;
-  }
 }
 
 async function getStygianInfo(
@@ -50,17 +30,16 @@ async function getStygianInfo(
 }
 
 async function fillStygianEnemyInfo(numVersionsLimit: number): Promise<void> {
-  const { data: fill, error } = await db
+  const { data: versions, error } = await db
     .from("stygian_versions")
     .select("version_number")
     .order("version_number", { ascending: false })
     .limit(numVersionsLimit);
 
   if (error) throw error;
-  if (!fill || fill.length === 0) return;
+  if (!versions || versions.length === 0) return;
 
-  // Use for...of so each upsert is properly awaited
-  for (const version of fill) {
+  for (const version of versions) {
     const info = await getStygianInfo(version.version_number + 1);
     if (info === undefined) {
       console.log(`  version ${version.version_number}: no Lunaris data yet, skipping`);
@@ -71,25 +50,30 @@ async function fillStygianEnemyInfo(numVersionsLimit: number): Promise<void> {
     const levelConfigs = info.levels[FEARLESS_LEVEL]?.levelConfigs;
     if (!Array.isArray(levelConfigs) || levelConfigs.length < 3) continue;
 
+    // Upsert the three enemies
     for (const enemy of levelConfigs) {
-      const { error } = await db.from("enemies").upsert({
+      const { error: enemyErr } = await db.from("enemies").upsert({
         id: enemy.id,
-        lunaris_asset: enemy.specialMonsterIcon,
-        name: enemy.enLevelName,
+        enemy_name: enemy.enLevelName,
+        asset: enemy.specialMonsterIcon,
+        description: enemy.description ?? null,
       });
-      if (error) throw error;
+      if (enemyErr) throw enemyErr;
     }
 
-    const { error } = await db
-      .from("stygian_versions")
-      .update({
-        schedule_id: info!.scheduleId,
-        enemy_id_1: levelConfigs[0].id,
-        enemy_id_2: levelConfigs[1].id,
-        enemy_id_3: levelConfigs[2].id,
-      })
-      .eq("version_number", version.version_number);
-    if (error) throw error;
+    // Upsert the version → enemy join rows (slot_index 0, 1, 2)
+    const versionEnemyRows = levelConfigs.slice(0, 3).map((enemy, i) => ({
+      version_number: version.version_number,
+      enemy_id: enemy.id,
+      slot_index: i,
+    }));
+
+    const { error: joinErr } = await db
+      .from("stygian_version_enemies")
+      .upsert(versionEnemyRows, { onConflict: "version_number,slot_index" });
+    if (joinErr) throw joinErr;
+
+    console.log(`  version ${version.version_number}: enemies upserted`);
   }
 }
 

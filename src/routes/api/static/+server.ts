@@ -15,13 +15,13 @@
  * even cache misses at the edge don't hammer Supabase.
  */
 
-import { json } from "@sveltejs/kit";
+import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { LRUCache } from "$lib/server/cache";
 import type { Tables } from "$lib/types/database.types";
 
-type Version = Tables<"versions">;
+type Version = Tables<"abyss_versions">;
 type StygianVersion = Tables<"stygian_versions">;
 type Enemy = Tables<"enemies">;
 
@@ -46,7 +46,7 @@ const CACHE_KEY = "static";
 async function fetchStaticData(): Promise<StaticPayload> {
   const [abyssVerRes, stygianVerRes] = await Promise.all([
     serverDb
-      .from("versions")
+      .from("abyss_versions")
       .select("*")
       .order("version_number", { ascending: false })
       .limit(1),
@@ -58,57 +58,80 @@ async function fetchStaticData(): Promise<StaticPayload> {
   ]);
 
   const latestAbyssVersion: Version = abyssVerRes.data?.[0] ?? {
-    version: "unknown",
+    created_at: "",
+    version_name: null,
     version_number: -1,
   };
 
   const latestStygianVersion: StygianVersion = stygianVerRes.data?.[0] ?? {
-    version: "unknown",
+    created_at: "",
+    version_name: null,
     version_number: -1,
-    schedule_id: null,
-    enemy_id_1: null,
-    enemy_id_2: null,
-    enemy_id_3: null,
   };
 
-  // Fetch all teams + ranked combinations in parallel
-  const [abyssTeamsRes, stygianTeamsRes] = await Promise.all([
+  // Fetch all teams + version enemies in parallel
+  const [abyssTeamsRes, stygianTeamsRes, versionEnemiesRes] = await Promise.all([
     serverDb.rpc("get_teams_with_characters_subset", {
-      p_character_names: [],
+      p_name_ids: [],
       p_version_number: latestAbyssVersion.version_number,
     }),
     serverDb.rpc("get_teams_with_characters_subset_stygian", {
-      p_character_names: [],
+      p_name_ids: [],
       p_version_number: latestStygianVersion.version_number,
     }),
+    serverDb
+      .from("stygian_version_enemies")
+      .select("slot_index, enemy_id")
+      .eq("version_number", latestStygianVersion.version_number),
   ]);
 
-  const enemyIds = [
-    latestStygianVersion.enemy_id_1,
-    latestStygianVersion.enemy_id_2,
-    latestStygianVersion.enemy_id_3,
-  ].filter((id): id is number => id !== null);
+  if (abyssTeamsRes.error) {
+    console.error("fetchStaticData: abyss RPC error", abyssTeamsRes.error);
+    throw error(500, "Failed to fetch Abyss team data");
+  }
+  if (stygianTeamsRes.error) {
+    console.error("fetchStaticData: stygian RPC error", stygianTeamsRes.error);
+    throw error(500, "Failed to fetch Stygian team data");
+  }
+  if (versionEnemiesRes.error) {
+    console.error("fetchStaticData: stygian_version_enemies error", versionEnemiesRes.error);
+    throw error(500, "Failed to fetch Stygian version enemies");
+  }
+
+  const versionEnemyRows = versionEnemiesRes.data;
+  const enemyIds = versionEnemyRows
+    .map((r) => r.enemy_id)
+    .filter((id): id is number => id !== null);
 
   const enemiesRes =
     enemyIds.length > 0
       ? await serverDb.from("enemies").select("*").in("id", enemyIds)
-      : { data: [] };
+      : { data: [], error: null };
+
+  if (enemiesRes.error) {
+    console.error("fetchStaticData: enemies query error", enemiesRes.error);
+    throw error(500, "Failed to fetch enemy data");
+  }
 
   const enemyMap = new Map(
-    (enemiesRes.data ?? []).map((e: Enemy) => [e.id, e]),
+    enemiesRes.data.map((e: Enemy) => [e.id, e]),
   );
 
+  // slot_index: 0=top, 1=middle, 2=bottom
+  const slotRow = (idx: number) =>
+    versionEnemyRows.find((r) => r.slot_index === idx);
+
   const stygianEnemies: StygianEnemies = {
-    top: enemyMap.get(latestStygianVersion.enemy_id_1 ?? -1) ?? null,
-    middle: enemyMap.get(latestStygianVersion.enemy_id_2 ?? -1) ?? null,
-    bottom: enemyMap.get(latestStygianVersion.enemy_id_3 ?? -1) ?? null,
+    top: enemyMap.get(slotRow(0)?.enemy_id ?? -1) ?? null,
+    middle: enemyMap.get(slotRow(1)?.enemy_id ?? -1) ?? null,
+    bottom: enemyMap.get(slotRow(2)?.enemy_id ?? -1) ?? null,
   };
 
   return {
     latestAbyssVersion,
     latestStygianVersion,
-    allTeamsAbyss: abyssTeamsRes.data ?? [],
-    allTeamsStygian: stygianTeamsRes.data ?? [],
+    allTeamsAbyss: abyssTeamsRes.data,
+    allTeamsStygian: stygianTeamsRes.data,
     stygianEnemies,
   };
 }

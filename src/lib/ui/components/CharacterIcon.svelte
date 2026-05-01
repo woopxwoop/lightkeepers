@@ -25,7 +25,7 @@
       src={character.name_id
         ? (useEnkaIcon ? getCharacterPortrait(character.name_id) : getCharacterCoop(character.name_id))
         : avatarImg}
-      alt={character.name}
+      alt={character.name ?? ""}
     />
   {/if}
 </div>

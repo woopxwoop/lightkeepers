@@ -107,7 +107,7 @@ export const teamsOwnedTop = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
   ($teamsOwned) =>
     $teamsOwned.filter(
       (team) =>
-        (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length === 4,
+        (team.field_1_rate ?? 0) > 40 && (team.members ?? []).length === 4,
     ),
 );
 export const teamsOwnedBottom = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
@@ -115,7 +115,7 @@ export const teamsOwnedBottom = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
   ($teamsOwned) =>
     $teamsOwned.filter(
       (team) =>
-        (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length === 4,
+        (team.field_2_rate ?? 0) > 40 && (team.members ?? []).length === 4,
     ),
 );
 
@@ -127,7 +127,7 @@ export const teamsOwnedStygianTop = derived<
 >(teamsOwnedStygian, ($t) =>
   $t.filter(
     (team) =>
-      (team.usage_rate_top ?? 0) > 40 && (team.members ?? []).length === 4,
+      (team.field_1_rate ?? 0) > 40 && (team.members ?? []).length === 4,
   ),
 );
 export const teamsOwnedStygianMiddle = derived<
@@ -136,7 +136,7 @@ export const teamsOwnedStygianMiddle = derived<
 >(teamsOwnedStygian, ($t) =>
   $t.filter(
     (team) =>
-      (team.usage_rate_middle ?? 0) > 40 && (team.members ?? []).length === 4,
+      (team.field_3_rate ?? 0) > 40 && (team.members ?? []).length === 4,
   ),
 );
 export const teamsOwnedStygianBottom = derived<
@@ -145,7 +145,7 @@ export const teamsOwnedStygianBottom = derived<
 >(teamsOwnedStygian, ($t) =>
   $t.filter(
     (team) =>
-      (team.usage_rate_bottom ?? 0) > 40 && (team.members ?? []).length === 4,
+      (team.field_2_rate ?? 0) > 40 && (team.members ?? []).length === 4,
   ),
 );
 
@@ -174,7 +174,7 @@ let nearMissRequestId = 0;
  */
 export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   const id = ++teamsRequestId;
-  const characters = owned.filter((c) => c.isOwned).map((c) => c.name);
+  const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
 
   try {
     const { abyssTeams, stygianTeams } = await postJson<{
@@ -202,7 +202,7 @@ export async function writeNearMissTeams(
   owned: CharacterOwned[],
 ): Promise<void> {
   const id = ++nearMissRequestId;
-  const characters = owned.filter((c) => c.isOwned).map((c) => c.name);
+  const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
 
   nearMissStygianLoaded.set(false);
   nearMissPairLoaded.set(false);

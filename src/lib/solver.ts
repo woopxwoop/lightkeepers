@@ -36,15 +36,15 @@ function solutionTeamKey<T extends { team: { team_key: string | null } }>(
 // ---- Slot preference ------------------------------------------------------
 
 function preferredAbyssSlot(team: AbyssTeam): AbyssSlot {
-  return (team.usage_rate_top ?? 0) >= (team.usage_rate_bottom ?? 0)
+  return (team.field_1_rate ?? 0) >= (team.field_2_rate ?? 0)
     ? "top"
     : "bottom";
 }
 
 function preferredStygianSlot(team: StygianTeam): StygianSlot {
-  const t = team.usage_rate_top ?? 0;
-  const m = team.usage_rate_middle ?? 0;
-  const b = team.usage_rate_bottom ?? 0;
+  const t = team.field_1_rate ?? 0;
+  const m = team.field_3_rate ?? 0;
+  const b = team.field_2_rate ?? 0;
   if (t >= m && t >= b) return "top";
   if (m >= t && m >= b) return "middle";
   return "bottom";
@@ -55,11 +55,17 @@ function preferredStygianSlot(team: StygianTeam): StygianSlot {
 // Teams below this threshold on a slot are treated as if that slot doesn't exist.
 const MIN_SLOT_RATE = 10; // 10% — teams below this on a slot won't be assigned there
 
+const SLOT_TO_FIELD: Record<string, string> = {
+  top: "field_1_rate",
+  bottom: "field_2_rate",
+  middle: "field_3_rate",
+};
+
 function slotRate<TTeam extends Record<string, any>>(
   team: TTeam,
   slot: string,
 ): number {
-  const key = `usage_rate_${slot}`;
+  const key = SLOT_TO_FIELD[slot] ?? `field_1_rate`;
   return team[key] ?? 0;
 }
 
@@ -68,9 +74,9 @@ function slotRate<TTeam extends Record<string, any>>(
 function greedyPass<
   TTeam extends Record<string, unknown> & {
     members: string[] | null;
-    usage_total: number | null;
-    usage_rate_top: number | null;
-    usage_rate_bottom: number | null;
+    usage_rate: number | null;
+    field_1_rate: number | null;
+    field_2_rate: number | null;
     team_key: string | null;
   },
   TSlot extends string,
@@ -114,7 +120,7 @@ function greedyPass<
     score: (() => {
       if (assignments.length === 0) return 0;
       const weighted = assignments.map(
-        (a) => (a.team.usage_total ?? 0) * slotAffinityRate(a.team, a.slot),
+        (a) => (a.team.usage_rate ?? 0) * slotAffinityRate(a.team, a.slot),
       );
       const min = Math.min(...weighted);
       const mean = weighted.reduce((s, v) => s + v, 0) / weighted.length;
@@ -147,16 +153,16 @@ function deduplicateSolutions<
 
 export function slotAffinityRate(
   team: {
-    usage_rate_top: number | null;
-    usage_rate_bottom: number | null;
+    field_1_rate: number | null;
+    field_2_rate: number | null;
     [key: string]: unknown;
   },
   slot: string,
 ): number {
-  const t = team.usage_rate_top ?? 0;
-  const b = team.usage_rate_bottom ?? 0;
+  const t = team.field_1_rate ?? 0;
+  const b = team.field_2_rate ?? 0;
   const m =
-    typeof team.usage_rate_middle === "number" ? team.usage_rate_middle : 0;
+    typeof team.field_3_rate === "number" ? team.field_3_rate : 0;
   const total = t + b + m;
   if (total === 0) return 1;
   if (slot === "top") return t / total;
@@ -449,7 +455,7 @@ function buildMinMissingAbyssSolutions(
       .sort(
         (a, b) =>
           a.missing.length - b.missing.length ||
-          (b.team.usage_total ?? 0) - (a.team.usage_total ?? 0),
+          (b.team.usage_rate ?? 0) - (a.team.usage_rate ?? 0),
       )
       .map((entry) => entry.team);
 
@@ -489,7 +495,7 @@ function buildMinMissingStygianSolutions(
       .sort(
         (a, b) =>
           a.missing.length - b.missing.length ||
-          (b.team.usage_total ?? 0) - (a.team.usage_total ?? 0),
+          (b.team.usage_rate ?? 0) - (a.team.usage_rate ?? 0),
       )
       .map((entry) => entry.team);
 

@@ -21,18 +21,18 @@
     data.stygianEnemies as {
       top: {
         id: number;
-        lunaris_asset: string | null;
-        name: string | null;
+        asset: string | null;
+        enemy_name: string | null;
       } | null;
       middle: {
         id: number;
-        lunaris_asset: string | null;
-        name: string | null;
+        asset: string | null;
+        enemy_name: string | null;
       } | null;
       bottom: {
         id: number;
-        lunaris_asset: string | null;
-        name: string | null;
+        asset: string | null;
+        enemy_name: string | null;
       } | null;
     },
   );
@@ -46,7 +46,7 @@
   const SOLUTIONS_COUNT = 6;
 
   let ownedNames = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name)),
+    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
   );
 
   let solutions = $derived.by(() => {
@@ -130,9 +130,9 @@
 
 
   function slotRate(team: StygianTeam, slot: Slot): number {
-    if (slot === "top") return team.usage_rate_top ?? 0;
-    if (slot === "middle") return team.usage_rate_middle ?? 0;
-    return team.usage_rate_bottom ?? 0;
+    if (slot === "top") return team.field_1_rate ?? 0;
+    if (slot === "middle") return team.field_3_rate ?? 0;
+    return team.field_2_rate ?? 0;
   }
 
   function assignmentKey(slot: Slot): string {
@@ -179,9 +179,9 @@
       class="relative w-full overflow-hidden"
       style="aspect-ratio: 3/2; background: color-mix(in srgb, {accent} 4%, var(--background-color));"
     >
-      {#if enemy?.lunaris_asset}
+      {#if enemy?.asset}
         <img
-          src={getEnemyAsset(enemy.lunaris_asset)}
+          src={getEnemyAsset(enemy.asset)}
           alt={stygianSlotLabel[slot]}
           class="w-full h-full object-contain"
           style="transform: scale(1.5) translateY(8%);"
@@ -205,7 +205,7 @@
         class="text-xs uppercase tracking-widest"
         style="color: var(--foreground-mid);"
       >
-        {enemy?.name ?? stygianSlotLabel[slot]}
+        {enemy?.enemy_name ?? stygianSlotLabel[slot]}
       </p>
 
       {#if assignment}
@@ -217,7 +217,7 @@
 
         <div class="flex items-center justify-between">
           <span class="text-xs" style="color: var(--foreground-mid);">
-            {(assignment.team.usage_total ?? 0).toFixed(2)}% usage
+            {(assignment.team.usage_rate ?? 0).toFixed(1)}% usage
           </span>
           <span class="text-xs" style="color: {accent};">
             {slotRate(assignment.team, slot).toFixed(0)}% in this field

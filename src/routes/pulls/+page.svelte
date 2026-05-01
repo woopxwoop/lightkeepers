@@ -83,7 +83,7 @@
   // Top 3 best teams the user doesn't have (pulls page section)
   let topMissingTeams = $derived.by(() => {
     const ownedNames = new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => c.name),
+      $charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id ?? ""),
     );
     const all = $allTeamsStygian;
 
@@ -91,17 +91,16 @@
       .filter((team) => {
         const members = team.members ?? [];
         if (members.length !== 4) return false;
-        if ((team.avg_usage_total ?? 0) <= 20) return false;
+        if ((team.usage_rate ?? 0) <= 20) return false;
         return members.some((m) => !ownedNames.has(m));
       })
-      .sort((a, b) => (b.avg_usage_total ?? 0) - (a.avg_usage_total ?? 0));
+      .sort((a, b) => (b.usage_rate ?? 0) - (a.usage_rate ?? 0));
 
     const result: typeof candidates = [];
     for (const team of candidates) {
       const members = team.members ?? [];
       const dominated = all.some((other) => {
-        if ((other.avg_usage_total ?? 0) <= (team.avg_usage_total ?? 0))
-          return false;
+        if ((other.usage_rate ?? 0) <= (team.usage_rate ?? 0)) return false;
         const otherMembers = other.members ?? [];
         if (otherMembers.length !== 4) return false;
         return members.filter((m) => otherMembers.includes(m)).length === 3;
@@ -274,10 +273,9 @@
                       {/each}
                     </div>
                     <p class="text-xs" style="color: var(--foreground-mid);">
-                      {(
-                        suggestion.currentBestTeam.avg_usage_total ??
-                        suggestion.currentBestTeam.usage_total
-                      )?.toFixed(1)}% avg usage
+                      {suggestion.currentBestTeam.usage_rate != null
+                        ? `${suggestion.currentBestTeam.usage_rate.toFixed(1)}% avg usage`
+                        : "N/A"}
                     </p>
                   </div>
                   <div class="flex flex-col gap-1.5">
@@ -295,8 +293,9 @@
                       {/each}
                     </div>
                     <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.bestTeam.avg_usage_total?.toFixed(1)}% avg
-                      usage
+                      {suggestion.bestTeam.usage_rate != null
+                        ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage`
+                        : "N/A"}
                     </p>
                   </div>
                 {:else}
@@ -315,8 +314,9 @@
                       {/each}
                     </div>
                     <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.bestTeam.avg_usage_total?.toFixed(1)}% avg
-                      usage · no current alternative
+                      {suggestion.bestTeam.usage_rate != null
+                        ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage · `
+                        : ""}no current alternative
                     </p>
                   </div>
                 {/if}
@@ -429,7 +429,9 @@
                     {/each}
                   </div>
                   <p class="text-xs" style="color: var(--foreground-mid);">
-                    {suggestion.bestTeam.avg_usage_total?.toFixed(1)}% avg usage
+                    {suggestion.bestTeam.usage_rate != null
+                      ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage`
+                      : "N/A"}
                   </p>
                 </div>
               </div>
@@ -472,7 +474,7 @@
               </div>
               <div class="flex flex-col gap-1">
                 <p class="text-xs" style="color: var(--foreground-mid);">
-                  {(team.avg_usage_total ?? 0).toFixed(1)}% avg usage
+                  {(team.usage_rate ?? 0).toFixed(1)}% avg usage
                 </p>
                 <p class="text-xs" style="color: {accent};">
                   missing: {missingCharacters.join(", ")}

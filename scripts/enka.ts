@@ -1,111 +1,53 @@
 import { EnkaClient } from "enka-network-api";
 import { supabase as db } from "./lib/supabase.js";
-import { WEAPON_TYPE_MAP, DISPLAY_TO_DB } from "./lib/enka-mappings.js";
-
-interface CharacterUpdate {
-  id: string;
-  element: string;
-  weapon_type: string;
-  name_id: string;
-  character_id: number;
-}
 
 async function main() {
   const enka = new EnkaClient({ defaultLanguage: "en" });
   enka.cachedAssetsManager.cacheDirectoryPath = "./cache";
   enka.cachedAssetsManager.cacheDirectorySetup();
   await enka.cachedAssetsManager.fetchAllContents();
-  enka.cachedAssetsManager.activateAutoCacheUpdater({
-    instant: false,
-    timeout: 60 * 60 * 1000,
-    onUpdateStart: async () => {
-      console.log("Updating Genshin Data...");
-    },
-    onUpdateEnd: async () => {
-      enka.cachedAssetsManager.refreshAllData();
-      console.log("Updating Completed!");
-    },
-  });
 
   const characters = enka.getAllCharacters();
 
-  const { data: existing, error: fetchError } = await db
-    .from("characters")
-    .select("id, name");
-  if (fetchError) throw fetchError;
+  const rows: {
+    game_id: number;
+    name_id: string;
+    name: string;
+    element: string;
+    weapon_type: string;
+    rarity: number;
+  }[] = [];
 
-  const nameToId = new Map(existing.map((c) => [c.name, c.id]));
-
-  const updates: CharacterUpdate[] = [];
-  const skipped: string[] = [];
   let seenTraveler = false;
 
   for (const char of characters) {
     if (!char.element) continue;
+    if (char.isMannequin) continue;
 
     if (char.isTraveler) {
       if (seenTraveler) continue;
       seenTraveler = true;
-      const id = nameToId.get("Traveler");
-      if (!id) {
-        skipped.push("Traveler");
-        continue;
-      }
-      updates.push({
-        id,
-        element: char.element.name.get(),
-        weapon_type: WEAPON_TYPE_MAP[char.weaponType] ?? char.weaponType,
-        name_id: char._nameId,
-        character_id: char.id,
-      });
-      continue;
     }
 
-    if (char.isMannequin) continue;
-
-    const displayName = char.name.get();
-    const dbName = DISPLAY_TO_DB.get(displayName) ?? displayName;
-    const id = nameToId.get(dbName);
-
-    if (!id) {
-      skipped.push(`${dbName} (display: ${char.name.get()})`);
-      continue;
-    }
-
-    updates.push({
-      id,
-      element: char.element.name.get(),
-      weapon_type: WEAPON_TYPE_MAP[char.weaponType] ?? char.weaponType,
+    rows.push({
+      game_id: char.id,
       name_id: char._nameId,
-      character_id: char.id,
+      name: char.isTraveler ? "Traveler" : char.name.get(),
+      element: char.element.name.get(),
+      weapon_type: char.weaponType,
+      rarity: char.stars,
     });
   }
 
-  if (skipped.length > 0) {
-    console.warn(`\nSkipped ${skipped.length} characters (not found in DB):`);
-    skipped.forEach((s) => console.warn(` - ${s}`));
-  }
-
-  console.log(`\nUpdating ${updates.length} characters...`);
+  console.log(`Upserting ${rows.length} characters...`);
 
   const BATCH = 50;
-  for (let i = 0; i < updates.length; i += BATCH) {
-    const batch = updates.slice(i, i + BATCH);
-
-    for (const row of batch) {
-      const { error } = await db
-        .from("characters")
-        .update({
-          element: row.element,
-          weapon_type: row.weapon_type,
-          name_id: row.name_id,
-          character_id: row.character_id,
-        })
-        .eq("id", row.id);
-      if (error) throw error;
-    }
-
-    console.log(`  ${Math.min(i + BATCH, updates.length)}/${updates.length}`);
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const { error } = await db
+      .from("characters")
+      .upsert(rows.slice(i, i + BATCH), { onConflict: "game_id" });
+    if (error) throw error;
+    console.log(`  ${Math.min(i + BATCH, rows.length)}/${rows.length}`);
   }
 
   console.log("Done.");
