@@ -32,8 +32,10 @@ const STYGIAN_URL = "https://api.lelaer.com/ys/getAbyssRank2.php";
 
 console.log("\n── Supabase reads ───────────────────────────────");
 
+let byName = new Map<string, { game_id: number; name_id: string }>();
 let charMapping = new Map<string, { game_id: number; name_id: string }>();
-let sampleRoleName: string | null = null;
+let sampleAbyssRole: string | null = null;
+let sampleStygianRole: string | null = null;
 
 function isExpectedHelperConstraintError(error: { code?: string; message?: string }) {
   const message = error.message?.toLowerCase() ?? "";
@@ -52,7 +54,7 @@ await check("url_to_character_mapping is readable", async () => {
   assert(Array.isArray(data) && data.length > 0, "characters table returned no rows");
   const { error: apiErr } = await supabase.rpc("get_teams_with_characters_subset", { p_name_ids: [], p_version_number: 0 });
   if (apiErr && !isExpectedHelperConstraintError(apiErr)) throw apiErr;
-  const byName = new Map<string, { game_id: number; name_id: string }>();
+  byName = new Map<string, { game_id: number; name_id: string }>();
   for (const r of data) {
     if (!r.name) {
       throw new Error(`characters row ${r.game_id} is missing name`);
@@ -72,17 +74,8 @@ await check("url_to_character_mapping is readable", async () => {
 
     byName.set(r.name, { game_id: r.game_id, name_id: r.name_id });
   }
-  const abyss = await fetchYsHelper(ABYSS_URL);
-  const names = extractCharacterNames(abyss);
-  for (const c of names) {
-    const m = byName.get(c.name);
-    if (m) {
-      charMapping.set(c.avatar, m);
-      if (!sampleRoleName) sampleRoleName = c.name;
-    }
-  }
-  assert(charMapping.size > 0, "character mapping resolved to 0 entries");
-  ok("character mapping is buildable", `${charMapping.size} entries`);
+  assert(byName.size > 0, "characters table resolved to 0 usable entries");
+  ok("characters table mapping is buildable", `${byName.size} entries`);
 });
 
 await check("versions table is readable", async () => {
@@ -127,6 +120,25 @@ await check("lelaer.com is reachable", async () => {
   assert(Array.isArray(stygianData.result) && stygianData.result.length > 0, "result missing");
   ok("lelaer.com is reachable", `version ${getCurrentVersion(stygianData)}`);
 });
+
+await check("character mapping is buildable", async () => {
+  assert(abyssData !== null, "abyss data unavailable");
+  const names = extractCharacterNames(abyssData!);
+  for (const c of names) {
+    const m = byName.get(c.name);
+    if (m) {
+      charMapping.set(c.avatar, m);
+      if (!sampleAbyssRole) sampleAbyssRole = c.name;
+    }
+  }
+  assert(charMapping.size > 0, "character mapping resolved to 0 entries");
+  ok("character mapping is buildable", `${charMapping.size} entries`);
+});
+
+if (stygianData) {
+  const stygianNames = extractCharacterNames(stygianData);
+  sampleStygianRole = stygianNames[0]?.name ?? null;
+}
 
 // ── Data extraction ───────────────────────────────────────────────────────────
 
@@ -230,20 +242,22 @@ if (stygianData && charMapping.size > 0) {
 
 console.log("\n── Per-character fetch (1 sample) ───────────────");
 
-if (charMapping.size > 0 && sampleRoleName) {
-  const sampleChar = sampleRoleName;
+await check(`fetchYsHelper role=${sampleAbyssRole ?? "n/a"} (abyss)`, async () => {
+  assert(charMapping.size > 0, "character mapping resolved to 0 entries");
+  assert(sampleAbyssRole !== null, "no abyss sample role available");
+  const data = await fetchYsHelper(ABYSS_URL, sampleAbyssRole, "en");
+  const teams = extractTeams(data);
+  assert(teams.length > 0, `role ${sampleAbyssRole} returned 0 abyss teams`);
+  ok(`fetchYsHelper role=${sampleAbyssRole} (abyss)`, `${teams.length} teams returned`);
+});
 
-  await check(`fetchYsHelper role=${sampleChar} (abyss)`, async () => {
-    const data = await fetchYsHelper(ABYSS_URL, sampleChar, "en");
-    const teams = extractTeams(data);
-    ok(`fetchYsHelper role=${sampleChar} (abyss)`, `${teams.length} teams returned`);
-  });
-
-  await check(`fetchYsHelper role=${sampleChar} (stygian)`, async () => {
-    const data = await fetchYsHelper(STYGIAN_URL, sampleChar, "en");
-    const teams = extractTeams(data);
-    ok(`fetchYsHelper role=${sampleChar} (stygian)`, `${teams.length} teams returned`);
-  });
-}
+await check(`fetchYsHelper role=${sampleStygianRole ?? "n/a"} (stygian)`, async () => {
+  assert(charMapping.size > 0, "character mapping resolved to 0 entries");
+  assert(sampleStygianRole !== null, "no stygian sample role available");
+  const data = await fetchYsHelper(STYGIAN_URL, sampleStygianRole, "en");
+  const teams = extractTeams(data);
+  assert(teams.length > 0, `role ${sampleStygianRole} returned 0 stygian teams`);
+  ok(`fetchYsHelper role=${sampleStygianRole} (stygian)`, `${teams.length} teams returned`);
+});
 
 summary();
