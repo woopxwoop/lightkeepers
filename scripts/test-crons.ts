@@ -62,6 +62,7 @@ await check("url_to_character_mapping is readable", async () => {
       if (!sampleRoleName) sampleRoleName = c.name;
     }
   }
+  assert(charMapping.size > 0, "character mapping resolved to 0 entries");
   ok("character mapping is buildable", `${charMapping.size} entries`);
 });
 
