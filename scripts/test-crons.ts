@@ -52,7 +52,26 @@ await check("url_to_character_mapping is readable", async () => {
   assert(Array.isArray(data) && data.length > 0, "characters table returned no rows");
   const { error: apiErr } = await supabase.rpc("get_teams_with_characters_subset", { p_name_ids: [], p_version_number: 0 });
   if (apiErr && !isExpectedHelperConstraintError(apiErr)) throw apiErr;
-  const byName = new Map(data.map((r) => [r.name, { game_id: r.game_id, name_id: r.name_id }]));
+  const byName = new Map<string, { game_id: number; name_id: string }>();
+  for (const r of data) {
+    if (!r.name) {
+      throw new Error(`characters row ${r.game_id} is missing name`);
+    }
+    if (r.name_id == null) {
+      throw new Error(`characters row ${r.game_id} (${r.name}) is missing name_id`);
+    }
+
+    const existing = byName.get(r.name);
+    if (existing) {
+      throw new Error(
+        `duplicate character name "${r.name}" in characters table: ` +
+          `existing game_id=${existing.game_id}, name_id=${existing.name_id}; ` +
+          `duplicate game_id=${r.game_id}, name_id=${r.name_id}`,
+      );
+    }
+
+    byName.set(r.name, { game_id: r.game_id, name_id: r.name_id });
+  }
   const abyss = await fetchYsHelper(ABYSS_URL);
   const names = extractCharacterNames(abyss);
   for (const c of names) {
