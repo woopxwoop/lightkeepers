@@ -82,10 +82,10 @@ await check("all Enka characters have required fields", async () => {
 await check("Enka characters match DB names (cross-reference)", async () => {
   const { data: dbChars, error } = await supabase
     .from("characters")
-    .select("id, name");
+    .select("game_id, name");
   if (error) throw error;
 
-  const nameToId = new Map(dbChars.map((c) => [c.name, c.id]));
+  const nameToId = new Map(dbChars.map((c) => [c.name, c.game_id]));
   const relevant = enkaCharacters.filter(
     (c) => c.element && !c.isMannequin && !c.isTraveler,
   );
