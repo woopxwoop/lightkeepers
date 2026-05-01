@@ -142,23 +142,30 @@ if (abyssData && charMapping.size > 0) {
   await check("mapAbyssTeam produces valid teams", async () => {
     const versionNumber = getCurrentVersion(abyssData!);
     const rawTeams = extractTeams(abyssData!);
+    let droppedCount = 0;
     const mapped = rawTeams
-      .map((raw) => mapAbyssTeam(raw, versionNumber, charMapping))
+      .map((raw) => {
+        const team = mapAbyssTeam(raw, versionNumber, charMapping);
+        if (team === null) droppedCount += 1;
+        return team;
+      })
       .filter((t): t is NonNullable<typeof t> => t !== null);
 
     const totalMembers = mapped.reduce((n, t) => n + t.members.length, 0);
-    const unknownCount = 0;
 
     assert(mapped.length > 0, "no teams mapped");
     assert(mapped.every((t) => t.teamKey.length === 64), "some team keys are not SHA-256");
 
-    const unknownPct = totalMembers > 0 ? (unknownCount / totalMembers) * 100 : 0;
-    if (unknownPct > 20) {
+    const droppedPct = rawTeams.length > 0 ? (droppedCount / rawTeams.length) * 100 : 0;
+    if (droppedPct > 5) {
       throw new Error(
-        `${unknownCount}/${totalMembers} members mapped to "Unknown" (${unknownPct.toFixed(1)}%) — character mapping may be stale`,
+        `${droppedCount}/${rawTeams.length} teams dropped (${droppedPct.toFixed(1)}%) — character mapping may be stale`,
       );
     }
-    ok("mapAbyssTeam produces valid teams", `${mapped.length} teams, ${unknownCount}/${totalMembers} unknown members`);
+    ok(
+      "mapAbyssTeam produces valid teams",
+      `${mapped.length} teams, dropped ${droppedCount}/${rawTeams.length} (${droppedPct.toFixed(1)}%)`,
+    );
   });
 }
 
@@ -166,13 +173,27 @@ if (stygianData && charMapping.size > 0) {
   await check("mapStygianTeam produces valid teams", async () => {
     const versionNumber = getCurrentVersion(stygianData!);
     const rawTeams = extractTeams(stygianData!);
+    let droppedCount = 0;
     const mapped = rawTeams
-      .map((raw) => mapStygianTeam(raw, versionNumber, charMapping))
+      .map((raw) => {
+        const team = mapStygianTeam(raw, versionNumber, charMapping);
+        if (team === null) droppedCount += 1;
+        return team;
+      })
       .filter((t): t is NonNullable<typeof t> => t !== null);
 
     assert(mapped.length > 0, "no stygian teams mapped");
     assert(mapped.every((t) => t.teamKey.length === 64), "some team keys are not SHA-256");
-    ok("mapStygianTeam produces valid teams", `${mapped.length} teams`);
+    const droppedPct = rawTeams.length > 0 ? (droppedCount / rawTeams.length) * 100 : 0;
+    if (droppedPct > 5) {
+      throw new Error(
+        `${droppedCount}/${rawTeams.length} stygian teams dropped (${droppedPct.toFixed(1)}%) — character mapping may be stale`,
+      );
+    }
+    ok(
+      "mapStygianTeam produces valid teams",
+      `${mapped.length} teams, dropped ${droppedCount}/${rawTeams.length} (${droppedPct.toFixed(1)}%)`,
+    );
   });
 }
 

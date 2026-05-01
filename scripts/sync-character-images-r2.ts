@@ -186,7 +186,7 @@ async function getCharactersFromDb() {
   const { data, error } = await db
     .from("characters")
     .select("game_id, name, name_id")
-    .order("enemy_name", { ascending: true });
+    .order("name", { ascending: true });
   if (error) throw error;
   return data ?? [];
 }
