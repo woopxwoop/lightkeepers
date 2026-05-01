@@ -155,6 +155,9 @@ if (unmapped.length > 0) {
 console.log(`  ${charMapping.size} mapped characters`);
 
 const allVersions = extractVersionEntries(firstData);
+if (allVersions.length === 0) {
+  throw new Error("No YSHelper versions found — API may be down or returning unexpected data");
+}
 let versionToRun;
 if (!process.argv[2]) {
   versionToRun = allVersions[0];

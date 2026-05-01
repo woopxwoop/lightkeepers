@@ -273,9 +273,9 @@
                       {/each}
                     </div>
                     <p class="text-xs" style="color: var(--foreground-mid);">
-                      {(suggestion.currentBestTeam.usage_rate ?? -1)?.toFixed(
-                        1,
-                      )}% avg usage
+                      {suggestion.currentBestTeam.usage_rate != null
+                        ? `${suggestion.currentBestTeam.usage_rate.toFixed(1)}% avg usage`
+                        : "N/A"}
                     </p>
                   </div>
                   <div class="flex flex-col gap-1.5">
