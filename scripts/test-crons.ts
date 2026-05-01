@@ -40,9 +40,9 @@ let sampleStygianRole: string | null = null;
 function isExpectedHelperConstraintError(error: { code?: string; message?: string }) {
   const message = error.message?.toLowerCase() ?? "";
   return (
-    error.code === "23514" ||
-    (message.includes("p_name_ids") &&
-      (message.includes("check constraint") || message.includes("violates constraint")))
+    error.code === "23514" &&
+    message.includes("p_name_ids") &&
+    (message.includes("check constraint") || message.includes("violates constraint"))
   );
 }
 
