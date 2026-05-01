@@ -35,14 +35,23 @@ console.log("\n── Supabase reads ──────────────�
 let charMapping = new Map<string, { game_id: number; name_id: string }>();
 let sampleRoleName: string | null = null;
 
+function isExpectedHelperConstraintError(error: { code?: string; message?: string }) {
+  const message = error.message?.toLowerCase() ?? "";
+  return (
+    error.code === "23514" ||
+    (message.includes("p_name_ids") &&
+      (message.includes("check constraint") || message.includes("violates constraint")))
+  );
+}
+
 await check("url_to_character_mapping is readable", async () => {
   const { data, error } = await supabase
     .from("characters")
     .select("game_id, name_id, name");
   if (error) throw error;
   assert(Array.isArray(data) && data.length > 0, "characters table returned no rows");
-  const { data: apiData, error: apiErr } = await supabase.rpc("get_teams_with_characters_subset", { p_name_ids: [], p_version_number: 0 });
-  if (apiErr) { /* ignore helper RPC constraints in smoke test */ }
+  const { error: apiErr } = await supabase.rpc("get_teams_with_characters_subset", { p_name_ids: [], p_version_number: 0 });
+  if (apiErr && !isExpectedHelperConstraintError(apiErr)) throw apiErr;
   const byName = new Map(data.map((r) => [r.name, { game_id: r.game_id, name_id: r.name_id }]));
   const abyss = await fetchYsHelper(ABYSS_URL);
   const names = extractCharacterNames(abyss);

@@ -308,6 +308,12 @@ async function main() {
         );
 
         if (dryRun) {
+          if (!character.name_id) {
+            console.warn(`- skip ${character.name}: missing name_id`);
+            failed += 1;
+            continue;
+          }
+
           const templates = getTemplateCandidates(character.name_id);
           console.log(`  portrait candidates: ${templates.portrait.length}`);
           console.log(`  coop candidates: ${templates.coop.length}`);
