@@ -21,6 +21,7 @@ import {
   buildCharMapping,
   mapAbyssTeam,
   sleep,
+  type ApiResponse,
   type AbyssTeam,
   type TeamMember,
 } from "./lib/yshelper.js";
@@ -30,9 +31,8 @@ const BATCH_SIZE = 10;
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
 
-async function updateVersions(): Promise<void> {
+async function updateVersions(data: ApiResponse): Promise<void> {
   console.log("Updating abyss versions...");
-  const data = await fetchYsHelper(ABYSS_URL);
   const entries = extractVersionEntries(data);
 
   const { error } = await supabase.from("abyss_versions").upsert(
@@ -125,9 +125,8 @@ async function flushBatch(batch: AbyssTeam[], idx: number): Promise<void> {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 console.log("=== Abyss cron start ===");
-await updateVersions();
-
 const firstData = await fetchYsHelper(ABYSS_URL);
+await updateVersions(firstData);
 const ysCharacters = extractCharacterNames(firstData);
 
 const { data: dbChars, error: charsErr } = await supabase

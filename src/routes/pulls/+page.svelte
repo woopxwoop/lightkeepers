@@ -293,7 +293,9 @@
                       {/each}
                     </div>
                     <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.bestTeam.usage_rate?.toFixed(1)}% avg usage
+                      {suggestion.bestTeam.usage_rate != null
+                        ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage`
+                        : "N/A"}
                     </p>
                   </div>
                 {:else}
@@ -312,8 +314,9 @@
                       {/each}
                     </div>
                     <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.bestTeam.usage_rate?.toFixed(1)}% avg usage ·
-                      no current alternative
+                      {suggestion.bestTeam.usage_rate != null
+                        ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage · `
+                        : ""}no current alternative
                     </p>
                   </div>
                 {/if}
@@ -426,7 +429,9 @@
                     {/each}
                   </div>
                   <p class="text-xs" style="color: var(--foreground-mid);">
-                    {suggestion.bestTeam.usage_rate?.toFixed(1)}% avg usage
+                    {suggestion.bestTeam.usage_rate != null
+                      ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage`
+                      : "N/A"}
                   </p>
                 </div>
               </div>
