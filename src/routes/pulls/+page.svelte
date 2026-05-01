@@ -83,7 +83,7 @@
   // Top 3 best teams the user doesn't have (pulls page section)
   let topMissingTeams = $derived.by(() => {
     const ownedNames = new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => c.name ?? ""),
+      $charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id ?? ""),
     );
     const all = $allTeamsStygian;
 

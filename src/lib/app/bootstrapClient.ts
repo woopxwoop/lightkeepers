@@ -22,7 +22,9 @@ type LayoutHydration = {
   allTeamsStygian: StygianTeam[];
 };
 
-type CachedOwnedEntry = { name_id: unknown; isOwned?: unknown };
+type CachedOwnedEntry =
+  | { name_id: unknown; isOwned?: unknown }
+  | { id: unknown; isOwned?: unknown };
 
 /**
  * Reads and validates the cached roster from localStorage.
@@ -52,7 +54,7 @@ function readOwnedCache(): CachedOwnedEntry[] | undefined {
     if (!Array.isArray(parsed)) return undefined;
     return parsed.filter(
       (v): v is CachedOwnedEntry =>
-        typeof v === "object" && v !== null && "name_id" in v,
+        typeof v === "object" && v !== null && ("name_id" in v || "id" in v),
     );
   } catch {
     return undefined;
@@ -67,8 +69,13 @@ function mergeOwnedFlags(
     return characters.map((c) => ({ ...c, isOwned: true }));
   }
 
+  const normalized = cachedOwned.map((v) => ({
+    name_id: "name_id" in v ? v.name_id : (v as { id: unknown; isOwned?: unknown }).id,
+    isOwned: v.isOwned,
+  }));
+
   return characters.map((c) => {
-    const cached = cachedOwned.find((x) => x.name_id === c.name_id);
+    const cached = normalized.find((x) => x.name_id === c.name_id);
     const isOwned =
       typeof cached?.isOwned === "boolean" ? cached.isOwned : true;
     return { ...c, isOwned };

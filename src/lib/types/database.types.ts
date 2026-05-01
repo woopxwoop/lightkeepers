@@ -4,486 +4,491 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5";
-  };
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       abyss_versions: {
         Row: {
-          created_at: string;
-          version_name: string | null;
-          version_number: number;
-        };
+          created_at: string
+          version_name: string | null
+          version_number: number
+        }
         Insert: {
-          created_at?: string;
-          version_name?: string | null;
-          version_number: number;
-        };
+          created_at?: string
+          version_name?: string | null
+          version_number: number
+        }
         Update: {
-          created_at?: string;
-          version_name?: string | null;
-          version_number?: number;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          version_name?: string | null
+          version_number?: number
+        }
+        Relationships: []
+      }
       character_stats_abyss: {
         Row: {
-          character_id: number;
-          created_at: string;
-          ownership: number | null;
-          usage: number | null;
-          version_number: number;
-        };
+          character_id: number
+          created_at: string
+          ownership: number | null
+          usage: number | null
+          version_number: number
+        }
         Insert: {
-          character_id: number;
-          created_at?: string;
-          ownership?: number | null;
-          usage?: number | null;
-          version_number: number;
-        };
+          character_id: number
+          created_at?: string
+          ownership?: number | null
+          usage?: number | null
+          version_number: number
+        }
         Update: {
-          character_id?: number;
-          created_at?: string;
-          ownership?: number | null;
-          usage?: number | null;
-          version_number?: number;
-        };
+          character_id?: number
+          created_at?: string
+          ownership?: number | null
+          usage?: number | null
+          version_number?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "character_stats_abyss_character_id_fkey";
-            columns: ["character_id"];
-            isOneToOne: false;
-            referencedRelation: "characters";
-            referencedColumns: ["game_id"];
+            foreignKeyName: "character_stats_abyss_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["game_id"]
           },
           {
-            foreignKeyName: "character_stats_abyss_version_number_fkey";
-            columns: ["version_number"];
-            isOneToOne: false;
-            referencedRelation: "abyss_versions";
-            referencedColumns: ["version_number"];
+            foreignKeyName: "character_stats_abyss_version_number_fkey"
+            columns: ["version_number"]
+            isOneToOne: false
+            referencedRelation: "abyss_versions"
+            referencedColumns: ["version_number"]
           },
-        ];
-      };
+        ]
+      }
       character_stats_stygian: {
         Row: {
-          character_id: number;
-          created_at: string;
-          ownership: number | null;
-          usage: number | null;
-          version_number: number;
-        };
+          character_id: number
+          created_at: string
+          ownership: number | null
+          usage: number | null
+          version_number: number
+        }
         Insert: {
-          character_id: number;
-          created_at?: string;
-          ownership?: number | null;
-          usage?: number | null;
-          version_number: number;
-        };
+          character_id: number
+          created_at?: string
+          ownership?: number | null
+          usage?: number | null
+          version_number: number
+        }
         Update: {
-          character_id?: number;
-          created_at?: string;
-          ownership?: number | null;
-          usage?: number | null;
-          version_number?: number;
-        };
+          character_id?: number
+          created_at?: string
+          ownership?: number | null
+          usage?: number | null
+          version_number?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "character_stats_stygian_character_id_fkey";
-            columns: ["character_id"];
-            isOneToOne: false;
-            referencedRelation: "characters";
-            referencedColumns: ["game_id"];
+            foreignKeyName: "character_stats_stygian_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["game_id"]
           },
           {
-            foreignKeyName: "character_stats_stygian_version_number_fkey";
-            columns: ["version_number"];
-            isOneToOne: false;
-            referencedRelation: "stygian_versions";
-            referencedColumns: ["version_number"];
+            foreignKeyName: "character_stats_stygian_version_number_fkey"
+            columns: ["version_number"]
+            isOneToOne: false
+            referencedRelation: "stygian_versions"
+            referencedColumns: ["version_number"]
           },
-        ];
-      };
+        ]
+      }
       characters: {
         Row: {
-          created_at: string;
-          element: string | null;
-          game_id: number;
-          name: string | null;
-          name_id: string;
-          rarity: number | null;
-          weapon_type: string | null;
-        };
+          created_at: string
+          element: string | null
+          game_id: number
+          name: string | null
+          name_id: string
+          rarity: number | null
+          weapon_type: string | null
+        }
         Insert: {
-          created_at?: string;
-          element?: string | null;
-          game_id: number;
-          name?: string | null;
-          name_id: string;
-          rarity?: number | null;
-          weapon_type?: string | null;
-        };
+          created_at?: string
+          element?: string | null
+          game_id: number
+          name?: string | null
+          name_id: string
+          rarity?: number | null
+          weapon_type?: string | null
+        }
         Update: {
-          created_at?: string;
-          element?: string | null;
-          game_id?: number;
-          name?: string | null;
-          name_id?: string;
-          rarity?: number | null;
-          weapon_type?: string | null;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          element?: string | null
+          game_id?: number
+          name?: string | null
+          name_id?: string
+          rarity?: number | null
+          weapon_type?: string | null
+        }
+        Relationships: []
+      }
       enemies: {
         Row: {
-          asset: string | null;
-          created_at: string;
-          description: string | null;
-          enemy_name: string | null;
-          id: number;
-        };
+          asset: string | null
+          created_at: string
+          description: string | null
+          enemy_name: string | null
+          id: number
+        }
         Insert: {
-          asset?: string | null;
-          created_at?: string;
-          description?: string | null;
-          enemy_name?: string | null;
-          id: number;
-        };
+          asset?: string | null
+          created_at?: string
+          description?: string | null
+          enemy_name?: string | null
+          id: number
+        }
         Update: {
-          asset?: string | null;
-          created_at?: string;
-          description?: string | null;
-          enemy_name?: string | null;
-          id?: number;
-        };
-        Relationships: [];
-      };
+          asset?: string | null
+          created_at?: string
+          description?: string | null
+          enemy_name?: string | null
+          id?: number
+        }
+        Relationships: []
+      }
       stygian_version_enemies: {
         Row: {
-          enemy_id: number;
-          slot_index: number;
-          version_number: number;
-        };
+          enemy_id: number
+          slot_index: number
+          version_number: number
+        }
         Insert: {
-          enemy_id: number;
-          slot_index: number;
-          version_number: number;
-        };
+          enemy_id: number
+          slot_index: number
+          version_number: number
+        }
         Update: {
-          enemy_id?: number;
-          slot_index?: number;
-          version_number?: number;
-        };
+          enemy_id?: number
+          slot_index?: number
+          version_number?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "stygian_version_enemies_enemy_id_fkey";
-            columns: ["enemy_id"];
-            isOneToOne: false;
-            referencedRelation: "enemies";
-            referencedColumns: ["id"];
+            foreignKeyName: "stygian_version_enemies_enemy_id_fkey"
+            columns: ["enemy_id"]
+            isOneToOne: false
+            referencedRelation: "enemies"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stygian_version_enemies_version_number_fkey";
-            columns: ["version_number"];
-            isOneToOne: false;
-            referencedRelation: "stygian_versions";
-            referencedColumns: ["version_number"];
+            foreignKeyName: "stygian_version_enemies_version_number_fkey"
+            columns: ["version_number"]
+            isOneToOne: false
+            referencedRelation: "stygian_versions"
+            referencedColumns: ["version_number"]
           },
-        ];
-      };
+        ]
+      }
       stygian_versions: {
         Row: {
-          created_at: string;
-          version_name: string | null;
-          version_number: number;
-        };
+          created_at: string
+          version_name: string | null
+          version_number: number
+        }
         Insert: {
-          created_at?: string;
-          version_name?: string | null;
-          version_number: number;
-        };
+          created_at?: string
+          version_name?: string | null
+          version_number: number
+        }
         Update: {
-          created_at?: string;
-          version_name?: string | null;
-          version_number?: number;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          version_name?: string | null
+          version_number?: number
+        }
+        Relationships: []
+      }
       team_characters: {
         Row: {
-          character_id: number;
-          team_key: string;
-        };
+          character_id: number
+          team_key: string
+        }
         Insert: {
-          character_id: number;
-          team_key: string;
-        };
+          character_id: number
+          team_key: string
+        }
         Update: {
-          character_id?: number;
-          team_key?: string;
-        };
+          character_id?: number
+          team_key?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "team_characters_character_id_fkey";
-            columns: ["character_id"];
-            isOneToOne: false;
-            referencedRelation: "characters";
-            referencedColumns: ["game_id"];
+            foreignKeyName: "team_characters_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["game_id"]
           },
           {
-            foreignKeyName: "team_characters_team_key_fkey";
-            columns: ["team_key"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["team_key"];
+            foreignKeyName: "team_characters_team_key_fkey"
+            columns: ["team_key"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["team_key"]
           },
-        ];
-      };
+        ]
+      }
       team_stats_abyss: {
         Row: {
-          created_at: string;
-          field_1_rate: number | null;
-          field_2_rate: number | null;
-          has_total: number | null;
-          team_key: string;
-          usage_rate: number | null;
-          usage_total: number | null;
-          version_number: number;
-        };
+          created_at: string
+          field_1_rate: number | null
+          field_2_rate: number | null
+          has_total: number | null
+          team_key: string
+          usage_rate: number | null
+          usage_total: number | null
+          version_number: number
+        }
         Insert: {
-          created_at?: string;
-          field_1_rate?: number | null;
-          field_2_rate?: number | null;
-          has_total?: number | null;
-          team_key: string;
-          usage_rate?: number | null;
-          usage_total?: number | null;
-          version_number: number;
-        };
+          created_at?: string
+          field_1_rate?: number | null
+          field_2_rate?: number | null
+          has_total?: number | null
+          team_key: string
+          usage_rate?: number | null
+          usage_total?: number | null
+          version_number: number
+        }
         Update: {
-          created_at?: string;
-          field_1_rate?: number | null;
-          field_2_rate?: number | null;
-          has_total?: number | null;
-          team_key?: string;
-          usage_rate?: number | null;
-          usage_total?: number | null;
-          version_number?: number;
-        };
+          created_at?: string
+          field_1_rate?: number | null
+          field_2_rate?: number | null
+          has_total?: number | null
+          team_key?: string
+          usage_rate?: number | null
+          usage_total?: number | null
+          version_number?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "team_stats_abyss_team_key_fkey";
-            columns: ["team_key"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["team_key"];
+            foreignKeyName: "team_stats_abyss_team_key_fkey"
+            columns: ["team_key"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["team_key"]
           },
           {
-            foreignKeyName: "team_stats_abyss_version_number_fkey";
-            columns: ["version_number"];
-            isOneToOne: false;
-            referencedRelation: "abyss_versions";
-            referencedColumns: ["version_number"];
+            foreignKeyName: "team_stats_abyss_version_number_fkey"
+            columns: ["version_number"]
+            isOneToOne: false
+            referencedRelation: "abyss_versions"
+            referencedColumns: ["version_number"]
           },
-        ];
-      };
+        ]
+      }
       team_stats_stygian: {
         Row: {
-          created_at: string;
-          field_1_rate: number | null;
-          field_2_rate: number | null;
-          field_3_rate: number | null;
-          has_total: number | null;
-          team_key: string;
-          usage_rate: number | null;
-          usage_total: number | null;
-          version_number: number;
-        };
+          created_at: string
+          field_1_rate: number | null
+          field_2_rate: number | null
+          field_3_rate: number | null
+          has_total: number | null
+          team_key: string
+          usage_rate: number | null
+          usage_total: number | null
+          version_number: number
+        }
         Insert: {
-          created_at?: string;
-          field_1_rate?: number | null;
-          field_2_rate?: number | null;
-          field_3_rate?: number | null;
-          has_total?: number | null;
-          team_key: string;
-          usage_rate?: number | null;
-          usage_total?: number | null;
-          version_number: number;
-        };
+          created_at?: string
+          field_1_rate?: number | null
+          field_2_rate?: number | null
+          field_3_rate?: number | null
+          has_total?: number | null
+          team_key: string
+          usage_rate?: number | null
+          usage_total?: number | null
+          version_number: number
+        }
         Update: {
-          created_at?: string;
-          field_1_rate?: number | null;
-          field_2_rate?: number | null;
-          field_3_rate?: number | null;
-          has_total?: number | null;
-          team_key?: string;
-          usage_rate?: number | null;
-          usage_total?: number | null;
-          version_number?: number;
-        };
+          created_at?: string
+          field_1_rate?: number | null
+          field_2_rate?: number | null
+          field_3_rate?: number | null
+          has_total?: number | null
+          team_key?: string
+          usage_rate?: number | null
+          usage_total?: number | null
+          version_number?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "team_stats_stygian_team_key_fkey";
-            columns: ["team_key"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["team_key"];
+            foreignKeyName: "team_stats_stygian_team_key_fkey"
+            columns: ["team_key"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["team_key"]
           },
           {
-            foreignKeyName: "team_stats_stygian_version_number_fkey";
-            columns: ["version_number"];
-            isOneToOne: false;
-            referencedRelation: "stygian_versions";
-            referencedColumns: ["version_number"];
+            foreignKeyName: "team_stats_stygian_version_number_fkey"
+            columns: ["version_number"]
+            isOneToOne: false
+            referencedRelation: "stygian_versions"
+            referencedColumns: ["version_number"]
           },
-        ];
-      };
+        ]
+      }
       teams: {
         Row: {
-          created_at: string;
-          team_key: string;
-        };
+          created_at: string
+          team_key: string
+        }
         Insert: {
-          created_at?: string;
-          team_key: string;
-        };
+          created_at?: string
+          team_key: string
+        }
         Update: {
-          created_at?: string;
-          team_key?: string;
-        };
-        Relationships: [];
-      };
-    };
+          created_at?: string
+          team_key?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
       stygian_character_pair_pmi: {
         Row: {
-          char_a: string | null;
-          char_b: string | null;
-          p_a: number | null;
-          p_ab: number | null;
-          p_b: number | null;
-          pmi: number | null;
-        };
-        Relationships: [];
-      };
+          char_a: string | null
+          char_b: string | null
+          p_a: number | null
+          p_ab: number | null
+          p_b: number | null
+          pmi: number | null
+        }
+        Relationships: []
+      }
       stygian_team_avg_usage: {
         Row: {
-          avg_usage_rate: number | null;
-          team_key: string | null;
-        };
+          avg_usage_rate: number | null
+          team_key: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "team_stats_stygian_team_key_fkey";
-            columns: ["team_key"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["team_key"];
+            foreignKeyName: "team_stats_stygian_team_key_fkey"
+            columns: ["team_key"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["team_key"]
           },
-        ];
-      };
-    };
+        ]
+      }
+    }
     Functions: {
       get_near_miss_stygian_pairs: {
         Args: {
-          p_min_pmi?: number;
-          p_name_ids: string[];
-          p_version_number: number;
-        };
+          p_min_pmi?: number
+          p_name_ids: string[]
+          p_version_number: number
+        }
         Returns: {
-          avg_usage_rate: number;
-          field_1_rate: number;
-          field_2_rate: number;
-          field_3_rate: number;
-          members: string[];
-          missing_char_a: string;
-          missing_char_b: string;
-          pmi: number;
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-        }[];
-      };
+          avg_usage_rate: number
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          members: string[]
+          missing_char_a: string
+          missing_char_b: string
+          pmi: number
+          team_key: string
+          usage_rate: number
+          usage_total: number
+        }[]
+      }
       get_near_miss_stygian_teams: {
-        Args: { p_name_ids: string[]; p_version_number: number };
+        Args: { p_name_ids: string[]; p_version_number: number }
         Returns: {
-          avg_usage_rate: number;
-          field_1_rate: number;
-          field_2_rate: number;
-          field_3_rate: number;
-          members: string[];
-          missing_character: string;
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-        }[];
-      };
+          avg_usage_rate: number
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          members: string[]
+          missing_character: string
+          team_key: string
+          usage_rate: number
+          usage_total: number
+        }[]
+      }
       get_teams_with_characters_subset: {
-        Args: { p_name_ids: string[]; p_version_number: number };
+        Args: { p_name_ids: string[]; p_version_number: number }
         Returns: {
-          field_1_rate: number;
-          field_2_rate: number;
-          has_total: number;
-          members: string[];
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-          version_number: number;
-        }[];
-      };
+          field_1_rate: number
+          field_2_rate: number
+          has_total: number
+          members: string[]
+          team_key: string
+          usage_rate: number
+          usage_total: number
+          version_number: number
+        }[]
+      }
       get_teams_with_characters_subset_stygian: {
-        Args: { p_name_ids: string[]; p_version_number: number };
+        Args: { p_name_ids: string[]; p_version_number: number }
         Returns: {
-          field_1_rate: number;
-          field_2_rate: number;
-          field_3_rate: number;
-          has_total: number;
-          members: string[];
-          team_key: string;
-          usage_rate: number;
-          usage_total: number;
-          version_number: number;
-        }[];
-      };
-      refresh_stygian_views: { Args: never; Returns: undefined };
-    };
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          has_total: number
+          members: string[]
+          team_key: string
+          usage_rate: number
+          usage_total: number
+          version_number: number
+        }[]
+      }
+      refresh_stygian_views: { Args: never; Returns: undefined }
+      upsert_abyss_team_batch: {
+        Args: { p_members: Json; p_stats: Json; p_teams: Json }
+        Returns: undefined
+      }
+      upsert_stygian_team_batch: {
+        Args: { p_members: Json; p_stats: Json; p_teams: Json }
+        Returns: undefined
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
@@ -491,98 +496,98 @@ export type Tables<
         DefaultSchema["Views"])
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R;
+        Row: infer R
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I;
+        Insert: infer I
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U;
+        Update: infer U
       }
       ? U
       : never
-    : never;
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never;
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never;
+    : never
 
 export const Constants = {
   public: {
     Enums: {},
   },
-} as const;
+} as const

@@ -92,7 +92,7 @@ export const POST: RequestHandler = async ({ request }) => {
     ]);
   } catch (e) {
     console.error("[nearmiss] RPC failed:", e);
-    throw error(500, e instanceof Error ? e.message : "RPC error");
+    throw error(500, "Internal server error");
   }
 
   return json({ nearMissTeams, nearMissPairs });

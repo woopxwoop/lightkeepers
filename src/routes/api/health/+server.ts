@@ -24,7 +24,7 @@ export const GET: RequestHandler = async () => {
       .from("abyss_versions")
       .select("version_number")
       .limit(1)
-      .single();
+      .maybeSingle();
 
     checks.supabase = error ? "error" : "ok";
   } catch {

@@ -15,7 +15,7 @@
  * even cache misses at the edge don't hammer Supabase.
  */
 
-import { json } from "@sveltejs/kit";
+import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { LRUCache } from "$lib/server/cache";
@@ -85,7 +85,20 @@ async function fetchStaticData(): Promise<StaticPayload> {
       .eq("version_number", latestStygianVersion.version_number),
   ]);
 
-  const versionEnemyRows = versionEnemiesRes.data ?? [];
+  if (abyssTeamsRes.error) {
+    console.error("fetchStaticData: abyss RPC error", abyssTeamsRes.error);
+    throw error(500, "Failed to fetch Abyss team data");
+  }
+  if (stygianTeamsRes.error) {
+    console.error("fetchStaticData: stygian RPC error", stygianTeamsRes.error);
+    throw error(500, "Failed to fetch Stygian team data");
+  }
+  if (versionEnemiesRes.error) {
+    console.error("fetchStaticData: stygian_version_enemies error", versionEnemiesRes.error);
+    throw error(500, "Failed to fetch Stygian version enemies");
+  }
+
+  const versionEnemyRows = versionEnemiesRes.data;
   const enemyIds = versionEnemyRows
     .map((r) => r.enemy_id)
     .filter((id): id is number => id !== null);
@@ -93,10 +106,15 @@ async function fetchStaticData(): Promise<StaticPayload> {
   const enemiesRes =
     enemyIds.length > 0
       ? await serverDb.from("enemies").select("*").in("id", enemyIds)
-      : { data: [] };
+      : { data: [], error: null };
+
+  if (enemiesRes.error) {
+    console.error("fetchStaticData: enemies query error", enemiesRes.error);
+    throw error(500, "Failed to fetch enemy data");
+  }
 
   const enemyMap = new Map(
-    (enemiesRes.data ?? []).map((e: Enemy) => [e.id, e]),
+    enemiesRes.data.map((e: Enemy) => [e.id, e]),
   );
 
   // slot_index: 0=top, 1=middle, 2=bottom
@@ -112,8 +130,8 @@ async function fetchStaticData(): Promise<StaticPayload> {
   return {
     latestAbyssVersion,
     latestStygianVersion,
-    allTeamsAbyss: abyssTeamsRes.data ?? [],
-    allTeamsStygian: stygianTeamsRes.data ?? [],
+    allTeamsAbyss: abyssTeamsRes.data,
+    allTeamsStygian: stygianTeamsRes.data,
     stygianEnemies,
   };
 }

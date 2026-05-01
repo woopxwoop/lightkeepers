@@ -74,7 +74,7 @@ function slotRate<TTeam extends Record<string, any>>(
 function greedyPass<
   TTeam extends Record<string, unknown> & {
     members: string[] | null;
-    usage_total: number | null;
+    usage_rate: number | null;
     field_1_rate: number | null;
     field_2_rate: number | null;
     team_key: string | null;
@@ -120,7 +120,7 @@ function greedyPass<
     score: (() => {
       if (assignments.length === 0) return 0;
       const weighted = assignments.map(
-        (a) => (a.team.usage_total ?? 0) * slotAffinityRate(a.team, a.slot),
+        (a) => (a.team.usage_rate ?? 0) * slotAffinityRate(a.team, a.slot),
       );
       const min = Math.min(...weighted);
       const mean = weighted.reduce((s, v) => s + v, 0) / weighted.length;
@@ -455,7 +455,7 @@ function buildMinMissingAbyssSolutions(
       .sort(
         (a, b) =>
           a.missing.length - b.missing.length ||
-          (b.team.usage_total ?? 0) - (a.team.usage_total ?? 0),
+          (b.team.usage_rate ?? 0) - (a.team.usage_rate ?? 0),
       )
       .map((entry) => entry.team);
 
@@ -495,7 +495,7 @@ function buildMinMissingStygianSolutions(
       .sort(
         (a, b) =>
           a.missing.length - b.missing.length ||
-          (b.team.usage_total ?? 0) - (a.team.usage_total ?? 0),
+          (b.team.usage_rate ?? 0) - (a.team.usage_rate ?? 0),
       )
       .map((entry) => entry.team);
 

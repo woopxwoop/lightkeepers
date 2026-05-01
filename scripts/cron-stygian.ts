@@ -47,7 +47,11 @@ async function updateVersions(): Promise<void> {
   console.log(`  ${entries.length} versions`);
 }
 
-async function updateTeams(versionNumber: number, ysCharacters: { name: string; avatar: string }[], charMapping: Map<string, TeamMember>): Promise<void> {
+async function updateTeams(
+  versionNumber: number,
+  ysCharacters: { name: string; avatar: string }[],
+  charMapping: Map<string, TeamMember>,
+): Promise<void> {
   const avatarToName = new Map(ysCharacters.map((c) => [c.avatar, c.name]));
   const missingAvatars = new Set<string>();
 
@@ -99,34 +103,23 @@ async function updateTeams(versionNumber: number, ysCharacters: { name: string; 
 }
 
 async function flushBatch(batch: StygianTeam[], idx: number): Promise<void> {
-  const { error: teamsErr } = await supabase.from("teams").upsert(
-    batch.map((t) => ({ team_key: t.teamKey })),
-    { onConflict: "team_key" },
-  );
-  if (teamsErr) throw teamsErr;
-
-  const memberRows = batch.flatMap((t) =>
-    t.members.map((m) => ({ team_key: t.teamKey, character_id: m.game_id })),
-  );
-  const { error: membersErr } = await supabase
-    .from("team_characters")
-    .upsert(memberRows, { onConflict: "team_key,character_id" });
-  if (membersErr) throw membersErr;
-
-  const statsRows = batch.map((t) => ({
-    team_key: t.teamKey,
-    version_number: t.versionNumber,
-    field_1_rate: t.field1Rate,
-    field_2_rate: t.field2Rate,
-    field_3_rate: t.field3Rate,
-    usage_rate: t.usageRate,
-    usage_total: t.usageTotal,
-    has_total: t.hasTotal,
-  }));
-  const { error: statsErr } = await supabase
-    .from("team_stats_stygian")
-    .upsert(statsRows, { onConflict: "team_key,version_number" });
-  if (statsErr) throw statsErr;
+  const { error } = await supabase.rpc("upsert_stygian_team_batch", {
+    p_teams: batch.map((t) => ({ team_key: t.teamKey })),
+    p_members: batch.flatMap((t) =>
+      t.members.map((m) => ({ team_key: t.teamKey, character_id: m.game_id })),
+    ),
+    p_stats: batch.map((t) => ({
+      team_key: t.teamKey,
+      version_number: t.versionNumber,
+      field_1_rate: t.field1Rate,
+      field_2_rate: t.field2Rate,
+      field_3_rate: t.field3Rate,
+      usage_rate: t.usageRate,
+      usage_total: t.usageTotal,
+      has_total: t.hasTotal,
+    })),
+  });
+  if (error) throw error;
 
   console.log(`  Batch ${idx}: ${batch.length} teams`);
 }
@@ -150,24 +143,38 @@ const { data: dbChars, error: charsErr } = await supabase
   .from("characters")
   .select("game_id, name_id, name");
 if (charsErr) throw charsErr;
-const { mapping: charMapping, unmapped } = buildCharMapping(ysCharacters, dbChars);
+const { mapping: charMapping, unmapped } = buildCharMapping(
+  ysCharacters,
+  dbChars,
+);
 
 if (unmapped.length > 0) {
-  console.warn(`  Unmapped characters (${unmapped.length}): ${unmapped.join(", ")}`);
+  console.warn(
+    `  Unmapped characters (${unmapped.length}): ${unmapped.join(", ")}`,
+  );
 }
 console.log(`  ${charMapping.size} mapped characters`);
 
-const argVersion = process.argv[2] ? parseInt(process.argv[2], 10) : NaN;
 const allVersions = extractVersionEntries(firstData);
-const versionToRun = !Number.isNaN(argVersion)
-  ? allVersions.find((v) => v.versionNumber === argVersion)
-  : allVersions[0];
-
-if (!versionToRun) {
-  throw new Error(`Version ${argVersion} not found in YSHelper history`);
+let versionToRun;
+if (!process.argv[2]) {
+  versionToRun = allVersions[0];
+} else {
+  const argVersion = parseInt(process.argv[2], 10);
+  if (Number.isNaN(argVersion)) {
+    throw new Error(
+      `Invalid CLI version argument: "${process.argv[2]}" is not a valid integer`,
+    );
+  }
+  versionToRun = allVersions.find((v) => v.versionNumber === argVersion);
+  if (!versionToRun) {
+    throw new Error(`Version ${argVersion} not found in YSHelper history`);
+  }
 }
 
-console.log(`\nUpdating stygian teams for version ${versionToRun.versionNumber} (${versionToRun.versionName})...`);
+console.log(
+  `\nUpdating stygian teams for version ${versionToRun.versionNumber} (${versionToRun.versionName})...`,
+);
 await updateTeams(versionToRun.versionNumber, ysCharacters, charMapping);
 
 await refreshViews();
