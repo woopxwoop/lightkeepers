@@ -16,7 +16,7 @@ const ABYSS_URL = 'https://api.yshelper.com/ys/getAbyssRank.php'
 const [apiData, { data: dbRows, error }] = await Promise.all([
   fetchYsHelper(ABYSS_URL),
   supabase
-    .from('versions')
+    .from('abyss_versions')
     .select('version_number')
     .order('version_number', { ascending: false })
     .limit(1),

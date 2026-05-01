@@ -144,18 +144,21 @@ async function existsInR2(key: string): Promise<boolean> {
 async function getEnemiesFromDb() {
   const { data, error } = await db
     .from("enemies")
-    .select("id, name, lunaris_asset")
-    .order("name", { ascending: true });
+    .select("id, enemy_name, asset")
+    .order("enemy_name", { ascending: true });
   if (error) throw error;
-  return (data ?? []).filter((e) => e.lunaris_asset);
+  return (data ?? []).filter(
+    (e): e is { id: number; enemy_name: string | null; asset: string } =>
+      typeof e.asset === "string" && e.asset.length > 0,
+  );
 }
 
 async function processEnemy(
-  enemy: { id: number; name: string | null; lunaris_asset: string },
+  enemy: { id: number; enemy_name: string | null; asset: string },
   { force = false } = {},
 ): Promise<{ ok: boolean; skipped?: boolean; reason?: string }> {
-  const asset = enemy.lunaris_asset;
-  const label = `${enemy.name ?? "unknown"} (${asset})`;
+  const asset = enemy.asset;
+  const label = `${enemy.enemy_name ?? "unknown"} (${asset})`;
   const key = `${ENEMY_R2_PREFIX}/${asset}.webp`;
 
   if (!force && (await existsInR2(key))) {
@@ -182,8 +185,8 @@ async function processEnemy(
 async function getCharactersFromDb() {
   const { data, error } = await db
     .from("characters")
-    .select("id, name, name_id, character_id")
-    .order("name", { ascending: true });
+    .select("game_id, name, name_id")
+    .order("enemy_name", { ascending: true });
   if (error) throw error;
   return data ?? [];
 }
@@ -210,16 +213,15 @@ async function buildEnkaByNameId(): Promise<{
 
 async function processCharacter(
   character: {
-    id: string;
-    name: string;
-    name_id: string | null;
-    character_id: number | null;
+    game_id: number;
+    name: string | null;
+    name_id: string;
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   enkaByNameId: Map<string, any>,
   { force = false } = {},
 ): Promise<{ ok: boolean; skipped?: boolean; reason?: string }> {
-  const label = `${character.name} (${character.name_id})`;
+  const label = `${character.name ?? "Unknown"} (${character.name_id})`;
 
   if (!character.name_id) {
     console.warn(`- skip ${character.name}: missing name_id`);
@@ -302,11 +304,11 @@ async function main() {
     try {
       for (const character of characters) {
         console.log(
-          `\nProcessing ${character.name} (${character.name_id ?? "n/a"})`,
+          `\nProcessing ${character.name ?? "Unknown"} (${character.name_id})`,
         );
 
         if (dryRun) {
-          const templates = getTemplateCandidates(character.name_id ?? "");
+          const templates = getTemplateCandidates(character.name_id);
           console.log(`  portrait candidates: ${templates.portrait.length}`);
           console.log(`  coop candidates: ${templates.coop.length}`);
           continue;
@@ -330,17 +332,17 @@ async function main() {
 
     for (const enemy of enemies) {
       console.log(
-        `\nProcessing enemy ${enemy.name ?? "unknown"} (${enemy.lunaris_asset})`,
+        `\nProcessing enemy ${enemy.enemy_name ?? "unknown"} (${enemy.asset})`,
       );
 
       if (dryRun) {
         console.log(
-          `  url: https://api.lunaris.moe/data/assets/leyline/${enemy.lunaris_asset}.png`,
+          `  url: https://api.lunaris.moe/data/assets/leyline/${enemy.asset}.png`,
         );
         continue;
       }
 
-      const result = await processEnemy(enemy as { id: number; name: string | null; lunaris_asset: string }, { force });
+      const result = await processEnemy(enemy, { force });
       if (result.ok) enemySuccess += 1;
       else enemyFailed += 1;
     }
