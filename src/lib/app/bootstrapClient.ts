@@ -82,10 +82,24 @@ function mergeOwnedFlags(
   });
 }
 
+async function loadDbRoster(
+  characters: Character[],
+): Promise<CharacterOwned[] | null> {
+  try {
+    const res = await fetch("/api/roster");
+    if (!res.ok) return null; // 401 = not logged in, 500 = error
+    const { roster } = await res.json();
+    if (!Array.isArray(roster)) return null;
+    return mergeOwnedFlags(characters, roster);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Client-side hydration.
  * - Seeds slow-changing stores from SSR layout data (no extra fetch)
- * - Seeds roster from localStorage cache
+ * - Seeds roster from localStorage, then overlays DB roster if logged in
  * - Kicks off server calls for teams + near-miss in the background
  */
 export async function bootstrapClient(data: LayoutHydration): Promise<void> {
@@ -93,14 +107,26 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   allTeamsAbyss.set(data.allTeamsAbyss);
   allTeamsStygian.set(data.allTeamsStygian);
 
+  // Render immediately from localStorage
   const cachedOwned = readOwnedCache();
-  const roster = mergeOwnedFlags(data.characters, cachedOwned);
-  charactersOwned.set(roster);
+  const localRoster = mergeOwnedFlags(data.characters, cachedOwned);
+  charactersOwned.set(localRoster);
   charactersHydrated.set(true);
 
-  // Single round-trip for both abyss + stygian owned teams
-  await writeTeamsOwned(roster);
+  // Fetch teams and DB roster in parallel
+  const [, dbRoster] = await Promise.all([
+    writeTeamsOwned(localRoster),
+    loadDbRoster(data.characters),
+  ]);
 
-  // Prefetch Pulls data (non-blocking)
-  writeNearMissTeams(roster).catch(console.error);
+  // DB takes precedence — update store, sync localStorage, re-fetch teams
+  if (dbRoster) {
+    charactersOwned.set(dbRoster);
+    try {
+      localStorage.setItem("charactersOwned", JSON.stringify(dbRoster));
+    } catch {}
+    writeTeamsOwned(dbRoster).catch(console.error);
+  }
+
+  writeNearMissTeams(dbRoster ?? localRoster).catch(console.error);
 }

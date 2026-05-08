@@ -37,12 +37,16 @@ let charMapping = new Map<string, { game_id: number; name_id: string }>();
 let sampleAbyssRole: string | null = null;
 let sampleStygianRole: string | null = null;
 
-function isExpectedHelperConstraintError(error: { code?: string; message?: string }) {
+function isExpectedHelperConstraintError(error: {
+  code?: string;
+  message?: string;
+}) {
   const message = error.message?.toLowerCase() ?? "";
   return (
     error.code === "23514" &&
     message.includes("p_name_ids") &&
-    (message.includes("check constraint") || message.includes("violates constraint"))
+    (message.includes("check constraint") ||
+      message.includes("violates constraint"))
   );
 }
 
@@ -51,8 +55,14 @@ await check("url_to_character_mapping is readable", async () => {
     .from("characters")
     .select("game_id, name_id, name");
   if (error) throw error;
-  assert(Array.isArray(data) && data.length > 0, "characters table returned no rows");
-  const { error: apiErr } = await supabase.rpc("get_teams_with_characters_subset", { p_name_ids: [], p_version_number: 0 });
+  assert(
+    Array.isArray(data) && data.length > 0,
+    "characters table returned no rows",
+  );
+  const { error: apiErr } = await supabase.rpc(
+    "get_teams_with_characters_subset",
+    { p_name_ids: [], p_version_number: 0 },
+  );
   if (apiErr && !isExpectedHelperConstraintError(apiErr)) throw apiErr;
   byName = new Map<string, { game_id: number; name_id: string }>();
   for (const r of data) {
@@ -60,7 +70,9 @@ await check("url_to_character_mapping is readable", async () => {
       throw new Error(`characters row ${r.game_id} is missing name`);
     }
     if (r.name_id == null) {
-      throw new Error(`characters row ${r.game_id} (${r.name}) is missing name_id`);
+      throw new Error(
+        `characters row ${r.game_id} (${r.name}) is missing name_id`,
+      );
     }
 
     const existing = byName.get(r.name);
@@ -86,7 +98,10 @@ await check("versions table is readable", async () => {
     .limit(1);
   if (error) throw error;
   assert(data && data.length > 0, "versions table is empty");
-  ok("versions table is readable", `latest abyss version: ${data[0].version_number}`);
+  ok(
+    "versions table is readable",
+    `latest abyss version: ${data[0].version_number}`,
+  );
 });
 
 await check("stygian_versions table is readable", async () => {
@@ -97,7 +112,10 @@ await check("stygian_versions table is readable", async () => {
     .limit(1);
   if (error) throw error;
   assert(data && data.length > 0, "stygian_versions table is empty");
-  ok("stygian_versions table is readable", `latest stygian version: ${data[0].version_number}`);
+  ok(
+    "stygian_versions table is readable",
+    `latest stygian version: ${data[0].version_number}`,
+  );
 });
 
 // ── API connectivity + parsing ────────────────────────────────────────────────
@@ -109,15 +127,28 @@ console.log("\n── API connectivity ─────────────�
 
 await check("yshelper.com is reachable", async () => {
   abyssData = await fetchYsHelper(ABYSS_URL);
-  assert(Array.isArray(abyssData.history_list) && abyssData.history_list.length > 0, "history_list missing");
-  assert(Array.isArray(abyssData.result) && abyssData.result.length > 0, "result missing");
+  assert(
+    Array.isArray(abyssData.history_list) && abyssData.history_list.length > 0,
+    "history_list missing",
+  );
+  assert(
+    Array.isArray(abyssData.result) && abyssData.result.length > 0,
+    "result missing",
+  );
   ok("yshelper.com is reachable", `version ${getCurrentVersion(abyssData)}`);
 });
 
 await check("lelaer.com is reachable", async () => {
   stygianData = await fetchYsHelper(STYGIAN_URL);
-  assert(Array.isArray(stygianData.history_list) && stygianData.history_list.length > 0, "history_list missing");
-  assert(Array.isArray(stygianData.result) && stygianData.result.length > 0, "result missing");
+  assert(
+    Array.isArray(stygianData.history_list) &&
+      stygianData.history_list.length > 0,
+    "history_list missing",
+  );
+  assert(
+    Array.isArray(stygianData.result) && stygianData.result.length > 0,
+    "result missing",
+  );
   ok("lelaer.com is reachable", `version ${getCurrentVersion(stygianData)}`);
 });
 
@@ -148,21 +179,32 @@ if (abyssData) {
   await check("extractVersionEntries (abyss)", async () => {
     const entries = extractVersionEntries(abyssData!);
     assert(entries.length > 0, "no version entries");
-    assert(entries.every((e) => typeof e.versionNumber === "number" && !isNaN(e.versionNumber)), "invalid version numbers");
+    assert(
+      entries.every(
+        (e) => typeof e.versionNumber === "number" && !isNaN(e.versionNumber),
+      ),
+      "invalid version numbers",
+    );
     ok("extractVersionEntries (abyss)", `${entries.length} entries`);
   });
 
   await check("extractCharacters (abyss)", async () => {
     const chars = extractCharacterNames(abyssData!);
     assert(chars.length > 0, "no characters extracted");
-    assert(chars.every((c) => typeof c.name === "string" && c.name.length > 0), "some chars missing name");
+    assert(
+      chars.every((c) => typeof c.name === "string" && c.name.length > 0),
+      "some chars missing name",
+    );
     ok("extractCharacters (abyss)", `${chars.length} characters`);
   });
 
   await check("extractTeams (abyss, role=all)", async () => {
     const teams = extractTeams(abyssData!);
     assert(teams.length > 0, "no teams extracted from role=all response");
-    assert(teams.every((t) => Array.isArray(t.role) && t.role.length > 0), "some teams have empty role array");
+    assert(
+      teams.every((t) => Array.isArray(t.role) && t.role.length > 0),
+      "some teams have empty role array",
+    );
     ok("extractTeams (abyss)", `${teams.length} teams`);
   });
 }
@@ -195,9 +237,13 @@ if (abyssData && charMapping.size > 0) {
     const totalMembers = mapped.reduce((n, t) => n + t.members.length, 0);
 
     assert(mapped.length > 0, "no teams mapped");
-    assert(mapped.every((t) => t.teamKey.length === 64), "some team keys are not SHA-256");
+    assert(
+      mapped.every((t) => t.teamKey.length === 64),
+      "some team keys are not SHA-256",
+    );
 
-    const droppedPct = rawTeams.length > 0 ? (droppedCount / rawTeams.length) * 100 : 0;
+    const droppedPct =
+      rawTeams.length > 0 ? (droppedCount / rawTeams.length) * 100 : 0;
     if (droppedPct > 5) {
       throw new Error(
         `${droppedCount}/${rawTeams.length} teams dropped (${droppedPct.toFixed(1)}%) — character mapping may be stale`,
@@ -224,8 +270,12 @@ if (stygianData && charMapping.size > 0) {
       .filter((t): t is NonNullable<typeof t> => t !== null);
 
     assert(mapped.length > 0, "no stygian teams mapped");
-    assert(mapped.every((t) => t.teamKey.length === 64), "some team keys are not SHA-256");
-    const droppedPct = rawTeams.length > 0 ? (droppedCount / rawTeams.length) * 100 : 0;
+    assert(
+      mapped.every((t) => t.teamKey.length === 64),
+      "some team keys are not SHA-256",
+    );
+    const droppedPct =
+      rawTeams.length > 0 ? (droppedCount / rawTeams.length) * 100 : 0;
     if (droppedPct > 5) {
       throw new Error(
         `${droppedCount}/${rawTeams.length} stygian teams dropped (${droppedPct.toFixed(1)}%) — character mapping may be stale`,
@@ -242,22 +292,37 @@ if (stygianData && charMapping.size > 0) {
 
 console.log("\n── Per-character fetch (1 sample) ───────────────");
 
-await check(`fetchYsHelper role=${sampleAbyssRole ?? "n/a"} (abyss)`, async () => {
-  assert(charMapping.size > 0, "character mapping resolved to 0 entries");
-  assert(sampleAbyssRole !== null, "no abyss sample role available");
-  const data = await fetchYsHelper(ABYSS_URL, sampleAbyssRole, "en");
-  const teams = extractTeams(data);
-  assert(teams.length > 0, `role ${sampleAbyssRole} returned 0 abyss teams`);
-  ok(`fetchYsHelper role=${sampleAbyssRole} (abyss)`, `${teams.length} teams returned`);
-});
+await check(
+  `fetchYsHelper role=${sampleAbyssRole ?? "n/a"} (abyss)`,
+  async () => {
+    assert(charMapping.size > 0, "character mapping resolved to 0 entries");
+    assert(sampleAbyssRole !== null, "no abyss sample role available");
+    const data = await fetchYsHelper(ABYSS_URL, sampleAbyssRole, "en");
+    const teams = extractTeams(data);
+    assert(teams.length > 0, `role ${sampleAbyssRole} returned 0 abyss teams`);
+    ok(
+      `fetchYsHelper role=${sampleAbyssRole} (abyss)`,
+      `${teams.length} teams returned`,
+    );
+  },
+);
 
-await check(`fetchYsHelper role=${sampleStygianRole ?? "n/a"} (stygian)`, async () => {
-  assert(charMapping.size > 0, "character mapping resolved to 0 entries");
-  assert(sampleStygianRole !== null, "no stygian sample role available");
-  const data = await fetchYsHelper(STYGIAN_URL, sampleStygianRole, "en");
-  const teams = extractTeams(data);
-  assert(teams.length > 0, `role ${sampleStygianRole} returned 0 stygian teams`);
-  ok(`fetchYsHelper role=${sampleStygianRole} (stygian)`, `${teams.length} teams returned`);
-});
+await check(
+  `fetchYsHelper role=${sampleStygianRole ?? "n/a"} (stygian)`,
+  async () => {
+    assert(charMapping.size > 0, "character mapping resolved to 0 entries");
+    assert(sampleStygianRole !== null, "no stygian sample role available");
+    const data = await fetchYsHelper(STYGIAN_URL, sampleStygianRole, "en");
+    const teams = extractTeams(data);
+    assert(
+      teams.length > 0,
+      `role ${sampleStygianRole} returned 0 stygian teams`,
+    );
+    ok(
+      `fetchYsHelper role=${sampleStygianRole} (stygian)`,
+      `${teams.length} teams returned`,
+    );
+  },
+);
 
 summary();

@@ -1,10 +1,10 @@
-export const WEAPON_TYPE_MAP: Record<string, string> = {
+export const WEAPON_TYPE_MAP = {
   WEAPON_SWORD_ONE_HAND: "Sword",
   WEAPON_CLAYMORE: "Claymore",
   WEAPON_POLE: "Polearm",
   WEAPON_CATALYST: "Catalyst",
   WEAPON_BOW: "Bow",
-};
+} as const;
 
 const CHARACTERS_CDN_BASE = "https://images.lightkeepers.moe/characters";
 
