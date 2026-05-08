@@ -32,6 +32,62 @@ export type Database = {
         }
         Relationships: []
       }
+      account: {
+        Row: {
+          accessToken: string | null
+          accessTokenExpiresAt: string | null
+          accountId: string
+          createdAt: string
+          id: string
+          idToken: string | null
+          password: string | null
+          providerId: string
+          refreshToken: string | null
+          refreshTokenExpiresAt: string | null
+          scope: string | null
+          updatedAt: string
+          userId: string
+        }
+        Insert: {
+          accessToken?: string | null
+          accessTokenExpiresAt?: string | null
+          accountId: string
+          createdAt?: string
+          id: string
+          idToken?: string | null
+          password?: string | null
+          providerId: string
+          refreshToken?: string | null
+          refreshTokenExpiresAt?: string | null
+          scope?: string | null
+          updatedAt: string
+          userId: string
+        }
+        Update: {
+          accessToken?: string | null
+          accessTokenExpiresAt?: string | null
+          accountId?: string
+          createdAt?: string
+          id?: string
+          idToken?: string | null
+          password?: string | null
+          providerId?: string
+          refreshToken?: string | null
+          refreshTokenExpiresAt?: string | null
+          scope?: string | null
+          updatedAt?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       character_stats_abyss: {
         Row: {
           character_id: number
@@ -163,6 +219,47 @@ export type Database = {
           id?: number
         }
         Relationships: []
+      }
+      session: {
+        Row: {
+          createdAt: string
+          expiresAt: string
+          id: string
+          ipAddress: string | null
+          token: string
+          updatedAt: string
+          userAgent: string | null
+          userId: string
+        }
+        Insert: {
+          createdAt?: string
+          expiresAt: string
+          id: string
+          ipAddress?: string | null
+          token: string
+          updatedAt: string
+          userAgent?: string | null
+          userId: string
+        }
+        Update: {
+          createdAt?: string
+          expiresAt?: string
+          id?: string
+          ipAddress?: string | null
+          token?: string
+          updatedAt?: string
+          userAgent?: string | null
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stygian_version_enemies: {
         Row: {
@@ -356,6 +453,84 @@ export type Database = {
         Update: {
           created_at?: string
           team_key?: string
+        }
+        Relationships: []
+      }
+      user: {
+        Row: {
+          createdAt: string
+          email: string
+          emailVerified: boolean
+          id: string
+          image: string | null
+          name: string
+          updatedAt: string
+        }
+        Insert: {
+          createdAt?: string
+          email: string
+          emailVerified: boolean
+          id: string
+          image?: string | null
+          name: string
+          updatedAt?: string
+        }
+        Update: {
+          createdAt?: string
+          email?: string
+          emailVerified?: boolean
+          id?: string
+          image?: string | null
+          name?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
+      user_rosters: {
+        Row: {
+          id: string
+          roster: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          roster?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          roster?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      verification: {
+        Row: {
+          createdAt: string
+          expiresAt: string
+          id: string
+          identifier: string
+          updatedAt: string
+          value: string
+        }
+        Insert: {
+          createdAt?: string
+          expiresAt: string
+          id: string
+          identifier: string
+          updatedAt?: string
+          value: string
+        }
+        Update: {
+          createdAt?: string
+          expiresAt?: string
+          id?: string
+          identifier?: string
+          updatedAt?: string
+          value?: string
         }
         Relationships: []
       }

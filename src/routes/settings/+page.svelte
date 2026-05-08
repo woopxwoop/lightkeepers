@@ -8,6 +8,7 @@
     writeTeamsOwned,
     type IconStyle,
   } from "$lib/stores";
+  import { authClient } from "$lib/auth-client";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import type { CharacterOwned } from "$lib/definitions";
   import { fly, slide } from "svelte/transition";
@@ -36,6 +37,48 @@
   let activeSectionIndex = $state(0);
   let activeSection = $derived(sections[activeSectionIndex].id);
   let tempCharactersOwned: CharacterOwned[] = $state([]);
+  const session = authClient.useSession();
+  let syncStatus = $state<"idle" | "checking" | "needs-upload" | "uploading" | "synced" | "error">("idle");
+
+  $effect(() => {
+    if ($session.data) {
+      checkRosterSync();
+    } else {
+      syncStatus = "idle";
+    }
+  });
+
+  async function checkRosterSync() {
+    syncStatus = "checking";
+    try {
+      const res = await fetch("/api/roster");
+      if (!res.ok) {
+        console.error("checkRosterSync: unexpected status", res.status);
+        syncStatus = "error";
+        return;
+      }
+      const { roster } = await res.json();
+      syncStatus = roster === null ? "needs-upload" : "synced";
+    } catch (err) {
+      console.error("checkRosterSync: network error", err);
+      syncStatus = "error";
+    }
+  }
+
+  async function uploadRoster() {
+    syncStatus = "uploading";
+    try {
+      await fetch("/api/roster", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roster: $charactersOwned }),
+      });
+      syncStatus = "synced";
+    } catch {
+      syncStatus = "needs-upload";
+    }
+  }
+
   let synced = $state(false);
   let showSaved = $state(false);
   let isSaving = $state(false);
@@ -85,7 +128,7 @@
       const matchesWeapon =
         weaponFilter.size === 0 ||
         (c.weapon_type != null &&
-          weaponFilter.has(WEAPON_TYPE_MAP[c.weapon_type] ?? c.weapon_type));
+          weaponFilter.has(WEAPON_TYPE_MAP[c.weapon_type as keyof typeof WEAPON_TYPE_MAP] ?? c.weapon_type));
       const matchesSearch =
         search === "" || (c.name ?? "").toLowerCase().includes(search.toLowerCase());
       return matchesRarity && matchesElement && matchesWeapon && matchesSearch;
@@ -132,6 +175,18 @@
     await writeTeamsOwned(tempCharactersOwned);
     writeNearMissTeams(tempCharactersOwned).catch(console.error);
 
+    if ($session.data) {
+      fetch("/api/roster", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roster: tempCharactersOwned }),
+      }).then((res) => {
+        if (!res.ok) syncStatus = "needs-upload";
+      }).catch(() => {
+        syncStatus = "needs-upload";
+      });
+    }
+
     showSaved = true;
     hasUnsavedChanges = false;
     isSaving = false;
@@ -162,6 +217,9 @@
       tempCharactersOwned = [...$charactersOwned];
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       synced = true;
+    } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
+      tempCharactersOwned = [...$charactersOwned];
+      savedSnapshot = JSON.stringify($charactersOwned);
     }
   });
 
@@ -423,23 +481,89 @@
               {/if}
             </div>
           {:else if activeSection === "sync"}
-            <div
-              class="settings-panel settings-sync-panel p-6 flex flex-col justify-between"
-            >
+            <div class="settings-panel settings-sync-panel p-6 flex flex-col gap-6">
               <div class="flex flex-col gap-3 max-w-xl">
-                <span class="panel-kicker">Upcoming</span>
                 <h3>Account / Sync</h3>
-                <p>
-                  Cloud roster sync is not wired up yet. For now, your character
-                  roster and display settings stay on this device.
-                </p>
+                <p>Log in to back up your roster and sync across devices.</p>
               </div>
-              <div class="sync-preview rounded-lg p-4">
-                <span>Planned</span>
-                <p>
-                  Account login, roster backup, and cross-device preferences.
-                </p>
-              </div>
+
+              {#if $session.isPending}
+                <div class="flex items-center justify-center min-h-[120px]">
+                  <p style="color: var(--foreground-mid);">Loading...</p>
+                </div>
+              {:else if $session.data}
+                <div class="flex flex-col gap-4">
+                  <div class="flex items-center gap-3">
+                    {#if $session.data.user.image}
+                      <img
+                        src={$session.data.user.image}
+                        alt=""
+                        width="36"
+                        height="36"
+                        class="rounded-full"
+                        style="border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);"
+                      />
+                    {/if}
+                    <div class="flex flex-col">
+                      <span style="color: var(--foreground-color); font-size: 0.9rem;">{$session.data.user.name}</span>
+                      <span style="color: var(--foreground-mid); font-size: 0.8rem;">{$session.data.user.email}</span>
+                    </div>
+                  </div>
+
+                  {#if syncStatus === "checking"}
+                    <p style="color: var(--foreground-mid); font-size: 0.85rem;">Checking roster sync...</p>
+                  {:else if syncStatus === "error"}
+                    <p style="color: var(--foreground-mid); font-size: 0.85rem;">Could not reach sync service. Check your connection and try again.</p>
+                  {:else if syncStatus === "needs-upload"}
+                    <div class="flex flex-col gap-3 p-4 rounded-lg" style="background: color-mix(in srgb, var(--background-color) 60%, transparent); border: 0.5px solid color-mix(in srgb, var(--accent-1) 28%, transparent);">
+                      <p style="color: var(--foreground-mid); font-size: 0.85rem; margin: 0;">No roster found in cloud. Upload your local roster?</p>
+                      <div class="flex gap-2">
+                        <button type="button" class="primary-action" onclick={uploadRoster}>Upload roster</button>
+                        <button type="button" class="secondary-action" onclick={() => syncStatus = "synced"}>Skip</button>
+                      </div>
+                    </div>
+                  {:else if syncStatus === "uploading"}
+                    <p style="color: var(--foreground-mid); font-size: 0.85rem;">Uploading roster...</p>
+                  {:else if syncStatus === "synced"}
+                    <p style="color: var(--foreground-mid); font-size: 0.85rem;">Roster synced</p>
+                  {/if}
+
+                  <button
+                    type="button"
+                    class="secondary-action"
+                    style="width: fit-content;"
+                    onclick={() => authClient.signOut()}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              {:else}
+                <div class="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    class="oauth-button"
+                    onclick={() => authClient.signIn.social({ provider: "google", callbackURL: "/settings" })}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                  </button>
+                  <button
+                    type="button"
+                    class="oauth-button"
+                    onclick={() => authClient.signIn.social({ provider: "discord", callbackURL: "/settings" })}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#5865F2" aria-hidden="true">
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+                    </svg>
+                    Continue with Discord
+                  </button>
+                </div>
+              {/if}
             </div>
           {:else}
             <div class="settings-panel p-6">
@@ -600,18 +724,11 @@
     color: var(--foreground-mid);
   }
 
-  .panel-kicker,
-  .sync-preview span,
   .filter-group > span {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--accent-1);
-  }
-
-  .sync-preview {
-    background: color-mix(in srgb, var(--background-color) 32%, transparent);
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
   }
 
   .filter-group {
@@ -750,6 +867,28 @@
   .segmented-control button.is-selected {
     color: var(--accent-1);
     background: color-mix(in srgb, var(--accent-1) 16%, transparent);
+  }
+
+  .oauth-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 320px;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 28%, transparent);
+    background: color-mix(in srgb, var(--background-color) 60%, transparent);
+    color: var(--foreground-color);
+    font-size: 0.9rem;
+    transition:
+      background-color 0.15s,
+      border-color 0.15s;
+  }
+
+  .oauth-button:hover {
+    background: color-mix(in srgb, var(--accent-1) 10%, transparent);
+    border-color: color-mix(in srgb, var(--accent-1) 44%, transparent);
   }
 
   .character-icon-button :global(*) {

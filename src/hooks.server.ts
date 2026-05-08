@@ -5,6 +5,7 @@
 import { sequence } from "@sveltejs/kit/hooks";
 import { handleErrorWithSentry, sentryHandle } from "@sentry/sveltekit";
 import { metrics } from "$lib/server/metrics";
+import { auth } from "$lib/server/auth";
 import type { Handle } from "@sveltejs/kit";
 
 const metricsHandle: Handle = async ({ event, resolve }) => {
@@ -24,5 +25,31 @@ const metricsHandle: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(sentryHandle(), metricsHandle);
+const SKIP_AUTH_PREFIXES = ["/_app/", "/favicon"];
+const SKIP_AUTH_PATHS = new Set(["/metrics"]);
+
+const authHandle: Handle = async ({ event, resolve }) => {
+  const { pathname } = event.url;
+  if (
+    SKIP_AUTH_PATHS.has(pathname) ||
+    SKIP_AUTH_PREFIXES.some((p) => pathname.startsWith(p))
+  ) {
+    event.locals.user = null;
+    event.locals.session = null;
+    return resolve(event);
+  }
+
+  try {
+    const session = await auth.api.getSession({ headers: event.request.headers });
+    event.locals.user = session?.user ?? null;
+    event.locals.session = session?.session ?? null;
+  } catch (err) {
+    console.error("authHandle: getSession failed", err);
+    event.locals.user = null;
+    event.locals.session = null;
+  }
+  return resolve(event);
+};
+
+export const handle = sequence(sentryHandle(), authHandle, metricsHandle);
 export const handleError = handleErrorWithSentry();

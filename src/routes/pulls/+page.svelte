@@ -474,7 +474,7 @@
               </div>
               <div class="flex flex-col gap-1">
                 <p class="text-xs" style="color: var(--foreground-mid);">
-                  {(team.usage_rate ?? 0).toFixed(1)}% avg usage
+                  {team.usage_rate != null ? `${team.usage_rate.toFixed(1)}% avg usage` : "N/A"}
                 </p>
                 <p class="text-xs" style="color: {accent};">
                   missing: {missingCharacters.join(", ")}

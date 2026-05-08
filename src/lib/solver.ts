@@ -77,6 +77,7 @@ function greedyPass<
     usage_rate: number | null;
     field_1_rate: number | null;
     field_2_rate: number | null;
+    field_3_rate?: number | null;
     team_key: string | null;
   },
   TSlot extends string,

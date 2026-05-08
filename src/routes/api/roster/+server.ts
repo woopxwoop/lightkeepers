@@ -1,0 +1,47 @@
+import { json, error } from "@sveltejs/kit";
+import type { RequestHandler } from "./$types";
+import { serverDb } from "$lib/server/supabaseServer";
+
+export const GET: RequestHandler = async ({ locals }) => {
+  if (!locals.user) throw error(401, "Unauthorized");
+
+  const { data, error: err } = await serverDb
+    .from("user_rosters")
+    .select("roster")
+    .eq("user_id", locals.user.id)
+    .maybeSingle();
+
+  if (err) throw error(500, err.message);
+
+  return json({ roster: data?.roster ?? null });
+};
+
+export const POST: RequestHandler = async ({ locals, request }) => {
+  if (!locals.user) throw error(401, "Unauthorized");
+
+  const { roster } = await request.json();
+
+  if (
+    !Array.isArray(roster) ||
+    !roster.every(
+      (item) =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof item.name_id === "string" &&
+        typeof item.isOwned === "boolean",
+    )
+  ) {
+    throw error(400, "Invalid roster payload");
+  }
+
+  const { error: err } = await serverDb
+    .from("user_rosters")
+    .upsert(
+      { user_id: locals.user.id, roster, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" },
+    );
+
+  if (err) throw error(500, err.message);
+
+  return json({ ok: true });
+};

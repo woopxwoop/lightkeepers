@@ -6,8 +6,11 @@
 
 <main class="w-[80%] pb-20">
   <div class="flex flex-col gap-8 mt-16">
-    <h1 class="hook">Let the light guide you.</h1>
-    <p>Your guide through the Genshin Impact meta</p>
+    <h1 class="hook">Genshin Impact <br /> meta recommendations.</h1>
+    <h2>
+      Select your owned characters, <br />get team and character recommendations
+    </h2>
+
     <p class="text-xs text-center mt-48" style="color: var(--foreground-mid);">
       adjust your roster in
       <a href={settingsPath} class="settings-link">settings</a>
