@@ -68,13 +68,19 @@
   async function uploadRoster() {
     syncStatus = "uploading";
     try {
-      await fetch("/api/roster", {
+      const res = await fetch("/api/roster", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roster: $charactersOwned }),
       });
-      syncStatus = "synced";
-    } catch {
+      if (!res.ok) {
+        console.error("uploadRoster: unexpected status", res.status);
+        syncStatus = "needs-upload";
+      } else {
+        syncStatus = "synced";
+      }
+    } catch (err) {
+      console.error("uploadRoster: network error", err);
       syncStatus = "needs-upload";
     }
   }
@@ -181,7 +187,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roster: tempCharactersOwned }),
       }).then((res) => {
-        if (!res.ok) syncStatus = "needs-upload";
+        syncStatus = res.ok ? "synced" : "needs-upload";
       }).catch(() => {
         syncStatus = "needs-upload";
       });

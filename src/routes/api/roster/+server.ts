@@ -11,7 +11,10 @@ export const GET: RequestHandler = async ({ locals }) => {
     .eq("user_id", locals.user.id)
     .maybeSingle();
 
-  if (err) throw error(500, err.message);
+  if (err) {
+    console.error("GET /api/roster failed:", err);
+    throw error(500, "Internal server error");
+  }
 
   return json({ roster: data?.roster ?? null });
 };
@@ -19,7 +22,14 @@ export const GET: RequestHandler = async ({ locals }) => {
 export const POST: RequestHandler = async ({ locals, request }) => {
   if (!locals.user) throw error(401, "Unauthorized");
 
-  const { roster } = await request.json();
+  let roster: unknown;
+  try {
+    const body = await request.json();
+    if (typeof body !== "object" || body === null) throw new Error();
+    roster = (body as Record<string, unknown>).roster;
+  } catch {
+    throw error(400, "Invalid roster payload");
+  }
 
   if (
     !Array.isArray(roster) ||
@@ -41,7 +51,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
       { onConflict: "user_id" },
     );
 
-  if (err) throw error(500, err.message);
+  if (err) {
+    console.error("POST /api/roster failed:", err);
+    throw error(500, "Internal server error");
+  }
 
   return json({ ok: true });
 };
