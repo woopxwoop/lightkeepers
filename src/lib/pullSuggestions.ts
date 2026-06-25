@@ -1,7 +1,12 @@
-import type { StygianTeam, NearMissStygianTeam, NearMissStygianPair } from "$lib/definitions";
+import type {
+  StygianTeam,
+  NearMissStygianTeam,
+  NearMissStygianPair,
+} from "$lib/definitions";
 
 export type PullSuggestion = {
   character: string;
+  characterName: string | undefined;
   improvement: number;
   unlocksTeams: number;
   bestTeam: StygianTeam;
@@ -11,7 +16,9 @@ export type PullSuggestion = {
 
 export type PairSuggestion = {
   charA: string;
+  charAName: string | undefined;
   charB: string;
+  charBName: string | undefined;
   pmi: number;
   avgUsage: number;
   improvement: number;
@@ -96,11 +103,13 @@ export function computePullSuggestions(
       field_2_rate: topNearMiss.field_2_rate,
       field_3_rate: topNearMiss.field_3_rate,
       members: topNearMiss.members,
+      members_names: topNearMiss.members_names,
       has_total: 0,
     };
 
     suggestions.push({
       character,
+      characterName: topNearMiss.missing_character_name,
       improvement,
       score,
       unlocksTeams: unlocked.length,
@@ -132,8 +141,10 @@ export function computePairSuggestions(
 ): PairSuggestion[] {
   const byPair = new Map<string, NearMissPairTeam[]>();
   for (const team of nearMissPairs) {
-    if (!team.missing_char_a || !team.missing_char_b) continue;
-    const key = [team.missing_char_a, team.missing_char_b].sort().join("|||");
+    if (!team.missing_character_a || !team.missing_character_b) continue;
+    const key = [team.missing_character_a, team.missing_character_b]
+      .sort()
+      .join("|||");
     const existing = byPair.get(key) ?? [];
     existing.push(team);
     byPair.set(key, existing);
@@ -148,8 +159,8 @@ export function computePairSuggestions(
         (a.avg_usage_rate ?? a.usage_total ?? 0),
     )[0];
 
-    const charA = topTeam.missing_char_a!;
-    const charB = topTeam.missing_char_b!;
+    const charA = topTeam.missing_character_a!;
+    const charB = topTeam.missing_character_b!;
 
     const avgUsage = topTeam.avg_usage_rate ?? topTeam.usage_total ?? 0;
     const pmi = topTeam.pmi ?? 0;
@@ -206,12 +217,15 @@ export function computePairSuggestions(
       field_2_rate: topTeam.field_2_rate,
       field_3_rate: topTeam.field_3_rate,
       members: topTeam.members,
+      members_names: topTeam.members_names,
       has_total: 0,
     };
 
     suggestions.push({
       charA,
+      charAName: topTeam.missing_character_a_name,
       charB,
+      charBName: topTeam.missing_character_b_name,
       pmi,
       avgUsage,
       improvement,

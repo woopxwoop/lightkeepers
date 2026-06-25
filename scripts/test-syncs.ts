@@ -93,12 +93,8 @@ await check("Enka characters match DB names (cross-reference)", async () => {
   const skipped: string[] = [];
   for (const char of relevant) {
     const displayName = char.name.get();
-    const dbName = DISPLAY_TO_DB.get(displayName) ?? displayName;
-    if (!nameToId.has(dbName)) skipped.push(dbName);
+    if (!nameToId.has(displayName)) skipped.push(displayName);
   }
-
-  // Traveler check separately
-  if (!nameToId.has("Traveler")) skipped.push("Traveler");
 
   const skipPct =
     relevant.length > 0 ? (skipped.length / relevant.length) * 100 : 0;

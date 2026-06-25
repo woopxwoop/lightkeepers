@@ -576,8 +576,11 @@ export type Database = {
           field_2_rate: number
           field_3_rate: number
           members: string[]
-          missing_char_a: string
-          missing_char_b: string
+          members_names: string[]
+          missing_character_a: string
+          missing_character_a_name: string
+          missing_character_b: string
+          missing_character_b_name: string
           pmi: number
           team_key: string
           usage_rate: number
@@ -592,7 +595,9 @@ export type Database = {
           field_2_rate: number
           field_3_rate: number
           members: string[]
+          members_names: string[]
           missing_character: string
+          missing_character_name: string
           team_key: string
           usage_rate: number
           usage_total: number
@@ -605,6 +610,7 @@ export type Database = {
           field_2_rate: number
           has_total: number
           members: string[]
+          members_names: string[]
           team_key: string
           usage_rate: number
           usage_total: number
@@ -619,6 +625,7 @@ export type Database = {
           field_3_rate: number
           has_total: number
           members: string[]
+          members_names: string[]
           team_key: string
           usage_rate: number
           usage_total: number

@@ -64,9 +64,7 @@ export function initDisplayPreferences(): void {
   }
 }
 
-export function setDisplayPreferences(
-  next: Partial<DisplayPreferences>,
-): void {
+export function setDisplayPreferences(next: Partial<DisplayPreferences>): void {
   displayPreferences.update((current) => {
     const updated = { ...current, ...next };
     try {

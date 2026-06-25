@@ -85,6 +85,7 @@
     const ownedNames = new Set(
       $charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id ?? ""),
     );
+
     const all = $allTeamsStygian;
 
     const candidates = all
@@ -109,10 +110,21 @@
       if (result.length === 3) break;
     }
 
-    return result.map((team) => ({
-      team,
-      missingCharacters: (team.members ?? []).filter((m) => !ownedNames.has(m)),
-    }));
+    return result.map((team) => {
+      const missingCharactersIndexes = (team.members ?? []).flatMap(
+        (member, index) => (!ownedNames.has(member) ? index : []),
+      );
+
+      return {
+        team,
+        missingCharacters: missingCharactersIndexes.map(
+          (index) => team.members[index],
+        ),
+        missingCharactersNames: missingCharactersIndexes.map(
+          (index) => team.members_names[index],
+        ),
+      };
+    });
   });
 
   // Debug: show state
@@ -258,27 +270,6 @@
                     suggestion.character,
                   )}
                   <div class="flex flex-col gap-1.5">
-                    <p class="text-xs" style="color: var(--foreground-mid);">
-                      currently running
-                    </p>
-                    <div class="grid grid-cols-4 gap-0.5 opacity-50">
-                      {#each aligned.currentAligned as member, j}
-                        <div
-                          class="team-slot rounded-[5px] overflow-hidden relative"
-                          class:team-slot-current-highlight={j === 3}
-                          style="background: var(--background-color);"
-                        >
-                          <CharacterIcon character={mapping.get(member)} />
-                        </div>
-                      {/each}
-                    </div>
-                    <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.currentBestTeam.usage_rate != null
-                        ? `${suggestion.currentBestTeam.usage_rate.toFixed(1)}% avg usage`
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div class="flex flex-col gap-1.5">
                     <div class="grid grid-cols-4 gap-0.5">
                       {#each aligned.bestAligned as member, j}
                         <div
@@ -295,6 +286,27 @@
                     <p class="text-xs" style="color: var(--foreground-mid);">
                       {suggestion.bestTeam.usage_rate != null
                         ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage`
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <p class="text-xs" style="color: var(--foreground-mid);">
+                      current alternative
+                    </p>
+                    <div class="grid grid-cols-4 gap-0.5 opacity-50">
+                      {#each aligned.currentAligned as member, j}
+                        <div
+                          class="team-slot rounded-[5px] overflow-hidden relative"
+                          class:team-slot-current-highlight={j === 3}
+                          style="background: var(--background-color);"
+                        >
+                          <CharacterIcon character={mapping.get(member)} />
+                        </div>
+                      {/each}
+                    </div>
+                    <p class="text-xs" style="color: var(--foreground-mid);">
+                      {suggestion.currentBestTeam.usage_rate != null
+                        ? `${suggestion.currentBestTeam.usage_rate.toFixed(1)}% avg usage`
                         : "N/A"}
                     </p>
                   </div>
@@ -373,7 +385,7 @@
                       class="text-xs sm:text-sm font-medium truncate"
                       style="color: var(--foreground-color);"
                     >
-                      {suggestion.charA} + {suggestion.charB}
+                      {suggestion.charAName} + {suggestion.charBName}
                     </span>
                     <div class="flex items-center gap-1 flex-wrap">
                       <span
@@ -452,7 +464,7 @@
         Best Teams You Don't Have
       </p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {#each topMissingTeams as { team, missingCharacters }, i}
+        {#each topMissingTeams as { team, missingCharacters, missingCharactersNames }, i}
           {@const accent = rankAccent[i]}
           <div
             class="rounded-xl overflow-hidden flex flex-col"
@@ -474,10 +486,12 @@
               </div>
               <div class="flex flex-col gap-1">
                 <p class="text-xs" style="color: var(--foreground-mid);">
-                  {team.usage_rate != null ? `${team.usage_rate.toFixed(1)}% avg usage` : "N/A"}
+                  {team.usage_rate != null
+                    ? `${team.usage_rate.toFixed(1)}% avg usage`
+                    : "N/A"}
                 </p>
                 <p class="text-xs" style="color: {accent};">
-                  missing: {missingCharacters.join(", ")}
+                  missing: {missingCharactersNames.join(", ")}
                 </p>
               </div>
             </div>

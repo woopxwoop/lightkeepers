@@ -34,8 +34,8 @@ console.log("\n── Supabase reads ──────────────�
 
 let byName = new Map<string, { game_id: number; name_id: string }>();
 let charMapping = new Map<string, { game_id: number; name_id: string }>();
-let sampleAbyssRole: string | null = null;
-let sampleStygianRole: string | null = null;
+let sampleAbyssRole: string | undefined = undefined;
+let sampleStygianRole: string | undefined = undefined;
 
 function isExpectedHelperConstraintError(error: {
   code?: string;
