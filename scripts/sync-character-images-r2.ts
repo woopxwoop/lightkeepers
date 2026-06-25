@@ -128,7 +128,7 @@ async function uploadToR2(key: string, body: Buffer): Promise<void> {
       "Content-Type": "image/webp",
       "Cache-Control": "public, max-age=31536000, immutable",
     },
-    body,
+    body: new Uint8Array(body),
   });
   if (!resp.ok) {
     const text = await resp.text();
