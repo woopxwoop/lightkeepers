@@ -234,7 +234,7 @@
                       class="text-sm font-medium truncate"
                       style="color: var(--foreground-color);"
                     >
-                      {suggestion.character}
+                      {suggestion.characterName ?? suggestion.character}
                     </span>
                     <span class="text-xs" style="color: var(--foreground-mid);">
                       unlocks {suggestion.unlocksTeams}
