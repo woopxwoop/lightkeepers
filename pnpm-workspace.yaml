@@ -1,6 +1,7 @@
 allowBuilds:
-  '@sentry/cli': true
+  "@sentry/cli": true
   enka-network-api: true
+  esbuild: true
   sharp: true
   supabase: true
 onlyBuiltDependencies:

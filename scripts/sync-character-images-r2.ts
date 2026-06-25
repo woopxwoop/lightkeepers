@@ -16,7 +16,13 @@ const {
   IMAGE_WEBP_QUALITY = "80",
 } = process.env;
 
-for (const [key, value] of Object.entries({ PUBLIC_SUPABASE_URL, PRIVATE_SUPABASE_KEY, R2_ACCOUNT_ID, R2_BUCKET, CF_API_TOKEN })) {
+for (const [key, value] of Object.entries({
+  PUBLIC_SUPABASE_URL,
+  PRIVATE_SUPABASE_KEY,
+  R2_ACCOUNT_ID,
+  R2_BUCKET,
+  CF_API_TOKEN,
+})) {
   if (!value) throw new Error(`Missing required env var: ${key}`);
 }
 
@@ -126,7 +132,9 @@ async function uploadToR2(key: string, body: Buffer): Promise<void> {
   });
   if (!resp.ok) {
     const text = await resp.text();
-    throw new Error(`R2 upload failed: ${resp.status} ${resp.statusText} - ${text}`);
+    throw new Error(
+      `R2 upload failed: ${resp.status} ${resp.statusText} - ${text}`,
+    );
   }
 }
 
@@ -138,7 +146,9 @@ async function existsInR2(key: string): Promise<boolean> {
   });
   if (resp.ok) return true;
   if (resp.status === 404) return false;
-  throw new Error(`R2 existence check failed for "${key}": ${resp.status} ${resp.statusText}`);
+  throw new Error(
+    `R2 existence check failed for "${key}": ${resp.status} ${resp.statusText}`,
+  );
 }
 
 async function getEnemiesFromDb() {
@@ -266,13 +276,17 @@ async function processCharacter(
   }
 
   if (portrait) {
-    const optimized = await optimizeToWebp(portrait.buffer, { sourceIsWebp: portrait.isWebp });
+    const optimized = await optimizeToWebp(portrait.buffer, {
+      sourceIsWebp: portrait.isWebp,
+    });
     await uploadToR2(portraitKey, optimized);
     console.log(`  portrait -> ${portraitKey} (${portrait.sourceUrl})`);
   }
 
   if (coop) {
-    const optimized = await optimizeToWebp(coop.buffer, { sourceIsWebp: coop.isWebp });
+    const optimized = await optimizeToWebp(coop.buffer, {
+      sourceIsWebp: coop.isWebp,
+    });
     await uploadToR2(coopKey, optimized);
     console.log(`  coop -> ${coopKey} (${coop.sourceUrl})`);
   }
@@ -358,7 +372,9 @@ async function main() {
   if (syncCharacters)
     console.log(`Characters — success: ${success}, failed: ${failed}`);
   if (syncEnemies)
-    console.log(`Enemies    — success: ${enemySuccess}, failed: ${enemyFailed}`);
+    console.log(
+      `Enemies    — success: ${enemySuccess}, failed: ${enemyFailed}`,
+    );
 }
 
 main().catch((error) => {
