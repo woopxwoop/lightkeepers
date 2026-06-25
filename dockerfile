@@ -43,8 +43,12 @@ WORKDIR /app
 COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/
 COPY package.json .
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 3000
 ENV NODE_ENV=production
+ENV IMMUTABLE_ASSETS_DIR=/data/immutable
+ENV IMMUTABLE_RETENTION_HOURS=48
 
-CMD ["node", "build"]
+ENTRYPOINT ["/entrypoint.sh"]

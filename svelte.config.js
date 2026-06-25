@@ -3,6 +3,10 @@ import adapter from "@sveltejs/adapter-node";
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   kit: {
+    version: {
+      // Poll for new deployments so client-side navigations hard-reload before stale chunks 404.
+      pollInterval: 60_000,
+    },
     // paths: {
     //   base: process.argv.includes("dev") ? "" : process.env.BASE_PATH,
     // },

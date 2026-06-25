@@ -1,0 +1,8 @@
+# Merged automatically with ~/app/docker-compose.yml on deploy.
+services:
+  lightkeepers:
+    volumes:
+      - ./data/immutable:/data/immutable
+    environment:
+      IMMUTABLE_ASSETS_DIR: /data/immutable
+      IMMUTABLE_RETENTION_HOURS: "48"
