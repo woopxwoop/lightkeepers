@@ -1,12 +1,14 @@
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
-  import { beforeNavigate } from "$app/navigation";
-  import { page, updated } from "$app/state";
+  import { page } from "$app/state";
   import { onMount } from "svelte";
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import type { Character } from "$lib/definitions";
-  import { bootstrapClient } from "$lib/app/bootstrapClient";
+  import {
+    bootstrapClient,
+    seedClientStores,
+  } from "$lib/app/bootstrapClient";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
   import { initDisplayPreferences } from "$lib/stores";
@@ -20,10 +22,14 @@
   let { data, children } = $props();
   let characters: Character[] = $derived(data.characters);
 
-  beforeNavigate(({ willUnload, to }) => {
-    if (updated.current && !willUnload && to?.url) {
-      location.href = to.url.href;
-    }
+  $effect(() => {
+    seedClientStores({
+      characters,
+      abyssVersionNumber: data.abyssVersionNumber,
+      stygianVersionNumber: data.stygianVersionNumber,
+      allTeamsAbyss: data.allTeamsAbyss,
+      allTeamsStygian: data.allTeamsStygian,
+    });
   });
 
   onMount(() => {

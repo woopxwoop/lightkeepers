@@ -13,6 +13,7 @@ import {
   writeNearMissTeams,
   writeTeamsOwned,
 } from "$lib/stores";
+import { get } from "svelte/store";
 
 type LayoutHydration = {
   characters: Character[];
@@ -102,20 +103,23 @@ async function loadDbRoster(
  * - Seeds roster from localStorage, then overlays DB roster if logged in
  * - Kicks off server calls for teams + near-miss in the background
  */
-export async function bootstrapClient(data: LayoutHydration): Promise<void> {
+export function seedClientStores(data: LayoutHydration): void {
   setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber);
   allTeamsAbyss.set(data.allTeamsAbyss);
   allTeamsStygian.set(data.allTeamsStygian);
 
-  // Render immediately from localStorage
   const cachedOwned = readOwnedCache();
   const localRoster = mergeOwnedFlags(data.characters, cachedOwned);
   charactersOwned.set(localRoster);
   charactersHydrated.set(true);
+}
+
+export async function bootstrapClient(data: LayoutHydration): Promise<void> {
+  seedClientStores(data);
 
   // Fetch teams and DB roster in parallel
   const [, dbRoster] = await Promise.all([
-    writeTeamsOwned(localRoster),
+    writeTeamsOwned(get(charactersOwned)),
     loadDbRoster(data.characters),
   ]);
 
@@ -128,5 +132,5 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
     writeTeamsOwned(dbRoster).catch(console.error);
   }
 
-  writeNearMissTeams(dbRoster ?? localRoster).catch(console.error);
+  writeNearMissTeams(dbRoster ?? get(charactersOwned)).catch(console.error);
 }
