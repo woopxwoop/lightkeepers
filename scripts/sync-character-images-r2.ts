@@ -43,6 +43,27 @@ function dedupe(values: (string | undefined | null)[]): string[] {
   return [...new Set(values.filter((v): v is string => Boolean(v)))];
 }
 
+/** Run async `fn` for each item with at most `limit` concurrent executions. */
+async function asyncPool<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = [];
+  const queue = items.entries();
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    for (const [i, item] of queue) {
+      try {
+        results[i] = await fn(item);
+      } catch (err) {
+        results[i] = { ok: false, reason: String(err) } as R;
+      }
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getEnkaPortraitCandidates(enkaCharacter: any): string[] {
   if (!enkaCharacter) return [];
@@ -108,15 +129,24 @@ async function optimizeToWebp(
   input: Buffer,
   { sourceIsWebp = false } = {},
 ): Promise<Buffer> {
-  const pipeline = sharp(input).rotate().resize({
+  // If source is already WebP, check dimensions — skip decode/re-encode if ≤ MAX_WIDTH
+  if (sourceIsWebp) {
+    const meta = await sharp(input).metadata();
+    if (meta.width && meta.width <= MAX_WIDTH) {
+      return input; // already optimal — upload as-is
+    }
+    // Oversized WebP: resize only, keep lossless
+    return sharp(input).resize({
+      width: MAX_WIDTH,
+      withoutEnlargement: true,
+      fit: "inside",
+    }).webp({ lossless: true }).toBuffer();
+  }
+  return sharp(input).resize({
     width: MAX_WIDTH,
     withoutEnlargement: true,
     fit: "inside",
-  });
-  if (sourceIsWebp) {
-    return pipeline.webp({ lossless: true }).toBuffer();
-  }
-  return pipeline.webp({ quality: WEBP_QUALITY, effort: 6 }).toBuffer();
+  }).webp({ quality: WEBP_QUALITY, effort: 6 }).toBuffer();
 }
 
 async function uploadToR2(key: string, body: Buffer): Promise<void> {
@@ -138,45 +168,69 @@ async function uploadToR2(key: string, body: Buffer): Promise<void> {
   }
 }
 
-async function existsInR2(key: string): Promise<boolean> {
-  const url = `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(key)}`;
-  const resp = await fetch(url, {
-    method: "HEAD",
-    headers: { Authorization: `Bearer ${CF_API_TOKEN}` },
-  });
-  if (resp.ok) return true;
-  if (resp.status === 404) return false;
-  throw new Error(
-    `R2 existence check failed for "${key}": ${resp.status} ${resp.statusText}`,
-  );
+/** List all object keys under a prefix (zero or a few API calls). */
+async function listR2Keys(prefix: string): Promise<Set<string>> {
+  const keys = new Set<string>();
+  let cursor: string | undefined;
+
+  do {
+    const params = new URLSearchParams({ prefix, per_page: "1000" });
+    if (cursor) params.set("cursor", cursor);
+
+    const url = `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects?${params}`;
+    const resp = await fetch(url, {
+      headers: { Authorization: `Bearer ${CF_API_TOKEN}` },
+    });
+    if (!resp.ok) throw new Error(`R2 list failed: ${resp.status}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body: any = await resp.json();
+    if (!body.success) throw new Error(`R2 list failed: ${JSON.stringify(body.errors)}`);
+
+    // Cloudflare API returns result as a flat array of objects
+    for (const obj of body.result ?? []) keys.add(obj.key);
+    cursor = body.result_info?.cursor;
+  } while (cursor);
+
+  return keys;
 }
 
-async function getEnemiesFromDb() {
+interface EnemyRecord {
+  id: number;
+  enemy_name: string | null;
+  asset: string;
+  icon_path: string;
+}
+
+async function getEnemiesFromDb(): Promise<EnemyRecord[]> {
   const { data, error } = await db
     .from("enemies")
-    .select("id, enemy_name, asset")
+    .select("id, enemy_name, asset, icon_path")
     .order("enemy_name", { ascending: true });
   if (error) throw error;
   return (data ?? []).filter(
-    (e): e is { id: number; enemy_name: string | null; asset: string } =>
-      typeof e.asset === "string" && e.asset.length > 0,
+    (e): e is EnemyRecord =>
+      typeof e.asset === "string" &&
+      e.asset.length > 0 &&
+      typeof e.icon_path === "string",
   );
 }
 
 async function processEnemy(
-  enemy: { id: number; enemy_name: string | null; asset: string },
+  enemy: EnemyRecord,
+  existingKeys: Set<string>,
   { force = false } = {},
 ): Promise<{ ok: boolean; skipped?: boolean; reason?: string }> {
   const asset = enemy.asset;
   const label = `${enemy.enemy_name ?? "unknown"} (${asset})`;
   const key = `${ENEMY_R2_PREFIX}/${asset}.webp`;
 
-  if (!force && (await existsInR2(key))) {
+  if (!force && existingKeys.has(key)) {
     console.log(`  skip (exists): ${key}`);
     return { ok: true, skipped: true };
   }
 
-  const url = `https://api.lunaris.moe/data/assets/leyline/${encodeURIComponent(asset)}.png`;
+  const url = `https://api.lunaris.moe/data/assets/${enemy.icon_path}/${encodeURIComponent(asset)}.png`;
   const result = await fetchFirstImageBuffer([url]);
 
   if (!result) {
@@ -229,6 +283,7 @@ async function processCharacter(
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   enkaByNameId: Map<string, any>,
+  existingKeys: Set<string>,
   { force = false } = {},
 ): Promise<{ ok: boolean; skipped?: boolean; reason?: string }> {
   const label = `${character.name ?? "Unknown"} (${character.name_id})`;
@@ -244,10 +299,7 @@ async function processCharacter(
 
   const [needsPortrait, needsCoop] = force
     ? [true, true]
-    : await Promise.all([
-        existsInR2(portraitKey).then((e) => !e),
-        existsInR2(coopKey).then((e) => !e),
-      ]);
+    : [!existingKeys.has(portraitKey), !existingKeys.has(coopKey)];
 
   if (!needsPortrait && !needsCoop) {
     console.log(`  skip (exists): ${portraitKey}, ${coopKey}`);
@@ -299,8 +351,22 @@ async function main() {
   const force = parseFlag("FORCE", false);
   const syncCharacters = parseFlag("CHARACTERS", true);
   const syncEnemies = parseFlag("ENEMIES", true);
+  const concurrency = Math.max(1, Number(process.env.CONCURRENCY) || 5);
   if (dryRun) console.log("DRY_RUN=true (uploads disabled)");
   if (force) console.log("FORCE=true (skipping existence checks)");
+  console.log(`Concurrency: ${concurrency}`);
+
+  // Pre-load existing R2 keys (two list calls total, one per prefix)
+  console.log("\n── R2 inventory ────────────────────────────");
+  const existingCharKeys = force
+    ? new Set<string>()
+    : await listR2Keys("characters/");
+  const existingEnemyKeys = force
+    ? new Set<string>()
+    : await listR2Keys("enemies/");
+  console.log(
+    `Existing: ${existingCharKeys.size} character assets, ${existingEnemyKeys.size} enemy assets`,
+  );
 
   let success = 0;
   let failed = 0;
@@ -316,29 +382,24 @@ async function main() {
     console.log(`Loaded ${enkaByNameId.size} characters from Enka cache.`);
 
     try {
-      for (const character of characters) {
-        console.log(
-          `\nProcessing ${character.name ?? "Unknown"} (${character.name_id})`,
-        );
-
-        if (dryRun) {
+      if (dryRun) {
+        for (const character of characters) {
           if (!character.name_id) {
             console.warn(`- skip ${character.name}: missing name_id`);
             failed += 1;
             continue;
           }
-
           const templates = getTemplateCandidates(character.name_id);
-          console.log(`  portrait candidates: ${templates.portrait.length}`);
-          console.log(`  coop candidates: ${templates.coop.length}`);
-          continue;
+          console.log(
+            `  ${character.name} — portrait: ${templates.portrait.length}, coop: ${templates.coop.length}`,
+          );
         }
-
-        const result = await processCharacter(character, enkaByNameId, {
-          force,
-        });
-        if (result.ok) success += 1;
-        else failed += 1;
+      } else {
+        const results = await asyncPool(characters, concurrency, (character) =>
+          processCharacter(character, enkaByNameId, existingCharKeys, { force }),
+        );
+        success = results.filter((r) => r.ok).length;
+        failed = results.filter((r) => !r.ok).length;
       }
     } finally {
       close();
@@ -350,21 +411,18 @@ async function main() {
     const enemies = await getEnemiesFromDb();
     console.log(`Loaded ${enemies.length} enemies from Supabase.`);
 
-    for (const enemy of enemies) {
-      console.log(
-        `\nProcessing enemy ${enemy.enemy_name ?? "unknown"} (${enemy.asset})`,
-      );
-
-      if (dryRun) {
+    if (dryRun) {
+      for (const enemy of enemies) {
         console.log(
-          `  url: https://api.lunaris.moe/data/assets/leyline/${enemy.asset}.png`,
+          `  ${enemy.enemy_name ?? "unknown"}: https://api.lunaris.moe/data/assets/${enemy.icon_path}/${enemy.asset}.png`,
         );
-        continue;
       }
-
-      const result = await processEnemy(enemy, { force });
-      if (result.ok) enemySuccess += 1;
-      else enemyFailed += 1;
+    } else {
+      const results = await asyncPool(enemies, concurrency, (enemy) =>
+        processEnemy(enemy, existingEnemyKeys, { force }),
+      );
+      enemySuccess = results.filter((r) => r.ok).length;
+      enemyFailed = results.filter((r) => !r.ok).length;
     }
   }
 
