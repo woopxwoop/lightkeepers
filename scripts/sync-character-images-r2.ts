@@ -53,7 +53,11 @@ async function asyncPool<T, R>(
   const queue = items.entries();
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
     for (const [i, item] of queue) {
-      results[i] = await fn(item);
+      try {
+        results[i] = await fn(item);
+      } catch (err) {
+        results[i] = { ok: false, reason: String(err) } as R;
+      }
     }
   });
   await Promise.all(workers);
