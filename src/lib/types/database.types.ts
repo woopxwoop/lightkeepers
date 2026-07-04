@@ -227,6 +227,7 @@ export type Database = {
           created_at: string
           description: string | null
           enemy_name: string | null
+          icon_path: string | null
           id: number
         }
         Insert: {
@@ -234,6 +235,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           enemy_name?: string | null
+          icon_path?: string | null
           id: number
         }
         Update: {
@@ -241,6 +243,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           enemy_name?: string | null
+          icon_path?: string | null
           id?: number
         }
         Relationships: []

@@ -196,7 +196,7 @@ async function sync(count: number) {
             const monster = toMonster(raw);
             if (monster && !seenEnemyIds.has(monster.id)) {
               seenEnemyIds.add(monster.id);
-              enemiesToUpsert.push({ id: monster.id, enemy_name: monster.name, asset: monster.icon });
+              enemiesToUpsert.push({ id: monster.id, enemy_name: monster.name, asset: monster.icon, icon_path: "monstericon" });
             }
           }
         }

@@ -69,6 +69,7 @@ async function sync(count: number) {
         id: enemy.id,
         enemy_name: enemy.enLevelName,
         asset: enemy.specialMonsterIcon,
+        icon_path: "leyline",
         description: enemy.description ?? null,
       };
       const { error: enemyErr } = await db.from("enemies").upsert(row);
