@@ -37,9 +37,16 @@ jobs:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}
 
-      - name: Sync enemy info from Lunaris
+      - name: Sync abyss schedule info from Lunaris
         if: steps.version_check.outputs.is_new == 'true'
-        run: pnpm exec tsx scripts/lunaris.ts
+        run: pnpm exec tsx scripts/sync-abyss-schedules.ts
+        env:
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}
+
+      - name: Sync stygian enemy info from Lunaris
+        if: steps.version_check.outputs.is_new == 'true'
+        run: pnpm exec tsx scripts/sync-stygian-enemies.ts
         env:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}
