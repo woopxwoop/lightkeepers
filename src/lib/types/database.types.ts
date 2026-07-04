@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       abyss_versions: {
@@ -219,6 +244,44 @@ export type Database = {
           id?: number
         }
         Relationships: []
+      }
+      lunaris_abyss_versions: {
+        Row: {
+          buff_name: string | null
+          close_time: string
+          created_at: string
+          floors: Json | null
+          open_time: string
+          schedule_id: number
+          ys_abyss_version: number | null
+        }
+        Insert: {
+          buff_name?: string | null
+          close_time: string
+          created_at?: string
+          floors?: Json | null
+          open_time: string
+          schedule_id?: number
+          ys_abyss_version?: number | null
+        }
+        Update: {
+          buff_name?: string | null
+          close_time?: string
+          created_at?: string
+          floors?: Json | null
+          open_time?: string
+          schedule_id?: number
+          ys_abyss_version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunaris_abyss_versions_ys_abyss_version_fkey"
+            columns: ["ys_abyss_version"]
+            isOneToOne: true
+            referencedRelation: "abyss_versions"
+            referencedColumns: ["version_number"]
+          },
+        ]
       }
       session: {
         Row: {
@@ -769,6 +832,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

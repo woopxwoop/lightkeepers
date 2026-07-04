@@ -2,7 +2,7 @@ import { supabase as db } from "./lib/supabase.js";
 import "dotenv/config";
 
 const BASE_STYGIAN_ID = 5269001;
-const LUNARIS_VERSION_ROUTE = "https://api.lunaris.moe/data/version.json";
+
 const BASE_LUNARIS_STYGIAN_ROUTE = "https://lunaris.moe/data/leylinechallenge";
 
 interface LevelConfig {
@@ -42,7 +42,9 @@ async function fillStygianEnemyInfo(numVersionsLimit: number): Promise<void> {
   for (const version of versions) {
     const info = await getStygianInfo(version.version_number + 1);
     if (info === undefined) {
-      console.log(`  version ${version.version_number}: no Lunaris data yet, skipping`);
+      console.log(
+        `  version ${version.version_number}: no Lunaris data yet, skipping`,
+      );
       continue;
     }
 
