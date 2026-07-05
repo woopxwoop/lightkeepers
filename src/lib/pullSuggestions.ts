@@ -72,6 +72,7 @@ export function computePullSuggestions(
     const bestCurrentAlternative = ownedTeams
       .filter((t) => ownedMembers.every((m) => (t.members ?? []).includes(m)))
       .filter((t) => t.members.length == 4)
+      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
       .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
 
     const alternativeUsage = bestCurrentAlternative?.avg_usage_rate ?? 0;
@@ -165,6 +166,7 @@ export function computePairSuggestions(
       .filter((t) =>
         [...ownedMembers, charA].every((m) => (t.members ?? []).includes(m)),
       )
+      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
       .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
 
     // Best team with ownedMembers + charB (other half of the pair)
@@ -172,6 +174,7 @@ export function computePairSuggestions(
       .filter((t) =>
         [...ownedMembers, charB].every((m) => (t.members ?? []).includes(m)),
       )
+      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
       .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
 
     // Best single-character alternative — pulling either one alone
@@ -190,7 +193,7 @@ export function computePairSuggestions(
     const bestTeam: StygianTeam = {
       team_key: topTeam.team_key,
       version_number: 0,
-      avg_usage_rate: topTeam.avg_usage_rate,
+      avg_usage_rate: avgUsage,
       usage_total: topTeam.usage_total,
       usage_rate: topTeam.usage_rate,
       field_1_rate: topTeam.field_1_rate,

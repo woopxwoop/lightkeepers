@@ -94,16 +94,17 @@
       .filter((team) => {
         const members = team.members ?? [];
         if (members.length !== 4) return false;
-        if ((team.usage_rate ?? 0) <= 20) return false;
+        if ((team.avg_usage_rate ?? 0) <= 20) return false;
         return members.some((m) => !ownedNames.has(m));
       })
-      .sort((a, b) => (b.usage_rate ?? 0) - (a.usage_rate ?? 0));
+      .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0));
 
     const result: typeof candidates = [];
     for (const team of candidates) {
       const members = team.members ?? [];
       const dominated = all.some((other) => {
-        if ((other.usage_rate ?? 0) <= (team.usage_rate ?? 0)) return false;
+        if ((other.avg_usage_rate ?? 0) <= (team.avg_usage_rate ?? 0))
+          return false;
         const otherMembers = other.members ?? [];
         if (otherMembers.length !== 4) return false;
         return members.filter((m) => otherMembers.includes(m)).length === 3;
@@ -335,8 +336,8 @@
                       class="text-xs text-right"
                       style="color: var(--foreground-mid);"
                     >
-                      {suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage ·
-                      no current alternative
+                      {suggestion.avgUsage.toFixed(1)}% avg usage · no current
+                      alternative
                     </p>
                   </div>
                 {/if}
@@ -435,7 +436,7 @@
                     class="text-xs text-right"
                     style="color: var(--foreground-mid);"
                   >
-                    {suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage
+                    {suggestion.avgUsage.toFixed(1)}% avg usage
                   </p>
                 </div>
               </div>
@@ -484,7 +485,7 @@
                   class="text-xs text-right"
                   style="color: var(--foreground-mid);"
                 >
-                  {team.usage_rate.toFixed(1)}% avg usage
+                  {team.avg_usage_rate.toFixed(1)}% avg usage
                 </span>
               </div>
             </div>
