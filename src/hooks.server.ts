@@ -48,7 +48,24 @@ const authHandle: Handle = async ({ event, resolve }) => {
     event.locals.user = null;
     event.locals.session = null;
   }
-  return resolve(event);
+
+  const response = await resolve(event);
+
+  // Cache anonymous HTML pages at the CDN edge.
+  // Cloudflare respects s-maxage for HTML when no session cookie is present.
+  // Logged-in users get uncached responses (private, no-cache below).
+  if (
+    !event.locals.user &&
+    event.request.method === "GET" &&
+    response.headers.get("content-type")?.startsWith("text/html")
+  ) {
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=60",
+    );
+  }
+
+  return response;
 };
 
 export const handle = sequence(sentryHandle(), authHandle, metricsHandle);

@@ -12,6 +12,7 @@ export type PullSuggestion = {
   bestTeam: StygianTeam;
   score: number;
   currentBestTeam: StygianTeam | null;
+  avgUsage: number;
 };
 
 export type PairSuggestion = {
@@ -55,15 +56,12 @@ export function computePullSuggestions(
   for (const [character, unlocked] of byCharacter) {
     // Best near-miss team for this character
     const topNearMiss = [...unlocked].sort(
-      (a, b) =>
-        (b.avg_usage_rate ?? b.usage_total ?? 0) -
-        (a.avg_usage_rate ?? a.usage_total ?? 0),
+      (a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0),
     )[0];
 
     if (topNearMiss.members.length !== 4) continue;
 
-    const unlockedUsage =
-      topNearMiss.avg_usage_rate ?? topNearMiss.usage_total ?? 0;
+    const unlockedUsage = topNearMiss.avg_usage_rate ?? 0;
 
     // The 3 owned members in this near-miss team
     const ownedMembers = (topNearMiss.members ?? []).filter(
@@ -74,16 +72,10 @@ export function computePullSuggestions(
     const bestCurrentAlternative = ownedTeams
       .filter((t) => ownedMembers.every((m) => (t.members ?? []).includes(m)))
       .filter((t) => t.members.length == 4)
-      .sort(
-        (a, b) =>
-          (b.usage_rate ?? b.usage_total ?? 0) -
-          (a.usage_rate ?? a.usage_total ?? 0),
-      )[0];
+      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
+      .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
 
-    const alternativeUsage =
-      bestCurrentAlternative?.usage_rate ??
-      bestCurrentAlternative?.usage_total ??
-      0;
+    const alternativeUsage = bestCurrentAlternative?.avg_usage_rate ?? 0;
 
     const improvement = unlockedUsage - alternativeUsage;
 
@@ -97,6 +89,7 @@ export function computePullSuggestions(
     const bestTeam: StygianTeam = {
       team_key: topNearMiss.team_key,
       version_number: 0,
+      avg_usage_rate: topNearMiss.avg_usage_rate,
       usage_total: topNearMiss.usage_total,
       usage_rate: topNearMiss.usage_rate,
       field_1_rate: topNearMiss.field_1_rate,
@@ -115,7 +108,8 @@ export function computePullSuggestions(
       unlocksTeams: unlocked.length,
       bestTeam,
       currentBestTeam: bestCurrentAlternative ?? null,
-    });
+      avgUsage: topNearMiss.avg_usage_rate,
+    } as PullSuggestion);
   }
 
   return suggestions.sort((a, b) => b.score - a.score).slice(0, maxSuggestions);
@@ -154,15 +148,13 @@ export function computePairSuggestions(
 
   for (const [, teams] of byPair) {
     const topTeam = [...teams].sort(
-      (a, b) =>
-        (b.avg_usage_rate ?? b.usage_total ?? 0) -
-        (a.avg_usage_rate ?? a.usage_total ?? 0),
+      (a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0),
     )[0];
 
     const charA = topTeam.missing_character_a!;
     const charB = topTeam.missing_character_b!;
 
-    const avgUsage = topTeam.avg_usage_rate ?? topTeam.usage_total ?? 0;
+    const avgUsage = topTeam.avg_usage_rate ?? 0;
     const pmi = topTeam.pmi ?? 0;
 
     const ownedMembers = (topTeam.members ?? []).filter(
@@ -174,34 +166,24 @@ export function computePairSuggestions(
       .filter((t) =>
         [...ownedMembers, charA].every((m) => (t.members ?? []).includes(m)),
       )
-      .sort(
-        (a, b) =>
-          (b.usage_rate ?? b.usage_total ?? 0) -
-          (a.usage_rate ?? a.usage_total ?? 0),
-      )[0];
+      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
+      .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
 
     // Best team with ownedMembers + charB (other half of the pair)
     const bestWithB = ownedTeams
       .filter((t) =>
         [...ownedMembers, charB].every((m) => (t.members ?? []).includes(m)),
       )
-      .sort(
-        (a, b) =>
-          (b.usage_rate ?? b.usage_total ?? 0) -
-          (a.usage_rate ?? a.usage_total ?? 0),
-      )[0];
+      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
+      .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
 
     // Best single-character alternative — pulling either one alone
     const bestCurrentAlternative =
-      (bestWithA?.usage_rate ?? bestWithA?.usage_total ?? 0) >=
-      (bestWithB?.usage_rate ?? bestWithB?.usage_total ?? 0)
+      (bestWithA?.avg_usage_rate ?? 0) >= (bestWithB?.avg_usage_rate ?? 0)
         ? (bestWithA ?? bestWithB ?? null)
         : (bestWithB ?? bestWithA ?? null);
 
-    const alternativeUsage =
-      bestCurrentAlternative?.usage_rate ??
-      bestCurrentAlternative?.usage_total ??
-      0;
+    const alternativeUsage = bestCurrentAlternative?.avg_usage_rate ?? 0;
     const improvement = avgUsage - alternativeUsage;
 
     if (improvement <= 0) continue;
@@ -211,6 +193,7 @@ export function computePairSuggestions(
     const bestTeam: StygianTeam = {
       team_key: topTeam.team_key,
       version_number: 0,
+      avg_usage_rate: avgUsage,
       usage_total: topTeam.usage_total,
       usage_rate: topTeam.usage_rate,
       field_1_rate: topTeam.field_1_rate,

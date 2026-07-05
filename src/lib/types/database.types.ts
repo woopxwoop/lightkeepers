@@ -411,32 +411,32 @@ export type Database = {
       team_stats_abyss: {
         Row: {
           created_at: string
-          field_1_rate: number | null
-          field_2_rate: number | null
-          has_total: number | null
+          field_1_rate: number
+          field_2_rate: number
+          has_total: number
           team_key: string
-          usage_rate: number | null
-          usage_total: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Insert: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          has_total?: number | null
+          field_1_rate: number
+          field_2_rate: number
+          has_total: number
           team_key: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Update: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          has_total?: number | null
+          field_1_rate?: number
+          field_2_rate?: number
+          has_total?: number
           team_key?: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate?: number
+          usage_total?: number
           version_number?: number
         }
         Relationships: [
@@ -459,35 +459,35 @@ export type Database = {
       team_stats_stygian: {
         Row: {
           created_at: string
-          field_1_rate: number | null
-          field_2_rate: number | null
-          field_3_rate: number | null
-          has_total: number | null
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          has_total: number
           team_key: string
-          usage_rate: number | null
-          usage_total: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Insert: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          field_3_rate?: number | null
-          has_total?: number | null
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          has_total: number
           team_key: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Update: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          field_3_rate?: number | null
-          has_total?: number | null
+          field_1_rate?: number
+          field_2_rate?: number
+          field_3_rate?: number
+          has_total?: number
           team_key?: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate?: number
+          usage_total?: number
           version_number?: number
         }
         Relationships: [
@@ -686,6 +686,7 @@ export type Database = {
       get_teams_with_characters_subset_stygian: {
         Args: { p_name_ids: string[]; p_version_number: number }
         Returns: {
+          avg_usage_rate: number
           field_1_rate: number
           field_2_rate: number
           field_3_rate: number

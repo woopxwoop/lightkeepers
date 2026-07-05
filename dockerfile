@@ -44,7 +44,9 @@ COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/
 COPY package.json .
 
+RUN npm install -g pm2
+
 EXPOSE 3000
 ENV NODE_ENV=production
 
-CMD ["node", "build"]
+CMD ["pm2-runtime", "build/index.js", "-i", "max"]
