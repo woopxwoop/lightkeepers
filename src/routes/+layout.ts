@@ -39,5 +39,18 @@ export const load: LayoutLoad = ({ data }) => {
       middle: Tables<"enemies"> | null;
       bottom: Tables<"enemies"> | null;
     },
+    abyssEnemies: data.abyssEnemies as {
+      top: {
+        chamber: number;
+        monsterLevel: number;
+        enemies: { id: number; name: string; asset: string | null }[];
+      }[];
+      bottom: {
+        chamber: number;
+        monsterLevel: number;
+        enemies: { id: number; name: string; asset: string | null }[];
+      }[];
+      buffName: string | null;
+    },
   };
 };
