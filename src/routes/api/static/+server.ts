@@ -47,6 +47,7 @@ type AbyssEnemies = {
   top: AbyssChamberEnemies[];
   bottom: AbyssChamberEnemies[];
   buffName: string | null;
+  openTime: string | null;
 };
 
 type StaticPayload = {
@@ -105,7 +106,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
         .eq("version_number", latestStygianVersion.version_number),
       serverDb
         .from("lunaris_abyss_versions")
-        .select("floors, buff_name")
+        .select("floors, buff_name, open_time")
         .eq("ys_abyss_version", latestAbyssVersion.version_number)
         .maybeSingle(),
     ]);
@@ -165,11 +166,14 @@ async function fetchStaticData(): Promise<StaticPayload> {
     }[];
   };
 
-  const buffName: string | null =
-    (abyssScheduleRes.data as { buff_name?: string | null } | null)
-      ?.buff_name ?? null;
+  const scheduleRow = abyssScheduleRes.data as {
+    buff_name?: string | null;
+    open_time?: string | null;
+  } | null;
+  const buffName: string | null = scheduleRow?.buff_name ?? null;
+  const openTime: string | null = scheduleRow?.open_time ?? null;
 
-  const emptyAbyssEnemies: AbyssEnemies = { top: [], bottom: [], buffName };
+  const emptyAbyssEnemies: AbyssEnemies = { top: [], bottom: [], buffName, openTime };
   let abyssEnemies: AbyssEnemies = emptyAbyssEnemies;
 
   if (abyssScheduleRes.data?.floors) {
@@ -227,6 +231,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
           enemies: chamber.secondHalfMonsters.map(toEnemy),
         })),
         buffName,
+        openTime,
       };
     }
   }

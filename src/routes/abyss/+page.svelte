@@ -26,6 +26,7 @@
         enemies: { id: number; name: string; asset: string | null }[];
       }[];
       buffName: string | null;
+      openTime: string | null;
     },
   );
 
@@ -180,14 +181,14 @@
               >
                 {chamber.chamber}
               </span>
-              <div class="flex flex-wrap justify-center gap-1">
+              <div class="flex justify-center gap-1">
                 {#each chamber.enemies.slice(0, 3) as enemy}
                   {#if enemy.asset}
                     <img
                       src={getEnemyAsset(enemy.asset)}
                       alt={enemy.name}
                       title={enemy.name}
-                      class="w-9 h-16 rounded-md object-cover"
+                      class="w-9 h-18 rounded-md object-cover"
                       style="border: 1px solid color-mix(in srgb, {accent} 18%, transparent);"
                     />
                   {/if}
@@ -207,7 +208,7 @@
 
     {#if abyssEnemies.buffName}
       <div
-        class="text-sm text-center py-2"
+        class="text-lg text-center py-2"
         style="background: color-mix(in srgb, {accent} 4%, var(--background-color)); color: var(--foreground-color);"
       >
         {abyssEnemies.buffName}: {halfLabel[slot]}
@@ -261,6 +262,18 @@
       style="color: var(--foreground-color);"
     >
       Spiral Abyss
+      {#if abyssEnemies.openTime}
+        <span
+          class="text-xs normal-case tracking-normal ml-2"
+          style="color: var(--foreground-mid);"
+        >
+          updated {new Date(abyssEnemies.openTime).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </span>
+      {/if}
     </h2>
 
     <div

@@ -51,6 +51,7 @@ export const load: LayoutLoad = ({ data }) => {
         enemies: { id: number; name: string; asset: string | null }[];
       }[];
       buffName: string | null;
+      openTime: string | null;
     },
   };
 };
