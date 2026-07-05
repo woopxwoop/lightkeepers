@@ -29,6 +29,8 @@
 
   const rankAccent = ["var(--accent-1)", "var(--accent-1)", "var(--accent-1)"];
 
+  const smallIconZoom = 1.6;
+
   // Align single-missing: swap slot always last
   function alignMembers(
     bestMembers: string[],
@@ -227,6 +229,7 @@
                   >
                     <CharacterIcon
                       character={mapping.get(suggestion.character)}
+                      zoom={smallIconZoom}
                     />
                   </div>
                   <div class="flex flex-col gap-0.5 min-w-0">
@@ -283,10 +286,11 @@
                         </div>
                       {/each}
                     </div>
-                    <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.bestTeam.usage_rate != null
-                        ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage`
-                        : "N/A"}
+                    <p
+                      class="text-xs text-right"
+                      style="color: {rankAccent[i]};"
+                    >
+                      {suggestion.avgUsage.toFixed(1)}% avg usage
                     </p>
                   </div>
                   <div class="flex flex-col gap-1.5">
@@ -304,10 +308,12 @@
                         </div>
                       {/each}
                     </div>
-                    <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.currentBestTeam.usage_rate != null
-                        ? `${suggestion.currentBestTeam.usage_rate.toFixed(1)}% avg usage`
-                        : "N/A"}
+                    <p
+                      class="text-xs text-right"
+                      style="color: var(--foreground-mid);"
+                    >
+                      {suggestion.currentBestTeam.avg_usage_rate.toFixed(1)}%
+                      avg usage
                     </p>
                   </div>
                 {:else}
@@ -325,10 +331,12 @@
                         </div>
                       {/each}
                     </div>
-                    <p class="text-xs" style="color: var(--foreground-mid);">
-                      {suggestion.bestTeam.usage_rate != null
-                        ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage · `
-                        : ""}no current alternative
+                    <p
+                      class="text-xs text-right"
+                      style="color: var(--foreground-mid);"
+                    >
+                      {suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage ·
+                      no current alternative
                     </p>
                   </div>
                 {/if}
@@ -369,6 +377,7 @@
                     >
                       <CharacterIcon
                         character={mapping.get(suggestion.charA)}
+                        zoom={smallIconZoom}
                       />
                     </div>
                     <div
@@ -377,6 +386,7 @@
                     >
                       <CharacterIcon
                         character={mapping.get(suggestion.charB)}
+                        zoom={smallIconZoom}
                       />
                     </div>
                   </div>
@@ -400,25 +410,6 @@
                   </div>
                 </div>
 
-                <!-- Bar driven by avg usage -->
-                <div class="flex items-center gap-2">
-                  <div
-                    class="flex-1 h-1 rounded-full overflow-hidden"
-                    style="background: var(--background-color);"
-                  >
-                    <div
-                      class="h-full rounded-full"
-                      style="width: {barWidth}%; background: {rankAccent[i]};"
-                    ></div>
-                  </div>
-                  <span
-                    class="text-xs font-medium whitespace-nowrap"
-                    style="color: {rankAccent[i]};"
-                  >
-                    {suggestion.avgUsage.toFixed(1)}% avg
-                  </span>
-                </div>
-
                 <!-- Best unlocked team — both missing slots get accent ring -->
                 <div class="flex flex-col gap-1.5">
                   <p class="text-xs" style="color: var(--foreground-mid);">
@@ -440,10 +431,11 @@
                       </div>
                     {/each}
                   </div>
-                  <p class="text-xs" style="color: var(--foreground-mid);">
-                    {suggestion.bestTeam.usage_rate != null
-                      ? `${suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage`
-                      : "N/A"}
+                  <p
+                    class="text-xs text-right"
+                    style="color: var(--foreground-mid);"
+                  >
+                    {suggestion.bestTeam.usage_rate.toFixed(1)}% avg usage
                   </p>
                 </div>
               </div>
@@ -484,15 +476,16 @@
                   </div>
                 {/each}
               </div>
-              <div class="flex flex-col gap-1">
-                <p class="text-xs" style="color: var(--foreground-mid);">
-                  {team.usage_rate != null
-                    ? `${team.usage_rate.toFixed(1)}% avg usage`
-                    : "N/A"}
-                </p>
-                <p class="text-xs" style="color: {accent};">
+              <div class="flex justify-between">
+                <span class="text-xs" style="color: {accent};">
                   missing: {missingCharactersNames.join(", ")}
-                </p>
+                </span>
+                <span
+                  class="text-xs text-right"
+                  style="color: var(--foreground-mid);"
+                >
+                  {team.usage_rate.toFixed(1)}% avg usage
+                </span>
               </div>
             </div>
           </div>

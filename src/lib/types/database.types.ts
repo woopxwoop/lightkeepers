@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       abyss_versions: {
@@ -202,6 +227,7 @@ export type Database = {
           created_at: string
           description: string | null
           enemy_name: string | null
+          icon_path: string | null
           id: number
         }
         Insert: {
@@ -209,6 +235,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           enemy_name?: string | null
+          icon_path?: string | null
           id: number
         }
         Update: {
@@ -216,9 +243,48 @@ export type Database = {
           created_at?: string
           description?: string | null
           enemy_name?: string | null
+          icon_path?: string | null
           id?: number
         }
         Relationships: []
+      }
+      lunaris_abyss_versions: {
+        Row: {
+          buff_name: string | null
+          close_time: string
+          created_at: string
+          floors: Json | null
+          open_time: string
+          schedule_id: number
+          ys_abyss_version: number | null
+        }
+        Insert: {
+          buff_name?: string | null
+          close_time: string
+          created_at?: string
+          floors?: Json | null
+          open_time: string
+          schedule_id?: number
+          ys_abyss_version?: number | null
+        }
+        Update: {
+          buff_name?: string | null
+          close_time?: string
+          created_at?: string
+          floors?: Json | null
+          open_time?: string
+          schedule_id?: number
+          ys_abyss_version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunaris_abyss_versions_ys_abyss_version_fkey"
+            columns: ["ys_abyss_version"]
+            isOneToOne: true
+            referencedRelation: "abyss_versions"
+            referencedColumns: ["version_number"]
+          },
+        ]
       }
       session: {
         Row: {
@@ -345,32 +411,32 @@ export type Database = {
       team_stats_abyss: {
         Row: {
           created_at: string
-          field_1_rate: number | null
-          field_2_rate: number | null
-          has_total: number | null
+          field_1_rate: number
+          field_2_rate: number
+          has_total: number
           team_key: string
-          usage_rate: number | null
-          usage_total: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Insert: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          has_total?: number | null
+          field_1_rate: number
+          field_2_rate: number
+          has_total: number
           team_key: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Update: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          has_total?: number | null
+          field_1_rate?: number
+          field_2_rate?: number
+          has_total?: number
           team_key?: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate?: number
+          usage_total?: number
           version_number?: number
         }
         Relationships: [
@@ -393,35 +459,35 @@ export type Database = {
       team_stats_stygian: {
         Row: {
           created_at: string
-          field_1_rate: number | null
-          field_2_rate: number | null
-          field_3_rate: number | null
-          has_total: number | null
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          has_total: number
           team_key: string
-          usage_rate: number | null
-          usage_total: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Insert: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          field_3_rate?: number | null
-          has_total?: number | null
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          has_total: number
           team_key: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate: number
+          usage_total: number
           version_number: number
         }
         Update: {
           created_at?: string
-          field_1_rate?: number | null
-          field_2_rate?: number | null
-          field_3_rate?: number | null
-          has_total?: number | null
+          field_1_rate?: number
+          field_2_rate?: number
+          field_3_rate?: number
+          has_total?: number
           team_key?: string
-          usage_rate?: number | null
-          usage_total?: number | null
+          usage_rate?: number
+          usage_total?: number
           version_number?: number
         }
         Relationships: [
@@ -620,6 +686,7 @@ export type Database = {
       get_teams_with_characters_subset_stygian: {
         Args: { p_name_ids: string[]; p_version_number: number }
         Returns: {
+          avg_usage_rate: number
           field_1_rate: number
           field_2_rate: number
           field_3_rate: number
@@ -769,6 +836,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

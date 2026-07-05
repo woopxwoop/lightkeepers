@@ -4,8 +4,13 @@
   import { displayPreferences } from "$lib/stores";
   import { getCharacterPortrait, getCharacterCoop } from "$lib/utils";
 
-  let { character }: { character: CharacterOwned | Character | undefined } =
-    $props();
+  let {
+    character,
+    zoom = 1,
+  }: {
+    character: CharacterOwned | Character | undefined;
+    zoom?: number;
+  } = $props();
 
   $effect(() => {
     if (!character)
@@ -19,6 +24,7 @@
   class="relative"
   class:icon-container-coop={character?.name_id && !useEnkaIcon}
   class:icon-container-compact={!character?.name_id || useEnkaIcon}
+  style:--czoom={zoom}
 >
   {#if character}
     <img
@@ -34,7 +40,7 @@
   .icon-container-coop img {
     transform-origin: 50% 15%;
     object-position: center 30%;
-    transform: scale(2);
+    transform: scale(calc(2 * var(--czoom)));
   }
 
   .icon-container-coop {
