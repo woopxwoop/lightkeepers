@@ -54,6 +54,24 @@ export const DEFAULT_DARK_COLORS: Record<ThemeColorKey, string> = {
 
 export type ThemeColorKey = (typeof THEME_COLOR_KEYS)[number];
 
+/**
+ * Normalize a hex color to exactly 6-digit `#rrggbb`.
+ * Handles 3-, 4-, 6-, and 8-digit formats. Drops alpha channels (4th/8th pair).
+ * Returns the input unchanged if it doesn't look like hex.
+ */
+export function normalizeHexColor(hex: string): string {
+  const match = /^#([0-9a-fA-F]{3,8})$/.exec(hex);
+  if (!match) return hex;
+  const digits = match[1];
+  // Expand shorthand: "abc" → "aabbcc", "abcd" → "aabbcc" (drop alpha)
+  if (digits.length === 3 || digits.length === 4) {
+    const rgb = digits.slice(0, 3);
+    return `#${rgb.split("").map((c) => c + c).join("")}`;
+  }
+  // Drop alpha channel from 8-digit hex, pad short 6-digit
+  return `#${digits.slice(0, 6).padEnd(6, "0")}`;
+}
+
 export type DisplayPreferences = {
   animationsEnabled: boolean;
   iconStyle: IconStyle;
@@ -105,8 +123,8 @@ export function initDisplayPreferences(): void {
                 ([k, v]) =>
                   (THEME_COLOR_KEYS as readonly string[]).includes(k) &&
                   typeof v === "string" &&
-                  /^#[0-9a-fA-F]{6}$/.test(v),
-              ),
+                  /^#[0-9a-fA-F]{3,8}$/.test(v),
+              ).map(([k, v]) => [k, normalizeHexColor(v as string)]),
             ) as Partial<Record<ThemeColorKey, string>>)
           : defaultDisplayPreferences.themeColors,
     });
@@ -146,16 +164,9 @@ export function areAnimationsEnabled(): boolean {
 }
 
 export const faviconDataUri = derived(displayPreferences, ($prefs) => {
-  const raw = $prefs.themeColors?.["accent-1"] ?? DEFAULT_DARK_COLORS["accent-1"];
-  // Normalise 3/4/6/8-digit hex to stable 6-digit for channel extraction.
-  const hex = raw.replace("#", "");
-  let full: string;
-  if (hex.length === 3 || hex.length === 4) {
-    full = hex.split("").map((c) => c + c).join("");
-  } else {
-    full = hex.slice(0, 6).padEnd(6, "0");
-  }
-  const accent = `#${full}`;
+  const accent = normalizeHexColor(
+    $prefs.themeColors?.["accent-1"] ?? DEFAULT_DARK_COLORS["accent-1"],
+  );
   const r = parseInt(accent.slice(1, 3), 16);
   const g = parseInt(accent.slice(3, 5), 16);
   const b = parseInt(accent.slice(5, 7), 16);

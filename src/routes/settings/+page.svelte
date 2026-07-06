@@ -8,6 +8,7 @@
     writeTeamsOwned,
     THEME_COLOR_KEYS,
     DEFAULT_DARK_COLORS,
+    normalizeHexColor,
     type IconStyle,
     type ThemeColorKey,
   } from "$lib/stores";
@@ -116,10 +117,11 @@
   function setThemeColor(key: ThemeColorKey, value: string) {
     if (!HEX_COLOR_RE.test(value))
       return;
+    const normalized = normalizeHexColor(value);
     setDisplayPreferences({
       themeColors: {
         ...$displayPreferences.themeColors,
-        [key]: value,
+        [key]: normalized,
       } as Partial<Record<ThemeColorKey, string>>,
     });
   }
@@ -651,6 +653,14 @@
                           Save
                         </button>
                       </div>
+                    {/if}
+                    {#if rosterError}
+                      <span
+                        class="text-xs"
+                        style="color: var(--accent-1);"
+                      >
+                        {rosterError}
+                      </span>
                     {/if}
                   </div>
                 {/if}
