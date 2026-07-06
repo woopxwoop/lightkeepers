@@ -8,7 +8,13 @@
 
 import type { LayoutLoad } from "./$types";
 import type { Tables } from "$lib/types/database.types";
-import type { AbyssTeam, StygianTeam } from "$lib/definitions";
+import type {
+  AbyssTeam,
+  StygianTeam,
+  StygianEnemies,
+  AbyssEnemies,
+  StygianSchedule,
+} from "$lib/definitions";
 
 export type RankedCombination = {
   rank: number;
@@ -34,30 +40,8 @@ export const load: LayoutLoad = ({ data }) => {
     stygianVersionNumber: data.stygianVersionNumber as number,
     allTeamsAbyss: data.allTeamsAbyss as AbyssTeam[],
     allTeamsStygian: data.allTeamsStygian as StygianTeam[],
-    stygianEnemies: data.stygianEnemies as {
-      top: Tables<"enemies"> | null;
-      middle: Tables<"enemies"> | null;
-      bottom: Tables<"enemies"> | null;
-    },
-    abyssEnemies: data.abyssEnemies as {
-      top: {
-        chamber: number;
-        monsterLevel: number;
-        enemies: { id: number; name: string; asset: string | null }[];
-      }[];
-      bottom: {
-        chamber: number;
-        monsterLevel: number;
-        enemies: { id: number; name: string; asset: string | null }[];
-      }[];
-      buffName: string | null;
-      openTime: string | null;
-    },
-    stygianSchedule: data.stygianSchedule as {
-      scheduleId: number;
-      openTime: string | null;
-      closeTime: string | null;
-      challengeName: string | null;
-    } | null,
+    stygianEnemies: data.stygianEnemies as StygianEnemies,
+    abyssEnemies: data.abyssEnemies as AbyssEnemies,
+    stygianSchedule: data.stygianSchedule as StygianSchedule,
   };
 };

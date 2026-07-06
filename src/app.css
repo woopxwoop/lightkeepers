@@ -42,13 +42,6 @@
   --h2-size: clamp(20px, 1.5vw + 0.2rem, 1.5rem);
 }
 
-[data-theme="light"] {
-  --background-color: #f5f0e8;
-  --foreground-color: #1a1a1a;
-  --background-mid: #e8e3db;
-  --foreground-mid: #5a5a5a;
-}
-
 body {
   background-color: var(--background-color);
   color: var(--foreground-color);

@@ -49,6 +49,7 @@
 
   let hasCloudRoster = $state<boolean | null>(null);
   let rosterLoading = $state(true);
+  let rosterError = $state("");
 
   $effect(() => {
     if ($session.data) {
@@ -79,10 +80,17 @@
   }
 
   async function resetCloudRoster() {
+    rosterError = "";
     try {
       const res = await fetch("/api/roster", { method: "DELETE" });
-      if (res.ok) hasCloudRoster = false;
+      if (res.ok) {
+        hasCloudRoster = false;
+      } else {
+        rosterError = `Server error (${res.status}) — roster not reset`;
+        console.error("resetCloudRoster: unexpected status", res.status);
+      }
     } catch (err) {
+      rosterError = "Network error — could not reset cloud roster";
       console.error("resetCloudRoster: network error", err);
     }
   }
@@ -103,8 +111,10 @@
     "accent-3": "Accent 3",
   };
 
+  const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
   function setThemeColor(key: ThemeColorKey, value: string) {
-    if (!/^#[0-9a-fA-F]{3,4}([0-9a-fA-F]{3,4})?$/.test(value))
+    if (!HEX_COLOR_RE.test(value))
       return;
     setDisplayPreferences({
       themeColors: {
@@ -292,15 +302,22 @@
     writeNearMissTeams(tempCharactersOwned).catch(console.error);
 
     if ($session.data) {
+      rosterError = "";
       fetch("/api/roster", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roster: tempCharactersOwned }),
       })
         .then((res) => {
-          if (res.ok) hasCloudRoster = true;
+          if (res.ok) {
+            hasCloudRoster = true;
+          } else {
+            rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
+          }
         })
-        .catch(() => {});
+        .catch(() => {
+          rosterError = "Network error — roster not saved to cloud";
+        });
     }
 
     showSaved = true;
@@ -649,13 +666,12 @@
                       aria-label="{character.name ??
                         'Unknown'}, {character.isOwned ? 'owned' : 'not owned'}"
                       class="cursor-pointer rounded-lg w-full h-fit overflow-hidden relative transition-all duration-75 character-icon-button"
+                      class:character-icon-button-owned={character.isOwned}
                       style="border: 2px solid {isNewCharacter(
                         character.released_at,
                       ) && !savedOwnedSet.has(character.name_id)
                         ? 'var(--accent-1)'
-                        : 'var(--foreground-color)'}; opacity: {character.isOwned
-                        ? '1'
-                        : '.33'};"
+                        : 'var(--foreground-color)'};"
                     >
                       {#if isNewCharacter(character.released_at) && !savedOwnedSet.has(character.name_id)}
                         <span
@@ -759,6 +775,12 @@
                       style="color: var(--foreground-mid); font-size: 0.85rem;"
                     >
                       No cloud roster backed up
+                    </p>
+                  {/if}
+
+                  {#if rosterError}
+                    <p style="color: var(--accent-1); font-size: 0.85rem;">
+                      {rosterError}
                     </p>
                   {/if}
 
@@ -1008,6 +1030,7 @@
                           type="color"
                           value={currentColor}
                           class="sr-only"
+                          aria-label="Pick color for {COLOR_LABELS[key]}"
                           oninput={(e) => {
                             const val = (e.target as HTMLInputElement).value;
                             setThemeColor(key, val);
@@ -1026,11 +1049,7 @@
                               : `#${val}`;
                             setThemeColor(key, normalized);
                             // Revert to stored/default value if invalid
-                            if (
-                              !/^#[0-9a-fA-F]{3,4}([0-9a-fA-F]{3,4})?$/.test(
-                                normalized,
-                              )
-                            ) {
+                            if (!HEX_COLOR_RE.test(normalized)) {
                               (e.target as HTMLInputElement).value =
                                 currentColor;
                             }
@@ -1403,6 +1422,10 @@
     opacity: 0.33;
   }
 
+  .character-icon-button-owned {
+    opacity: 1;
+  }
+
   .bg-picker-row {
     flex-direction: column;
     align-items: stretch;
@@ -1530,6 +1553,12 @@
   }
 
   .bg-card-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: color-mix(in oklab, black 80%, transparent);
+  }
+
+  .char-card-overlay {
     position: absolute;
     inset: 0;
     background-color: color-mix(in oklab, black 80%, transparent);

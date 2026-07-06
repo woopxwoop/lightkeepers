@@ -100,7 +100,14 @@ export function initDisplayPreferences(): void {
           : defaultDisplayPreferences.colorTheme,
       themeColors:
         typeof parsed.themeColors === "object" && parsed.themeColors !== null
-          ? (parsed.themeColors as Partial<Record<ThemeColorKey, string>>)
+          ? (Object.fromEntries(
+              Object.entries(parsed.themeColors).filter(
+                ([k, v]) =>
+                  (THEME_COLOR_KEYS as readonly string[]).includes(k) &&
+                  typeof v === "string" &&
+                  /^#[0-9a-fA-F]{6}$/.test(v),
+              ),
+            ) as Partial<Record<ThemeColorKey, string>>)
           : defaultDisplayPreferences.themeColors,
     });
   } catch {
@@ -139,7 +146,16 @@ export function areAnimationsEnabled(): boolean {
 }
 
 export const faviconDataUri = derived(displayPreferences, ($prefs) => {
-  const accent = $prefs.themeColors?.["accent-1"] ?? DEFAULT_DARK_COLORS["accent-1"];
+  const raw = $prefs.themeColors?.["accent-1"] ?? DEFAULT_DARK_COLORS["accent-1"];
+  // Normalise 3/4/6/8-digit hex to stable 6-digit for channel extraction.
+  const hex = raw.replace("#", "");
+  let full: string;
+  if (hex.length === 3 || hex.length === 4) {
+    full = hex.split("").map((c) => c + c).join("");
+  } else {
+    full = hex.slice(0, 6).padEnd(6, "0");
+  }
+  const accent = `#${full}`;
   const r = parseInt(accent.slice(1, 3), 16);
   const g = parseInt(accent.slice(3, 5), 16);
   const b = parseInt(accent.slice(5, 7), 16);

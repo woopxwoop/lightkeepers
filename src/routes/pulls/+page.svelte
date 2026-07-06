@@ -13,7 +13,7 @@
     computePairSuggestions,
   } from "$lib/pullSuggestions";
   import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
-  import { faviconDataUri } from "$lib/stores";
+  import { faviconDataUri, animationsEnabled } from "$lib/stores";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
 
   let { data } = $props();
@@ -134,7 +134,10 @@
   let debugVisible = import.meta.env.DEV;
 </script>
 
-<main class="w-[80%] pb-20 flex flex-col gap-8">
+<main
+  class="w-[80%] pb-20 flex flex-col gap-8"
+  style={!$animationsEnabled ? '--sk-animation: none; --pulse-animation: none' : ''}
+>
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-1">
@@ -177,6 +180,43 @@
     </div>
   </div>
 
+  {#snippet singlePullCardSkeleton()}
+    <div
+      class="rounded-xl overflow-hidden flex flex-col"
+      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
+    >
+      <div
+        class="h-0.5"
+        style="background: color-mix(in srgb, var(--accent-1) 30%, transparent);"
+      ></div>
+      <div class="p-3 flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+          <div class="sk sk-avatar w-11 h-11 rounded-lg shrink-0"></div>
+          <div class="flex flex-col gap-1.5 min-w-0 flex-1">
+            <div class="sk sk-line w-2/3 h-3 rounded"></div>
+            <div class="sk sk-line w-1/3 h-2.5 rounded"></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="sk sk-line flex-1 h-1.5 rounded-full"></div>
+          <div class="sk sk-line w-10 h-2.5 rounded"></div>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <div class="grid grid-cols-4 gap-0.5">
+            {#each { length: 4 } as _}
+              <div class="sk sk-slot rounded-[5px]"></div>
+            {/each}
+          </div>
+          <div class="grid grid-cols-4 gap-0.5 mt-1.5">
+            {#each { length: 4 } as _}
+              <div class="sk sk-slot rounded-[5px]"></div>
+            {/each}
+          </div>
+        </div>
+      </div>
+    </div>
+  {/snippet}
+
   {#if pageState === "idle"}
     <div class="flex flex-col gap-8">
       <!-- Single Pulls skeleton -->
@@ -189,40 +229,7 @@
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {#each { length: 3 } as _}
-            <div
-              class="rounded-xl overflow-hidden flex flex-col"
-              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-            >
-              <div
-                class="h-0.5"
-                style="background: color-mix(in srgb, var(--accent-1) 30%, transparent);"
-              ></div>
-              <div class="p-3 flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                  <div class="sk sk-avatar w-11 h-11 rounded-lg shrink-0"></div>
-                  <div class="flex flex-col gap-1.5 min-w-0 flex-1">
-                    <div class="sk sk-line w-2/3 h-3 rounded"></div>
-                    <div class="sk sk-line w-1/3 h-2.5 rounded"></div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="sk sk-line flex-1 h-1.5 rounded-full"></div>
-                  <div class="sk sk-line w-10 h-2.5 rounded"></div>
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <div class="grid grid-cols-4 gap-0.5">
-                    {#each { length: 4 } as _}
-                      <div class="sk sk-slot rounded-[5px]"></div>
-                    {/each}
-                  </div>
-                  <div class="grid grid-cols-4 gap-0.5 mt-1.5">
-                    {#each { length: 4 } as _}
-                      <div class="sk sk-slot rounded-[5px]"></div>
-                    {/each}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {@render singlePullCardSkeleton()}
           {/each}
         </div>
       </section>
@@ -275,7 +282,6 @@
     </div>
   {:else if pageState === "loading"}
     <div class="flex flex-col gap-8">
-      <!-- Same skeleton while loading -->
       <section class="flex flex-col gap-3">
         <p
           class="text-xs tracking-widest uppercase"
@@ -285,40 +291,7 @@
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {#each { length: 3 } as _}
-            <div
-              class="rounded-xl overflow-hidden flex flex-col"
-              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-            >
-              <div
-                class="h-0.5"
-                style="background: color-mix(in srgb, var(--accent-1) 30%, transparent);"
-              ></div>
-              <div class="p-3 flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                  <div class="sk sk-avatar w-11 h-11 rounded-lg shrink-0"></div>
-                  <div class="flex flex-col gap-1.5 min-w-0 flex-1">
-                    <div class="sk sk-line w-2/3 h-3 rounded"></div>
-                    <div class="sk sk-line w-1/3 h-2.5 rounded"></div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="sk sk-line flex-1 h-1.5 rounded-full"></div>
-                  <div class="sk sk-line w-10 h-2.5 rounded"></div>
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <div class="grid grid-cols-4 gap-0.5">
-                    {#each { length: 4 } as _}
-                      <div class="sk sk-slot rounded-[5px]"></div>
-                    {/each}
-                  </div>
-                  <div class="grid grid-cols-4 gap-0.5 mt-1.5">
-                    {#each { length: 4 } as _}
-                      <div class="sk sk-slot rounded-[5px]"></div>
-                    {/each}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {@render singlePullCardSkeleton()}
           {/each}
         </div>
       </section>
@@ -326,7 +299,7 @@
       <div class="flex items-center justify-center gap-2 pt-4">
         <span
           class="w-2 h-2 rounded-full"
-          style="background: var(--accent-1); animation: loading-pulse 1s ease-in-out infinite;"
+          style="background: var(--accent-1); animation: var(--pulse-animation, loading-pulse 1s ease-in-out infinite);"
         ></span>
         <p style="color: var(--foreground-mid); font-size: 0.85rem;">
           Calculating…
@@ -691,7 +664,7 @@
       color-mix(in srgb, var(--foreground-mid) 5%, transparent) 75%
     );
     background-size: 200% 100%;
-    animation: sk-shimmer 3.5s ease-in-out infinite;
+    animation: var(--sk-animation, sk-shimmer 3.5s ease-in-out infinite);
   }
 
   .sk-avatar {

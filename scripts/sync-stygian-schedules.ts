@@ -6,6 +6,7 @@ import "dotenv/config";
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type EnemyInsert = Database["public"]["Tables"]["enemies"]["Insert"];
+type StygianVersionInsert = Database["public"]["Tables"]["lunaris_stygian_versions"]["Insert"];
 
 interface LevelConfig {
   id: number;
@@ -284,12 +285,12 @@ async function sync(count: number) {
     // If one becomes available in the future, add a `buff_name` column to
     // the table and map it here.
 
-    const scheduleRow = {
+    const scheduleRow: StygianVersionInsert = {
       schedule_id: lunarisData.scheduleId,
       open_time: lunarisData.scheduleStartTime,
       close_time: lunarisData.scheduleEndTime,
       challenge_name: lunarisData.challengeName ?? null,
-      levels: lunarisData.levels as any,
+      levels: lunarisData.levels as StygianVersionInsert["levels"],
       ys_stygian_version: verNum,
     };
 
@@ -326,6 +327,10 @@ async function sync(count: number) {
 
 // ─── CLI ────────────────────────────────────────────────────────────────────
 
-const count = Math.max(1, parseInt(process.argv[2] ?? "1", 10));
+const parsedCount = parseInt(process.argv[2] ?? "1", 10);
+const count = Math.max(1, Number.isNaN(parsedCount) ? 1 : parsedCount);
 console.log(`=== Stygian schedule sync (latest ${count}) ===`);
-sync(count).catch(console.error);
+sync(count).catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

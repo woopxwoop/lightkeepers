@@ -59,7 +59,6 @@
 
 <div
   class="relative min-h-screen w-full flex flex-col items-center"
-  data-theme={$displayPreferences.colorTheme}
   style={$displayPreferences.themeColors
     ? Object.entries($displayPreferences.themeColors)
         .map(([key, val]) => `--${key}:${val}`)
