@@ -54,10 +54,16 @@ const authHandle: Handle = async ({ event, resolve }) => {
   // Cache anonymous HTML pages at the CDN edge.
   // Cloudflare respects s-maxage for HTML when no session cookie is present.
   // Logged-in users get uncached responses (private, no-cache below).
+  //
+  // Only check for the Better Auth session cookie — anonymous users with
+  // unrelated cookies (analytics, consent banners) should still get edge caching.
   if (
     !event.locals.user &&
     event.request.method === "GET" &&
-    response.headers.get("content-type")?.startsWith("text/html")
+    response.headers.get("content-type")?.startsWith("text/html") &&
+    !event.request.headers.get("cookie")?.includes("better-auth.session_token") &&
+    !response.headers.has("set-cookie") &&
+    !response.headers.has("cache-control")
   ) {
     response.headers.set(
       "Cache-Control",

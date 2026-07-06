@@ -20,16 +20,16 @@ import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { LRUCache } from "$lib/server/cache";
 import type { Tables } from "$lib/types/database.types";
+import type {
+  StygianEnemies,
+  AbyssChamberEnemy,
+  AbyssEnemies,
+  StygianSchedule,
+} from "$lib/definitions";
 
 type Version = Tables<"abyss_versions">;
 type StygianVersion = Tables<"stygian_versions">;
 type Enemy = Tables<"enemies">;
-
-type StygianEnemies = {
-  top: Enemy | null;
-  middle: Enemy | null;
-  bottom: Enemy | null;
-};
 
 type StaticPayload = {
   latestAbyssVersion: Version;
@@ -37,6 +37,8 @@ type StaticPayload = {
   allTeamsAbyss: unknown[];
   allTeamsStygian: unknown[];
   stygianEnemies: StygianEnemies;
+  abyssEnemies: AbyssEnemies;
+  stygianSchedule: StygianSchedule;
 };
 
 // Single-entry cache — we only ever need the most recent fetch.
@@ -70,20 +72,31 @@ async function fetchStaticData(): Promise<StaticPayload> {
   };
 
   // Fetch all teams + version enemies in parallel
-  const [abyssTeamsRes, stygianTeamsRes, versionEnemiesRes] = await Promise.all([
-    serverDb.rpc("get_teams_with_characters_subset", {
-      p_name_ids: [],
-      p_version_number: latestAbyssVersion.version_number,
-    }),
-    serverDb.rpc("get_teams_with_characters_subset_stygian", {
-      p_name_ids: [],
-      p_version_number: latestStygianVersion.version_number,
-    }),
-    serverDb
-      .from("stygian_version_enemies")
-      .select("slot_index, enemy_id")
-      .eq("version_number", latestStygianVersion.version_number),
-  ]);
+  const [abyssTeamsRes, stygianTeamsRes, versionEnemiesRes, abyssScheduleRes, stygianScheduleRes] =
+    await Promise.all([
+      serverDb.rpc("get_teams_with_characters_subset", {
+        p_name_ids: [],
+        p_version_number: latestAbyssVersion.version_number,
+      }),
+      serverDb.rpc("get_teams_with_characters_subset_stygian", {
+        p_name_ids: [],
+        p_version_number: latestStygianVersion.version_number,
+      }),
+      serverDb
+        .from("stygian_version_enemies")
+        .select("slot_index, enemy_id")
+        .eq("version_number", latestStygianVersion.version_number),
+      serverDb
+        .from("lunaris_abyss_versions")
+        .select("floors, buff_name, open_time")
+        .eq("ys_abyss_version", latestAbyssVersion.version_number)
+        .maybeSingle(),
+      serverDb
+        .from("lunaris_stygian_versions")
+        .select("schedule_id, open_time, close_time, challenge_name")
+        .eq("ys_stygian_version", latestStygianVersion.version_number)
+        .maybeSingle(),
+    ]);
 
   if (abyssTeamsRes.error) {
     console.error("fetchStaticData: abyss RPC error", abyssTeamsRes.error);
@@ -96,6 +109,14 @@ async function fetchStaticData(): Promise<StaticPayload> {
   if (versionEnemiesRes.error) {
     console.error("fetchStaticData: stygian_version_enemies error", versionEnemiesRes.error);
     throw error(500, "Failed to fetch Stygian version enemies");
+  }
+  if (abyssScheduleRes.error) {
+    console.error("fetchStaticData: lunaris_abyss_versions error", abyssScheduleRes.error);
+    throw error(500, "Failed to fetch Abyss schedule data");
+  }
+  if (stygianScheduleRes.error) {
+    console.error("fetchStaticData: lunaris_stygian_versions error", stygianScheduleRes.error);
+    throw error(500, "Failed to fetch Stygian schedule data");
   }
 
   const versionEnemyRows = versionEnemiesRes.data;
@@ -127,12 +148,119 @@ async function fetchStaticData(): Promise<StaticPayload> {
     bottom: enemyMap.get(slotRow(2)?.enemy_id ?? -1) ?? null,
   };
 
+  // ── Parse abyss floors (floor 12) ───────────────────────────────────────
+  // floors JSONB follows the FloorRecord[] shape from sync-abyss-schedules.ts
+  type ParsedMonster = { id: number; name: string; icon: string };
+  type FloorRecord = {
+    floorId: number;
+    floorIndex: number;
+    chambers: {
+      monsterLevel: number;
+      firstHalfMonsters: ParsedMonster[];
+      secondHalfMonsters: ParsedMonster[];
+    }[];
+  };
+
+  const scheduleRow = abyssScheduleRes.data as {
+    buff_name?: string | null;
+    open_time?: string | null;
+  } | null;
+  const buffName: string | null = scheduleRow?.buff_name ?? null;
+  const openTime: string | null = scheduleRow?.open_time ?? null;
+
+  const emptyAbyssEnemies: AbyssEnemies = { top: [], bottom: [], buffName, openTime };
+  let abyssEnemies: AbyssEnemies = emptyAbyssEnemies;
+
+  if (abyssScheduleRes.data?.floors) {
+    try {
+      const floors = abyssScheduleRes.data.floors as unknown as FloorRecord[];
+      const floor12 = floors.find((f) => f.floorIndex === 12);
+
+      if (floor12) {
+        // Collect enemy IDs not yet in the Stygian enemy map
+        const abyssEnemyIds = new Set<number>();
+        for (const chamber of floor12.chambers) {
+          for (const mon of [
+            ...chamber.firstHalfMonsters,
+            ...chamber.secondHalfMonsters,
+          ]) {
+            abyssEnemyIds.add(mon.id);
+          }
+        }
+
+        const missingIds = [...abyssEnemyIds].filter((id) => !enemyMap.has(id));
+        if (missingIds.length > 0) {
+          const abyssEnemiesRes = await serverDb
+            .from("enemies")
+            .select("*")
+            .in("id", missingIds);
+          if (abyssEnemiesRes.error) {
+            console.error(
+              "fetchStaticData: abyss enemies query error",
+              abyssEnemiesRes.error,
+            );
+          } else {
+            for (const e of abyssEnemiesRes.data) {
+              enemyMap.set(e.id, e as Enemy);
+            }
+          }
+        }
+
+        const toEnemy = (mon: ParsedMonster): AbyssChamberEnemy => {
+          const enemy = enemyMap.get(mon.id);
+          return {
+            id: mon.id,
+            name: mon.name,
+            asset: enemy?.asset ?? mon.icon ?? null,
+          };
+        };
+
+        abyssEnemies = {
+          top: floor12.chambers.map((chamber, i) => ({
+            chamber: i + 1,
+            monsterLevel: chamber.monsterLevel,
+            enemies: chamber.firstHalfMonsters.map(toEnemy),
+          })),
+          bottom: floor12.chambers.map((chamber, i) => ({
+            chamber: i + 1,
+            monsterLevel: chamber.monsterLevel,
+            enemies: chamber.secondHalfMonsters.map(toEnemy),
+          })),
+          buffName,
+          openTime,
+        };
+      }
+    } catch (err) {
+      console.error("fetchStaticData: malformed abyss floors JSONB", err);
+      abyssEnemies = emptyAbyssEnemies;
+    }
+  }
+
+  // ── Build Stygian schedule object ──────────────────────────────────────
+  const stygianScheduleRow = stygianScheduleRes.data as {
+    schedule_id?: number;
+    open_time?: string | null;
+    close_time?: string | null;
+    challenge_name?: string | null;
+  } | null;
+
+  const stygianSchedule: StygianSchedule = stygianScheduleRow
+    ? {
+        scheduleId: stygianScheduleRow.schedule_id ?? 0,
+        openTime: stygianScheduleRow.open_time ?? null,
+        closeTime: stygianScheduleRow.close_time ?? null,
+        challengeName: stygianScheduleRow.challenge_name ?? null,
+      }
+    : null;
+
   return {
     latestAbyssVersion,
     latestStygianVersion,
     allTeamsAbyss: abyssTeamsRes.data,
     allTeamsStygian: stygianTeamsRes.data,
     stygianEnemies,
+    abyssEnemies,
+    stygianSchedule,
   };
 }
 

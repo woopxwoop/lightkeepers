@@ -115,18 +115,18 @@ async function main() {
   for (let v = 0; v <= maxYsVer; v++) {
     const entry = await fetchYshelper(v);
     if (entry) yshelper.set(v, entry);
-    process.stdout.write(`\ryshelper: ${v + 1}/${maxYsVer + 1}`);
+    process.stderr.write(`\ryshelper: ${v + 1}/${maxYsVer + 1}`);
   }
-  console.log("\n");
+  console.error();
 
   // Fetch all lunaris scheduleIds
   const lunaris = new Map<number, LunarisEntry>();
   for (let id = 1; id <= maxId; id++) {
     const entry = await fetchLunaris(lunarisVer, id);
     if (entry) lunaris.set(id, entry);
-    process.stdout.write(`\rlunaris: ${id}/${maxId}`);
+    process.stderr.write(`\rlunaris: ${id}/${maxId}`);
   }
-  console.log("\n");
+  console.error();
 
   // Cross-reference
   const table: MapRow[] = [];

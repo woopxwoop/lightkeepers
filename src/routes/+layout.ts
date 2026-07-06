@@ -8,7 +8,13 @@
 
 import type { LayoutLoad } from "./$types";
 import type { Tables } from "$lib/types/database.types";
-import type { AbyssTeam, StygianTeam } from "$lib/definitions";
+import type {
+  AbyssTeam,
+  StygianTeam,
+  StygianEnemies,
+  AbyssEnemies,
+  StygianSchedule,
+} from "$lib/definitions";
 
 export type RankedCombination = {
   rank: number;
@@ -34,10 +40,8 @@ export const load: LayoutLoad = ({ data }) => {
     stygianVersionNumber: data.stygianVersionNumber as number,
     allTeamsAbyss: data.allTeamsAbyss as AbyssTeam[],
     allTeamsStygian: data.allTeamsStygian as StygianTeam[],
-    stygianEnemies: data.stygianEnemies as {
-      top: Tables<"enemies"> | null;
-      middle: Tables<"enemies"> | null;
-      bottom: Tables<"enemies"> | null;
-    },
+    stygianEnemies: data.stygianEnemies as StygianEnemies,
+    abyssEnemies: data.abyssEnemies as AbyssEnemies,
+    stygianSchedule: data.stygianSchedule as StygianSchedule,
   };
 };

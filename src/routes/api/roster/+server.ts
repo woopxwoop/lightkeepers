@@ -58,3 +58,19 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   return json({ ok: true });
 };
+
+export const DELETE: RequestHandler = async ({ locals }) => {
+  if (!locals.user) throw error(401, "Unauthorized");
+
+  const { error: err } = await serverDb
+    .from("user_rosters")
+    .delete()
+    .eq("user_id", locals.user.id);
+
+  if (err) {
+    console.error("DELETE /api/roster failed:", err);
+    throw error(500, "Internal server error");
+  }
+
+  return json({ ok: true });
+};

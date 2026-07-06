@@ -1,5 +1,4 @@
 <script lang="ts">
-  import favicon from "$lib/assets/favicon.svg";
   import { page } from "$app/state";
   import { onMount } from "svelte";
   import { fly } from "svelte/transition";
@@ -11,7 +10,7 @@
   } from "$lib/app/bootstrapClient";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
-  import { initDisplayPreferences } from "$lib/stores";
+  import { displayPreferences, initDisplayPreferences, faviconDataUri } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
   import "../app.css";
 
@@ -49,7 +48,7 @@
 </script>
 
 <svelte:head>
-  <link rel="icon" href={favicon} type="image/svg+xml" />
+  <link rel="icon" href={$faviconDataUri} type="image/svg+xml" />
   <title>{page.data.seo?.title ?? "Lightkeepers"}</title>
   <meta
     name="description"
@@ -58,16 +57,25 @@
   />
 </svelte:head>
 
-<div class="relative min-h-screen w-full flex flex-col items-center">
-  <div
-    class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-    style="background-image: url('/lightkeepers_dark.png')"
-  ></div>
-  <div
-    class="fixed inset-0 -z-10 backdrop-blur-xs bg-overlay"
-    class:bg-dark={page.url.pathname === `/`}
-    class:bg-darker={page.url.pathname !== `/`}
-  ></div>
+<div
+  class="relative min-h-screen w-full flex flex-col items-center"
+  style={$displayPreferences.themeColors
+    ? Object.entries($displayPreferences.themeColors)
+        .map(([key, val]) => `--${key}:${val}`)
+        .join(";")
+    : ""}
+>
+  {#if $displayPreferences.backgroundEnabled}
+    <div
+      class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+      style="background-image: url('/lightkeepers_dark.png')"
+    ></div>
+    <div
+      class="fixed inset-0 -z-10 backdrop-blur-xs bg-overlay"
+      class:bg-dark={page.url.pathname === `/`}
+      class:bg-darker={page.url.pathname !== `/`}
+    ></div>
+  {/if}
   <NavBar />
 
   <div class="h-12 w-full"></div>

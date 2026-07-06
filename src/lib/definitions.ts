@@ -16,3 +16,37 @@ export type NearMissStygianPair =
 export type AbyssVersion = Tables<"abyss_versions">;
 export type StygianVersion = Tables<"stygian_versions">;
 export type Enemy = Tables<"enemies">;
+
+// ── Shared payload shapes used by /api/static, layout data, and consumers ────
+
+export type StygianEnemies = {
+  top: Enemy | null;
+  middle: Enemy | null;
+  bottom: Enemy | null;
+};
+
+export type AbyssChamberEnemy = {
+  id: number;
+  name: string;
+  asset: string | null;
+};
+
+export type AbyssChamberEnemies = {
+  chamber: number;
+  monsterLevel: number;
+  enemies: AbyssChamberEnemy[];
+};
+
+export type AbyssEnemies = {
+  top: AbyssChamberEnemies[];
+  bottom: AbyssChamberEnemies[];
+  buffName: string | null;
+  openTime: string | null;
+};
+
+export type StygianSchedule = {
+  scheduleId: number;
+  openTime: string | null;
+  closeTime: string | null;
+  challengeName: string | null;
+} | null;

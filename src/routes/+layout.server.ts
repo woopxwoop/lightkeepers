@@ -52,5 +52,12 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
       middle: null,
       bottom: null,
     },
+    abyssEnemies: staticData?.abyssEnemies ?? {
+      top: [],
+      bottom: [],
+      buffName: null,
+      openTime: null,
+    },
+    stygianSchedule: staticData?.stygianSchedule ?? null,
   };
 };

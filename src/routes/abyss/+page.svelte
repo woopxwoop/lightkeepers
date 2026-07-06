@@ -5,6 +5,7 @@
   import Team from "$lib/ui/components/Team.svelte";
   import { onMount } from "svelte";
   import type { AbyssTeam } from "$lib/definitions";
+  import { getEnemyAsset } from "$lib/utils";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -12,6 +13,27 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
+  let abyssEnemies = $derived(
+    data.abyssEnemies as {
+      top: {
+        chamber: number;
+        monsterLevel: number;
+        enemies: { id: number; name: string; asset: string | null }[];
+      }[];
+      bottom: {
+        chamber: number;
+        monsterLevel: number;
+        enemies: { id: number; name: string; asset: string | null }[];
+      }[];
+      buffName: string | null;
+      openTime: string | null;
+    },
+  );
+
+  const halfLabel: Record<Slot, string> = {
+    top: "First Half",
+    bottom: "Second Half",
+  };
 
   let teamsMode = $state<"roster" | "meta">("roster");
   let selectedIndex = $state(0);
@@ -136,6 +158,7 @@
 </script>
 
 {#snippet slotPanel(slot: Slot)}
+  {@const sideEnemies = abyssEnemies?.[slot]}
   {@const assignment = solution?.assignments.find((a) => a.slot === slot)}
   {@const accent = slotAccent[slot]}
 
@@ -143,17 +166,60 @@
     class="rounded-2xl overflow-hidden flex flex-col"
     style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
   >
-    <!-- Team content -->
-    <div class="p-4 flex flex-col gap-3">
-      <!-- Slot badge -->
-      <span
-        class="text-xs font-medium px-2.5 py-1 rounded uppercase tracking-wider self-start"
-        style="background: color-mix(in srgb, {accent} 14%, var(--background-color));
-               color: {accent};
-               border: 0.5px solid color-mix(in srgb, {accent} 30%, transparent);"
+    <!-- Chamber enemies -->
+    <div
+      class="relative w-full overflow-hidden p-4"
+      style="background: color-mix(in srgb, {accent} 4%, var(--background-color));"
+    >
+      {#if sideEnemies && sideEnemies.length > 0}
+        <div class="flex">
+          {#each sideEnemies as chamber}
+            <div class="flex-1 flex flex-col items-center gap-1 px-3">
+              <span
+                class="text-xs font-medium pb-1 border-b"
+                style="color: var(--foreground-mid); border-color: color-mix(in srgb, {accent} 22%, transparent);"
+              >
+                {chamber.chamber}
+              </span>
+              <div class="flex flex-row justify-center gap-1">
+                {#each chamber.enemies.slice(0, 3) as enemy}
+                  {#if enemy.asset}
+                    <img
+                      src={getEnemyAsset(enemy.asset)}
+                      alt={enemy.name}
+                      title={enemy.name}
+                      class="min-w-8 grow h-18 rounded-md object-cover"
+                      style="border: 1px solid color-mix(in srgb, {accent} 18%, transparent);"
+                    />
+                  {/if}
+                {/each}
+              </div>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="flex items-center justify-center py-3">
+          <span class="text-xs" style="color: var(--foreground-mid);"
+            >No enemy data</span
+          >
+        </div>
+      {/if}
+    </div>
+
+    {#if abyssEnemies?.buffName}
+      <div
+        class="text-lg text-center py-2"
+        style="background: color-mix(in srgb, {accent} 4%, var(--background-color)); color: var(--foreground-color);"
       >
-        {abyssSlotLabel[slot]}
-      </span>
+        {abyssEnemies.buffName}: {halfLabel[slot]}
+      </div>
+    {/if}
+
+    <!-- Team content -->
+    <div
+      class="p-4 flex flex-col gap-3"
+      style="background: color-mix(in srgb, {accent} 4%, var(--background-color));"
+    >
       {#if assignment}
         <Team
           team={assignment.team}
@@ -166,7 +232,7 @@
             {(assignment.team.usage_rate ?? 0).toFixed(1)}% usage
           </span>
           <span class="text-xs" style="color: {accent};">
-            {slotRate(assignment.team, slot).toFixed(0)}% on this side
+            {slotRate(assignment.team, slot).toFixed(0)}% in this half
           </span>
         </div>
       {:else if solution}
@@ -196,6 +262,18 @@
       style="color: var(--foreground-color);"
     >
       Spiral Abyss
+      {#if abyssEnemies?.openTime}
+        <span
+          class="text-xs normal-case tracking-normal ml-2"
+          style="color: var(--foreground-mid);"
+        >
+          updated {new Date(abyssEnemies.openTime).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </span>
+      {/if}
     </h2>
 
     <div

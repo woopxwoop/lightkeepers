@@ -13,6 +13,7 @@ import {
   writeNearMissTeams,
   writeTeamsOwned,
 } from "$lib/stores";
+import { isNewCharacter } from "$lib/utils";
 import { get } from "svelte/store";
 
 type LayoutHydration = {
@@ -66,8 +67,16 @@ function mergeOwnedFlags(
   characters: Character[],
   cachedOwned: CachedOwnedEntry[] | undefined,
 ): CharacterOwned[] {
+  const defaultOwned = (c: Character): boolean => {
+    // New characters (recently released) default to not owned — the user likely
+    // doesn't have them yet. This prevents the roster from auto-assigning owned
+    // for every new character that gets added to the DB.
+    if (isNewCharacter(c.released_at)) return false;
+    return true;
+  };
+
   if (!cachedOwned) {
-    return characters.map((c) => ({ ...c, isOwned: true }));
+    return characters.map((c) => ({ ...c, isOwned: defaultOwned(c) }));
   }
 
   const normalized = cachedOwned.map((v) => ({
@@ -78,7 +87,7 @@ function mergeOwnedFlags(
   return characters.map((c) => {
     const cached = normalized.find((x) => x.name_id === c.name_id);
     const isOwned =
-      typeof cached?.isOwned === "boolean" ? cached.isOwned : true;
+      typeof cached?.isOwned === "boolean" ? cached.isOwned : defaultOwned(c);
     return { ...c, isOwned };
   });
 }
