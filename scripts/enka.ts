@@ -1,5 +1,6 @@
 import { EnkaClient } from "enka-network-api";
 import { supabase as db } from "./lib/supabase.js";
+import type { Database } from "../src/lib/types/database.types.js";
 
 async function main() {
   const enka = new EnkaClient({ defaultLanguage: "en" });
@@ -9,14 +10,9 @@ async function main() {
 
   const characters = enka.getAllCharacters();
 
-  const rows: {
-    game_id: number;
-    name_id: string;
-    name: string;
-    element: string;
-    weapon_type: string;
-    rarity: number;
-  }[] = [];
+  type CharacterInsert = Database["public"]["Tables"]["characters"]["Insert"];
+
+  const rows: CharacterInsert[] = [];
 
   let seenTraveler = false;
 
@@ -36,6 +32,7 @@ async function main() {
       element: char.element.name.get(),
       weapon_type: char.weaponType,
       rarity: char.stars,
+      released_at: char.releasedAt?.toISOString(),
     });
   }
 

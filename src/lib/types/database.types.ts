@@ -199,6 +199,7 @@ export type Database = {
           name: string | null
           name_id: string
           rarity: number | null
+          released_at: string | null
           weapon_type: string | null
         }
         Insert: {
@@ -208,6 +209,7 @@ export type Database = {
           name?: string | null
           name_id: string
           rarity?: number | null
+          released_at?: string | null
           weapon_type?: string | null
         }
         Update: {
@@ -217,6 +219,7 @@ export type Database = {
           name?: string | null
           name_id?: string
           rarity?: number | null
+          released_at?: string | null
           weapon_type?: string | null
         }
         Relationships: []

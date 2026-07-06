@@ -12,7 +12,7 @@
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import type { CharacterOwned } from "$lib/definitions";
   import { fly, slide } from "svelte/transition";
-  import { WEAPON_TYPE_MAP } from "$lib/utils";
+  import { WEAPON_TYPE_MAP, isNewCharacter } from "$lib/utils";
 
   const sections = [
     {
@@ -93,11 +93,12 @@
   let rarityFilter = $state<Set<string>>(new Set());
   let elementFilter = $state<Set<string>>(new Set());
   let weaponFilter = $state<Set<string>>(new Set());
+  let ownershipFilter = $state<"all" | "owned" | "unowned">("all");
   let search = $state("");
   let filtersOpen = $state(false);
 
   let isFiltered = $derived(
-    rarityFilter.size > 0 || elementFilter.size > 0 || weaponFilter.size > 0,
+    rarityFilter.size > 0 || elementFilter.size > 0 || weaponFilter.size > 0 || ownershipFilter !== "all",
   );
 
   const elements = [
@@ -123,22 +124,42 @@
   }
 
   let visibleCharacters = $derived(
-    tempCharactersOwned.filter((c) => {
-      const matchesRarity =
-        rarityFilter.size === 0 ||
-        (rarityFilter.has("5") && c.rarity === 5) ||
-        (rarityFilter.has("4") && c.rarity === 4);
-      const matchesElement =
-        elementFilter.size === 0 ||
-        (c.element != null && elementFilter.has(c.element));
-      const matchesWeapon =
-        weaponFilter.size === 0 ||
-        (c.weapon_type != null &&
-          weaponFilter.has(WEAPON_TYPE_MAP[c.weapon_type as keyof typeof WEAPON_TYPE_MAP] ?? c.weapon_type));
-      const matchesSearch =
-        search === "" || (c.name ?? "").toLowerCase().includes(search.toLowerCase());
-      return matchesRarity && matchesElement && matchesWeapon && matchesSearch;
-    }),
+    tempCharactersOwned
+      .filter((c) => {
+        const matchesRarity =
+          rarityFilter.size === 0 ||
+          (rarityFilter.has("5") && c.rarity === 5) ||
+          (rarityFilter.has("4") && c.rarity === 4);
+        const matchesElement =
+          elementFilter.size === 0 ||
+          (c.element != null && elementFilter.has(c.element));
+        const matchesWeapon =
+          weaponFilter.size === 0 ||
+          (c.weapon_type != null &&
+            weaponFilter.has(WEAPON_TYPE_MAP[c.weapon_type as keyof typeof WEAPON_TYPE_MAP] ?? c.weapon_type));
+        const matchesOwnership =
+          ownershipFilter === "all" ||
+          (ownershipFilter === "owned" && c.isOwned) ||
+          (ownershipFilter === "unowned" && !c.isOwned);
+        const matchesSearch =
+          search === "" || (c.name ?? "").toLowerCase().includes(search.toLowerCase());
+        return matchesRarity && matchesElement && matchesWeapon && matchesOwnership && matchesSearch;
+      })
+      .sort((a, b) => {
+        // Unowned new characters first (most recently released at the very front)
+        const aIsNew = isNewCharacter(a.released_at) && !savedOwnedSet.has(a.name_id);
+        const bIsNew = isNewCharacter(b.released_at) && !savedOwnedSet.has(b.name_id);
+        if (aIsNew && !bIsNew) return -1;
+        if (!aIsNew && bIsNew) return 1;
+        // Among new characters, sort by released_at descending (newest first)
+        if (aIsNew && bIsNew) {
+          const aTime = a.released_at ? new Date(a.released_at.replace(" ", "T")).getTime() : 0;
+          const bTime = b.released_at ? new Date(b.released_at.replace(" ", "T")).getTime() : 0;
+          return bTime - aTime;
+        }
+        // Among non-new characters, preserve original order
+        return 0;
+      }),
   );
 
   let savedSnapshot = $state<string>("");
@@ -228,6 +249,11 @@
       savedSnapshot = JSON.stringify($charactersOwned);
     }
   });
+
+  /** Characters that were owned before any unsaved edits. */
+  let savedOwnedSet = $derived(
+    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
+  );
 
   let ownedCount = $derived(
     tempCharactersOwned.filter((c) => c.isOwned).length,
@@ -395,6 +421,32 @@
                           {/each}
                         </div>
                       </div>
+
+                      <div class="filter-group">
+                        <span>Ownership</span>
+                        <div>
+                          <button
+                            type="button"
+                            class="filter-chip"
+                            class:is-selected={ownershipFilter === "owned"}
+                            aria-pressed={ownershipFilter === "owned"}
+                            onclick={() =>
+                              (ownershipFilter = ownershipFilter === "owned" ? "all" : "owned")}
+                          >
+                            Owned
+                          </button>
+                          <button
+                            type="button"
+                            class="filter-chip"
+                            class:is-selected={ownershipFilter === "unowned"}
+                            aria-pressed={ownershipFilter === "unowned"}
+                            onclick={() =>
+                              (ownershipFilter = ownershipFilter === "unowned" ? "all" : "unowned")}
+                          >
+                            Unowned
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   {/if}
                 </div>
@@ -426,28 +478,54 @@
 
                 {#if hasUnsavedChanges || isSaving || showSaved}
                   <div
-                    class="fixed bottom-6 left-0 right-0 mx-auto w-fit z-20 flex items-center gap-4 px-5 py-3 rounded-lg"
-                    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 40%, transparent);"
+                    class="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-center gap-8 px-6 py-3"
+                    style="background: color-mix(in srgb, var(--background-mid) 94%, transparent); border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 28%, transparent); backdrop-filter: blur(12px);"
                     transition:fly={{ y: 200, duration: 500 }}
                   >
-                    <span class="text-sm" style="color: var(--foreground-mid);">
-                      {isSaving
-                        ? "Saving..."
-                        : showSaved
-                          ? "Saved!"
-                          : "Unsaved changes"}
-                    </span>
-                    <button
-                      type="button"
-                      onclick={saveCharacters}
-                      disabled={isSaving || showSaved || !hasUnsavedChanges}
-                      class="primary-action"
-                      style:opacity={isSaving || showSaved || !hasUnsavedChanges
-                        ? "0.7"
-                        : "1"}
-                    >
-                      {isSaving ? "Saving..." : showSaved ? "Saved" : "Save"}
-                    </button>
+                    <div class="flex items-center gap-2.5">
+                      <span
+                        class="w-2 h-2 rounded-full shrink-0"
+                        style="background: {isSaving
+                          ? 'var(--accent-2)'
+                          : showSaved
+                            ? 'color-mix(in srgb, var(--accent-1) 40%, transparent)'
+                            : 'var(--accent-1)'};"
+                      ></span>
+                      <span class="text-sm" style="color: var(--foreground-color);">
+                        {isSaving
+                          ? "Saving..."
+                          : showSaved
+                            ? "Saved"
+                            : "Unsaved changes"}
+                      </span>
+                      {#if hasUnsavedChanges}
+                        <span class="text-xs" style="color: var(--foreground-mid);">
+                          ({tempCharactersOwned.reduce((count, c) => count + (c.isOwned !== $charactersOwned.find(o => o.name_id === c.name_id)?.isOwned ? 1 : 0), 0)} changed)
+                        </span>
+                      {/if}
+                    </div>
+                    {#if hasUnsavedChanges && !isSaving && !showSaved}
+                      <div class="flex gap-2">
+                        <button
+                          type="button"
+                            onclick={() => {
+                              tempCharactersOwned = [...$charactersOwned];
+                              savedSnapshot = JSON.stringify($charactersOwned);
+                              hasUnsavedChanges = false;
+                            }}
+                          class="cancel-action"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onclick={saveCharacters}
+                          class="primary-action"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    {/if}
                   </div>
                 {/if}
 
@@ -463,10 +541,20 @@
                         ? 'owned'
                         : 'not owned'}"
                       class="cursor-pointer rounded-lg w-full h-fit overflow-hidden relative transition-all duration-75 character-icon-button"
-                      style="border: 2px solid var(--foreground-color); opacity: {character.isOwned
+                      style="border: 2px solid {isNewCharacter(character.released_at) && !savedOwnedSet.has(character.name_id)
+                        ? 'var(--accent-1)'
+                        : 'var(--foreground-color)'}; opacity: {character.isOwned
                         ? '1'
                         : '.33'};"
                     >
+                      {#if isNewCharacter(character.released_at) && !savedOwnedSet.has(character.name_id)}
+                        <span
+                          class="absolute top-1 right-1 z-10 text-[9px] font-bold px-1 py-0.5 rounded"
+                          style="background: var(--accent-1); color: var(--background-color);"
+                        >
+                          NEW
+                        </span>
+                      {/if}
                       <CharacterIcon {character} />
                     </button>
                   {/each}
@@ -786,11 +874,35 @@
   }
 
   .primary-action {
-    border-radius: 8px;
-    padding: 0.35rem 1rem;
-    color: var(--accent-1);
-    background: color-mix(in srgb, var(--accent-1) 15%, transparent);
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 45%, transparent);
+    border-radius: 10px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--background-color);
+    background: var(--accent-1);
+    border: none;
+    transition: opacity 0.15s;
+  }
+
+  .primary-action:hover {
+    opacity: 0.85;
+  }
+
+  .cancel-action {
+    border-radius: 10px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.8rem;
+    color: var(--foreground-mid);
+    background: transparent;
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
+    transition:
+      border-color 0.15s,
+      color 0.15s;
+  }
+
+  .cancel-action:hover {
+    color: var(--foreground-color);
+    border-color: color-mix(in srgb, var(--accent-1) 40%, transparent);
   }
 
   .preference-list {
