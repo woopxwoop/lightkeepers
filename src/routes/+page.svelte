@@ -24,7 +24,7 @@
   }
 
   .settings-link {
-    color: var(--foreground-color);
+    color: var(--accent-2);
     transition: color 0.15s;
   }
 
