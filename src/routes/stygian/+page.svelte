@@ -36,6 +36,14 @@
       } | null;
     },
   );
+  let schedule = $derived(
+    data.stygianSchedule as {
+      scheduleId: number;
+      openTime: string | null;
+      closeTime: string | null;
+      challengeName: string | null;
+    } | null,
+  );
 
   let teamsMode = $state<"roster" | "meta">("roster");
   let selectedIndex = $state(0);
@@ -127,7 +135,6 @@
   function handleKeyboardClick(event: MouseEvent, action: () => void) {
     if (event.detail === 0) action();
   }
-
 
   function slotRate(team: StygianTeam, slot: Slot): number {
     if (slot === "top") return team.field_1_rate ?? 0;
@@ -245,12 +252,23 @@
 <main class="w-[80%] pb-20 flex flex-col gap-6">
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="flex items-center justify-between gap-4 flex-wrap">
-    <h2
-      class="tracking-widest uppercase"
-      style="color: var(--foreground-color);"
-    >
-      Stygian Onslaught
-    </h2>
+    <div class="flex items-center gap-3 flex-wrap">
+      <h2
+        class="tracking-widest uppercase"
+        style="color: var(--foreground-color);"
+      >
+        Stygian Onslaught
+      </h2>
+
+      {#if schedule?.challengeName}
+        <span
+          class="text-xs px-2 py-0.5 rounded-md"
+          style="background: color-mix(in srgb, var(--accent-1) 10%, var(--background-mid)); color: var(--accent-1);"
+        >
+          v{schedule.challengeName}
+        </span>
+      {/if}
+    </div>
 
     <div
       class="flex rounded-lg overflow-hidden"

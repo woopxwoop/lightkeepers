@@ -50,6 +50,13 @@ type AbyssEnemies = {
   openTime: string | null;
 };
 
+type StygianSchedule = {
+  scheduleId: number;
+  openTime: string | null;
+  closeTime: string | null;
+  challengeName: string | null;
+} | null;
+
 type StaticPayload = {
   latestAbyssVersion: Version;
   latestStygianVersion: StygianVersion;
@@ -57,6 +64,7 @@ type StaticPayload = {
   allTeamsStygian: unknown[];
   stygianEnemies: StygianEnemies;
   abyssEnemies: AbyssEnemies;
+  stygianSchedule: StygianSchedule;
 };
 
 // Single-entry cache — we only ever need the most recent fetch.
@@ -90,7 +98,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
   };
 
   // Fetch all teams + version enemies in parallel
-  const [abyssTeamsRes, stygianTeamsRes, versionEnemiesRes, abyssScheduleRes] =
+  const [abyssTeamsRes, stygianTeamsRes, versionEnemiesRes, abyssScheduleRes, stygianScheduleRes] =
     await Promise.all([
       serverDb.rpc("get_teams_with_characters_subset", {
         p_name_ids: [],
@@ -109,6 +117,11 @@ async function fetchStaticData(): Promise<StaticPayload> {
         .select("floors, buff_name, open_time")
         .eq("ys_abyss_version", latestAbyssVersion.version_number)
         .maybeSingle(),
+      serverDb
+        .from("lunaris_stygian_versions")
+        .select("schedule_id, open_time, close_time, challenge_name")
+        .eq("ys_stygian_version", latestStygianVersion.version_number)
+        .maybeSingle(),
     ]);
 
   if (abyssTeamsRes.error) {
@@ -122,6 +135,10 @@ async function fetchStaticData(): Promise<StaticPayload> {
   if (versionEnemiesRes.error) {
     console.error("fetchStaticData: stygian_version_enemies error", versionEnemiesRes.error);
     throw error(500, "Failed to fetch Stygian version enemies");
+  }
+  if (stygianScheduleRes.error) {
+    console.error("fetchStaticData: lunaris_stygian_versions error", stygianScheduleRes.error);
+    throw error(500, "Failed to fetch Stygian schedule data");
   }
 
   const versionEnemyRows = versionEnemiesRes.data;
@@ -236,6 +253,23 @@ async function fetchStaticData(): Promise<StaticPayload> {
     }
   }
 
+  // ── Build Stygian schedule object ──────────────────────────────────────
+  const stygianScheduleRow = stygianScheduleRes.data as {
+    schedule_id?: number;
+    open_time?: string | null;
+    close_time?: string | null;
+    challenge_name?: string | null;
+  } | null;
+
+  const stygianSchedule: StygianSchedule = stygianScheduleRow
+    ? {
+        scheduleId: stygianScheduleRow.schedule_id ?? 0,
+        openTime: stygianScheduleRow.open_time ?? null,
+        closeTime: stygianScheduleRow.close_time ?? null,
+        challengeName: stygianScheduleRow.challenge_name ?? null,
+      }
+    : null;
+
   return {
     latestAbyssVersion,
     latestStygianVersion,
@@ -243,6 +277,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
     allTeamsStygian: stygianTeamsRes.data,
     stygianEnemies,
     abyssEnemies,
+    stygianSchedule,
   };
 }
 

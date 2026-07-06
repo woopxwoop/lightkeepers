@@ -51,6 +51,13 @@ jobs:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}
 
+      - name: Sync stygian schedule & enemies from Lunaris
+        if: steps.version_check.outputs.is_new == 'true'
+        run: pnpm exec tsx scripts/sync-stygian-schedules.ts 4
+        env:
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}
+
       - name: Sync character and enemy images to R2
         if: steps.version_check.outputs.is_new == 'true'
         run: pnpm exec tsx scripts/sync-character-images-r2.ts

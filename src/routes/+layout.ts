@@ -53,5 +53,11 @@ export const load: LayoutLoad = ({ data }) => {
       buffName: string | null;
       openTime: string | null;
     },
+    stygianSchedule: data.stygianSchedule as {
+      scheduleId: number;
+      openTime: string | null;
+      closeTime: string | null;
+      challengeName: string | null;
+    } | null,
   };
 };

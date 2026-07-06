@@ -15,6 +15,7 @@
     "sync:enka": "tsx scripts/enka.ts",
     "sync:stygian-enemies": "tsx scripts/sync-stygian-enemies.ts",
     "sync:abyss-schedules": "tsx scripts/sync-abyss-schedules.ts",
+    "sync:stygian-schedules": "tsx scripts/sync-stygian-schedules.ts",
     "map:abyss-versions": "tsx scripts/map-abyss-versions.ts",
     "sync:images": "tsx scripts/sync-character-images-r2.ts",
     "cron:abyss": "tsx scripts/cron-abyss.ts",

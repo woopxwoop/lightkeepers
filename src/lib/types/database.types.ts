@@ -286,6 +286,44 @@ export type Database = {
           },
         ]
       }
+      lunaris_stygian_versions: {
+        Row: {
+          challenge_name: string | null
+          close_time: string
+          created_at: string
+          levels: Json | null
+          open_time: string
+          schedule_id: number
+          ys_stygian_version: number | null
+        }
+        Insert: {
+          challenge_name?: string | null
+          close_time: string
+          created_at?: string
+          levels?: Json | null
+          open_time: string
+          schedule_id?: number
+          ys_stygian_version?: number | null
+        }
+        Update: {
+          challenge_name?: string | null
+          close_time?: string
+          created_at?: string
+          levels?: Json | null
+          open_time?: string
+          schedule_id?: number
+          ys_stygian_version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunaris_stygian_versions_ys_stygian_version_fkey"
+            columns: ["ys_stygian_version"]
+            isOneToOne: true
+            referencedRelation: "stygian_versions"
+            referencedColumns: ["version_number"]
+          },
+        ]
+      }
       session: {
         Row: {
           createdAt: string

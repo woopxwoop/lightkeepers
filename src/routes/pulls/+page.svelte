@@ -145,7 +145,7 @@
           Pull Suggestions
         </h2>
         <p style="color: var(--foreground-mid);">
-          Based on your {ownedCount} characters — Stygian Onslaught
+          Based on your {ownedCount} characters & Stygian Onslaught usage
         </p>
       </div>
       <div

@@ -174,21 +174,21 @@
       {#if sideEnemies && sideEnemies.length > 0}
         <div class="flex">
           {#each sideEnemies as chamber}
-            <div class="flex-1 flex flex-col items-center gap-1.5">
+            <div class="flex-1 flex flex-col items-center gap-1 px-3">
               <span
                 class="text-xs font-medium pb-1 border-b"
                 style="color: var(--foreground-mid); border-color: color-mix(in srgb, {accent} 22%, transparent);"
               >
                 {chamber.chamber}
               </span>
-              <div class="flex justify-center gap-1">
+              <div class="flex flex-row justify-center gap-1">
                 {#each chamber.enemies.slice(0, 3) as enemy}
                   {#if enemy.asset}
                     <img
                       src={getEnemyAsset(enemy.asset)}
                       alt={enemy.name}
                       title={enemy.name}
-                      class="w-9 h-18 rounded-md object-cover"
+                      class="min-w-8 grow h-18 rounded-md object-cover"
                       style="border: 1px solid color-mix(in srgb, {accent} 18%, transparent);"
                     />
                   {/if}
@@ -232,7 +232,7 @@
             {(assignment.team.usage_rate ?? 0).toFixed(1)}% usage
           </span>
           <span class="text-xs" style="color: {accent};">
-            {slotRate(assignment.team, slot).toFixed(0)}% on this side
+            {slotRate(assignment.team, slot).toFixed(0)}% in this half
           </span>
         </div>
       {:else if solution}
