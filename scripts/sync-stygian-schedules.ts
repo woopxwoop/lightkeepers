@@ -96,13 +96,16 @@ async function getLunarisStygian(
  */
 async function findMaxLunarisId(latestVersionNumber: number): Promise<number> {
   let id = BASE_STYGIAN_ID + latestVersionNumber + 1;
+  const MAX_WALK = 50; // sanity cap to avoid runaway loops
+  let steps = 0;
 
   // Walk forward until we hit a gap
-  while (true) {
+  while (steps++ < MAX_WALK) {
     const data = await getLunarisStygian(id + 1);
     if (!data) return id;
     id++;
   }
+  return id;
 }
 
 async function fetchYshelperVersion(
@@ -218,55 +221,60 @@ async function sync(count: number) {
 
     // ── 4. Extract and upsert enemies ──────────────────────────────────
     const FEARLESS_LEVEL = 4;
-    const levelConfigs = lunarisData.levels[FEARLESS_LEVEL]?.levelConfigs;
 
-    if (!Array.isArray(levelConfigs) || levelConfigs.length < 3) {
-      console.log(
-        `  ⚠ v${verNum}: fewer than 3 level configs at fearless level, skipping enemy upsert`,
-      );
+    if (!Array.isArray(lunarisData.levels)) {
+      console.log(`  ⚠ v${verNum}: Lunaris response missing levels array, skipping enemy upsert`);
     } else {
-      // Upsert unique enemies to the `enemies` table
-      const seenEnemyIds = new Set<number>();
-      const enemiesToUpsert: EnemyInsert[] = [];
+      const levelConfigs = lunarisData.levels[FEARLESS_LEVEL]?.levelConfigs;
 
-      for (const config of levelConfigs) {
-        if (!seenEnemyIds.has(config.id)) {
-          seenEnemyIds.add(config.id);
-          enemiesToUpsert.push({
-            id: config.id,
-            enemy_name: config.enLevelName,
-            asset: config.specialMonsterIcon,
-            icon_path: "leyline",
-            description: config.description ?? null,
-          });
-        }
-      }
-
-      if (enemiesToUpsert.length > 0) {
-        const { error } = await supabase
-          .from("enemies")
-          .upsert(enemiesToUpsert, { onConflict: "id" });
-        if (error) {
-          console.error(`  Enemy upsert error: ${error.message}`);
-        } else {
-          console.log(`  Upserted ${enemiesToUpsert.length} enemies`);
-        }
-      }
-
-      // Upsert version→enemy join rows (slot_index 0=top, 1=middle, 2=bottom)
-      const joinRows = levelConfigs.slice(0, 3).map((config, i) => ({
-        version_number: verNum,
-        enemy_id: config.id,
-        slot_index: i,
-      }));
-
-      const { error: joinErr } = await supabase
-        .from("stygian_version_enemies")
-        .upsert(joinRows, { onConflict: "version_number,slot_index" });
-      if (joinErr) {
-        console.error(`  Version-enemy join error: ${joinErr.message}`);
+      if (!Array.isArray(levelConfigs) || levelConfigs.length < 3) {
+        console.log(
+          `  ⚠ v${verNum}: fewer than 3 level configs at fearless level, skipping enemy upsert`,
+        );
       } else {
-        console.log(`  Synced ${joinRows.length} version→enemy joins`);
+        // Upsert unique enemies to the `enemies` table
+        const seenEnemyIds = new Set<number>();
+        const enemiesToUpsert: EnemyInsert[] = [];
+
+        for (const config of levelConfigs) {
+          if (!seenEnemyIds.has(config.id)) {
+            seenEnemyIds.add(config.id);
+            enemiesToUpsert.push({
+              id: config.id,
+              enemy_name: config.enLevelName,
+              asset: config.specialMonsterIcon,
+              icon_path: "leyline",
+              description: config.description ?? null,
+            });
+          }
+        }
+
+        if (enemiesToUpsert.length > 0) {
+          const { error } = await supabase
+            .from("enemies")
+            .upsert(enemiesToUpsert, { onConflict: "id" });
+          if (error) {
+            console.error(`  Enemy upsert error: ${error.message}`);
+          } else {
+            console.log(`  Upserted ${enemiesToUpsert.length} enemies`);
+          }
+        }
+
+        // Upsert version→enemy join rows (slot_index 0=top, 1=middle, 2=bottom)
+        const joinRows = levelConfigs.slice(0, 3).map((config, i) => ({
+          version_number: verNum,
+          enemy_id: config.id,
+          slot_index: i,
+        }));
+
+        const { error: joinErr } = await supabase
+          .from("stygian_version_enemies")
+          .upsert(joinRows, { onConflict: "version_number,slot_index" });
+        if (joinErr) {
+          console.error(`  Version-enemy join error: ${joinErr.message}`);
+        } else {
+          console.log(`  Synced ${joinRows.length} version→enemy joins`);
+        }
       }
     }
 

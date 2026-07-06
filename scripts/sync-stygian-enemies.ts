@@ -96,4 +96,7 @@ async function sync(count: number) {
 
 const count = Math.max(1, parseInt(process.argv[2] ?? "1", 10));
 console.log(`=== Stygian enemy sync (latest ${count}) ===`);
-sync(count).catch(console.error);
+sync(count).catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

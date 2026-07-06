@@ -7,7 +7,7 @@
  *   - `lunaris_abyss_versions` — schedule metadata + floors JSONB
  *
  * Usage:
- *   PUBLIC_SUPUBASE_URL=... PRIVATE_SUPABASE_KEY=... npx tsx scripts/lunaris.ts [N]
+ *   PUBLIC_SUPABASE_URL=... PRIVATE_SUPABASE_KEY=... npx tsx scripts/sync-abyss-schedules.ts [N]
  *
  *   N  — number of recent versions to sync (default: 1)
  */
@@ -118,15 +118,23 @@ async function findMatchingLunarisId(
 
 /**
  * Find the highest existing Lunaris schedule ID.
+ * Returns 0 when the catalog is empty.
  */
 async function findMaxLunarisId(lunarisVer: string): Promise<number> {
+  // Check if the catalog is empty first
+  const first = await getLunarisSchedule(lunarisVer, 1);
+  if (!first) return 0;
+
+  // Exponential stepping to find an upper bound
   let id = 1;
+  let step = 1;
   while (true) {
-    const data = await getLunarisSchedule(lunarisVer, id + 100); // jump in 100s
+    step *= 2;
+    const data = await getLunarisSchedule(lunarisVer, id + step);
     if (!data) break;
-    id += 100;
+    id += step;
   }
-  // Now binary search or linear walk from here
+  // Linear walk from the last known good position
   while (true) {
     const data = await getLunarisSchedule(lunarisVer, id + 1);
     if (!data) return id;
@@ -146,7 +154,11 @@ async function sync(count: number) {
 
   // 2. Fetch latest yshelper response to get history_list
   const latest = await getLatestYshelper();
-  const history = latest.history_list as { title: string; value: number }[];
+  const history = latest.history_list as { title: string; value: number }[] | undefined;
+  if (!Array.isArray(history) || history.length === 0) {
+    console.log("  No version history found — is the YSHelper API reachable?");
+    return;
+  }
   console.log(`Yshelper latest: ${latest.version} (v${history[0].value})`);
 
   // 3. Take the top N from history
@@ -257,6 +269,10 @@ async function sync(count: number) {
 
 // ─── CLI ────────────────────────────────────────────────────────────────────
 
-const count = Math.max(1, parseInt(process.argv[2] ?? "1", 10));
+const parsedCount = parseInt(process.argv[2] ?? "1", 10);
+const count = Math.max(1, Number.isNaN(parsedCount) ? 1 : parsedCount);
 console.log(`=== Abyss schedule sync (latest ${count}) ===`);
-sync(count).catch(console.error);
+sync(count).catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

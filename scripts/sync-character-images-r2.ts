@@ -358,10 +358,10 @@ async function main() {
 
   // Pre-load existing R2 keys (two list calls total, one per prefix)
   console.log("\n── R2 inventory ────────────────────────────");
-  const existingCharKeys = force
+  const existingCharKeys = dryRun || force || !syncCharacters
     ? new Set<string>()
     : await listR2Keys("characters/");
-  const existingEnemyKeys = force
+  const existingEnemyKeys = dryRun || force || !syncEnemies
     ? new Set<string>()
     : await listR2Keys("enemies/");
   console.log(

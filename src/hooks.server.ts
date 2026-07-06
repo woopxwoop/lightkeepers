@@ -57,7 +57,10 @@ const authHandle: Handle = async ({ event, resolve }) => {
   if (
     !event.locals.user &&
     event.request.method === "GET" &&
-    response.headers.get("content-type")?.startsWith("text/html")
+    response.headers.get("content-type")?.startsWith("text/html") &&
+    !event.request.headers.has("cookie") &&
+    !response.headers.has("set-cookie") &&
+    !response.headers.has("cache-control")
   ) {
     response.headers.set(
       "Cache-Control",

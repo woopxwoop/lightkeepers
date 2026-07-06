@@ -206,7 +206,7 @@
       {/if}
     </div>
 
-    {#if abyssEnemies.buffName}
+    {#if abyssEnemies?.buffName}
       <div
         class="text-lg text-center py-2"
         style="background: color-mix(in srgb, {accent} 4%, var(--background-color)); color: var(--foreground-color);"
@@ -262,7 +262,7 @@
       style="color: var(--foreground-color);"
     >
       Spiral Abyss
-      {#if abyssEnemies.openTime}
+      {#if abyssEnemies?.openTime}
         <span
           class="text-xs normal-case tracking-normal ml-2"
           style="color: var(--foreground-mid);"

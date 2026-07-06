@@ -46,52 +46,44 @@
   let activeSection = $derived(sections[activeSectionIndex].id);
   let tempCharactersOwned: CharacterOwned[] = $state([]);
   const session = authClient.useSession();
-  let syncStatus = $state<
-    "idle" | "checking" | "needs-upload" | "uploading" | "synced" | "error"
-  >("idle");
+
+  let hasCloudRoster = $state<boolean | null>(null);
+  let rosterLoading = $state(true);
 
   $effect(() => {
     if ($session.data) {
-      checkRosterSync();
+      checkCloudRoster();
     } else {
-      syncStatus = "idle";
+      hasCloudRoster = null;
+      rosterLoading = false;
     }
   });
 
-  async function checkRosterSync() {
-    syncStatus = "checking";
+  async function checkCloudRoster() {
+    rosterLoading = true;
     try {
       const res = await fetch("/api/roster");
       if (!res.ok) {
-        console.error("checkRosterSync: unexpected status", res.status);
-        syncStatus = "error";
+        console.error("checkCloudRoster: unexpected status", res.status);
+        hasCloudRoster = null;
         return;
       }
       const { roster } = await res.json();
-      syncStatus = roster === null ? "needs-upload" : "synced";
+      hasCloudRoster = roster !== null;
     } catch (err) {
-      console.error("checkRosterSync: network error", err);
-      syncStatus = "error";
+      console.error("checkCloudRoster: network error", err);
+      hasCloudRoster = null;
+    } finally {
+      rosterLoading = false;
     }
   }
 
-  async function uploadRoster() {
-    syncStatus = "uploading";
+  async function resetCloudRoster() {
     try {
-      const res = await fetch("/api/roster", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roster: $charactersOwned }),
-      });
-      if (!res.ok) {
-        console.error("uploadRoster: unexpected status", res.status);
-        syncStatus = "needs-upload";
-      } else {
-        syncStatus = "synced";
-      }
+      const res = await fetch("/api/roster", { method: "DELETE" });
+      if (res.ok) hasCloudRoster = false;
     } catch (err) {
-      console.error("uploadRoster: network error", err);
-      syncStatus = "needs-upload";
+      console.error("resetCloudRoster: network error", err);
     }
   }
 
@@ -112,7 +104,7 @@
   };
 
   function setThemeColor(key: ThemeColorKey, value: string) {
-    if (!/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?([0-9a-fA-F]{2})?$/.test(value))
+    if (!/^#[0-9a-fA-F]{3,4}([0-9a-fA-F]{3,4})?$/.test(value))
       return;
     setDisplayPreferences({
       themeColors: {
@@ -306,11 +298,9 @@
         body: JSON.stringify({ roster: tempCharactersOwned }),
       })
         .then((res) => {
-          syncStatus = res.ok ? "synced" : "needs-upload";
+          if (res.ok) hasCloudRoster = true;
         })
-        .catch(() => {
-          syncStatus = "needs-upload";
-        });
+        .catch(() => {});
     }
 
     showSaved = true;
@@ -732,53 +722,43 @@
                     </div>
                   </div>
 
-                  {#if syncStatus === "checking"}
+                  {#if rosterLoading}
                     <p
                       style="color: var(--foreground-mid); font-size: 0.85rem;"
                     >
-                      Checking roster sync...
+                      Checking cloud roster...
                     </p>
-                  {:else if syncStatus === "error"}
+                  {:else if hasCloudRoster === null}
                     <p
                       style="color: var(--foreground-mid); font-size: 0.85rem;"
                     >
-                      Could not reach sync service. Check your connection and
-                      try again.
+                      Could not reach sync service.
                     </p>
-                  {:else if syncStatus === "needs-upload"}
+                  {:else if hasCloudRoster}
                     <div
-                      class="flex flex-col gap-3 p-4 rounded-lg"
+                      class="flex items-center gap-3 p-3 rounded-lg"
                       style="background: color-mix(in srgb, var(--background-color) 60%, transparent); border: 0.5px solid color-mix(in srgb, var(--accent-1) 28%, transparent);"
                     >
+                      <span
+                        class="w-2 h-2 rounded-full shrink-0"
+                        style="background: color-mix(in srgb, var(--accent-1) 40%, transparent);"
+                      ></span>
                       <p
-                        style="color: var(--foreground-mid); font-size: 0.85rem; margin: 0;"
+                        style="color: var(--foreground-mid); font-size: 0.85rem; margin: 0; flex: 1;"
                       >
-                        No roster found in cloud. Upload your local roster?
+                        Cloud roster backed up
                       </p>
-                      <div class="flex gap-2">
-                        <button
-                          type="button"
-                          class="primary-action"
-                          onclick={uploadRoster}>Upload roster</button
-                        >
-                        <button
-                          type="button"
-                          class="secondary-action"
-                          onclick={() => (syncStatus = "synced")}>Skip</button
-                        >
-                      </div>
+                      <button
+                        type="button"
+                        class="secondary-action"
+                        onclick={resetCloudRoster}>Reset</button
+                      >
                     </div>
-                  {:else if syncStatus === "uploading"}
+                  {:else}
                     <p
                       style="color: var(--foreground-mid); font-size: 0.85rem;"
                     >
-                      Uploading roster...
-                    </p>
-                  {:else if syncStatus === "synced"}
-                    <p
-                      style="color: var(--foreground-mid); font-size: 0.85rem;"
-                    >
-                      Roster synced
+                      No cloud roster backed up
                     </p>
                   {/if}
 
@@ -871,6 +851,7 @@
                       class="bg-card"
                       class:is-selected={$displayPreferences.iconStyle ===
                         "coop"}
+                      aria-pressed={$displayPreferences.iconStyle === "coop"}
                       onclick={() => setIconStyle("coop")}
                     >
                       <div
@@ -888,6 +869,7 @@
                       class="bg-card"
                       class:is-selected={$displayPreferences.iconStyle ===
                         "enka"}
+                      aria-pressed={$displayPreferences.iconStyle === "enka"}
                       onclick={() => setIconStyle("enka")}
                     >
                       <div
@@ -1045,7 +1027,7 @@
                             setThemeColor(key, normalized);
                             // Revert to stored/default value if invalid
                             if (
-                              !/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?([0-9a-fA-F]{2})?$/.test(
+                              !/^#[0-9a-fA-F]{3,4}([0-9a-fA-F]{3,4})?$/.test(
                                 normalized,
                               )
                             ) {
