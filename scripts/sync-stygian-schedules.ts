@@ -1,38 +1,3 @@
-/**
- * Sync Stygian Onslaught schedule + enemy info from Lunaris and YSHelper.
- *
- * Before running, create the target table in Supabase SQL editor:
- *
- *   CREATE TABLE lunaris_stygian_versions (
- *     schedule_id INTEGER PRIMARY KEY,
- *     open_time TIMESTAMPTZ NOT NULL,
- *     close_time TIMESTAMPTZ NOT NULL,
- *     challenge_name TEXT,           -- e.g. "6.6" — Lunaris challengeName, matches game version
- *     levels JSONB,                  -- full levels[] array with enemy configs per difficulty
- *     ys_stygian_version INTEGER UNIQUE REFERENCES stygian_versions(version_number),
- *     created_at TIMESTAMPTZ DEFAULT now()
- *   );
- *
- * Pipeline:
- *   1. Fetch version history from YSHelper
- *   2. Find the max Lunaris Leyline challenge schedule ID (probe 5269001+N)
- *   3. For each recent version:
- *      a. Get YSHelper per-version detail (extract period start from update field)
- *      b. Try formula-based Lunaris schedule (fast path): 5269001 + version_number + 1
- *      c. Verify date match; fall back to date-proximity search if mismatched
- *      d. Upsert enemies from levels[4].levelConfigs into enemies table
- *      e. Upsert version→enemy joins into stygian_version_enemies
- *      f. Upsert full schedule + levels JSONB into lunaris_stygian_versions
- *
- * This replaces scripts/sync-stygian-enemies.ts — same enemy sync plus
- * schedule metadata.
- *
- * Usage:
- *   PUBLIC_SUPABASE_URL=... PRIVATE_SUPABASE_KEY=... npx tsx scripts/sync-stygian-schedules.ts [N]
- *
- *   N  — number of recent versions to sync (default: 1)
- */
-
 import { supabase } from "./lib/supabase.js";
 import type { Database } from "../src/lib/types/database.types.js";
 import { fetchYsHelper, extractVersionEntries } from "./lib/yshelper.js";
