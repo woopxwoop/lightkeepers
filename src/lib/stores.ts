@@ -29,14 +29,46 @@ export function setVersionNumbers(abyss: number, stygian: number) {
 
 export type IconStyle = "coop" | "enka";
 
+export type ColorTheme = "dark" | "light";
+
+/** CSS variable names that can be customized via the color picker. */
+export const THEME_COLOR_KEYS = [
+  "background-color",
+  "foreground-color",
+  "background-mid",
+  "foreground-mid",
+  "accent-1",
+  "accent-2",
+  "accent-3",
+] as const;
+
+export const DEFAULT_DARK_COLORS: Record<ThemeColorKey, string> = {
+  "background-color": "#02060b",
+  "foreground-color": "#f4f1e8",
+  "background-mid": "#040d17",
+  "foreground-mid": "#f3e6c9",
+  "accent-1": "#d79a3e",
+  "accent-2": "#f6d68a",
+  "accent-3": "#ead7b0",
+};
+
+export type ThemeColorKey = (typeof THEME_COLOR_KEYS)[number];
+
 export type DisplayPreferences = {
   animationsEnabled: boolean;
   iconStyle: IconStyle;
+  backgroundEnabled: boolean;
+  colorTheme: ColorTheme;
+  /** Overrides for individual CSS custom properties. Keyed without the `--` prefix. */
+  themeColors: Partial<Record<ThemeColorKey, string>> | null;
 };
 
 const defaultDisplayPreferences: DisplayPreferences = {
   animationsEnabled: true,
   iconStyle: "coop",
+  backgroundEnabled: true,
+  colorTheme: "dark",
+  themeColors: null,
 };
 
 export const displayPreferences = writable<DisplayPreferences>({
@@ -58,6 +90,18 @@ export function initDisplayPreferences(): void {
         parsed.iconStyle === "enka" || parsed.iconStyle === "coop"
           ? parsed.iconStyle
           : defaultDisplayPreferences.iconStyle,
+      backgroundEnabled:
+        typeof parsed.backgroundEnabled === "boolean"
+          ? parsed.backgroundEnabled
+          : defaultDisplayPreferences.backgroundEnabled,
+      colorTheme:
+        parsed.colorTheme === "dark" || parsed.colorTheme === "light"
+          ? parsed.colorTheme
+          : defaultDisplayPreferences.colorTheme,
+      themeColors:
+        typeof parsed.themeColors === "object" && parsed.themeColors !== null
+          ? (parsed.themeColors as Partial<Record<ThemeColorKey, string>>)
+          : defaultDisplayPreferences.themeColors,
     });
   } catch {
     displayPreferences.set({ ...defaultDisplayPreferences });
@@ -93,6 +137,18 @@ export const animationsEnabled = derived(
 export function areAnimationsEnabled(): boolean {
   return get(displayPreferences).animationsEnabled;
 }
+
+export const faviconDataUri = derived(displayPreferences, ($prefs) => {
+  const accent = $prefs.themeColors?.["accent-1"] ?? DEFAULT_DARK_COLORS["accent-1"];
+  const r = parseInt(accent.slice(1, 3), 16);
+  const g = parseInt(accent.slice(3, 5), 16);
+  const b = parseInt(accent.slice(5, 7), 16);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <polygon points="50,4 59,41 96,50 59,59 50,96 41,59 4,50 41,41" fill="rgba(${r},${g},${b},0.15)" stroke="${accent}" stroke-width="3"/>
+    <circle cx="50" cy="50" r="30" fill="none" stroke="${accent}" stroke-width="2.5"/>
+  </svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+});
 
 // ── Character store ────────────────────────────────────────────────────────
 export const charactersOwned = writable<CharacterOwned[]>([]);

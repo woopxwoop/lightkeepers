@@ -13,8 +13,8 @@
     computePairSuggestions,
   } from "$lib/pullSuggestions";
   import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
+  import { faviconDataUri } from "$lib/stores";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import favicon from "$lib/assets/favicon.svg";
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -167,7 +167,7 @@
       class="rounded-2xl p-8 flex flex-col items-center gap-6 text-center"
       style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
     >
-      <img src={favicon} alt="Lightkeepers" class="w-14 h-14" />
+      <img src={$faviconDataUri} alt="Lightkeepers" class="w-14 h-14" />
 
       <div class="flex flex-col gap-2 max-w-sm">
         <p class="font-medium" style="color: var(--foreground-color);">
