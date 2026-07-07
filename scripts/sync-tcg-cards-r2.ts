@@ -67,6 +67,17 @@ if (!TCG_CARDS_DIR && !GOOGLE_DRIVE_API_KEY) {
 const MAX_WIDTH = Number(IMAGE_MAX_WIDTH);
 const WEBP_QUALITY = Number(IMAGE_WEBP_QUALITY);
 
+if (!Number.isInteger(MAX_WIDTH) || MAX_WIDTH < 1) {
+  throw new Error(
+    `IMAGE_MAX_WIDTH must be a positive integer, got: ${IMAGE_MAX_WIDTH}`,
+  );
+}
+if (!Number.isInteger(WEBP_QUALITY) || WEBP_QUALITY < 1 || WEBP_QUALITY > 100) {
+  throw new Error(
+    `IMAGE_WEBP_QUALITY must be an integer 1–100, got: ${IMAGE_WEBP_QUALITY}`,
+  );
+}
+
 const db = createClient<Database>(PUBLIC_SUPABASE_URL!, PRIVATE_SUPABASE_KEY!, {
   auth: { persistSession: false },
 });
