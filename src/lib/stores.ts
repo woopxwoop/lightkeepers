@@ -27,7 +27,7 @@ export function setVersionNumbers(abyss: number, stygian: number) {
   stygianVersionNumber = stygian;
 }
 
-export type IconStyle = "coop" | "enka";
+export type IconStyle = "coop" | "enka" | "tcg";
 
 export type ColorTheme = "dark" | "light";
 
@@ -107,7 +107,9 @@ export function initDisplayPreferences(): void {
           ? parsed.animationsEnabled
           : defaultDisplayPreferences.animationsEnabled,
       iconStyle:
-        parsed.iconStyle === "enka" || parsed.iconStyle === "coop"
+        parsed.iconStyle === "enka" ||
+        parsed.iconStyle === "coop" ||
+        parsed.iconStyle === "tcg"
           ? parsed.iconStyle
           : defaultDisplayPreferences.iconStyle,
       backgroundEnabled:
