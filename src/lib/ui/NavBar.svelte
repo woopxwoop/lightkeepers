@@ -9,6 +9,13 @@
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
   const settingsPath = resolve("/settings");
+  const settingsRosterPath = resolve("/settings/roster");
+  const settingsAccountPath = resolve("/settings/account");
+  const settingsDisplayPath = resolve("/settings/display");
+
+  const onSettingsPage = $derived(
+    page.url.pathname.startsWith(resolve("/settings")),
+  );
 
   // ── Sliding underline ──────────────────────────────────────────────────
   let navLinks: Record<string, HTMLElement | null> = {
@@ -85,14 +92,30 @@
     return () => window.removeEventListener("scroll", onScroll);
   });
 
+  // ── Settings hover sub-row ──────────────────────────────────────────────
+  let settingsHovered = $state(false);
+  let settingsLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function onSettingsEnter() {
+    if (settingsLeaveTimeout) {
+      clearTimeout(settingsLeaveTimeout);
+      settingsLeaveTimeout = null;
+    }
+    settingsHovered = true;
+  }
+
+  function onSettingsLeave() {
+    settingsLeaveTimeout = setTimeout(() => {
+      settingsHovered = false;
+    }, 120);
+  }
+
   // ── Mobile drawer ──────────────────────────────────────────────────────
   let mobileOpen = $state(false);
+  let settingsDrawerExpanded = $state(false);
   let drawerEl: HTMLElement | null = $state(null);
   let hamburgerEl: HTMLButtonElement | null = $state(null);
-  // Tracks whether the drawer was previously open so focus is only restored
-  // after a real close, not on the initial render where mobileOpen is false.
   let drawerWasOpen = false;
-  // Track if close was triggered by navigation to skip focus restoration
   let closedByNavigation = false;
 
   $effect(() => {
@@ -120,7 +143,6 @@
       drawerWasOpen = true;
       closedByNavigation = false;
 
-      // Move focus to the first link once the drawer is in the DOM.
       tick().then(() => {
         drawerEl?.querySelector<HTMLElement>("a[href]")?.focus();
       });
@@ -164,74 +186,122 @@
 </script>
 
 <nav
-  class="nav-bar w-full pl-[10%] pr-[10%] fixed top-0 z-30 flex items-center justify-between h-16 border-none transition-colors duration-300 {scrolled
+  class="nav-bar w-full fixed top-0 z-30 flex flex-col transition-all duration-300 {scrolled
     ? 'opaque-bg'
     : 'nav-initial'}"
+  class:nav-sub-open={settingsHovered}
 >
-  <a
-    href={homePath}
-    class="nav-logo shrink-0"
-    aria-current={page.url.pathname === homePath ? "page" : undefined}
-  >
-    LIGHTKEEPERS
-  </a>
-
-  <!-- Desktop links -->
+  <!-- Main row -->
   <div
-    class="hidden md:flex items-center gap-6 relative"
-    bind:this={linksContainer}
+    class="flex items-center justify-between h-16 pl-[10%] pr-[10%]"
   >
     <a
-      href={abyssPath}
-      class="nav-link"
-      aria-current={page.url.pathname === abyssPath ? "page" : undefined}
-      bind:this={navLinks.abyss}>Abyss</a
+      href={homePath}
+      class="nav-logo shrink-0"
+      aria-current={page.url.pathname === homePath ? "page" : undefined}
     >
-    <a
-      href={stygianPath}
-      class="nav-link"
-      aria-current={page.url.pathname === stygianPath ? "page" : undefined}
-      bind:this={navLinks.stygian}>Stygian</a
-    >
-    <a
-      href={pullsPath}
-      class="nav-link"
-      aria-current={page.url.pathname === pullsPath ? "page" : undefined}
-      bind:this={navLinks.pulls}>Pulls</a
-    >
-    <a
-      href={settingsPath}
-      class="nav-link"
-      aria-current={page.url.pathname === settingsPath ? "page" : undefined}
-      bind:this={navLinks.settings}>Settings</a
-    >
+      LIGHTKEEPERS
+    </a>
 
-    {#if underlineReady}
-      <span
-        class="absolute bottom-0 h-[1.5px] pointer-events-none"
-        style="
-          left: {underlineLeft}px;
-          width: {underlineWidth}px;
-          background: var(--accent-1);
-          transition: left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                      width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        "
-      ></span>
-    {/if}
+    <!-- Desktop links -->
+    <div
+      class="hidden md:flex items-center gap-6 relative"
+      bind:this={linksContainer}
+    >
+      <a
+        href={abyssPath}
+        class="nav-link"
+        aria-current={page.url.pathname === abyssPath ? "page" : undefined}
+        bind:this={navLinks.abyss}>Abyss</a
+      >
+      <a
+        href={stygianPath}
+        class="nav-link"
+        aria-current={page.url.pathname === stygianPath ? "page" : undefined}
+        bind:this={navLinks.stygian}>Stygian</a
+      >
+      <a
+        href={pullsPath}
+        class="nav-link"
+        aria-current={page.url.pathname === pullsPath ? "page" : undefined}
+        bind:this={navLinks.pulls}>Pulls</a
+      >
+      <a
+        href={settingsPath}
+        class="nav-link"
+        aria-current={onSettingsPage ? "page" : undefined}
+        bind:this={navLinks.settings}
+        onmouseenter={onSettingsEnter}
+        onmouseleave={onSettingsLeave}>Settings</a
+      >
+
+      {#if underlineReady}
+        <span
+          class="absolute bottom-0 h-[1.5px] pointer-events-none"
+          style="
+            left: {underlineLeft}px;
+            width: {underlineWidth}px;
+            background: var(--accent-1);
+            transition: left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          "
+        ></span>
+      {/if}
+    </div>
+
+    <!-- Hamburger button (mobile only) -->
+    <button
+      class="hamburger md:hidden"
+      aria-label={mobileOpen ? "Close menu" : "Open menu"}
+      aria-expanded={mobileOpen}
+      bind:this={hamburgerEl}
+      onclick={() => (mobileOpen = !mobileOpen)}
+    >
+      <span class="bar" class:open={mobileOpen}></span>
+      <span class="bar" class:open={mobileOpen}></span>
+      <span class="bar" class:open={mobileOpen}></span>
+    </button>
   </div>
 
-  <!-- Hamburger button (mobile only) -->
-  <button
-    class="hamburger md:hidden"
-    aria-label={mobileOpen ? "Close menu" : "Open menu"}
-    aria-expanded={mobileOpen}
-    bind:this={hamburgerEl}
-    onclick={() => (mobileOpen = !mobileOpen)}
+  <!-- Settings sub-row (desktop only, slides in on hover) -->
+  <div
+    class="settings-sub-row hidden md:flex items-center h-10 overflow-hidden transition-all duration-200"
+    class:settings-sub-row-open={settingsHovered}
+    role="presentation"
+    onmouseenter={onSettingsEnter}
+    onmouseleave={onSettingsLeave}
   >
-    <span class="bar" class:open={mobileOpen}></span>
-    <span class="bar" class:open={mobileOpen}></span>
-    <span class="bar" class:open={mobileOpen}></span>
-  </button>
+    <div class="flex-1"></div>
+    <div class="flex items-center gap-6 pr-[10%]">
+      <a
+        href={settingsRosterPath}
+        class="nav-sub-link"
+        aria-current={page.url.pathname === settingsRosterPath
+          ? "page"
+          : undefined}
+      >
+        Roster
+      </a>
+      <a
+        href={settingsAccountPath}
+        class="nav-sub-link"
+        aria-current={page.url.pathname === settingsAccountPath
+          ? "page"
+          : undefined}
+      >
+        Account
+      </a>
+      <a
+        href={settingsDisplayPath}
+        class="nav-sub-link"
+        aria-current={page.url.pathname === settingsDisplayPath
+          ? "page"
+          : undefined}
+      >
+        Display
+      </a>
+    </div>
+  </div>
 </nav>
 
 <!-- Backdrop -->
@@ -272,12 +342,62 @@
       aria-current={page.url.pathname === pullsPath ? "page" : undefined}
       >Pulls</a
     >
-    <a
-      href={settingsPath}
-      class="drawer-link"
-      aria-current={page.url.pathname === settingsPath ? "page" : undefined}
-      >Settings</a
-    >
+
+    <!-- Collapsible Settings section -->
+    <div class="drawer-settings-group">
+      <button
+        class="drawer-link drawer-settings-toggle"
+        aria-expanded={settingsDrawerExpanded || undefined}
+        aria-current={onSettingsPage ? "page" : undefined}
+        onclick={() => (settingsDrawerExpanded = !settingsDrawerExpanded)}
+      >
+        Settings
+        <svg
+          class="drawer-chevron"
+          class:drawer-chevron-open={settingsDrawerExpanded}
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      <div class="drawer-sub-links" class:drawer-sub-links-open={settingsDrawerExpanded}>
+        <a
+          href={settingsRosterPath}
+          class="drawer-link drawer-sub-link"
+          aria-current={page.url.pathname === settingsRosterPath
+            ? "page"
+            : undefined}
+        >
+          Roster
+        </a>
+        <a
+          href={settingsAccountPath}
+          class="drawer-link drawer-sub-link"
+          aria-current={page.url.pathname === settingsAccountPath
+            ? "page"
+            : undefined}
+        >
+          Account
+        </a>
+        <a
+          href={settingsDisplayPath}
+          class="drawer-link drawer-sub-link"
+          aria-current={page.url.pathname === settingsDisplayPath
+            ? "page"
+            : undefined}
+        >
+          Display
+        </a>
+      </div>
+    </div>
+
     <img
       src="/guoba_lightkeepers.png"
       alt=""
@@ -289,7 +409,14 @@
 <style>
   .nav-bar {
     pointer-events: none;
-    transition: background-color 0.4s ease;
+    transition:
+      background-color 0.4s ease,
+      height 0.25s ease;
+    height: 4rem;
+  }
+
+  .nav-bar.nav-sub-open {
+    height: 6.5rem;
   }
 
   .nav-initial {
@@ -327,6 +454,32 @@
   }
 
   .nav-link[aria-current="page"] {
+    color: var(--accent-1);
+  }
+
+  /* ── Settings sub-row ── */
+  .settings-sub-row {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .settings-sub-row.settings-sub-row-open {
+    max-height: 2.5rem;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-sub-link {
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    color: var(--foreground-mid);
+    transition: color 0.15s;
+    pointer-events: auto;
+  }
+
+  .nav-sub-link:hover,
+  .nav-sub-link[aria-current="page"] {
     color: var(--accent-1);
   }
 
@@ -384,5 +537,50 @@
   .drawer-link:hover,
   .drawer-link[aria-current="page"] {
     color: var(--accent-1);
+  }
+
+  /* ── Drawer settings collapsible ── */
+  .drawer-settings-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer-settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    text-align: left;
+  }
+
+  .drawer-chevron {
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .drawer-chevron-open {
+    transform: rotate(180deg);
+  }
+
+  .drawer-sub-links {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer-sub-links-open {
+    max-height: 10rem;
+  }
+
+  .drawer-sub-link {
+    font-size: 1rem;
+    padding-left: 1.2rem;
+    margin-top: 0.6rem;
   }
 </style>
