@@ -8,31 +8,37 @@
   let rosterError = $state("");
   let confirmReset = $state(false);
 
+  let cloudRosterVersion = 0;
+
   $effect(() => {
     if ($session.data) {
-      checkCloudRoster();
+      cloudRosterVersion++;
+      checkCloudRoster(cloudRosterVersion);
     } else {
       hasCloudRoster = null;
       rosterLoading = false;
     }
   });
 
-  async function checkCloudRoster() {
+  async function checkCloudRoster(version: number) {
     rosterLoading = true;
     try {
       const res = await fetch("/api/roster");
+      if (version !== cloudRosterVersion) return;
       if (!res.ok) {
         console.error("checkCloudRoster: unexpected status", res.status);
         hasCloudRoster = null;
         return;
       }
       const { roster } = await res.json();
+      if (version !== cloudRosterVersion) return;
       hasCloudRoster = roster !== null;
     } catch (err) {
+      if (version !== cloudRosterVersion) return;
       console.error("checkCloudRoster: network error", err);
       hasCloudRoster = null;
     } finally {
-      rosterLoading = false;
+      if (version === cloudRosterVersion) rosterLoading = false;
     }
   }
 
