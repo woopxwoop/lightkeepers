@@ -126,6 +126,7 @@
       if (mobileOpen) {
         closedByNavigation = true;
         mobileOpen = false;
+        settingsDrawerExpanded = false;
       }
     });
   });
@@ -152,6 +153,7 @@
       function onKeydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
           mobileOpen = false;
+          settingsDrawerExpanded = false;
           return;
         }
         if (e.key !== "Tab" || !drawerEl) return;
@@ -299,7 +301,10 @@
     class="fixed inset-0 z-40 bg-black/60"
     role="presentation"
     transition:fade={{ duration: 200 }}
-    onclick={() => (mobileOpen = false)}
+    onclick={() => {
+      mobileOpen = false;
+      settingsDrawerExpanded = false;
+    }}
   ></div>
 {/if}
 
