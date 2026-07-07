@@ -119,27 +119,24 @@
   }
 
   function toggleOwned(name_id: string) {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
-      c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
-    );
+    const char = tempCharactersOwned.find((c) => c.name_id === name_id);
+    if (char) char.isOwned = !char.isOwned;
     updateUnsavedState();
   }
 
   function selectAll() {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
-      visibleCharacters.some((v) => v.name_id === c.name_id)
-        ? { ...c, isOwned: true }
-        : c,
-    );
+    const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
+    for (const c of tempCharactersOwned) {
+      if (visibleIds.has(c.name_id)) c.isOwned = true;
+    }
     updateUnsavedState();
   }
 
   function deselectAll() {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
-      visibleCharacters.some((v) => v.name_id === c.name_id)
-        ? { ...c, isOwned: false }
-        : c,
-    );
+    const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
+    for (const c of tempCharactersOwned) {
+      if (visibleIds.has(c.name_id)) c.isOwned = false;
+    }
     updateUnsavedState();
   }
 
@@ -196,8 +193,14 @@
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       synced = true;
     } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
-      tempCharactersOwned = [...$charactersOwned];
-      savedSnapshot = JSON.stringify($charactersOwned);
+      // Only reassign when the store actually differs — avoids
+      // thrashing CharacterIcon after save (which already set the store
+      // from tempCharactersOwned).
+      const storeJson = JSON.stringify($charactersOwned);
+      if (storeJson !== savedSnapshot) {
+        tempCharactersOwned = [...$charactersOwned];
+        savedSnapshot = storeJson;
+      }
     }
   });
 
