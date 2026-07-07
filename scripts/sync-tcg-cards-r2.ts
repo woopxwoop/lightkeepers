@@ -5,13 +5,21 @@ import sharp from "sharp";
 import { readdir } from "node:fs/promises";
 import { join, basename } from "node:path";
 
+/**
+ * R2 object key prefix for card uploads.
+ *
+ * Must match the `/characters/` path segment in src/lib/utils.ts
+ * (`CHARACTERS_CDN_BASE`). Changing this without also updating the frontend's
+ * `getCharacterCard()` will silently break all card images.
+ */
+const R2_PREFIX = "characters";
+
 const {
   PUBLIC_SUPABASE_URL,
   PRIVATE_SUPABASE_KEY,
   R2_ACCOUNT_ID,
   CF_API_TOKEN,
   R2_BUCKET,
-  R2_PREFIX = "characters",
   // ── Source: local directory ────────────────────────────────────────────
   TCG_CARDS_DIR,
   // ── Source: Google Drive API (no OAuth needed for public folders) ──────

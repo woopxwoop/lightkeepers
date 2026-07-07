@@ -19,16 +19,19 @@
       href: abyssPath,
       label: "Spiral Abyss",
       description: "Find your best teams for the current abyss cycle.",
+      banner: "/abyss_banner.png",
     },
     {
       href: stygianPath,
       label: "Stygian Onslaught",
       description: "Find your best teams for the current stygian cycle.",
+      banner: "/stygian_banner.png",
     },
     {
       href: pullsPath,
       label: "Pull Suggestions",
       description: "See which characters would improve your teams the most.",
+      banner: "/heizou.jpg",
     },
   ];
 </script>
@@ -71,21 +74,11 @@
             class="feature-card rounded-xl overflow-hidden flex flex-col group relative"
             style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
           >
-            <!-- Banner backgrounds for abyss and stygian -->
-            {#if feature.label === "Spiral Abyss"}
+            <!-- Banner background -->
+            {#if feature.banner}
               <div
                 class="absolute inset-0 bg-cover bg-center opacity-20"
-                style="background-image: url('/abyss_banner.png');"
-              ></div>
-            {:else if feature.label === "Stygian Onslaught"}
-              <div
-                class="absolute inset-0 bg-cover bg-center opacity-20"
-                style="background-image: url('/stygian_banner.png');"
-              ></div>
-            {:else if feature.label === "Pull Suggestions"}
-              <div
-                class="absolute inset-0 bg-cover bg-center opacity-20"
-                style="background-image: url('/heizou.jpg');"
+                style="background-image: url('{feature.banner}');"
               ></div>
             {/if}
 
