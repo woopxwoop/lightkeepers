@@ -267,27 +267,24 @@
   let savedSnapshot = $state<string>("");
 
   function toggleOwned(name_id: string) {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
-      c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
-    );
+    const char = tempCharactersOwned.find((c) => c.name_id === name_id);
+    if (char) char.isOwned = !char.isOwned;
     hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
   }
 
   function selectAll() {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
-      visibleCharacters.some((v) => v.name_id === c.name_id)
-        ? { ...c, isOwned: true }
-        : c,
-    );
+    const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
+    for (const c of tempCharactersOwned) {
+      if (visibleIds.has(c.name_id)) c.isOwned = true;
+    }
     hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
   }
 
   function deselectAll() {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
-      visibleCharacters.some((v) => v.name_id === c.name_id)
-        ? { ...c, isOwned: false }
-        : c,
-    );
+    const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
+    for (const c of tempCharactersOwned) {
+      if (visibleIds.has(c.name_id)) c.isOwned = false;
+    }
     hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
   }
 
@@ -354,8 +351,14 @@
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       synced = true;
     } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
-      tempCharactersOwned = [...$charactersOwned];
-      savedSnapshot = JSON.stringify($charactersOwned);
+      // Only reassign when the store actually differs — avoids
+      // thrashing CharacterIcon after save (which already set the store
+      // from tempCharactersOwned).
+      const storeJson = JSON.stringify($charactersOwned);
+      if (storeJson !== savedSnapshot) {
+        tempCharactersOwned = [...$charactersOwned];
+        savedSnapshot = storeJson;
+      }
     }
   });
 
