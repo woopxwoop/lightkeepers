@@ -114,22 +114,32 @@ async function asyncPool<T, R>(
 
 // ── R2 helpers ──────────────────────────────────────────────────────────
 
+const R2_UPLOAD_TIMEOUT_MS = 30_000;
+const R2_LIST_TIMEOUT_MS = 15_000;
+
 async function uploadToR2(key: string, body: Buffer): Promise<void> {
   const url = `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(key)}`;
-  const resp = await fetch(url, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${CF_API_TOKEN}`,
-      "Content-Type": "image/webp",
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-    body: new Uint8Array(body),
-  });
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(
-      `R2 upload failed: ${resp.status} ${resp.statusText} - ${text}`,
-    );
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), R2_UPLOAD_TIMEOUT_MS);
+  try {
+    const resp = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${CF_API_TOKEN}`,
+        "Content-Type": "image/webp",
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+      body: new Uint8Array(body),
+      signal: controller.signal,
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(
+        `R2 upload failed: ${resp.status} ${resp.statusText} - ${text}`,
+      );
+    }
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -143,13 +153,21 @@ async function listR2Keys(prefix: string): Promise<Set<string>> {
     if (cursor) params.set("cursor", cursor);
 
     const url = `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects?${params}`;
-    const resp = await fetch(url, {
-      headers: { Authorization: `Bearer ${CF_API_TOKEN}` },
-    });
-    if (!resp.ok) throw new Error(`R2 list failed: ${resp.status}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), R2_LIST_TIMEOUT_MS);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body: any = await resp.json();
+    let body: any;
+    try {
+      const resp = await fetch(url, {
+        headers: { Authorization: `Bearer ${CF_API_TOKEN}` },
+        signal: controller.signal,
+      });
+      if (!resp.ok) throw new Error(`R2 list failed: ${resp.status}`);
+      body = await resp.json();
+    } finally {
+      clearTimeout(timer);
+    }
     if (!body.success)
       throw new Error(`R2 list failed: ${JSON.stringify(body.errors)}`);
 
