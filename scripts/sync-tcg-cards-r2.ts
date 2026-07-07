@@ -30,16 +30,32 @@ const {
   IMAGE_WEBP_QUALITY = "80",
 } = process.env;
 
+function parseFlag(name: string, defaultValue = false): boolean {
+  const value = process.env[name];
+  if (value == null) return defaultValue;
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
+const DRY_RUN = parseFlag("DRY_RUN", false);
+
 // ── Validation ──────────────────────────────────────────────────────────
 
 for (const [key, value] of Object.entries({
   PUBLIC_SUPABASE_URL,
   PRIVATE_SUPABASE_KEY,
-  R2_ACCOUNT_ID,
-  R2_BUCKET,
-  CF_API_TOKEN,
 })) {
   if (!value) throw new Error(`Missing required env var: ${key}`);
+}
+
+// R2 credentials aren't needed for a dry run (no uploads).
+if (!DRY_RUN) {
+  for (const [key, value] of Object.entries({
+    R2_ACCOUNT_ID,
+    R2_BUCKET,
+    CF_API_TOKEN,
+  })) {
+    if (!value) throw new Error(`Missing required env var: ${key}`);
+  }
 }
 
 if (!TCG_CARDS_DIR && !GOOGLE_DRIVE_API_KEY) {
@@ -54,12 +70,6 @@ const WEBP_QUALITY = Number(IMAGE_WEBP_QUALITY);
 const db = createClient<Database>(PUBLIC_SUPABASE_URL!, PRIVATE_SUPABASE_KEY!, {
   auth: { persistSession: false },
 });
-
-function parseFlag(name: string, defaultValue = false): boolean {
-  const value = process.env[name];
-  if (value == null) return defaultValue;
-  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
-}
 
 // ── Concurrency pool ────────────────────────────────────────────────────
 
@@ -432,11 +442,10 @@ function resolveMatches(
 }
 
 async function main() {
-  const dryRun = parseFlag("DRY_RUN", false);
   const force = parseFlag("FORCE", false);
   const concurrency = Math.max(1, Number(process.env.CONCURRENCY) || 5);
 
-  if (dryRun) console.log("DRY_RUN=true (uploads disabled)");
+  if (DRY_RUN) console.log("DRY_RUN=true (uploads disabled)");
   if (force) console.log("FORCE=true (skipping existence checks)");
   console.log(`Concurrency: ${concurrency}`);
 
@@ -507,11 +516,11 @@ async function main() {
   // ── Existing R2 inventory ────────────────────────────────────────────
   console.log("\n── R2 inventory ────────────────────────────");
   const existingKeys =
-    dryRun || force ? new Set<string>() : await listR2Keys(`${R2_PREFIX}/`);
+    DRY_RUN || force ? new Set<string>() : await listR2Keys(`${R2_PREFIX}/`);
   console.log(`Existing: ${existingKeys.size} character assets`);
 
   // ── Process & upload ─────────────────────────────────────────────────
-  if (dryRun) {
+  if (DRY_RUN) {
     console.log("\n── Dry run (would upload) ─────────────────");
     for (const match of uploads) {
       const key = `${R2_PREFIX}/${match.character.name_id}/card.webp`;
