@@ -142,38 +142,43 @@
   async function saveCharacters() {
     if (isSaving) return;
     isSaving = true;
-    localStorage.setItem(
-      "charactersOwned",
-      JSON.stringify(tempCharactersOwned),
-    );
-    savedSnapshot = JSON.stringify(tempCharactersOwned);
-    charactersOwned.set(tempCharactersOwned);
+    rosterError = "";
 
-    await writeTeamsOwned(tempCharactersOwned);
-    writeNearMissTeams(tempCharactersOwned).catch(console.error);
+    try {
+      // Persist locally first (synchronous)
+      localStorage.setItem(
+        "charactersOwned",
+        JSON.stringify(tempCharactersOwned),
+      );
+      charactersOwned.set(tempCharactersOwned);
 
-    if ($session.data) {
-      rosterError = "";
-      fetch("/api/roster", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roster: tempCharactersOwned }),
-      })
-        .then((res) => {
-          if (res.ok) {
-            // Cloud roster updated
-          } else {
-            rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
-          }
-        })
-        .catch(() => {
-          rosterError = "Network error — roster not saved to cloud";
+      // Local persistence — all awaited so errors are caught
+      await writeTeamsOwned(tempCharactersOwned);
+      await writeNearMissTeams(tempCharactersOwned);
+
+      // Cloud sync (only when logged in)
+      if ($session.data) {
+        const res = await fetch("/api/roster", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roster: tempCharactersOwned }),
         });
+        if (!res.ok) {
+          rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
+        }
+      }
+
+      // All persistence succeeded — mark as saved
+      savedSnapshot = JSON.stringify(tempCharactersOwned);
+      showSaved = true;
+      hasUnsavedChanges = false;
+    } catch (e) {
+      console.error("Roster save error:", e);
+      rosterError = "Something went wrong — your changes may not be saved";
+    } finally {
+      isSaving = false;
     }
 
-    showSaved = true;
-    hasUnsavedChanges = false;
-    isSaving = false;
     setTimeout(() => {
       showSaved = false;
     }, 2000);
