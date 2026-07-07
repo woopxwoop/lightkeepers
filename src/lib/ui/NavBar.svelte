@@ -341,7 +341,7 @@
     <div class="drawer-settings-group">
       <button
         class="drawer-link drawer-settings-toggle"
-        aria-expanded={settingsDrawerExpanded || undefined}
+        aria-expanded={settingsDrawerExpanded}
         aria-current={onSettingsPage ? "page" : undefined}
         onclick={() => (settingsDrawerExpanded = !settingsDrawerExpanded)}
       >
