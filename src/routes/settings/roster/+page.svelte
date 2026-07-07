@@ -112,11 +112,17 @@
 
   let savedSnapshot = $state("");
 
+  function updateUnsavedState() {
+    const changed = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
+    hasUnsavedChanges = changed;
+    if (changed) showSaved = false;
+  }
+
   function toggleOwned(name_id: string) {
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
     );
-    hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
+    updateUnsavedState();
   }
 
   function selectAll() {
@@ -125,7 +131,7 @@
         ? { ...c, isOwned: true }
         : c,
     );
-    hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
+    updateUnsavedState();
   }
 
   function deselectAll() {
@@ -134,7 +140,7 @@
         ? { ...c, isOwned: false }
         : c,
     );
-    hasUnsavedChanges = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
+    updateUnsavedState();
   }
 
   let rosterError = $state("");
