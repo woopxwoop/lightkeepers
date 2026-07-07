@@ -1,14 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { charactersOwned } from "$lib/stores";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-
-  let { data } = $props();
-  let characters = $derived(data.characters);
-
-  function findChar(name: string) {
-    return characters.find((c) => c.name?.toLowerCase() === name.toLowerCase());
-  }
 
   const settingsPath = resolve("/settings");
   const abyssPath = resolve("/abyss");
@@ -27,19 +19,40 @@
       href: abyssPath,
       label: "Spiral Abyss",
       description: "Find your best teams for the current abyss cycle.",
-      chars: ["Bennett", "Rosaria", "Xiangling", "Kaeya"],
+      banner: "/abyss_banner.png",
     },
     {
       href: stygianPath,
       label: "Stygian Onslaught",
       description: "Find your best teams for the current stygian cycle.",
-      chars: ["Sandrone", "Cyno"],
+      banner: "/stygian_banner.png",
     },
     {
       href: pullsPath,
       label: "Pull Suggestions",
       description: "See which characters would improve your teams the most.",
-      chars: ["Qiqi", "Yumemizuki Mizuki"],
+      banner: "/heizou.jpg",
+    },
+  ];
+
+  const quickStartSteps = [
+    {
+      step: "1",
+      title: "Set up your roster",
+      description:
+        "Mark the characters you own so recommendations are tailored to you.",
+    },
+    {
+      step: "2",
+      title: "Browse team recommendations",
+      description:
+        "Get optimal team assignments for Spiral Abyss and Stygian Onslaught.",
+    },
+    {
+      step: "3",
+      title: "Discover who to pull",
+      description:
+        "See which characters would unlock your best missing teams.",
     },
   ];
 </script>
@@ -51,18 +64,24 @@
         <h1 class="hook">Genshin Impact <br /> meta recommendations.</h1>
         {#if !showRosterView}
           <p style="color: var(--foreground-mid);">
-            Select your owned characters to get personalized team recommendations.
+            Select your owned characters to get personalized team
+            recommendations.
           </p>
         {/if}
       </div>
 
       {#if import.meta.env.DEV}
         <button
-          onclick={() => (devOverride = devOverride === null ? !hasRoster : !devOverride)}
+          onclick={() =>
+            (devOverride = devOverride === null ? !hasRoster : !devOverride)}
           class="text-xs px-2 py-1 rounded font-mono shrink-0 mt-1"
           style="background: color-mix(in srgb, var(--accent-1) 15%, transparent); color: var(--accent-1); border: 0.5px solid color-mix(in srgb, var(--accent-1) 25%, transparent);"
         >
-          {devOverride === null ? "dev: auto" : devOverride ? "dev: roster" : "dev: empty"}
+          {devOverride === null
+            ? "dev: auto"
+            : devOverride
+              ? "dev: roster"
+              : "dev: empty"}
         </button>
       {/if}
     </div>
@@ -73,29 +92,33 @@
         {#each features as feature}
           <a
             href={feature.href}
-            class="feature-card rounded-xl overflow-hidden flex flex-col group"
+            class="feature-card rounded-xl overflow-hidden flex flex-col group relative"
             style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
           >
-            <div class="p-4 flex flex-col gap-3">
-              <!-- Character icon row -->
-              <div class="flex items-center gap-1">
-                {#each feature.chars.slice(0, 4) as charName}
-                  <div
-                    class="w-10 h-10 rounded-lg overflow-hidden shrink-0"
-                    style="background: var(--background-color);"
-                  >
-                    <CharacterIcon character={findChar(charName)} zoom={1.5} />
-                  </div>
-                {/each}
-              </div>
+            <!-- Banner background -->
+            {#if feature.banner}
+              <div
+                class="absolute inset-0 bg-cover bg-center opacity-20"
+                style="background-image: url('{feature.banner}');"
+              ></div>
+            {/if}
 
-              <div class="flex flex-col gap-1">
-                <span class="text-sm font-medium" style="color: var(--foreground-color);">
-                  {feature.label}
-                </span>
-                <p class="text-xs leading-relaxed" style="color: var(--foreground-mid);">
-                  {feature.description}
-                </p>
+            <div class="p-4 flex flex-col gap-3 relative z-10">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex flex-col gap-1">
+                  <span
+                    class="text-sm font-medium"
+                    style="color: var(--foreground-color);"
+                  >
+                    {feature.label}
+                  </span>
+                  <p
+                    class="text-xs leading-relaxed"
+                    style="color: var(--foreground-mid);"
+                  >
+                    {feature.description}
+                  </p>
+                </div>
               </div>
             </div>
           </a>
@@ -104,11 +127,7 @@
     {:else}
       <!-- Quick-start steps -->
       <div class="flex flex-col gap-5 mt-2">
-        {#each [
-          { step: "1", title: "Set up your roster", description: "Mark the characters you own so recommendations are tailored to you." },
-          { step: "2", title: "Browse team recommendations", description: "Get optimal team assignments for Spiral Abyss and Stygian Onslaught." },
-          { step: "3", title: "Discover who to pull", description: "See which characters would unlock your best missing teams." },
-        ] as item}
+        {#each quickStartSteps as item}
           <div class="flex items-start gap-4">
             <div
               class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
@@ -117,7 +136,10 @@
               {item.step}
             </div>
             <div class="flex flex-col gap-0.5 pt-0.5">
-              <span class="text-sm font-medium" style="color: var(--foreground-color);">
+              <span
+                class="text-sm font-medium"
+                style="color: var(--foreground-color);"
+              >
                 {item.title}
               </span>
               <p class="text-xs" style="color: var(--foreground-mid);">
@@ -145,11 +167,17 @@
   }
 
   .feature-card {
-    transition: border-color 0.2s, transform 0.2s;
+    transition:
+      border-color 0.2s,
+      transform 0.2s;
   }
 
   .feature-card:hover {
-    border-color: color-mix(in srgb, var(--accent-1) 45%, transparent) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--accent-1) 45%,
+      transparent
+    ) !important;
     transform: translateY(-1px);
   }
 </style>

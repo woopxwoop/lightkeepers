@@ -21,6 +21,7 @@
     isNewCharacter,
     getCharacterCoop,
     getCharacterPortrait,
+    getCharacterCard,
   } from "$lib/utils";
 
   const sections = [
@@ -112,11 +113,11 @@
     "accent-3": "Accent 3",
   };
 
-  const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+  const HEX_COLOR_RE =
+    /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
   function setThemeColor(key: ThemeColorKey, value: string) {
-    if (!HEX_COLOR_RE.test(value))
-      return;
+    if (!HEX_COLOR_RE.test(value)) return;
     const normalized = normalizeHexColor(value);
     setDisplayPreferences({
       themeColors: {
@@ -655,10 +656,7 @@
                       </div>
                     {/if}
                     {#if rosterError}
-                      <span
-                        class="text-xs"
-                        style="color: var(--accent-1);"
-                      >
+                      <span class="text-xs" style="color: var(--accent-1);">
                         {rosterError}
                       </span>
                     {/if}
@@ -875,7 +873,7 @@
                 <div class="preference-row bg-picker-row">
                   <div>
                     <span>Character Icons</span>
-                    <p>Choose between portrait or headshot.</p>
+                    <p>Choose between portrait, headshot, or TCG card art.</p>
                   </div>
                   <div class="bg-picker portrait-picker">
                     <button
@@ -891,9 +889,7 @@
                         style="background-image: url({getCharacterCoop(
                           'Wriothesley',
                         )});"
-                      >
-                        <div class="char-card-overlay"></div>
-                      </div>
+                      ></div>
                       <span>Portrait</span>
                     </button>
                     <button
@@ -912,7 +908,47 @@
                       ></div>
                       <span>Headshot</span>
                     </button>
+                    <button
+                      type="button"
+                      class="bg-card"
+                      class:is-selected={$displayPreferences.iconStyle ===
+                        "tcg"}
+                      aria-pressed={$displayPreferences.iconStyle === "tcg"}
+                      onclick={() => setIconStyle("tcg")}
+                    >
+                      <div
+                        class="char-card-preview char-card-preview--tcg"
+                        style="background-image: url({getCharacterCard(
+                          'Wriothesley',
+                        )});"
+                      ></div>
+                      <span>TCG Card</span>
+                    </button>
                   </div>
+                  {#if $displayPreferences.iconStyle === "tcg"}
+                    <p
+                      class="tcg-info"
+                      style="color: var(--foreground-mid); font-size: 0.78rem; display: flex; align-items: center; gap: 0.35rem; margin-top: 0.25rem;"
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>
+                      Not all characters have a TCG card yet &mdash; in that case,
+                      their portrait will be shown instead.
+                    </p>
+                  {/if}
                 </div>
 
                 <div class="preference-row bg-picker-row">
@@ -1423,6 +1459,10 @@
     transform: scale(2.5);
   }
 
+  .character-icon-button:hover :global(.icon-container-tcg img) {
+    transform: scale(1.5);
+  }
+
   .character-icon-button:hover {
     opacity: 0.67;
   }
@@ -1520,8 +1560,7 @@
     gap: 6px;
     padding: 10px 14px;
     border-radius: 8px;
-    border: 0.5px solid
-      color-mix(in srgb, var(--accent-1) 22%, transparent);
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
     background: color-mix(in srgb, var(--background-color) 50%, transparent);
     cursor: pointer;
     transition:
@@ -1548,8 +1587,7 @@
     width: 14px;
     height: 14px;
     border-radius: 3px;
-    border: 0.5px solid
-      color-mix(in srgb, var(--accent-1) 18%, transparent);
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);
   }
 
   .bg-card-preview--image {
@@ -1568,14 +1606,8 @@
     background-color: color-mix(in oklab, black 80%, transparent);
   }
 
-  .char-card-overlay {
-    position: absolute;
-    inset: 0;
-    background-color: color-mix(in oklab, black 80%, transparent);
-  }
-
   .portrait-picker {
-    max-width: 400px;
+    max-width: 550px;
   }
 
   .char-card-preview {
@@ -1591,9 +1623,13 @@
     background-position: center 22%;
   }
 
+  .char-card-preview--tcg {
+    background-size: 100%;
+    background-position: center 12%;
+  }
+
   .char-card-preview--headshot {
     background-size: cover;
     background-position: center;
   }
 </style>
-

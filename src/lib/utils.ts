@@ -35,6 +35,10 @@ export function getCharacterCoop(nameId: string) {
   return `${CHARACTERS_CDN_BASE}/${nameId}/coop.webp`;
 }
 
+export function getCharacterCard(nameId: string) {
+  return `${CHARACTERS_CDN_BASE}/${nameId}/card.webp`;
+}
+
 export function getEnemyAsset(assetId: string) {
   return `${ENEMIES_CDN_BASE}/${assetId}.webp`;
 }
