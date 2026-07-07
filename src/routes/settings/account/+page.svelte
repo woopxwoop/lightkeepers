@@ -6,6 +6,7 @@
   let hasCloudRoster = $state<boolean | null>(null);
   let rosterLoading = $state(true);
   let rosterError = $state("");
+  let confirmReset = $state(false);
 
   $effect(() => {
     if ($session.data) {
@@ -35,8 +36,17 @@
     }
   }
 
-  async function resetCloudRoster() {
+  function promptReset() {
+    confirmReset = true;
+  }
+
+  function cancelReset() {
+    confirmReset = false;
+  }
+
+  async function executeReset() {
     rosterError = "";
+    confirmReset = false;
     try {
       const res = await fetch("/api/roster", { method: "DELETE" });
       if (res.ok) {
@@ -107,9 +117,26 @@
           >
             Cloud roster backed up
           </p>
-          <button type="button" class="secondary-action" onclick={resetCloudRoster}
-            >Reset</button
-          >
+          {#if confirmReset}
+            <div class="flex items-center gap-2">
+              <span style="color: var(--foreground-mid); font-size: 0.85rem;">
+                Delete cloud roster?
+              </span>
+              <button
+                type="button"
+                class="secondary-action"
+                style="color: var(--accent-1);"
+                onclick={executeReset}>Yes</button
+              >
+              <button type="button" class="secondary-action" onclick={cancelReset}
+                >No</button
+              >
+            </div>
+          {:else}
+            <button type="button" class="secondary-action" onclick={promptReset}
+              >Reset</button
+            >
+          {/if}
         </div>
       {:else}
         <p style="color: var(--foreground-mid); font-size: 0.85rem;">
