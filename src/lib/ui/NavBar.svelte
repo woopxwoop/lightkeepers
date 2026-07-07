@@ -235,7 +235,9 @@
         aria-current={onSettingsPage ? "page" : undefined}
         bind:this={navLinks.settings}
         onmouseenter={onSettingsEnter}
-        onmouseleave={onSettingsLeave}>Settings</a
+        onmouseleave={onSettingsLeave}
+        onfocus={onSettingsEnter}
+        onblur={onSettingsLeave}>Settings</a
       >
 
       <!-- Settings sub-links -->
@@ -246,6 +248,8 @@
         role="presentation"
         onmouseenter={onSettingsEnter}
         onmouseleave={onSettingsLeave}
+        onfocusin={onSettingsEnter}
+        onfocusout={onSettingsLeave}
       >
         {#each settingsLinks as link}
           <a
