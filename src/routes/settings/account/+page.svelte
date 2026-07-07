@@ -140,7 +140,7 @@
         onclick={() =>
           authClient.signIn.social({
             provider: "google",
-            callbackURL: "/settings",
+            callbackURL: "/settings/account",
           })}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -169,7 +169,7 @@
         onclick={() =>
           authClient.signIn.social({
             provider: "discord",
-            callbackURL: "/settings",
+            callbackURL: "/settings/account",
           })}
       >
         <svg
