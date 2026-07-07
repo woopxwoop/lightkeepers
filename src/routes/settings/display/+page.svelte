@@ -287,6 +287,7 @@
               type="color"
               value={currentColor}
               class="sr-only"
+              tabindex="-1"
               aria-label="Pick color for {COLOR_LABELS[key]}"
               oninput={(e) => {
                 const val = (e.target as HTMLInputElement).value;
