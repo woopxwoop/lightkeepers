@@ -39,7 +39,7 @@
     character?.name_id
       ? useEnkaIcon
         ? getCharacterPortrait(character.name_id)
-        : useTcg
+        : useTcg && !tcgFailed
           ? getCharacterCard(character.name_id)
           : getCharacterCoop(character.name_id)
       : avatarImg,
@@ -62,16 +62,8 @@
     <img
       src={imgSrc}
       alt={character.name ?? "Character"}
-      onerror={(e) => {
-        const img = e.target as HTMLImageElement;
-        // If TCG card asset is missing (404), fall back to coop portrait
-        // and swap the container class so zoom / positioning is correct.
-        if (useTcg && !img.src.includes("coop.webp")) {
-          img.src = character.name_id
-            ? getCharacterCoop(character.name_id)
-            : avatarImg;
-          tcgFailed = true;
-        }
+      onerror={() => {
+        if (useTcg && !tcgFailed) tcgFailed = true;
       }}
     />
   {/if}
