@@ -9,9 +9,11 @@
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
   const settingsPath = resolve("/settings");
-  const settingsRosterPath = resolve("/settings/roster");
-  const settingsAccountPath = resolve("/settings/account");
-  const settingsDisplayPath = resolve("/settings/display");
+  const settingsLinks = [
+    { label: "Roster", path: resolve("/settings/roster") },
+    { label: "Account", path: resolve("/settings/account") },
+    { label: "Display", path: resolve("/settings/display") },
+  ] as const;
 
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(resolve("/settings")),
@@ -226,6 +228,7 @@
         aria-current={page.url.pathname === pullsPath ? "page" : undefined}
         bind:this={navLinks.pulls}>Pulls</a
       >
+      <div class="relative">
       <a
         href={settingsPath}
         class="nav-link"
@@ -234,6 +237,26 @@
         onmouseenter={onSettingsEnter}
         onmouseleave={onSettingsLeave}>Settings</a
       >
+
+      <!-- Settings sub-links -->
+      <div
+        class="settings-sub-row absolute left-1/2 -translate-x-1/2 top-full flex items-center gap-4 pt-4 pb-2 transition-all duration-200 whitespace-nowrap"
+        class:settings-sub-row-open={settingsHovered}
+        role="presentation"
+        onmouseenter={onSettingsEnter}
+        onmouseleave={onSettingsLeave}
+      >
+        {#each settingsLinks as link}
+          <a
+            href={link.path}
+            class="nav-sub-link"
+            aria-current={page.url.pathname === link.path
+              ? "page"
+              : undefined}>{link.label}</a
+          >
+        {/each}
+      </div>
+      </div>
 
       {#if underlineReady}
         <span
@@ -263,45 +286,6 @@
     </button>
   </div>
 
-  <!-- Settings sub-row (desktop only, slides in on hover) -->
-  <div
-    class="settings-sub-row hidden md:flex items-center h-10 overflow-hidden transition-all duration-200"
-    class:settings-sub-row-open={settingsHovered}
-    role="presentation"
-    onmouseenter={onSettingsEnter}
-    onmouseleave={onSettingsLeave}
-  >
-    <div class="flex-1"></div>
-    <div class="flex items-center gap-6 pr-[10%]">
-      <a
-        href={settingsRosterPath}
-        class="nav-sub-link"
-        aria-current={page.url.pathname === settingsRosterPath
-          ? "page"
-          : undefined}
-      >
-        Roster
-      </a>
-      <a
-        href={settingsAccountPath}
-        class="nav-sub-link"
-        aria-current={page.url.pathname === settingsAccountPath
-          ? "page"
-          : undefined}
-      >
-        Account
-      </a>
-      <a
-        href={settingsDisplayPath}
-        class="nav-sub-link"
-        aria-current={page.url.pathname === settingsDisplayPath
-          ? "page"
-          : undefined}
-      >
-        Display
-      </a>
-    </div>
-  </div>
 </nav>
 
 <!-- Backdrop -->
@@ -368,33 +352,17 @@
         </svg>
       </button>
       <div class="drawer-sub-links" class:drawer-sub-links-open={settingsDrawerExpanded}>
-        <a
-          href={settingsRosterPath}
-          class="drawer-link drawer-sub-link"
-          aria-current={page.url.pathname === settingsRosterPath
-            ? "page"
-            : undefined}
-        >
-          Roster
-        </a>
-        <a
-          href={settingsAccountPath}
-          class="drawer-link drawer-sub-link"
-          aria-current={page.url.pathname === settingsAccountPath
-            ? "page"
-            : undefined}
-        >
-          Account
-        </a>
-        <a
-          href={settingsDisplayPath}
-          class="drawer-link drawer-sub-link"
-          aria-current={page.url.pathname === settingsDisplayPath
-            ? "page"
-            : undefined}
-        >
-          Display
-        </a>
+        {#each settingsLinks as link}
+          <a
+            href={link.path}
+            class="drawer-link drawer-sub-link"
+            aria-current={page.url.pathname === link.path
+              ? "page"
+              : undefined}
+          >
+            {link.label}
+          </a>
+        {/each}
       </div>
     </div>
 
@@ -580,7 +548,6 @@
 
   .drawer-sub-link {
     font-size: 1rem;
-    padding-left: 1.2rem;
     margin-top: 0.6rem;
   }
 </style>
