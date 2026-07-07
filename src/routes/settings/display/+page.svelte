@@ -183,6 +183,7 @@
           type="button"
           class="bg-card"
           class:is-selected={$displayPreferences.backgroundEnabled}
+          aria-pressed={$displayPreferences.backgroundEnabled}
           onclick={() => setDisplayPreferences({ backgroundEnabled: true })}
         >
           <div
@@ -197,6 +198,7 @@
           type="button"
           class="bg-card"
           class:is-selected={!$displayPreferences.backgroundEnabled}
+          aria-pressed={!$displayPreferences.backgroundEnabled}
           onclick={() => setDisplayPreferences({ backgroundEnabled: false })}
         >
           <div
