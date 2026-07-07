@@ -278,6 +278,11 @@
       aria-current={page.url.pathname === settingsPath ? "page" : undefined}
       >Settings</a
     >
+    <img
+      src="/guoba_lightkeepers.png"
+      alt=""
+      class="w-full h-auto mt-auto opacity-50"
+    />
   </div>
 {/if}
 

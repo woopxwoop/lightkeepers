@@ -4,13 +4,14 @@
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import type { Character } from "$lib/definitions";
-  import {
-    bootstrapClient,
-    seedClientStores,
-  } from "$lib/app/bootstrapClient";
+  import { bootstrapClient, seedClientStores } from "$lib/app/bootstrapClient";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
-  import { displayPreferences, initDisplayPreferences, faviconDataUri } from "$lib/stores";
+  import {
+    displayPreferences,
+    initDisplayPreferences,
+    faviconDataUri,
+  } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
   import "../app.css";
 
