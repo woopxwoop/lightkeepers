@@ -160,7 +160,7 @@
           drawerEl.querySelectorAll<HTMLElement>(
             'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
           ),
-        );
+        ).filter((el) => !el.closest("[inert]"));
         if (focusable.length < 2) return;
 
         const first = focusable[0];
@@ -242,6 +242,7 @@
       <div
         class="settings-sub-row absolute left-1/2 -translate-x-1/2 top-full flex items-center gap-4 pt-4 pb-2 transition-all duration-200 whitespace-nowrap"
         class:settings-sub-row-open={settingsHovered}
+        inert={!settingsHovered}
         role="presentation"
         onmouseenter={onSettingsEnter}
         onmouseleave={onSettingsLeave}
@@ -351,7 +352,7 @@
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
-      <div class="drawer-sub-links" class:drawer-sub-links-open={settingsDrawerExpanded}>
+      <div class="drawer-sub-links" class:drawer-sub-links-open={settingsDrawerExpanded} inert={!settingsDrawerExpanded}>
         {#each settingsLinks as link}
           <a
             href={link.path}
