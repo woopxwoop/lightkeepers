@@ -70,9 +70,10 @@
 </div>
 
 <style>
-  /* ── Coop portrait (default) ──────────────────────────────────── */
+  /* ── Coop portrait & TCG card (shared 3:4 container) ──────────── */
 
-  .icon-container-coop {
+  .icon-container-coop,
+  .icon-container-tcg {
     width: 100%;
     aspect-ratio: 3/4;
     overflow: hidden;
@@ -84,13 +85,7 @@
     transform: scale(calc(2 * var(--czoom)));
   }
 
-  /* ── TCG card (same 3:4 aspect, less zoom) ───────────────────── */
-
-  .icon-container-tcg {
-    width: 100%;
-    aspect-ratio: 3/4;
-    overflow: hidden;
-  }
+  /* ── TCG card (less zoom) ────────────────────────────────────── */
 
   .icon-container-tcg img {
     object-position: center 30%;
