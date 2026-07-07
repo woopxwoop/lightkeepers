@@ -34,6 +34,27 @@
       banner: "/heizou.jpg",
     },
   ];
+
+  const quickStartSteps = [
+    {
+      step: "1",
+      title: "Set up your roster",
+      description:
+        "Mark the characters you own so recommendations are tailored to you.",
+    },
+    {
+      step: "2",
+      title: "Browse team recommendations",
+      description:
+        "Get optimal team assignments for Spiral Abyss and Stygian Onslaught.",
+    },
+    {
+      step: "3",
+      title: "Discover who to pull",
+      description:
+        "See which characters would unlock your best missing teams.",
+    },
+  ];
 </script>
 
 <main class="w-[80%] pb-20">
@@ -106,7 +127,7 @@
     {:else}
       <!-- Quick-start steps -->
       <div class="flex flex-col gap-5 mt-2">
-        {#each [{ step: "1", title: "Set up your roster", description: "Mark the characters you own so recommendations are tailored to you." }, { step: "2", title: "Browse team recommendations", description: "Get optimal team assignments for Spiral Abyss and Stygian Onslaught." }, { step: "3", title: "Discover who to pull", description: "See which characters would unlock your best missing teams." }] as item}
+        {#each quickStartSteps as item}
           <div class="flex items-start gap-4">
             <div
               class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
