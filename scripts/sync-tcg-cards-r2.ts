@@ -274,6 +274,7 @@ async function listDriveFiles(
     url.searchParams.set("key", apiKey);
     url.searchParams.set("fields", "files(id, name), nextPageToken");
     url.searchParams.set("pageSize", "1000");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), DRIVE_TIMEOUT_MS);
