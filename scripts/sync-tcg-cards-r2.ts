@@ -568,6 +568,9 @@ async function main() {
     console.log(
       `\nDone. Success: ${success}, skipped: ${skipped}, failed: ${failed}`,
     );
+    if (failed > 0) {
+      throw new Error(`${failed} card upload(s) failed.`);
+    }
   }
 }
 
