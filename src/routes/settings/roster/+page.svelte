@@ -223,7 +223,7 @@
   <div class="flex flex-col gap-4">
     <div class="flex flex-col gap-0">
       <div
-        class="flex items-center gap-2 rounded-lg px-3"
+        class="flex items-center gap-2 rounded-lg px-3 search-bar"
         style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
       >
         <button
@@ -590,5 +590,9 @@
 
   .character-icon-button-owned {
     opacity: 1;
+  }
+
+  .search-bar:focus-within {
+    box-shadow: 0 0 0 1.5px var(--accent-1);
   }
 </style>
