@@ -318,6 +318,14 @@
     bind:this={drawerEl}
     transition:fly={{ x: 280, duration: 260 }}
   >
+    <!-- External: Community -->
+    <a
+      href="https://discord.gg/D7RbZgCFCC"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="drawer-link"
+      >Discord</a
+    >
     <a
       href={abyssPath}
       class="drawer-link"
