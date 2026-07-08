@@ -176,7 +176,10 @@
         "charactersOwned",
         JSON.stringify(tempCharactersOwned),
       );
-      charactersOwned.set(tempCharactersOwned);
+      // Clone so the store holds independent objects — otherwise
+      // mutations to tempCharactersOwned silently update the store
+      // and the "changed" count always reads 0.
+      charactersOwned.set(structuredClone(tempCharactersOwned));
 
       // Local persistence — all awaited so errors are caught
       await writeTeamsOwned(tempCharactersOwned);
@@ -213,7 +216,8 @@
 
   $effect(() => {
     if ($charactersHydrated && !synced) {
-      tempCharactersOwned = [...$charactersOwned];
+      // Deep-clone so tempCharactersOwned objects are independent of the store.
+      tempCharactersOwned = structuredClone($charactersOwned);
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       synced = true;
     } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
@@ -222,7 +226,7 @@
       // from tempCharactersOwned).
       const storeJson = JSON.stringify($charactersOwned);
       if (storeJson !== savedSnapshot) {
-        tempCharactersOwned = [...$charactersOwned];
+        tempCharactersOwned = structuredClone($charactersOwned);
         savedSnapshot = storeJson;
       }
     }
@@ -511,7 +515,7 @@
             <button
               type="button"
               onclick={() => {
-                tempCharactersOwned = [...$charactersOwned];
+                tempCharactersOwned = structuredClone($charactersOwned);
                 savedSnapshot = JSON.stringify($charactersOwned);
                 hasUnsavedChanges = false;
               }}
