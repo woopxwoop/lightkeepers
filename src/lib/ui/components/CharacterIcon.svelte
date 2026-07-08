@@ -29,13 +29,25 @@
   // — so we track whether the fallback fired and swap the container class.
   let tcgFailed = $state(false);
   let settled = $state(false);
+  let characterKey = $state("");
 
-  // Reset the fallback flag and settled state whenever the character or icon style changes.
+  // Only reset the fallback and transition guard when the character or icon
+  // style actually changes — avoids replaying the TCG→coop fallback cycle
+  // when the parent re-renders with the same character (e.g., after Cancel).
   $effect(() => {
-    void (character?.name_id, useTcg);
-    tcgFailed = false;
-    settled = false;
+    const key = `${character?.name_id ?? ""}:${useTcg}`;
+    if (key !== characterKey) {
+      characterKey = key;
+      tcgFailed = false;
+      settled = false;
+    }
   });
+
+  function onImgSettled() {
+    requestAnimationFrame(() => {
+      settled = true;
+    });
+  }
 
   let imgSrc = $derived(
     character?.name_id
@@ -46,12 +58,6 @@
           : getCharacterCoop(character.name_id)
       : avatarImg,
   );
-
-  function settleOnNextTick() {
-    requestAnimationFrame(() => {
-      settled = true;
-    });
-  }
 
   /** Whether the coop container styling should be used (including TCG fallback). */
   let useCoopContainer = $derived(
@@ -74,14 +80,14 @@
       onerror={() => {
         if (useTcg && !tcgFailed) {
           tcgFailed = true;
-          settleOnNextTick();
-        } else if (!settled) {
-          settleOnNextTick();
+          // Don't settle yet — the coop fallback image hasn't loaded.
+          // Let the new image's own onload/onerror settle the component
+          // so the transition: none guard stays active during the swap.
+          return;
         }
+        onImgSettled();
       }}
-      onload={() => {
-        if (!settled) settleOnNextTick();
-      }}
+      onload={onImgSettled}
     />
   {/if}
 </div>
