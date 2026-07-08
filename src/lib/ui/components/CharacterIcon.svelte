@@ -28,11 +28,13 @@
   // coop image needs the coop container styling (higher zoom, different origin)
   // — so we track whether the fallback fired and swap the container class.
   let tcgFailed = $state(false);
+  let settled = $state(false);
 
-  // Reset the fallback flag whenever the character or icon style changes.
+  // Reset the fallback flag and settled state whenever the character or icon style changes.
   $effect(() => {
     void (character?.name_id, useTcg);
     tcgFailed = false;
+    settled = false;
   });
 
   let imgSrc = $derived(
@@ -44,6 +46,12 @@
           : getCharacterCoop(character.name_id)
       : avatarImg,
   );
+
+  function settleOnNextTick() {
+    requestAnimationFrame(() => {
+      settled = true;
+    });
+  }
 
   /** Whether the coop container styling should be used (including TCG fallback). */
   let useCoopContainer = $derived(
@@ -62,8 +70,17 @@
     <img
       src={imgSrc}
       alt={character.name ?? "Character"}
+      style={settled ? "" : "transition: none"}
       onerror={() => {
-        if (useTcg && !tcgFailed) tcgFailed = true;
+        if (useTcg && !tcgFailed) {
+          tcgFailed = true;
+          settleOnNextTick();
+        } else if (!settled) {
+          settleOnNextTick();
+        }
+      }}
+      onload={() => {
+        if (!settled) settleOnNextTick();
       }}
     />
   {/if}
