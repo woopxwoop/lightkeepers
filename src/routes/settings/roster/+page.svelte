@@ -168,6 +168,7 @@
         });
         if (!res.ok) {
           rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
+          return;
         }
       }
 
@@ -369,7 +370,7 @@
       </div>
     </div>
 
-    {#if hasUnsavedChanges || isSaving || showSaved}
+    {#if hasUnsavedChanges || isSaving || showSaved || rosterError}
       <div
         class="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-center gap-8 px-6 py-3"
         style="background: color-mix(in srgb, var(--background-mid) 94%, transparent); border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 28%, transparent); backdrop-filter: blur(12px);"
