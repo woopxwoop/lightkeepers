@@ -221,6 +221,6 @@ export function computePairSuggestions(
 
   return suggestions
     .sort((a, b) => b.score - a.score)
-    .filter((a) => a.avgUsage >= 10)
+    .filter((a) => a.avgUsage >= 20)
     .slice(0, maxSuggestions);
 }
