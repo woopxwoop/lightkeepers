@@ -27,6 +27,29 @@
   let weaponFilter = $state<Set<string>>(new Set());
   let ownershipFilter = $state<"all" | "owned" | "unowned">("all");
   let search = $state("");
+  let sortBy = $state<"default" | "game_id" | "release_date">("release_date");
+  let sortAsc = $state(false);
+  let sortOpen = $state(false);
+  let sortTriggerEl: HTMLButtonElement | null = $state(null);
+
+  $effect(() => {
+    if (!sortOpen) return;
+    function onKeydown(e: KeyboardEvent) {
+      if (e.key === "Escape") sortOpen = false;
+    }
+    function onClick(e: MouseEvent) {
+      if (sortTriggerEl && !sortTriggerEl.contains(e.target as Node)) {
+        const dropdown = document.querySelector(".sort-dropdown");
+        if (dropdown && !dropdown.contains(e.target as Node)) sortOpen = false;
+      }
+    }
+    window.addEventListener("keydown", onKeydown);
+    window.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("keydown", onKeydown);
+      window.removeEventListener("click", onClick);
+    };
+  });
   let filtersOpen = $state(false);
 
   let isFiltered = $derived(
@@ -91,22 +114,22 @@
         );
       })
       .sort((a, b) => {
-        const aIsNew =
-          isNewCharacter(a.released_at) && !savedOwnedSet.has(a.name_id);
-        const bIsNew =
-          isNewCharacter(b.released_at) && !savedOwnedSet.has(b.name_id);
-        if (aIsNew && !bIsNew) return -1;
-        if (!aIsNew && bIsNew) return 1;
-        if (aIsNew && bIsNew) {
-          const aTime = a.released_at
-            ? new Date(a.released_at.replace(" ", "T")).getTime()
-            : 0;
-          const bTime = b.released_at
-            ? new Date(b.released_at.replace(" ", "T")).getTime()
-            : 0;
-          return bTime - aTime;
-        }
-        return 0;
+        const cmp = (() => {
+          if (sortBy === "game_id") return a.game_id - b.game_id;
+          if (sortBy === "release_date") {
+            if (a.released_at === null && b.released_at === null) return a.game_id - b.game_id;
+            if (a.released_at === null) return -1;
+            if (b.released_at === null) return 1;
+            const diff = new Date(a.released_at.replace(" ", "T")).getTime() - new Date(b.released_at.replace(" ", "T")).getTime();
+            if (diff !== 0) return diff;
+            return a.game_id - b.game_id;
+          }
+          // default: alphabetical by name, tiebreak by game_id
+          const nameCmp = (a.name ?? "").localeCompare(b.name ?? "");
+          if (nameCmp !== 0) return nameCmp;
+          return a.game_id - b.game_id;
+        })();
+        return sortAsc ? cmp : -cmp;
       }),
   );
 
@@ -363,6 +386,87 @@
       <button type="button" onclick={deselectAll} class="secondary-action">
         Deselect all
       </button>
+
+      <div class="flex items-center gap-1 relative">
+        <span class="text-xs" style="color: var(--foreground-mid);">Sort:</span>
+        <button
+          type="button"
+          onclick={() => (sortOpen = !sortOpen)}
+          class="sort-trigger"
+          bind:this={sortTriggerEl}
+        >
+          {sortBy === "default" ? "Alphabetical" : sortBy === "game_id" ? "Game ID" : "Release Date"}
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class:sort-chevron-open={sortOpen}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        {#if sortOpen}
+          <div
+            class="sort-dropdown"
+            role="listbox"
+            aria-label="Sort by"
+          >
+            <button
+              type="button"
+              role="option"
+              aria-selected={sortBy === "default"}
+              class="sort-option"
+              class:sort-option-selected={sortBy === "default"}
+              onclick={() => { sortBy = "default"; sortOpen = false; }}
+            >Alphabetical</button>
+            <button
+              type="button"
+              role="option"
+              aria-selected={sortBy === "game_id"}
+              class="sort-option"
+              class:sort-option-selected={sortBy === "game_id"}
+              onclick={() => { sortBy = "game_id"; sortOpen = false; }}
+            >Game ID</button>
+            <button
+              type="button"
+              role="option"
+              aria-selected={sortBy === "release_date"}
+              class="sort-option"
+              class:sort-option-selected={sortBy === "release_date"}
+              onclick={() => { sortBy = "release_date"; sortOpen = false; }}
+            >Release Date</button>
+          </div>
+        {/if}
+        <button
+          type="button"
+          onclick={() => (sortAsc = !sortAsc)}
+          class="sort-direction-btn"
+          aria-label={sortAsc ? "Ascending" : "Descending"}
+          title={sortAsc ? "Ascending" : "Descending"}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            {#if sortAsc}
+              <polyline points="18 15 12 9 6 15" />
+            {:else}
+              <polyline points="6 9 12 15 18 9" />
+            {/if}
+          </svg>
+        </button>
+      </div>
       <div class="ml-auto">
         <span class="text-sm" style="color: var(--foreground-mid);">
           {ownedCount} / {totalCount}
@@ -594,5 +698,88 @@
 
   .search-bar:focus-within {
     box-shadow: 0 0 0 1.5px var(--accent-1);
+  }
+
+  .sort-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 8px;
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
+    background: var(--background-mid);
+    color: var(--foreground-mid);
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .sort-trigger:hover {
+    border-color: color-mix(in srgb, var(--accent-1) 40%, transparent);
+    color: var(--foreground-color);
+  }
+
+  .sort-chevron-open {
+    transform: rotate(180deg);
+  }
+
+  .sort-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.25rem;
+    min-width: 130px;
+    border-radius: 8px;
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
+    background: color-mix(in srgb, var(--background-mid) 96%, transparent);
+    backdrop-filter: blur(12px);
+    padding: 0.25rem;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .sort-option {
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--foreground-mid);
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .sort-option:hover {
+    background: color-mix(in srgb, var(--accent-1) 14%, transparent);
+    color: var(--foreground-color);
+  }
+
+  .sort-option-selected {
+    color: var(--accent-1);
+  }
+
+  .sort-direction-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
+    background: var(--background-mid);
+    color: var(--foreground-mid);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .sort-direction-btn:hover {
+    border-color: color-mix(in srgb, var(--accent-1) 40%, transparent);
+    color: var(--foreground-color);
   }
 </style>
