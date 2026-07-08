@@ -9,10 +9,23 @@
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
 
+  const rosterPath = resolve("/settings/roster");
+
   /** Show the nudge only when the user has never saved a roster AND isn't logged in. */
   let showNudge = $derived(!$hasSavedRoster && !$session.data);
 
-  const features = [
+  const features = $derived([
+    ...(showNudge
+      ? [
+          {
+            href: rosterPath,
+            label: "Configure your roster",
+            description:
+              "Mark the characters you own so recommendations are tailored to you.",
+            banner: "/team.png",
+          },
+        ]
+      : []),
     {
       href: abyssPath,
       label: "Spiral Abyss",
@@ -31,9 +44,7 @@
       description: "See which characters would improve your teams the most.",
       banner: "/heizou.jpg",
     },
-  ];
-
-  const rosterPath = resolve("/settings/roster");
+  ]);
 </script>
 
 <main class="w-[80%] pb-20">
@@ -71,7 +82,7 @@
               <div class="flex flex-col gap-1">
                 <span
                   class="text-sm font-medium"
-                  style="color: var(--foreground-color);"
+                  style="color: var(--accent-1);"
                 >
                   {feature.label}
                 </span>
@@ -88,22 +99,6 @@
       {/each}
     </div>
   </div>
-
-  <!-- New-user nudge — only shown until the first roster save -->
-  {#if showNudge}
-    <a
-      href={rosterPath}
-      class="roster-nudge"
-      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 28%, transparent);"
-    >
-      <span class="text-sm font-medium" style="color: var(--foreground-color);">
-        New here?
-      </span>
-      <span class="text-xs" style="color: var(--foreground-mid);">
-        Configure your roster
-      </span>
-    </a>
-  {/if}
 </main>
 
 <style>
@@ -126,32 +121,4 @@
     transform: translateY(-1px);
   }
 
-  .roster-nudge {
-    position: fixed;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    z-index: 50;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.75rem 1rem;
-    border-radius: 0.75rem;
-    text-decoration: none;
-    backdrop-filter: blur(12px);
-    transition:
-      border-color 0.2s,
-      transform 0.2s,
-      box-shadow 0.2s;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
-  }
-
-  .roster-nudge:hover {
-    border-color: color-mix(
-      in srgb,
-      var(--accent-1) 50%,
-      transparent
-    ) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  }
 </style>

@@ -173,14 +173,14 @@
 
     try {
       // Persist locally first (synchronous)
-      localStorage.setItem(
-        "charactersOwned",
-        JSON.stringify(tempCharactersOwned),
-      );
-      // Clone so the store holds independent objects — otherwise
-      // mutations to tempCharactersOwned silently update the store
-      // and the "changed" count always reads 0.
-      charactersOwned.set(structuredClone(tempCharactersOwned));
+      try {
+        localStorage.setItem(
+          "charactersOwned",
+          JSON.stringify(tempCharactersOwned),
+        );
+      } catch {
+        console.warn("localStorage unavailable — saving to memory only");
+      }
 
       // Local persistence — all awaited so errors are caught
       await writeTeamsOwned(tempCharactersOwned);
@@ -199,14 +199,18 @@
         }
       }
 
-      // All persistence succeeded — mark as saved
+      // All persistence succeeded — mark as saved.
+      // Update the store after the async work so the "changed" count and
+      // hasUnsavedChanges flip happen in the same synchronous batch —
+      // avoids flashing "0 changed" before "Saved" appears.
       savedSnapshot = JSON.stringify(tempCharactersOwned);
+      charactersOwned.set(tempCharactersOwned.map((c) => ({ ...c })));
       showSaved = true;
       hasUnsavedChanges = false;
       setHasSavedRoster(); // dismiss the "New here?" nudge on the home page
     } catch (e) {
       console.error("Roster save error:", e);
-      rosterError = "Something went wrong — your changes may not be saved";
+      rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
     } finally {
       isSaving = false;
     }
@@ -219,7 +223,7 @@
   $effect(() => {
     if ($charactersHydrated && !synced) {
       // Deep-clone so tempCharactersOwned objects are independent of the store.
-      tempCharactersOwned = structuredClone($charactersOwned);
+      tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       synced = true;
     } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
@@ -228,7 +232,7 @@
       // from tempCharactersOwned).
       const storeJson = JSON.stringify($charactersOwned);
       if (storeJson !== savedSnapshot) {
-        tempCharactersOwned = structuredClone($charactersOwned);
+        tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
         savedSnapshot = storeJson;
       }
     }
@@ -517,7 +521,7 @@
             <button
               type="button"
               onclick={() => {
-                tempCharactersOwned = structuredClone($charactersOwned);
+                tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
                 savedSnapshot = JSON.stringify($charactersOwned);
                 hasUnsavedChanges = false;
               }}
