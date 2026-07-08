@@ -1,18 +1,16 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { charactersOwned } from "$lib/stores";
+  import { hasSavedRoster } from "$lib/stores";
+  import { authClient } from "$lib/auth-client";
 
-  const settingsPath = resolve("/settings");
+  const session = authClient.useSession();
+
   const abyssPath = resolve("/abyss");
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
 
-  let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
-  let hasRoster = $derived(ownedCount > 0);
-
-  // Dev toggle
-  let devOverride: boolean | null = $state(null);
-  let showRosterView = $derived(devOverride ?? hasRoster);
+  /** Show the nudge only when the user has never saved a roster AND isn't logged in. */
+  let showNudge = $derived(!$hasSavedRoster && !$session.data);
 
   const features = [
     {
@@ -35,25 +33,7 @@
     },
   ];
 
-  const quickStartSteps = [
-    {
-      step: "1",
-      title: "Set up your roster",
-      description:
-        "Mark the characters you own so recommendations are tailored to you.",
-    },
-    {
-      step: "2",
-      title: "Browse team recommendations",
-      description:
-        "Get optimal team assignments for Spiral Abyss and Stygian Onslaught.",
-    },
-    {
-      step: "3",
-      title: "Discover who to pull",
-      description: "See which characters would unlock your best missing teams.",
-    },
-  ];
+  const rosterPath = resolve("/settings/roster");
 </script>
 
 <main class="w-[80%] pb-20">
@@ -61,103 +41,69 @@
     <div class="flex items-start justify-between gap-4">
       <div class="flex flex-col gap-3">
         <h1 class="hook">Genshin Impact <br /> personalized insights.</h1>
-        {#if !showRosterView}
+        {#if showNudge}
           <p style="color: var(--foreground-mid);">
             Select your owned characters to get personalized team
             recommendations.
           </p>
         {/if}
       </div>
-
-      {#if import.meta.env.DEV}
-        <button
-          onclick={() =>
-            (devOverride = devOverride === null ? !hasRoster : !devOverride)}
-          class="text-xs px-2 py-1 rounded font-mono shrink-0 mt-1"
-          style="background: color-mix(in srgb, var(--accent-1) 15%, transparent); color: var(--accent-1); border: 0.5px solid color-mix(in srgb, var(--accent-1) 25%, transparent);"
-        >
-          {devOverride === null
-            ? "dev: auto"
-            : devOverride
-              ? "dev: roster"
-              : "dev: empty"}
-        </button>
-      {/if}
     </div>
 
-    {#if showRosterView}
-      <!-- Feature cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-        {#each features as feature}
-          <a
-            href={feature.href}
-            class="feature-card rounded-xl overflow-hidden flex flex-col group relative"
-            style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-          >
-            <!-- Banner background -->
-            {#if feature.banner}
-              <div
-                class="absolute inset-0 bg-cover bg-center opacity-20"
-                style="background-image: url('{feature.banner}');"
-              ></div>
-            {/if}
+    <!-- Feature cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+      {#each features as feature}
+        <a
+          href={feature.href}
+          class="feature-card rounded-xl overflow-hidden flex flex-col group relative"
+          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
+        >
+          <!-- Banner background -->
+          {#if feature.banner}
+            <div
+              class="absolute inset-0 bg-cover bg-center opacity-20"
+              style="background-image: url('{feature.banner}');"
+            ></div>
+          {/if}
 
-            <div class="p-4 flex flex-col gap-3 relative z-10">
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex flex-col gap-1">
-                  <span
-                    class="text-sm font-medium"
-                    style="color: var(--foreground-color);"
-                  >
-                    {feature.label}
-                  </span>
-                  <p
-                    class="text-xs leading-relaxed"
-                    style="color: var(--foreground-mid);"
-                  >
-                    {feature.description}
-                  </p>
-                </div>
+          <div class="p-4 flex flex-col gap-3 relative z-10">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex flex-col gap-1">
+                <span
+                  class="text-sm font-medium"
+                  style="color: var(--foreground-color);"
+                >
+                  {feature.label}
+                </span>
+                <p
+                  class="text-xs leading-relaxed"
+                  style="color: var(--foreground-mid);"
+                >
+                  {feature.description}
+                </p>
               </div>
             </div>
-          </a>
-        {/each}
-      </div>
-    {:else}
-      <!-- Quick-start steps -->
-      <div class="flex flex-col gap-5 mt-2">
-        {#each quickStartSteps as item}
-          <div class="flex items-start gap-4">
-            <div
-              class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
-              style="background: var(--accent-1); color: var(--background-color);"
-            >
-              {item.step}
-            </div>
-            <div class="flex flex-col gap-0.5 pt-0.5">
-              <span
-                class="text-sm font-medium"
-                style="color: var(--foreground-color);"
-              >
-                {item.title}
-              </span>
-              <p class="text-xs" style="color: var(--foreground-mid);">
-                {item.description}
-              </p>
-            </div>
           </div>
-        {/each}
-
-        <a
-          href={settingsPath}
-          class="self-start mt-1 px-5 py-2 rounded-xl text-sm font-medium transition-all duration-150"
-          style="background: var(--accent-1); color: var(--background-color);"
-        >
-          Go to settings →
         </a>
-      </div>
-    {/if}
+      {/each}
+    </div>
   </div>
+
+  <!-- New-user nudge — only shown until the first roster save -->
+  {#if showNudge}
+    <a
+      href={rosterPath}
+      class="roster-nudge"
+      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 28%, transparent);"
+    >
+      <span class="text-sm font-medium" style="color: var(--foreground-color);">
+        New here?
+      </span>
+      <span class="text-xs" style="color: var(--foreground-mid);">
+        Configure your roster
+      </span>
+    </a>
+  {/if}
 </main>
 
 <style>
@@ -178,5 +124,34 @@
       transparent
     ) !important;
     transform: translateY(-1px);
+  }
+
+  .roster-nudge {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    text-decoration: none;
+    backdrop-filter: blur(12px);
+    transition:
+      border-color 0.2s,
+      transform 0.2s,
+      box-shadow 0.2s;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .roster-nudge:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--accent-1) 50%,
+      transparent
+    ) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
   }
 </style>

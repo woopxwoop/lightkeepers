@@ -9,6 +9,7 @@ import {
   allTeamsStygian,
   charactersOwned,
   charactersHydrated,
+  initHasSavedRoster,
   setVersionNumbers,
   writeNearMissTeams,
   writeTeamsOwned,
@@ -116,6 +117,8 @@ export function seedClientStores(data: LayoutHydration): void {
   setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber);
   allTeamsAbyss.set(data.allTeamsAbyss);
   allTeamsStygian.set(data.allTeamsStygian);
+
+  initHasSavedRoster();
 
   const cachedOwned = readOwnedCache();
   const localRoster = mergeOwnedFlags(data.characters, cachedOwned);

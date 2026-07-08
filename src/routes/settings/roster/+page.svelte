@@ -2,6 +2,7 @@
   import {
     charactersOwned,
     charactersHydrated,
+    setHasSavedRoster,
     writeNearMissTeams,
     writeTeamsOwned,
   } from "$lib/stores";
@@ -202,6 +203,7 @@
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       showSaved = true;
       hasUnsavedChanges = false;
+      setHasSavedRoster(); // dismiss the "New here?" nudge on the home page
     } catch (e) {
       console.error("Roster save error:", e);
       rosterError = "Something went wrong — your changes may not be saved";

@@ -185,6 +185,25 @@ export const faviconDataUri = derived(displayPreferences, ($prefs) => {
 export const charactersOwned = writable<CharacterOwned[]>([]);
 export const charactersHydrated = writable<boolean>(false);
 
+/** Whether the user has ever saved a roster. Persisted in localStorage. */
+export const hasSavedRoster = writable<boolean>(false);
+
+export function initHasSavedRoster(): void {
+  try {
+    const val = localStorage.getItem("hasSavedRoster");
+    hasSavedRoster.set(val === "true");
+  } catch {
+    // localStorage unavailable — assume not saved
+  }
+}
+
+export function setHasSavedRoster(): void {
+  hasSavedRoster.set(true);
+  try {
+    localStorage.setItem("hasSavedRoster", "true");
+  } catch {}
+}
+
 // ── Abyss stores ──────────────────────────────────────────────────────────
 export const teamsOwned = writable<AbyssTeam[]>([]);
 export const teamsOwnedTop = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
