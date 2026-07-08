@@ -12,6 +12,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "update-types": "npx supabase gen types --lang=typescript --project-id oihiyebudfruomyzllql > ./src/lib/types/database.types.ts",
+    "sync:characters": "pnpm sync:enka && pnpm sync:stygian-enemies && pnpm sync:abyss-schedules && pnpm sync:stygian-schedules 4 && pnpm sync:images",
     "sync:enka": "tsx scripts/enka.ts",
     "sync:stygian-enemies": "tsx scripts/sync-stygian-enemies.ts",
     "sync:abyss-schedules": "tsx scripts/sync-abyss-schedules.ts",
