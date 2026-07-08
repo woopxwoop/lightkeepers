@@ -14,18 +14,16 @@
   /** Show the nudge only when the user has never saved a roster AND isn't logged in. */
   let showNudge = $derived(!$hasSavedRoster && !$session.data);
 
+  const rosterCard = {
+    href: rosterPath,
+    label: "Configure your roster",
+    description:
+      "Mark the characters you own so recommendations are tailored to you.",
+    banner: "/team.png",
+  };
+
   const features = $derived([
-    ...(showNudge
-      ? [
-          {
-            href: rosterPath,
-            label: "Configure your roster",
-            description:
-              "Mark the characters you own so recommendations are tailored to you.",
-            banner: "/team.png",
-          },
-        ]
-      : []),
+    ...(showNudge ? [rosterCard] : []),
     {
       href: abyssPath,
       label: "Spiral Abyss",
@@ -44,6 +42,7 @@
       description: "See which characters would improve your teams the most.",
       banner: "/heizou.jpg",
     },
+    ...(showNudge ? [] : [rosterCard]),
   ]);
 </script>
 
