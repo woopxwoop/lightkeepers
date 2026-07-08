@@ -90,6 +90,23 @@
       </div>
     {/key}
   </div>
+
+  <!-- Footer -->
+  <footer
+    class="w-full flex items-center justify-center gap-2 py-8 mt-auto text-xs"
+    style="color: var(--foreground-mid);"
+  >
+    <span>© Lightkeepers</span>
+    <span aria-hidden="true">·</span>
+    <a
+      href="https://discord.gg/D7RbZgCFCC"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="footer-link"
+    >
+      Discord
+    </a>
+  </footer>
 </div>
 
 <style>
@@ -102,5 +119,13 @@
 
   .bg-darker {
     background-color: color-mix(in oklab, black 80%, transparent);
+  }
+
+  .footer-link {
+    color: var(--accent-1);
+    text-decoration: none;
+  }
+  .footer-link:hover {
+    text-decoration: underline;
   }
 </style>
