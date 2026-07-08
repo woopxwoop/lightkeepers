@@ -54,6 +54,20 @@ function daysBetween(a: Date, b: Date): number {
 }
 
 /**
+ * Check whether the Lunaris challengeName aligns with the YSHelper version name.
+ * e.g., challengeName "6.6" should be found inside versionName "6.6".
+ * Returns false when challengeName is empty (no signal to compare).
+ */
+function versionAlignsWithChallengeName(
+  versionName: string,
+  challengeName: string,
+): boolean {
+  const cn = challengeName.trim();
+  if (!cn) return false;
+  return versionName.includes(cn);
+}
+
+/**
  * Convert a Lunaris scheduleStartTime (space-separated "YYYY-MM-DD HH:mm:ss")
  * to a Date. These are timestamps without a timezone suffix, assumed UTC.
  */
@@ -169,20 +183,40 @@ async function sync(count: number) {
       await getLunarisStygian(formulaId);
 
     if (lunarisData) {
-      // Verify date match within tolerance
-      const lStart = parseLunarisTime(lunarisData.scheduleStartTime);
-      const yParsed = new Date(ysDate);
-      const diff = daysBetween(lStart, yParsed);
+      // Match by challengeName first — version alignment is the ground
+      // truth. Date drift between APIs is normal and non-blocking.
+      const versionAligns = versionAlignsWithChallengeName(
+        entry.versionName,
+        lunarisData.challengeName ?? "",
+      );
 
-      if (diff <= 1.5) {
+      if (versionAligns) {
+        const lStart = parseLunarisTime(lunarisData.scheduleStartTime);
+        const yParsed = new Date(ysDate);
+        const diff = daysBetween(lStart, yParsed);
+        const dateNote =
+          diff > 1.5
+            ? ` (dates differ by ${diff.toFixed(2)}d, ok)`
+            : "";
         console.log(
-          `  → Matched Lunaris schedule ${lunarisData.scheduleId} (formula, Δ=${diff.toFixed(2)}d)`,
+          `  → Matched Lunaris schedule ${lunarisData.scheduleId} by version (formula, challengeName="${lunarisData.challengeName}"${dateNote})`,
         );
       } else {
-        console.log(
-          `  Formula gave ${formulaId} but date mismatch (${lunarisData.scheduleStartTime} vs ${ysDate}, Δ=${diff.toFixed(2)}d), searching...`,
-        );
-        lunarisData = null;
+        // Version doesn't align — try date as fallback, but warn loudly
+        const lStart = parseLunarisTime(lunarisData.scheduleStartTime);
+        const yParsed = new Date(ysDate);
+        const diff = daysBetween(lStart, yParsed);
+
+        if (diff <= 1.5) {
+          console.warn(
+            `  ⚠ Matched by date only (formula): challengeName="${lunarisData.challengeName}" doesn't align with YSHelper version "${entry.versionName}"`,
+          );
+        } else {
+          console.log(
+            `  Formula gave ${formulaId} but no match (challengeName="${lunarisData.challengeName}" vs "${entry.versionName}", Δ=${diff.toFixed(2)}d), searching...`,
+          );
+          lunarisData = null;
+        }
       }
     } else {
       console.log(
@@ -190,7 +224,8 @@ async function sync(count: number) {
       );
     }
 
-    // Fallback: search by date proximity from max downward
+    // Fallback: search from max downward, checking version alignment first.
+    // Date proximity is a secondary signal — version match is authoritative.
     if (!lunarisData) {
       const yParsed = new Date(ysDate);
 
@@ -198,13 +233,35 @@ async function sync(count: number) {
         const data = await getLunarisStygian(id);
         if (!data?.scheduleStartTime) continue;
 
+        const challengeName = data.challengeName ?? "";
+        const versionAligns = versionAlignsWithChallengeName(
+          entry.versionName,
+          challengeName,
+        );
+
+        if (versionAligns) {
+          // Version match is authoritative — accept regardless of dates
+          lunarisData = data;
+          const lStart = parseLunarisTime(data.scheduleStartTime);
+          const diff = daysBetween(lStart, yParsed);
+          const dateNote =
+            diff > 1.5
+              ? ` (dates differ by ${diff.toFixed(2)}d, ok)`
+              : "";
+          console.log(
+            `  → Matched Lunaris schedule ${data.scheduleId} by version (challengeName="${challengeName}"${dateNote})`,
+          );
+          break;
+        }
+
+        // Version doesn't align — try date proximity as weaker fallback
         const lStart = parseLunarisTime(data.scheduleStartTime);
         const diff = daysBetween(lStart, yParsed);
 
         if (diff <= 1.5) {
           lunarisData = data;
-          console.log(
-            `  → Matched Lunaris schedule ${data.scheduleId} (date search, Δ=${diff.toFixed(2)}d)`,
+          console.warn(
+            `  ⚠ Matched by date only (Δ=${diff.toFixed(2)}d): challengeName="${challengeName}" doesn't align with YSHelper version "${entry.versionName}"`,
           );
           break;
         }
@@ -310,12 +367,13 @@ async function sync(count: number) {
           `  ✓ Synced schedule ${lunarisData.scheduleId} → YSHelper v${verNum}`,
         );
 
-        // Also verify the challengeName ↔ version alignment
+        // Confirm the challengeName ↔ version alignment (caught during
+        // matching above; this is a belt-and-suspenders safety net).
         const ysVersionInTitle = entry.versionName ?? "";
         const lunarisVersion = lunarisData.challengeName ?? "";
         if (lunarisVersion && !ysVersionInTitle.includes(lunarisVersion)) {
           console.warn(
-            `  ⚠ Version mismatch: Lunaris challengeName="${lunarisVersion}" not found in YSHelper title "${ysVersionInTitle}"`,
+            `  ⚠ Version mismatch survived matching: Lunaris challengeName="${lunarisVersion}" not found in YSHelper title "${ysVersionInTitle}"`,
           );
         }
       }
