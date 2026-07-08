@@ -136,7 +136,9 @@
 
 <main
   class="w-[80%] pb-20 flex flex-col gap-8"
-  style={!$animationsEnabled ? '--sk-animation: none; --pulse-animation: none' : ''}
+  style={!$animationsEnabled
+    ? "--sk-animation: none; --pulse-animation: none"
+    : ""}
 >
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between">
@@ -234,13 +236,13 @@
         </div>
       </section>
 
-      <!-- Synergy Pairs skeleton -->
+      <!-- Duos skeleton -->
       <section class="flex flex-col gap-3">
         <p
           class="text-xs tracking-widest uppercase"
           style="color: color-mix(in srgb, var(--foreground-mid) 50%, transparent);"
         >
-          Synergy Pairs
+          Duos
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {#each { length: 3 } as _}
@@ -467,7 +469,7 @@
           class="text-xs tracking-widest uppercase"
           style="color: var(--foreground-mid);"
         >
-          Synergy Pairs
+          Duos
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {#each pairSuggestions as suggestion, i}
