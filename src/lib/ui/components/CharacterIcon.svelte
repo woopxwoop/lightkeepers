@@ -30,6 +30,7 @@
   let tcgFailed = $state(false);
   let settled = $state(false);
   let characterKey = $state("");
+  let imgEl: HTMLImageElement | undefined = $state();
 
   // Only reset the fallback and transition guard when the character or icon
   // style actually changes — avoids replaying the TCG→coop fallback cycle
@@ -40,6 +41,15 @@
       characterKey = key;
       tcgFailed = false;
       settled = false;
+    }
+  });
+
+  // If the image was already cached (complete before onload attached),
+  // settle immediately so the transition guard doesn't persist forever.
+  $effect(() => {
+    characterKey;
+    if (imgEl?.complete && imgEl.naturalWidth > 0 && !settled) {
+      onImgSettled();
     }
   });
 
@@ -74,6 +84,7 @@
 >
   {#if character}
     <img
+      bind:this={imgEl}
       src={imgSrc}
       alt={character.name ?? "Character"}
       style={settled ? "" : "transition: none"}
