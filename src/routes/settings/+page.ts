@@ -1,3 +1,6 @@
+import { redirect } from "@sveltejs/kit";
+import { resolve } from "$app/paths";
+
 export function load() {
-  return {};
+  redirect(307, resolve("/settings/roster"));
 }

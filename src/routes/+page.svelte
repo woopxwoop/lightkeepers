@@ -51,8 +51,7 @@
     {
       step: "3",
       title: "Discover who to pull",
-      description:
-        "See which characters would unlock your best missing teams.",
+      description: "See which characters would unlock your best missing teams.",
     },
   ];
 </script>
@@ -61,7 +60,7 @@
   <div class="flex flex-col gap-8 mt-16">
     <div class="flex items-start justify-between gap-4">
       <div class="flex flex-col gap-3">
-        <h1 class="hook">Genshin Impact <br /> meta recommendations.</h1>
+        <h1 class="hook">Genshin Impact <br /> personalized insights.</h1>
         {#if !showRosterView}
           <p style="color: var(--foreground-mid);">
             Select your owned characters to get personalized team

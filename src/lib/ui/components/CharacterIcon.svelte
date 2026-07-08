@@ -28,12 +28,36 @@
   // coop image needs the coop container styling (higher zoom, different origin)
   // — so we track whether the fallback fired and swap the container class.
   let tcgFailed = $state(false);
+  let settled = $state(false);
+  let characterKey = $state("");
+  let imgEl: HTMLImageElement | undefined = $state();
 
-  // Reset the fallback flag whenever the character or icon style changes.
+  // Only reset the fallback and transition guard when the character or icon
+  // style actually changes — avoids replaying the TCG→coop fallback cycle
+  // when the parent re-renders with the same character (e.g., after Cancel).
   $effect(() => {
-    void (character?.name_id, useTcg);
-    tcgFailed = false;
+    const key = `${character?.name_id ?? ""}:${useTcg}`;
+    if (key !== characterKey) {
+      characterKey = key;
+      tcgFailed = false;
+      settled = false;
+    }
   });
+
+  // If the image was already cached (complete before onload attached),
+  // settle immediately so the transition guard doesn't persist forever.
+  $effect(() => {
+    characterKey;
+    if (imgEl?.complete && imgEl.naturalWidth > 0 && !settled) {
+      onImgSettled();
+    }
+  });
+
+  function onImgSettled() {
+    requestAnimationFrame(() => {
+      settled = true;
+    });
+  }
 
   let imgSrc = $derived(
     character?.name_id
@@ -60,11 +84,21 @@
 >
   {#if character}
     <img
+      bind:this={imgEl}
       src={imgSrc}
       alt={character.name ?? "Character"}
+      style={settled ? "" : "transition: none"}
       onerror={() => {
-        if (useTcg && !tcgFailed) tcgFailed = true;
+        if (useTcg && !tcgFailed) {
+          tcgFailed = true;
+          // Don't settle yet — the coop fallback image hasn't loaded.
+          // Let the new image's own onload/onerror settle the component
+          // so the transition: none guard stays active during the swap.
+          return;
+        }
+        onImgSettled();
       }}
+      onload={onImgSettled}
     />
   {/if}
 </div>
