@@ -19,7 +19,7 @@
     label: "Configure your roster",
     description:
       "Mark the characters you own so recommendations are tailored to you.",
-    banner: "/team.png",
+    banner: "https://images.lightkeepers.moe/site/team.webp",
   };
 
   const features = $derived([
@@ -28,13 +28,13 @@
       href: abyssPath,
       label: "Spiral Abyss",
       description: "Find your best teams for the current abyss cycle.",
-      banner: "/abyss_banner.png",
+      banner: "https://images.lightkeepers.moe/site/abyss_banner.webp",
     },
     {
       href: stygianPath,
       label: "Stygian Onslaught",
       description: "Find your best teams for the current stygian cycle.",
-      banner: "/stygian_banner.png",
+      banner: "https://images.lightkeepers.moe/site/stygian_banner.webp",
     },
     {
       href: pullsPath,
@@ -51,12 +51,6 @@
     <div class="flex items-start justify-between gap-4">
       <div class="flex flex-col gap-3">
         <h1 class="hook">Genshin Impact <br /> personalized insights.</h1>
-        {#if showNudge}
-          <p style="color: var(--foreground-mid);">
-            Select your owned characters to get personalized team
-            recommendations.
-          </p>
-        {/if}
       </div>
     </div>
 
@@ -119,5 +113,4 @@
     ) !important;
     transform: translateY(-1px);
   }
-
 </style>

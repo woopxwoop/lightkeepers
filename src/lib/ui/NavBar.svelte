@@ -385,7 +385,7 @@
     </div>
 
     <img
-      src="/guoba_lightkeepers.png"
+      src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
       alt=""
       class="w-full h-auto mt-auto opacity-50"
     />

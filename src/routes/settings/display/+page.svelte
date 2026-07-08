@@ -188,7 +188,7 @@
         >
           <div
             class="bg-card-preview bg-card-preview--image"
-            style="background-image: url('/lightkeepers_dark.png');"
+            style="background-image: url('https://images.lightkeepers.moe/site/lightkeepers_dark.webp');"
           >
             <div class="bg-card-overlay"></div>
           </div>
