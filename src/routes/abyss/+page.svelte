@@ -375,7 +375,8 @@
 
     {#if solution?.isFallback && solution.neededCharacters.length > 0}
       <p class="text-xs text-center" style="color: var(--foreground-mid);">
-        Some teams need characters not in your roster
+        Unable to find floor 12 clears with your roster - try teams similar to
+        those suggested or look at your pull suggestions
       </p>
     {/if}
   {/if}
