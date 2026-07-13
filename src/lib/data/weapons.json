@@ -1,0 +1,2108 @@
+[
+  {
+    "id": 11101,
+    "name": "Dull Blade",
+    "stars": 1,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Blunt",
+    "awakenIcon": "UI_EquipIcon_Sword_Blunt_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Blunt"
+  },
+  {
+    "id": 11201,
+    "name": "Silver Sword",
+    "stars": 2,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Silver",
+    "awakenIcon": "UI_EquipIcon_Sword_Silver_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Silver"
+  },
+  {
+    "id": 11301,
+    "name": "Cool Steel",
+    "stars": 3,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Steel",
+    "awakenIcon": "UI_EquipIcon_Sword_Steel_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Steel"
+  },
+  {
+    "id": 11302,
+    "name": "Harbinger of Dawn",
+    "stars": 3,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Dawn",
+    "awakenIcon": "UI_EquipIcon_Sword_Dawn_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Dawn"
+  },
+  {
+    "id": 11303,
+    "name": "Traveler's Handy Sword",
+    "stars": 3,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Traveler",
+    "awakenIcon": "UI_EquipIcon_Sword_Traveler_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Traveler"
+  },
+  {
+    "id": 11304,
+    "name": "Dark Iron Sword",
+    "stars": 3,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Darker",
+    "awakenIcon": "UI_EquipIcon_Sword_Darker_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Darker"
+  },
+  {
+    "id": 11305,
+    "name": "Fillet Blade",
+    "stars": 3,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Sashimi",
+    "awakenIcon": "UI_EquipIcon_Sword_Sashimi_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Sashimi"
+  },
+  {
+    "id": 11306,
+    "name": "Skyrider Sword",
+    "stars": 3,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Mitsurugi",
+    "awakenIcon": "UI_EquipIcon_Sword_Mitsurugi_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Mitsurugi"
+  },
+  {
+    "id": 11401,
+    "name": "Favonius Sword",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Zephyrus",
+    "awakenIcon": "UI_EquipIcon_Sword_Zephyrus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Zephyrus"
+  },
+  {
+    "id": 11402,
+    "name": "The Flute",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Troupe",
+    "awakenIcon": "UI_EquipIcon_Sword_Troupe_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Troupe"
+  },
+  {
+    "id": 11403,
+    "name": "Sacrificial Sword",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Fossil",
+    "awakenIcon": "UI_EquipIcon_Sword_Fossil_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Fossil"
+  },
+  {
+    "id": 11404,
+    "name": "Royal Longsword",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Theocrat",
+    "awakenIcon": "UI_EquipIcon_Sword_Theocrat_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Theocrat"
+  },
+  {
+    "id": 11405,
+    "name": "Lion's Roar",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Rockkiller",
+    "awakenIcon": "UI_EquipIcon_Sword_Rockkiller_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Rockkiller"
+  },
+  {
+    "id": 11406,
+    "name": "Prototype Rancour",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Proto",
+    "awakenIcon": "UI_EquipIcon_Sword_Proto_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Proto"
+  },
+  {
+    "id": 11407,
+    "name": "Iron Sting",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Exotic",
+    "awakenIcon": "UI_EquipIcon_Sword_Exotic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Exotic"
+  },
+  {
+    "id": 11408,
+    "name": "Blackcliff Longsword",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Blackrock",
+    "awakenIcon": "UI_EquipIcon_Sword_Blackrock_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Blackrock"
+  },
+  {
+    "id": 11409,
+    "name": "The Black Sword",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Bloodstained",
+    "awakenIcon": "UI_EquipIcon_Sword_Bloodstained_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Bloodstained"
+  },
+  {
+    "id": 11410,
+    "name": "The Alley Flash",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Outlaw",
+    "awakenIcon": "UI_EquipIcon_Sword_Outlaw_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Outlaw"
+  },
+  {
+    "id": 11412,
+    "name": "Sword of Descension",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Psalmus",
+    "awakenIcon": "UI_EquipIcon_Sword_Psalmus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Psalmus"
+  },
+  {
+    "id": 11413,
+    "name": "Festering Desire",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Magnum",
+    "awakenIcon": "UI_EquipIcon_Sword_Magnum_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Magnum"
+  },
+  {
+    "id": 11414,
+    "name": "Amenoma Kageuchi",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Bakufu",
+    "awakenIcon": "UI_EquipIcon_Sword_Bakufu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Bakufu"
+  },
+  {
+    "id": 11415,
+    "name": "Cinnabar Spindle",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Opus",
+    "awakenIcon": "UI_EquipIcon_Sword_Opus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Opus"
+  },
+  {
+    "id": 11416,
+    "name": "Kagotsurube Isshin",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Youtou",
+    "awakenIcon": "UI_EquipIcon_Sword_Youtou_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Youtou"
+  },
+  {
+    "id": 11417,
+    "name": "Sapwood Blade",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Arakalari",
+    "awakenIcon": "UI_EquipIcon_Sword_Arakalari_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Arakalari"
+  },
+  {
+    "id": 11418,
+    "name": "Xiphos' Moonlight",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Pleroma",
+    "awakenIcon": "UI_EquipIcon_Sword_Pleroma_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Pleroma"
+  },
+  {
+    "id": 11422,
+    "name": "Toukabou Shigure",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Kasabouzu",
+    "awakenIcon": "UI_EquipIcon_Sword_Kasabouzu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Kasabouzu"
+  },
+  {
+    "id": 11424,
+    "name": "Wolf-Fang",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Boreas",
+    "awakenIcon": "UI_EquipIcon_Sword_Boreas_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Boreas"
+  },
+  {
+    "id": 11425,
+    "name": "Finale of the Deep",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Vorpal",
+    "awakenIcon": "UI_EquipIcon_Sword_Vorpal_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Vorpal"
+  },
+  {
+    "id": 11426,
+    "name": "Fleuve Cendre Ferryman",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Machination",
+    "awakenIcon": "UI_EquipIcon_Sword_Machination_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Machination"
+  },
+  {
+    "id": 11427,
+    "name": "The Dockhand's Assistant",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Mechanic",
+    "awakenIcon": "UI_EquipIcon_Sword_Mechanic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Mechanic"
+  },
+  {
+    "id": 11428,
+    "name": "Sword of Narzissenkreuz",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Purewill",
+    "awakenIcon": "UI_EquipIcon_Sword_Purewill",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Purewill"
+  },
+  {
+    "id": 11430,
+    "name": "Sturdy Bone",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Umpakati",
+    "awakenIcon": "UI_EquipIcon_Sword_Umpakati_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Umpakati"
+  },
+  {
+    "id": 11431,
+    "name": "Flute of Ezpitzal",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Isikhulu",
+    "awakenIcon": "UI_EquipIcon_Sword_Isikhulu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Isikhulu"
+  },
+  {
+    "id": 11432,
+    "name": "Calamity of Eshu",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_SacrificialNgombe",
+    "awakenIcon": "UI_EquipIcon_Sword_SacrificialNgombe_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_SacrificialNgombe"
+  },
+  {
+    "id": 11433,
+    "name": "Serenity's Call",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Ilmarinen",
+    "awakenIcon": "UI_EquipIcon_Sword_Ilmarinen_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Ilmarinen"
+  },
+  {
+    "id": 11434,
+    "name": "Moonweaver's Dawn",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Miekka",
+    "awakenIcon": "UI_EquipIcon_Sword_Miekka_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Miekka"
+  },
+  {
+    "id": 11501,
+    "name": "Aquila Favonia",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Falcon",
+    "awakenIcon": "UI_EquipIcon_Sword_Falcon_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Falcon"
+  },
+  {
+    "id": 11502,
+    "name": "Skyward Blade",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Dvalin",
+    "awakenIcon": "UI_EquipIcon_Sword_Dvalin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Dvalin"
+  },
+  {
+    "id": 11503,
+    "name": "Freedom-Sworn",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Widsith",
+    "awakenIcon": "UI_EquipIcon_Sword_Widsith_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Widsith"
+  },
+  {
+    "id": 11504,
+    "name": "Summit Shaper",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Kunwu",
+    "awakenIcon": "UI_EquipIcon_Sword_Kunwu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Kunwu"
+  },
+  {
+    "id": 11505,
+    "name": "Primordial Jade Cutter",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Morax",
+    "awakenIcon": "UI_EquipIcon_Sword_Morax_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Morax"
+  },
+  {
+    "id": 11509,
+    "name": "Mistsplitter Reforged",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Narukami",
+    "awakenIcon": "UI_EquipIcon_Sword_Narukami_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Narukami"
+  },
+  {
+    "id": 11510,
+    "name": "Haran Geppaku Futsu",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Amenoma",
+    "awakenIcon": "UI_EquipIcon_Sword_Amenoma_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Amenoma"
+  },
+  {
+    "id": 11511,
+    "name": "Key of Khaj-Nisut",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Deshret",
+    "awakenIcon": "UI_EquipIcon_Sword_Deshret_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Deshret"
+  },
+  {
+    "id": 11512,
+    "name": "Light of Foliar Incision",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Ayus",
+    "awakenIcon": "UI_EquipIcon_Sword_Ayus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Ayus"
+  },
+  {
+    "id": 11513,
+    "name": "Splendor of Tranquil Waters",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Regalis",
+    "awakenIcon": "UI_EquipIcon_Sword_Regalis_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Regalis"
+  },
+  {
+    "id": 11514,
+    "name": "Uraku Misugiri",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Needle",
+    "awakenIcon": "UI_EquipIcon_Sword_Needle_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Needle"
+  },
+  {
+    "id": 11515,
+    "name": "Absolution",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Estoc",
+    "awakenIcon": "UI_EquipIcon_Sword_Estoc_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Estoc"
+  },
+  {
+    "id": 11516,
+    "name": "Peak Patrol Song",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_XochitlsTube",
+    "awakenIcon": "UI_EquipIcon_Sword_XochitlsTube_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_XochitlsTube"
+  },
+  {
+    "id": 11517,
+    "name": "Azurelight",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_OuterSword",
+    "awakenIcon": "UI_EquipIcon_Sword_OuterSword_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_OuterSword"
+  },
+  {
+    "id": 11518,
+    "name": "Athame Artis",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Motsognir",
+    "awakenIcon": "UI_EquipIcon_Sword_Motsognir_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Motsognir"
+  },
+  {
+    "id": 11519,
+    "name": "Lightbearing Moonshard",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_SilverwareSaw",
+    "awakenIcon": "UI_EquipIcon_Sword_SilverwareSaw_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_SilverwareSaw"
+  },
+  {
+    "id": 12101,
+    "name": "Waster Greatsword",
+    "stars": 1,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Aniki",
+    "awakenIcon": "UI_EquipIcon_Claymore_Aniki_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Aniki"
+  },
+  {
+    "id": 12201,
+    "name": "Old Merc's Pal",
+    "stars": 2,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Oyaji",
+    "awakenIcon": "UI_EquipIcon_Claymore_Oyaji_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Oyaji"
+  },
+  {
+    "id": 12301,
+    "name": "Ferrous Shadow",
+    "stars": 3,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Glaive",
+    "awakenIcon": "UI_EquipIcon_Claymore_Glaive_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Glaive"
+  },
+  {
+    "id": 12302,
+    "name": "Bloodtainted Greatsword",
+    "stars": 3,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Siegfry",
+    "awakenIcon": "UI_EquipIcon_Claymore_Siegfry_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Siegfry"
+  },
+  {
+    "id": 12303,
+    "name": "White Iron Greatsword",
+    "stars": 3,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Tin",
+    "awakenIcon": "UI_EquipIcon_Claymore_Tin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Tin"
+  },
+  {
+    "id": 12305,
+    "name": "Debate Club",
+    "stars": 3,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Reasoning",
+    "awakenIcon": "UI_EquipIcon_Claymore_Reasoning_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Reasoning"
+  },
+  {
+    "id": 12306,
+    "name": "Skyrider Greatsword",
+    "stars": 3,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Mitsurugi",
+    "awakenIcon": "UI_EquipIcon_Claymore_Mitsurugi_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Mitsurugi"
+  },
+  {
+    "id": 12401,
+    "name": "Favonius Greatsword",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Zephyrus",
+    "awakenIcon": "UI_EquipIcon_Claymore_Zephyrus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Zephyrus"
+  },
+  {
+    "id": 12402,
+    "name": "The Bell",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Troupe",
+    "awakenIcon": "UI_EquipIcon_Claymore_Troupe_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Troupe"
+  },
+  {
+    "id": 12403,
+    "name": "Sacrificial Greatsword",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Fossil",
+    "awakenIcon": "UI_EquipIcon_Claymore_Fossil_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Fossil"
+  },
+  {
+    "id": 12404,
+    "name": "Royal Greatsword",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Theocrat",
+    "awakenIcon": "UI_EquipIcon_Claymore_Theocrat_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Theocrat"
+  },
+  {
+    "id": 12405,
+    "name": "Rainslasher",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Perdue",
+    "awakenIcon": "UI_EquipIcon_Claymore_Perdue_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Perdue"
+  },
+  {
+    "id": 12406,
+    "name": "Prototype Archaic",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Proto",
+    "awakenIcon": "UI_EquipIcon_Claymore_Proto_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Proto"
+  },
+  {
+    "id": 12407,
+    "name": "Whiteblind",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Exotic",
+    "awakenIcon": "UI_EquipIcon_Claymore_Exotic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Exotic"
+  },
+  {
+    "id": 12408,
+    "name": "Blackcliff Slasher",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Blackrock",
+    "awakenIcon": "UI_EquipIcon_Claymore_Blackrock_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Blackrock"
+  },
+  {
+    "id": 12409,
+    "name": "Serpent Spine",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Kione",
+    "awakenIcon": "UI_EquipIcon_Claymore_Kione_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Kione"
+  },
+  {
+    "id": 12410,
+    "name": "Lithic Blade",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Lapis",
+    "awakenIcon": "UI_EquipIcon_Claymore_Lapis_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Lapis"
+  },
+  {
+    "id": 12411,
+    "name": "Snow-Tombed Starsilver",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Dragonfell",
+    "awakenIcon": "UI_EquipIcon_Claymore_Dragonfell_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Dragonfell"
+  },
+  {
+    "id": 12412,
+    "name": "Luxurious Sea-Lord",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_MillenniaTuna",
+    "awakenIcon": "UI_EquipIcon_Claymore_MillenniaTuna_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_MillenniaTuna"
+  },
+  {
+    "id": 12414,
+    "name": "Katsuragikiri Nagamasa",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Bakufu",
+    "awakenIcon": "UI_EquipIcon_Claymore_Bakufu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Bakufu"
+  },
+  {
+    "id": 12415,
+    "name": "Makhaira Aquamarine",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Pleroma",
+    "awakenIcon": "UI_EquipIcon_Claymore_Pleroma_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Pleroma"
+  },
+  {
+    "id": 12416,
+    "name": "Akuoumaru",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Maria",
+    "awakenIcon": "UI_EquipIcon_Claymore_Maria_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Maria"
+  },
+  {
+    "id": 12417,
+    "name": "Forest Regalia",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Arakalari",
+    "awakenIcon": "UI_EquipIcon_Claymore_Arakalari_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Arakalari"
+  },
+  {
+    "id": 12418,
+    "name": "Mailed Flower",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Fleurfair",
+    "awakenIcon": "UI_EquipIcon_Claymore_Fleurfair_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Fleurfair"
+  },
+  {
+    "id": 12424,
+    "name": "Talking Stick",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_BeastTamer",
+    "awakenIcon": "UI_EquipIcon_Claymore_BeastTamer_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_BeastTamer"
+  },
+  {
+    "id": 12425,
+    "name": "Tidal Shadow",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Vorpal",
+    "awakenIcon": "UI_EquipIcon_Claymore_Vorpal_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Vorpal"
+  },
+  {
+    "id": 12426,
+    "name": "\"Ultimate Overlord's Mega Magic Sword\"",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Champion",
+    "awakenIcon": "UI_EquipIcon_Claymore_Champion_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Champion"
+  },
+  {
+    "id": 12427,
+    "name": "Portable Power Saw",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Mechanic",
+    "awakenIcon": "UI_EquipIcon_Claymore_Mechanic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Mechanic"
+  },
+  {
+    "id": 12430,
+    "name": "Fruitful Hook",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Umpakati",
+    "awakenIcon": "UI_EquipIcon_Claymore_Umpakati_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Umpakati"
+  },
+  {
+    "id": 12431,
+    "name": "Earth Shaker",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Isikhulu",
+    "awakenIcon": "UI_EquipIcon_Claymore_Isikhulu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Isikhulu"
+  },
+  {
+    "id": 12432,
+    "name": "Flame-Forged Insight",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Polilith",
+    "awakenIcon": "UI_EquipIcon_Claymore_Polilith_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Polilith"
+  },
+  {
+    "id": 12433,
+    "name": "Master Key",
+    "stars": 4,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Ilmarinen",
+    "awakenIcon": "UI_EquipIcon_Claymore_Ilmarinen_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Ilmarinen"
+  },
+  {
+    "id": 12501,
+    "name": "Skyward Pride",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Dvalin",
+    "awakenIcon": "UI_EquipIcon_Claymore_Dvalin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Dvalin"
+  },
+  {
+    "id": 12502,
+    "name": "Wolf's Gravestone",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Wolfmound",
+    "awakenIcon": "UI_EquipIcon_Claymore_Wolfmound_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Wolfmound"
+  },
+  {
+    "id": 12503,
+    "name": "Song of Broken Pines",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Widsith",
+    "awakenIcon": "UI_EquipIcon_Claymore_Widsith_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Widsith"
+  },
+  {
+    "id": 12504,
+    "name": "The Unforged",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Kunwu",
+    "awakenIcon": "UI_EquipIcon_Claymore_Kunwu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Kunwu"
+  },
+  {
+    "id": 12510,
+    "name": "Redhorn Stonethresher",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Itadorimaru",
+    "awakenIcon": "UI_EquipIcon_Claymore_Itadorimaru_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Itadorimaru"
+  },
+  {
+    "id": 12511,
+    "name": "Beacon of the Reed Sea",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_Deshret",
+    "awakenIcon": "UI_EquipIcon_Claymore_Deshret_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_Deshret"
+  },
+  {
+    "id": 12512,
+    "name": "Verdict",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_GoldenVerdict",
+    "awakenIcon": "UI_EquipIcon_Claymore_GoldenVerdict_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_GoldenVerdict"
+  },
+  {
+    "id": 12513,
+    "name": "Fang of the Mountain King",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_EmeraldSword",
+    "awakenIcon": "UI_EquipIcon_Claymore_EmeraldSword_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_EmeraldSword"
+  },
+  {
+    "id": 12514,
+    "name": "A Thousand Blazing Suns",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_RadianceSword",
+    "awakenIcon": "UI_EquipIcon_Claymore_RadianceSword_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_RadianceSword"
+  },
+  {
+    "id": 12515,
+    "name": "Gest of the Mighty Wolf",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_EnsisAquilonis",
+    "awakenIcon": "UI_EquipIcon_Claymore_EnsisAquilonis_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_EnsisAquilonis"
+  },
+  {
+    "id": 12516,
+    "name": "A Teaspoon of Transcendence",
+    "stars": 5,
+    "weaponType": "WEAPON_CLAYMORE",
+    "icon": "UI_EquipIcon_Claymore_CrystallineSword",
+    "awakenIcon": "UI_EquipIcon_Claymore_CrystallineSword_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Claymore_CrystallineSword"
+  },
+  {
+    "id": 13101,
+    "name": "Beginner's Protector",
+    "stars": 1,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Gewalt",
+    "awakenIcon": "UI_EquipIcon_Pole_Gewalt_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Gewalt"
+  },
+  {
+    "id": 13201,
+    "name": "Iron Point",
+    "stars": 2,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Rod",
+    "awakenIcon": "UI_EquipIcon_Pole_Rod_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Rod"
+  },
+  {
+    "id": 13301,
+    "name": "White Tassel",
+    "stars": 3,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Ruby",
+    "awakenIcon": "UI_EquipIcon_Pole_Ruby_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Ruby"
+  },
+  {
+    "id": 13302,
+    "name": "Halberd",
+    "stars": 3,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Halberd",
+    "awakenIcon": "UI_EquipIcon_Pole_Halberd_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Halberd"
+  },
+  {
+    "id": 13303,
+    "name": "Black Tassel",
+    "stars": 3,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Noire",
+    "awakenIcon": "UI_EquipIcon_Pole_Noire_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Noire"
+  },
+  {
+    "id": 13401,
+    "name": "Dragon's Bane",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Stardust",
+    "awakenIcon": "UI_EquipIcon_Pole_Stardust_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Stardust"
+  },
+  {
+    "id": 13402,
+    "name": "Prototype Starglitter",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Proto",
+    "awakenIcon": "UI_EquipIcon_Pole_Proto_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Proto"
+  },
+  {
+    "id": 13403,
+    "name": "Crescent Pike",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Exotic",
+    "awakenIcon": "UI_EquipIcon_Pole_Exotic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Exotic"
+  },
+  {
+    "id": 13404,
+    "name": "Blackcliff Pole",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Blackrock",
+    "awakenIcon": "UI_EquipIcon_Pole_Blackrock_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Blackrock"
+  },
+  {
+    "id": 13405,
+    "name": "Deathmatch",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Gladiator",
+    "awakenIcon": "UI_EquipIcon_Pole_Gladiator_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Gladiator"
+  },
+  {
+    "id": 13406,
+    "name": "Lithic Spear",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Lapis",
+    "awakenIcon": "UI_EquipIcon_Pole_Lapis_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Lapis"
+  },
+  {
+    "id": 13407,
+    "name": "Favonius Lance",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Zephyrus",
+    "awakenIcon": "UI_EquipIcon_Pole_Zephyrus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Zephyrus"
+  },
+  {
+    "id": 13408,
+    "name": "Royal Spear",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Theocrat",
+    "awakenIcon": "UI_EquipIcon_Pole_Theocrat_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Theocrat"
+  },
+  {
+    "id": 13409,
+    "name": "Dragonspine Spear",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Everfrost",
+    "awakenIcon": "UI_EquipIcon_Pole_Everfrost_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Everfrost"
+  },
+  {
+    "id": 13414,
+    "name": "Kitain Cross Spear",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Bakufu",
+    "awakenIcon": "UI_EquipIcon_Pole_Bakufu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Bakufu"
+  },
+  {
+    "id": 13415,
+    "name": "\"The Catch\"",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Mori",
+    "awakenIcon": "UI_EquipIcon_Pole_Mori_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Mori"
+  },
+  {
+    "id": 13416,
+    "name": "Wavebreaker's Fin",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Maria",
+    "awakenIcon": "UI_EquipIcon_Pole_Maria_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Maria"
+  },
+  {
+    "id": 13417,
+    "name": "Moonpiercer",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Arakalari",
+    "awakenIcon": "UI_EquipIcon_Pole_Arakalari_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Arakalari"
+  },
+  {
+    "id": 13419,
+    "name": "Missive Windspear",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Windvane",
+    "awakenIcon": "UI_EquipIcon_Pole_Windvane_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Windvane"
+  },
+  {
+    "id": 13424,
+    "name": "Ballad of the Fjords",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Shanty",
+    "awakenIcon": "UI_EquipIcon_Pole_Shanty_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Shanty"
+  },
+  {
+    "id": 13425,
+    "name": "Rightful Reward",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Vorpal",
+    "awakenIcon": "UI_EquipIcon_Pole_Vorpal_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Vorpal"
+  },
+  {
+    "id": 13426,
+    "name": "Dialogues of the Desert Sages",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Caduceus",
+    "awakenIcon": "UI_EquipIcon_Pole_Caduceus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Caduceus"
+  },
+  {
+    "id": 13427,
+    "name": "Prospector's Drill",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Mechanic",
+    "awakenIcon": "UI_EquipIcon_Pole_Mechanic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Mechanic"
+  },
+  {
+    "id": 13430,
+    "name": "Mountain-Bracing Bolt",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Umpakati",
+    "awakenIcon": "UI_EquipIcon_Pole_Umpakati_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Umpakati"
+  },
+  {
+    "id": 13431,
+    "name": "Footprint of the Rainbow",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Isikhulu",
+    "awakenIcon": "UI_EquipIcon_Pole_Isikhulu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Isikhulu"
+  },
+  {
+    "id": 13432,
+    "name": "Tamayuratei no Ohanashi",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Aoandon",
+    "awakenIcon": "UI_EquipIcon_Pole_Aoandon_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Aoandon"
+  },
+  {
+    "id": 13433,
+    "name": "Prospector's Shovel",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Ilmarinen",
+    "awakenIcon": "UI_EquipIcon_Pole_Ilmarinen_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Ilmarinen"
+  },
+  {
+    "id": 13434,
+    "name": "Sacrificer's Staff",
+    "stars": 4,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Krivule",
+    "awakenIcon": "UI_EquipIcon_Pole_Krivule_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Krivule"
+  },
+  {
+    "id": 13501,
+    "name": "Staff of Homa",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Homa",
+    "awakenIcon": "UI_EquipIcon_Pole_Homa_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Homa"
+  },
+  {
+    "id": 13502,
+    "name": "Skyward Spine",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Dvalin",
+    "awakenIcon": "UI_EquipIcon_Pole_Dvalin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Dvalin"
+  },
+  {
+    "id": 13504,
+    "name": "Vortex Vanquisher",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Kunwu",
+    "awakenIcon": "UI_EquipIcon_Pole_Kunwu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Kunwu"
+  },
+  {
+    "id": 13505,
+    "name": "Primordial Jade Winged-Spear",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Morax",
+    "awakenIcon": "UI_EquipIcon_Pole_Morax_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Morax"
+  },
+  {
+    "id": 13507,
+    "name": "Calamity Queller",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Santika",
+    "awakenIcon": "UI_EquipIcon_Pole_Santika_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Santika"
+  },
+  {
+    "id": 13509,
+    "name": "Engulfing Lightning",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Narukami",
+    "awakenIcon": "UI_EquipIcon_Pole_Narukami_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Narukami"
+  },
+  {
+    "id": 13511,
+    "name": "Staff of the Scarlet Sands",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Deshret",
+    "awakenIcon": "UI_EquipIcon_Pole_Deshret_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Deshret"
+  },
+  {
+    "id": 13512,
+    "name": "Crimson Moon's Semblance",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_BloodMoon",
+    "awakenIcon": "UI_EquipIcon_Pole_BloodMoon_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_BloodMoon"
+  },
+  {
+    "id": 13513,
+    "name": "Lumidouce Elegy",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Muguet",
+    "awakenIcon": "UI_EquipIcon_Pole_Muguet_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Muguet"
+  },
+  {
+    "id": 13514,
+    "name": "Symphonist of Scents",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Trident",
+    "awakenIcon": "UI_EquipIcon_Pole_Trident_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Trident"
+  },
+  {
+    "id": 13515,
+    "name": "Fractured Halo",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Perdix",
+    "awakenIcon": "UI_EquipIcon_Pole_Perdix_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Perdix"
+  },
+  {
+    "id": 13516,
+    "name": "Bloodsoaked Ruins",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_TummaLyhty",
+    "awakenIcon": "UI_EquipIcon_Pole_TummaLyhty_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_TummaLyhty"
+  },
+  {
+    "id": 13517,
+    "name": "Disaster and Remorse",
+    "stars": 5,
+    "weaponType": "WEAPON_POLE",
+    "icon": "UI_EquipIcon_Pole_Carbine",
+    "awakenIcon": "UI_EquipIcon_Pole_Carbine_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Pole_Carbine"
+  },
+  {
+    "id": 14101,
+    "name": "Apprentice's Notes",
+    "stars": 1,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Apprentice",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Apprentice_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Apprentice"
+  },
+  {
+    "id": 14201,
+    "name": "Pocket Grimoire",
+    "stars": 2,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Pocket",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Pocket_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Pocket"
+  },
+  {
+    "id": 14301,
+    "name": "Magic Guide",
+    "stars": 3,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Intro",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Intro_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Intro"
+  },
+  {
+    "id": 14302,
+    "name": "Thrilling Tales of Dragon Slayers",
+    "stars": 3,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Pulpfic",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Pulpfic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Pulpfic"
+  },
+  {
+    "id": 14303,
+    "name": "Otherworldly Story",
+    "stars": 3,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Lightnov",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Lightnov_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Lightnov"
+  },
+  {
+    "id": 14304,
+    "name": "Emerald Orb",
+    "stars": 3,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Jade",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Jade_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Jade"
+  },
+  {
+    "id": 14305,
+    "name": "Twin Nephrite",
+    "stars": 3,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Phoney",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Phoney_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Phoney"
+  },
+  {
+    "id": 14401,
+    "name": "Favonius Codex",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Zephyrus",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Zephyrus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Zephyrus"
+  },
+  {
+    "id": 14402,
+    "name": "The Widsith",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Troupe",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Troupe_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Troupe"
+  },
+  {
+    "id": 14403,
+    "name": "Sacrificial Fragments",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Fossil",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Fossil_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Fossil"
+  },
+  {
+    "id": 14404,
+    "name": "Royal Grimoire",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Theocrat",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Theocrat_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Theocrat"
+  },
+  {
+    "id": 14405,
+    "name": "Solar Pearl",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Resurrection",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Resurrection_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Resurrection"
+  },
+  {
+    "id": 14406,
+    "name": "Prototype Amber",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Proto",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Proto_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Proto"
+  },
+  {
+    "id": 14407,
+    "name": "Mappa Mare",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Exotic",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Exotic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Exotic"
+  },
+  {
+    "id": 14408,
+    "name": "Blackcliff Agate",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Blackrock",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Blackrock_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Blackrock"
+  },
+  {
+    "id": 14409,
+    "name": "Eye of Perception",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Truelens",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Truelens_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Truelens"
+  },
+  {
+    "id": 14410,
+    "name": "Wine and Song",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Outlaw",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Outlaw_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Outlaw"
+  },
+  {
+    "id": 14412,
+    "name": "Frostbearer",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Everfrost",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Everfrost_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Everfrost"
+  },
+  {
+    "id": 14413,
+    "name": "Dodoco Tales",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Ludiharpastum",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Ludiharpastum_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Ludiharpastum"
+  },
+  {
+    "id": 14414,
+    "name": "Hakushin Ring",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Bakufu",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Bakufu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Bakufu"
+  },
+  {
+    "id": 14415,
+    "name": "Oathsworn Eye",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Jyanome",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Jyanome_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Jyanome"
+  },
+  {
+    "id": 14416,
+    "name": "Wandering Evenstar",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Pleroma",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Pleroma_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Pleroma"
+  },
+  {
+    "id": 14417,
+    "name": "Fruit of Fulfillment",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Arakalari",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Arakalari_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Arakalari"
+  },
+  {
+    "id": 14424,
+    "name": "Sacrificial Jade",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Yue",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Yue_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Yue"
+  },
+  {
+    "id": 14425,
+    "name": "Flowing Purity",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Vorpal",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Vorpal_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Vorpal"
+  },
+  {
+    "id": 14426,
+    "name": "Ballad of the Boundless Blue",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_DandelionPoem",
+    "awakenIcon": "UI_EquipIcon_Catalyst_DandelionPoem_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_DandelionPoem"
+  },
+  {
+    "id": 14427,
+    "name": "Ash-Graven Drinking Horn",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_ConchSprayer",
+    "awakenIcon": "UI_EquipIcon_Catalyst_ConchSprayer_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_ConchSprayer"
+  },
+  {
+    "id": 14430,
+    "name": "Waveriding Whirl",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Umpakati",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Umpakati_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Umpakati"
+  },
+  {
+    "id": 14431,
+    "name": "Ring of Yaxche",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Isikhulu",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Isikhulu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Isikhulu"
+  },
+  {
+    "id": 14432,
+    "name": "Etherlight Spindlelute",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_SeeliesLute",
+    "awakenIcon": "UI_EquipIcon_Catalyst_SeeliesLute_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_SeeliesLute"
+  },
+  {
+    "id": 14433,
+    "name": "Blackmarrow Lantern",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Ilmarinen",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Ilmarinen_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Ilmarinen"
+  },
+  {
+    "id": 14434,
+    "name": "Dawning Frost",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Ziedas",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Ziedas_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Ziedas"
+  },
+  {
+    "id": 14501,
+    "name": "Skyward Atlas",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Dvalin",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Dvalin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Dvalin"
+  },
+  {
+    "id": 14502,
+    "name": "Lost Prayer to the Sacred Winds",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Fourwinds",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Fourwinds_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Fourwinds"
+  },
+  {
+    "id": 14504,
+    "name": "Memory of Dust",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Kunwu",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Kunwu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Kunwu"
+  },
+  {
+    "id": 14505,
+    "name": "Jadefall's Splendor",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Morax",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Morax_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Morax"
+  },
+  {
+    "id": 14506,
+    "name": "Everlasting Moonglow",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Kaleido",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Kaleido_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Kaleido"
+  },
+  {
+    "id": 14509,
+    "name": "Kagura's Verity",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Narukami",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Narukami_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Narukami"
+  },
+  {
+    "id": 14511,
+    "name": "A Thousand Floating Dreams",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Ayus",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Ayus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Ayus"
+  },
+  {
+    "id": 14512,
+    "name": "Tulaytullah's Remembrance",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Alaya",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Alaya_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Alaya"
+  },
+  {
+    "id": 14513,
+    "name": "Cashflow Supervision",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Wheatley",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Wheatley_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Wheatley"
+  },
+  {
+    "id": 14514,
+    "name": "Tome of the Eternal Flow",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Iudex",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Iudex_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Iudex"
+  },
+  {
+    "id": 14515,
+    "name": "Crane's Echoing Call",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_MountainGale",
+    "awakenIcon": "UI_EquipIcon_Catalyst_MountainGale_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_MountainGale"
+  },
+  {
+    "id": 14516,
+    "name": "Surf's Up",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_MechaPufferfish",
+    "awakenIcon": "UI_EquipIcon_Catalyst_MechaPufferfish_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_MechaPufferfish"
+  },
+  {
+    "id": 14517,
+    "name": "Starcaller's Watch",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Figurines",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Figurines_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Figurines"
+  },
+  {
+    "id": 14518,
+    "name": "Sunny Morning Sleep-In",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_SakuraFan",
+    "awakenIcon": "UI_EquipIcon_Catalyst_SakuraFan_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_SakuraFan"
+  },
+  {
+    "id": 14519,
+    "name": "Vivid Notions",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_VaresaTransformer",
+    "awakenIcon": "UI_EquipIcon_Catalyst_VaresaTransformer_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_VaresaTransformer"
+  },
+  {
+    "id": 14520,
+    "name": "Nightweaver's Looking Glass",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_MenulisRing",
+    "awakenIcon": "UI_EquipIcon_Catalyst_MenulisRing_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_MenulisRing"
+  },
+  {
+    "id": 14521,
+    "name": "Reliquary of Truth",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Sistrum",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Sistrum_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Sistrum"
+  },
+  {
+    "id": 14522,
+    "name": "Nocturne's Curtain Call",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Brisingamen",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Brisingamen_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Brisingamen"
+  },
+  {
+    "id": 14523,
+    "name": "Angelos' Heptades",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_FairyGarden",
+    "awakenIcon": "UI_EquipIcon_Catalyst_FairyGarden_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_FairyGarden"
+  },
+  {
+    "id": 15101,
+    "name": "Hunter's Bow",
+    "stars": 1,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Hunters",
+    "awakenIcon": "UI_EquipIcon_Bow_Hunters_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Hunters"
+  },
+  {
+    "id": 15201,
+    "name": "Seasoned Hunter's Bow",
+    "stars": 2,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Old",
+    "awakenIcon": "UI_EquipIcon_Bow_Old_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Old"
+  },
+  {
+    "id": 15301,
+    "name": "Raven Bow",
+    "stars": 3,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Crowfeather",
+    "awakenIcon": "UI_EquipIcon_Bow_Crowfeather_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Crowfeather"
+  },
+  {
+    "id": 15302,
+    "name": "Sharpshooter's Oath",
+    "stars": 3,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Arjuna",
+    "awakenIcon": "UI_EquipIcon_Bow_Arjuna_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Arjuna"
+  },
+  {
+    "id": 15303,
+    "name": "Recurve Bow",
+    "stars": 3,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Curve",
+    "awakenIcon": "UI_EquipIcon_Bow_Curve_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Curve"
+  },
+  {
+    "id": 15304,
+    "name": "Slingshot",
+    "stars": 3,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Sling",
+    "awakenIcon": "UI_EquipIcon_Bow_Sling_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Sling"
+  },
+  {
+    "id": 15305,
+    "name": "Messenger",
+    "stars": 3,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Msg",
+    "awakenIcon": "UI_EquipIcon_Bow_Msg_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Msg"
+  },
+  {
+    "id": 15401,
+    "name": "Favonius Warbow",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Zephyrus",
+    "awakenIcon": "UI_EquipIcon_Bow_Zephyrus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Zephyrus"
+  },
+  {
+    "id": 15402,
+    "name": "The Stringless",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Troupe",
+    "awakenIcon": "UI_EquipIcon_Bow_Troupe_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Troupe"
+  },
+  {
+    "id": 15403,
+    "name": "Sacrificial Bow",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Fossil",
+    "awakenIcon": "UI_EquipIcon_Bow_Fossil_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Fossil"
+  },
+  {
+    "id": 15404,
+    "name": "Royal Bow",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Theocrat",
+    "awakenIcon": "UI_EquipIcon_Bow_Theocrat_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Theocrat"
+  },
+  {
+    "id": 15405,
+    "name": "Rust",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Recluse",
+    "awakenIcon": "UI_EquipIcon_Bow_Recluse_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Recluse"
+  },
+  {
+    "id": 15406,
+    "name": "Prototype Crescent",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Proto",
+    "awakenIcon": "UI_EquipIcon_Bow_Proto_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Proto"
+  },
+  {
+    "id": 15407,
+    "name": "Compound Bow",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Exotic",
+    "awakenIcon": "UI_EquipIcon_Bow_Exotic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Exotic"
+  },
+  {
+    "id": 15408,
+    "name": "Blackcliff Warbow",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Blackrock",
+    "awakenIcon": "UI_EquipIcon_Bow_Blackrock_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Blackrock"
+  },
+  {
+    "id": 15409,
+    "name": "The Viridescent Hunt",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Viridescent",
+    "awakenIcon": "UI_EquipIcon_Bow_Viridescent_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Viridescent"
+  },
+  {
+    "id": 15410,
+    "name": "Alley Hunter",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Outlaw",
+    "awakenIcon": "UI_EquipIcon_Bow_Outlaw_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Outlaw"
+  },
+  {
+    "id": 15411,
+    "name": "Fading Twilight",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Fallensun",
+    "awakenIcon": "UI_EquipIcon_Bow_Fallensun_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Fallensun"
+  },
+  {
+    "id": 15412,
+    "name": "Mitternachts Waltz",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Nachtblind",
+    "awakenIcon": "UI_EquipIcon_Bow_Nachtblind_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Nachtblind"
+  },
+  {
+    "id": 15413,
+    "name": "Windblume Ode",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Fleurfair",
+    "awakenIcon": "UI_EquipIcon_Bow_Fleurfair_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Fleurfair"
+  },
+  {
+    "id": 15414,
+    "name": "Hamayumi",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Bakufu",
+    "awakenIcon": "UI_EquipIcon_Bow_Bakufu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Bakufu"
+  },
+  {
+    "id": 15415,
+    "name": "Predator",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Predator",
+    "awakenIcon": "UI_EquipIcon_Bow_Predator_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Predator"
+  },
+  {
+    "id": 15416,
+    "name": "Mouun's Moon",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Maria",
+    "awakenIcon": "UI_EquipIcon_Bow_Maria_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Maria"
+  },
+  {
+    "id": 15417,
+    "name": "King's Squire",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Arakalari",
+    "awakenIcon": "UI_EquipIcon_Bow_Arakalari_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Arakalari"
+  },
+  {
+    "id": 15418,
+    "name": "End of the Line",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Fin",
+    "awakenIcon": "UI_EquipIcon_Bow_Fin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Fin"
+  },
+  {
+    "id": 15419,
+    "name": "Ibis Piercer",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Ibis",
+    "awakenIcon": "UI_EquipIcon_Bow_Ibis_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Ibis"
+  },
+  {
+    "id": 15424,
+    "name": "Scion of the Blazing Sun",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Gurabad",
+    "awakenIcon": "UI_EquipIcon_Bow_Gurabad_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Gurabad"
+  },
+  {
+    "id": 15425,
+    "name": "Song of Stillness",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Vorpal",
+    "awakenIcon": "UI_EquipIcon_Bow_Vorpal_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Vorpal"
+  },
+  {
+    "id": 15426,
+    "name": "Cloudforged",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Ultimatum",
+    "awakenIcon": "UI_EquipIcon_Bow_Ultimatum_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Ultimatum"
+  },
+  {
+    "id": 15427,
+    "name": "Range Gauge",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Mechanic",
+    "awakenIcon": "UI_EquipIcon_Bow_Mechanic_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Mechanic"
+  },
+  {
+    "id": 15430,
+    "name": "Flower-Wreathed Feathers",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Umpakati",
+    "awakenIcon": "UI_EquipIcon_Bow_Umpakati_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Umpakati"
+  },
+  {
+    "id": 15431,
+    "name": "Chain Breaker",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Isikhulu",
+    "awakenIcon": "UI_EquipIcon_Bow_Isikhulu_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Isikhulu"
+  },
+  {
+    "id": 15432,
+    "name": "Sequence of Solitude",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Stinger",
+    "awakenIcon": "UI_EquipIcon_Bow_Stinger_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Stinger"
+  },
+  {
+    "id": 15433,
+    "name": "Snare Hook",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Ilmarinen",
+    "awakenIcon": "UI_EquipIcon_Bow_Ilmarinen_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Ilmarinen"
+  },
+  {
+    "id": 15434,
+    "name": "Rainbow Serpent's Rain Bow",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_ElegguaBow",
+    "awakenIcon": "UI_EquipIcon_Bow_ElegguaBow_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_ElegguaBow"
+  },
+  {
+    "id": 15501,
+    "name": "Skyward Harp",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Dvalin",
+    "awakenIcon": "UI_EquipIcon_Bow_Dvalin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Dvalin"
+  },
+  {
+    "id": 15502,
+    "name": "Amos' Bow",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Amos",
+    "awakenIcon": "UI_EquipIcon_Bow_Amos_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Amos"
+  },
+  {
+    "id": 15503,
+    "name": "Elegy for the End",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Widsith",
+    "awakenIcon": "UI_EquipIcon_Bow_Widsith_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Widsith"
+  },
+  {
+    "id": 15507,
+    "name": "Polar Star",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Worldbane",
+    "awakenIcon": "UI_EquipIcon_Bow_Worldbane_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Worldbane"
+  },
+  {
+    "id": 15508,
+    "name": "Aqua Simulacra",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Kirin",
+    "awakenIcon": "UI_EquipIcon_Bow_Kirin_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Kirin"
+  },
+  {
+    "id": 15509,
+    "name": "Thundering Pulse",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Narukami",
+    "awakenIcon": "UI_EquipIcon_Bow_Narukami_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Narukami"
+  },
+  {
+    "id": 15511,
+    "name": "Hunter's Path",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Ayus",
+    "awakenIcon": "UI_EquipIcon_Bow_Ayus_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Ayus"
+  },
+  {
+    "id": 15512,
+    "name": "The First Great Magic",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Pledge",
+    "awakenIcon": "UI_EquipIcon_Bow_Pledge_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Pledge"
+  },
+  {
+    "id": 15513,
+    "name": "Silvershower Heartstrings",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Arcdange",
+    "awakenIcon": "UI_EquipIcon_Bow_Arcdange_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Arcdange"
+  },
+  {
+    "id": 15514,
+    "name": "Astral Vulture's Crimson Plumage",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Qoyllorsnova",
+    "awakenIcon": "UI_EquipIcon_Bow_Qoyllorsnova_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Qoyllorsnova"
+  },
+  {
+    "id": 15515,
+    "name": "The Daybreak Chronicles",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Arianna",
+    "awakenIcon": "UI_EquipIcon_Bow_Arianna_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Arianna"
+  },
+  {
+    "id": 15516,
+    "name": "Golden Frostbound Oath",
+    "stars": 5,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Alkonost",
+    "awakenIcon": "UI_EquipIcon_Bow_Alkonost_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Alkonost"
+  }
+]
