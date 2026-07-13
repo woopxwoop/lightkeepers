@@ -103,3 +103,58 @@ export const weaponByKey = buildGoodKeyMap(weaponsRaw as WeaponData[]);
 
 /** Pre-built: GOOD artifact set key → ArtifactSetData */
 export const artifactSetByKey = buildGoodKeyMap(artifactSetsRaw as ArtifactSetData[]);
+
+// ── Stat key → English ──────────────────────────────────────────────────────
+//
+// gcsim uses internal stat keys defined in the GOOD interface.
+// This map translates them to human-readable English labels.
+
+const STAT_KEY_MAP: Record<string, string> = {
+  // Flat
+  hp: "HP",
+  atk: "ATK",
+  def: "DEF",
+  // Percentage
+  hp_: "HP%",
+  atk_: "ATK%",
+  def_: "DEF%",
+  // Elemental DMG
+  pyro_dmg_: "Pyro DMG Bonus",
+  hydro_dmg_: "Hydro DMG Bonus",
+  cryo_dmg_: "Cryo DMG Bonus",
+  electro_dmg_: "Electro DMG Bonus",
+  anemo_dmg_: "Anemo DMG Bonus",
+  geo_dmg_: "Geo DMG Bonus",
+  dendro_dmg_: "Dendro DMG Bonus",
+  physical_dmg_: "Physical DMG Bonus",
+  // Special
+  eleMas: "Elemental Mastery",
+  enerRech_: "Energy Recharge",
+  critRate_: "CRIT Rate",
+  critDMG_: "CRIT DMG",
+  heal_: "Healing Bonus",
+};
+
+/** Translate a gcsim stat key into a readable English label. */
+export function translateStatKey(key: string): string {
+  if (!key) return key;
+  // Direct match
+  if (STAT_KEY_MAP[key]) return STAT_KEY_MAP[key];
+  // Normalize: trim trailing underscores and try again
+  const trimmed = key.replace(/_+$/, "");
+  if (STAT_KEY_MAP[trimmed]) return STAT_KEY_MAP[trimmed];
+  return key;
+}
+
+// ── Namecard URL ─────────────────────────────────────────────────────────────
+
+const NAMECARD_CDN_BASE = "https://images.lightkeepers.moe/namecards";
+
+/**
+ * Build a character namecard background URL pointing at our CDN.
+ * Namecards are synced by `scripts/sync-namecards-r2.ts` and stored as WebP
+ * under `namecards/{name_id}.webp` in R2.
+ */
+export function getNamecardUrl(nameId: string): string {
+  return `${NAMECARD_CDN_BASE}/${nameId}.webp`;
+}
