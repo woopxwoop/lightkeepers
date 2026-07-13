@@ -8,6 +8,7 @@
   const abyssPath = resolve("/abyss");
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
+  const teamsPath = resolve("/teams");
   const settingsPath = resolve("/settings");
   const settingsLinks = [
     { label: "Roster", path: resolve("/settings/roster") },
@@ -24,6 +25,7 @@
     abyss: null,
     stygian: null,
     pulls: null,
+    teams: null,
     settings: null,
   };
   let linksContainer: HTMLElement | null = $state(null);
@@ -94,7 +96,7 @@
     return () => window.removeEventListener("scroll", onScroll);
   });
 
-  // ── Settings hover sub-row ──────────────────────────────────────────────
+  // ── Settings & Investment hover sub-row ──────────────────────────────
   let settingsHovered = $state(false);
   let settingsLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -230,6 +232,12 @@
         aria-current={page.url.pathname === pullsPath ? "page" : undefined}
         bind:this={navLinks.pulls}>Pulls</a
       >
+      <a
+        href={teamsPath}
+        class="nav-link"
+        aria-current={page.url.pathname === teamsPath ? "page" : undefined}
+        bind:this={navLinks.teams}>Teams</a
+      >
       <div class="relative">
       <a
         href={settingsPath}
@@ -343,6 +351,12 @@
       class="drawer-link"
       aria-current={page.url.pathname === pullsPath ? "page" : undefined}
       >Pulls</a
+    >
+    <a
+      href={teamsPath}
+      class="drawer-link"
+      aria-current={page.url.pathname === teamsPath ? "page" : undefined}
+      >Teams</a
     >
 
     <!-- Collapsible Settings section -->

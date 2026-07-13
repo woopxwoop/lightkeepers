@@ -8,6 +8,7 @@
   const abyssPath = resolve("/abyss");
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
+  const teamsPath = resolve("/teams");
 
   const rosterPath = resolve("/settings/roster");
 
@@ -42,6 +43,12 @@
       description: "See which characters would improve your teams the most.",
       banner: "/heizou.jpg",
     },
+    {
+      href: teamsPath,
+      label: "Teams",
+      description: "Look up team investment levels — constellations, weapons, and artifacts.",
+      banner: "/heizou.jpg",
+    },
     ...(showNudge ? [] : [rosterCard]),
   ]);
 </script>
@@ -55,7 +62,7 @@
     </div>
 
     <!-- Feature cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
       {#each features as feature}
         <a
           href={feature.href}
