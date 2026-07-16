@@ -9,6 +9,7 @@
     type IconStyle,
     type ThemeColorKey,
   } from "$lib/stores";
+  import IconInfo from "$lib/ui/icons/IconInfo.svelte";
   import {
     getCharacterCoop,
     getCharacterPortrait,
@@ -150,21 +151,7 @@
           class="tcg-info"
           style="color: var(--foreground-mid); font-size: 0.78rem; display: flex; align-items: center; gap: 0.35rem; margin-top: 0.25rem;"
         >
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
+          <IconInfo size={13} />
           Not all characters have a TCG card yet &mdash; in that case, their
           portrait will be shown instead.
         </p>

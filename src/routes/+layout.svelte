@@ -99,6 +99,15 @@
     <span>© Lightkeepers</span>
     <span aria-hidden="true">·</span>
     <a
+      href="https://github.com/woopxwoop/lightkeepers"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="footer-link"
+    >
+      GitHub
+    </a>
+    <span aria-hidden="true">·</span>
+    <a
       href="https://discord.gg/D7RbZgCFCC"
       target="_blank"
       rel="noopener noreferrer"
