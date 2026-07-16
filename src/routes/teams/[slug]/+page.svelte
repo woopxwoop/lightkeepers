@@ -141,6 +141,9 @@
         {@const char = goodKeyMap.get(goodKey)}
         {@const owned = isOwned(goodKey)}
         {@const elColor = ELEMENT_COLORS[char?.element ?? ""]}
+        {@const baselineBuild = costGroups[0]?.sims[0]?.characters.find(
+          (c: CharacterBuild) => c.key === goodKey,
+        )}
         <div
           class="char-card rounded-md overflow-hidden relative"
           style="--shine: {elColor ?? 'transparent'}; background: {elementBg(
@@ -179,6 +182,14 @@
             >
               {char?.name ?? goodKey}
             </span>
+            {#if baselineBuild}
+              <span
+                class="text-[0.65rem] font-semibold leading-tight tracking-wider"
+                style="color: var(--accent-1);"
+              >
+                C{baselineBuild.cons}R{baselineBuild.weapon.refinement}
+              </span>
+            {/if}
           </div>
 
           <!-- Dim unowned -->
