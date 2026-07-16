@@ -158,3 +158,16 @@ const NAMECARD_CDN_BASE = "https://images.lightkeepers.moe/namecards";
 export function getNamecardUrl(nameId: string): string {
   return `${NAMECARD_CDN_BASE}/${nameId}.webp`;
 }
+
+// ── gcsim config URL ────────────────────────────────────────────────────────
+
+const SIM_CONFIGS_BASE = "https://images.lightkeepers.moe/sim-configs";
+
+/**
+ * Build a URL to the gcsim config.txt for a given simulation state key.
+ * Configs are synced by `scripts/sync-gcsim-r2.ts` and stored as
+ * `sim-configs/{state_key}/config.txt` in R2 with immutable caching.
+ */
+export function getSimConfigUrl(stateKey: string): string {
+  return `${SIM_CONFIGS_BASE}/${encodeURIComponent(stateKey)}/config.txt`;
+}
