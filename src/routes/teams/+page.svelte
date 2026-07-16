@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
   import {
     buildGoodKeyMap,
@@ -8,6 +9,7 @@
     artifactSetByKey,
   } from "$lib/utils";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import IconCog from "$lib/ui/icons/IconCog.svelte";
   import type { InvestmentFile, InvestmentTeam } from "$lib/types/investment";
 
   const API_URL = "/api/investment";
@@ -152,6 +154,7 @@
   }
 
   let showInfo = $state(false);
+  let showSettings = $state(false);
   let showSuggestions = $derived(focused && suggestions.length > 0);
 
   // Which GOOD keys the user owns
@@ -383,6 +386,18 @@
         class:tag-search-focus={focused}
         style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
       >
+        <!-- Settings gear -->
+        <button
+          type="button"
+          onclick={() => (showSettings = !showSettings)}
+          class="settings-gear shrink-0"
+          class:settings-gear-active={showSettings}
+          aria-label="Toggle filter settings"
+          style="color: var(--foreground-mid);"
+        >
+          <IconCog size={16} />
+        </button>
+
         {#each tags as tag}
           <span class="tag-chip">
             <span class="tag-chip-text">{goodKeyMap.get(tag)?.name ?? tag}</span
@@ -418,6 +433,97 @@
         </span>
       </div>
 
+      <!-- Expandable settings panel -->
+      {#if showSettings}
+        <div
+          class="settings-panel mt-1 rounded-xl px-3 py-2.5 flex flex-wrap items-center gap-3"
+          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
+          transition:slide={{ duration: 150 }}
+        >
+          <!-- Owned first toggle -->
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              bind:checked={sortOwnedFirst}
+              class="toggle-input"
+            />
+            <span class="text-sm" style="color: var(--foreground-color);">
+              Owned first
+            </span>
+          </label>
+
+          <!-- Separator -->
+          <span
+            class="w-px h-5"
+            style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
+          ></span>
+
+          <!-- Sort select -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs" style="color: var(--foreground-mid);">Sort</span>
+            <select
+              bind:value={sortBy}
+              class="sort-select text-sm"
+              style="background: var(--background-color); color: var(--foreground-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
+            >
+              <option value="dps-desc">DPS ↓</option>
+              <option value="dps-asc">DPS ↑</option>
+            </select>
+          </div>
+
+          <!-- Separator -->
+          <span
+            class="w-px h-5"
+            style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
+          ></span>
+
+          <!-- Cost filter -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs" style="color: var(--foreground-mid);">Cost</span>
+            <input
+              type="number"
+              bind:value={selectedCost}
+              placeholder="{availableCosts[0] ?? 0}–{availableCosts[availableCosts.length - 1] ?? 0}"
+              class="cost-input text-sm"
+              style="background: var(--background-color); color: var(--foreground-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
+            />
+            {#if selectedCost !== null}
+              <button
+                onclick={() => (selectedCost = null)}
+                class="text-xs"
+                style="background: none; border: none; cursor: pointer; color: var(--foreground-mid);"
+                aria-label="Clear cost filter"
+              >
+                ×
+              </button>
+            {/if}
+          </div>
+
+          <!-- Separator -->
+          <span
+            class="w-px h-5"
+            style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
+          ></span>
+
+          <!-- View mode toggle (hidden on small screens — single column anyway) -->
+          <div
+            class="hidden sm:flex rounded-md overflow-hidden ml-auto"
+            style="border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
+          >
+            {#each ["spotlight", "compact"] as const as mode}
+              <button
+                type="button"
+                onclick={() => (viewMode = mode)}
+                class="mode-btn px-2.5 py-1 text-xs capitalize transition-colors"
+                class:mode-btn-active={viewMode === mode}
+              >
+                {mode}
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- Suggestions dropdown -->
       {#if showSuggestions}
         <div
@@ -450,96 +556,6 @@
           {/each}
         </div>
       {/if}
-    </div>
-
-    <!-- Sort & filter toolbar -->
-    <div
-      class="filter-toolbar flex flex-wrap items-center gap-3 px-3 py-2 rounded-xl"
-      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-    >
-      <!-- Owned first toggle -->
-      <label class="flex items-center gap-2 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          bind:checked={sortOwnedFirst}
-          class="toggle-input"
-        />
-        <span class="text-sm" style="color: var(--foreground-color);">
-          Owned first
-        </span>
-      </label>
-
-      <!-- Separator -->
-      <span
-        class="w-px h-5"
-        style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
-      ></span>
-
-      <!-- Sort select -->
-      <div class="flex items-center gap-1.5">
-        <span class="text-xs" style="color: var(--foreground-mid);">Sort</span>
-        <select
-          bind:value={sortBy}
-          class="sort-select text-sm"
-          style="background: var(--background-color); color: var(--foreground-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-        >
-          <option value="dps-desc">DPS ↓</option>
-          <option value="dps-asc">DPS ↑</option>
-        </select>
-      </div>
-
-      <!-- Separator -->
-      <span
-        class="w-px h-5"
-        style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
-      ></span>
-
-      <!-- Cost filter -->
-      <div class="flex items-center gap-1.5">
-        <span class="text-xs" style="color: var(--foreground-mid);">Cost</span>
-        <input
-          type="number"
-          bind:value={selectedCost}
-          placeholder="{availableCosts[0] ?? 0}–{availableCosts[
-            availableCosts.length - 1
-          ] ?? 0}"
-          class="cost-input text-sm"
-          style="background: var(--background-color); color: var(--foreground-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-        />
-        {#if selectedCost !== null}
-          <button
-            onclick={() => (selectedCost = null)}
-            class="text-xs"
-            style="background: none; border: none; cursor: pointer; color: var(--foreground-mid);"
-            aria-label="Clear cost filter"
-          >
-            ×
-          </button>
-        {/if}
-      </div>
-
-      <!-- Separator -->
-      <span
-        class="w-px h-5"
-        style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
-      ></span>
-
-      <!-- View mode toggle -->
-      <div
-        class="flex rounded-md overflow-hidden ml-auto"
-        style="border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-      >
-        {#each ["spotlight", "compact"] as const as mode}
-          <button
-            type="button"
-            onclick={() => (viewMode = mode)}
-            class="mode-btn px-2.5 py-1 text-xs capitalize transition-colors"
-            class:mode-btn-active={viewMode === mode}
-          >
-            {mode}
-          </button>
-        {/each}
-      </div>
     </div>
 
     <!-- Team cards -->
@@ -839,6 +855,37 @@
     background: color-mix(in srgb, var(--accent-1) 8%, transparent);
   }
 
+  /* ── Settings gear ────────────────────────────────────────────────────── */
+
+  .settings-gear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      transform 0.3s ease;
+  }
+
+  .settings-gear:hover {
+    background: color-mix(in srgb, var(--accent-1) 10%, transparent);
+    color: var(--accent-1);
+  }
+
+  .settings-gear-active {
+    color: var(--accent-1) !important;
+    background: color-mix(in srgb, var(--accent-1) 12%, transparent);
+    transform: rotate(60deg);
+  }
+
+  /* ── Settings panel ───────────────────────────────────────────────────── */
+
   .team-slot {
     width: 100%;
     min-width: 32px;
@@ -937,13 +984,7 @@
     color: var(--accent-1);
   }
 
-  /* ── Sort & filter toolbar ────────────────────────────────────────────── */
-
-  .filter-toolbar {
-    transition: border-color 0.2s;
-  }
-
-  /* Toggle switch */
+  /* ── Toggle switch ─────────────────────────────────────────────────────── */
   .toggle-input {
     appearance: none;
     -webkit-appearance: none;

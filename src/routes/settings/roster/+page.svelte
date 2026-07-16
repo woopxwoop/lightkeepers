@@ -14,6 +14,8 @@
     WEAPON_TYPE_MAP,
     isNewCharacter,
   } from "$lib/utils";
+  import IconFilter from "$lib/ui/icons/IconFilter.svelte";
+  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
 
   const session = authClient.useSession();
 
@@ -266,20 +268,7 @@
           class="settings-filter-button flex items-center gap-1.5 text-xs py-2 shrink-0 transition-opacity hover:opacity-75"
           class:settings-filter-button-active={isFiltered}
         >
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <polygon
-              points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
-            />
-          </svg>
+          <IconFilter size={13} />
           Filter
         </button>
         <div
@@ -406,25 +395,18 @@
           bind:this={sortTriggerEl}
         >
           {sortBy === "default" ? "Alphabetical" : sortBy === "game_id" ? "Game ID" : "Release Date"}
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+          <span
             class:sort-chevron-open={sortOpen}
           >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+            <IconChevronDown size={10} strokeWidth={2.5} />
+          </span>
         </button>
         {#if sortOpen}
           <div
             class="sort-dropdown"
             role="listbox"
             aria-label="Sort by"
+            transition:slide={{ duration: 150 }}
           >
             <button
               type="button"
@@ -459,22 +441,9 @@
           aria-label={sortAsc ? "Ascending" : "Descending"}
           title={sortAsc ? "Ascending" : "Descending"}
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            {#if sortAsc}
-              <polyline points="18 15 12 9 6 15" />
-            {:else}
-              <polyline points="6 9 12 15 18 9" />
-            {/if}
-          </svg>
+          <span class:sort-chevron-up={sortAsc}>
+            <IconChevronDown size={12} strokeWidth={2.5} />
+          </span>
         </button>
       </div>
       <div class="ml-auto">
@@ -731,6 +700,10 @@
   }
 
   .sort-chevron-open {
+    transform: rotate(180deg);
+  }
+
+  .sort-chevron-up {
     transform: rotate(180deg);
   }
 

@@ -3,6 +3,7 @@
   import { resolve } from "$app/paths";
   import { tick, untrack } from "svelte";
   import { fly, fade } from "svelte/transition";
+  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
 
   const homePath = resolve("/");
   const abyssPath = resolve("/abyss");
@@ -326,14 +327,6 @@
     bind:this={drawerEl}
     transition:fly={{ x: 280, duration: 260 }}
   >
-    <!-- External: Community -->
-    <a
-      href="https://discord.gg/D7RbZgCFCC"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="drawer-link"
-      >Discord</a
-    >
     <a
       href={abyssPath}
       class="drawer-link"
@@ -368,20 +361,12 @@
         onclick={() => (settingsDrawerExpanded = !settingsDrawerExpanded)}
       >
         Settings
-        <svg
+        <span
           class="drawer-chevron"
           class:drawer-chevron-open={settingsDrawerExpanded}
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
         >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+          <IconChevronDown size={14} strokeWidth={2} />
+        </span>
       </button>
       <div class="drawer-sub-links" class:drawer-sub-links-open={settingsDrawerExpanded} inert={!settingsDrawerExpanded}>
         {#each settingsLinks as link}

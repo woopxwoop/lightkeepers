@@ -1,6 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
+  import IconUser from "$lib/ui/icons/IconUser.svelte";
+  import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
+  import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
 
   const sections = [
     { id: "roster", label: "Roster", icon: "users" },
@@ -29,26 +32,11 @@
           >
             <span class="settings-nav-icon" aria-hidden="true">
               {#if section.icon === "users"}
-                <svg viewBox="0 0 24 24">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <IconUser size={18} />
               {:else if section.icon === "cloud"}
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M17.5 19H8a6 6 0 1 1 5.4-8.6A4.5 4.5 0 1 1 17.5 19Z"
-                  />
-                  <path d="M12 12v6" />
-                  <path d="m9 15 3-3 3 3" />
-                </svg>
+                <IconCloudUp size={18} />
               {:else}
-                <svg viewBox="0 0 24 24">
-                  <rect x="3" y="4" width="18" height="12" rx="2" />
-                  <path d="M8 20h8" />
-                  <path d="M12 16v4" />
-                </svg>
+                <IconMonitor size={18} />
               {/if}
             </span>
             <span class="min-w-0">
@@ -116,15 +104,5 @@
     place-items: center;
     color: currentColor;
     flex: 0 0 auto;
-  }
-
-  .settings-nav-icon svg {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 2;
   }
 </style>
