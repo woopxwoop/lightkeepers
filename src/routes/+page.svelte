@@ -18,8 +18,7 @@
   const rosterCard = {
     href: rosterPath,
     label: "Configure your roster",
-    description:
-      "Mark the characters you own so recommendations are tailored to you.",
+    description: "Mark the characters you own for tailored recommendations.",
     banner: "https://images.lightkeepers.moe/site/team.webp",
   };
 
@@ -40,14 +39,14 @@
     {
       href: pullsPath,
       label: "Pull Suggestions",
-      description: "See which characters would improve your teams the most.",
-      banner: "/heizou.jpg",
+      description: "See which characters would improve your teams.",
+      banner: "https://images.lightkeepers.moe/site/heizou.webp",
     },
     {
       href: teamsPath,
       label: "Teams",
-      description: "Look up team investment levels — constellations, weapons, and artifacts.",
-      banner: "/heizou.jpg",
+      description: "Compare team investment levels.",
+      banner: "https://images.lightkeepers.moe/site/kazuha.webp",
     },
     ...(showNudge ? [] : [rosterCard]),
   ]);
