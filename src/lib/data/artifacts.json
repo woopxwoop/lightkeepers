@@ -1,0 +1,5339 @@
+[
+  {
+    "id": 51310,
+    "name": "Goblet of the Sojourner",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_1"
+  },
+  {
+    "id": 51320,
+    "name": "Feather of Homecoming",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_2"
+  },
+  {
+    "id": 51330,
+    "name": "Crown of Parting",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_3"
+  },
+  {
+    "id": 51340,
+    "name": "Heart of Comradeship",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_4"
+  },
+  {
+    "id": 51350,
+    "name": "Sundial of the Sojourner",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_5"
+  },
+  {
+    "id": 51410,
+    "name": "Goblet of the Sojourner",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_1"
+  },
+  {
+    "id": 51420,
+    "name": "Feather of Homecoming",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_2"
+  },
+  {
+    "id": 51430,
+    "name": "Crown of Parting",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_3"
+  },
+  {
+    "id": 51440,
+    "name": "Heart of Comradeship",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_4"
+  },
+  {
+    "id": 51450,
+    "name": "Sundial of the Sojourner",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10001,
+    "setName": "Resolution of Sojourner",
+    "icon": "UI_RelicIcon_10001_5"
+  },
+  {
+    "id": 52310,
+    "name": "Outset of the Brave",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_1"
+  },
+  {
+    "id": 52320,
+    "name": "Prospect of the Brave",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_2"
+  },
+  {
+    "id": 52330,
+    "name": "Crown of the Brave",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_3"
+  },
+  {
+    "id": 52340,
+    "name": "Medal of the Brave",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_4"
+  },
+  {
+    "id": 52350,
+    "name": "Fortitude of the Brave",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_5"
+  },
+  {
+    "id": 52410,
+    "name": "Outset of the Brave",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_1"
+  },
+  {
+    "id": 52420,
+    "name": "Prospect of the Brave",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_2"
+  },
+  {
+    "id": 52430,
+    "name": "Crown of the Brave",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_3"
+  },
+  {
+    "id": 52440,
+    "name": "Medal of the Brave",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_4"
+  },
+  {
+    "id": 52450,
+    "name": "Fortitude of the Brave",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10002,
+    "setName": "Brave Heart",
+    "icon": "UI_RelicIcon_10002_5"
+  },
+  {
+    "id": 53310,
+    "name": "Guardian's Vessel",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_1"
+  },
+  {
+    "id": 53320,
+    "name": "Guardian's Sigil",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_2"
+  },
+  {
+    "id": 53330,
+    "name": "Guardian's Band",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_3"
+  },
+  {
+    "id": 53340,
+    "name": "Guardian's Flower",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_4"
+  },
+  {
+    "id": 53350,
+    "name": "Guardian's Clock",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_5"
+  },
+  {
+    "id": 53410,
+    "name": "Guardian's Vessel",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_1"
+  },
+  {
+    "id": 53420,
+    "name": "Guardian's Sigil",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_2"
+  },
+  {
+    "id": 53430,
+    "name": "Guardian's Band",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_3"
+  },
+  {
+    "id": 53440,
+    "name": "Guardian's Flower",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_4"
+  },
+  {
+    "id": 53450,
+    "name": "Guardian's Clock",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10003,
+    "setName": "Defender's Will",
+    "icon": "UI_RelicIcon_10003_5"
+  },
+  {
+    "id": 54310,
+    "name": "Tiny Miracle's Goblet",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_1"
+  },
+  {
+    "id": 54320,
+    "name": "Tiny Miracle's Feather",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_2"
+  },
+  {
+    "id": 54330,
+    "name": "Tiny Miracle's Earrings",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_3"
+  },
+  {
+    "id": 54340,
+    "name": "Tiny Miracle's Flower",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_4"
+  },
+  {
+    "id": 54350,
+    "name": "Tiny Miracle's Hourglass",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_5"
+  },
+  {
+    "id": 54410,
+    "name": "Tiny Miracle's Goblet",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_1"
+  },
+  {
+    "id": 54420,
+    "name": "Tiny Miracle's Feather",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_2"
+  },
+  {
+    "id": 54430,
+    "name": "Tiny Miracle's Earrings",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_3"
+  },
+  {
+    "id": 54440,
+    "name": "Tiny Miracle's Flower",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_4"
+  },
+  {
+    "id": 54450,
+    "name": "Tiny Miracle's Hourglass",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10004,
+    "setName": "Tiny Miracle",
+    "icon": "UI_RelicIcon_10004_5"
+  },
+  {
+    "id": 55310,
+    "name": "Berserker's Bone Goblet",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_1"
+  },
+  {
+    "id": 55320,
+    "name": "Berserker's Indigo Feather",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_2"
+  },
+  {
+    "id": 55330,
+    "name": "Berserker's Battle Mask",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_3"
+  },
+  {
+    "id": 55340,
+    "name": "Berserker's Rose",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_4"
+  },
+  {
+    "id": 55350,
+    "name": "Berserker's Timepiece",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_5"
+  },
+  {
+    "id": 55410,
+    "name": "Berserker's Bone Goblet",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_1"
+  },
+  {
+    "id": 55420,
+    "name": "Berserker's Indigo Feather",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_2"
+  },
+  {
+    "id": 55430,
+    "name": "Berserker's Battle Mask",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_3"
+  },
+  {
+    "id": 55440,
+    "name": "Berserker's Rose",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_4"
+  },
+  {
+    "id": 55450,
+    "name": "Berserker's Timepiece",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10005,
+    "setName": "Berserker",
+    "icon": "UI_RelicIcon_10005_5"
+  },
+  {
+    "id": 56310,
+    "name": "Martial Artist's Wine Cup",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_1"
+  },
+  {
+    "id": 56320,
+    "name": "Martial Artist's Feather Accessory",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_2"
+  },
+  {
+    "id": 56330,
+    "name": "Martial Artist's Bandana",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_3"
+  },
+  {
+    "id": 56340,
+    "name": "Martial Artist's Red Flower",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_4"
+  },
+  {
+    "id": 56350,
+    "name": "Martial Artist's Water Hourglass",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_5"
+  },
+  {
+    "id": 56410,
+    "name": "Martial Artist's Wine Cup",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_1"
+  },
+  {
+    "id": 56420,
+    "name": "Martial Artist's Feather Accessory",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_2"
+  },
+  {
+    "id": 56430,
+    "name": "Martial Artist's Bandana",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_3"
+  },
+  {
+    "id": 56440,
+    "name": "Martial Artist's Red Flower",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_4"
+  },
+  {
+    "id": 56450,
+    "name": "Martial Artist's Water Hourglass",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10006,
+    "setName": "Martial Artist",
+    "icon": "UI_RelicIcon_10006_5"
+  },
+  {
+    "id": 57310,
+    "name": "Instructor's Tea Cup",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_1"
+  },
+  {
+    "id": 57320,
+    "name": "Instructor's Feather Accessory",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_2"
+  },
+  {
+    "id": 57330,
+    "name": "Instructor's Cap",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_3"
+  },
+  {
+    "id": 57340,
+    "name": "Instructor's Brooch",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_4"
+  },
+  {
+    "id": 57350,
+    "name": "Instructor's Pocket Watch",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_5"
+  },
+  {
+    "id": 57410,
+    "name": "Instructor's Tea Cup",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_1"
+  },
+  {
+    "id": 57420,
+    "name": "Instructor's Feather Accessory",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_2"
+  },
+  {
+    "id": 57430,
+    "name": "Instructor's Cap",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_3"
+  },
+  {
+    "id": 57440,
+    "name": "Instructor's Brooch",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_4"
+  },
+  {
+    "id": 57450,
+    "name": "Instructor's Pocket Watch",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10007,
+    "setName": "Instructor",
+    "icon": "UI_RelicIcon_10007_5"
+  },
+  {
+    "id": 58310,
+    "name": "Gambler's Dice Cup",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_1"
+  },
+  {
+    "id": 58320,
+    "name": "Gambler's Feather Accessory",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_2"
+  },
+  {
+    "id": 58330,
+    "name": "Gambler's Earrings",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_3"
+  },
+  {
+    "id": 58340,
+    "name": "Gambler's Brooch",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_4"
+  },
+  {
+    "id": 58350,
+    "name": "Gambler's Pocket Watch",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_5"
+  },
+  {
+    "id": 58410,
+    "name": "Gambler's Dice Cup",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_1"
+  },
+  {
+    "id": 58420,
+    "name": "Gambler's Feather Accessory",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_2"
+  },
+  {
+    "id": 58430,
+    "name": "Gambler's Earrings",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_3"
+  },
+  {
+    "id": 58440,
+    "name": "Gambler's Brooch",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_4"
+  },
+  {
+    "id": 58450,
+    "name": "Gambler's Pocket Watch",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10008,
+    "setName": "Gambler",
+    "icon": "UI_RelicIcon_10008_5"
+  },
+  {
+    "id": 59310,
+    "name": "Exile's Goblet",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_1"
+  },
+  {
+    "id": 59320,
+    "name": "Exile's Feather",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_2"
+  },
+  {
+    "id": 59330,
+    "name": "Exile's Circlet",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_3"
+  },
+  {
+    "id": 59340,
+    "name": "Exile's Flower",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_4"
+  },
+  {
+    "id": 59350,
+    "name": "Exile's Pocket Watch",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_5"
+  },
+  {
+    "id": 59410,
+    "name": "Exile's Goblet",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_1"
+  },
+  {
+    "id": 59420,
+    "name": "Exile's Feather",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_2"
+  },
+  {
+    "id": 59430,
+    "name": "Exile's Circlet",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_3"
+  },
+  {
+    "id": 59440,
+    "name": "Exile's Flower",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_4"
+  },
+  {
+    "id": 59450,
+    "name": "Exile's Pocket Watch",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10009,
+    "setName": "The Exile",
+    "icon": "UI_RelicIcon_10009_5"
+  },
+  {
+    "id": 60110,
+    "name": "Adventurer's Golden Goblet",
+    "stars": 1,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_1"
+  },
+  {
+    "id": 60120,
+    "name": "Adventurer's Tail Feather",
+    "stars": 1,
+    "equipType": "Plume of Death",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_2"
+  },
+  {
+    "id": 60130,
+    "name": "Adventurer's Bandana",
+    "stars": 1,
+    "equipType": "Circlet of Logos",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_3"
+  },
+  {
+    "id": 60140,
+    "name": "Adventurer's Flower",
+    "stars": 1,
+    "equipType": "Flower of Life",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_4"
+  },
+  {
+    "id": 60150,
+    "name": "Adventurer's Pocket Watch",
+    "stars": 1,
+    "equipType": "Sands of Eon",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_5"
+  },
+  {
+    "id": 60210,
+    "name": "Adventurer's Golden Goblet",
+    "stars": 2,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_1"
+  },
+  {
+    "id": 60220,
+    "name": "Adventurer's Tail Feather",
+    "stars": 2,
+    "equipType": "Plume of Death",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_2"
+  },
+  {
+    "id": 60230,
+    "name": "Adventurer's Bandana",
+    "stars": 2,
+    "equipType": "Circlet of Logos",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_3"
+  },
+  {
+    "id": 60240,
+    "name": "Adventurer's Flower",
+    "stars": 2,
+    "equipType": "Flower of Life",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_4"
+  },
+  {
+    "id": 60250,
+    "name": "Adventurer's Pocket Watch",
+    "stars": 2,
+    "equipType": "Sands of Eon",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_5"
+  },
+  {
+    "id": 60310,
+    "name": "Adventurer's Golden Goblet",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_1"
+  },
+  {
+    "id": 60320,
+    "name": "Adventurer's Tail Feather",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_2"
+  },
+  {
+    "id": 60330,
+    "name": "Adventurer's Bandana",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_3"
+  },
+  {
+    "id": 60340,
+    "name": "Adventurer's Flower",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_4"
+  },
+  {
+    "id": 60350,
+    "name": "Adventurer's Pocket Watch",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10010,
+    "setName": "Adventurer",
+    "icon": "UI_RelicIcon_10010_5"
+  },
+  {
+    "id": 61110,
+    "name": "Lucky Dog's Goblet",
+    "stars": 1,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_1"
+  },
+  {
+    "id": 61120,
+    "name": "Lucky Dog's Eagle Feather",
+    "stars": 1,
+    "equipType": "Plume of Death",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_2"
+  },
+  {
+    "id": 61130,
+    "name": "Lucky Dog's Silver Circlet",
+    "stars": 1,
+    "equipType": "Circlet of Logos",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_3"
+  },
+  {
+    "id": 61140,
+    "name": "Lucky Dog's Clover",
+    "stars": 1,
+    "equipType": "Flower of Life",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_4"
+  },
+  {
+    "id": 61150,
+    "name": "Lucky Dog's Hourglass",
+    "stars": 1,
+    "equipType": "Sands of Eon",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_5"
+  },
+  {
+    "id": 61210,
+    "name": "Lucky Dog's Goblet",
+    "stars": 2,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_1"
+  },
+  {
+    "id": 61220,
+    "name": "Lucky Dog's Eagle Feather",
+    "stars": 2,
+    "equipType": "Plume of Death",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_2"
+  },
+  {
+    "id": 61230,
+    "name": "Lucky Dog's Silver Circlet",
+    "stars": 2,
+    "equipType": "Circlet of Logos",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_3"
+  },
+  {
+    "id": 61240,
+    "name": "Lucky Dog's Clover",
+    "stars": 2,
+    "equipType": "Flower of Life",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_4"
+  },
+  {
+    "id": 61250,
+    "name": "Lucky Dog's Hourglass",
+    "stars": 2,
+    "equipType": "Sands of Eon",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_5"
+  },
+  {
+    "id": 61310,
+    "name": "Lucky Dog's Goblet",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_1"
+  },
+  {
+    "id": 61320,
+    "name": "Lucky Dog's Eagle Feather",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_2"
+  },
+  {
+    "id": 61330,
+    "name": "Lucky Dog's Silver Circlet",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_3"
+  },
+  {
+    "id": 61340,
+    "name": "Lucky Dog's Clover",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_4"
+  },
+  {
+    "id": 61350,
+    "name": "Lucky Dog's Hourglass",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10011,
+    "setName": "Lucky Dog",
+    "icon": "UI_RelicIcon_10011_5"
+  },
+  {
+    "id": 62310,
+    "name": "Scholar's Ink Cup",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_1"
+  },
+  {
+    "id": 62320,
+    "name": "Scholar's Quill Pen",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_2"
+  },
+  {
+    "id": 62330,
+    "name": "Scholar's Lens",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_3"
+  },
+  {
+    "id": 62340,
+    "name": "Scholar's Bookmark",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_4"
+  },
+  {
+    "id": 62350,
+    "name": "Scholar's Clock",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_5"
+  },
+  {
+    "id": 62410,
+    "name": "Scholar's Ink Cup",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_1"
+  },
+  {
+    "id": 62420,
+    "name": "Scholar's Quill Pen",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_2"
+  },
+  {
+    "id": 62430,
+    "name": "Scholar's Lens",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_3"
+  },
+  {
+    "id": 62440,
+    "name": "Scholar's Bookmark",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_4"
+  },
+  {
+    "id": 62450,
+    "name": "Scholar's Clock",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 10012,
+    "setName": "Scholar",
+    "icon": "UI_RelicIcon_10012_5"
+  },
+  {
+    "id": 63110,
+    "name": "Traveling Doctor's Medicine Pot",
+    "stars": 1,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_1"
+  },
+  {
+    "id": 63120,
+    "name": "Traveling Doctor's Owl Feather",
+    "stars": 1,
+    "equipType": "Plume of Death",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_2"
+  },
+  {
+    "id": 63130,
+    "name": "Traveling Doctor's Handkerchief",
+    "stars": 1,
+    "equipType": "Circlet of Logos",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_3"
+  },
+  {
+    "id": 63140,
+    "name": "Traveling Doctor's Silver Lotus",
+    "stars": 1,
+    "equipType": "Flower of Life",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_4"
+  },
+  {
+    "id": 63150,
+    "name": "Traveling Doctor's Pocket Watch",
+    "stars": 1,
+    "equipType": "Sands of Eon",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_5"
+  },
+  {
+    "id": 63210,
+    "name": "Traveling Doctor's Medicine Pot",
+    "stars": 2,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_1"
+  },
+  {
+    "id": 63220,
+    "name": "Traveling Doctor's Owl Feather",
+    "stars": 2,
+    "equipType": "Plume of Death",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_2"
+  },
+  {
+    "id": 63230,
+    "name": "Traveling Doctor's Handkerchief",
+    "stars": 2,
+    "equipType": "Circlet of Logos",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_3"
+  },
+  {
+    "id": 63240,
+    "name": "Traveling Doctor's Silver Lotus",
+    "stars": 2,
+    "equipType": "Flower of Life",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_4"
+  },
+  {
+    "id": 63250,
+    "name": "Traveling Doctor's Pocket Watch",
+    "stars": 2,
+    "equipType": "Sands of Eon",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_5"
+  },
+  {
+    "id": 63310,
+    "name": "Traveling Doctor's Medicine Pot",
+    "stars": 3,
+    "equipType": "Goblet of Eonothem",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_1"
+  },
+  {
+    "id": 63320,
+    "name": "Traveling Doctor's Owl Feather",
+    "stars": 3,
+    "equipType": "Plume of Death",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_2"
+  },
+  {
+    "id": 63330,
+    "name": "Traveling Doctor's Handkerchief",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_3"
+  },
+  {
+    "id": 63340,
+    "name": "Traveling Doctor's Silver Lotus",
+    "stars": 3,
+    "equipType": "Flower of Life",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_4"
+  },
+  {
+    "id": 63350,
+    "name": "Traveling Doctor's Pocket Watch",
+    "stars": 3,
+    "equipType": "Sands of Eon",
+    "setId": 10013,
+    "setName": "Traveling Doctor",
+    "icon": "UI_RelicIcon_10013_5"
+  },
+  {
+    "id": 71410,
+    "name": "Frost-Weaved Dignity",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_1"
+  },
+  {
+    "id": 71420,
+    "name": "Icebreaker's Resolve",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_2"
+  },
+  {
+    "id": 71430,
+    "name": "Broken Rime's Echo",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_3"
+  },
+  {
+    "id": 71440,
+    "name": "Snowswept Memory",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_4"
+  },
+  {
+    "id": 71450,
+    "name": "Frozen Homeland's Demise",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_5"
+  },
+  {
+    "id": 71510,
+    "name": "Frost-Weaved Dignity",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_1"
+  },
+  {
+    "id": 71520,
+    "name": "Icebreaker's Resolve",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_2"
+  },
+  {
+    "id": 71530,
+    "name": "Broken Rime's Echo",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_3"
+  },
+  {
+    "id": 71540,
+    "name": "Snowswept Memory",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_4"
+  },
+  {
+    "id": 71550,
+    "name": "Frozen Homeland's Demise",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 14001,
+    "setName": "Blizzard Strayer",
+    "icon": "UI_RelicIcon_14001_5"
+  },
+  {
+    "id": 72410,
+    "name": "Thundersoother's Goblet",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_1"
+  },
+  {
+    "id": 72420,
+    "name": "Thundersoother's Plume",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_2"
+  },
+  {
+    "id": 72430,
+    "name": "Thundersoother's Diadem",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_3"
+  },
+  {
+    "id": 72440,
+    "name": "Thundersoother's Heart",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_4"
+  },
+  {
+    "id": 72450,
+    "name": "Hour of Soothing Thunder",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_5"
+  },
+  {
+    "id": 72510,
+    "name": "Thundersoother's Goblet",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_1"
+  },
+  {
+    "id": 72520,
+    "name": "Thundersoother's Plume",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_2"
+  },
+  {
+    "id": 72530,
+    "name": "Thundersoother's Diadem",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_3"
+  },
+  {
+    "id": 72540,
+    "name": "Thundersoother's Heart",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_4"
+  },
+  {
+    "id": 72550,
+    "name": "Hour of Soothing Thunder",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 14002,
+    "setName": "Thundersoother",
+    "icon": "UI_RelicIcon_14002_5"
+  },
+  {
+    "id": 73410,
+    "name": "Lavawalker's Epiphany",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_1"
+  },
+  {
+    "id": 73420,
+    "name": "Lavawalker's Salvation",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_2"
+  },
+  {
+    "id": 73430,
+    "name": "Lavawalker's Wisdom",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_3"
+  },
+  {
+    "id": 73440,
+    "name": "Lavawalker's Resolution",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_4"
+  },
+  {
+    "id": 73450,
+    "name": "Lavawalker's Torment",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_5"
+  },
+  {
+    "id": 73510,
+    "name": "Lavawalker's Epiphany",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_1"
+  },
+  {
+    "id": 73520,
+    "name": "Lavawalker's Salvation",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_2"
+  },
+  {
+    "id": 73530,
+    "name": "Lavawalker's Wisdom",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_3"
+  },
+  {
+    "id": 73540,
+    "name": "Lavawalker's Resolution",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_4"
+  },
+  {
+    "id": 73550,
+    "name": "Lavawalker's Torment",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 14003,
+    "setName": "Lavawalker",
+    "icon": "UI_RelicIcon_14003_5"
+  },
+  {
+    "id": 74410,
+    "name": "Maiden's Fleeting Leisure",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_1"
+  },
+  {
+    "id": 74420,
+    "name": "Maiden's Heart-Stricken Infatuation",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_2"
+  },
+  {
+    "id": 74430,
+    "name": "Maiden's Fading Beauty",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_3"
+  },
+  {
+    "id": 74440,
+    "name": "Maiden's Distant Love",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_4"
+  },
+  {
+    "id": 74450,
+    "name": "Maiden's Passing Youth",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_5"
+  },
+  {
+    "id": 74510,
+    "name": "Maiden's Fleeting Leisure",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_1"
+  },
+  {
+    "id": 74520,
+    "name": "Maiden's Heart-Stricken Infatuation",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_2"
+  },
+  {
+    "id": 74530,
+    "name": "Maiden's Fading Beauty",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_3"
+  },
+  {
+    "id": 74540,
+    "name": "Maiden's Distant Love",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_4"
+  },
+  {
+    "id": 74550,
+    "name": "Maiden's Passing Youth",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 14004,
+    "setName": "Maiden Beloved",
+    "icon": "UI_RelicIcon_14004_5"
+  },
+  {
+    "id": 75410,
+    "name": "Gladiator's Intoxication",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_1"
+  },
+  {
+    "id": 75420,
+    "name": "Gladiator's Destiny",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_2"
+  },
+  {
+    "id": 75430,
+    "name": "Gladiator's Triumphus",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_3"
+  },
+  {
+    "id": 75440,
+    "name": "Gladiator's Nostalgia",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_4"
+  },
+  {
+    "id": 75450,
+    "name": "Gladiator's Longing",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_5"
+  },
+  {
+    "id": 75510,
+    "name": "Gladiator's Intoxication",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_1"
+  },
+  {
+    "id": 75520,
+    "name": "Gladiator's Destiny",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_2"
+  },
+  {
+    "id": 75530,
+    "name": "Gladiator's Triumphus",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_3"
+  },
+  {
+    "id": 75540,
+    "name": "Gladiator's Nostalgia",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_4"
+  },
+  {
+    "id": 75550,
+    "name": "Gladiator's Longing",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15001,
+    "setName": "Gladiator's Finale",
+    "icon": "UI_RelicIcon_15001_5"
+  },
+  {
+    "id": 76410,
+    "name": "Viridescent Venerer's Vessel",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_1"
+  },
+  {
+    "id": 76420,
+    "name": "Viridescent Arrow Feather",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_2"
+  },
+  {
+    "id": 76430,
+    "name": "Viridescent Venerer's Diadem",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_3"
+  },
+  {
+    "id": 76440,
+    "name": "In Remembrance of Viridescent Fields",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_4"
+  },
+  {
+    "id": 76450,
+    "name": "Viridescent Venerer's Determination",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_5"
+  },
+  {
+    "id": 76510,
+    "name": "Viridescent Venerer's Vessel",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_1"
+  },
+  {
+    "id": 76520,
+    "name": "Viridescent Arrow Feather",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_2"
+  },
+  {
+    "id": 76530,
+    "name": "Viridescent Venerer's Diadem",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_3"
+  },
+  {
+    "id": 76540,
+    "name": "In Remembrance of Viridescent Fields",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_4"
+  },
+  {
+    "id": 76550,
+    "name": "Viridescent Venerer's Determination",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15002,
+    "setName": "Viridescent Venerer",
+    "icon": "UI_RelicIcon_15002_5"
+  },
+  {
+    "id": 77410,
+    "name": "Wanderer's String-Kettle",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_1"
+  },
+  {
+    "id": 77420,
+    "name": "Bard's Arrow Feather",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_2"
+  },
+  {
+    "id": 77430,
+    "name": "Conductor's Top Hat",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_3"
+  },
+  {
+    "id": 77440,
+    "name": "Troupe's Dawnlight",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_4"
+  },
+  {
+    "id": 77450,
+    "name": "Concert's Final Hour",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_5"
+  },
+  {
+    "id": 77510,
+    "name": "Wanderer's String-Kettle",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_1"
+  },
+  {
+    "id": 77520,
+    "name": "Bard's Arrow Feather",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_2"
+  },
+  {
+    "id": 77530,
+    "name": "Conductor's Top Hat",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_3"
+  },
+  {
+    "id": 77540,
+    "name": "Troupe's Dawnlight",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_4"
+  },
+  {
+    "id": 77550,
+    "name": "Concert's Final Hour",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15003,
+    "setName": "Wanderer's Troupe",
+    "icon": "UI_RelicIcon_15003_5"
+  },
+  {
+    "id": 79410,
+    "name": "Omen of Thunderstorm",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_1"
+  },
+  {
+    "id": 79420,
+    "name": "Survivor of Catastrophe",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_2"
+  },
+  {
+    "id": 79430,
+    "name": "Thunder Summoner's Crown",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_3"
+  },
+  {
+    "id": 79440,
+    "name": "Thunderbird's Mercy",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_4"
+  },
+  {
+    "id": 79450,
+    "name": "Hourglass of Thunder",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_5"
+  },
+  {
+    "id": 79510,
+    "name": "Omen of Thunderstorm",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_1"
+  },
+  {
+    "id": 79520,
+    "name": "Survivor of Catastrophe",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_2"
+  },
+  {
+    "id": 79530,
+    "name": "Thunder Summoner's Crown",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_3"
+  },
+  {
+    "id": 79540,
+    "name": "Thunderbird's Mercy",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_4"
+  },
+  {
+    "id": 79550,
+    "name": "Hourglass of Thunder",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15005,
+    "setName": "Thundering Fury",
+    "icon": "UI_RelicIcon_15005_5"
+  },
+  {
+    "id": 80410,
+    "name": "Witch's Heart Flames",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_1"
+  },
+  {
+    "id": 80420,
+    "name": "Witch's Ever-Burning Plume",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_2"
+  },
+  {
+    "id": 80430,
+    "name": "Witch's Scorching Hat",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_3"
+  },
+  {
+    "id": 80440,
+    "name": "Witch's Flower of Blaze",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_4"
+  },
+  {
+    "id": 80450,
+    "name": "Witch's End Time",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_5"
+  },
+  {
+    "id": 80510,
+    "name": "Witch's Heart Flames",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_1"
+  },
+  {
+    "id": 80520,
+    "name": "Witch's Ever-Burning Plume",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_2"
+  },
+  {
+    "id": 80530,
+    "name": "Witch's Scorching Hat",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_3"
+  },
+  {
+    "id": 80540,
+    "name": "Witch's Flower of Blaze",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_4"
+  },
+  {
+    "id": 80550,
+    "name": "Witch's End Time",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15006,
+    "setName": "Crimson Witch of Flames",
+    "icon": "UI_RelicIcon_15006_5"
+  },
+  {
+    "id": 81410,
+    "name": "Royal Silver Urn",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_1"
+  },
+  {
+    "id": 81420,
+    "name": "Royal Plume",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_2"
+  },
+  {
+    "id": 81430,
+    "name": "Royal Masque",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_3"
+  },
+  {
+    "id": 81440,
+    "name": "Royal Flora",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_4"
+  },
+  {
+    "id": 81450,
+    "name": "Royal Pocket Watch",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_5"
+  },
+  {
+    "id": 81510,
+    "name": "Royal Silver Urn",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_1"
+  },
+  {
+    "id": 81520,
+    "name": "Royal Plume",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_2"
+  },
+  {
+    "id": 81530,
+    "name": "Royal Masque",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_3"
+  },
+  {
+    "id": 81540,
+    "name": "Royal Flora",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_4"
+  },
+  {
+    "id": 81550,
+    "name": "Royal Pocket Watch",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15007,
+    "setName": "Noblesse Oblige",
+    "icon": "UI_RelicIcon_15007_5"
+  },
+  {
+    "id": 82410,
+    "name": "Bloodstained Chevalier's Goblet",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_1"
+  },
+  {
+    "id": 82420,
+    "name": "Bloodstained Black Plume",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_2"
+  },
+  {
+    "id": 82430,
+    "name": "Bloodstained Iron Mask",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_3"
+  },
+  {
+    "id": 82440,
+    "name": "Bloodstained Flower of Iron",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_4"
+  },
+  {
+    "id": 82450,
+    "name": "Bloodstained Final Hour",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_5"
+  },
+  {
+    "id": 82510,
+    "name": "Bloodstained Chevalier's Goblet",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_1"
+  },
+  {
+    "id": 82520,
+    "name": "Bloodstained Black Plume",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_2"
+  },
+  {
+    "id": 82530,
+    "name": "Bloodstained Iron Mask",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_3"
+  },
+  {
+    "id": 82540,
+    "name": "Bloodstained Flower of Iron",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_4"
+  },
+  {
+    "id": 82550,
+    "name": "Bloodstained Final Hour",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15008,
+    "setName": "Bloodstained Chivalry",
+    "icon": "UI_RelicIcon_15008_5"
+  },
+  {
+    "id": 83330,
+    "name": "Tiara of Flame",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 15009,
+    "setName": "Prayers for Illumination",
+    "icon": "UI_RelicIcon_15009_3"
+  },
+  {
+    "id": 83430,
+    "name": "Tiara of Flame",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15009,
+    "setName": "Prayers for Illumination",
+    "icon": "UI_RelicIcon_15009_3"
+  },
+  {
+    "id": 84330,
+    "name": "Tiara of Torrents",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 15010,
+    "setName": "Prayers for Destiny",
+    "icon": "UI_RelicIcon_15010_3"
+  },
+  {
+    "id": 84430,
+    "name": "Tiara of Torrents",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15010,
+    "setName": "Prayers for Destiny",
+    "icon": "UI_RelicIcon_15010_3"
+  },
+  {
+    "id": 85330,
+    "name": "Tiara of Thunder",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 15011,
+    "setName": "Prayers for Wisdom",
+    "icon": "UI_RelicIcon_15011_3"
+  },
+  {
+    "id": 85430,
+    "name": "Tiara of Thunder",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15011,
+    "setName": "Prayers for Wisdom",
+    "icon": "UI_RelicIcon_15011_3"
+  },
+  {
+    "id": 87330,
+    "name": "Tiara of Frost",
+    "stars": 3,
+    "equipType": "Circlet of Logos",
+    "setId": 15013,
+    "setName": "Prayers to Springtime",
+    "icon": "UI_RelicIcon_15013_3"
+  },
+  {
+    "id": 87430,
+    "name": "Tiara of Frost",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15013,
+    "setName": "Prayers to Springtime",
+    "icon": "UI_RelicIcon_15013_3"
+  },
+  {
+    "id": 88410,
+    "name": "Goblet of Chiseled Crag",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_1"
+  },
+  {
+    "id": 88420,
+    "name": "Feather of Jagged Peaks",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_2"
+  },
+  {
+    "id": 88430,
+    "name": "Mask of Solitude Basalt",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_3"
+  },
+  {
+    "id": 88440,
+    "name": "Flower of Creviced Cliff",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_4"
+  },
+  {
+    "id": 88450,
+    "name": "Sundial of Enduring Jade",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_5"
+  },
+  {
+    "id": 88510,
+    "name": "Goblet of Chiseled Crag",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_1"
+  },
+  {
+    "id": 88520,
+    "name": "Feather of Jagged Peaks",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_2"
+  },
+  {
+    "id": 88530,
+    "name": "Mask of Solitude Basalt",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_3"
+  },
+  {
+    "id": 88540,
+    "name": "Flower of Creviced Cliff",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_4"
+  },
+  {
+    "id": 88550,
+    "name": "Sundial of Enduring Jade",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15014,
+    "setName": "Archaic Petra",
+    "icon": "UI_RelicIcon_15014_5"
+  },
+  {
+    "id": 89410,
+    "name": "Summer Night's Waterballoon",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_1"
+  },
+  {
+    "id": 89420,
+    "name": "Summer Night's Finale",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_2"
+  },
+  {
+    "id": 89430,
+    "name": "Summer Night's Mask",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_3"
+  },
+  {
+    "id": 89440,
+    "name": "Summer Night's Bloom",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_4"
+  },
+  {
+    "id": 89450,
+    "name": "Summer Night's Moment",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_5"
+  },
+  {
+    "id": 89510,
+    "name": "Summer Night's Waterballoon",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_1"
+  },
+  {
+    "id": 89520,
+    "name": "Summer Night's Finale",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_2"
+  },
+  {
+    "id": 89530,
+    "name": "Summer Night's Mask",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_3"
+  },
+  {
+    "id": 89540,
+    "name": "Summer Night's Bloom",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_4"
+  },
+  {
+    "id": 89550,
+    "name": "Summer Night's Moment",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15015,
+    "setName": "Retracing Bolide",
+    "icon": "UI_RelicIcon_15015_5"
+  },
+  {
+    "id": 90410,
+    "name": "Goblet of Thundering Deep",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_1"
+  },
+  {
+    "id": 90420,
+    "name": "Gust of Nostalgia",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_2"
+  },
+  {
+    "id": 90430,
+    "name": "Wine-Stained Tricorne",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_3"
+  },
+  {
+    "id": 90440,
+    "name": "Gilded Corsage",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_4"
+  },
+  {
+    "id": 90450,
+    "name": "Copper Compass",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_5"
+  },
+  {
+    "id": 90510,
+    "name": "Goblet of Thundering Deep",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_1"
+  },
+  {
+    "id": 90520,
+    "name": "Gust of Nostalgia",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_2"
+  },
+  {
+    "id": 90530,
+    "name": "Wine-Stained Tricorne",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_3"
+  },
+  {
+    "id": 90540,
+    "name": "Gilded Corsage",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_4"
+  },
+  {
+    "id": 90550,
+    "name": "Copper Compass",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15016,
+    "setName": "Heart of Depth",
+    "icon": "UI_RelicIcon_15016_5"
+  },
+  {
+    "id": 91410,
+    "name": "Noble's Pledging Vessel",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_1"
+  },
+  {
+    "id": 91420,
+    "name": "Ceremonial War-Plume",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_2"
+  },
+  {
+    "id": 91430,
+    "name": "General's Ancient Helm",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_3"
+  },
+  {
+    "id": 91440,
+    "name": "Flower of Accolades",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_4"
+  },
+  {
+    "id": 91450,
+    "name": "Orichalceous Time-Dial",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_5"
+  },
+  {
+    "id": 91510,
+    "name": "Noble's Pledging Vessel",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_1"
+  },
+  {
+    "id": 91520,
+    "name": "Ceremonial War-Plume",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_2"
+  },
+  {
+    "id": 91530,
+    "name": "General's Ancient Helm",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_3"
+  },
+  {
+    "id": 91540,
+    "name": "Flower of Accolades",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_4"
+  },
+  {
+    "id": 91550,
+    "name": "Orichalceous Time-Dial",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15017,
+    "setName": "Tenacity of the Millelith",
+    "icon": "UI_RelicIcon_15017_5"
+  },
+  {
+    "id": 92410,
+    "name": "Surpassing Cup",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_1"
+  },
+  {
+    "id": 92420,
+    "name": "Wise Doctor's Pinion",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_2"
+  },
+  {
+    "id": 92430,
+    "name": "Mocking Mask",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_3"
+  },
+  {
+    "id": 92440,
+    "name": "Stainless Bloom",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_4"
+  },
+  {
+    "id": 92450,
+    "name": "Moment of Cessation",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_5"
+  },
+  {
+    "id": 92510,
+    "name": "Surpassing Cup",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_1"
+  },
+  {
+    "id": 92520,
+    "name": "Wise Doctor's Pinion",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_2"
+  },
+  {
+    "id": 92530,
+    "name": "Mocking Mask",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_3"
+  },
+  {
+    "id": 92540,
+    "name": "Stainless Bloom",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_4"
+  },
+  {
+    "id": 92550,
+    "name": "Moment of Cessation",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15018,
+    "setName": "Pale Flame",
+    "icon": "UI_RelicIcon_15018_5"
+  },
+  {
+    "id": 93413,
+    "name": "Hopeful Heart",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_1"
+  },
+  {
+    "id": 93423,
+    "name": "Shaft of Remembrance",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_2"
+  },
+  {
+    "id": 93433,
+    "name": "Capricious Visage",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_3"
+  },
+  {
+    "id": 93443,
+    "name": "Entangling Bloom",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_4"
+  },
+  {
+    "id": 93453,
+    "name": "Morning Dew's Moment",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_5"
+  },
+  {
+    "id": 93513,
+    "name": "Hopeful Heart",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_1"
+  },
+  {
+    "id": 93523,
+    "name": "Shaft of Remembrance",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_2"
+  },
+  {
+    "id": 93533,
+    "name": "Capricious Visage",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_3"
+  },
+  {
+    "id": 93543,
+    "name": "Entangling Bloom",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_4"
+  },
+  {
+    "id": 93553,
+    "name": "Morning Dew's Moment",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15019,
+    "setName": "Shimenawa's Reminiscence",
+    "icon": "UI_RelicIcon_15019_5"
+  },
+  {
+    "id": 94413,
+    "name": "Scarlet Vessel",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_1"
+  },
+  {
+    "id": 94423,
+    "name": "Sundered Feather",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_2"
+  },
+  {
+    "id": 94433,
+    "name": "Ornate Kabuto",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_3"
+  },
+  {
+    "id": 94443,
+    "name": "Magnificent Tsuba",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_4"
+  },
+  {
+    "id": 94453,
+    "name": "Storm Cage",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_5"
+  },
+  {
+    "id": 94513,
+    "name": "Scarlet Vessel",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_1"
+  },
+  {
+    "id": 94523,
+    "name": "Sundered Feather",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_2"
+  },
+  {
+    "id": 94533,
+    "name": "Ornate Kabuto",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_3"
+  },
+  {
+    "id": 94543,
+    "name": "Magnificent Tsuba",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_4"
+  },
+  {
+    "id": 94553,
+    "name": "Storm Cage",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15020,
+    "setName": "Emblem of Severed Fate",
+    "icon": "UI_RelicIcon_15020_5"
+  },
+  {
+    "id": 95413,
+    "name": "Calabash of Awakening",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_1"
+  },
+  {
+    "id": 95423,
+    "name": "Plume of Luxury",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_2"
+  },
+  {
+    "id": 95433,
+    "name": "Skeletal Hat",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_3"
+  },
+  {
+    "id": 95443,
+    "name": "Bloom Times",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_4"
+  },
+  {
+    "id": 95453,
+    "name": "Song of Life",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_5"
+  },
+  {
+    "id": 95513,
+    "name": "Calabash of Awakening",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_1"
+  },
+  {
+    "id": 95523,
+    "name": "Plume of Luxury",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_2"
+  },
+  {
+    "id": 95533,
+    "name": "Skeletal Hat",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_3"
+  },
+  {
+    "id": 95543,
+    "name": "Bloom Times",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_4"
+  },
+  {
+    "id": 95553,
+    "name": "Song of Life",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15021,
+    "setName": "Husk of Opulent Dreams",
+    "icon": "UI_RelicIcon_15021_5"
+  },
+  {
+    "id": 96413,
+    "name": "Pearl Cage",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_1"
+  },
+  {
+    "id": 96423,
+    "name": "Deep Palace's Plume",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_2"
+  },
+  {
+    "id": 96433,
+    "name": "Crown of Watatsumi",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_3"
+  },
+  {
+    "id": 96443,
+    "name": "Sea-Dyed Blossom",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_4"
+  },
+  {
+    "id": 96453,
+    "name": "Cowry of Parting",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_5"
+  },
+  {
+    "id": 96513,
+    "name": "Pearl Cage",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_1"
+  },
+  {
+    "id": 96523,
+    "name": "Deep Palace's Plume",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_2"
+  },
+  {
+    "id": 96533,
+    "name": "Crown of Watatsumi",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_3"
+  },
+  {
+    "id": 96543,
+    "name": "Sea-Dyed Blossom",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_4"
+  },
+  {
+    "id": 96553,
+    "name": "Cowry of Parting",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15022,
+    "setName": "Ocean-Hued Clam",
+    "icon": "UI_RelicIcon_15022_5"
+  },
+  {
+    "id": 97413,
+    "name": "Moment of the Pact",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_1"
+  },
+  {
+    "id": 97423,
+    "name": "Feather of Nascent Light",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_2"
+  },
+  {
+    "id": 97433,
+    "name": "Thundering Poise",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_3"
+  },
+  {
+    "id": 97443,
+    "name": "Flowering Life",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_4"
+  },
+  {
+    "id": 97453,
+    "name": "Solar Relic",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_5"
+  },
+  {
+    "id": 97513,
+    "name": "Moment of the Pact",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_1"
+  },
+  {
+    "id": 97523,
+    "name": "Feather of Nascent Light",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_2"
+  },
+  {
+    "id": 97533,
+    "name": "Thundering Poise",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_3"
+  },
+  {
+    "id": 97543,
+    "name": "Flowering Life",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_4"
+  },
+  {
+    "id": 97553,
+    "name": "Solar Relic",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15023,
+    "setName": "Vermillion Hereafter",
+    "icon": "UI_RelicIcon_15023_5"
+  },
+  {
+    "id": 98413,
+    "name": "Chalice of the Font",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_1"
+  },
+  {
+    "id": 98423,
+    "name": "Jade Leaf",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_2"
+  },
+  {
+    "id": 98433,
+    "name": "Flowing Rings",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_3"
+  },
+  {
+    "id": 98443,
+    "name": "Soulscent Bloom",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_4"
+  },
+  {
+    "id": 98453,
+    "name": "Symbol of Felicitation",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_5"
+  },
+  {
+    "id": 98513,
+    "name": "Chalice of the Font",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_1"
+  },
+  {
+    "id": 98523,
+    "name": "Jade Leaf",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_2"
+  },
+  {
+    "id": 98533,
+    "name": "Flowing Rings",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_3"
+  },
+  {
+    "id": 98543,
+    "name": "Soulscent Bloom",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_4"
+  },
+  {
+    "id": 98553,
+    "name": "Symbol of Felicitation",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15024,
+    "setName": "Echoes of an Offering",
+    "icon": "UI_RelicIcon_15024_5"
+  },
+  {
+    "id": 20413,
+    "name": "Lamp of the Lost",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_1"
+  },
+  {
+    "id": 20423,
+    "name": "Scholar of Vines",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_2"
+  },
+  {
+    "id": 20433,
+    "name": "Laurel Coronet",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_3"
+  },
+  {
+    "id": 20443,
+    "name": "Labyrinth Wayfarer",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_4"
+  },
+  {
+    "id": 20453,
+    "name": "A Time of Insight",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_5"
+  },
+  {
+    "id": 20513,
+    "name": "Lamp of the Lost",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_1"
+  },
+  {
+    "id": 20523,
+    "name": "Scholar of Vines",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_2"
+  },
+  {
+    "id": 20533,
+    "name": "Laurel Coronet",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_3"
+  },
+  {
+    "id": 20543,
+    "name": "Labyrinth Wayfarer",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_4"
+  },
+  {
+    "id": 20553,
+    "name": "A Time of Insight",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15025,
+    "setName": "Deepwood Memories",
+    "icon": "UI_RelicIcon_15025_5"
+  },
+  {
+    "id": 21413,
+    "name": "Honeyed Final Feast",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_1"
+  },
+  {
+    "id": 21423,
+    "name": "Feather of Judgment",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_2"
+  },
+  {
+    "id": 21433,
+    "name": "Shadow of the Sand King",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_3"
+  },
+  {
+    "id": 21443,
+    "name": "Dreaming Steelbloom",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_4"
+  },
+  {
+    "id": 21453,
+    "name": "The Sunken Years",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_5"
+  },
+  {
+    "id": 21513,
+    "name": "Honeyed Final Feast",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_1"
+  },
+  {
+    "id": 21523,
+    "name": "Feather of Judgment",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_2"
+  },
+  {
+    "id": 21533,
+    "name": "Shadow of the Sand King",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_3"
+  },
+  {
+    "id": 21543,
+    "name": "Dreaming Steelbloom",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_4"
+  },
+  {
+    "id": 21553,
+    "name": "The Sunken Years",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15026,
+    "setName": "Gilded Dreams",
+    "icon": "UI_RelicIcon_15026_5"
+  },
+  {
+    "id": 27413,
+    "name": "Defender of the Enchanting Dream",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_1"
+  },
+  {
+    "id": 27423,
+    "name": "End of the Golden Realm",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_2"
+  },
+  {
+    "id": 27433,
+    "name": "Legacy of the Desert High-Born",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_3"
+  },
+  {
+    "id": 27443,
+    "name": "The First Days of the City of Kings",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_4"
+  },
+  {
+    "id": 27453,
+    "name": "Timepiece of the Lost Path",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_5"
+  },
+  {
+    "id": 27513,
+    "name": "Defender of the Enchanting Dream",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_1"
+  },
+  {
+    "id": 27523,
+    "name": "End of the Golden Realm",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_2"
+  },
+  {
+    "id": 27533,
+    "name": "Legacy of the Desert High-Born",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_3"
+  },
+  {
+    "id": 27543,
+    "name": "The First Days of the City of Kings",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_4"
+  },
+  {
+    "id": 27553,
+    "name": "Timepiece of the Lost Path",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15027,
+    "setName": "Desert Pavilion Chronicle",
+    "icon": "UI_RelicIcon_15027_5"
+  },
+  {
+    "id": 28413,
+    "name": "Secret-Keeper's Magic Bottle",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_1"
+  },
+  {
+    "id": 28423,
+    "name": "Wilting Feast",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_2"
+  },
+  {
+    "id": 28433,
+    "name": "Amethyst Crown",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_3"
+  },
+  {
+    "id": 28443,
+    "name": "Ay-Khanoum's Myriad",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_4"
+  },
+  {
+    "id": 28453,
+    "name": "A Moment Congealed",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_5"
+  },
+  {
+    "id": 28513,
+    "name": "Secret-Keeper's Magic Bottle",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_1"
+  },
+  {
+    "id": 28523,
+    "name": "Wilting Feast",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_2"
+  },
+  {
+    "id": 28533,
+    "name": "Amethyst Crown",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_3"
+  },
+  {
+    "id": 28543,
+    "name": "Ay-Khanoum's Myriad",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_4"
+  },
+  {
+    "id": 28553,
+    "name": "A Moment Congealed",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15028,
+    "setName": "Flower of Paradise Lost",
+    "icon": "UI_RelicIcon_15028_5"
+  },
+  {
+    "id": 29413,
+    "name": "Heroes' Tea Party",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_1"
+  },
+  {
+    "id": 29423,
+    "name": "Wicked Mage's Plumule",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_2"
+  },
+  {
+    "id": 29433,
+    "name": "Fell Dragon's Monocle",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_3"
+  },
+  {
+    "id": 29443,
+    "name": "Odyssean Flower",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_4"
+  },
+  {
+    "id": 29453,
+    "name": "Nymph's Constancy",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_5"
+  },
+  {
+    "id": 29513,
+    "name": "Heroes' Tea Party",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_1"
+  },
+  {
+    "id": 29523,
+    "name": "Wicked Mage's Plumule",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_2"
+  },
+  {
+    "id": 29533,
+    "name": "Fell Dragon's Monocle",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_3"
+  },
+  {
+    "id": 29543,
+    "name": "Odyssean Flower",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_4"
+  },
+  {
+    "id": 29553,
+    "name": "Nymph's Constancy",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15029,
+    "setName": "Nymph's Dream",
+    "icon": "UI_RelicIcon_15029_5"
+  },
+  {
+    "id": 30413,
+    "name": "Feast of Boundless Joy",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_1"
+  },
+  {
+    "id": 30423,
+    "name": "Vibrant Pinion",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_2"
+  },
+  {
+    "id": 30433,
+    "name": "Heart of Khvarena's Brilliance",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_3"
+  },
+  {
+    "id": 30443,
+    "name": "Stamen of Khvarena's Origin",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_4"
+  },
+  {
+    "id": 30453,
+    "name": "Ancient Abscission",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_5"
+  },
+  {
+    "id": 30513,
+    "name": "Feast of Boundless Joy",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_1"
+  },
+  {
+    "id": 30523,
+    "name": "Vibrant Pinion",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_2"
+  },
+  {
+    "id": 30533,
+    "name": "Heart of Khvarena's Brilliance",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_3"
+  },
+  {
+    "id": 30543,
+    "name": "Stamen of Khvarena's Origin",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_4"
+  },
+  {
+    "id": 30553,
+    "name": "Ancient Abscission",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15030,
+    "setName": "Vourukasha's Glow",
+    "icon": "UI_RelicIcon_15030_5"
+  },
+  {
+    "id": 31413,
+    "name": "Forgotten Vessel",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_1"
+  },
+  {
+    "id": 31423,
+    "name": "Masterpiece's Overture",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_2"
+  },
+  {
+    "id": 31433,
+    "name": "Veteran's Visage",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_3"
+  },
+  {
+    "id": 31443,
+    "name": "Hunter's Brooch",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_4"
+  },
+  {
+    "id": 31453,
+    "name": "Moment of Judgment",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_5"
+  },
+  {
+    "id": 31513,
+    "name": "Forgotten Vessel",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_1"
+  },
+  {
+    "id": 31523,
+    "name": "Masterpiece's Overture",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_2"
+  },
+  {
+    "id": 31533,
+    "name": "Veteran's Visage",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_3"
+  },
+  {
+    "id": 31543,
+    "name": "Hunter's Brooch",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_4"
+  },
+  {
+    "id": 31553,
+    "name": "Moment of Judgment",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15031,
+    "setName": "Marechaussee Hunter",
+    "icon": "UI_RelicIcon_15031_5"
+  },
+  {
+    "id": 32413,
+    "name": "Golden Night's Bustle",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_1"
+  },
+  {
+    "id": 32423,
+    "name": "Golden Bird's Shedding",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_2"
+  },
+  {
+    "id": 32433,
+    "name": "Golden Troupe's Reward",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_3"
+  },
+  {
+    "id": 32443,
+    "name": "Golden Song's Variation",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_4"
+  },
+  {
+    "id": 32453,
+    "name": "Golden Era's Prelude",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_5"
+  },
+  {
+    "id": 32513,
+    "name": "Golden Night's Bustle",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_1"
+  },
+  {
+    "id": 32523,
+    "name": "Golden Bird's Shedding",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_2"
+  },
+  {
+    "id": 32533,
+    "name": "Golden Troupe's Reward",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_3"
+  },
+  {
+    "id": 32543,
+    "name": "Golden Song's Variation",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_4"
+  },
+  {
+    "id": 32553,
+    "name": "Golden Era's Prelude",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15032,
+    "setName": "Golden Troupe",
+    "icon": "UI_RelicIcon_15032_5"
+  },
+  {
+    "id": 33413,
+    "name": "Promised Dream of Days Past",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_1"
+  },
+  {
+    "id": 33423,
+    "name": "Recollection of Days Past",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_2"
+  },
+  {
+    "id": 33433,
+    "name": "Poetry of Days Past",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_3"
+  },
+  {
+    "id": 33443,
+    "name": "Forgotten Oath of Days Past",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_4"
+  },
+  {
+    "id": 33453,
+    "name": "Echoing Sound From Days Past",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_5"
+  },
+  {
+    "id": 33513,
+    "name": "Promised Dream of Days Past",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_1"
+  },
+  {
+    "id": 33523,
+    "name": "Recollection of Days Past",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_2"
+  },
+  {
+    "id": 33533,
+    "name": "Poetry of Days Past",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_3"
+  },
+  {
+    "id": 33543,
+    "name": "Forgotten Oath of Days Past",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_4"
+  },
+  {
+    "id": 33553,
+    "name": "Echoing Sound From Days Past",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15033,
+    "setName": "Song of Days Past",
+    "icon": "UI_RelicIcon_15033_5"
+  },
+  {
+    "id": 34413,
+    "name": "Magnanimous Ink Bottle",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_1"
+  },
+  {
+    "id": 34423,
+    "name": "Honest Quill",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_2"
+  },
+  {
+    "id": 34433,
+    "name": "Compassionate Ladies' Hat",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_3"
+  },
+  {
+    "id": 34443,
+    "name": "Selfless Floral Accessory",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_4"
+  },
+  {
+    "id": 34453,
+    "name": "Faithful Hourglass",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_5"
+  },
+  {
+    "id": 34513,
+    "name": "Magnanimous Ink Bottle",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_1"
+  },
+  {
+    "id": 34523,
+    "name": "Honest Quill",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_2"
+  },
+  {
+    "id": 34533,
+    "name": "Compassionate Ladies' Hat",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_3"
+  },
+  {
+    "id": 34543,
+    "name": "Selfless Floral Accessory",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_4"
+  },
+  {
+    "id": 34553,
+    "name": "Faithful Hourglass",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15034,
+    "setName": "Nighttime Whispers in the Echoing Woods",
+    "icon": "UI_RelicIcon_15034_5"
+  },
+  {
+    "id": 35413,
+    "name": "Ichor Shower Rhapsody",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_1"
+  },
+  {
+    "id": 35423,
+    "name": "Ancient Sea's Nocturnal Musing",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_2"
+  },
+  {
+    "id": 35433,
+    "name": "Whimsical Dance of the Withered",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_3"
+  },
+  {
+    "id": 35443,
+    "name": "Harmonious Symphony Prelude",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_4"
+  },
+  {
+    "id": 35453,
+    "name": "The Grand Jape of the Turning of Fate",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_5"
+  },
+  {
+    "id": 35513,
+    "name": "Ichor Shower Rhapsody",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_1"
+  },
+  {
+    "id": 35523,
+    "name": "Ancient Sea's Nocturnal Musing",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_2"
+  },
+  {
+    "id": 35533,
+    "name": "Whimsical Dance of the Withered",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_3"
+  },
+  {
+    "id": 35543,
+    "name": "Harmonious Symphony Prelude",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_4"
+  },
+  {
+    "id": 35553,
+    "name": "The Grand Jape of the Turning of Fate",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15035,
+    "setName": "Fragment of Harmonic Whimsy",
+    "icon": "UI_RelicIcon_15035_5"
+  },
+  {
+    "id": 36413,
+    "name": "The Wine-Flask Over Which the Plan Was Hatched",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_1"
+  },
+  {
+    "id": 36423,
+    "name": "Faded Emerald Tail",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_2"
+  },
+  {
+    "id": 36433,
+    "name": "Crownless Crown",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_3"
+  },
+  {
+    "id": 36443,
+    "name": "Dark Fruit of Bright Flowers",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_4"
+  },
+  {
+    "id": 36453,
+    "name": "Moment of Attainment",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_5"
+  },
+  {
+    "id": 36513,
+    "name": "The Wine-Flask Over Which the Plan Was Hatched",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_1"
+  },
+  {
+    "id": 36523,
+    "name": "Faded Emerald Tail",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_2"
+  },
+  {
+    "id": 36533,
+    "name": "Crownless Crown",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_3"
+  },
+  {
+    "id": 36543,
+    "name": "Dark Fruit of Bright Flowers",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_4"
+  },
+  {
+    "id": 36553,
+    "name": "Moment of Attainment",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15036,
+    "setName": "Unfinished Reverie",
+    "icon": "UI_RelicIcon_15036_5"
+  },
+  {
+    "id": 37413,
+    "name": "Wandering Scholar's Claw Cup",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_1"
+  },
+  {
+    "id": 37423,
+    "name": "Mountain Ranger's Marker",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_2"
+  },
+  {
+    "id": 37433,
+    "name": "Demon-Warrior's Feather Mask",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_3"
+  },
+  {
+    "id": 37443,
+    "name": "Beast Tamer's Talisman",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_4"
+  },
+  {
+    "id": 37453,
+    "name": "Mystic's Gold Dial",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_5"
+  },
+  {
+    "id": 37513,
+    "name": "Wandering Scholar's Claw Cup",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_1"
+  },
+  {
+    "id": 37523,
+    "name": "Mountain Ranger's Marker",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_2"
+  },
+  {
+    "id": 37533,
+    "name": "Demon-Warrior's Feather Mask",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_3"
+  },
+  {
+    "id": 37543,
+    "name": "Beast Tamer's Talisman",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_4"
+  },
+  {
+    "id": 37553,
+    "name": "Mystic's Gold Dial",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15037,
+    "setName": "Scroll of the Hero of Cinder City",
+    "icon": "UI_RelicIcon_15037_5"
+  },
+  {
+    "id": 38413,
+    "name": "Pre-Banquet of the Contenders",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_1"
+  },
+  {
+    "id": 38423,
+    "name": "Root of the Spirit-Marrow",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_2"
+  },
+  {
+    "id": 38433,
+    "name": "Crown of the Saints",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_3"
+  },
+  {
+    "id": 38443,
+    "name": "Reckoning of the Xenogenic",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_4"
+  },
+  {
+    "id": 38453,
+    "name": "Myths of the Night Realm",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_5"
+  },
+  {
+    "id": 38513,
+    "name": "Pre-Banquet of the Contenders",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_1"
+  },
+  {
+    "id": 38523,
+    "name": "Root of the Spirit-Marrow",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_2"
+  },
+  {
+    "id": 38533,
+    "name": "Crown of the Saints",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_3"
+  },
+  {
+    "id": 38543,
+    "name": "Reckoning of the Xenogenic",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_4"
+  },
+  {
+    "id": 38553,
+    "name": "Myths of the Night Realm",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15038,
+    "setName": "Obsidian Codex",
+    "icon": "UI_RelicIcon_15038_5"
+  },
+  {
+    "id": 39413,
+    "name": "A Horn Unwinded",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_1"
+  },
+  {
+    "id": 39423,
+    "name": "Nightingale's Tail Feather",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_2"
+  },
+  {
+    "id": 39433,
+    "name": "Dyed Tassel",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_3"
+  },
+  {
+    "id": 39443,
+    "name": "Lightkeeper's Pledge",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_4"
+  },
+  {
+    "id": 39453,
+    "name": "Undying One's Mourning Bell",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_5"
+  },
+  {
+    "id": 39513,
+    "name": "A Horn Unwinded",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_1"
+  },
+  {
+    "id": 39523,
+    "name": "Nightingale's Tail Feather",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_2"
+  },
+  {
+    "id": 39533,
+    "name": "Dyed Tassel",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_3"
+  },
+  {
+    "id": 39543,
+    "name": "Lightkeeper's Pledge",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_4"
+  },
+  {
+    "id": 39553,
+    "name": "Undying One's Mourning Bell",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15039,
+    "setName": "Long Night's Oath",
+    "icon": "UI_RelicIcon_15039_5"
+  },
+  {
+    "id": 40413,
+    "name": "Deep Gallery's Bestowed Banquet",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_1"
+  },
+  {
+    "id": 40423,
+    "name": "Deep Gallery's Distant Pact",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_2"
+  },
+  {
+    "id": 40433,
+    "name": "Deep Gallery's Lost Crown",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_3"
+  },
+  {
+    "id": 40443,
+    "name": "Deep Gallery's Echoing Song",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_4"
+  },
+  {
+    "id": 40453,
+    "name": "Deep Gallery's Moment of Oblivion",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_5"
+  },
+  {
+    "id": 40513,
+    "name": "Deep Gallery's Bestowed Banquet",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_1"
+  },
+  {
+    "id": 40523,
+    "name": "Deep Gallery's Distant Pact",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_2"
+  },
+  {
+    "id": 40533,
+    "name": "Deep Gallery's Lost Crown",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_3"
+  },
+  {
+    "id": 40543,
+    "name": "Deep Gallery's Echoing Song",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_4"
+  },
+  {
+    "id": 40553,
+    "name": "Deep Gallery's Moment of Oblivion",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15040,
+    "setName": "Finale of the Deep Galleries",
+    "icon": "UI_RelicIcon_15040_5"
+  },
+  {
+    "id": 41413,
+    "name": "Vessel of Plenty",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_1"
+  },
+  {
+    "id": 41423,
+    "name": "Feather of Indelible Sin",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_2"
+  },
+  {
+    "id": 41433,
+    "name": "Crown of the Befallen",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_3"
+  },
+  {
+    "id": 41443,
+    "name": "Bloom of the Mind's Desire",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_4"
+  },
+  {
+    "id": 41453,
+    "name": "Revelation's Toll",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_5"
+  },
+  {
+    "id": 41513,
+    "name": "Vessel of Plenty",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_1"
+  },
+  {
+    "id": 41523,
+    "name": "Feather of Indelible Sin",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_2"
+  },
+  {
+    "id": 41533,
+    "name": "Crown of the Befallen",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_3"
+  },
+  {
+    "id": 41543,
+    "name": "Bloom of the Mind's Desire",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_4"
+  },
+  {
+    "id": 41553,
+    "name": "Revelation's Toll",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15041,
+    "setName": "Night of the Sky's Unveiling",
+    "icon": "UI_RelicIcon_15041_5"
+  },
+  {
+    "id": 42413,
+    "name": "Joyous Glory of the Pure",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_1"
+  },
+  {
+    "id": 42423,
+    "name": "Pristine Plume of the Blessed",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_2"
+  },
+  {
+    "id": 42433,
+    "name": "Holy Crown of the Believer",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_3"
+  },
+  {
+    "id": 42443,
+    "name": "Crystal Tear of the Wanderer",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_4"
+  },
+  {
+    "id": 42453,
+    "name": "Frost Devotee's Delirium",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_5"
+  },
+  {
+    "id": 42513,
+    "name": "Joyous Glory of the Pure",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_1"
+  },
+  {
+    "id": 42523,
+    "name": "Pristine Plume of the Blessed",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_2"
+  },
+  {
+    "id": 42533,
+    "name": "Holy Crown of the Believer",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_3"
+  },
+  {
+    "id": 42543,
+    "name": "Crystal Tear of the Wanderer",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_4"
+  },
+  {
+    "id": 42553,
+    "name": "Frost Devotee's Delirium",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15042,
+    "setName": "Silken Moon's Serenade",
+    "icon": "UI_RelicIcon_15042_5"
+  },
+  {
+    "id": 43413,
+    "name": "Moonlit Offering's Libation",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_1"
+  },
+  {
+    "id": 43423,
+    "name": "Moonlit Offering's Parting Light",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_2"
+  },
+  {
+    "id": 43433,
+    "name": "Moonlit Offering's Silver Crown",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_3"
+  },
+  {
+    "id": 43443,
+    "name": "Moonlit Offering's Opulent Dream",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_4"
+  },
+  {
+    "id": 43453,
+    "name": "Moonlit Offering's Final Hour",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_5"
+  },
+  {
+    "id": 43513,
+    "name": "Moonlit Offering's Libation",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_1"
+  },
+  {
+    "id": 43523,
+    "name": "Moonlit Offering's Parting Light",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_2"
+  },
+  {
+    "id": 43533,
+    "name": "Moonlit Offering's Silver Crown",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_3"
+  },
+  {
+    "id": 43543,
+    "name": "Moonlit Offering's Opulent Dream",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_4"
+  },
+  {
+    "id": 43553,
+    "name": "Moonlit Offering's Final Hour",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15043,
+    "setName": "Aubade of Morningstar and Moon",
+    "icon": "UI_RelicIcon_15043_5"
+  },
+  {
+    "id": 44413,
+    "name": "Heldenepos's Unspoken Tale",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_1"
+  },
+  {
+    "id": 44423,
+    "name": "Dawn's Brilliant Oath",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_2"
+  },
+  {
+    "id": 44433,
+    "name": "Minnesang of Love and Lament",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_3"
+  },
+  {
+    "id": 44443,
+    "name": "Windborne Flower's Spruchdichtung",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_4"
+  },
+  {
+    "id": 44453,
+    "name": "A Note in Spring's Leich",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_5"
+  },
+  {
+    "id": 44513,
+    "name": "Heldenepos's Unspoken Tale",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_1"
+  },
+  {
+    "id": 44523,
+    "name": "Dawn's Brilliant Oath",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_2"
+  },
+  {
+    "id": 44533,
+    "name": "Minnesang of Love and Lament",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_3"
+  },
+  {
+    "id": 44543,
+    "name": "Windborne Flower's Spruchdichtung",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_4"
+  },
+  {
+    "id": 44553,
+    "name": "A Note in Spring's Leich",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15044,
+    "setName": "A Day Carved From Rising Winds",
+    "icon": "UI_RelicIcon_15044_5"
+  },
+  {
+    "id": 45413,
+    "name": "Heavensent Reward",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_1"
+  },
+  {
+    "id": 45423,
+    "name": "Heavensent Demise",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_2"
+  },
+  {
+    "id": 45433,
+    "name": "Heavensent Crown",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_3"
+  },
+  {
+    "id": 45443,
+    "name": "Heavensent Fragrance",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_4"
+  },
+  {
+    "id": 45453,
+    "name": "Heavensent Decree",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_5"
+  },
+  {
+    "id": 45513,
+    "name": "Heavensent Reward",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_1"
+  },
+  {
+    "id": 45523,
+    "name": "Heavensent Demise",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_2"
+  },
+  {
+    "id": 45533,
+    "name": "Heavensent Crown",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_3"
+  },
+  {
+    "id": 45543,
+    "name": "Heavensent Fragrance",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_4"
+  },
+  {
+    "id": 45553,
+    "name": "Heavensent Decree",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15045,
+    "setName": "Celestial Gift",
+    "icon": "UI_RelicIcon_15045_5"
+  },
+  {
+    "id": 46413,
+    "name": "Ovations That Ceased Upon Festivity",
+    "stars": 4,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_1"
+  },
+  {
+    "id": 46423,
+    "name": "Sharpness That Ceased Upon Wondrous Creation",
+    "stars": 4,
+    "equipType": "Plume of Death",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_2"
+  },
+  {
+    "id": 46433,
+    "name": "Pendulum That Ceased Amidst a Great Fall",
+    "stars": 4,
+    "equipType": "Circlet of Logos",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_3"
+  },
+  {
+    "id": 46443,
+    "name": "Iridescence That Ceased Amidst Glory",
+    "stars": 4,
+    "equipType": "Flower of Life",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_4"
+  },
+  {
+    "id": 46453,
+    "name": "Moment That Ceased Upon Waking From Grand Dreams",
+    "stars": 4,
+    "equipType": "Sands of Eon",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_5"
+  },
+  {
+    "id": 46513,
+    "name": "Ovations That Ceased Upon Festivity",
+    "stars": 5,
+    "equipType": "Goblet of Eonothem",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_1"
+  },
+  {
+    "id": 46523,
+    "name": "Sharpness That Ceased Upon Wondrous Creation",
+    "stars": 5,
+    "equipType": "Plume of Death",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_2"
+  },
+  {
+    "id": 46533,
+    "name": "Pendulum That Ceased Amidst a Great Fall",
+    "stars": 5,
+    "equipType": "Circlet of Logos",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_3"
+  },
+  {
+    "id": 46543,
+    "name": "Iridescence That Ceased Amidst Glory",
+    "stars": 5,
+    "equipType": "Flower of Life",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_4"
+  },
+  {
+    "id": 46553,
+    "name": "Moment That Ceased Upon Waking From Grand Dreams",
+    "stars": 5,
+    "equipType": "Sands of Eon",
+    "setId": 15046,
+    "setName": "Disenchantment in Deep Shadow",
+    "icon": "UI_RelicIcon_15046_5"
+  }
+]

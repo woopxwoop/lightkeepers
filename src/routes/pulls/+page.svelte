@@ -130,8 +130,6 @@
     });
   });
 
-  // Debug: show state
-  let debugVisible = import.meta.env.DEV;
 </script>
 
 <main
@@ -629,14 +627,6 @@
 </main>
 
 <style>
-  .pulls-debug-hidden {
-    display: none;
-  }
-
-  .pulls-debug-visible {
-    display: block;
-  }
-
   .calculate-button-disabled {
     opacity: 0.45;
     cursor: default;
