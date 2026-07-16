@@ -409,10 +409,7 @@
               class="suggestion-item flex items-center gap-2 w-full text-left px-3 py-2 text-sm"
               class:suggestion-active={i === suggestionIndex}
               style="color: var(--foreground-color);"
-              onmousedown={(e) => {
-                e.preventDefault();
-                addTag(key);
-              }}
+              onclick={() => addTag(key)}
             >
               <span
                 class="w-5 h-5 rounded-[3px] overflow-hidden shrink-0"
@@ -645,7 +642,11 @@
           {#each displayTeams as team, i}
             {@const owned = ownsTeam(team)}
             {@const costSim =
-              selectedCost !== null ? getSimAtCost(team, selectedCost) : null}
+              selectedCost !== null
+                ? getSimAtCost(team, selectedCost)
+                : team.results.length > 0
+                  ? team.results[0]
+                  : null}
             <div
               class="team-card card-enter rounded-xl overflow-hidden flex flex-col"
               style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent); animation-delay: {i *

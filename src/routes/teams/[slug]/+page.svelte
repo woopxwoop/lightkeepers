@@ -222,8 +222,9 @@
         {@const cumulative = (peakSim.dps / baselineDps) * 100}
         <div
           class="accordion rounded-xl overflow-hidden"
-          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent); animation: slide-up 0.3s ease-out both; animation-delay: {gi *
-            60}ms;"
+          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);{$animationsEnabled
+            ? ` animation: slide-up 0.3s ease-out both; animation-delay: ${gi * 60}ms;`
+            : ''}"
         >
           <!-- Accordion header: cost + peak DPS + label -->
           <button
@@ -238,15 +239,12 @@
               >
                 {group.cost} cost
               </span>
-              <a
-                href={getSimConfigUrl(peakSim.state_key)}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-xs truncate hidden sm:inline hover:underline"
+              <span
+                class="text-xs truncate hidden sm:inline"
                 style="color: var(--foreground-mid);"
               >
                 — {peakSim.label}
-              </a>
+              </span>
             </div>
             <div class="accordion-stats">
               <span style="color: var(--foreground-mid);">
@@ -286,10 +284,11 @@
                       href={getSimConfigUrl(sim.state_key)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-xs hover:underline"
-                      style="color: var(--foreground-mid);"
+                      class="config-link text-xs"
+                      style="color: var(--foreground-mid); text-decoration: underline; text-underline-offset: 2px;"
                     >
-                      {sim.label || `config.txt`}
+                      <span class="config-link-label">{sim.label || `config.txt`}</span>
+                      <span class="config-link-hover">View Config</span>
                     </a>
                     <span
                       class="text-xs font-medium"
@@ -378,6 +377,22 @@
 
   .sim-divider {
     border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 8%, transparent);
+  }
+
+  /* ── Config link hover swap ────────────────────────────────────────────── */
+
+  .config-link .config-link-hover {
+    display: none;
+  }
+
+  .config-link:hover .config-link-label {
+    display: none;
+  }
+
+  .config-link:hover .config-link-hover {
+    display: inline;
+    color: var(--accent-1);
+    text-decoration: underline;
   }
 
   /* Portrait cards (shared with list page spotlight) */

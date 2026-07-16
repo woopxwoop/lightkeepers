@@ -235,7 +235,7 @@
       <a
         href={teamsPath}
         class="nav-link"
-        aria-current={page.url.pathname === teamsPath ? "page" : undefined}
+        aria-current={page.url.pathname.startsWith(teamsPath) ? "page" : undefined}
         bind:this={navLinks.teams}>Teams</a
       >
       <div class="relative">
@@ -355,7 +355,7 @@
     <a
       href={teamsPath}
       class="drawer-link"
-      aria-current={page.url.pathname === teamsPath ? "page" : undefined}
+      aria-current={page.url.pathname.startsWith(teamsPath) ? "page" : undefined}
       >Teams</a
     >
 
