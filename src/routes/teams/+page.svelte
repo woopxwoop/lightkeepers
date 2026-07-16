@@ -1,19 +1,59 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import { buildGoodKeyMap, toGoodKey, weaponByKey } from "$lib/utils";
+  import {
+    buildGoodKeyMap,
+    toGoodKey,
+    weaponByKey,
+    artifactSetByKey,
+  } from "$lib/utils";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import type { InvestmentFile, InvestmentTeam } from "$lib/types/investment";
 
   const API_URL = "/api/investment";
 
+  // ── Element accent colours ────────────────────────────────────────────────
+  const ELEMENT_COLORS: Record<string, string> = {
+    Pyro: "#f07b4a",
+    Hydro: "#5eb8f5",
+    Anemo: "#6dd5a8",
+    Electro: "#c48ad5",
+    Dendro: "#b1d94c",
+    Cryo: "#8fd5e5",
+    Geo: "#f5c242",
+  };
+
+  function elementBg(element: string | null): string {
+    if (!element || !ELEMENT_COLORS[element]) return "var(--background-color)";
+    return `color-mix(in srgb, ${ELEMENT_COLORS[element]} 8%, var(--background-color))`;
+  }
+
   let data: InvestmentFile | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
 
+  // ── View mode ─────────────────────────────────────────────────────────────
+  type ViewMode = "spotlight" | "compact";
+  let viewMode = $state<ViewMode>("spotlight");
+  const SPOTLIGHT_PAGE = 10;
+  let spotlightCount = $state(SPOTLIGHT_PAGE);
+
+  // Reset pagination when filters change
+  $effect(() => {
+    tags;
+    selectedCost;
+    sortBy;
+    sortOwnedFirst;
+    spotlightCount = SPOTLIGHT_PAGE;
+  });
+
+  function showMore() {
+    spotlightCount += SPOTLIGHT_PAGE;
+  }
+
   // ── Sort & filter state ──────────────────────────────────────────────────
   let sortOwnedFirst = $state(true);
-  let sortBy = $state<"dps-desc" | "dps-asc" | "cost-desc" | "cost-asc">("dps-desc");
+  let sortBy = $state<"dps-desc" | "dps-asc">("dps-desc");
   /** Selected cost level — show DPS of the best sim at (or nearest to) this cost. */
   let selectedCost = $state<number | null>(null);
 
@@ -48,9 +88,11 @@
     if (!data) return [] as string[];
     const set = new Set<string>();
     for (const t of data.teams) {
-      for (const k of t.characters) set.add(k);
+      for (const k of t.characters) {
+        set.add(k);
+      }
     }
-    return [...set].sort();
+    return [...set];
   });
 
   // Suggestions filtered by input text, excluding already-tagged keys
@@ -102,6 +144,7 @@
     }
   }
 
+  let showInfo = $state(false);
   let showSuggestions = $derived(focused && suggestions.length > 0);
 
   // Which GOOD keys the user owns
@@ -141,7 +184,10 @@
     let bestDist = Math.abs(best.cost - cost);
     for (let i = 1; i < team.results.length; i++) {
       const dist = Math.abs(team.results[i].cost - cost);
-      if (dist < bestDist || (dist === bestDist && team.results[i].cost < best.cost)) {
+      if (
+        dist < bestDist ||
+        (dist === bestDist && team.results[i].cost < best.cost)
+      ) {
         best = team.results[i];
         bestDist = dist;
       }
@@ -161,7 +207,11 @@
   }
 
   /** Format a cons + refinement label, e.g. "C2R1" or "C0". */
-  function formatCR(cons: number, refinement: number, weaponKey: string): string {
+  function formatCR(
+    cons: number,
+    refinement: number,
+    weaponKey: string,
+  ): string {
     const weapon = weaponByKey.get(weaponKey);
     const is4Star = weapon ? weapon.stars <= 4 : false;
     const parts: string[] = [];
@@ -183,10 +233,6 @@
         return (a, b) => displayDps(b) - displayDps(a);
       case "dps-asc":
         return (a, b) => displayDps(a) - displayDps(b);
-      case "cost-desc":
-        return (a, b) => b.baseline_cost - a.baseline_cost;
-      case "cost-asc":
-        return (a, b) => a.baseline_cost - b.baseline_cost;
     }
   }
 
@@ -197,7 +243,9 @@
 
     // When a cost is selected, only show teams that have a sim at exactly that cost
     if (selectedCost !== null) {
-      teams = teams.filter((t) => t.results.some((r) => r.cost === selectedCost));
+      teams = teams.filter((t) =>
+        t.results.some((r) => r.cost === selectedCost),
+      );
     }
 
     const sorted = [...teams];
@@ -218,6 +266,16 @@
   function ownsTeam(team: InvestmentTeam): boolean {
     return team.characters.every((k) => ownedKeys.has(k));
   }
+
+  // ── Spotlight pagination ──────────────────────────────────────────────────
+  let spotlightTeams = $derived(displayTeams.slice(0, spotlightCount));
+  let hasMore = $derived(spotlightCount < displayTeams.length);
+  let remaining = $derived(displayTeams.length - spotlightCount);
+
+  // Animation re-trigger key — changes whenever filters, sort, cost, or view mode change
+  let listKey = $derived(
+    `${tags.join(",")}|${selectedCost ?? "any"}|${sortBy}|${sortOwnedFirst}|${viewMode}`,
+  );
 </script>
 
 <main
@@ -226,17 +284,52 @@
     ? "--sk-animation: none; --pulse-animation: none"
     : ""}
 >
-  <div class="flex flex-col gap-1">
+  <div class="flex items-center gap-2">
     <h2
       class="tracking-widest uppercase"
       style="color: var(--foreground-color);"
     >
       Teams
     </h2>
-    <p style="color: var(--foreground-mid);">
-      Look up team investment levels — constellations, weapons, and artifacts
-      from gcsim simulations.
-    </p>
+    <span class="info-tip relative inline-block">
+      <button
+        type="button"
+        onclick={() => (showInfo = !showInfo)}
+        class="inline-flex items-center justify-center rounded-full cursor-pointer"
+        style="width: 18px; height: 18px; font-size: 11px; font-weight: 700; color: var(--background-color); background: var(--foreground-mid); border: none;"
+      >
+        i
+      </button>
+      {#if showInfo}
+        <span
+          class="info-tooltip absolute left-full top-0 ml-2 w-80 px-3 py-2 rounded-lg text-xs leading-relaxed z-20"
+          style="background: var(--foreground-mid); color: var(--background-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);"
+        >
+        Team calculations done via
+        <a
+          href="https://gcsim.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:underline"
+          style="color: var(--background-color); text-decoration: underline; text-underline-offset: 2px;"
+        >
+          gcsim
+        </a>
+        using
+        <a
+          href="https://compendium.keqingmains.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:underline"
+          style="color: var(--background-color); text-decoration: underline; text-underline-offset: 2px;"
+        >
+          KQM artifact standards
+        </a>. Comparisons between teams is not recommended — rotation difficulty
+        and team cost vary. Comparing the same team at different investment
+        levels is encouraged.
+        </span>
+      {/if}
+    </span>
   </div>
 
   {#if loading}
@@ -278,7 +371,8 @@
       >
         {#each tags as tag}
           <span class="tag-chip">
-            <span class="tag-chip-text">{goodKeyMap.get(tag)?.name ?? tag}</span>
+            <span class="tag-chip-text">{goodKeyMap.get(tag)?.name ?? tag}</span
+            >
             <button
               class="tag-chip-x"
               onclick={() => removeTag(tag)}
@@ -368,8 +462,6 @@
         >
           <option value="dps-desc">DPS ↓</option>
           <option value="dps-asc">DPS ↑</option>
-          <option value="cost-desc">Cost ↓</option>
-          <option value="cost-asc">Cost ↑</option>
         </select>
       </div>
 
@@ -385,7 +477,9 @@
         <input
           type="number"
           bind:value={selectedCost}
-          placeholder="{availableCosts[0] ?? 0}–{availableCosts[availableCosts.length - 1] ?? 0}"
+          placeholder="{availableCosts[0] ?? 0}–{availableCosts[
+            availableCosts.length - 1
+          ] ?? 0}"
           class="cost-input text-sm"
           style="background: var(--background-color); color: var(--foreground-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
         />
@@ -400,97 +494,237 @@
           </button>
         {/if}
       </div>
+
+      <!-- Separator -->
+      <span
+        class="w-px h-5"
+        style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
+      ></span>
+
+      <!-- View mode toggle -->
+      <div
+        class="flex rounded-md overflow-hidden ml-auto"
+        style="border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
+      >
+        {#each ["spotlight", "compact"] as const as mode}
+          <button
+            type="button"
+            onclick={() => (viewMode = mode)}
+            class="mode-btn px-2.5 py-1 text-xs capitalize transition-colors"
+            class:mode-btn-active={viewMode === mode}
+          >
+            {mode}
+          </button>
+        {/each}
+      </div>
     </div>
 
     <!-- Team cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {#each displayTeams as team}
-        {@const owned = ownsTeam(team)}
-        {@const costSim = selectedCost !== null ? getSimAtCost(team, selectedCost) : null}
-        <div
-          class="team-card rounded-xl overflow-hidden flex flex-col"
-          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-        >
-          <!-- Header accent -->
-          <div
-            class="h-0.5"
-            style="background: {owned
-              ? 'var(--accent-1)'
-              : 'color-mix(in srgb, var(--foreground-mid) 30%, transparent)'};"
-          ></div>
-
-          <div class="p-3 flex flex-col gap-2">
-            <!-- Team name + DPS -->
-            <div class="flex items-center justify-between gap-2">
-              <span
-                class="text-sm font-medium truncate"
-                style="color: var(--foreground-color);"
-              >
-                {team.team_name}
-              </span>
-              <span
-                class="text-xs whitespace-nowrap shrink-0"
-                style="color: var(--foreground-mid);"
-              >
-                {(displayDps(team) / 1000).toFixed(0)}K DPS
-              </span>
-            </div>
-
-            <!-- Character icons -->
-            <div class="flex gap-0.5">
-              {#each team.characters as goodKey}
-                {@const char = goodKeyMap.get(goodKey)}
-                {@const isOwned = ownedKeys.has(goodKey)}
-                {@const build = costSim?.characters.find((c) => c.key === goodKey)}
-                <div
-                  class="team-slot rounded-[5px] overflow-hidden relative"
-                  style="background: var(--background-color);"
-                >
-                  <div style={!isOwned ? "opacity: 0.3;" : ""}>
-                    {#if char}
-                      <CharacterIcon character={char} />
-                    {:else}
+    {#if viewMode === "spotlight"}
+      {#key listKey}
+        <div class="flex flex-col gap-4" class:no-anim={!$animationsEnabled}>
+          {#each spotlightTeams as team, i}
+            {@const owned = ownsTeam(team)}
+            {@const costSim =
+              selectedCost !== null ? getSimAtCost(team, selectedCost) : null}
+            {@const bestSim =
+              costSim ?? (team.results.length > 0 ? team.results[0] : null)}
+            <div
+              class="team-row card-enter rounded-xl overflow-hidden"
+              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent); animation-delay: {i *
+                50}ms;"
+            >
+              <!-- 4 character portrait cards -->
+              <div class="grid grid-cols-4 gap-1 p-2">
+                {#each team.characters as goodKey}
+                  {@const char = goodKeyMap.get(goodKey)}
+                  {@const isOwned = ownedKeys.has(goodKey)}
+                  {@const build = bestSim?.characters.find(
+                    (c) => c.key === goodKey,
+                  )}
+                  {@const elColor = ELEMENT_COLORS[char?.element ?? ""]}
+                  <div
+                    class="char-card rounded-md overflow-hidden relative"
+                    style="--shine: {elColor ??
+                      'transparent'}; background: {elementBg(
+                      char?.element ?? null,
+                    )};"
+                  >
+                    <!-- Subtle element glow at top -->
+                    {#if elColor}
                       <div
-                        class="w-full h-full flex items-center justify-center text-[0.55rem]"
-                        style="color: var(--foreground-mid);"
-                      >
-                        {goodKey.slice(0, 4)}
+                        class="absolute top-0 left-0 right-0 z-10 pointer-events-none"
+                        style="height: 2px; background: {elColor}; opacity: 0.7;"
+                      ></div>
+                    {/if}
+
+                    <!-- Portrait image -->
+                    {#if char}
+                      <div class="char-portrait-img">
+                        <CharacterIcon character={char} />
                       </div>
                     {/if}
-                  </div>
-                  {#if build}
-                    <span
-                      class="absolute bottom-0 left-0 right-0 text-center font-medium py-px"
-                      style="background: color-mix(in srgb, var(--background-color) 75%, transparent);
-                             color: var(--accent-1);
-                             font-size: 11px;
-                             font-weight: 600;
-                             letter-spacing: 0.06em;"
-                    >
-                      {formatCR(build.cons, build.weapon.refinement, build.weapon.key)}
-                    </span>
-                  {/if}
-                </div>
-              {/each}
-            </div>
 
-            <!-- Cost + view details -->
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs" style="color: var(--foreground-mid);">
-                {selectedCost !== null ? selectedCost : team.baseline_cost} cost
-              </span>
-              <a
-                href="/teams/{team.team_key}"
-                class="text-xs font-medium hover:underline shrink-0"
-                style="color: var(--accent-1);"
+                    <!-- Gradient overlay at bottom -->
+                    <div
+                      class="char-overlay absolute bottom-0 left-0 right-0 flex flex-col justify-end px-1.5 pb-1.5 pt-5 z-10"
+                    >
+                      <span
+                        class="text-[0.7rem] font-medium leading-tight truncate"
+                        style="color: var(--foreground-color);"
+                      >
+                        {char?.name ?? goodKey}
+                      </span>
+                      {#if build}
+                        <span
+                          class="text-[0.65rem] font-semibold leading-tight tracking-wider"
+                          style="color: var(--accent-1);"
+                        >
+                          {formatCR(
+                            build.cons,
+                            build.weapon.refinement,
+                            build.weapon.key,
+                          )}
+                        </span>
+                      {/if}
+                    </div>
+
+                    <!-- Dim unowned characters -->
+                    {#if !isOwned}
+                      <div
+                        class="absolute inset-0 z-[5]"
+                        style="background: rgba(2, 6, 11, 0.55);"
+                      ></div>
+                    {/if}
+                  </div>
+                {/each}
+              </div>
+
+              <!-- Info bar -->
+              <div
+                class="flex items-center justify-between px-4 py-3"
+                style="border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 12%, transparent);"
               >
-                view details
-              </a>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xs" style="color: var(--foreground-mid);">
+                    {selectedCost !== null ? selectedCost : team.baseline_cost}
+                    cost -
+                    {(displayDps(team) / 1000).toFixed(0)}K DPS
+                  </span>
+                </div>
+
+                <a
+                  href="/teams/{team.team_key}"
+                  class="text-xs font-medium hover:underline shrink-0"
+                  style="color: var(--accent-1);"
+                >
+                  view details
+                </a>
+              </div>
             </div>
-          </div>
+          {/each}
         </div>
-      {/each}
-    </div>
+      {/key}
+
+      <!-- Show more button -->
+      {#if hasMore}
+        <button
+          onclick={showMore}
+          class="show-more-btn rounded-xl px-5 py-3 text-sm font-medium transition-all duration-150"
+          style="background: color-mix(in srgb, var(--accent-1) 8%, var(--background-mid)); color: var(--accent-1); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
+        >
+          Show {Math.min(SPOTLIGHT_PAGE, remaining)} more ({remaining} remaining)
+        </button>
+      {/if}
+    {:else}
+      {#key listKey}
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+          class:no-anim={!$animationsEnabled}
+        >
+          {#each displayTeams as team, i}
+            {@const owned = ownsTeam(team)}
+            {@const costSim =
+              selectedCost !== null ? getSimAtCost(team, selectedCost) : null}
+            <div
+              class="team-card card-enter rounded-xl overflow-hidden flex flex-col"
+              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent); animation-delay: {i *
+                35}ms;"
+            >
+              <!-- Header accent -->
+              <div
+                class="h-0.5"
+                style="background: {owned
+                  ? 'var(--accent-1)'
+                  : 'color-mix(in srgb, var(--foreground-mid) 30%, transparent)'};"
+              ></div>
+
+              <div class="p-3 flex flex-col gap-2">
+                <!-- Character icons -->
+                <div class="flex gap-0.5">
+                  {#each team.characters as goodKey}
+                    {@const char = goodKeyMap.get(goodKey)}
+                    {@const isOwned = ownedKeys.has(goodKey)}
+                    {@const build = costSim?.characters.find(
+                      (c) => c.key === goodKey,
+                    )}
+                    <div
+                      class="team-slot rounded-[5px] overflow-hidden relative"
+                      style="background: {elementBg(char?.element ?? null)};"
+                    >
+                      <div style={!isOwned ? "opacity: 0.3;" : ""}>
+                        {#if char}
+                          <CharacterIcon character={char} />
+                        {:else}
+                          <div
+                            class="w-full h-full flex items-center justify-center text-[0.55rem]"
+                            style="color: var(--foreground-mid);"
+                          >
+                            {goodKey.slice(0, 4)}
+                          </div>
+                        {/if}
+                      </div>
+                      {#if build}
+                        <span
+                          class="absolute bottom-0 left-0 right-0 text-center font-medium py-px"
+                          style="background: color-mix(in srgb, var(--background-color) 75%, transparent);
+                                 color: var(--accent-1);
+                                 font-size: 11px;
+                                 font-weight: 600;
+                                 letter-spacing: 0.06em;"
+                        >
+                          {formatCR(
+                            build.cons,
+                            build.weapon.refinement,
+                            build.weapon.key,
+                          )}
+                        </span>
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+
+                <!-- Cost + view details -->
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs" style="color: var(--foreground-mid);">
+                    {selectedCost !== null ? selectedCost : team.baseline_cost} cost
+                    - {(displayDps(team) / 1000).toFixed(0)}K DPS
+                  </span>
+
+                  <a
+                    href="/teams/{team.team_key}"
+                    class="text-xs font-medium hover:underline shrink-0"
+                    style="color: var(--accent-1);"
+                  >
+                    view details
+                  </a>
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/key}
+    {/if}
 
     {#if displayTeams.length === 0}
       <div
@@ -500,9 +734,7 @@
         <p style="color: var(--foreground-mid);">
           No teams found{tags.length > 0
             ? " with those characters"
-            : ""}{selectedCost !== null
-            ? " at that cost"
-            : ""}.
+            : ""}{selectedCost !== null ? " at that cost" : ""}.
         </p>
       </div>
     {/if}
@@ -583,6 +815,99 @@
   .team-slot {
     width: 100%;
     min-width: 32px;
+  }
+
+  /* ── Spotlight portrait cards ─────────────────────────────────────────── */
+
+  .team-row {
+    transition: border-color 0.2s;
+  }
+
+  .team-row:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--accent-1) 40%,
+      transparent
+    ) !important;
+  }
+
+  .char-card {
+    aspect-ratio: 3 / 4;
+    transition:
+      box-shadow 0.35s ease,
+      transform 0.2s ease;
+  }
+
+  .char-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      ellipse 100% 70% at 50% 60%,
+      var(--shine) 0%,
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .char-card:hover {
+    box-shadow: 0 0 32px 6px color-mix(in srgb, var(--shine) 30%, transparent);
+    z-index: 5;
+  }
+
+  .char-card:hover::after {
+    opacity: 0.35;
+  }
+
+  .char-portrait-img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .char-portrait-img :global(img) {
+    /* Let CharacterIcon's own styling handle the image;
+       only ensure it fills the card without gaps */
+    display: block;
+  }
+
+  .char-overlay {
+    background: linear-gradient(
+      to top,
+      rgba(2, 6, 11, 0.92) 0%,
+      rgba(2, 6, 11, 0.6) 50%,
+      transparent 100%
+    );
+  }
+
+  .show-more-btn:hover {
+    background: color-mix(
+      in srgb,
+      var(--accent-1) 14%,
+      var(--background-mid)
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--accent-1) 32%,
+      transparent
+    ) !important;
+  }
+
+  /* ── View mode toggle ─────────────────────────────────────────────────── */
+
+  .mode-btn {
+    background: var(--background-mid);
+    color: var(--foreground-mid);
+    cursor: pointer;
+    border: none;
+  }
+
+  .mode-btn-active {
+    background: color-mix(in srgb, var(--accent-1) 12%, var(--background-mid));
+    color: var(--accent-1);
   }
 
   /* ── Sort & filter toolbar ────────────────────────────────────────────── */
@@ -695,5 +1020,15 @@
       opacity: 1;
       transform: scale(1.2);
     }
+  }
+
+  /* ── Staggered card entrance ────────────────────────────────────────── */
+
+  .card-enter {
+    animation: slide-up 0.35s ease-out both;
+  }
+
+  .no-anim .card-enter {
+    animation: none;
   }
 </style>
