@@ -23,6 +23,7 @@
     Geo: "#f5c242",
   };
 
+  /** Build a subtle element-tinted background colour for a character's element. */
   function elementBg(element: string | null): string {
     if (!element || !ELEMENT_COLORS[element]) return "var(--background-color)";
     return `color-mix(in srgb, ${ELEMENT_COLORS[element]} 8%, var(--background-color))`;
@@ -47,6 +48,7 @@
     spotlightCount = SPOTLIGHT_PAGE;
   });
 
+  /** Bump the spotlight pagination window to reveal the next page of teams. */
   function showMore() {
     spotlightCount += SPOTLIGHT_PAGE;
   }
@@ -66,6 +68,7 @@
 
   onMount(() => fetchData());
 
+  /** Fetch the investment data JSON from the API and populate `data`. */
   async function fetchData() {
     loading = true;
     error = null;
@@ -110,6 +113,7 @@
     suggestionIndex = 0;
   });
 
+  /** Add a character tag to the filter set and reset the search input. */
   function addTag(key: string) {
     if (!tags.includes(key)) {
       tags = [...tags, key];
@@ -119,10 +123,13 @@
     inputEl?.focus();
   }
 
+  /** Remove a character tag from the active filter set. */
   function removeTag(key: string) {
     tags = tags.filter((t) => t !== key);
   }
 
+  /** Keyboard navigation for the combobox: Enter to select, arrows to move,
+   *  Backspace on empty to remove last tag, Escape to dismiss. */
   function onKeydown(e: KeyboardEvent) {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -201,12 +208,16 @@
     return team.results.length > 0 ? team.results[0].dps : 0;
   }
 
-  /** Get the sim at exactly the given cost, if it exists. */
+  /** Find the simulation result at exactly `cost`, or null if none exists. */
   function getSimAtCost(team: InvestmentTeam, cost: number) {
     return team.results.find((r) => r.cost === cost) ?? null;
   }
 
-  /** Format a cons + refinement label, e.g. "C2R1" or "C0". */
+  /**
+   * Format a constellation + refinement label for display.
+   * 4★ weapons always show R0 — the community treats them as baseline since
+   * they're easily obtainable and refinement has minimal impact on rankings.
+   */
   function formatCR(
     cons: number,
     refinement: number,
@@ -217,6 +228,8 @@
     const parts: string[] = [];
     parts.push(`C${cons}`);
     if (is4Star) {
+      // Community regards 4★ weapons as baseline R0 — refinement
+      // is rarely meaningful since they're easily obtainable.
       parts.push("R0");
     } else {
       parts.push(`R${refinement}`);
@@ -224,7 +237,7 @@
     return parts.join("");
   }
 
-  // Sort comparator based on selected sort option
+  /** Build a comparator for the active sort mode (DPS ascending or descending). */
   function getSortComparator(
     mode: typeof sortBy,
   ): (a: InvestmentTeam, b: InvestmentTeam) => number {
@@ -263,6 +276,7 @@
     return sorted;
   });
 
+  /** Whether the current user owns every character in the given team. */
   function ownsTeam(team: InvestmentTeam): boolean {
     return team.characters.every((k) => ownedKeys.has(k));
   }
@@ -339,7 +353,7 @@
     >
       <span
         class="w-2 h-2 rounded-full"
-        style="background: var(--accent-1); animation: loading-pulse 1s ease-in-out infinite;"
+        style="background: var(--accent-1); animation: var(--pulse-animation, loading-pulse 1s ease-in-out infinite);"
       ></span>
       <p style="color: var(--foreground-mid); font-size: 0.85rem;">
         Loading investment data…
@@ -391,6 +405,13 @@
           onblur={() => setTimeout(() => (focused = false), 150)}
           placeholder={tags.length === 0 ? "Filter by character…" : ""}
           class="tag-search-input"
+          role="combobox"
+          aria-label="Filter teams by character"
+          aria-expanded={showSuggestions}
+          aria-controls="suggestion-listbox"
+          aria-activedescendant={showSuggestions && suggestionIndex < suggestions.length
+            ? `suggestion-${suggestions[suggestionIndex]}`
+            : undefined}
         />
         <span class="text-xs ml-auto" style="color: var(--foreground-mid);">
           {displayTeams.length} of {data.teams.length}
@@ -400,12 +421,17 @@
       <!-- Suggestions dropdown -->
       {#if showSuggestions}
         <div
+          id="suggestion-listbox"
+          role="listbox"
           class="suggestions-dropdown absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden z-20"
           style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
         >
           {#each suggestions as key, i}
             {@const char = goodKeyMap.get(key)}
             <button
+              id="suggestion-{key}"
+              role="option"
+              aria-selected={i === suggestionIndex}
               class="suggestion-item flex items-center gap-2 w-full text-left px-3 py-2 text-sm"
               class:suggestion-active={i === suggestionIndex}
               style="color: var(--foreground-color);"

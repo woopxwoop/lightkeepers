@@ -24,24 +24,31 @@
   let loading = $state(true);
   let error: string | null = $state(null);
 
-  onMount(() => fetchTeam());
+  onMount(() => fetchData());
 
-  async function fetchTeam() {
+  /** Fetch the investment data JSON; team selection happens reactively via `$effect`. */
+  async function fetchData() {
     loading = true;
     error = null;
     try {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: InvestmentFile = await res.json();
-      investment = data;
-      team = data.teams.find((t) => t.team_key === layoutData.slug) ?? null;
-      if (!team) throw new Error(`Team "${layoutData.slug}" not found`);
+      investment = await res.json();
     } catch (e) {
       error = e instanceof Error ? e.message : "Failed to load team";
     } finally {
       loading = false;
     }
   }
+
+  // Reactively select team when data or slug changes (handles client-side nav)
+  $effect(() => {
+    if (investment) {
+      team =
+        investment.teams.find((t) => t.team_key === layoutData.slug) ?? null;
+      if (!team) error = `Team "${layoutData.slug}" not found`;
+    }
+  });
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
@@ -66,6 +73,8 @@
     Geo: "#f5c242",
   };
 
+  /** Build a subtle element-tinted background colour for a character's element,
+   *  mixing the element colour at 8% into the page background. */
   function elementBg(element: string | null): string {
     if (!element || !ELEMENT_COLORS[element]) return "var(--background-color)";
     return `color-mix(in srgb, ${ELEMENT_COLORS[element]} 8%, var(--background-color))`;
@@ -94,6 +103,7 @@
 
   let openCosts = $state<Set<number>>(new Set());
 
+  /** Toggle a cost group in the accordion — open if closed, close if open. */
   function toggleCost(cost: number) {
     const next = new Set(openCosts);
     if (next.has(cost)) {
@@ -230,6 +240,8 @@
           <button
             type="button"
             onclick={() => toggleCost(group.cost)}
+            aria-expanded={openCosts.has(group.cost)}
+            aria-controls="cost-panel-{group.cost}"
             class="accordion-header flex items-center justify-between w-full px-4 py-3 text-left"
           >
             <div class="flex items-baseline gap-2 min-w-0">
@@ -269,6 +281,7 @@
           <!-- Accordion body -->
           {#if openCosts.has(group.cost)}
             <div
+              id="cost-panel-{group.cost}"
               class="flex flex-col"
               style="border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 12%, transparent);"
               transition:slide={{ duration: 200 }}
