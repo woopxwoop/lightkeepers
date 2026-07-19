@@ -17,11 +17,23 @@ export interface InvestmentTeam {
   results: InvestmentSim[];
 }
 
+export type SimKind = "baseline" | "f2p" | "vertical";
+
 export interface InvestmentSim {
   /** Stable key: characters sorted, Char~C{cons}~{weapon}, joined by __ */
   state_key: string;
-  /** Human-readable label, e.g. "Flins C1" or "Flins C1 + Ineffa C0R1" */
+  /**
+   * Human-readable label.
+   * - baseline: full config (every char C / weapon / R)
+   * - f2p / vertical: diffs from baseline only (e.g. "Flins C1", "Aino C2")
+   */
   label: string;
+  /**
+   * baseline = canonical starting build;
+   * f2p = floor-cost alternative (free weapon / 4★ budget cons, etc.);
+   * vertical = limited-pull upgrades (extra cost above floor).
+   */
+  kind: SimKind;
   /** Total cost in limited5 copies (baseline + upgrades). */
   cost: number;
   /** Simulated DPS from gcsim. */
@@ -53,4 +65,59 @@ export interface CharacterBuild {
     skill: number;
     burst: number;
   };
+  /**
+   * Total substat rolls from gcsim OptimFull (`stat=*N` in config).
+   * Includes the fixed baseline (default 2 per substat).
+   * Keys are GOOD StatKey values (e.g. critDMG_, atk_).
+   */
+  substat_rolls?: Record<string, number>;
+  /** Liquid rolls only (total minus fixed baseline of 2). */
+  substat_rolls_liquid?: Record<string, number>;
+}
+
+/** Shape of output/characters.json (and per-key characters/{GoodKey}.json). */
+export interface CharacterIndexFile {
+  characters: Record<string, CharacterIndex>;
+}
+
+export interface CharacterIndex {
+  key: string;
+  /**
+   * Free / standard weapons ranked by how many teams they appear on
+   * (baseline + f2p sims only). `teams` = distinct team_key count.
+   */
+  weapons: CharacterWeaponRank[];
+  /**
+   * Per-slot main-stat frequency from each team's baseline sim only
+   * (one vote per team). Ranked by team count.
+   */
+  main_stats: {
+    sands: CharacterStatRank[];
+    goblet: CharacterStatRank[];
+    circlet: CharacterStatRank[];
+  };
+  /**
+   * Mean OptimFull liquid rolls: average f2p + bp_limited-weapon configs
+   * within a team, then average those team-means across teams.
+   */
+  substat_rolls_liquid: CharacterLiquidSubstats;
+}
+
+export interface CharacterWeaponRank {
+  key: string;
+  teams: number;
+}
+
+export interface CharacterStatRank {
+  key: string;
+  teams: number;
+}
+
+export interface CharacterLiquidSubstats {
+  /** Teams that contributed at least one liquid sample. */
+  teams: number;
+  /** Total configs averaged before the per-team collapse. */
+  configs: number;
+  mean: Record<string, number>;
+  ranked: Array<{ key: string; mean: number }>;
 }
