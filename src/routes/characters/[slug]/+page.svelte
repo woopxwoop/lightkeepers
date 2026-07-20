@@ -201,7 +201,7 @@
       }
     }
     return builds.substat_rolls_liquid.ranked
-      .filter((r) => r.mean > 0.5)
+      .filter((r) => r.mean > 0.5 || mainSlots.has(r.key))
       .map((r) => {
         const slots = mainSlots.get(r.key) ?? [];
         return {
