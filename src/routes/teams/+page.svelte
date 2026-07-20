@@ -2,16 +2,11 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import {
-    buildGoodKeyMap,
-    toGoodKey,
-    formatInvestmentCR,
-  } from "$lib/utils";
+  import { buildGoodKeyMap, toGoodKey, formatInvestmentCR } from "$lib/utils";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
+  import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type { InvestmentFile, InvestmentTeam } from "$lib/types/investment";
-
-  const API_URL = "/api/investment";
 
   // ── Element accent colours ────────────────────────────────────────────────
   const ELEMENT_COLORS: Record<string, string> = {
@@ -30,8 +25,8 @@
     return `color-mix(in srgb, ${ELEMENT_COLORS[element]} 8%, var(--background-color))`;
   }
 
-  let data: InvestmentFile | null = $state(null);
-  let loading = $state(true);
+  let data: InvestmentFile | null = $state(getInvestmentCached());
+  let loading = $derived(data === null);
   let error: string | null = $state(null);
 
   // ── View mode ─────────────────────────────────────────────────────────────
@@ -75,14 +70,16 @@
 
   onMount(() => fetchData());
 
-  /** Fetch the investment data JSON from the API and populate `data`. */
+  /** Use shared session cache (prefetched from bootstrap when possible). */
   async function fetchData() {
+    if (data) {
+      loading = false;
+      return;
+    }
     loading = true;
     error = null;
     try {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      data = await res.json();
+      data = await loadInvestment();
     } catch (e) {
       error = e instanceof Error ? e.message : "Failed to load investment data";
     } finally {
@@ -323,28 +320,28 @@
           class="info-tooltip absolute left-full top-0 ml-2 w-80 px-3 py-2 rounded-lg text-xs leading-relaxed z-20"
           style="background: var(--foreground-mid); color: var(--background-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);"
         >
-        Team calculations done via
-        <a
-          href="https://gcsim.app/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="hover:underline"
-          style="color: var(--background-color); text-decoration: underline; text-underline-offset: 2px;"
-        >
-          gcsim
-        </a>
-        using
-        <a
-          href="https://compendium.keqingmains.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="hover:underline"
-          style="color: var(--background-color); text-decoration: underline; text-underline-offset: 2px;"
-        >
-          KQM artifact standards
-        </a>. Comparisons between teams is not recommended — rotation difficulty
-        and team cost vary. Comparing the same team at different investment
-        levels is encouraged.
+          Team calculations done via
+          <a
+            href="https://gcsim.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:underline"
+            style="color: var(--background-color); text-decoration: underline; text-underline-offset: 2px;"
+          >
+            gcsim
+          </a>
+          using
+          <a
+            href="https://compendium.keqingmains.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:underline"
+            style="color: var(--background-color); text-decoration: underline; text-underline-offset: 2px;"
+          >
+            KQM artifact standards
+          </a>. Comparisons between teams is not recommended — rotation
+          difficulty and team cost vary. Comparing the same team at different
+          investment levels is encouraged.
         </span>
       {/if}
     </span>
@@ -425,7 +422,8 @@
           aria-label="Filter teams by character"
           aria-expanded={showSuggestions}
           aria-controls="suggestion-listbox"
-          aria-activedescendant={showSuggestions && suggestionIndex < suggestions.length
+          aria-activedescendant={showSuggestions &&
+          suggestionIndex < suggestions.length
             ? `suggestion-${suggestions[suggestionIndex]}`
             : undefined}
         />
@@ -483,7 +481,9 @@
 
           <!-- Sort select -->
           <div class="flex items-center gap-1.5">
-            <span class="text-xs" style="color: var(--foreground-mid);">Sort</span>
+            <span class="text-xs" style="color: var(--foreground-mid);"
+              >Sort</span
+            >
             <select
               bind:value={sortBy}
               class="sort-select text-sm"
@@ -502,11 +502,15 @@
 
           <!-- Cost filter -->
           <div class="flex items-center gap-1.5">
-            <span class="text-xs" style="color: var(--foreground-mid);">Cost</span>
+            <span class="text-xs" style="color: var(--foreground-mid);"
+              >Cost</span
+            >
             <input
               type="number"
               bind:value={selectedCost}
-              placeholder="{availableCosts[0] ?? 0}–{availableCosts[availableCosts.length - 1] ?? 0}"
+              placeholder="{availableCosts[0] ?? 0}–{availableCosts[
+                availableCosts.length - 1
+              ] ?? 0}"
               class="cost-input text-sm"
               style="background: var(--background-color); color: var(--foreground-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
             />
@@ -627,8 +631,8 @@
                         class="absolute top-1 right-1 z-20 text-[0.7rem] leading-none drop-shadow"
                         style="color: var(--accent-1);"
                         title="This character's best team"
-                        aria-label="Best team for this character"
-                      >★</span>
+                        aria-label="Best team for this character">★</span
+                      >
                     {/if}
 
                     <!-- Portrait image -->
@@ -665,7 +669,7 @@
                     <!-- Dim unowned characters -->
                     {#if !isOwned}
                       <div
-                        class="absolute inset-0 z-[5]"
+                        class="absolute inset-0 z-5"
                         style="background: rgba(2, 6, 11, 0.55);"
                       ></div>
                     {/if}
@@ -756,8 +760,8 @@
                           class="absolute top-0.5 right-0.5 z-20 text-[0.55rem] leading-none"
                           style="color: var(--accent-1);"
                           title="This character's best team"
-                          aria-label="Best team for this character"
-                        >★</span>
+                          aria-label="Best team for this character">★</span
+                        >
                       {/if}
                       <div style={!isOwned ? "opacity: 0.3;" : ""}>
                         {#if char}

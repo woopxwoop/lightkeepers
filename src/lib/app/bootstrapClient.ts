@@ -16,6 +16,7 @@ import {
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/utils";
 import { get } from "svelte/store";
+import { prefetchInvestment } from "$lib/app/investment";
 
 type LayoutHydration = {
   characters: Character[];
@@ -145,4 +146,7 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   }
 
   writeNearMissTeams(dbRoster ?? get(charactersOwned)).catch(console.error);
+
+  // Warm investment.json for /teams (shared client cache; non-blocking)
+  prefetchInvestment();
 }

@@ -12,6 +12,7 @@
   import { weaponIconUrl } from "$lib/asset-urls";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
+  import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type {
     InvestmentFile,
     InvestmentTeam,
@@ -21,23 +22,23 @@
 
   let { data: layoutData } = $props();
 
-  const API_URL = "/api/investment";
-
-  let investment: InvestmentFile | null = $state(null);
+  let investment: InvestmentFile | null = $state(getInvestmentCached());
   let team: InvestmentTeam | null = $state(null);
-  let loading = $state(true);
+  let loading = $derived(investment === null);
   let error: string | null = $state(null);
 
   onMount(() => fetchData());
 
-  /** Fetch the investment data JSON; team selection happens reactively via `$effect`. */
+  /** Use shared session cache (prefetched from bootstrap when possible). */
   async function fetchData() {
+    if (investment) {
+      loading = false;
+      return;
+    }
     loading = true;
     error = null;
     try {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      investment = await res.json();
+      investment = await loadInvestment();
     } catch (e) {
       error = e instanceof Error ? e.message : "Failed to load team";
     } finally {
@@ -286,7 +287,7 @@
               </div>
             {/if}
           </div>
-          <WeaponTooltip weapon={weapon} refinement={refine} />
+          <WeaponTooltip {weapon} refinement={refine} />
         </div>
       {/each}
     </div>

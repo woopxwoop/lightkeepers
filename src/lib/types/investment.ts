@@ -66,6 +66,9 @@ export interface CharacterBuild {
     key: string;
     count: number;
   };
+  /** Second 2pc set when running 2pc/2pc (flat fields from pipeline summaries). */
+  set2?: string;
+  set2_count?: number;
   main_stats: {
     sands: string;
     goblet: string;
@@ -95,10 +98,15 @@ export interface CharacterIndexFile {
 export interface CharacterIndex {
   key: string;
   /**
-   * Free / standard weapons ranked by how many teams they appear on
-   * (baseline + f2p sims only). `teams` = distinct team_key count.
+   * Weapons ranked by how many teams they appear on across all sim kinds
+   * (includes signature weapons from vertical). `teams` = distinct team_key count.
    */
   weapons: CharacterWeaponRank[];
+  /**
+   * Artifact sets from each team's baseline sim only
+   * (one vote per team). Ranked by team count; `count` is 2 or 4 pieces.
+   */
+  sets: CharacterSetRank[];
   /**
    * Per-slot main-stat frequency from each team's baseline sim only
    * (one vote per team). Ranked by team count.
@@ -117,6 +125,13 @@ export interface CharacterIndex {
 
 export interface CharacterWeaponRank {
   key: string;
+  teams: number;
+}
+
+export interface CharacterSetRank {
+  key: string;
+  /** Piece count bucket: 2 (from 2–3) or 4 (from 4–5). */
+  count: number;
   teams: number;
 }
 
