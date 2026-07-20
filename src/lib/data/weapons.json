@@ -1023,7 +1023,7 @@
     "stars": 4,
     "weaponType": "WEAPON_SWORD_ONE_HAND",
     "icon": "UI_EquipIcon_Sword_Purewill",
-    "awakenIcon": "UI_EquipIcon_Sword_Purewill_Awaken",
+    "awakenIcon": "UI_EquipIcon_Sword_Purewill",
     "splashIcon": "UI_Gacha_EquipIcon_Sword_Purewill",
     "baseAtk": 509.6,
     "subStat": {
