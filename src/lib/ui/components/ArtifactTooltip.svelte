@@ -21,7 +21,7 @@
 
 {#if resolved}
   <HoverTooltip class="max-w-64">
-    <div class="text-s font-medium leading-tight">
+    <div class="text-sm font-medium leading-tight">
       {resolved.name}{#if pieceCount != null}
         {" "}· {pieceCount}pc{/if}
     </div>

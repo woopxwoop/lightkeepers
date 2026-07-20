@@ -148,7 +148,7 @@
   ): { mode: "extra" | "replace"; text: string } | null {
     if (!enhanced) return null;
     if (enhanced.startsWith(base)) {
-      const extra = enhanced.slice(base.length).replace(/^\n+/, "");
+      const extra = enhanced.slice(base.length).replace(/^(\r\n|\n|\r)+/, "");
       return extra ? { mode: "extra", text: extra } : null;
     }
     return { mode: "replace", text: enhanced };
@@ -216,6 +216,28 @@
       });
   });
 </script>
+
+{#snippet descriptionBlock(
+  base: string,
+  enhance: { mode: "extra" | "replace"; text: string } | null,
+)}
+  {#if enhance?.mode === "replace"}
+    <GameText
+      text={enhance.text}
+      class="text-xs"
+      resolveLink={resolveKitLink}
+    />
+  {:else}
+    <GameText text={base} class="text-xs" resolveLink={resolveKitLink} />
+    {#if enhance}
+      <GameText
+        text={enhance.text}
+        class="text-xs mt-1.5"
+        resolveLink={resolveKitLink}
+      />
+    {/if}
+  {/if}
+{/snippet}
 
 <main
   class="w-[80%] pb-20 flex flex-col gap-8"
@@ -372,26 +394,7 @@
                   {SKILL_LABELS[skill.type] ?? skill.type}
                 </span>
               </div>
-              {#if skillEnhance?.mode === "replace"}
-                <GameText
-                  text={skillEnhance.text}
-                  class="text-xs"
-                  resolveLink={resolveKitLink}
-                />
-              {:else}
-                <GameText
-                  text={skill.description}
-                  class="text-xs"
-                  resolveLink={resolveKitLink}
-                />
-                {#if skillEnhance}
-                  <GameText
-                    text={skillEnhance.text}
-                    class="text-xs mt-1.5"
-                    resolveLink={resolveKitLink}
-                  />
-                {/if}
-              {/if}
+              {@render descriptionBlock(skill.description, skillEnhance)}
             </div>
           </article>
         {/each}
@@ -435,26 +438,7 @@
                   {passiveKindLabel(passive)}
                 </span>
               </div>
-              {#if passiveEnhance?.mode === "replace"}
-                <GameText
-                  text={passiveEnhance.text}
-                  class="text-xs"
-                  resolveLink={resolveKitLink}
-                />
-              {:else}
-                <GameText
-                  text={passive.description}
-                  class="text-xs"
-                  resolveLink={resolveKitLink}
-                />
-                {#if passiveEnhance}
-                  <GameText
-                    text={passiveEnhance.text}
-                    class="text-xs mt-1.5"
-                    resolveLink={resolveKitLink}
-                  />
-                {/if}
-              {/if}
+              {@render descriptionBlock(passive.description, passiveEnhance)}
             </div>
           </article>
         {/each}
@@ -497,26 +481,7 @@
                   {c.name}
                 </h3>
               </div>
-              {#if constEnhance?.mode === "replace"}
-                <GameText
-                  text={constEnhance.text}
-                  class="text-xs"
-                  resolveLink={resolveKitLink}
-                />
-              {:else}
-                <GameText
-                  text={c.description}
-                  class="text-xs"
-                  resolveLink={resolveKitLink}
-                />
-                {#if constEnhance}
-                  <GameText
-                    text={constEnhance.text}
-                    class="text-xs mt-1.5"
-                    resolveLink={resolveKitLink}
-                  />
-                {/if}
-              {/if}
+              {@render descriptionBlock(c.description, constEnhance)}
             </div>
           </article>
         {/each}
