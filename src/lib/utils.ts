@@ -57,10 +57,30 @@ function resolveGameLinks(
   );
 }
 
+/**
+ * Hoyoverse dynamic placeholders used in skill / talent text.
+ * Web defaults to PC layout (`Press` not `Tap`).
+ * Leading `#` is a client marker (not content) — strip when at start.
+ */
+export function resolveGamePlaceholders(
+  text: string,
+  platform: "MOBILE" | "PC" | "PS" = "PC",
+): string {
+  let out = text.replace(/^\s*#/, "");
+  out = out.replace(
+    /\{LAYOUT_(MOBILE|PC|PS)#([^}]*)\}/gi,
+    (_m, layout: string, value: string) =>
+      layout.toUpperCase() === platform ? value : "",
+  );
+  // Collapse spaces left by dropped layout variants (keep newlines).
+  out = out.replace(/[^\S\n]{2,}/g, " ");
+  return out;
+}
+
 /** Strip Hoyoverse `<color=#…>…</color>` and `{LINK#…}…{/LINK}` tags; keep inner text. */
 export function stripColorTags(text: string): string {
   return resolveGameLinks(
-    text
+    resolveGamePlaceholders(text)
       .replace(/<\/?color[^>]*>/gi, "")
       .replace(/\r\n/g, "\n"),
   ).trim();
@@ -68,7 +88,8 @@ export function stripColorTags(text: string): string {
 
 /**
  * Convert in-game description markup to safe HTML for `{@html}`.
- * Supports `<color=#AARRGGBB>`, `<i>`, `{LINK#…}…{/LINK}`, and newlines.
+ * Supports `<color=#AARRGGBB>`, `<i>`, `{LINK#…}…{/LINK}`,
+ * `{LAYOUT_*#…}`, leading `#`, and newlines.
  *
  * Pass `resolveLink` to turn skill/passive/const refs into in-page anchors
  * (`S` → skill, `P` → passive, `T` → constellation). Unknown refs (e.g. `N`)
@@ -78,7 +99,7 @@ export function formatGameDescriptionHtml(
   text: string,
   opts?: { resolveLink?: (ref: string) => string | null },
 ): string {
-  const escaped = text
+  const escaped = resolveGamePlaceholders(text)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
