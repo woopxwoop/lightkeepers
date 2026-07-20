@@ -28,6 +28,7 @@ export async function getCharacterSummary(
     summaryCache.set(goodKey, summary);
     return summary;
   } catch {
+    summaryCache.set(goodKey, null);
     return null;
   }
 }
