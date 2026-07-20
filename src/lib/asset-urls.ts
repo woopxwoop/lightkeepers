@@ -22,6 +22,7 @@ import type {
   CharacterKitIndex,
 } from "$lib/types/character-kit";
 import type { EnemyIndex } from "$lib/types/enemy";
+import { fetchWithTimeout } from "$lib/cdn-fetch";
 
 const CDN_BASE = "https://images.lightkeepers.moe";
 const UI_PREFIX = `${CDN_BASE}/genshin/ui`;
@@ -138,7 +139,7 @@ export function characterKitUrl(nameId: string): string {
 
 /** Fetch + parse the character kit index from the CDN. */
 export async function fetchCharacterKitIndex(): Promise<CharacterKitIndex> {
-  const resp = await fetch(characterKitIndexUrl());
+  const resp = await fetchWithTimeout(characterKitIndexUrl());
   if (!resp.ok) {
     throw new Error(
       `Failed to fetch character kit index: ${resp.status} ${resp.statusText}`,
@@ -149,7 +150,7 @@ export async function fetchCharacterKitIndex(): Promise<CharacterKitIndex> {
 
 /** Fetch + parse one character's kit JSON from the CDN. */
 export async function fetchCharacterKit(nameId: string): Promise<CharacterKit> {
-  const resp = await fetch(characterKitUrl(nameId));
+  const resp = await fetchWithTimeout(characterKitUrl(nameId));
   if (!resp.ok) {
     throw new Error(
       `Failed to fetch character kit (${nameId}): ${resp.status} ${resp.statusText}`,
@@ -166,7 +167,7 @@ export function enemyIndexUrl(): string {
 
 /** Fetch + parse the enemy icon index from the CDN. */
 export async function fetchEnemyIndex(): Promise<EnemyIndex> {
-  const resp = await fetch(enemyIndexUrl());
+  const resp = await fetchWithTimeout(enemyIndexUrl());
   if (!resp.ok) {
     throw new Error(
       `Failed to fetch enemy index: ${resp.status} ${resp.statusText}`,

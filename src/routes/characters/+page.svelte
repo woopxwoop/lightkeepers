@@ -2,7 +2,6 @@
   import { charactersOwned, animationsEnabled } from "$lib/stores";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import {
-    WEAPON_TYPE_MAP,
     weaponTypeLabel,
     isNewCharacter,
   } from "$lib/utils";
@@ -88,10 +87,7 @@
         const matchesWeapon =
           weaponFilter.size === 0 ||
           (c.weapon_type != null &&
-            weaponFilter.has(
-              WEAPON_TYPE_MAP[c.weapon_type as keyof typeof WEAPON_TYPE_MAP] ??
-                c.weapon_type,
-            ));
+            weaponFilter.has(weaponTypeLabel(c.weapon_type)));
         const matchesOwnership =
           ownershipFilter === "all" ||
           (ownershipFilter === "owned" && c.isOwned) ||

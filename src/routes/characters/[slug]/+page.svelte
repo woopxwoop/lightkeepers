@@ -46,7 +46,6 @@
 
   function handlePointerAction(event: PointerEvent, action: () => void) {
     if (event.button !== 0) return;
-    event.preventDefault();
     action();
   }
 

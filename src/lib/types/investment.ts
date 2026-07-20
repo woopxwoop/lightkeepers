@@ -90,7 +90,7 @@ export interface CharacterBuild {
   substat_rolls_liquid?: Record<string, number>;
 }
 
-/** Shape of output/characters.json (and per-key characters/{GoodKey}.json). */
+/** Shape of `output/characters.json` (aggregate character summaries). */
 export interface CharacterIndexFile {
   characters: Record<string, CharacterIndex>;
 }

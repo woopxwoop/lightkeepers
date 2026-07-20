@@ -5,6 +5,7 @@
 import type { CharacterIndex } from "$lib/types/investment";
 import { getSimCharacterSummaryUrl } from "$lib/utils";
 import { LRUCache } from "$lib/server/cache";
+import { fetchWithTimeout } from "$lib/cdn-fetch";
 
 const summaryCache = new LRUCache<CharacterIndex | null>(200, 15 * 60 * 1000);
 
@@ -17,7 +18,7 @@ export async function getCharacterSummary(
     const cached = summaryCache.get(goodKey);
     if (cached !== undefined) return cached;
 
-    const res = await fetch(getSimCharacterSummaryUrl(goodKey));
+    const res = await fetchWithTimeout(getSimCharacterSummaryUrl(goodKey));
     if (!res.ok) {
       summaryCache.set(goodKey, null);
       return null;

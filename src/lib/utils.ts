@@ -48,7 +48,9 @@ function resolveGameLinks(
     (_m, ref: string, inner: string) => {
       if (!inner) return "";
       const href = resolveLink?.(ref) ?? null;
-      if (!href) return inner;
+      if (!href || (!href.startsWith("#") && !href.startsWith("/"))) {
+        return inner;
+      }
       const safe = href.replace(/"/g, "");
       return `<a href="${safe}" class="game-link">${inner}</a>`;
     },
