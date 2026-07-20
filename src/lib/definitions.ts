@@ -17,6 +17,14 @@ export type AbyssVersion = Tables<"abyss_versions">;
 export type StygianVersion = Tables<"stygian_versions">;
 export type Enemy = Tables<"enemies">;
 
+// Re-export CDN kit / enemy contracts for discoverability.
+export type {
+  CharacterKit,
+  CharacterKitIndex,
+  CharacterKitIndexEntry,
+} from "$lib/types/character-kit";
+export type { EnemyIndex, EnemyIndexEntry } from "$lib/types/enemy";
+
 // ── Shared payload shapes used by /api/static, layout data, and consumers ────
 
 export type StygianEnemies = {

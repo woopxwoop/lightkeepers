@@ -149,7 +149,8 @@ async function fetchStaticData(): Promise<StaticPayload> {
   };
 
   // ── Parse abyss floors (floor 12) ───────────────────────────────────────
-  // floors JSONB follows the FloorRecord[] shape from sync-abyss-schedules.ts
+  // floors JSONB follows AbyssFloorRecord[] from hybrid sync
+  // (scripts/sync/abyss-schedules.ts → $lib/types/schedules)
   type ParsedMonster = { id: number; name: string; icon: string };
   type FloorRecord = {
     floorId: number;

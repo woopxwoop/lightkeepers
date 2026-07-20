@@ -10,6 +10,7 @@
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
   const teamsPath = resolve("/teams");
+  const charactersPath = resolve("/characters");
   const settingsPath = resolve("/settings");
   const settingsLinks = [
     { label: "Roster", path: resolve("/settings/roster") },
@@ -27,6 +28,7 @@
     stygian: null,
     pulls: null,
     teams: null,
+    characters: null,
     settings: null,
   };
   let linksContainer: HTMLElement | null = $state(null);
@@ -239,6 +241,14 @@
         aria-current={page.url.pathname.startsWith(teamsPath) ? "page" : undefined}
         bind:this={navLinks.teams}>Teams</a
       >
+      <a
+        href={charactersPath}
+        class="nav-link"
+        aria-current={page.url.pathname.startsWith(charactersPath)
+          ? "page"
+          : undefined}
+        bind:this={navLinks.characters}>Characters</a
+      >
       <div class="relative">
       <a
         href={settingsPath}
@@ -350,6 +360,14 @@
       class="drawer-link"
       aria-current={page.url.pathname.startsWith(teamsPath) ? "page" : undefined}
       >Teams</a
+    >
+    <a
+      href={charactersPath}
+      class="drawer-link"
+      aria-current={page.url.pathname.startsWith(charactersPath)
+        ? "page"
+        : undefined}
+      >Characters</a
     >
 
     <!-- Collapsible Settings section -->

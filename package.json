@@ -11,7 +11,10 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "update-types": "npx supabase gen types --lang=typescript --project-id oihiyebudfruomyzllql > ./src/lib/types/database.types.ts"
+    "update-types": "npx supabase gen types --lang=typescript --project-id oihiyebudfruomyzllql > ./src/lib/types/database.types.ts",
+    "sync:schedules": "tsx scripts/workflows/sync-schedules.ts",
+    "sync:character-assets": "tsx scripts/workflows/sync-character-assets.ts",
+    "sync:equipment": "tsx scripts/workflows/sync-equipment.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
@@ -36,7 +39,6 @@
     "@tailwindcss/vite": "^4.3.2",
     "better-auth": "^1.6.23",
     "dotenv": "^17.4.2",
-    "enka-network-api": "^5.0.16",
     "pg": "^8.22.0",
     "prom-client": "^15.1.3",
     "sharp": "^0.34.5",

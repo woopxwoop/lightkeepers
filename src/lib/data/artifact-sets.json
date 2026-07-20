@@ -300,6 +300,21 @@
     ]
   },
   {
+    "id": 15004,
+    "name": "Glacier and Snowfield",
+    "icon": "UI_RelicIcon_15004_4",
+    "bonuses": [
+      {
+        "needCount": 2,
+        "description": "Cryo DMG Bonus +15%"
+      },
+      {
+        "needCount": 4,
+        "description": "Increases Superconduct DMG by 100%. Increases Melt DMG by 15%. Using an Elemental Burst increases Cryo DMG Bonus by 30% for 10s."
+      }
+    ]
+  },
+  {
     "id": 15005,
     "name": "Thundering Fury",
     "icon": "UI_RelicIcon_15005_4",
@@ -389,6 +404,17 @@
       {
         "needCount": 1,
         "description": "Affected by Electro for 40% less time."
+      }
+    ]
+  },
+  {
+    "id": 15012,
+    "name": "Prayers to the Firmament",
+    "icon": "UI_RelicIcon_15012_3",
+    "bonuses": [
+      {
+        "needCount": 1,
+        "description": "Affected by Anemo for 40% less time."
       }
     ]
   },

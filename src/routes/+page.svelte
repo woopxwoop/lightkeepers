@@ -9,6 +9,7 @@
   const stygianPath = resolve("/stygian");
   const pullsPath = resolve("/pulls");
   const teamsPath = resolve("/teams");
+  const charactersPath = resolve("/characters");
 
   const rosterPath = resolve("/settings/roster");
 
@@ -45,8 +46,14 @@
     {
       href: teamsPath,
       label: "Teams",
-      description: "Compare team investment levels.",
+      description: "Compare teams across different investment levels.",
       banner: "https://images.lightkeepers.moe/site/kazuha.webp",
+    },
+    {
+      href: charactersPath,
+      label: "Characters",
+      description: "Browse character stats and build recommendations",
+      banner: "https://images.lightkeepers.moe/site/xiao.webp",
     },
     ...(showNudge ? [] : [rosterCard]),
   ]);
