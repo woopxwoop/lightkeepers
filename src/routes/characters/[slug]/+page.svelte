@@ -138,10 +138,20 @@
     return passiveUnlockLabel(passive.unlock);
   }
 
-  function enhanceKindLabel(): string {
-    if (kit.enhanceKind === "hexerei") return "Hexerei";
-    if (kit.enhanceKind === "polestar") return "Polestar Field";
-    return "Enhanced";
+  /**
+   * Enhanced Excel text usually prepends the base desc then appends buff text.
+   * Return only the new suffix when that's the case; otherwise the full rewrite.
+   */
+  function enhanceExtra(
+    base: string,
+    enhanced: string | undefined,
+  ): { mode: "extra" | "replace"; text: string } | null {
+    if (!enhanced) return null;
+    if (enhanced.startsWith(base)) {
+      const extra = enhanced.slice(base.length).replace(/^\n+/, "");
+      return extra ? { mode: "extra", text: extra } : null;
+    }
+    return { mode: "replace", text: enhanced };
   }
 
   function iconUrl(icon: string, kind: "skill" | "talent"): string | null {
@@ -334,6 +344,10 @@
         {#each kit.skills as skill}
           {@const icon =
             iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
+          {@const skillEnhance = enhanceExtra(
+            skill.description,
+            skill.enhanceDescription,
+          )}
           <article
             id="kit-S{skill.id}"
             class="kit-card rounded-xl p-4 flex gap-3"
@@ -358,25 +372,25 @@
                   {SKILL_LABELS[skill.type] ?? skill.type}
                 </span>
               </div>
-              <GameText
-                text={skill.description}
-                class="text-xs"
-                resolveLink={resolveKitLink}
-              />
-              {#if skill.enhanceDescription}
-                <div class="mt-1.5 flex flex-col gap-0.5">
-                  <span
-                    class="text-[0.65rem] uppercase tracking-wider"
-                    style="color: var(--foreground-mid);"
-                  >
-                    {enhanceKindLabel()}
-                  </span>
+              {#if skillEnhance?.mode === "replace"}
+                <GameText
+                  text={skillEnhance.text}
+                  class="text-xs"
+                  resolveLink={resolveKitLink}
+                />
+              {:else}
+                <GameText
+                  text={skill.description}
+                  class="text-xs"
+                  resolveLink={resolveKitLink}
+                />
+                {#if skillEnhance}
                   <GameText
-                    text={skill.enhanceDescription}
-                    class="text-xs"
+                    text={skillEnhance.text}
+                    class="text-xs mt-1.5"
                     resolveLink={resolveKitLink}
                   />
-                </div>
+                {/if}
               {/if}
             </div>
           </article>
@@ -393,6 +407,10 @@
         {#each kit.passives as passive}
           {@const icon =
             iconUrl(passive.icon, "talent") ?? getUiAssetUrl(passive.icon)}
+          {@const passiveEnhance = enhanceExtra(
+            passive.description,
+            passive.enhanceDescription,
+          )}
           <article
             id="kit-P{passive.id}"
             class="kit-card rounded-xl p-4 flex gap-3"
@@ -417,25 +435,25 @@
                   {passiveKindLabel(passive)}
                 </span>
               </div>
-              <GameText
-                text={passive.description}
-                class="text-xs"
-                resolveLink={resolveKitLink}
-              />
-              {#if passive.enhanceDescription}
-                <div class="mt-1.5 flex flex-col gap-0.5">
-                  <span
-                    class="text-[0.65rem] uppercase tracking-wider"
-                    style="color: var(--foreground-mid);"
-                  >
-                    {enhanceKindLabel()}
-                  </span>
+              {#if passiveEnhance?.mode === "replace"}
+                <GameText
+                  text={passiveEnhance.text}
+                  class="text-xs"
+                  resolveLink={resolveKitLink}
+                />
+              {:else}
+                <GameText
+                  text={passive.description}
+                  class="text-xs"
+                  resolveLink={resolveKitLink}
+                />
+                {#if passiveEnhance}
                   <GameText
-                    text={passive.enhanceDescription}
-                    class="text-xs"
+                    text={passiveEnhance.text}
+                    class="text-xs mt-1.5"
                     resolveLink={resolveKitLink}
                   />
-                </div>
+                {/if}
               {/if}
             </div>
           </article>
@@ -451,6 +469,10 @@
       <div class="flex flex-col gap-2">
         {#each kit.constellations as c}
           {@const icon = iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
+          {@const constEnhance = enhanceExtra(
+            c.description,
+            c.enhanceDescription,
+          )}
           <article
             id="kit-T{c.id}"
             class="kit-card rounded-xl p-4 flex gap-3"
@@ -475,25 +497,25 @@
                   {c.name}
                 </h3>
               </div>
-              <GameText
-                text={c.description}
-                class="text-xs"
-                resolveLink={resolveKitLink}
-              />
-              {#if c.enhanceDescription}
-                <div class="mt-1.5 flex flex-col gap-0.5">
-                  <span
-                    class="text-[0.65rem] uppercase tracking-wider"
-                    style="color: var(--foreground-mid);"
-                  >
-                    {enhanceKindLabel()}
-                  </span>
+              {#if constEnhance?.mode === "replace"}
+                <GameText
+                  text={constEnhance.text}
+                  class="text-xs"
+                  resolveLink={resolveKitLink}
+                />
+              {:else}
+                <GameText
+                  text={c.description}
+                  class="text-xs"
+                  resolveLink={resolveKitLink}
+                />
+                {#if constEnhance}
                   <GameText
-                    text={c.enhanceDescription}
-                    class="text-xs"
+                    text={constEnhance.text}
+                    class="text-xs mt-1.5"
                     resolveLink={resolveKitLink}
                   />
-                </div>
+                {/if}
               {/if}
             </div>
           </article>
