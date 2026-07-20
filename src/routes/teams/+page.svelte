@@ -5,8 +5,7 @@
   import {
     buildGoodKeyMap,
     toGoodKey,
-    weaponByKey,
-    artifactSetByKey,
+    formatInvestmentCR,
   } from "$lib/utils";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
@@ -47,6 +46,7 @@
     selectedCost;
     sortBy;
     sortOwnedFirst;
+    bestPerCharacter;
     spotlightCount = SPOTLIGHT_PAGE;
   });
 
@@ -57,6 +57,11 @@
 
   // ── Sort & filter state ──────────────────────────────────────────────────
   let sortOwnedFirst = $state(true);
+  /**
+   * Keep only teams that are someone's best — i.e. for at least one character on
+   * the team, no other team (at the active cost) has higher DPS for them.
+   */
+  let bestPerCharacter = $state(false);
   let sortBy = $state<"dps-desc" | "dps-asc">("dps-desc");
   /** Selected cost level — show DPS of the best sim at (or nearest to) this cost. */
   let selectedCost = $state<number | null>(null);
@@ -173,14 +178,61 @@
     );
   });
 
-  // All unique cost values across every team's sims (for the select dropdown)
+  // All unique cost values (prefer merge-time list; fall back to scan)
   let availableCosts = $derived.by(() => {
     if (!data) return [] as number[];
+    if (data.available_costs?.length) return data.available_costs;
     const set = new Set<number>();
     for (const t of data.teams) {
       for (const r of t.results) set.add(r.cost);
     }
     return [...set].sort((a, b) => a - b);
+  });
+
+  /**
+   * Characters for whom this team is best at the active cost (merge-time fields).
+   * Empty if the payload predates annotation.
+   */
+  function bestForChars(team: InvestmentTeam): string[] {
+    if (selectedCost === null) return team.is_best_for ?? [];
+    return team.is_best_for_at_cost?.[String(selectedCost)] ?? [];
+  }
+
+  /** Whether this team is `goodKey`'s best DPS team at the active cost. */
+  function isBestTeamFor(team: InvestmentTeam, goodKey: string): boolean {
+    return bestForChars(team).includes(goodKey);
+  }
+
+  // Final display list: tag → cost → best-per-character → sorted
+  let displayTeams = $derived.by(() => {
+    if (!data) return [];
+    let teams = filteredTeams;
+
+    // When a cost is selected, only show teams that have a sim at exactly that cost
+    if (selectedCost !== null) {
+      teams = teams.filter((t) =>
+        t.results.some((r) => r.cost === selectedCost),
+      );
+    }
+
+    if (bestPerCharacter) {
+      // Keep T if it is at least one member's best team (precomputed at merge)
+      teams = teams.filter((t) => bestForChars(t).length > 0);
+    }
+
+    const sorted = [...teams];
+    const comparator = getSortComparator(sortBy);
+
+    if (sortOwnedFirst) {
+      const owned = sorted.filter((t) => ownsTeam(t));
+      const notOwned = sorted.filter((t) => !ownsTeam(t));
+      owned.sort(comparator);
+      notOwned.sort(comparator);
+      return [...owned, ...notOwned];
+    }
+
+    sorted.sort(comparator);
+    return sorted;
   });
 
   /**
@@ -216,30 +268,6 @@
     return team.results.find((r) => r.cost === cost) ?? null;
   }
 
-  /**
-   * Format a constellation + refinement label for display.
-   * 4★ weapons always show R0 — the community treats them as baseline since
-   * they're easily obtainable and refinement has minimal impact on rankings.
-   */
-  function formatCR(
-    cons: number,
-    refinement: number,
-    weaponKey: string,
-  ): string {
-    const weapon = weaponByKey.get(weaponKey);
-    const is4Star = weapon ? weapon.stars <= 4 : false;
-    const parts: string[] = [];
-    parts.push(`C${cons}`);
-    if (is4Star) {
-      // Community regards 4★ weapons as baseline R0 — refinement
-      // is rarely meaningful since they're easily obtainable.
-      parts.push("R0");
-    } else {
-      parts.push(`R${refinement}`);
-    }
-    return parts.join("");
-  }
-
   /** Build a comparator for the active sort mode (DPS ascending or descending). */
   function getSortComparator(
     mode: typeof sortBy,
@@ -251,33 +279,6 @@
         return (a, b) => displayDps(a) - displayDps(b);
     }
   }
-
-  // Final display list: tag-filtered → cost-filtered (by baseline_cost ≤ selectedCost) → sorted
-  let displayTeams = $derived.by(() => {
-    if (!data) return [];
-    let teams = filteredTeams;
-
-    // When a cost is selected, only show teams that have a sim at exactly that cost
-    if (selectedCost !== null) {
-      teams = teams.filter((t) =>
-        t.results.some((r) => r.cost === selectedCost),
-      );
-    }
-
-    const sorted = [...teams];
-    const comparator = getSortComparator(sortBy);
-
-    if (sortOwnedFirst) {
-      const owned = sorted.filter((t) => ownsTeam(t));
-      const notOwned = sorted.filter((t) => !ownsTeam(t));
-      owned.sort(comparator);
-      notOwned.sort(comparator);
-      return [...owned, ...notOwned];
-    }
-
-    sorted.sort(comparator);
-    return sorted;
-  });
 
   /** Whether the current user owns every character in the given team. */
   function ownsTeam(team: InvestmentTeam): boolean {
@@ -291,7 +292,7 @@
 
   // Animation re-trigger key — changes whenever filters, sort, cost, or view mode change
   let listKey = $derived(
-    `${tags.join(",")}|${selectedCost ?? "any"}|${sortBy}|${sortOwnedFirst}|${viewMode}`,
+    `${tags.join(",")}|${selectedCost ?? "any"}|${sortBy}|${sortOwnedFirst}|${bestPerCharacter}|${viewMode}`,
   );
 </script>
 
@@ -458,6 +459,28 @@
             style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
           ></span>
 
+          <!-- Best per character: union of each character's top DPS team(s) -->
+          <label
+            class="flex items-center gap-2 cursor-pointer select-none"
+            title="Show a team if it is any character's best DPS team at the active cost"
+          >
+            <input
+              type="checkbox"
+              bind:checked={bestPerCharacter}
+              class="toggle-input"
+            />
+            <span class="text-sm" style="color: var(--foreground-color);">
+              <span aria-hidden="true" style="color: var(--accent-1);">★</span>
+              Best per character
+            </span>
+          </label>
+
+          <!-- Separator -->
+          <span
+            class="w-px h-5"
+            style="background: color-mix(in srgb, var(--accent-1) 18%, transparent);"
+          ></span>
+
           <!-- Sort select -->
           <div class="flex items-center gap-1.5">
             <span class="text-xs" style="color: var(--foreground-mid);">Sort</span>
@@ -582,6 +605,8 @@
                     (c) => c.key === goodKey,
                   )}
                   {@const elColor = ELEMENT_COLORS[char?.element ?? ""]}
+                  {@const starred =
+                    bestPerCharacter && isBestTeamFor(team, goodKey)}
                   <div
                     class="char-card rounded-md overflow-hidden relative"
                     style="--shine: {elColor ??
@@ -595,6 +620,15 @@
                         class="absolute top-0 left-0 right-0 z-10 pointer-events-none"
                         style="height: 2px; background: {elColor}; opacity: 0.7;"
                       ></div>
+                    {/if}
+
+                    {#if starred}
+                      <span
+                        class="absolute top-1 right-1 z-20 text-[0.7rem] leading-none drop-shadow"
+                        style="color: var(--accent-1);"
+                        title="This character's best team"
+                        aria-label="Best team for this character"
+                      >★</span>
                     {/if}
 
                     <!-- Portrait image -->
@@ -619,7 +653,7 @@
                           class="text-[0.65rem] font-semibold leading-tight tracking-wider"
                           style="color: var(--accent-1);"
                         >
-                          {formatCR(
+                          {formatInvestmentCR(
                             build.cons,
                             build.weapon.refinement,
                             build.weapon.key,
@@ -711,10 +745,20 @@
                     {@const build = costSim?.characters.find(
                       (c) => c.key === goodKey,
                     )}
+                    {@const starred =
+                      bestPerCharacter && isBestTeamFor(team, goodKey)}
                     <div
                       class="team-slot rounded-[5px] overflow-hidden relative"
                       style="background: {elementBg(char?.element ?? null)};"
                     >
+                      {#if starred}
+                        <span
+                          class="absolute top-0.5 right-0.5 z-20 text-[0.55rem] leading-none"
+                          style="color: var(--accent-1);"
+                          title="This character's best team"
+                          aria-label="Best team for this character"
+                        >★</span>
+                      {/if}
                       <div style={!isOwned ? "opacity: 0.3;" : ""}>
                         {#if char}
                           <CharacterIcon character={char} />
@@ -736,7 +780,7 @@
                                  font-weight: 600;
                                  letter-spacing: 0.06em;"
                         >
-                          {formatCR(
+                          {formatInvestmentCR(
                             build.cons,
                             build.weapon.refinement,
                             build.weapon.key,

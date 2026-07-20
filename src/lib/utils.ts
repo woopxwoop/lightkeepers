@@ -9,6 +9,13 @@ export const WEAPON_TYPE_MAP = {
   WEAPON_BOW: "Bow",
 } as const;
 
+/** Human label for a Dimbreath / Excel `weaponType` enum value. */
+export function weaponTypeLabel(weaponType: string): string {
+  return (
+    WEAPON_TYPE_MAP[weaponType as keyof typeof WEAPON_TYPE_MAP] ?? weaponType
+  );
+}
+
 /** Characters released within this many days are considered "new". */
 export const NEW_CHARACTER_DAYS = 20;
 
@@ -26,24 +33,44 @@ export function isNewCharacter(releasedAt: string | null | undefined): boolean {
   return released.getTime() > cutoff;
 }
 
-const CHARACTERS_CDN_BASE = "https://images.lightkeepers.moe/characters";
+const CDN_BASE = "https://images.lightkeepers.moe";
+const GENSIN_UI_BASE = `${CDN_BASE}/genshin/ui`;
 
-const ENEMIES_CDN_BASE = "https://images.lightkeepers.moe/enemies";
+function genshinUiUrl(uiName: string): string {
+  return `${GENSIN_UI_BASE}/${encodeURIComponent(uiName)}.webp`;
+}
 
 export function getCharacterPortrait(nameId: string) {
-  return `${CHARACTERS_CDN_BASE}/${nameId}/portrait.webp`;
+  return genshinUiUrl(`UI_AvatarIcon_${nameId}`);
 }
 
 export function getCharacterCoop(nameId: string) {
-  return `${CHARACTERS_CDN_BASE}/${nameId}/coop.webp`;
+  return genshinUiUrl(`UI_CoopImg_${nameId}`);
 }
 
+/**
+ * TCG character card art. Synced by `scripts/sync/tcg-cards-r2.ts` to
+ * `characters/{name_id}/card.webp` (not genshin/ui — keep that prefix for TCG).
+ */
 export function getCharacterCard(nameId: string) {
-  return `${CHARACTERS_CDN_BASE}/${nameId}/card.webp`;
+  return `${CDN_BASE}/characters/${encodeURIComponent(nameId)}/card.webp`;
 }
 
+export function getCharacterGachaSplash(nameId: string) {
+  return genshinUiUrl(`UI_Gacha_AvatarImg_${nameId}`);
+}
+
+/** CDN URL for a skill / talent UI_* icon name from character kit JSON. */
+export function getUiAssetUrl(uiName: string) {
+  return genshinUiUrl(uiName.replace(/\.(png|webp|jpe?g)$/i, ""));
+}
+
+/**
+ * Enemy icon URL. `assetId` is the DB `enemies.asset` stem (UI_MonsterIcon_*,
+ * UI_Img_LeyLineChallenge_*, …) — same flat genshin/ui layout as other textures.
+ */
 export function getEnemyAsset(assetId: string) {
-  return `${ENEMIES_CDN_BASE}/${assetId}.webp`;
+  return genshinUiUrl(assetId.replace(/\.(png|webp|jpe?g)$/i, ""));
 }
 
 // ── GOOD key helpers ────────────────────────────────────────────────────────
@@ -89,6 +116,17 @@ export interface WeaponData {
   icon: string;
   awakenIcon: string;
   splashIcon: string;
+  /** Ascended base ATK at level 90. */
+  baseAtk: number;
+  /** Secondary stat at level 90, or null. */
+  subStat: {
+    propType: string;
+    label: string;
+    value: number;
+    isPercent: boolean;
+  } | null;
+  /** Passive refinements R1–R5 (empty when none). */
+  refinements: { rank: number; description: string }[];
 }
 
 export interface ArtifactSetData {
@@ -103,6 +141,56 @@ export const weaponByKey = buildGoodKeyMap(weaponsRaw as WeaponData[]);
 
 /** Pre-built: GOOD artifact set key → ArtifactSetData */
 export const artifactSetByKey = buildGoodKeyMap(artifactSetsRaw as ArtifactSetData[]);
+
+/**
+ * Community baseline treats 4★ weapons as R0 — refinement is rarely ranked.
+ * Unknown keys are treated as not-4★ so we don't invent R0 for missing data.
+ */
+export function isFourStarWeapon(weaponKey: string): boolean {
+  const weapon = weaponByKey.get(weaponKey);
+  return weapon ? weapon.stars <= 4 : false;
+}
+
+/** Refinement to show in UI (always 0 for 4★ weapons). */
+export function displayWeaponRefinement(
+  weaponKey: string,
+  refinement: number,
+): number {
+  return isFourStarWeapon(weaponKey) ? 0 : refinement;
+}
+
+/**
+ * Format constellation + refinement for investment cards.
+ * 4★ weapons always show R0.
+ */
+export function formatInvestmentCR(
+  cons: number,
+  refinement: number,
+  weaponKey: string,
+): string {
+  return `C${cons}R${displayWeaponRefinement(weaponKey, refinement)}`;
+}
+
+/** Weapon GOOD keys longest-first — avoids partial replacements in labels. */
+const WEAPON_KEYS_BY_LENGTH = [...weaponByKey.keys()].sort(
+  (a, b) => b.length - a.length,
+);
+
+/**
+ * Replace GOOD weapon keys in an investment sim label with display names.
+ * Leaves character keys / C/R tokens alone.
+ */
+export function humanizeInvestmentLabel(label: string): string {
+  if (!label) return label;
+  let out = label;
+  for (const key of WEAPON_KEYS_BY_LENGTH) {
+    if (!out.includes(key)) continue;
+    const name = weaponByKey.get(key)?.name;
+    if (!name) continue;
+    out = out.split(key).join(name);
+  }
+  return out;
+}
 
 // ── Stat key → English ──────────────────────────────────────────────────────
 //
@@ -146,28 +234,41 @@ export function translateStatKey(key: string): string {
   return key;
 }
 
-// ── Namecard URL ─────────────────────────────────────────────────────────────
-
-const NAMECARD_CDN_BASE = "https://images.lightkeepers.moe/namecards";
-
 /**
  * Build a character namecard background URL pointing at our CDN.
- * Namecards are synced by `scripts/sync-namecards-r2.ts` and stored as WebP
- * under `namecards/{name_id}.webp` in R2.
+ * Synced as `genshin/ui/UI_NameCardPic_{name_id}_P.webp`.
  */
 export function getNamecardUrl(nameId: string): string {
-  return `${NAMECARD_CDN_BASE}/${nameId}.webp`;
+  return genshinUiUrl(`UI_NameCardPic_${nameId}_P`);
 }
 
-// ── gcsim config URL ────────────────────────────────────────────────────────
+// ── gcsim CDN URLs ──────────────────────────────────────────────────────────
 
+const SIM_BASE = "https://images.lightkeepers.moe/sim";
 const SIM_CONFIGS_BASE = "https://images.lightkeepers.moe/sim-configs";
 
 /**
  * Build a URL to the gcsim config.txt for a given simulation state key.
- * Configs are synced by `scripts/sync-gcsim-r2.ts` and stored as
+ * Configs are synced by `scripts/sync/gcsim-r2.ts` and stored as
  * `sim-configs/{state_key}/config.txt` in R2 with immutable caching.
  */
 export function getSimConfigUrl(stateKey: string): string {
   return `${SIM_CONFIGS_BASE}/${encodeURIComponent(stateKey)}/config.txt`;
+}
+
+/**
+ * Aggregate character config summaries (`sim/characters.json.gz`).
+ * Synced by `scripts/sync/gcsim-r2.ts` from `output/characters.json`.
+ */
+export function getSimCharactersIndexUrl(): string {
+  return `${SIM_BASE}/characters.json.gz`;
+}
+
+/**
+ * Per-character config summary (`sim/characters/{Key}.json.gz`).
+ * Synced from `output/characters/{Key}.json`. Gzipped like the aggregate;
+ * fetch with normal `fetch()` — browsers decode Content-Encoding: gzip.
+ */
+export function getSimCharacterSummaryUrl(characterKey: string): string {
+  return `${SIM_BASE}/characters/${encodeURIComponent(characterKey)}.json.gz`;
 }

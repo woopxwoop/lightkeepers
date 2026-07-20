@@ -3,6 +3,8 @@
 
 export interface InvestmentFile {
   teams: InvestmentTeam[];
+  /** Sorted unique sim costs across all teams (merge-time). */
+  available_costs?: number[];
 }
 
 export interface InvestmentTeam {
@@ -13,6 +15,16 @@ export interface InvestmentTeam {
   baseline_cost: number;
   /** Character keys in the team, sorted alphabetically. */
   characters: string[];
+  /**
+   * Characters for whom this team's floor-tier DPS (`results[0]`) is their
+   * global best (merge-time). Ties include all winners.
+   */
+  is_best_for?: string[];
+  /**
+   * Per exact cost: characters for whom this team's DPS at that cost is best.
+   * Keys are cost strings (e.g. `"2"`).
+   */
+  is_best_for_at_cost?: Record<string, string[]>;
   /** All simulated investment levels for this team, sorted by cost → dps descending. */
   results: InvestmentSim[];
 }
