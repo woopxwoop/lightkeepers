@@ -16,12 +16,17 @@ export type CharacterKitSkillSlot = "normal" | "skill" | "burst";
 /** Normal ascension/utility vs Hexerei / Polestar Field extra talents. */
 export type CharacterKitPassiveKind = "passive" | "hexerei" | "polestar";
 
+/** Quest-unlocked enhance line (Hexerei / Polestar Field). */
+export type CharacterKitEnhanceKind = "hexerei" | "polestar";
+
 export interface CharacterKitSkill {
   id: number;
   type: CharacterKitSkillSlot;
   name: string;
   description: string;
   icon: string;
+  /** Full description after Hexerei / Polestar Field unlock (when different). */
+  enhanceDescription?: string;
 }
 
 export interface CharacterKitPassive {
@@ -33,6 +38,8 @@ export interface CharacterKitPassive {
   unlock: number;
   /** Defaults to `"passive"` when omitted (older CDN kits). */
   kind?: CharacterKitPassiveKind;
+  /** Enhanced passive text after Hexerei / Polestar Field unlock. */
+  enhanceDescription?: string;
 }
 
 export interface CharacterKitConstellation {
@@ -41,6 +48,8 @@ export interface CharacterKitConstellation {
   name: string;
   description: string;
   icon: string;
+  /** Enhanced constellation text after Hexerei / Polestar Field unlock. */
+  enhanceDescription?: string;
 }
 
 export interface CharacterKitAssets {
@@ -80,6 +89,8 @@ export interface CharacterKit {
   skills: CharacterKitSkill[];
   passives: CharacterKitPassive[];
   constellations: CharacterKitConstellation[];
+  /** Present when the character has a Hexerei or Polestar Field enhance line. */
+  enhanceKind?: CharacterKitEnhanceKind;
 }
 
 /** One row in `characters/index.json`. */

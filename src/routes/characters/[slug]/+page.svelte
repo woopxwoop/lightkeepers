@@ -138,6 +138,12 @@
     return passiveUnlockLabel(passive.unlock);
   }
 
+  function enhanceKindLabel(): string {
+    if (kit.enhanceKind === "hexerei") return "Hexerei";
+    if (kit.enhanceKind === "polestar") return "Polestar Field";
+    return "Enhanced";
+  }
+
   function iconUrl(icon: string, kind: "skill" | "talent"): string | null {
     return kind === "skill" ? skillIconUrl(icon) : talentIconUrl(icon);
   }
@@ -357,6 +363,21 @@
                 class="text-xs"
                 resolveLink={resolveKitLink}
               />
+              {#if skill.enhanceDescription}
+                <div class="mt-1.5 flex flex-col gap-0.5">
+                  <span
+                    class="text-[0.65rem] uppercase tracking-wider"
+                    style="color: var(--foreground-mid);"
+                  >
+                    {enhanceKindLabel()}
+                  </span>
+                  <GameText
+                    text={skill.enhanceDescription}
+                    class="text-xs"
+                    resolveLink={resolveKitLink}
+                  />
+                </div>
+              {/if}
             </div>
           </article>
         {/each}
@@ -401,6 +422,21 @@
                 class="text-xs"
                 resolveLink={resolveKitLink}
               />
+              {#if passive.enhanceDescription}
+                <div class="mt-1.5 flex flex-col gap-0.5">
+                  <span
+                    class="text-[0.65rem] uppercase tracking-wider"
+                    style="color: var(--foreground-mid);"
+                  >
+                    {enhanceKindLabel()}
+                  </span>
+                  <GameText
+                    text={passive.enhanceDescription}
+                    class="text-xs"
+                    resolveLink={resolveKitLink}
+                  />
+                </div>
+              {/if}
             </div>
           </article>
         {/each}
@@ -444,6 +480,21 @@
                 class="text-xs"
                 resolveLink={resolveKitLink}
               />
+              {#if c.enhanceDescription}
+                <div class="mt-1.5 flex flex-col gap-0.5">
+                  <span
+                    class="text-[0.65rem] uppercase tracking-wider"
+                    style="color: var(--foreground-mid);"
+                  >
+                    {enhanceKindLabel()}
+                  </span>
+                  <GameText
+                    text={c.enhanceDescription}
+                    class="text-xs"
+                    resolveLink={resolveKitLink}
+                  />
+                </div>
+              {/if}
             </div>
           </article>
         {/each}
