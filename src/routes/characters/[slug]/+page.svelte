@@ -130,6 +130,14 @@
     return `Ascension ${unlock}`;
   }
 
+  function passiveKindLabel(
+    passive: (typeof kit.passives)[number],
+  ): string {
+    if (passive.kind === "hexerei") return "Hexerei";
+    if (passive.kind === "polestar") return "Polestar Field";
+    return passiveUnlockLabel(passive.unlock);
+  }
+
   function iconUrl(icon: string, kind: "skill" | "talent"): string | null {
     return kind === "skill" ? skillIconUrl(icon) : talentIconUrl(icon);
   }
@@ -385,7 +393,7 @@
                   class="text-[0.65rem] uppercase tracking-wider"
                   style="color: var(--foreground-mid);"
                 >
-                  {passiveUnlockLabel(passive.unlock)}
+                  {passiveKindLabel(passive)}
                 </span>
               </div>
               <GameText

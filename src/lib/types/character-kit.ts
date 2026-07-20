@@ -13,6 +13,9 @@
 
 export type CharacterKitSkillSlot = "normal" | "skill" | "burst";
 
+/** Normal ascension/utility vs Hexerei / Polestar Field extra talents. */
+export type CharacterKitPassiveKind = "passive" | "hexerei" | "polestar";
+
 export interface CharacterKitSkill {
   id: number;
   type: CharacterKitSkillSlot;
@@ -26,8 +29,10 @@ export interface CharacterKitPassive {
   name: string;
   description: string;
   icon: string;
-  /** Ascension unlock; 0 = always / utility (e.g. cooking). */
+  /** Ascension unlock; 0 = always / utility (e.g. cooking) or quest-gated extras. */
   unlock: number;
+  /** Defaults to `"passive"` when omitted (older CDN kits). */
+  kind?: CharacterKitPassiveKind;
 }
 
 export interface CharacterKitConstellation {
