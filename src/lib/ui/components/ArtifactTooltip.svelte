@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    artifactSetByKey,
-    type ArtifactSetData,
-  } from "$lib/utils";
+  import { artifactSetByKey, type ArtifactSetData } from "$lib/utils";
   import HoverTooltip from "./HoverTooltip.svelte";
 
   let {
@@ -24,14 +21,14 @@
 
 {#if resolved}
   <HoverTooltip class="max-w-64">
-    <div class="text-xs font-medium leading-tight">
+    <div class="text-sm font-medium leading-tight">
       {resolved.name}{#if pieceCount != null}
         {" "}· {pieceCount}pc{/if}
     </div>
     {#each resolved.bonuses as bonus}
       {#if pieceCount == null || bonus.needCount <= pieceCount}
-        <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-          <span class="font-semibold">{bonus.needCount}-Piece:</span>
+        <div class="text-xs leading-snug mt-1 opacity-85">
+          <span>{bonus.needCount}-Piece:</span>
           {bonus.description}
         </div>
       {/if}

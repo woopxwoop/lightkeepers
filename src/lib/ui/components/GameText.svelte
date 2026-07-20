@@ -40,6 +40,8 @@
   .game-text :global(a.game-link:visited),
   .game-text :global(a.game-link:hover),
   .game-text :global(a.game-link:active) {
+    font-size: inherit;
+    line-height: inherit;
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 2px;
