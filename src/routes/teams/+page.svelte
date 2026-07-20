@@ -1104,6 +1104,7 @@
     outline: none;
     text-align: center;
     font-size: 0.82rem;
+    appearance: textfield;
     -moz-appearance: textfield;
   }
 
