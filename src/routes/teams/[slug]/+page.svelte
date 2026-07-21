@@ -5,7 +5,6 @@
   import {
     buildGoodKeyMap,
     toGoodKey,
-    getSimConfigUrl,
     humanizeInvestmentLabel,
     weaponByKey,
   } from "$lib/utils";
@@ -180,6 +179,15 @@
       >
         {team.team_name}
       </h2>
+      {#if baselineSim}
+        <a
+          href="/team-configs/{encodeURIComponent(baselineSim.state_key)}"
+          class="text-xs underline underline-offset-2 w-fit"
+          style="color: var(--accent-1);"
+        >
+          View build config
+        </a>
+      {/if}
     </div>
     <!-- Character portrait cards (canonical baseline builds) -->
     <div class="grid grid-cols-4 gap-1.5">
@@ -314,9 +322,7 @@
       >
         {#each baselineVariants as sim, vi}
           <a
-            href={getSimConfigUrl(sim.state_key)}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/team-configs/{encodeURIComponent(sim.state_key)}"
             class="diff-row flex items-center gap-2 px-3 py-2 text-xs no-underline"
             class:sim-divider={vi > 0}
             style="color: inherit;"
@@ -423,9 +429,7 @@
             >
               {#each group.sims as sim, si}
                 <a
-                  href={getSimConfigUrl(sim.state_key)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/team-configs/{encodeURIComponent(sim.state_key)}"
                   class="diff-row flex items-center gap-2 px-3 py-2 text-xs no-underline"
                   class:sim-divider={si > 0}
                   style="color: inherit;"

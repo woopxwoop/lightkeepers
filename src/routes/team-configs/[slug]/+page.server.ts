@@ -1,0 +1,77 @@
+import type { PageServerLoad } from "./$types";
+import { error } from "@sveltejs/kit";
+import {
+  findInvestmentSim,
+  getInvestmentFile,
+  getSimConfigText,
+} from "$lib/server/team-config";
+import { getCharacterKit } from "$lib/server/character-kit";
+import { characterBaseByKey } from "$lib/build-stats";
+import { talentIconUrl } from "$lib/asset-urls";
+import { getSimConfigUrl } from "$lib/utils";
+
+export type TeamConfigKitIcons = {
+  constellations: { index: number; name: string; icon: string | null }[];
+  talents: {
+    auto: string | null;
+    skill: string | null;
+    burst: string | null;
+  };
+};
+
+export const load: PageServerLoad = async ({ params }) => {
+  const slug = params.slug;
+  if (!slug) error(404, "Config not found");
+
+  let file;
+  try {
+    file = await getInvestmentFile();
+  } catch (e) {
+    console.error("team-configs investment:", e);
+    error(502, "Failed to load team data");
+  }
+
+  const match = findInvestmentSim(file, slug);
+  if (!match) error(404, `Config "${slug}" not found`);
+
+  const { team, sim } = match;
+  const configText = await getSimConfigText(sim.state_key);
+
+  const kitsByKey: Record<string, TeamConfigKitIcons> = {};
+  await Promise.all(
+    sim.characters.map(async (build) => {
+      const base = characterBaseByKey.get(build.key);
+      if (!base) return;
+      const kit = await getCharacterKit(base.name_id);
+      if (!kit) return;
+
+      const byType = Object.fromEntries(
+        kit.skills.map((s) => [s.type, talentIconUrl(s.icon)]),
+      );
+
+      kitsByKey[build.key] = {
+        constellations: [...kit.constellations]
+          .sort((a, b) => a.index - b.index)
+          .map((c) => ({
+            index: c.index,
+            name: c.name,
+            icon: talentIconUrl(c.icon),
+          })),
+        talents: {
+          auto: byType.normal ?? null,
+          skill: byType.skill ?? null,
+          burst: byType.burst ?? null,
+        },
+      };
+    }),
+  );
+
+  return {
+    slug,
+    team,
+    sim,
+    configText,
+    configUrl: getSimConfigUrl(sim.state_key),
+    kitsByKey,
+  };
+};
