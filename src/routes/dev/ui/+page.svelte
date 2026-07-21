@@ -5,6 +5,19 @@
     DEFAULT_DARK_COLORS,
     type ThemeColorKey,
   } from "$lib/stores";
+  import PageShell from "$lib/ui/components/PageShell.svelte";
+  import PageHeader from "$lib/ui/components/PageHeader.svelte";
+  import Surface from "$lib/ui/components/Surface.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
+  import Toggle from "$lib/ui/components/Toggle.svelte";
+  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
+  import Chip from "$lib/ui/components/Chip.svelte";
+  import Badge from "$lib/ui/components/Badge.svelte";
+  import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
+  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
+  import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import Team from "$lib/ui/components/Team.svelte";
   import GameText from "$lib/ui/components/GameText.svelte";
@@ -18,7 +31,9 @@
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
+  import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
   import type { AbyssTeam } from "$lib/definitions";
+  import { weaponTypeLabel, isNewCharacter } from "$lib/utils";
 
   const COLOR_LABELS: Record<ThemeColorKey, string> = {
     "background-color": "Background",
@@ -30,15 +45,14 @@
     "accent-3": "Accent 3",
   };
 
-  const ELEMENT_COLORS: Record<string, string> = {
-    Pyro: "#f07b4a",
-    Hydro: "#5eb8f5",
-    Anemo: "#6dd5a8",
-    Electro: "#c48ad5",
-    Dendro: "#b1d94c",
-    Cryo: "#8fd5e5",
-    Geo: "#f5c242",
-  };
+  const SEMANTIC_TOKENS = [
+    { name: "--surface-raised", swatch: "var(--surface-raised)" },
+    { name: "--surface-inset", swatch: "var(--surface-inset)" },
+    { name: "--surface-selected", swatch: "var(--surface-selected)" },
+    { name: "--border-default", swatch: "var(--border-default)" },
+    { name: "--border-strong", swatch: "var(--border-strong)" },
+    { name: "--accent-1 (solid)", swatch: "var(--accent-1)" },
+  ] as const;
 
   let sampleChars = $derived($charactersOwned.slice(0, 8));
   let sampleMap = $derived(
@@ -57,9 +71,27 @@
   let segment = $state<"roster" | "meta">("roster");
   let chipOn = $state(true);
   let toggleOn = $state(true);
+  let slidingTab = $state<"top" | "bottom" | "skills">("top");
+  let solutionIndex = $state(0);
   let iconStyleNote = $derived($displayPreferences.iconStyle);
 
-  /** Type pairings — production lock-in is plex-titles. */
+  const SEGMENT_OPTIONS = [
+    { value: "roster" as const, label: "roster" },
+    { value: "meta" as const, label: "meta" },
+  ];
+
+  const SLIDING_TAB_OPTIONS = [
+    { value: "top" as const, label: "First Half" },
+    { value: "bottom" as const, label: "Second Half" },
+    { value: "skills" as const, label: "Skills" },
+  ];
+
+  let slidingAccent = $derived(
+    slidingTab === "skills"
+      ? elementColor(sampleChars[0]?.element, "var(--accent-1)")
+      : "var(--accent-1)",
+  );
+
   type TypePairing = {
     id: string;
     label: string;
@@ -99,27 +131,9 @@
       tracking: "0.14em",
     },
     {
-      id: "space-grotesk",
-      label: "Space Grotesk",
-      note: "Geometric brand/display; Manrope body — instrument, not manuscript",
-      brand: '"Space Grotesk", sans-serif',
-      display: '"Space Grotesk", sans-serif',
-      body: '"Manrope", sans-serif',
-      tracking: "0.08em",
-    },
-    {
-      id: "outfit",
-      label: "Outfit",
-      note: "Soft geometric sans throughout — clean coastal chart energy",
-      brand: '"Outfit", sans-serif',
-      display: '"Outfit", sans-serif',
-      body: '"Outfit", sans-serif',
-      tracking: "0.12em",
-    },
-    {
       id: "legacy",
       label: "Legacy Bonobo + Lora",
-      note: "Previous brand/display faces (local files) — ornamental / classical",
+      note: "Previous brand/display faces — ornamental / classical",
       brand: '"Bonobo", serif',
       display: '"Lora", serif',
       body: '"Manrope", sans-serif',
@@ -133,46 +147,53 @@
   );
 </script>
 
-<svelte:head>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
+<PageShell class="gap-10">
+  <PageHeader
+    eyebrow="Dev"
+    title="UI gallery"
+    lede="Living surface for tokens and shared primitives. Icon style follows Display settings ({iconStyleNote})."
   />
-</svelte:head>
-
-<main class="w-[85%] pb-24 flex flex-col gap-10">
-  <header class="flex flex-col gap-2">
-    <p class="eyebrow">Dev</p>
-    <h1 class="page-title">UI gallery</h1>
-    <p class="lede">
-      Living surface for tokens and components while we unify the system. Icon
-      style follows Display settings ({iconStyleNote}).
-    </p>
-  </header>
 
   <!-- ── Tokens ─────────────────────────────────────────────────────────── -->
   <section class="gallery-section" id="tokens">
     <div class="section-head">
-      <h2>Tokens</h2>
-      <p>Current CSS variables (overrides from Display apply live).</p>
+      <h2>Paint tokens</h2>
+      <p>Display-editable CSS variables (overrides apply live).</p>
     </div>
     <div class="token-grid">
       {#each THEME_COLOR_KEYS as key}
         {@const resolved =
           $displayPreferences.themeColors?.[key] ?? DEFAULT_DARK_COLORS[key]}
-        <div class="token-card surface">
+        <Surface class="token-card">
           <div class="swatch" style="background: var(--{key});"></div>
           <div class="min-w-0">
             <p class="token-name">--{key}</p>
             <p class="token-meta">{COLOR_LABELS[key]} · {resolved}</p>
           </div>
-        </div>
+        </Surface>
       {/each}
     </div>
 
-    <div class="type-lab surface">
+    <div class="section-head mt-2">
+      <h2>Semantic tokens</h2>
+      <p>
+        Derived from paint. Accent is solid text/border only — selected fills use
+        neutral surface washes.
+      </p>
+    </div>
+    <div class="token-grid">
+      {#each SEMANTIC_TOKENS as token}
+        <Surface class="token-card">
+          <div class="swatch" style="background: {token.swatch};"></div>
+          <div class="min-w-0">
+            <p class="token-name">{token.name}</p>
+            <p class="token-meta">Derived · follows theme paint</p>
+          </div>
+        </Surface>
+      {/each}
+    </div>
+
+    <Surface class="type-lab">
       <div class="type-lab-head">
         <p class="surface-label">Typography lab</p>
         <p class="token-meta">
@@ -181,16 +202,12 @@
       </div>
       <div class="type-pairing-row" role="radiogroup" aria-label="Type pairing">
         {#each TYPE_PAIRINGS as pairing}
-          <button
-            type="button"
-            role="radio"
-            aria-checked={typePairingId === pairing.id}
-            class="type-pairing-btn"
-            class:is-active={typePairingId === pairing.id}
+          <Chip
+            active={typePairingId === pairing.id}
             onclick={() => (typePairingId = pairing.id)}
           >
             {pairing.label}
-          </button>
+          </Chip>
         {/each}
       </div>
       <p class="token-meta type-pairing-note">{typePairing.note}</p>
@@ -214,109 +231,196 @@
         <p class="sample-meta">Updated Mar 12, 2026 · 48 teams shown</p>
         <p class="sample-data">12.4K DPS · Cost 3 · C2 R1</p>
       </div>
-    </div>
+    </Surface>
   </section>
 
   <!-- ── Surfaces ───────────────────────────────────────────────────────── -->
   <section class="gallery-section" id="surfaces">
     <div class="section-head">
-      <h2>Surfaces <span class="tag">pattern</span></h2>
-      <p>Repeated card recipes to extract into Surface / Card.</p>
+      <h2>Surface</h2>
+      <p>Shared <code>Surface</code> primitive — default / interactive / inset / empty.</p>
     </div>
     <div class="surface-row">
-      <div class="surface">
+      <Surface>
         <p class="surface-label">Default</p>
-        <p class="token-meta">background-mid + 18–22% accent border</p>
-      </div>
-      <div class="surface surface-interactive">
+        <p class="token-meta">surface-raised + border-default</p>
+      </Surface>
+      <Surface variant="interactive">
         <p class="surface-label">Interactive</p>
-        <p class="token-meta">Hover strengthens accent border</p>
-      </div>
-      <div class="surface surface-inset">
+        <p class="token-meta">Hover strengthens border</p>
+      </Surface>
+      <Surface variant="inset">
         <p class="surface-label">Inset</p>
-        <p class="token-meta">Accent wash for nested blocks</p>
-      </div>
-      <div class="surface surface-empty">
+        <p class="token-meta">Neutral wash for nested blocks</p>
+      </Surface>
+      <Surface variant="empty">
         <p class="surface-label">Empty / loading</p>
-        <p class="token-meta">Quiet mid text, no chrome noise</p>
-      </div>
+        <p class="token-meta">Quiet mid text, dashed border</p>
+      </Surface>
     </div>
   </section>
 
   <!-- ── Controls ───────────────────────────────────────────────────────── -->
   <section class="gallery-section" id="controls">
     <div class="section-head">
-      <h2>Controls <span class="tag">pattern</span></h2>
-      <p>Local demos of patterns to become SegmentedControl, Chip, Toggle, Button.</p>
+      <h2>Controls</h2>
+      <p>
+        Shared <code>SegmentedControl</code>, <code>Chip</code>, <code>Toggle</code>,
+        <code>Button</code>, <code>Badge</code>.
+      </p>
     </div>
 
     <div class="control-stack">
-      <div class="control-block surface">
-        <p class="surface-label">Segmented</p>
-        <div class="segmented">
-          {#each ["roster", "meta"] as mode}
-            <button
-              type="button"
-              class="segment"
-              class:segment-active={segment === mode}
-              onclick={() => (segment = mode as "roster" | "meta")}
-            >
-              {mode}
-            </button>
-          {/each}
-        </div>
-      </div>
+      <Surface>
+        <p class="surface-label">SegmentedControl</p>
+        <SegmentedControl
+          options={SEGMENT_OPTIONS}
+          bind:value={segment}
+          aria-label="Demo segment"
+        />
+      </Surface>
 
-      <div class="control-block surface">
+      <Surface>
         <p class="surface-label">Chips</p>
         <div class="chip-row">
-          <button
-            type="button"
-            class="chip"
-            class:chip-active={chipOn}
-            onclick={() => (chipOn = !chipOn)}>Owned</button
-          >
+          <Chip active={chipOn} onclick={() => (chipOn = !chipOn)}>Owned</Chip>
           {#each Object.entries(ELEMENT_COLORS) as [el, color]}
-            <button
-              type="button"
-              class="chip"
-              style="border-color: {color}; color: {color};">{el}</button
-            >
+            <Chip style="border-color: {color}; color: {color};">{el}</Chip>
           {/each}
         </div>
-      </div>
+      </Surface>
 
-      <div class="control-block surface">
-        <p class="surface-label">Toggle + actions</p>
+      <Surface>
+        <p class="surface-label">Toggle + Button</p>
         <div class="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            class="toggle"
-            class:is-on={toggleOn}
-            aria-pressed={toggleOn}
-            aria-label="Demo toggle"
-            onclick={() => (toggleOn = !toggleOn)}
-          >
-            <span></span>
-          </button>
-          <button type="button" class="btn-secondary">Secondary</button>
-          <button type="button" class="btn-ghost">
+          <Toggle bind:pressed={toggleOn} aria-label="Demo toggle" />
+          <Button variant="primary">Primary</Button>
+          <Button>Secondary</Button>
+          <Button variant="ghost">
             <IconFilter size={14} />
             Filters
-          </button>
-          <button type="button" class="btn-icon" aria-label="Settings">
+          </Button>
+          <Button variant="icon" aria-label="Settings">
             <IconCog size={16} />
-          </button>
+          </Button>
         </div>
-      </div>
+      </Surface>
 
-      <div class="control-block surface">
+      <Surface>
         <p class="surface-label">Badges</p>
         <div class="chip-row">
-          <span class="badge badge-gold">R5</span>
-          <span class="badge badge-mint">4pc</span>
-          <span class="badge badge-muted">NEW</span>
-          <span class="badge badge-warn">missing</span>
+          <Badge tone="gold">R5</Badge>
+          <Badge tone="mint">4pc</Badge>
+          <Badge tone="muted">NEW</Badge>
+          <Badge tone="warn">missing</Badge>
+        </div>
+      </Surface>
+    </div>
+  </section>
+
+  <!-- ── New patterns (pre-migration) ───────────────────────────────────── -->
+  <section class="gallery-section" id="patterns">
+    <div class="section-head">
+      <h2>New patterns</h2>
+      <p>
+        Candidates for route migration — SlidingTabs, CharacterPortraitCard,
+        SolutionDots, EmptyState, LoadingState.
+      </p>
+    </div>
+
+    <div class="control-stack">
+      <Surface>
+        <p class="surface-label">SlidingTabs</p>
+        <p class="token-meta mb-2">
+          Indicator tablist (Abyss / Stygian / character detail). Accent can be
+          slot gold or element color.
+        </p>
+        <SlidingTabs
+          options={SLIDING_TAB_OPTIONS}
+          bind:value={slidingTab}
+          accent={slidingAccent}
+          aria-label="Demo sliding tabs"
+        />
+        <p class="token-meta mt-2">Active: {slidingTab}</p>
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">SolutionDots</p>
+        <p class="token-meta mb-2">
+          Pager for alternate Abyss / Stygian solutions.
+        </p>
+        <SolutionDots count={4} bind:index={solutionIndex} />
+        <p class="token-meta mt-2">Index: {solutionIndex}</p>
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">CharacterPortraitCard</p>
+        <p class="token-meta mb-2">
+          Portrait tile with element stripe, shine hover, optional dim / tint /
+          meta overlay. Link vs static.
+        </p>
+        {#if sampleChars.length}
+          <div class="portrait-grid">
+            {#each sampleChars.slice(0, 4) as character, i (character.name_id)}
+              <CharacterPortraitCard
+                {character}
+                href="/characters/{character.name_id}"
+                tintBackground={i % 2 === 1}
+                dimmed={i === 3}
+              >
+                {#snippet badge()}
+                  {#if isNewCharacter(character.released_at)}
+                    <span class="new-badge absolute top-1.5 right-1.5 z-20"
+                      >NEW</span
+                    >
+                  {:else if i === 1}
+                    <span
+                      class="absolute top-1 right-1 z-20 text-[0.7rem] leading-none"
+                      style="color: var(--accent-1);"
+                      aria-label="Best team">★</span
+                    >
+                  {/if}
+                {/snippet}
+                {#snippet meta()}
+                  <div
+                    class="text-[0.7rem] font-medium leading-tight truncate"
+                    style="color: var(--foreground-color);"
+                  >
+                    {character.name}
+                  </div>
+                  <div
+                    class="text-[0.6rem] leading-tight truncate"
+                    style="color: var(--foreground-mid);"
+                  >
+                    {character.rarity}★ · {weaponTypeLabel(
+                      character.weapon_type ?? "",
+                    )}
+                  </div>
+                {/snippet}
+              </CharacterPortraitCard>
+            {/each}
+          </div>
+        {:else}
+          <p class="token-meta">Roster not loaded yet.</p>
+        {/if}
+      </Surface>
+
+      <div class="status-row">
+        <div>
+          <p class="surface-label">EmptyState</p>
+          <EmptyState message="No teams found with those characters.">
+            {#snippet action()}
+              <Button variant="primary">Clear filters</Button>
+            {/snippet}
+          </EmptyState>
+        </div>
+        <div>
+          <p class="surface-label">LoadingState (plain)</p>
+          <LoadingState message="Loading…" class="min-h-status" />
+        </div>
+        <div>
+          <p class="surface-label">LoadingState (pulse)</p>
+          <LoadingState variant="pulse" message="Loading investment data…" />
         </div>
       </div>
     </div>
@@ -330,7 +434,7 @@
     </div>
 
     <div class="control-stack">
-      <div class="control-block surface">
+      <Surface>
         <p class="surface-label">CharacterIcon</p>
         {#if sampleChars.length}
           <div class="icon-row">
@@ -343,9 +447,9 @@
         {:else}
           <p class="token-meta">Roster not loaded yet — refresh after hydrate.</p>
         {/if}
-      </div>
+      </Surface>
 
-      <div class="control-block surface">
+      <Surface>
         <p class="surface-label">Team</p>
         {#if demoTeam}
           <Team
@@ -356,32 +460,32 @@
         {:else}
           <p class="token-meta">Need at least 4 characters in store.</p>
         {/if}
-      </div>
+      </Surface>
 
-      <div class="control-block surface">
+      <Surface>
         <p class="surface-label">GameText</p>
         <GameText
           text={"Deals <color=#FFD780FF>Pyro DMG</color> equal to 200% of ATK. {LINK#demo}See talent{/LINK}."}
           resolveLink={() => "#components"}
         />
-      </div>
+      </Surface>
 
-      <div class="control-block surface">
+      <Surface>
         <p class="surface-label">Tooltips</p>
         <div class="chip-row">
           <div class="group relative inline-flex">
-            <button type="button" class="btn-secondary">Weapon</button>
+            <Button>Weapon</Button>
             <WeaponTooltip weaponKey="EngulfingLightning" refinement={1} />
           </div>
           <div class="group relative inline-flex">
-            <button type="button" class="btn-secondary">Artifact</button>
+            <Button>Artifact</Button>
             <ArtifactTooltip setKey="EmblemOfSeveredFate" pieceCount={4} />
           </div>
           <div class="group relative inline-flex">
-            <button type="button" class="btn-ghost">
+            <Button variant="ghost">
               <IconInfo size={14} />
               Hover tip
-            </button>
+            </Button>
             <HoverTooltip>
               <p class="text-xs" style="color: var(--foreground-color);">
                 Generic hover / focus tip shell.
@@ -389,9 +493,9 @@
             </HoverTooltip>
           </div>
         </div>
-      </div>
+      </Surface>
 
-      <div class="control-block surface">
+      <Surface>
         <p class="surface-label">Icons</p>
         <div class="icon-strip">
           <IconInfo size={18} />
@@ -402,110 +506,54 @@
           <IconMonitor size={18} />
           <IconCloudUp size={18} />
         </div>
-      </div>
+      </Surface>
     </div>
   </section>
 
   <!-- ── Planned ────────────────────────────────────────────────────────── -->
   <section class="gallery-section" id="planned">
     <div class="section-head">
-      <h2>Planned primitives</h2>
-      <p>Stubs land here as we extract them from routes.</p>
+      <h2>Still to extract</h2>
+      <p>Defer until the matching route migration.</p>
     </div>
     <div class="planned-grid">
       {#each [
-        "PageShell / PageHeader",
-        "Surface / Card",
-        "Button",
-        "SegmentedControl / Tabs",
-        "FilterBar / SearchInput / Chip",
-        "Toggle",
-        "CharacterCard",
-        "StatRow / StatusBadge",
+        "StatRow",
+        "FilterBar / SearchInput",
+        "CharacterFilterBar (logic)",
+        "SectionLabel",
         "Tooltip (focus + touch)",
       ] as name}
-        <div class="planned-card surface surface-empty">
+        <Surface variant="empty">
           <p class="surface-label">{name}</p>
           <p class="token-meta">Not extracted yet</p>
-        </div>
+        </Surface>
       {/each}
     </div>
   </section>
-</main>
+</PageShell>
 
 <style>
-  .eyebrow {
-    font-size: 0.7rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
-  .page-title {
-    font-size: var(--h1-size);
-    font-weight: 600;
-    color: var(--foreground-color);
-  }
-
-  .lede {
-    max-width: 40rem;
-    color: var(--foreground-mid);
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-
   .gallery-section {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .section-head h2 {
     font-size: var(--h2-size);
-    letter-spacing: 0.08em;
+    letter-spacing: var(--tracking-title);
     text-transform: uppercase;
     color: var(--foreground-color);
   }
 
   .section-head p {
-    font-size: 0.8rem;
+    font-size: var(--text-sm);
     color: var(--foreground-mid);
   }
 
-  .tag {
-    margin-left: 0.4rem;
-    font-size: 0.65rem;
-    letter-spacing: 0.06em;
-    color: var(--accent-1);
-    text-transform: uppercase;
-  }
-
-  .surface {
-    background: var(--background-mid);
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 20%, transparent);
-    border-radius: 0.75rem;
-    padding: 1rem;
-  }
-
-  .surface-interactive {
-    transition: border-color 0.15s ease;
-  }
-
-  .surface-interactive:hover {
-    border-color: color-mix(in srgb, var(--accent-1) 45%, transparent);
-  }
-
-  .surface-inset {
-    background: color-mix(in srgb, var(--accent-1) 7%, var(--background-mid));
-  }
-
-  .surface-empty {
-    border-style: dashed;
-    opacity: 0.85;
-  }
-
   .surface-label {
-    font-size: 0.75rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--foreground-color);
     margin-bottom: 0.35rem;
@@ -514,46 +562,47 @@
   .token-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-    gap: 0.75rem;
+    gap: var(--space-3);
   }
 
-  .token-card {
+  :global(.token-card) {
     display: flex;
-    gap: 0.75rem;
+    gap: var(--space-3);
     align-items: center;
-    padding: 0.75rem;
+    padding: var(--space-3);
   }
 
   .swatch {
     width: 2.25rem;
     height: 2.25rem;
-    border-radius: 0.4rem;
-    border: 0.5px solid color-mix(in srgb, var(--foreground-color) 15%, transparent);
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 15%, transparent);
     flex-shrink: 0;
   }
 
   .token-name {
-    font-size: 0.75rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--foreground-color);
     font-variant-numeric: tabular-nums;
   }
 
   .token-meta {
-    font-size: 0.7rem;
+    font-size: var(--text-xs);
     color: var(--foreground-mid);
   }
 
-  .type-lab {
+  :global(.type-lab) {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-3);
   }
 
   .type-lab-head {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-1);
   }
 
   .type-pairing-row {
@@ -562,34 +611,18 @@
     gap: 0.4rem;
   }
 
-  .type-pairing-btn {
-    font-size: 0.7rem;
-    padding: 0.3rem 0.65rem;
-    border-radius: 0.4rem;
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
-    color: var(--foreground-mid);
-    background: transparent;
-  }
-
-  .type-pairing-btn.is-active {
-    color: var(--accent-1);
-    background: color-mix(in srgb, var(--accent-1) 12%, transparent);
-    border-color: color-mix(in srgb, var(--accent-1) 45%, transparent);
-  }
-
   .type-pairing-note {
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-1);
   }
 
   .type-samples {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
-    padding-top: 0.5rem;
-    border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 14%, transparent);
+    padding-top: var(--space-2);
+    border-top: var(--border-width) solid var(--border-subtle);
   }
 
-  /* Legacy comparison faces — not used in production */
   @font-face {
     font-family: "Bonobo";
     src: url("/fonts/BonoboSemiBold.ttf") format("truetype");
@@ -605,15 +638,15 @@
   }
 
   .sample-brand {
-    font-family: var(--lab-brand, "Bonobo", serif);
-    letter-spacing: var(--lab-tracking, 0.1em);
+    font-family: var(--lab-brand, var(--font-brand));
+    letter-spacing: var(--lab-tracking, var(--tracking-brand));
     color: var(--accent-1);
     font-size: 1.35rem;
     font-weight: 700;
   }
 
   .sample-display {
-    font-family: var(--lab-display, "Lora", serif);
+    font-family: var(--lab-display, var(--font-display));
     font-size: clamp(1.35rem, 2.5vw, 1.85rem);
     font-weight: 600;
     line-height: 1.2;
@@ -621,8 +654,8 @@
   }
 
   .sample-title {
-    font-family: var(--lab-display, "Manrope", sans-serif);
-    letter-spacing: var(--lab-tracking, 0.12em);
+    font-family: var(--lab-display, var(--font-display));
+    letter-spacing: var(--lab-tracking, var(--tracking-title));
     text-transform: uppercase;
     font-size: 1rem;
     font-weight: 600;
@@ -630,20 +663,20 @@
   }
 
   .sample-body {
-    font-family: var(--lab-body, "Manrope", sans-serif);
-    font-size: 0.95rem;
+    font-family: var(--lab-body, var(--font-body));
+    font-size: var(--text-base);
     line-height: 1.45;
     color: var(--foreground-color);
   }
 
   .sample-meta {
-    font-family: var(--lab-body, "Manrope", sans-serif);
-    font-size: 0.75rem;
+    font-family: var(--lab-body, var(--font-body));
+    font-size: var(--text-sm);
     color: var(--foreground-mid);
   }
 
   .sample-data {
-    font-family: var(--lab-body, "Manrope", sans-serif);
+    font-family: var(--lab-body, var(--font-body));
     font-size: 0.8rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -654,7 +687,7 @@
   .control-stack,
   .planned-grid {
     display: grid;
-    gap: 0.75rem;
+    gap: var(--space-3);
   }
 
   .surface-row {
@@ -665,26 +698,6 @@
     grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
   }
 
-  .segmented {
-    display: inline-flex;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
-  }
-
-  .segment {
-    padding: 0.35rem 0.75rem;
-    font-size: 0.75rem;
-    text-transform: capitalize;
-    background: var(--background-mid);
-    color: var(--foreground-mid);
-  }
-
-  .segment-active {
-    background: color-mix(in srgb, var(--accent-1) 12%, var(--background-mid));
-    color: var(--accent-1);
-  }
-
   .chip-row {
     display: flex;
     flex-wrap: wrap;
@@ -692,112 +705,54 @@
     align-items: center;
   }
 
-  .chip {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 25%, transparent);
-    color: var(--foreground-mid);
-    background: transparent;
+  .portrait-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 5.5rem));
+    gap: var(--space-2);
   }
 
-  .chip-active {
-    color: var(--accent-1);
-    border-color: color-mix(in srgb, var(--accent-1) 55%, transparent);
-    background: color-mix(in srgb, var(--accent-1) 10%, transparent);
+  .status-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--space-3);
+    align-items: start;
   }
 
-  .toggle {
-    width: 2.75rem;
-    height: 1.5rem;
-    border-radius: 999px;
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);
-    background: color-mix(in srgb, var(--foreground-mid) 12%, transparent);
-    padding: 0.15rem;
-    display: flex;
-    align-items: center;
+  :global(.min-h-status) {
+    min-height: 8rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    border: var(--border-width) solid var(--border-default);
   }
 
-  .toggle span {
-    width: 1.05rem;
-    height: 1.05rem;
-    border-radius: 999px;
-    background: var(--foreground-mid);
-    transition: transform 0.15s ease, background 0.15s ease;
-  }
-
-  .toggle.is-on {
-    background: color-mix(in srgb, var(--accent-1) 22%, transparent);
-  }
-
-  .toggle.is-on span {
-    transform: translateX(1.15rem);
-    background: var(--accent-1);
-  }
-
-  .btn-secondary,
-  .btn-ghost,
-  .btn-icon {
-    font-size: 0.75rem;
-    border-radius: 0.45rem;
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);
-    color: var(--foreground-color);
-    background: color-mix(in srgb, var(--accent-1) 6%, transparent);
-    padding: 0.35rem 0.7rem;
-  }
-
-  .btn-ghost,
-  .btn-icon {
-    background: transparent;
-    color: var(--foreground-mid);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .btn-icon {
-    padding: 0.4rem;
-  }
-
-  .badge {
-    font-size: 0.65rem;
+  .new-badge {
+    font-size: 0.55rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 0.1rem 0.4rem;
-    border-radius: 0.25rem;
-  }
-
-  .badge-gold {
-    color: #1a1208;
-    background: color-mix(in srgb, var(--accent-1) 85%, #f0c060);
-  }
-
-  .badge-mint {
-    color: #0a120e;
-    background: color-mix(in srgb, #6dd5a8 75%, var(--accent-1));
-  }
-
-  .badge-muted {
-    color: var(--foreground-mid);
-    border: 0.5px solid color-mix(in srgb, var(--accent-1) 25%, transparent);
-  }
-
-  .badge-warn {
-    color: var(--accent-1);
-    text-transform: uppercase;
     letter-spacing: 0.06em;
+    padding: 0.15rem 0.35rem;
+    border-radius: var(--radius-sm);
+    background: var(--accent-1);
+    color: var(--background-color);
+  }
+
+  .mb-2 {
+    margin-bottom: var(--space-2);
+  }
+
+  .mt-2 {
+    margin-top: var(--space-2);
   }
 
   .icon-row {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 4.5rem));
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
 
   .icon-cell {
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     overflow: hidden;
-    background: var(--background-color);
+    background: var(--surface-base);
   }
 
   .icon-strip {
@@ -808,13 +763,17 @@
   }
 
   code {
-    font-size: 0.75rem;
+    font-size: var(--text-sm);
     color: var(--accent-2);
   }
 
   @media (max-width: 640px) {
     .icon-row {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .portrait-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 </style>

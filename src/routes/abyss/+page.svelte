@@ -1,15 +1,22 @@
 <script lang="ts">
   import { teamsOwned, allTeamsAbyss, charactersOwned } from "$lib/stores";
-  import { abyssSlotLabel } from "$lib/slotLabels";
   import { solveAbyssWithFallback, solveAbyss } from "$lib/solver";
   import Team from "$lib/ui/components/Team.svelte";
-  import { onMount } from "svelte";
+  import PageShell from "$lib/ui/components/PageShell.svelte";
+  import Surface from "$lib/ui/components/Surface.svelte";
+  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
+  import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
+  import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import type { AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
-  const modes = ["roster", "meta"] as const;
+
+  const MODE_OPTIONS = [
+    { value: "roster" as const, label: "roster" },
+    { value: "meta" as const, label: "meta" },
+  ];
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -37,9 +44,6 @@
 
   let teamsMode = $state<"roster" | "meta">("roster");
   let selectedIndex = $state(0);
-  let activeSlotIndex = $state(0);
-  let activeSlot = $derived(SLOTS[activeSlotIndex]);
-  let isDesktop = $state(false);
 
   const SOLUTIONS_COUNT = 6;
 
@@ -84,44 +88,33 @@
     Math.min(selectedIndex, Math.max(0, displaySolutions.length - 1)),
   );
 
+  $effect(() => {
+    if (selectedIndex !== safeIndex) selectedIndex = safeIndex;
+  });
+
+  // Reset pager when switching roster ↔ meta (not on every solution change)
+  let prevMode = $state<"roster" | "meta">("roster");
+  $effect(() => {
+    if (teamsMode !== prevMode) {
+      prevMode = teamsMode;
+      selectedIndex = 0;
+    }
+  });
+
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
     $teamsOwned.length === 0 && $allTeamsAbyss.length === 0,
   );
 
-  function setTeamsMode(mode: "roster" | "meta") {
-    teamsMode = mode;
-    selectedIndex = 0;
-    if (import.meta.env.DEV) {
-      console.debug("[LK TEAMS MODE]", { mode, route: location.pathname });
-    }
-  }
-
-  function setActiveSlot(index: number) {
-    const previousIndex = activeSlotIndex;
-    activeSlotIndex = index;
-    if (import.meta.env.DEV) {
-      queueMicrotask(() => {
-        console.debug("[LK ACTIVE SLOT]", {
-          requestedIndex: index,
-          previousIndex,
-          currentIndex: activeSlotIndex,
-          activeSlot,
-          route: location.pathname,
-        });
-      });
-    }
-  }
-
-  function handlePointerAction(event: PointerEvent, action: () => void) {
-    if (event.button !== 0) return;
-    action();
-  }
-
-  function handleKeyboardClick(event: MouseEvent, action: () => void) {
-    if (event.detail === 0) action();
-  }
+  let updatedLabel = $derived.by(() => {
+    if (!abyssEnemies?.openTime) return "";
+    return new Date(abyssEnemies.openTime).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  });
 
   function slotRate(team: AbyssTeam, slot: Slot): number {
     if (slot === "top") return team.field_1_rate ?? 0;
@@ -134,62 +127,28 @@
     )?.team.team_key;
     return `${slot}:${String(teamKey ?? "empty")}`;
   }
-
-  const slotAccent: Record<Slot, string> = {
-    top: "var(--accent-1)",
-    bottom: "var(--accent-1)",
-  };
-
-  let activeSlotAccent = $derived(slotAccent[activeSlot]);
-  let activeSlotLeft = $derived(
-    `calc((100% / ${SLOTS.length}) * ${activeSlotIndex})`,
-  );
-
-  onMount(() => {
-    const query = window.matchMedia("(min-width: 1024px)");
-    const sync = () => {
-      isDesktop = query.matches;
-    };
-
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  });
 </script>
 
 {#snippet slotPanel(slot: Slot)}
   {@const sideEnemies = abyssEnemies?.[slot]}
   {@const assignment = solution?.assignments.find((a) => a.slot === slot)}
-  {@const accent = slotAccent[slot]}
 
-  <div
-    class="rounded-2xl overflow-hidden flex flex-col"
-    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-  >
-    <!-- Chamber enemies -->
-    <div
-      class="relative w-full overflow-hidden p-4"
-      style="background: color-mix(in srgb, {accent} 4%, var(--background-color));"
-    >
+  <Surface flush class="slot-panel">
+    <!-- Chamber enemies — dynamic 3-chamber strip preserved -->
+    <div class="chamber-strip">
       {#if sideEnemies && sideEnemies.length > 0}
-        <div class="flex">
+        <div class="chambers">
           {#each sideEnemies as chamber}
-            <div class="flex-1 flex flex-col items-center gap-1 px-3">
-              <span
-                class="text-xs font-medium pb-1 border-b"
-                style="color: var(--foreground-mid); border-color: color-mix(in srgb, {accent} 22%, transparent);"
-              >
-                {chamber.chamber}
-              </span>
-              <div class="flex flex-row justify-center gap-1">
+            <div class="chamber">
+              <span class="chamber-label">{chamber.chamber}</span>
+              <div class="chamber-enemies">
                 {#each chamber.enemies.slice(0, 3) as enemy}
                   {#if enemy.asset}
                     <img
                       src={getEnemyAsset(enemy.asset)}
                       alt={enemy.name}
                       title={enemy.name}
-                      class="min-w-8 grow h-18 rounded-md object-cover"
-                      style="border: 1px solid color-mix(in srgb, {accent} 18%, transparent);"
+                      class="enemy-portrait"
                     />
                   {/if}
                 {/each}
@@ -198,28 +157,20 @@
           {/each}
         </div>
       {:else}
-        <div class="flex items-center justify-center py-3">
-          <span class="text-xs" style="color: var(--foreground-mid);"
-            >No enemy data</span
-          >
+        <div class="chamber-empty">
+          <span>No enemy data</span>
         </div>
       {/if}
     </div>
 
     {#if abyssEnemies?.buffName}
-      <div
-        class="text-lg text-center py-2"
-        style="background: color-mix(in srgb, {accent} 4%, var(--background-color)); color: var(--foreground-color);"
-      >
-        {abyssEnemies.buffName}: {halfLabel[slot]}
-      </div>
+      <p class="buff-line">
+        <span class="buff-name">{abyssEnemies.buffName}</span>
+        <span class="buff-half">{halfLabel[slot]}</span>
+      </p>
     {/if}
 
-    <!-- Team content -->
-    <div
-      class="p-4 flex flex-col gap-3"
-      style="background: color-mix(in srgb, {accent} 4%, var(--background-color));"
-    >
+    <div class="team-block">
       {#if assignment}
         <Team
           team={assignment.team}
@@ -227,23 +178,19 @@
           missingCharacters={assignment.missingCharacters}
         />
 
-        <div class="flex items-center justify-between">
-          <span class="text-xs" style="color: var(--foreground-mid);">
-            {(assignment.team.usage_rate ?? 0).toFixed(1)}% usage
-          </span>
-          <span class="text-xs" style="color: {accent};">
-            {slotRate(assignment.team, slot).toFixed(0)}% in this half
-          </span>
+        <div class="rate-row">
+          <span>{(assignment.team.usage_rate ?? 0).toFixed(1)}% usage</span>
+          <span class="rate-slot"
+            >{slotRate(assignment.team, slot).toFixed(0)}% in this half</span
+          >
         </div>
       {:else if solution}
-        <div class="flex items-center justify-center py-8">
-          <p class="text-xs" style="color: var(--foreground-mid);">
-            No team available for this side
-          </p>
+        <div class="panel-empty">
+          <p>No team available for this side</p>
         </div>
       {:else}
-        <div class="flex items-center justify-center py-8">
-          <p class="text-xs" style="color: var(--foreground-mid);">
+        <div class="panel-empty">
+          <p>
             {teamsMode === "roster"
               ? "Set up your roster in Settings"
               : "No data available"}
@@ -251,167 +198,208 @@
         </div>
       {/if}
     </div>
-  </div>
+  </Surface>
 {/snippet}
 
-<main class="w-[85%] pb-20 flex flex-col gap-6">
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
-  <div class="flex items-center justify-between gap-4 flex-wrap">
-    <h2
-      class="tracking-widest uppercase"
-      style="color: var(--foreground-color);"
-    >
-      Spiral Abyss
-      {#if abyssEnemies?.openTime}
-        <span
-          class="text-xs normal-case tracking-normal ml-2"
-          style="color: var(--foreground-mid);"
-        >
-          updated {new Date(abyssEnemies.openTime).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
+<PageShell class="gap-6">
+  <header class="page-head">
+    <div class="page-head-text">
+      <h1 class="page-title">Spiral Abyss</h1>
+      {#if updatedLabel}
+        <p class="page-meta">Updated {updatedLabel}</p>
       {/if}
-    </h2>
-
-    <div
-      class="flex rounded-lg overflow-hidden"
-      style="border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-    >
-      {#each modes as mode}
-        <button
-          type="button"
-          onpointerdown={(event) =>
-            handlePointerAction(event, () => setTeamsMode(mode))}
-          onclick={(event) =>
-            handleKeyboardClick(event, () => setTeamsMode(mode))}
-          class="mode-button px-3 py-1.5 text-xs capitalize transition-colors"
-          class:mode-button-active={teamsMode === mode}
-        >
-          {mode}
-        </button>
-      {/each}
     </div>
-  </div>
 
-  <!-- ── Mobile side tabs ───────────────────────────────────────────────── -->
-  <div
-    role="tablist"
-    aria-label="Abyss side"
-    class="relative z-1 lg:hidden flex rounded-xl overflow-hidden"
-    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-  >
-    <span
-      class="absolute inset-y-0 pointer-events-none transition-[left,background-color] duration-150"
-      style="left: {activeSlotLeft}; width: calc(100% / {SLOTS.length}); background: color-mix(in srgb, {activeSlotAccent} 10%, var(--background-mid));"
-    ></span>
-    <span
-      class="absolute bottom-0 h-[1.5px] pointer-events-none transition-[left,background-color] duration-150"
-      style="left: {activeSlotLeft}; width: calc(100% / {SLOTS.length}); background: {activeSlotAccent};"
-    ></span>
-    {#each SLOTS as slot, slotIndex (slot)}
-      <button
-        type="button"
-        role="tab"
-        data-slot={slot}
-        data-active={activeSlot === slot}
-        aria-selected={activeSlot === slot}
-        onpointerdown={(event) =>
-          handlePointerAction(event, () => setActiveSlot(slotIndex))}
-        onclick={(event) =>
-          handleKeyboardClick(event, () => setActiveSlot(slotIndex))}
-        class="slot-tab relative z-1 flex-1 py-2.5 text-xs font-medium transition-colors pointer-events-auto touch-manipulation"
-        class:slot-tab-active={activeSlot === slot}
-      >
-        {abyssSlotLabel[slot]}
-      </button>
-    {/each}
-  </div>
+    <SegmentedControl
+      options={MODE_OPTIONS}
+      bind:value={teamsMode}
+      aria-label="Team source"
+    />
+  </header>
 
-  <!-- ── Solution dots ─────────────────────────────────────────────────── -->
   {#if !loading && displaySolutions.length > 1}
-    <div class="flex items-center justify-center gap-0.5">
-      {#each displaySolutions as _, i}
-        <button
-          type="button"
-          onpointerdown={(event) =>
-            handlePointerAction(event, () => (selectedIndex = i))}
-          onclick={(event) =>
-            handleKeyboardClick(event, () => (selectedIndex = i))}
-          aria-label="Solution {i + 1}"
-          class="w-6 h-6 flex items-center justify-center"
-        >
-          <span
-            class="solution-dot rounded-full block transition-all duration-150"
-            class:solution-dot-active={safeIndex === i}
-          ></span>
-        </button>
-      {/each}
-    </div>
+    <SolutionDots
+      count={displaySolutions.length}
+      bind:index={selectedIndex}
+      aria-label-prefix="Solution"
+    />
   {/if}
 
-  <!-- ── Side panels ────────────────────────────────────────────────────── -->
   {#if loading}
-    <div class="flex items-center justify-center min-h-[40vh]">
-      <p style="color: var(--foreground-mid);">Loading…</p>
-    </div>
+    <LoadingState />
   {:else}
-    <div class="grid lg:grid-cols-2 gap-4 items-start">
-      {#each SLOTS as slot, slotIndex (slot)}
-        {#if isDesktop || slotIndex === activeSlotIndex}
-          <div
-            data-panel-slot={slot}
-            data-active-panel={slotIndex === activeSlotIndex}
-          >
-            {#key assignmentKey(slot)}
-              {@render slotPanel(slot)}
-            {/key}
-          </div>
-        {/if}
+    <div class="panels">
+      {#each SLOTS as slot (slot)}
+        <div data-panel-slot={slot}>
+          {#key assignmentKey(slot)}
+            {@render slotPanel(slot)}
+          {/key}
+        </div>
       {/each}
     </div>
 
     {#if solution?.isFallback && solution.neededCharacters.length > 0}
-      <p class="text-xs text-center" style="color: var(--foreground-mid);">
-        Unable to find floor 12 clears with your roster - try teams similar to
-        those suggested or look at your pull suggestions
+      <p class="fallback-note">
+        Unable to find floor 12 clears with your roster — try teams similar to
+        those suggested, or check Pull suggestions.
       </p>
     {/if}
   {/if}
-</main>
+</PageShell>
 
 <style>
-  .mode-button {
-    background: var(--background-mid);
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .page-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: var(--h2-size);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .page-meta {
+    font-size: var(--text-xs);
     color: var(--foreground-mid);
   }
 
-  .mode-button-active {
-    background: color-mix(in srgb, var(--accent-1) 12%, var(--background-mid));
-    color: var(--accent-1);
+  .panels {
+    display: grid;
+    gap: var(--space-4);
+    align-items: start;
   }
 
-  .slot-tab {
+  @media (min-width: 1024px) {
+    .panels {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  :global(.slot-panel) {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chamber-strip {
+    padding: var(--space-4);
+    background: var(--surface-base);
+  }
+
+  .chambers {
+    display: flex;
+  }
+
+  .chamber {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0.75rem;
+  }
+
+  .chamber-label {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    padding-bottom: 0.25rem;
+    border-bottom: var(--border-width) solid var(--border-default);
     color: var(--foreground-mid);
   }
 
-  .slot-tab-active {
+  .chamber-enemies {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .enemy-portrait {
+    min-width: 2rem;
+    flex-grow: 1;
+    height: 4.5rem;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    border: 1px solid var(--border-subtle);
+  }
+
+  .chamber-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 0;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .buff-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.55rem var(--space-4);
+    border-top: var(--border-width) solid var(--border-subtle);
+    background: var(--surface-base);
+    font-size: var(--text-sm);
+  }
+
+  .buff-name {
+    color: var(--foreground-color);
+    font-weight: 500;
+  }
+
+  .buff-half {
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+  }
+
+  .team-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: var(--space-4);
+    border-top: var(--border-width) solid var(--border-subtle);
+  }
+
+  .rate-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground-mid);
+  }
+
+  .rate-slot {
     color: var(--accent-1);
   }
 
-  .solution-dot {
-    width: 5px;
-    height: 5px;
-    background: var(--foreground-mid);
-    opacity: 0.6;
+  .panel-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
   }
 
-  .solution-dot-active {
-    width: 7px;
-    height: 7px;
-    background: var(--accent-1);
-    opacity: 1;
+  .fallback-note {
+    font-size: var(--text-xs);
+    text-align: center;
+    color: var(--foreground-mid);
+    line-height: 1.45;
   }
 </style>

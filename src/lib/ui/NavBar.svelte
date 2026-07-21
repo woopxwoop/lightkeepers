@@ -202,7 +202,7 @@
 >
   <!-- Main row -->
   <div
-    class="flex items-center justify-between h-16 pl-[7.5%] pr-[7.5%]"
+    class="nav-row flex items-center justify-between h-16"
   >
     <a
       href={homePath}
@@ -424,6 +424,11 @@
       background-color 0.4s ease,
       height 0.25s ease;
     height: 4rem;
+  }
+
+  .nav-row {
+    padding-left: var(--page-gutter);
+    padding-right: var(--page-gutter);
   }
 
   .nav-bar.nav-sub-open {
