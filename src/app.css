@@ -3,22 +3,41 @@
 @font-face {
   font-family: "Manrope";
   src: url("/fonts/Manrope.ttf") format("truetype");
-  font-weight: normal;
+  font-weight: 400 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
-  src: url("/fonts/Lora.ttf") format("truetype");
-  font-weight: normal;
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-Regular.woff2") format("woff2");
+  font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-  font-family: "Bonobo";
-  src: url("/fonts/BonoboSemiBold.ttf") format("truetype");
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-SemiBold.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @media (min-width: 1024px) {
@@ -38,6 +57,10 @@
   --accent-2: #f6d68a;
   --accent-3: #ead7b0;
 
+  --font-brand: "IBM Plex Sans", system-ui, sans-serif;
+  --font-display: "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+
   --h1-size: clamp(24px, 3vw + 0.25rem, 2.5rem);
   --h2-size: clamp(20px, 1.5vw + 0.2rem, 1.5rem);
 }
@@ -48,7 +71,7 @@ body {
   transition:
     background-color 0.3s,
     color 0.3s;
-  font-family: "Manrope", serif;
+  font-family: var(--font-body);
 }
 
 @keyframes flip-in {
@@ -71,6 +94,13 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 h1 {

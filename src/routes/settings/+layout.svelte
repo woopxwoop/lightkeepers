@@ -20,7 +20,7 @@
   let { children } = $props();
 </script>
 
-<main class="w-[80%] pb-24 flex flex-col gap-6">
+<main class="w-[85%] pb-24 flex flex-col gap-6">
   <div class="settings-shell grid items-start gap-5 lg:grid-cols-[160px_1fr]">
     <aside class="settings-sidebar hidden lg:block lg:sticky overflow-hidden">
       <div class="flex flex-row lg:flex-col">

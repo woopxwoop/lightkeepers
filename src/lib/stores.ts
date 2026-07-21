@@ -9,7 +9,7 @@
  *   - Service-role key stays server-side only
  */
 
-import { writable, derived, get, type Writable } from "svelte/store";
+import { writable, derived, get, readable, type Writable } from "svelte/store";
 import type { CharacterOwned, AbyssTeam, StygianTeam } from "$lib/definitions";
 import type {
   NearMissStygianTeam,
@@ -167,19 +167,8 @@ export function areAnimationsEnabled(): boolean {
   return get(displayPreferences).animationsEnabled;
 }
 
-export const faviconDataUri = derived(displayPreferences, ($prefs) => {
-  const accent = normalizeHexColor(
-    $prefs.themeColors?.["accent-1"] ?? DEFAULT_DARK_COLORS["accent-1"],
-  );
-  const r = parseInt(accent.slice(1, 3), 16);
-  const g = parseInt(accent.slice(3, 5), 16);
-  const b = parseInt(accent.slice(5, 7), 16);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <polygon points="50,4 59,41 96,50 59,59 50,96 41,59 4,50 41,41" fill="rgba(${r},${g},${b},0.15)" stroke="${accent}" stroke-width="3"/>
-    <circle cx="50" cy="50" r="30" fill="none" stroke="${accent}" stroke-width="2.5"/>
-  </svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-});
+/** Designed lighthouse mark — same asset as the navbar logo. */
+export const faviconDataUri = readable("/lightkeepers-mark.png");
 
 // ── Character store ────────────────────────────────────────────────────────
 export const charactersOwned = writable<CharacterOwned[]>([]);

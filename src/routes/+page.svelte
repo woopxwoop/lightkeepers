@@ -59,47 +59,34 @@
   ]);
 </script>
 
-<main class="w-[80%] pb-20">
-  <div class="flex flex-col gap-8 mt-16">
-    <div class="flex items-start justify-between gap-4">
-      <div class="flex flex-col gap-3">
-        <h1 class="hook">Genshin Impact <br /> personalized insights.</h1>
-      </div>
-    </div>
+<main class="w-[85%] pb-20">
+  <div class="flex flex-col gap-10">
+    <header class="hero flex flex-col gap-4">
+      <p class="hero-eyebrow">Genshin Impact meta resources</p>
+      <h1 class="hook">
+        Find your best<br />
+        <span class="hook-accent">teams and builds.</span>
+      </h1>
+    </header>
 
     <!-- Feature cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {#each features as feature}
-        <a
-          href={feature.href}
-          class="feature-card rounded-xl overflow-hidden flex flex-col group relative"
-          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-        >
-          <!-- Banner background -->
+        <a href={feature.href} class="feature-card group relative rounded-xl overflow-hidden">
           {#if feature.banner}
             <div
-              class="absolute inset-0 bg-cover bg-center opacity-20"
+              class="feature-art absolute inset-0 bg-cover bg-center"
               style="background-image: url('{feature.banner}');"
             ></div>
           {/if}
+          <div class="feature-scrim absolute inset-0"></div>
 
-          <div class="p-4 flex flex-col gap-3 relative z-10">
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex flex-col gap-1">
-                <span
-                  class="text-sm font-medium"
-                  style="color: var(--accent-1);"
-                >
-                  {feature.label}
-                </span>
-                <p
-                  class="text-xs leading-relaxed"
-                  style="color: var(--foreground-mid);"
-                >
-                  {feature.description}
-                </p>
-              </div>
-            </div>
+          <div class="relative z-10 flex flex-col justify-end h-full p-4 gap-1">
+            <span class="feature-label">
+              {feature.label}
+              <span class="feature-arrow" aria-hidden="true">→</span>
+            </span>
+            <p class="feature-desc">{feature.description}</p>
           </div>
         </a>
       {/each}
@@ -108,22 +95,92 @@
 </main>
 
 <style>
+  .hero-eyebrow {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-1);
+  }
+
   .hook {
-    font-family: "Lora";
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--foreground-color);
+  }
+
+  /* app.css sets a global span font-size clamp — keep hero spans at h1 size */
+  .hook span {
+    font-size: inherit;
+  }
+
+  .hook-accent {
+    color: var(--accent-2);
   }
 
   .feature-card {
+    min-height: 11rem;
+    background: var(--background-mid);
+    border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);
     transition:
       border-color 0.2s,
       transform 0.2s;
   }
 
   .feature-card:hover {
-    border-color: color-mix(
-      in srgb,
-      var(--accent-1) 45%,
-      transparent
-    ) !important;
-    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--accent-1) 50%, transparent);
+    transform: translateY(-2px);
+  }
+
+  .feature-art {
+    opacity: 0.55;
+    transition: opacity 0.25s ease, transform 0.4s ease;
+  }
+
+  .feature-card:hover .feature-art {
+    opacity: 0.7;
+    transform: scale(1.03);
+  }
+
+  .feature-scrim {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--background-color) 92%, transparent) 0%,
+      color-mix(in srgb, var(--background-color) 55%, transparent) 45%,
+      color-mix(in srgb, var(--background-color) 15%, transparent) 100%
+    );
+  }
+
+  .feature-label {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--foreground-color);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .feature-arrow {
+    font-size: 0.85rem;
+    color: var(--accent-1);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .feature-card:hover .feature-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .feature-desc {
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--foreground-mid);
   }
 </style>

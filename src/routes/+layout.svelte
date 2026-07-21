@@ -49,7 +49,7 @@
 </script>
 
 <svelte:head>
-  <link rel="icon" href={$faviconDataUri} type="image/svg+xml" />
+  <link rel="icon" href={$faviconDataUri} type="image/png" />
   <title>{page.data.seo?.title ?? "Lightkeepers"}</title>
   <meta
     name="description"

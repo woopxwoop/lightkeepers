@@ -7,7 +7,7 @@
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 </script>
 
-<main class="w-[80%] pb-20 flex flex-col gap-6">
+<main class="w-[85%] pb-20 flex flex-col gap-6">
   <header class="flex flex-col gap-1">
     <div class="flex flex-wrap items-baseline justify-between gap-2">
       <h1

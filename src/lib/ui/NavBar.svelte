@@ -202,14 +202,22 @@
 >
   <!-- Main row -->
   <div
-    class="flex items-center justify-between h-16 pl-[10%] pr-[10%]"
+    class="flex items-center justify-between h-16 pl-[7.5%] pr-[7.5%]"
   >
     <a
       href={homePath}
-      class="nav-logo shrink-0"
+      class="nav-logo shrink-0 flex items-center gap-2.5"
       aria-current={page.url.pathname === homePath ? "page" : undefined}
     >
-      LIGHTKEEPERS
+      <img
+        class="nav-mark"
+        src="/lightkeepers-mark.png"
+        alt=""
+        width="28"
+        height="28"
+        decoding="async"
+      />
+      <span>Lightkeepers</span>
     </a>
 
     <!-- Desktop links -->
@@ -249,39 +257,39 @@
           : undefined}
         bind:this={navLinks.characters}>Characters</a
       >
-      <div class="relative">
-      <a
-        href={settingsPath}
-        class="nav-link"
-        aria-current={onSettingsPage ? "page" : undefined}
-        bind:this={navLinks.settings}
-        onmouseenter={onSettingsEnter}
-        onmouseleave={onSettingsLeave}
-        onfocus={onSettingsEnter}
-        onblur={onSettingsLeave}>Settings</a
-      >
+      <div class="settings-item">
+        <a
+          href={settingsPath}
+          class="nav-link"
+          aria-current={onSettingsPage ? "page" : undefined}
+          bind:this={navLinks.settings}
+          onmouseenter={onSettingsEnter}
+          onmouseleave={onSettingsLeave}
+          onfocus={onSettingsEnter}
+          onblur={onSettingsLeave}>Settings</a
+        >
 
-      <!-- Settings sub-links -->
-      <div
-        class="settings-sub-row absolute left-1/2 -translate-x-1/2 top-full flex items-center gap-4 pt-4 pb-2 transition-all duration-200 whitespace-nowrap"
-        class:settings-sub-row-open={settingsHovered}
-        inert={!settingsHovered}
-        role="presentation"
-        onmouseenter={onSettingsEnter}
-        onmouseleave={onSettingsLeave}
-        onfocusin={onSettingsEnter}
-        onfocusout={onSettingsLeave}
-      >
-        {#each settingsLinks as link}
-          <a
-            href={link.path}
-            class="nav-sub-link"
-            aria-current={page.url.pathname === link.path
-              ? "page"
-              : undefined}>{link.label}</a
-          >
-        {/each}
-      </div>
+        <!-- Settings sub-links -->
+        <div
+          class="settings-sub-row"
+          class:settings-sub-row-open={settingsHovered}
+          inert={!settingsHovered}
+          role="presentation"
+          onmouseenter={onSettingsEnter}
+          onmouseleave={onSettingsLeave}
+          onfocusin={onSettingsEnter}
+          onfocusout={onSettingsLeave}
+        >
+          {#each settingsLinks as link}
+            <a
+              href={link.path}
+              class="nav-sub-link"
+              aria-current={page.url.pathname === link.path
+                ? "page"
+                : undefined}>{link.label}</a
+            >
+          {/each}
+        </div>
       </div>
 
       {#if underlineReady}
@@ -431,17 +439,37 @@
   }
 
   .nav-logo {
-    letter-spacing: 0.1em;
-    font-size: var(--h2-size);
-    font-family: "Bonobo";
-    font-weight: 700;
-    color: var(--accent-1);
+    font-family: var(--font-brand);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--foreground-color);
     pointer-events: auto;
+    transition: color 0.15s;
+  }
+
+  /* Designed mark is dark-on-black — invert so it reads on the nav. */
+  .nav-mark {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+    filter: invert(1);
+    transition: filter 0.2s ease;
+  }
+
+  .nav-logo:hover .nav-mark {
+    filter: invert(1) brightness(1.15);
   }
 
   .nav-link {
     padding-bottom: 2px;
     border-bottom: 1.5px solid transparent;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    color: var(--foreground-mid);
     transition:
       color 0.15s,
       border-color 0.15s;
@@ -461,21 +489,46 @@
   }
 
   /* ── Settings sub-row ── */
+  .settings-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    /* Match other nav-link flex items so Settings doesn't sit low */
+    align-self: center;
+  }
+
   .settings-sub-row {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+    white-space: nowrap;
     max-height: 0;
     opacity: 0;
+    overflow: hidden;
     pointer-events: none;
+    transition:
+      max-height 0.2s ease,
+      opacity 0.2s ease;
   }
 
   .settings-sub-row.settings-sub-row-open {
     max-height: 2.5rem;
     opacity: 1;
+    overflow: visible;
     pointer-events: auto;
   }
 
   .nav-sub-link {
     font-size: 0.85rem;
     letter-spacing: 0.03em;
+    font-family: var(--font-display);
+    font-weight: 500;
     color: var(--foreground-mid);
     transition: color 0.15s;
     pointer-events: auto;
@@ -533,6 +586,8 @@
   .drawer-link {
     font-size: 1.2rem;
     letter-spacing: 0.06em;
+    font-family: var(--font-display);
+    font-weight: 500;
     color: var(--foreground-mid);
     transition: color 0.15s;
   }

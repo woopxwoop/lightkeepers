@@ -249,7 +249,7 @@
   </div>
 {/snippet}
 
-<main class="w-[80%] pb-20 flex flex-col gap-6">
+<main class="w-[85%] pb-20 flex flex-col gap-6">
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="flex items-center justify-between gap-4 flex-wrap">
     <div class="flex items-center gap-3 flex-wrap">

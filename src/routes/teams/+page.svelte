@@ -294,7 +294,7 @@
 </script>
 
 <main
-  class="w-[80%] pb-20 flex flex-col gap-6"
+  class="w-[85%] pb-20 flex flex-col gap-6"
   style={!$animationsEnabled
     ? "--sk-animation: none; --pulse-animation: none"
     : ""}

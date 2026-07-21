@@ -133,7 +133,7 @@
 </script>
 
 <main
-  class="w-[80%] pb-20 flex flex-col gap-8"
+  class="w-[85%] pb-20 flex flex-col gap-8"
   style={!$animationsEnabled
     ? "--sk-animation: none; --pulse-animation: none"
     : ""}
