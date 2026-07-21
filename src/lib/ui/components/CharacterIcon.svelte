@@ -11,9 +11,11 @@
   let {
     character,
     zoom = 1,
+    iconStyle = "preference",
   }: {
     character: CharacterOwned | Character | undefined;
     zoom?: number;
+    iconStyle?: "preference" | "enka" | "coop" | "tcg";
   } = $props();
 
   $effect(() => {
@@ -21,8 +23,11 @@
       console.error("invalid character passed in as prop to CharacterIcon");
   });
 
-  let useEnkaIcon = $derived($displayPreferences.iconStyle === "enka");
-  let useTcg = $derived($displayPreferences.iconStyle === "tcg");
+  let resolvedIconStyle = $derived(
+    iconStyle === "preference" ? $displayPreferences.iconStyle : iconStyle,
+  );
+  let useEnkaIcon = $derived(resolvedIconStyle === "enka");
+  let useTcg = $derived(resolvedIconStyle === "tcg");
 
   // When the TCG card image 404s, we fall back to the coop portrait.  But the
   // coop image needs the coop container styling (higher zoom, different origin)
@@ -37,7 +42,7 @@
   // style actually changes — avoids replaying the TCG→coop fallback cycle
   // when the parent re-renders with the same character (e.g., after Cancel).
   $effect(() => {
-    const key = `${character?.name_id ?? ""}:${useTcg}`;
+    const key = `${character?.name_id ?? ""}:${resolvedIconStyle}`;
     if (key !== characterKey) {
       characterKey = key;
       tcgFailed = false;
