@@ -1,6 +1,6 @@
 <script lang="ts">
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import { animationsEnabled } from "$lib/stores";
+  import { animationsEnabled, displayPreferences } from "$lib/stores";
   import type { AbyssTeam, StygianTeam } from "$lib/definitions";
   import type { Tables } from "$lib/types/database.types";
 
@@ -17,33 +17,79 @@
   } = $props();
 
   let missingSet = $derived(new Set(missingCharacters));
+  let compactIcons = $derived($displayPreferences.iconStyle === "enka");
 </script>
 
-<div class="grid grid-cols-4 gap-0.75" style="perspective: 600px;">
+<div class="team-grid" style="perspective: 600px;">
   {#each team.members as member, idx}
     {@const isMissing = missingSet.has(member)}
     <div
-      class="relative rounded-lg overflow-hidden"
-      style="background: var(--background-mid);
-             {$animationsEnabled
+      class="team-slot"
+      class:team-slot-compact={compactIcons}
+      style={$animationsEnabled
         ? `animation: flip-in 0.35s ease-out both; animation-delay: ${idx * 60}ms;`
-        : ''}"
+        : undefined}
     >
-      <div style="{isMissing ? 'opacity: 0.3;' : ''}">
+      <div class="team-slot-art" class:team-slot-dimmed={isMissing}>
         <CharacterIcon character={mapping.get(member)} />
       </div>
       {#if isMissing}
-        <div
-          class="absolute bottom-0 left-0 right-0 flex items-center justify-center"
-          style="background: color-mix(in srgb, var(--background-color) 75%, transparent);
-                 padding: 2px 0;"
-        >
-          <span
-            style="font-size: 8px; font-weight: 600; letter-spacing: 0.06em;
-                   color: var(--accent-1); text-transform: uppercase;"
-          >missing</span>
+        <div class="team-slot-missing">
+          <span>missing</span>
         </div>
       {/if}
     </div>
   {/each}
 </div>
+
+<style>
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.1875rem;
+    align-items: start;
+  }
+
+  .team-slot {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--background-mid);
+    /* Hard frame — image assets cannot change this box. */
+    aspect-ratio: 3 / 4;
+  }
+
+  .team-slot-compact {
+    aspect-ratio: 1;
+  }
+
+  .team-slot-art {
+    position: absolute;
+    inset: 0;
+  }
+
+  .team-slot-dimmed {
+    opacity: 0.3;
+  }
+
+  .team-slot-missing {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 0;
+    background: color-mix(in srgb, var(--background-color) 75%, transparent);
+  }
+
+  .team-slot-missing span {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--accent-1);
+    text-transform: uppercase;
+  }
+</style>
