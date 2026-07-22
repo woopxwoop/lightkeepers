@@ -5,14 +5,16 @@
     displayPreferences,
   } from "$lib/stores";
   import {
-    artifactSetByKey,
     buildGoodKeyMap,
-    humanizeInvestmentLabel,
     humanizeTeamName,
     translateStatKey,
-    weaponByKey,
     statIconUrl,
   } from "$lib/utils";
+  import {
+    artifactSetByKey,
+    humanizeInvestmentLabel,
+    weaponByKey,
+  } from "$lib/equipment-data";
   import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";

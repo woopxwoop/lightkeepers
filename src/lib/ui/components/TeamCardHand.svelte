@@ -7,7 +7,7 @@
     displayWeaponRefinement,
     formatInvestmentCR,
     weaponByKey,
-  } from "$lib/utils";
+  } from "$lib/equipment-data";
 
   type BuildBadge = {
     cons: number;

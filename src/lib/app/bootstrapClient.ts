@@ -14,7 +14,7 @@ import {
   writeNearMissTeams,
   writeTeamsOwned,
 } from "$lib/stores";
-import { isNewCharacter } from "$lib/utils";
+import { isNewCharacter } from "$lib/is-new-character";
 import { get } from "svelte/store";
 import { prefetchInvestment } from "$lib/app/investment";
 

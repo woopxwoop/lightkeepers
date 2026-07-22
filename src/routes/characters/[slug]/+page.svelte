@@ -12,7 +12,6 @@
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import { elementColor } from "$lib/element-colors";
   import {
-    artifactSetByKey,
     artifactSlotIconUrl,
     associationLabel,
     elementIconUrl,
@@ -20,10 +19,10 @@
     getUiAssetUrl,
     statIconUrl,
     translateStatKey,
-    weaponByKey,
     weaponTypeIconUrl,
     weaponTypeLabel,
   } from "$lib/utils";
+  import { artifactSetByKey, weaponByKey } from "$lib/equipment-data";
   import {
     artifactIconUrl,
     skillIconUrl,

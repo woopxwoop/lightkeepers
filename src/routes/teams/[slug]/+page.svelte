@@ -5,11 +5,13 @@
   import {
     buildGoodKeyMap,
     toGoodKey,
-    humanizeInvestmentLabel,
     humanizeTeamName,
+  } from "$lib/utils";
+  import {
+    humanizeInvestmentLabel,
     displayWeaponRefinement,
     weaponByKey,
-  } from "$lib/utils";
+  } from "$lib/equipment-data";
   import { weaponIconUrl } from "$lib/asset-urls";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
@@ -30,10 +32,10 @@
 
   let { data: layoutData } = $props();
 
-  let investment: InvestmentFile | null = $state(getInvestmentCached());
-  let team: InvestmentTeam | null = $state(null);
+  let investment = $state<InvestmentFile | null>(getInvestmentCached());
+  let team = $state<InvestmentTeam | null>(null);
   let loading = $derived(investment === null);
-  let error: string | null = $state(null);
+  let error = $state<string | null>(null);
 
   onMount(() => fetchData());
 

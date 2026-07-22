@@ -37,7 +37,8 @@
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
   import type { AbyssTeam, CharacterOwned } from "$lib/definitions";
-  import { toGoodKey, weaponTypeLabel, isNewCharacter } from "$lib/utils";
+  import { toGoodKey, weaponTypeLabel } from "$lib/utils";
+  import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,

@@ -1,6 +1,3 @@
-import weaponsRaw from "$lib/data/weapons.json";
-import artifactSetsRaw from "$lib/data/artifact-sets.json";
-
 export const WEAPON_TYPE_MAP = {
   WEAPON_SWORD_ONE_HAND: "Sword",
   WEAPON_CLAYMORE: "Claymore",
@@ -118,21 +115,10 @@ export function formatGameDescriptionHtml(
 }
 
 /** Characters released within this many days are considered "new". */
-export const NEW_CHARACTER_DAYS = 20;
-
-/**
- * Whether a character was released recently enough to be flagged as "new".
- * Characters with no `released_at` are not considered new.
- */
-export function isNewCharacter(releasedAt: string | null | undefined): boolean {
-  if (!releasedAt) return false;
-  // Normalize space-separated timestamps (e.g. "2026-06-29 16:00:00+00")
-  // to ISO 8601 format so `new Date()` parses reliably across runtimes.
-  const released = new Date(releasedAt.replace(" ", "T"));
-  if (isNaN(released.getTime())) return false;
-  const cutoff = Date.now() - NEW_CHARACTER_DAYS * 86_400_000;
-  return released.getTime() > cutoff;
-}
+export {
+  NEW_CHARACTER_DAYS,
+  isNewCharacter,
+} from "$lib/is-new-character";
 
 const CDN_BASE = "https://images.lightkeepers.moe";
 const GENSIN_UI_BASE = `${CDN_BASE}/genshin/ui`;
@@ -205,110 +191,6 @@ export function buildGoodKeyMap<T extends { name: string | null }>(
     if (key) map.set(key, item);
   }
   return map;
-}
-
-// ── Static weapon & artifact data ───────────────────────────────────────────
-
-export interface WeaponData {
-  id: number;
-  name: string;
-  stars: number;
-  weaponType: string;
-  icon: string;
-  awakenIcon: string;
-  splashIcon: string;
-  /** Ascended base ATK at level 90. */
-  baseAtk: number;
-  /** Secondary stat at level 90, or null. */
-  subStat: {
-    propType: string;
-    label: string;
-    value: number;
-    isPercent: boolean;
-  } | null;
-  /** Passive refinements R1–R5 (empty when none). */
-  refinements: { rank: number; description: string }[];
-}
-
-export interface ArtifactSetData {
-  id: number;
-  name: string;
-  icon: string;
-  bonuses: { needCount: number; description: string }[];
-}
-
-/** Pre-built: GOOD weapon key → WeaponData */
-export const weaponByKey = buildGoodKeyMap(weaponsRaw as WeaponData[]);
-
-/** Pre-built: GOOD artifact set key → ArtifactSetData */
-export const artifactSetByKey = buildGoodKeyMap(artifactSetsRaw as ArtifactSetData[]);
-
-/**
- * Unknown keys are treated as not-4★ so we don't invent rarity for missing data.
- */
-export function isFourStarWeapon(weaponKey: string): boolean {
-  const weapon = weaponByKey.get(weaponKey);
-  return weapon ? weapon.stars <= 4 : false;
-}
-
-/**
- * Refinement rank to show in UI.
- * When the weapon icon is visible, use the sim's actual refinement.
- * When it isn't, 4★ weapons fall back to R0 (community baseline shorthand).
- */
-export function displayWeaponRefinement(
-  weaponKey: string,
-  refinement: number,
-  opts?: { weaponShown?: boolean },
-): number {
-  if (opts?.weaponShown) return refinement;
-  return isFourStarWeapon(weaponKey) ? 0 : refinement;
-}
-
-/**
- * Format constellation + refinement when the weapon itself isn't shown.
- * 4★ weapons use R0 in that case.
- */
-export function formatInvestmentCR(
-  cons: number,
-  refinement: number,
-  weaponKey: string,
-): string {
-  return `C${cons}R${displayWeaponRefinement(weaponKey, refinement)}`;
-}
-
-/** Weapon GOOD keys longest-first — avoids partial replacements in labels. */
-const WEAPON_KEYS_BY_LENGTH = [...weaponByKey.keys()].sort(
-  (a, b) => b.length - a.length,
-);
-
-/**
- * Replace GOOD weapon keys in an investment sim label with display names.
- * When `characterByKey` is provided, character GOOD keys are replaced too
- * (longest-first so compound keys win).
- */
-export function humanizeInvestmentLabel(
-  label: string,
-  characterByKey?: Map<string, string>,
-): string {
-  if (!label) return label;
-  let out = label;
-  for (const key of WEAPON_KEYS_BY_LENGTH) {
-    if (!out.includes(key)) continue;
-    const name = weaponByKey.get(key)?.name;
-    if (!name) continue;
-    out = out.split(key).join(name);
-  }
-  if (characterByKey?.size) {
-    const keys = [...characterByKey.keys()].sort((a, b) => b.length - a.length);
-    for (const key of keys) {
-      if (!out.includes(key)) continue;
-      const name = characterByKey.get(key);
-      if (!name) continue;
-      out = out.split(key).join(name);
-    }
-  }
-  return out;
 }
 
 /** Join character GOOD keys as display names (roster order). */

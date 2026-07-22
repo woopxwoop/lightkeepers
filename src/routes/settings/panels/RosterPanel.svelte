@@ -14,7 +14,8 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { CharacterOwned } from "$lib/definitions";
-  import { isNewCharacter, weaponTypeLabel } from "$lib/utils";
+  import { weaponTypeLabel } from "$lib/utils";
+  import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,

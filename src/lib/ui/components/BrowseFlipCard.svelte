@@ -2,7 +2,8 @@
   import type { Character, CharacterOwned } from "$lib/definitions";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import { elementBg } from "$lib/element-colors";
-  import { weaponTypeLabel, isNewCharacter } from "$lib/utils";
+  import { weaponTypeLabel } from "$lib/utils";
+  import { isNewCharacter } from "$lib/is-new-character";
 
   let {
     character,

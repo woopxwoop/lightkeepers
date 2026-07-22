@@ -10,7 +10,7 @@
  * Does **not** include artifact set bonuses or weapon passives (conditional).
  */
 import characterBasesRaw from "$lib/data/character-bases.json";
-import { weaponByKey, type WeaponData } from "$lib/utils";
+import { weaponByKey, type WeaponData } from "$lib/equipment-data";
 import type { CharacterBuild } from "$lib/types/investment";
 
 export interface CharacterBaseStats {
