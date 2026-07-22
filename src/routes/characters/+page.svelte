@@ -15,8 +15,8 @@
   let weaponFilter = $state<Set<string>>(new Set());
   let ownershipFilter = $state<OwnershipFilter>("all");
   let search = $state("");
-  let sortBy = $state<CharacterSortKey>("name");
-  let sortAsc = $state(true);
+  let sortBy = $state<CharacterSortKey>("release_date");
+  let sortAsc = $state(false);
 
   let visible = $derived(
     filterAndSortCharacters($charactersOwned, {

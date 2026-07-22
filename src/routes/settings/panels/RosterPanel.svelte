@@ -12,6 +12,7 @@
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
+  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { CharacterOwned } from "$lib/definitions";
   import { isNewCharacter, weaponTypeLabel } from "$lib/utils";
   import {
@@ -173,6 +174,13 @@
 
 {#if synced}
   <div class="roster-page">
+    <header class="panel-head">
+      <h2 class="section-title">Roster</h2>
+      <p class="lede">
+        Toggle ownership on each card. Select all applies to the current filter.
+      </p>
+    </header>
+
     <CharacterFilterBar
       bind:search
       bind:rarityFilter
@@ -220,6 +228,13 @@
               Cancel
             </Button>
             <Button variant="primary" onclick={saveCharacters}>Save</Button>
+            <div class="save-cue" aria-hidden="true">
+              <IconChevronDown
+                size={22}
+                strokeWidth={2.5}
+                class="save-cue-icon"
+              />
+            </div>
           </div>
         {/if}
         {#if rosterError}
@@ -273,7 +288,31 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    padding: var(--space-4);
     padding-bottom: 6rem;
+  }
+
+  .panel-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 42rem;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .lede {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--foreground-mid);
   }
 
   .roster-actions {
@@ -393,7 +432,42 @@
 
   .save-actions {
     display: flex;
+    align-items: center;
     gap: var(--space-2);
+  }
+
+  .save-cue {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.15rem;
+    color: var(--accent-1);
+    animation: save-cue-nudge 1.1s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .save-cue :global(.save-cue-icon) {
+    transform: rotate(90deg);
+  }
+
+  @keyframes save-cue-nudge {
+    0%,
+    100% {
+      transform: translateX(0.3rem);
+      opacity: 0.75;
+    }
+    50% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .save-cue {
+      animation: none;
+      transform: none;
+      opacity: 1;
+    }
   }
 
   .save-error {

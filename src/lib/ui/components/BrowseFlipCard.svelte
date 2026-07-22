@@ -48,6 +48,7 @@
         <span class="dim absolute inset-0 z-[5]"></span>
       {/if}
       <span class="reduced-cue" aria-hidden="true">
+        <span class="back-name">{character.name}</span>
         <span class="view-label">View details</span>
       </span>
     </span>
@@ -60,6 +61,7 @@
         draggable="false"
       />
       <span class="back-prompt">
+        <span class="back-name">{character.name}</span>
         <span class="view-label">View details</span>
       </span>
     </span>
@@ -170,11 +172,13 @@
 
   .meta-name,
   .meta-sub,
+  .back-name,
   .view-label {
     display: block;
   }
 
-  .meta-name {
+  .meta-name,
+  .back-name {
     font-size: 0.7rem;
     font-weight: 500;
     line-height: 1.15;
@@ -182,6 +186,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .back-name {
+    max-width: 100%;
+    text-align: center;
+    padding: 0 0.25rem;
   }
 
   .meta-sub {
@@ -235,7 +245,6 @@
     .flip-card:hover,
     .flip-card:focus-visible {
       z-index: 5;
-      box-shadow: 0 0 28px 4px color-mix(in srgb, var(--shine) 28%, transparent);
     }
   }
 

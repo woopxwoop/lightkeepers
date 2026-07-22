@@ -13,9 +13,9 @@
   const charactersPath = resolve("/characters");
   const settingsPath = resolve("/settings");
   const settingsLinks = [
-    { label: "Roster", path: resolve("/settings/roster") },
-    { label: "Account", path: resolve("/settings/account") },
-    { label: "Display", path: resolve("/settings/display") },
+    { label: "Roster", path: resolve("/settings") },
+    { label: "Account", path: `${resolve("/settings")}?tab=account` },
+    { label: "Display", path: `${resolve("/settings")}?tab=display` },
   ] as const;
 
   const onSettingsPage = $derived(
@@ -281,10 +281,13 @@
           onfocusout={onSettingsLeave}
         >
           {#each settingsLinks as link}
+            {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
+            {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
+            {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
             <a
               href={link.path}
               class="nav-sub-link"
-              aria-current={page.url.pathname === link.path
+              aria-current={onSettingsPage && activeTab === linkTab
                 ? "page"
                 : undefined}>{link.label}</a
             >
@@ -294,14 +297,8 @@
 
       {#if underlineReady}
         <span
-          class="absolute bottom-0 h-[1.5px] pointer-events-none"
-          style="
-            left: {underlineLeft}px;
-            width: {underlineWidth}px;
-            background: var(--accent-1);
-            transition: left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                        width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-          "
+          class="nav-underline"
+          style="left: {underlineLeft}px; width: {underlineWidth}px;"
         ></span>
       {/if}
     </div>
@@ -396,10 +393,13 @@
       </button>
       <div class="drawer-sub-links" class:drawer-sub-links-open={settingsDrawerExpanded} inert={!settingsDrawerExpanded}>
         {#each settingsLinks as link}
+          {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
+          {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
+          {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
           <a
             href={link.path}
             class="drawer-link drawer-sub-link"
-            aria-current={page.url.pathname === link.path
+            aria-current={onSettingsPage && activeTab === linkTab
               ? "page"
               : undefined}
           >
@@ -422,8 +422,10 @@
     pointer-events: none;
     transition:
       background-color 0.4s ease,
-      height 0.25s ease;
+      height 0.25s ease,
+      border-color 0.4s ease;
     height: 4rem;
+    border-bottom: var(--border-width) solid transparent;
   }
 
   .nav-row {
@@ -440,17 +442,20 @@
   }
 
   .opaque-bg {
-    background: color-mix(in srgb, var(--background-color) 80%, black 19%);
+    background: color-mix(in srgb, var(--background-color) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
   }
 
   .nav-logo {
     font-family: var(--font-brand);
-    font-size: 1.05rem;
+    font-size: var(--text-lg);
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: var(--tracking-brand);
     color: var(--foreground-color);
     pointer-events: auto;
-    transition: color 0.15s;
+    transition: color var(--control-duration) var(--control-ease);
+    text-decoration: none;
   }
 
   /* Designed mark is dark-on-black — invert so it reads on the nav. */
@@ -470,14 +475,13 @@
     padding-bottom: 2px;
     border-bottom: 1.5px solid transparent;
     font-family: var(--font-display);
-    font-size: 0.85rem;
+    font-size: var(--text-md);
     font-weight: 500;
     letter-spacing: 0.01em;
     line-height: 1.25;
     color: var(--foreground-mid);
-    transition:
-      color 0.15s,
-      border-color 0.15s;
+    text-decoration: none;
+    transition: color var(--control-duration) var(--control-ease);
     pointer-events: auto;
   }
 
@@ -485,12 +489,21 @@
     pointer-events: auto;
   }
 
-  .nav-link:hover {
-    color: var(--accent-1);
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
+    color: var(--foreground-color);
   }
 
-  .nav-link[aria-current="page"] {
-    color: var(--accent-1);
+  .nav-underline {
+    position: absolute;
+    bottom: 0;
+    height: 1.5px;
+    pointer-events: none;
+    /* Gold on page-base nav — intentional lamp accent, not a mid-surface wash */
+    background: var(--accent-1);
+    transition:
+      left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   /* ── Settings sub-row ── */
@@ -509,9 +522,9 @@
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding-top: 1rem;
-    padding-bottom: 0.5rem;
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-2);
     white-space: nowrap;
     max-height: 0;
     opacity: 0;
@@ -530,18 +543,19 @@
   }
 
   .nav-sub-link {
-    font-size: 0.85rem;
+    font-size: var(--text-md);
     letter-spacing: 0.03em;
     font-family: var(--font-display);
     font-weight: 500;
     color: var(--foreground-mid);
-    transition: color 0.15s;
+    text-decoration: none;
+    transition: color var(--control-duration) var(--control-ease);
     pointer-events: auto;
   }
 
   .nav-sub-link:hover,
   .nav-sub-link[aria-current="page"] {
-    color: var(--accent-1);
+    color: var(--foreground-color);
   }
 
   /* ── Hamburger ── */
@@ -585,21 +599,22 @@
     width: min(240px, 80vw);
     background: color-mix(in srgb, var(--background-color) 97%, transparent);
     backdrop-filter: blur(16px);
-    border-left: 1px solid color-mix(in srgb, var(--accent-1) 25%, transparent);
+    border-left: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
   .drawer-link {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     letter-spacing: 0.06em;
     font-family: var(--font-display);
     font-weight: 500;
     color: var(--foreground-mid);
-    transition: color 0.15s;
+    text-decoration: none;
+    transition: color var(--control-duration) var(--control-ease);
   }
 
   .drawer-link:hover,
   .drawer-link[aria-current="page"] {
-    color: var(--accent-1);
+    color: var(--foreground-color);
   }
 
   /* ── Drawer settings collapsible ── */
@@ -642,7 +657,8 @@
   }
 
   .drawer-sub-link {
-    font-size: 1rem;
+    font-size: var(--text-base);
     margin-top: 0.6rem;
   }
 </style>
+
