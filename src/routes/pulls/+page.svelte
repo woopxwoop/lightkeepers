@@ -6,6 +6,7 @@
     nearMissPairTeams,
     nearMissStygianLoaded,
     nearMissPairLoaded,
+    ensureNearMissTeams,
   } from "$lib/stores";
   import {
     computePullSuggestions,
@@ -73,6 +74,13 @@
       console.error("pull suggestion ranking failed:", error);
     }
   }
+
+  // Fetch near-miss on first visit (not from global bootstrap).
+  $effect(() => {
+    if (ownedCount === 0) return;
+    if (nearMissReady) return;
+    ensureNearMissTeams($charactersOwned).catch(console.error);
+  });
 
   // Auto-run once near-miss data arrives. The old "Calculate" button was mostly
   // waiting on that fetch — ranking itself is local and fast.

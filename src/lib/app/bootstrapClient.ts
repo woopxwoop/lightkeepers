@@ -4,7 +4,6 @@ import {
   charactersHydrated,
   initHasSavedRoster,
   setVersionNumbers,
-  writeNearMissTeams,
   writeTeamsOwned,
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/is-new-character";
@@ -115,8 +114,8 @@ export function seedClientStores(data: LayoutHydration): void {
 }
 
 /**
- * Seeds layout stores, then fetches owned teams + roster (and warms near-miss /
- * investment) in the background.
+ * Seeds layout stores, then fetches owned teams + roster in the background.
+ * Near-miss is loaded lazily on /pulls; investment warms for /teams.
  */
 export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);
@@ -135,8 +134,6 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
     } catch {}
     writeTeamsOwned(dbRoster).catch(console.error);
   }
-
-  writeNearMissTeams(dbRoster ?? get(charactersOwned)).catch(console.error);
 
   // Warm investment.json for /teams (shared client cache; non-blocking)
   prefetchInvestment();

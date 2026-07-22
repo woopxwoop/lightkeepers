@@ -91,6 +91,8 @@
     bind:this={imgEl}
     src={imgSrc}
     alt={character?.name ?? "Character"}
+    loading="lazy"
+    decoding="async"
     style={settled ? "" : "transition: none"}
     onerror={() => {
       if (useTcg && !tcgFailed) {

@@ -3,7 +3,7 @@
     charactersOwned,
     charactersHydrated,
     setHasSavedRoster,
-    writeNearMissTeams,
+    invalidateNearMissTeams,
     writeTeamsOwned,
   } from "$lib/stores";
   import { authClient } from "$lib/auth-client";
@@ -97,7 +97,7 @@
       }
 
       await writeTeamsOwned(tempCharactersOwned);
-      await writeNearMissTeams(tempCharactersOwned);
+      invalidateNearMissTeams();
 
       if ($session.data) {
         const res = await fetch("/api/roster", {

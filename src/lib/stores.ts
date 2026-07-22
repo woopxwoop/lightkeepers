@@ -288,6 +288,19 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
 }
 
 /**
+ * Clears near-miss stores so the next /pulls visit refetches.
+ * Call after roster changes instead of eagerly hitting /api/nearmiss.
+ */
+export function invalidateNearMissTeams(): void {
+  nearMissRequestId++;
+  nearMissInFlight = null;
+  nearMissStygianLoaded.set(false);
+  nearMissPairLoaded.set(false);
+  nearMissStygianTeams.set([]);
+  nearMissPairTeams.set([]);
+}
+
+/**
  * Fetches near-miss data for the Pulls page.
  * Combines single + pair into one server call.
  */
@@ -323,4 +336,21 @@ export async function writeNearMissTeams(
       nearMissPairLoaded.set(true);
     }
   }
+}
+
+/**
+ * Load near-miss only when needed (Pulls page). No-ops if already loaded;
+ * coalesces concurrent callers onto one in-flight request.
+ */
+let nearMissInFlight: Promise<void> | null = null;
+
+export async function ensureNearMissTeams(
+  owned: CharacterOwned[],
+): Promise<void> {
+  if (get(nearMissStygianLoaded) && get(nearMissPairLoaded)) return;
+  if (nearMissInFlight) return nearMissInFlight;
+  nearMissInFlight = writeNearMissTeams(owned).finally(() => {
+    nearMissInFlight = null;
+  });
+  return nearMissInFlight;
 }
