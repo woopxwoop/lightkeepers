@@ -19,14 +19,13 @@
   } = $props();
 </script>
 
-<div class="segmented {className}" role="radiogroup" aria-label={ariaLabel}>
+<div class="segmented {className}" role="group" aria-label={ariaLabel}>
   {#each options as option (option.value)}
     <button
       type="button"
-      role="radio"
       class="segment"
       class:segment-active={value === option.value}
-      aria-checked={value === option.value}
+      aria-pressed={value === option.value}
       onpointerdown={(event) =>
         handlePointerAction(event, () => (value = option.value))}
       onclick={(event) =>

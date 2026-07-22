@@ -45,17 +45,17 @@ export const artifactSetByKey = buildGoodKeyMap(
 );
 
 /**
- * Unknown keys are treated as not-4★ so we don't invent rarity for missing data.
+ * True only for known 5★ weapons. Missing keys are treated as not-5★.
  */
-export function isFourStarWeapon(weaponKey: string): boolean {
+export function isFiveStarWeapon(weaponKey: string): boolean {
   const weapon = weaponByKey.get(weaponKey);
-  return weapon ? weapon.stars <= 4 : false;
+  return weapon?.stars === 5;
 }
 
 /**
  * Refinement rank to show in UI.
  * When the weapon icon is visible, use the sim's actual refinement.
- * When it isn't, 4★ weapons fall back to R0 (community baseline shorthand).
+ * When it isn't, any non-5★ weapon falls back to R0 (community baseline).
  */
 export function displayWeaponRefinement(
   weaponKey: string,
@@ -63,12 +63,12 @@ export function displayWeaponRefinement(
   opts?: { weaponShown?: boolean },
 ): number {
   if (opts?.weaponShown) return refinement;
-  return isFourStarWeapon(weaponKey) ? 0 : refinement;
+  return isFiveStarWeapon(weaponKey) ? refinement : 0;
 }
 
 /**
  * Format constellation + refinement when the weapon itself isn't shown.
- * 4★ weapons use R0 in that case.
+ * Non-5★ weapons use R0 in that case.
  */
 export function formatInvestmentCR(
   cons: number,

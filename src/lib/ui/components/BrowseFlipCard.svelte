@@ -237,6 +237,17 @@
     }
   }
 
+  /* Coarse / no-hover: keyboard focus still needs a visible card cue */
+  @media (hover: none), (pointer: coarse) {
+    .flip-card:focus-visible .flip-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flip-card:focus-visible {
+      z-index: 5;
+    }
+  }
+
   /* Reduced motion: overlay cue instead of flip */
   @media (prefers-reduced-motion: reduce) {
     .flip-inner {

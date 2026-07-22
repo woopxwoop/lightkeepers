@@ -30,6 +30,39 @@
   let count = $derived(Math.max(options.length, 1));
   let left = $derived(`calc((100% / ${count}) * ${activeIndex})`);
   let width = $derived(`calc(100% / ${count})`);
+
+  function selectIndex(index: number) {
+    const next = options[index];
+    if (next) value = next.value;
+  }
+
+  function onTabKeydown(event: KeyboardEvent, index: number) {
+    let next = index;
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        next = (index + 1) % options.length;
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        next = (index - 1 + options.length) % options.length;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = options.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    selectIndex(next);
+    const buttons = (event.currentTarget as HTMLElement)
+      .parentElement
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    buttons?.[next]?.focus();
+  }
 </script>
 
 <div
@@ -46,15 +79,18 @@
     class="indicator-bar absolute bottom-0 h-[1.5px] pointer-events-none"
     style="left: {left}; width: {width}; background: var(--tab-accent);"
   ></span>
-  {#each options as option (option.value)}
+  {#each options as option, index (option.value)}
     <button
       type="button"
       role="tab"
+      id="tab-{option.value}"
       aria-selected={value === option.value}
+      tabindex={value === option.value ? 0 : -1}
       onpointerdown={(event) =>
         handlePointerAction(event, () => (value = option.value))}
       onclick={(event) =>
         handleKeyboardClick(event, () => (value = option.value))}
+      onkeydown={(event) => onTabKeydown(event, index)}
       class="tab relative z-1 flex-1 py-2.5 text-xs font-medium pointer-events-auto touch-manipulation"
       class:tab-active={value === option.value}
     >

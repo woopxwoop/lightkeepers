@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import type { HTMLAttributes } from "svelte/elements";
 
   let {
     variant = "default",
@@ -13,8 +14,10 @@
     flush?: boolean;
     class?: string;
     children?: Snippet;
-    [key: string]: unknown;
-  } = $props();
+  } & Omit<
+    HTMLAttributes<HTMLDivElement>,
+    "children" | "class"
+  > = $props();
 </script>
 
 <div

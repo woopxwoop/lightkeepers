@@ -146,7 +146,6 @@
     /* Top of frame = top of card art (also when parents force object-fit: cover). */
     transform-origin: 50% 0%;
     transform: scale(calc(1.2 * var(--czoom)));
-    object-position: top center;
   }
 
   /* ── Enka headshot (square) ──────────────────────────────────── */

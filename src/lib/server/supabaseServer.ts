@@ -32,9 +32,9 @@ function getServerDb(): SupabaseClient<Database> {
 export const serverDb: SupabaseClient<Database> = new Proxy(
   {} as SupabaseClient<Database>,
   {
-    get(_target, prop, receiver) {
+    get(_target, prop, _receiver) {
       const client = getServerDb();
-      const value = Reflect.get(client, prop, receiver);
+      const value = Reflect.get(client, prop, client);
       return typeof value === "function" ? value.bind(client) : value;
     },
   },

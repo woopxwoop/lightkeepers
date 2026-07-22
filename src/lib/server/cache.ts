@@ -85,7 +85,7 @@ export class LRUCache<T> {
         const value = await fn();
         this.set(key, value);
         if (rKey) {
-          await valkeySetJson(rKey, value, this.ttlMs);
+          void valkeySetJson(rKey, value, this.ttlMs);
         }
         return value;
       } finally {

@@ -32,7 +32,16 @@ export async function getValkey(): Promise<RedisClientType | null> {
 
   connecting = (async () => {
     try {
-      const c = createClient({ url });
+      const c = createClient({
+        url,
+        socket: {
+          connectTimeout: 2_000,
+          reconnectStrategy: (retries) => {
+            if (retries >= 3) return false;
+            return Math.min(retries * 200, 1_000);
+          },
+        },
+      });
       c.on("error", (err) => {
         console.error("[valkey] client error:", err);
       });

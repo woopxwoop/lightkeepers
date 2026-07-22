@@ -153,7 +153,8 @@
   let closedByNavigation = false;
 
   $effect(() => {
-    page.url.pathname;
+    // Include search so Settings ?tab= changes close the mobile drawer too.
+    page.url.href;
     untrack(() => {
       if (mobileOpen) {
         closedByNavigation = true;

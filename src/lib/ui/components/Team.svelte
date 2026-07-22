@@ -1,6 +1,6 @@
 <script lang="ts">
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import { animationsEnabled, displayPreferences } from "$lib/stores";
+  import { animationsEnabled, isIconCompact } from "$lib/stores";
   import type { AbyssTeam, StygianTeam } from "$lib/definitions";
   import type { Tables } from "$lib/types/database.types";
 
@@ -17,7 +17,6 @@
   } = $props();
 
   let missingSet = $derived(new Set(missingCharacters));
-  let compactIcons = $derived($displayPreferences.iconStyle === "enka");
 </script>
 
 <div class="team-grid" style="perspective: 600px;">
@@ -25,7 +24,7 @@
     {@const isMissing = missingSet.has(member)}
     <div
       class="team-slot"
-      class:team-slot-compact={compactIcons}
+      class:team-slot-compact={$isIconCompact}
       style={$animationsEnabled
         ? `animation: flip-in 0.35s ease-out both; animation-delay: ${idx * 60}ms;`
         : undefined}
