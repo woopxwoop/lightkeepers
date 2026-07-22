@@ -48,13 +48,6 @@
 </script>
 
 {#snippet body()}
-  {#if shine !== "transparent"}
-    <div
-      class="stripe absolute top-0 left-0 right-0 z-10 pointer-events-none"
-      style="background: {shine};"
-    ></div>
-  {/if}
-
   {@render badge?.()}
 
   <div class="portrait">
@@ -155,11 +148,6 @@
 
   .char-card:hover::after {
     opacity: 0.3;
-  }
-
-  .stripe {
-    height: 2px;
-    opacity: 0.7;
   }
 
   .portrait {

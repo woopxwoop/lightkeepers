@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Character, CharacterOwned } from "$lib/definitions";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import { elementBg, elementColor } from "$lib/element-colors";
+  import { elementBg } from "$lib/element-colors";
   import { weaponTypeLabel, isNewCharacter } from "$lib/utils";
 
   let {
@@ -14,24 +14,17 @@
     dimmed?: boolean;
   } = $props();
 
-  let shine = $derived(elementColor(character?.element, "transparent"));
   let bg = $derived(elementBg(character?.element));
 </script>
 
 <a
   {href}
   class="flip-card no-underline"
-  style="--shine: {shine}; --card-bg: {bg};"
+  style="--card-bg: {bg};"
   title="View details — {character.name ?? character.name_id}"
 >
   <span class="flip-inner">
     <span class="face face-front">
-      {#if shine !== "transparent"}
-        <span
-          class="stripe absolute top-0 left-0 right-0 z-10 pointer-events-none"
-          style="background: {shine};"
-        ></span>
-      {/if}
       {#if isNewCharacter(character.released_at)}
         <span class="new-badge absolute top-1.5 right-1.5 z-20">NEW</span>
       {/if}
@@ -140,11 +133,6 @@
       rgba(2, 6, 11, 0.45) 70%,
       transparent 100%
     );
-  }
-
-  .stripe {
-    height: 2px;
-    opacity: 0.7;
   }
 
   .portrait {

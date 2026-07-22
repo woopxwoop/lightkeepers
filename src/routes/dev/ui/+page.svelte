@@ -422,7 +422,7 @@
       <Surface>
         <p class="surface-label">CharacterPortraitCard</p>
         <p class="token-meta mb-2">
-          Portrait tile with element stripe, shine hover, optional dim / tint /
+          Portrait tile with shine hover, optional dim / tint /
           meta overlay. Link vs static.
         </p>
         {#if sampleChars.length}
