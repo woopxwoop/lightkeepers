@@ -7,6 +7,8 @@ type CacheEntry<T> = {
 
 export class LRUCache<T> {
   private map = new Map<string, CacheEntry<T>>();
+  /** In-flight computations keyed by cache key — collapses concurrent misses. */
+  private inflight = new Map<string, Promise<T>>();
 
   constructor(
     private readonly maxSize: number,
@@ -35,13 +37,36 @@ export class LRUCache<T> {
     this.map.set(key, { value, expiresAt: Date.now() + this.ttlMs });
   }
 
-  /** Convenience: return cached value or compute + store it. */
+  /**
+   * Return cached value or compute + store it.
+   * Concurrent misses for the same key share one in-flight Promise (singleflight)
+   * so TTL expiry doesn't stampede Supabase with N identical RPCs.
+   *
+   * Note: this is per-process only. With `pm2 -i max`, each worker still has its
+   * own map — shared cache across workers needs Upstash Redis (TODO).
+   */
   async getOrSet(key: string, fn: () => Promise<T>): Promise<T> {
     const cached = this.get(key);
     if (cached !== undefined) return cached;
-    const value = await fn();
-    this.set(key, value);
-    return value;
+
+    const existing = this.inflight.get(key);
+    if (existing) return existing;
+
+    const pending = (async () => {
+      try {
+        // Re-check after awaiting the queue — another waiter may have filled it.
+        const again = this.get(key);
+        if (again !== undefined) return again;
+        const value = await fn();
+        this.set(key, value);
+        return value;
+      } finally {
+        this.inflight.delete(key);
+      }
+    })();
+
+    this.inflight.set(key, pending);
+    return pending;
   }
 
   invalidate(key: string): void {
@@ -56,6 +81,7 @@ export class LRUCache<T> {
     return this.map.size;
   }
 }
+
 
 // ── Rate Limiter ───────────────────────────────────────────────────────────
 
@@ -108,6 +134,12 @@ export class RateLimiter {
 
 // ── Shared singletons ──────────────────────────────────────────────────────
 // These live in server memory for the lifetime of the Node process.
+//
+// TODO(upstash): With `pm2 -i max`, each worker has its own LRU. Wire
+// rpcCache + charactersCache (+ optional static) to Upstash Redis REST
+// (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN) so POST /api/teams and
+// /api/nearmiss share one cache across workers. Keep getOrSet singleflight
+// as the local stampede guard on top.
 
 import type { Tables } from "$lib/types/database.types";
 
