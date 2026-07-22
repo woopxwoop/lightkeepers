@@ -4,7 +4,7 @@
     charactersHydrated,
     setHasSavedRoster,
     invalidateNearMissTeams,
-    writeTeamsOwned,
+    invalidateTeamsOwned,
   } from "$lib/stores";
   import { authClient } from "$lib/auth-client";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
@@ -96,7 +96,7 @@
         console.warn("localStorage unavailable — saving to memory only");
       }
 
-      await writeTeamsOwned(tempCharactersOwned);
+      invalidateTeamsOwned();
       invalidateNearMissTeams();
 
       if ($session.data) {

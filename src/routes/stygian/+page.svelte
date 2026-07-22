@@ -1,8 +1,10 @@
 <script lang="ts">
   import {
     teamsOwnedStygian,
+    teamsOwnedLoaded,
     allTeamsStygian,
     charactersOwned,
+    ensureTeamsOwned,
   } from "$lib/stores";
   import { stygianSlotLabel } from "$lib/slotLabels";
   import { solveStygianWithFallback } from "$lib/solver";
@@ -38,6 +40,10 @@
     allTeamsStygian.set(data.allTeamsStygian as StygianTeam[]);
   });
 
+  $effect(() => {
+    ensureTeamsOwned($charactersOwned).catch(console.error);
+  });
+
   let selectedIndex = $state(0);
 
   let ownedNames = $derived(
@@ -69,7 +75,7 @@
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
-    $teamsOwnedStygian.length === 0 && $allTeamsStygian.length === 0,
+    !$teamsOwnedLoaded && $allTeamsStygian.length === 0,
   );
 
   let updatedLabel = $derived.by(() => {

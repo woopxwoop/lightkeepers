@@ -4,10 +4,10 @@ import {
   charactersHydrated,
   initHasSavedRoster,
   setVersionNumbers,
-  writeTeamsOwned,
+  invalidateTeamsOwned,
+  invalidateNearMissTeams,
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/is-new-character";
-import { get } from "svelte/store";
 import { prefetchInvestment } from "$lib/app/investment";
 
 type LayoutHydration = {
@@ -114,25 +114,22 @@ export function seedClientStores(data: LayoutHydration): void {
 }
 
 /**
- * Seeds layout stores, then fetches owned teams + roster in the background.
- * Near-miss is loaded lazily on /pulls; investment warms for /teams.
+ * Seeds layout stores, syncs DB roster if logged in.
+ * Owned teams + near-miss load lazily on Abyss / Stygian / Pulls.
  */
 export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);
 
-  // Fetch teams and DB roster in parallel
-  const [, dbRoster] = await Promise.all([
-    writeTeamsOwned(get(charactersOwned)),
-    loadDbRoster(data.characters),
-  ]);
+  const dbRoster = await loadDbRoster(data.characters);
 
-  // DB takes precedence — update store, sync localStorage, re-fetch teams
+  // DB takes precedence — update store, sync localStorage, invalidate team caches
   if (dbRoster) {
     charactersOwned.set(dbRoster);
     try {
       localStorage.setItem("charactersOwned", JSON.stringify(dbRoster));
     } catch {}
-    writeTeamsOwned(dbRoster).catch(console.error);
+    invalidateTeamsOwned();
+    invalidateNearMissTeams();
   }
 
   // Warm investment.json for /teams (shared client cache; non-blocking)

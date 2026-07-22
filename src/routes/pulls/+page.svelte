@@ -2,11 +2,13 @@
   import {
     charactersOwned,
     teamsOwnedStygian,
+    teamsOwnedLoaded,
     nearMissStygianTeams,
     nearMissPairTeams,
     nearMissStygianLoaded,
     nearMissPairLoaded,
     ensureNearMissTeams,
+    ensureTeamsOwned,
   } from "$lib/stores";
   import {
     computePullSuggestions,
@@ -24,8 +26,7 @@
   let { data } = $props();
   let mapping = $derived(data.mapping);
 
-  // "waiting" = /api/nearmiss still in flight (the old button's real gate).
-  // Local ranking is cheap; the expensive part was always the fetch.
+  // "waiting" = owned teams and/or near-miss still in flight.
   type PageState = "waiting" | "done" | "empty" | "error";
   let pageState: PageState = $state("waiting");
   let suggestions: PullSuggestion[] = $state([]);
@@ -53,6 +54,8 @@
     $nearMissStygianLoaded && $nearMissPairLoaded,
   );
 
+  let pullsDataReady = $derived(nearMissReady && $teamsOwnedLoaded);
+
   function rankSuggestions() {
     try {
       const singles = computePullSuggestions(
@@ -75,15 +78,15 @@
     }
   }
 
-  // Fetch near-miss on first visit (not from global bootstrap).
+  // Lazy: owned teams + near-miss (not from global bootstrap).
   $effect(() => {
     if (ownedCount === 0) return;
-    if (nearMissReady) return;
-    ensureNearMissTeams($charactersOwned).catch(console.error);
+    ensureTeamsOwned($charactersOwned).catch(console.error);
+    if (!nearMissReady) {
+      ensureNearMissTeams($charactersOwned).catch(console.error);
+    }
   });
 
-  // Auto-run once near-miss data arrives. The old "Calculate" button was mostly
-  // waiting on that fetch — ranking itself is local and fast.
   $effect(() => {
     if (ownedCount === 0) {
       suggestions = [];
@@ -92,7 +95,7 @@
       return;
     }
 
-    if (!nearMissReady) {
+    if (!pullsDataReady) {
       pageState = "waiting";
       return;
     }

@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { teamsOwned, allTeamsAbyss, charactersOwned } from "$lib/stores";
+  import {
+    teamsOwned,
+    teamsOwnedLoaded,
+    allTeamsAbyss,
+    charactersOwned,
+    ensureTeamsOwned,
+  } from "$lib/stores";
   import { solveAbyssWithFallback } from "$lib/solver";
   import Team from "$lib/ui/components/Team.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
@@ -22,6 +28,11 @@
   // Page load owns the full meta team list (not root layout).
   $effect(() => {
     allTeamsAbyss.set(data.allTeamsAbyss as AbyssTeam[]);
+  });
+
+  // Owned subset is lazy — not fetched on every app bootstrap.
+  $effect(() => {
+    ensureTeamsOwned($charactersOwned).catch(console.error);
   });
 
   const halfLabel: Record<Slot, string> = {
@@ -61,7 +72,7 @@
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
-    $teamsOwned.length === 0 && $allTeamsAbyss.length === 0,
+    !$teamsOwnedLoaded && $allTeamsAbyss.length === 0,
   );
 
   let updatedLabel = $derived.by(() => {

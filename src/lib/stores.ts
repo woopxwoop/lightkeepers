@@ -246,6 +246,9 @@ export const teamsOwnedStygianBottom = derived<
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
 export const allTeamsStygian = writable<StygianTeam[]>([]);
 
+/** True after a successful /api/teams fetch (or empty owned roster short-circuit). */
+export const teamsOwnedLoaded = writable(false);
+
 // ── Near-miss stores ───────────────────────────────────────────────────────
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
 export const nearMissStygianLoaded = writable(false);
@@ -256,10 +259,20 @@ export const nearMissPairLoaded = writable(false);
 // Discard responses from superseded requests (fast roster changes).
 let teamsRequestId = 0;
 let nearMissRequestId = 0;
-
-// ── API helpers ────────────────────────────────────────────────────────────
+let teamsInFlight: Promise<void> | null = null;
 
 // ── Write functions ────────────────────────────────────────────────────────
+
+/**
+ * Clears owned-team stores so the next Abyss / Stygian / Pulls visit refetches.
+ */
+export function invalidateTeamsOwned(): void {
+  teamsRequestId++;
+  teamsInFlight = null;
+  teamsOwnedLoaded.set(false);
+  teamsOwned.set([]);
+  teamsOwnedStygian.set([]);
+}
 
 /**
  * Fetches both abyss and stygian owned-team lists in a single server round-trip.
@@ -268,6 +281,8 @@ let nearMissRequestId = 0;
 export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   const id = ++teamsRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
+
+  teamsOwnedLoaded.set(false);
 
   try {
     const { abyssTeams, stygianTeams } = await postJson<{
@@ -284,7 +299,26 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     teamsOwnedStygian.set(stygianTeams);
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
+  } finally {
+    if (id === teamsRequestId) {
+      teamsOwnedLoaded.set(true);
+    }
   }
+}
+
+/**
+ * Load owned teams only when needed (Abyss / Stygian / Pulls).
+ * No-ops if already loaded; coalesces concurrent callers.
+ */
+export async function ensureTeamsOwned(
+  owned: CharacterOwned[],
+): Promise<void> {
+  if (get(teamsOwnedLoaded)) return;
+  if (teamsInFlight) return teamsInFlight;
+  teamsInFlight = writeTeamsOwned(owned).finally(() => {
+    teamsInFlight = null;
+  });
+  return teamsInFlight;
 }
 
 /**
