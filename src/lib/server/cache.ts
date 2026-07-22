@@ -1,3 +1,5 @@
+import { valkeyGetJson, valkeySetJson } from "$lib/server/valkey";
+
 // ── LRU Cache ──────────────────────────────────────────────────────────────
 
 type CacheEntry<T> = {
@@ -5,15 +7,32 @@ type CacheEntry<T> = {
   expiresAt: number;
 };
 
+export type LRUCacheOptions = {
+  /**
+   * When set, getOrSet also reads/writes Valkey under `lk:{namespace}:…`
+   * so pm2 workers share one cache. Falls back to memory-only if VALKEY_URL
+   * is unset or Valkey is unreachable.
+   */
+  redisNamespace?: string;
+};
+
 export class LRUCache<T> {
   private map = new Map<string, CacheEntry<T>>();
   /** In-flight computations keyed by cache key — collapses concurrent misses. */
   private inflight = new Map<string, Promise<T>>();
+  private readonly redisNamespace: string | undefined;
 
   constructor(
     private readonly maxSize: number,
     private readonly ttlMs: number,
-  ) {}
+    options?: LRUCacheOptions,
+  ) {
+    this.redisNamespace = options?.redisNamespace;
+  }
+
+  private redisKey(key: string): string | null {
+    return this.redisNamespace ? `lk:${this.redisNamespace}:${key}` : null;
+  }
 
   get(key: string): T | undefined {
     const entry = this.map.get(key);
@@ -39,11 +58,8 @@ export class LRUCache<T> {
 
   /**
    * Return cached value or compute + store it.
-   * Concurrent misses for the same key share one in-flight Promise (singleflight)
-   * so TTL expiry doesn't stampede Supabase with N identical RPCs.
-   *
-   * Note: this is per-process only. With `pm2 -i max`, each worker still has its
-   * own map — shared cache across workers needs Upstash Redis (TODO).
+   * Concurrent misses for the same key share one in-flight Promise (singleflight).
+   * With `redisNamespace`, also checks/writes Valkey so workers share state.
    */
   async getOrSet(key: string, fn: () => Promise<T>): Promise<T> {
     const cached = this.get(key);
@@ -54,11 +70,23 @@ export class LRUCache<T> {
 
     const pending = (async () => {
       try {
-        // Re-check after awaiting the queue — another waiter may have filled it.
         const again = this.get(key);
         if (again !== undefined) return again;
+
+        const rKey = this.redisKey(key);
+        if (rKey) {
+          const remote = await valkeyGetJson<T>(rKey);
+          if (remote !== undefined) {
+            this.set(key, remote);
+            return remote;
+          }
+        }
+
         const value = await fn();
         this.set(key, value);
+        if (rKey) {
+          await valkeySetJson(rKey, value, this.ttlMs);
+        }
         return value;
       } finally {
         this.inflight.delete(key);
@@ -81,7 +109,6 @@ export class LRUCache<T> {
     return this.map.size;
   }
 }
-
 
 // ── Rate Limiter ───────────────────────────────────────────────────────────
 
@@ -133,13 +160,8 @@ export class RateLimiter {
 }
 
 // ── Shared singletons ──────────────────────────────────────────────────────
-// These live in server memory for the lifetime of the Node process.
-//
-// TODO(upstash): With `pm2 -i max`, each worker has its own LRU. Wire
-// rpcCache + charactersCache (+ optional static) to Upstash Redis REST
-// (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN) so POST /api/teams and
-// /api/nearmiss share one cache across workers. Keep getOrSet singleflight
-// as the local stampede guard on top.
+// Memory L1 per process + Valkey L2 when VALKEY_URL / REDIS_URL is set
+// (see docker-compose.yml). Keep pm2 -i max; workers share Valkey.
 
 import type { Tables } from "$lib/types/database.types";
 
@@ -151,18 +173,23 @@ const TTL_15_MIN = 15 * 60 * 1000;
  * Cache for the characters table — changes only on patch day.
  * Single entry; keyed by the constant string "characters".
  */
-export const charactersCache = new LRUCache<Character[]>(1, TTL_15_MIN);
+export const charactersCache = new LRUCache<Character[]>(1, TTL_15_MIN, {
+  redisNamespace: "characters",
+});
 
 /**
  * Cache for per-user Supabase RPC results.
  * Key: `${rpcName}:${versionNumber}:${sortedCharNames}`
- * Holds up to 2 000 distinct character-list combinations.
+ * Holds up to 2 000 distinct character-list combinations in L1.
  */
-export const rpcCache = new LRUCache<unknown>(2_000, TTL_15_MIN);
+export const rpcCache = new LRUCache<unknown>(2_000, TTL_15_MIN, {
+  redisNamespace: "rpc",
+});
 
 /**
  * Rate limiter for user-facing API routes.
  * 60 requests per minute per IP — generous for normal use, blocks scrapers.
+ * (Still per-process; move to Valkey later if needed.)
  */
 export const apiRateLimiter = new RateLimiter(60, 60_000);
 

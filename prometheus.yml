@@ -1,0 +1,11 @@
+# Scrapes the SvelteKit app every 15s on the compose network.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: lightkeepers
+    static_configs:
+      # Docker Compose service name for the app container.
+      - targets: ["app:3000"]
+    metrics_path: /metrics

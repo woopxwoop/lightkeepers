@@ -42,7 +42,10 @@ type StaticPayload = {
 };
 
 // Single-entry cache — we only ever need the most recent fetch.
-const staticCache = new LRUCache<StaticPayload>(1, 15 * 60 * 1000);
+// Valkey L2 when VALKEY_URL is set so pm2 workers share cold SSR hits.
+const staticCache = new LRUCache<StaticPayload>(1, 15 * 60 * 1000, {
+  redisNamespace: "static",
+});
 const CACHE_KEY = "static";
 
 async function fetchStaticData(): Promise<StaticPayload> {

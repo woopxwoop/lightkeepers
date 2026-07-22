@@ -8,6 +8,8 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
+# Public client env only — baked into the browser bundle by design (anon key).
+# Private secrets are injected at container runtime (see deploy.yml + compose).
 ARG PUBLIC_SUPABASE_URL
 ARG PUBLIC_SUPABASE_KEY
 ARG SENTRY_DSN
@@ -15,25 +17,13 @@ ARG SENTRY_DSN
 ENV PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL
 ENV PUBLIC_SUPABASE_KEY=$PUBLIC_SUPABASE_KEY
 ENV SENTRY_DSN=$SENTRY_DSN
+ENV PUBLIC_SENTRY_DSN=$SENTRY_DSN
 
+# SENTRY_AUTH_TOKEN is build-only (source map upload); never ends up in the image.
 RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-    --mount=type=secret,id=PRIVATE_SUPABASE_KEY \
-    --mount=type=secret,id=DATABASE_URL \
-    --mount=type=secret,id=BETTER_AUTH_SECRET \
-    --mount=type=secret,id=GOOGLE_CLIENT_ID \
-    --mount=type=secret,id=GOOGLE_CLIENT_SECRET \
-    --mount=type=secret,id=DISCORD_CLIENT_ID \
-    --mount=type=secret,id=DISCORD_CLIENT_SECRET \
     echo "PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL" > .env && \
     echo "PUBLIC_SUPABASE_KEY=$PUBLIC_SUPABASE_KEY" >> .env && \
     echo "PUBLIC_SENTRY_DSN=$SENTRY_DSN" >> .env && \
-    echo "PRIVATE_SUPABASE_KEY=$(cat /run/secrets/PRIVATE_SUPABASE_KEY)" >> .env && \
-    echo "DATABASE_URL=$(cat /run/secrets/DATABASE_URL)" >> .env && \
-    echo "BETTER_AUTH_SECRET=$(cat /run/secrets/BETTER_AUTH_SECRET)" >> .env && \
-    echo "GOOGLE_CLIENT_ID=$(cat /run/secrets/GOOGLE_CLIENT_ID)" >> .env && \
-    echo "GOOGLE_CLIENT_SECRET=$(cat /run/secrets/GOOGLE_CLIENT_SECRET)" >> .env && \
-    echo "DISCORD_CLIENT_ID=$(cat /run/secrets/DISCORD_CLIENT_ID)" >> .env && \
-    echo "DISCORD_CLIENT_SECRET=$(cat /run/secrets/DISCORD_CLIENT_SECRET)" >> .env && \
     SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) pnpm build
 RUN pnpm prune --prod
 

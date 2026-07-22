@@ -6,7 +6,7 @@
  *
  * Body: { characters: string[]; abyssVersion: number; stygianVersion: number }
  *
- * Cache: in-memory LRU keyed by sorted character list + version numbers.
+ * Cache: memory L1 + optional Valkey L2 (VALKEY_URL), keyed by roster + version.
  * Rate limit: 60 requests / minute / IP.
  */
 

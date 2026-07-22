@@ -5,7 +5,7 @@
 import { sequence } from "@sveltejs/kit/hooks";
 import { handleErrorWithSentry, sentryHandle } from "@sentry/sveltekit";
 import { metrics } from "$lib/server/metrics";
-import { auth } from "$lib/server/auth";
+import { getAuth } from "$lib/server/auth";
 import type { Handle } from "@sveltejs/kit";
 
 const metricsHandle: Handle = async ({ event, resolve }) => {
@@ -40,7 +40,9 @@ const authHandle: Handle = async ({ event, resolve }) => {
   }
 
   try {
-    const session = await auth.api.getSession({ headers: event.request.headers });
+    const session = await getAuth().api.getSession({
+      headers: event.request.headers,
+    });
     event.locals.user = session?.user ?? null;
     event.locals.session = session?.session ?? null;
   } catch (err) {
