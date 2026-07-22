@@ -1,8 +1,14 @@
 <script lang="ts">
-  import { charactersOwned, animationsEnabled, displayPreferences } from "$lib/stores";
+  import {
+    charactersOwned,
+    animationsEnabled,
+    displayPreferences,
+  } from "$lib/stores";
   import {
     artifactSetByKey,
     buildGoodKeyMap,
+    humanizeInvestmentLabel,
+    humanizeTeamName,
     translateStatKey,
     weaponByKey,
     statIconUrl,
@@ -11,6 +17,8 @@
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import PageShell from "$lib/ui/components/PageShell.svelte";
+  import Surface from "$lib/ui/components/Surface.svelte";
   import {
     computeBuildSheetStats,
     formatSheetStat,
@@ -26,6 +34,17 @@
   let kitsByKey = $derived(data.kitsByKey);
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
+  let characterNames = $derived(
+    new Map(
+      [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
+    ),
+  );
+  let teamTitle = $derived(
+    humanizeTeamName(team.characters, characterNames),
+  );
+  let simLabel = $derived(
+    sim.label ? humanizeInvestmentLabel(sim.label, characterNames) : "",
+  );
   let iconStyle = $derived($displayPreferences.iconStyle);
 
   function characterFor(key: string) {
@@ -55,50 +74,19 @@
   }
 </script>
 
-<main
-  class="w-[85%] pb-20 flex flex-col gap-8"
-  style={!$animationsEnabled
-    ? "--sk-animation: none; --pulse-animation: none"
-    : ""}
->
-  <header class="flex flex-col gap-1.5">
-    <p
-      class="text-xs tracking-widest uppercase"
-      style="color: var(--foreground-mid);"
-    >
-      Team config
-    </p>
-    <h1
-      class="text-2xl md:text-3xl font-semibold leading-tight"
-      style="color: var(--foreground-color);"
-    >
-      {team.team_name}
-    </h1>
-    {#if sim.label}
-      <p class="text-sm" style="color: var(--foreground-mid);">
-        {sim.label}
-      </p>
-    {/if}
-    <div
-      class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
-      style="color: var(--foreground-mid);"
-    >
+<PageShell class="gap-8 {$animationsEnabled ? '' : 'no-page-anim'}">
+  <header class="page-head">
+    <a href="/teams/{team.team_key}" class="back-link">← {teamTitle}</a>
+    <h1 class="page-title">{simLabel || teamTitle}</h1>
+    <p class="page-meta">
       <span>{(sim.dps / 1000).toFixed(1)}K DPS</span>
       <span aria-hidden="true">·</span>
       <span>Cost {sim.cost}</span>
-      <span aria-hidden="true">·</span>
-      <a
-        href="/teams/{team.team_key}"
-        class="underline underline-offset-2"
-        style="color: var(--accent-1);"
-      >
-        Investment curve
-      </a>
-    </div>
+    </p>
   </header>
 
-  <section class="flex flex-col gap-4">
-    <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4">
+  <section class="section">
+    <div class="builds-grid">
       {#each sim.characters as build (build.key)}
         {@const character = characterFor(build.key)}
         {@const weapon = weaponByKey.get(build.weapon.key)}
@@ -107,13 +95,10 @@
         {@const sheet = sheetFor(build)}
         {@const wIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
         {@const sIcon = set ? artifactIconUrl(set.icon) : null}
+        {@const s2Icon = set2 ? artifactIconUrl(set2.icon) : null}
         {@const kit = kitsByKey[build.key]}
-        <article
-          class="build-card rounded-xl overflow-hidden"
-          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-        >
+        <Surface flush class="build-card">
           <div class="build-grid">
-            <!-- Left: avatar + constellations -->
             <div
               class="build-art"
               class:build-art--enka={iconStyle === "enka"}
@@ -161,30 +146,15 @@
                   {/if}
 
                   <div class="build-art-meta">
-                    <h3
-                      class="text-base font-semibold leading-tight"
-                      style="color: var(--foreground-color); text-shadow: 0 1px 8px rgba(0,0,0,0.65);"
-                    >
-                      {character?.name ?? build.key}
-                    </h3>
-                    <p
-                      class="text-[0.7rem] mt-0.5"
-                      style="color: var(--foreground-mid); text-shadow: 0 1px 6px rgba(0,0,0,0.65);"
-                    >
-                      Lv. {build.level}
-                    </p>
+                    <h3 class="char-name">{character?.name ?? build.key}</h3>
+                    <p class="char-level">Lv. {build.level}</p>
                   </div>
                 </div>
               {/if}
             </div>
 
-            <!-- Right: equip + stats -->
-            <div class="build-panel flex flex-col gap-3 p-3.5 min-w-0">
-              <!-- Weapon -->
-              <div
-                class="relative flex gap-2.5 items-start rounded-lg p-2"
-                style="background: color-mix(in srgb, var(--accent-1) 7%, transparent);"
-              >
+            <div class="build-panel">
+              <div class="equip-block group">
                 {#if wIcon}
                   <img
                     src={wIcon}
@@ -194,28 +164,19 @@
                   />
                 {/if}
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <p
-                      class="text-[0.8rem] font-medium leading-tight truncate"
-                      style="color: var(--foreground-color);"
-                    >
+                  <div class="equip-title-row">
+                    <p class="equip-name">
                       {weapon?.name ?? build.weapon.key}
                     </p>
                     <span class="r-badge">R{build.weapon.refinement}</span>
                   </div>
                   {#if weapon}
-                    <div
-                      class="flex gap-0.5 mt-0.5"
-                      aria-label="{weapon.stars} star"
-                    >
+                    <div class="star-row" aria-label="{weapon.stars} star">
                       {#each Array.from({ length: starCount(weapon.stars) }, (_, i) => i) as i (i)}
                         <span class="star">★</span>
                       {/each}
                     </div>
-                    <div
-                      class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[0.65rem]"
-                      style="color: var(--foreground-mid);"
-                    >
+                    <div class="equip-stats">
                       <span>ATK {Math.round(weapon.baseAtk)}</span>
                       {#if weapon.subStat}
                         <span>
@@ -234,13 +195,16 @@
                 />
               </div>
 
-              <!-- Stats -->
               {#if sheet}
                 {@const coreStats = [
                   { key: "hp", label: "HP", value: sheet.hp },
                   { key: "atk", label: "ATK", value: sheet.atk },
                   { key: "def", label: "DEF", value: sheet.def },
-                  { key: "eleMas", label: "Elemental Mastery", value: sheet.eleMas },
+                  {
+                    key: "eleMas",
+                    label: "Elemental Mastery",
+                    value: sheet.eleMas,
+                  },
                   { key: "critRate", label: "CRIT Rate", value: sheet.critRate },
                   { key: "critDMG", label: "CRIT DMG", value: sheet.critDMG },
                   {
@@ -254,7 +218,7 @@
                     value,
                   })),
                 ]}
-                <div class="flex flex-col gap-1">
+                <div class="stat-list">
                   {#each coreStats as row (row.key)}
                     {@const icon = statIconUrl(iconKeyFor(row.key))}
                     <div class="stat-row">
@@ -271,104 +235,184 @@
                   {/each}
                 </div>
               {:else}
-                <p class="text-xs" style="color: var(--foreground-mid);">
-                  Base stats unavailable for {build.key}
-                </p>
+                <p class="muted">Base stats unavailable for {build.key}</p>
               {/if}
 
-              <!-- Talents -->
-              <div
-                class="flex gap-3 text-[0.65rem]"
-                style="color: var(--foreground-mid);"
-              >
+              <div class="talent-row">
                 {#each [
                   ["auto", build.talents.auto, kit?.talents.auto],
                   ["skill", build.talents.skill, kit?.talents.skill],
                   ["burst", build.talents.burst, kit?.talents.burst],
                 ] as [slot, level, icon] (slot)}
                   <span class="talent-chip">
-                    {#if icon}
+                    {#if typeof icon === "string" && icon}
                       <img src={icon} alt="" class="talent-icon" />
                     {:else}
                       <span class="talent-fallback">
                         {slot === "auto" ? "NA" : slot === "skill" ? "E" : "Q"}
                       </span>
                     {/if}
-                    <strong style="color: var(--foreground-color);">{level}</strong>
+                    <strong class="talent-level">{level}</strong>
                   </span>
                 {/each}
               </div>
 
-              <!-- Set -->
-              <div
-                class="relative flex gap-2 items-center pt-2"
-                style="border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 12%, transparent);"
-              >
-                {#if sIcon}
-                  <img
-                    src={sIcon}
-                    alt=""
-                    class="set-icon shrink-0"
-                    loading="lazy"
+              <div class="set-list">
+                <div class="set-row group">
+                  {#if sIcon}
+                    <img
+                      src={sIcon}
+                      alt=""
+                      class="set-icon shrink-0"
+                      loading="lazy"
+                    />
+                  {/if}
+                  <p class="set-name">{set?.name ?? build.set.key}</p>
+                  <span class="set-badge shrink-0">{build.set.count}</span>
+                  <ArtifactTooltip
+                    setKey={build.set.key}
+                    pieceCount={build.set.count}
                   />
-                {/if}
-                <p
-                  class="text-[0.75rem] font-medium truncate min-w-0"
-                  style="color: var(--foreground-color);"
-                >
-                  {set?.name ?? build.set.key}
-                </p>
-                <span class="set-badge shrink-0">{build.set.count}</span>
+                </div>
                 {#if build.set2}
-                  <span class="text-[0.65rem] truncate" style="color: var(--foreground-mid);">
-                    + {set2?.name ?? build.set2}
-                    {build.set2_count ?? 2}
-                  </span>
+                  <div class="set-row group">
+                    {#if s2Icon}
+                      <img
+                        src={s2Icon}
+                        alt=""
+                        class="set-icon shrink-0"
+                        loading="lazy"
+                      />
+                    {/if}
+                    <p class="set-name">{set2?.name ?? build.set2}</p>
+                    <span class="set-badge shrink-0"
+                      >{build.set2_count ?? 2}</span
+                    >
+                    <ArtifactTooltip
+                      setKey={build.set2}
+                      pieceCount={build.set2_count ?? 2}
+                    />
+                  </div>
                 {/if}
-                <ArtifactTooltip
-                  setKey={build.set.key}
-                  pieceCount={build.set.count}
-                />
               </div>
             </div>
           </div>
-        </article>
+        </Surface>
       {/each}
     </div>
-    <p class="text-[0.65rem]" style="color: var(--foreground-mid);">
+    <p class="footnote">
       Sheet totals exclude artifact set bonuses and weapon passives.
     </p>
   </section>
 
-  <section class="flex flex-col gap-3">
-    <div class="flex flex-wrap items-baseline justify-between gap-2">
-      <h2 class="tracking-widest" style="color: var(--foreground-color);">
-        gcsim config
-      </h2>
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">gcsim config</h2>
       <a
         href={configUrl}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-xs underline underline-offset-2"
-        style="color: var(--accent-1);"
+        class="meta-link"
       >
-        Open raw
+        Open raw →
       </a>
     </div>
     {#if configText}
-      <pre
-        class="config-block rounded-xl p-4 text-[0.7rem] leading-relaxed overflow-x-auto"
-        style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent); color: var(--foreground-mid);"
-      >{configText}</pre>
+      <Surface flush class="config-surface">
+        <pre class="config-block">{configText}</pre>
+      </Surface>
     {:else}
-      <p class="text-xs" style="color: var(--foreground-mid);">
-        Config file not found on CDN for this build.
-      </p>
+      <p class="muted">Config file not found on CDN for this build.</p>
     {/if}
   </section>
-</main>
+</PageShell>
 
 <style>
+  .page-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .back-link {
+    width: fit-content;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .back-link:hover {
+    color: var(--accent-1);
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: var(--h2-size);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .page-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .meta-link {
+    color: var(--accent-1);
+  }
+
+  .meta-link:hover {
+    text-decoration: underline;
+  }
+
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .builds-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 1536px) {
+    .builds-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  :global(.build-card),
+  :global(.config-surface) {
+    --border-subtle: rgba(255, 255, 255, 0.14);
+    --border-default: rgba(255, 255, 255, 0.24);
+    --border-strong: rgba(255, 255, 255, 0.45);
+    overflow: hidden;
+  }
+
   .build-grid {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -379,7 +423,7 @@
   .build-art {
     position: relative;
     overflow: hidden;
-    background: color-mix(in srgb, var(--accent-1) 8%, #0a0e14);
+    background: color-mix(in srgb, var(--foreground-color) 6%, #0a0e14);
     align-self: stretch;
   }
 
@@ -397,7 +441,6 @@
     overflow: hidden;
   }
 
-  /* Fill the full art column; keep CharacterIcon crop/zoom transforms. */
   .build-avatar :global(.relative) {
     width: 100%;
     height: 100%;
@@ -421,13 +464,27 @@
     pointer-events: none;
   }
 
-  /* Name sits above the fade, clear of the cons rail. */
   .build-art-meta {
     position: absolute;
     left: 2.4rem;
     right: 0.75rem;
     bottom: 0.65rem;
     z-index: 2;
+  }
+
+  .char-name {
+    font-size: var(--text-md);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--foreground-color);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
+  }
+
+  .char-level {
+    margin-top: 0.15rem;
+    font-size: 0.7rem;
+    color: var(--foreground-mid);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
   }
 
   .cons-rail {
@@ -451,7 +508,7 @@
     border-radius: 999px;
     overflow: hidden;
     background: color-mix(in srgb, #0a0e14 70%, transparent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-1) 35%, transparent);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28);
   }
 
   .cons-node img {
@@ -474,41 +531,55 @@
     background: rgba(0, 0, 0, 0.35);
   }
 
-  @media (max-width: 640px) {
-    .build-grid {
-      grid-template-columns: 1fr;
-      min-height: 0;
-    }
+  .build-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    min-width: 0;
+  }
 
-    .build-art,
-    .build-art--portrait,
-    .build-art--enka {
-      width: 100%;
-      min-height: 16rem;
-    }
+  .equip-block {
+    position: relative;
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
 
-    .cons-rail {
-      top: 0.75rem;
-      bottom: 3.25rem;
-      transform: none;
-      justify-content: space-between;
-    }
+  .equip-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
 
-    .cons-node {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
+  .equip-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--foreground-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-    .build-art-meta {
-      left: 2.25rem;
-      bottom: 0.55rem;
-    }
+  .equip-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.75rem;
+    margin-top: 0.25rem;
+    font-size: 0.65rem;
+    color: var(--foreground-mid);
+  }
 
-    /* Wide mobile banner: pin TCG art to the face, not mid-card. */
-    .build-art--tcg .build-avatar :global(img) {
-      object-position: center top;
-      transform: none;
-    }
+  .star-row {
+    display: flex;
+    gap: 0.1rem;
+    margin-top: 0.15rem;
   }
 
   .weapon-icon {
@@ -528,15 +599,41 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     padding: 0.05rem 0.35rem;
-    border-radius: 0.25rem;
-    color: #1a1208;
-    background: color-mix(in srgb, var(--accent-1) 85%, #f0c060);
+    border-radius: var(--radius-sm);
+    color: var(--accent-3);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
+    background: transparent;
   }
 
   .star {
     font-size: 0.55rem;
-    color: #e8b84a;
+    color: var(--accent-3);
     line-height: 1;
+  }
+
+  .set-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .set-row {
+    position: relative;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .set-name {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--foreground-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
 
   .set-badge {
@@ -547,9 +644,16 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.25rem;
-    color: #0a120e;
-    background: color-mix(in srgb, #6dd5a8 75%, var(--accent-1));
+    border-radius: var(--radius-sm);
+    color: var(--foreground-color);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+  }
+
+  .stat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
   }
 
   .stat-row {
@@ -574,7 +678,6 @@
     height: 0.95rem;
     object-fit: contain;
     flex-shrink: 0;
-    /* Lunaris icons are dark glyphs — force light on dark theme */
     filter: brightness(0) invert(1);
     opacity: 0.7;
   }
@@ -588,6 +691,13 @@
     font-weight: 600;
     color: var(--foreground-color);
     font-variant-numeric: tabular-nums;
+  }
+
+  .talent-row {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.65rem;
+    color: var(--foreground-mid);
   }
 
   .talent-chip {
@@ -607,10 +717,30 @@
     font-weight: 600;
   }
 
+  .talent-level {
+    color: var(--foreground-color);
+  }
+
+  .footnote,
+  .muted {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
   .config-block {
+    margin: 0;
+    padding: 1rem;
+    font-size: 0.7rem;
+    line-height: 1.55;
+    color: var(--foreground-mid);
     white-space: pre-wrap;
     word-break: break-word;
     max-height: 32rem;
-    overflow-y: auto;
+    overflow: auto;
+  }
+
+  :global(.page-shell.no-page-anim) {
+    --sk-animation: none;
+    --pulse-animation: none;
   }
 </style>

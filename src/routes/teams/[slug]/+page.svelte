@@ -6,6 +6,7 @@
     buildGoodKeyMap,
     toGoodKey,
     humanizeInvestmentLabel,
+    humanizeTeamName,
     displayWeaponRefinement,
     weaponByKey,
   } from "$lib/utils";
@@ -64,6 +65,16 @@
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
+  let characterNames = $derived(
+    new Map(
+      [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
+    ),
+  );
+
+  let teamTitle = $derived(
+    team ? humanizeTeamName(team.characters, characterNames) : "",
+  );
+
   let ownedKeys = $derived(
     new Set(
       $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
@@ -113,7 +124,10 @@
 
   function simDiffLabel(sim: InvestmentTeam["results"][number]): string {
     if (sim.kind === "baseline") return "Baseline";
-    return humanizeInvestmentLabel(sim.label?.trim() || "variant");
+    return humanizeInvestmentLabel(
+      sim.label?.trim() || "variant",
+      characterNames,
+    );
   }
 
   function pctVsBaseline(dps: number): string {
@@ -173,7 +187,7 @@
     <header class="page-head">
       <a href="/teams" class="back-link">← Teams</a>
       <div class="page-head-text">
-        <h1 class="page-title">{team.team_name}</h1>
+        <h1 class="page-title">{teamTitle}</h1>
         <p class="page-meta">
           {#if baselineSim}
             Baseline · {team.baseline_cost} cost · {(

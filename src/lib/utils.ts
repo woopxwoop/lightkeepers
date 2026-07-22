@@ -284,9 +284,13 @@ const WEAPON_KEYS_BY_LENGTH = [...weaponByKey.keys()].sort(
 
 /**
  * Replace GOOD weapon keys in an investment sim label with display names.
- * Leaves character keys / C/R tokens alone.
+ * When `characterByKey` is provided, character GOOD keys are replaced too
+ * (longest-first so compound keys win).
  */
-export function humanizeInvestmentLabel(label: string): string {
+export function humanizeInvestmentLabel(
+  label: string,
+  characterByKey?: Map<string, string>,
+): string {
   if (!label) return label;
   let out = label;
   for (const key of WEAPON_KEYS_BY_LENGTH) {
@@ -295,7 +299,27 @@ export function humanizeInvestmentLabel(label: string): string {
     if (!name) continue;
     out = out.split(key).join(name);
   }
+  if (characterByKey?.size) {
+    const keys = [...characterByKey.keys()].sort((a, b) => b.length - a.length);
+    for (const key of keys) {
+      if (!out.includes(key)) continue;
+      const name = characterByKey.get(key);
+      if (!name) continue;
+      out = out.split(key).join(name);
+    }
+  }
   return out;
+}
+
+/** Join character GOOD keys as display names (roster order). */
+export function humanizeTeamName(
+  characterKeys: string[],
+  characterByKey: Map<string, string>,
+  sep = " · ",
+): string {
+  return characterKeys
+    .map((k) => characterByKey.get(k) ?? k)
+    .join(sep);
 }
 
 // ── Stat key → English ──────────────────────────────────────────────────────
