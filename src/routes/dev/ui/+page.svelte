@@ -15,6 +15,8 @@
   import Badge from "$lib/ui/components/Badge.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
+  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
+  import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
   import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
@@ -33,7 +35,15 @@
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
   import type { AbyssTeam } from "$lib/definitions";
-  import { weaponTypeLabel, isNewCharacter } from "$lib/utils";
+  import { toGoodKey, weaponTypeLabel, isNewCharacter } from "$lib/utils";
+
+  let demoTags: string[] = $state([]);
+  let demoTagOptions = $derived(
+    $charactersOwned.slice(0, 24).map((c) => toGoodKey(c.name)),
+  );
+  let demoCharByKey = $derived(
+    new Map($charactersOwned.map((c) => [toGoodKey(c.name), c])),
+  );
 
   const COLOR_LABELS: Record<ThemeColorKey, string> = {
     "background-color": "Background",
@@ -324,7 +334,8 @@
       <h2>New patterns</h2>
       <p>
         Candidates for route migration — SlidingTabs, CharacterPortraitCard,
-        SolutionDots, EmptyState, LoadingState.
+        TeamCardHand, CharacterTagSearch, SolutionDots, EmptyState,
+        LoadingState.
       </p>
     </div>
 
@@ -400,6 +411,78 @@
               </CharacterPortraitCard>
             {/each}
           </div>
+        {:else}
+          <p class="token-meta">Roster not loaded yet.</p>
+        {/if}
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">TeamCardHand</p>
+        <p class="token-meta mb-2">
+          Four portraits as a held hand — fan + overlap. Candidate for the Teams
+          spotlight card. Hover lifts a card.
+        </p>
+        {#if sampleChars.length >= 4}
+          {@const handChars = sampleChars.slice(0, 4)}
+          {@const demoBuilds = [
+            { cons: 0, weaponRefinement: 1, weaponKey: "PrototypeAmber" },
+            { cons: 2, weaponRefinement: 1, weaponKey: "StaffOfHoma" },
+            { cons: 0, weaponRefinement: 5, weaponKey: "FavoniusCodex" },
+            { cons: 6, weaponRefinement: 1, weaponKey: "SkywardBlade" },
+          ]}
+          <p class="token-meta mb-1">spread = hand · stack = right (default)</p>
+          <TeamCardHand
+            characters={handChars}
+            builds={demoBuilds}
+            starredKeys={new Set([handChars[1]?.name_id ?? ""])}
+            dimmedKeys={new Set([handChars[3]?.name_id ?? ""])}
+          />
+          <p class="token-meta mb-1 mt-4">spread = hand · stack = left</p>
+          <TeamCardHand
+            characters={handChars}
+            builds={demoBuilds}
+            stack="left"
+          />
+          <p class="token-meta mb-1 mt-4">spread = flat (overlap only)</p>
+          <TeamCardHand
+            characters={handChars}
+            builds={demoBuilds}
+            spread="flat"
+          />
+        {:else}
+          <p class="token-meta">Need at least 4 roster characters to demo.</p>
+        {/if}
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">CharacterTagSearch</p>
+        <p class="token-meta mb-2">
+          Combobox tag filter with optional leading control (gear). Used on
+          Teams.
+        </p>
+        {#if demoTagOptions.length}
+          <CharacterTagSearch
+            bind:tags={demoTags}
+            options={demoTagOptions}
+            getLabel={(key) => demoCharByKey.get(key)?.name ?? key}
+            getCharacter={(key) => demoCharByKey.get(key)}
+            countLabel="{demoTags.length} selected"
+          >
+            {#snippet leading()}
+              <button
+                type="button"
+                class="demo-gear"
+                aria-label="Demo settings gear"
+              >
+                <IconCog size={16} />
+              </button>
+            {/snippet}
+          </CharacterTagSearch>
+          <p class="token-meta mt-2">
+            Type a name to add tags. Tags: {demoTags.length
+              ? demoTags.join(", ")
+              : "none"}
+          </p>
         {:else}
           <p class="token-meta">Roster not loaded yet.</p>
         {/if}
@@ -519,8 +602,6 @@
     <div class="planned-grid">
       {#each [
         "StatRow",
-        "FilterBar / SearchInput",
-        "CharacterFilterBar (logic)",
         "SectionLabel",
         "Tooltip (focus + touch)",
       ] as name}
@@ -716,6 +797,24 @@
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
     gap: var(--space-3);
     align-items: start;
+  }
+
+  .demo-gear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--foreground-mid);
+    cursor: pointer;
+  }
+
+  .demo-gear:hover {
+    background: var(--surface-quiet);
+    color: var(--accent-1);
   }
 
   :global(.min-h-status) {

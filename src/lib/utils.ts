@@ -244,25 +244,30 @@ export const weaponByKey = buildGoodKeyMap(weaponsRaw as WeaponData[]);
 export const artifactSetByKey = buildGoodKeyMap(artifactSetsRaw as ArtifactSetData[]);
 
 /**
- * Community baseline treats 4★ weapons as R0 — refinement is rarely ranked.
- * Unknown keys are treated as not-4★ so we don't invent R0 for missing data.
+ * Unknown keys are treated as not-4★ so we don't invent rarity for missing data.
  */
 export function isFourStarWeapon(weaponKey: string): boolean {
   const weapon = weaponByKey.get(weaponKey);
   return weapon ? weapon.stars <= 4 : false;
 }
 
-/** Refinement to show in UI (always 0 for 4★ weapons). */
+/**
+ * Refinement rank to show in UI.
+ * When the weapon icon is visible, use the sim's actual refinement.
+ * When it isn't, 4★ weapons fall back to R0 (community baseline shorthand).
+ */
 export function displayWeaponRefinement(
   weaponKey: string,
   refinement: number,
+  opts?: { weaponShown?: boolean },
 ): number {
+  if (opts?.weaponShown) return refinement;
   return isFourStarWeapon(weaponKey) ? 0 : refinement;
 }
 
 /**
- * Format constellation + refinement for investment cards.
- * 4★ weapons always show R0.
+ * Format constellation + refinement when the weapon itself isn't shown.
+ * 4★ weapons use R0 in that case.
  */
 export function formatInvestmentCR(
   cons: number,
