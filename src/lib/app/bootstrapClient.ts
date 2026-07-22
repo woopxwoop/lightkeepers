@@ -1,12 +1,5 @@
-import type {
-  AbyssTeam,
-  Character,
-  CharacterOwned,
-  StygianTeam,
-} from "$lib/definitions";
+import type { Character, CharacterOwned } from "$lib/definitions";
 import {
-  allTeamsAbyss,
-  allTeamsStygian,
   charactersOwned,
   charactersHydrated,
   initHasSavedRoster,
@@ -22,8 +15,6 @@ type LayoutHydration = {
   characters: Character[];
   abyssVersionNumber: number;
   stygianVersionNumber: number;
-  allTeamsAbyss: AbyssTeam[];
-  allTeamsStygian: StygianTeam[];
 };
 
 type CachedOwnedEntry =
@@ -109,15 +100,11 @@ async function loadDbRoster(
 }
 
 /**
- * Client-side hydration.
- * - Seeds slow-changing stores from SSR layout data (no extra fetch)
- * - Seeds roster from localStorage, then overlays DB roster if logged in
- * - Kicks off server calls for teams + near-miss in the background
+ * Client-side hydration from root layout SSR data.
+ * Full allTeams* lists are seeded by abyss / stygian page loads only.
  */
 export function seedClientStores(data: LayoutHydration): void {
   setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber);
-  allTeamsAbyss.set(data.allTeamsAbyss);
-  allTeamsStygian.set(data.allTeamsStygian);
 
   initHasSavedRoster();
 
@@ -127,6 +114,10 @@ export function seedClientStores(data: LayoutHydration): void {
   charactersHydrated.set(true);
 }
 
+/**
+ * Seeds layout stores, then fetches owned teams + roster (and warms near-miss /
+ * investment) in the background.
+ */
 export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);
 

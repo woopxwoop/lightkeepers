@@ -6,7 +6,7 @@
   import Surface from "$lib/ui/components/Surface.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import type { AbyssTeam } from "$lib/definitions";
+  import type { AbyssEnemies, AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
 
   const SLOTS = ["top", "bottom"] as const;
@@ -17,22 +17,12 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let abyssEnemies = $derived(
-    data.abyssEnemies as {
-      top: {
-        chamber: number;
-        monsterLevel: number;
-        enemies: { id: number; name: string; asset: string | null }[];
-      }[];
-      bottom: {
-        chamber: number;
-        monsterLevel: number;
-        enemies: { id: number; name: string; asset: string | null }[];
-      }[];
-      buffName: string | null;
-      openTime: string | null;
-    },
-  );
+  let abyssEnemies = $derived(data.abyssEnemies as AbyssEnemies);
+
+  // Page load owns the full meta team list (not root layout).
+  $effect(() => {
+    allTeamsAbyss.set(data.allTeamsAbyss as AbyssTeam[]);
+  });
 
   const halfLabel: Record<Slot, string> = {
     top: "First Half",

@@ -15,7 +15,11 @@
     handleKeyboardClick,
     handlePointerAction,
   } from "$lib/ui/pointer";
-  import type { StygianTeam } from "$lib/definitions";
+  import type {
+    StygianEnemies,
+    StygianSchedule,
+    StygianTeam,
+  } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
@@ -26,33 +30,13 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let enemies = $derived(
-    data.stygianEnemies as {
-      top: {
-        id: number;
-        asset: string | null;
-        enemy_name: string | null;
-      } | null;
-      middle: {
-        id: number;
-        asset: string | null;
-        enemy_name: string | null;
-      } | null;
-      bottom: {
-        id: number;
-        asset: string | null;
-        enemy_name: string | null;
-      } | null;
-    },
-  );
-  let schedule = $derived(
-    data.stygianSchedule as {
-      scheduleId: number;
-      openTime: string | null;
-      closeTime: string | null;
-      challengeName: string | null;
-    } | null,
-  );
+  let enemies = $derived(data.stygianEnemies as StygianEnemies);
+  let schedule = $derived(data.stygianSchedule as StygianSchedule | null);
+
+  // Page load owns the full meta team list (not root layout).
+  $effect(() => {
+    allTeamsStygian.set(data.allTeamsStygian as StygianTeam[]);
+  });
 
   let selectedIndex = $state(0);
 

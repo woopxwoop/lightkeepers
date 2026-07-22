@@ -28,8 +28,6 @@
       characters,
       abyssVersionNumber: data.abyssVersionNumber,
       stygianVersionNumber: data.stygianVersionNumber,
-      allTeamsAbyss: data.allTeamsAbyss,
-      allTeamsStygian: data.allTeamsStygian,
     });
   });
 
@@ -41,8 +39,6 @@
       characters,
       abyssVersionNumber: data.abyssVersionNumber,
       stygianVersionNumber: data.stygianVersionNumber,
-      allTeamsAbyss: data.allTeamsAbyss,
-      allTeamsStygian: data.allTeamsStygian,
     }).catch(console.error);
 
     return detachDebug;

@@ -242,7 +242,7 @@ export const teamsOwnedStygianBottom = derived<
   ),
 );
 
-// ── All-teams stores (pre-populated from layout server data) ───────────────
+// ── All-teams stores (seeded by abyss / stygian page loads) ────────────────
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
 export const allTeamsStygian = writable<StygianTeam[]>([]);
 
