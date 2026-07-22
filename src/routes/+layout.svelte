@@ -13,6 +13,7 @@
     faviconDataUri,
   } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
+  import { DISCORD_INVITE_URL } from "$lib/site";
   import "../app.css";
 
   if (typeof window !== "undefined") {
@@ -108,7 +109,7 @@
     </a>
     <span aria-hidden="true">·</span>
     <a
-      href="https://discord.gg/D7RbZgCFCC"
+      href={DISCORD_INVITE_URL}
       target="_blank"
       rel="noopener noreferrer"
       class="footer-link"

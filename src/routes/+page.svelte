@@ -3,6 +3,8 @@
   import { hasSavedRoster } from "$lib/stores";
   import { authClient } from "$lib/auth-client";
   import PageShell from "$lib/ui/components/PageShell.svelte";
+  import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
+  import { DISCORD_INVITE_URL } from "$lib/site";
 
   const session = authClient.useSession();
 
@@ -67,6 +69,16 @@
       Find your best<br />
       <span class="hook-accent">teams, builds, and pulls.</span>
     </h1>
+    <a
+      class="discord-cta"
+      href={DISCORD_INVITE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <IconDiscord size={18} />
+      <span>Join the Discord</span>
+      <span class="discord-cta-hint">feedback & updates</span>
+    </a>
   </header>
 
   <div class="feature-grid">
@@ -124,6 +136,35 @@
 
   .hook-accent {
     color: var(--accent-2);
+  }
+
+  .discord-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    margin-top: var(--space-1);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: 500;
+    color: var(--foreground-color);
+    text-decoration: none;
+    transition: color var(--control-duration) var(--control-ease);
+  }
+
+  .discord-cta:hover {
+    color: var(--accent-2);
+  }
+
+  .discord-cta-hint {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 400;
+    color: var(--foreground-mid);
+  }
+
+  .discord-cta:hover .discord-cta-hint {
+    color: inherit;
   }
 
   .feature-grid {
