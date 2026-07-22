@@ -313,10 +313,10 @@
                 ? `animation-delay: ${gi * 40}ms`
                 : undefined}
             >
-              <div class="ladder-peak">
+              <div class="ladder-row">
                 <a
                   href="/team-configs/{encodeURIComponent(peakSim.state_key)}"
-                  class="ladder-main is-near-best"
+                  class="ladder-link is-near-best"
                 >
                   <span class="col-cost">{group.cost}</span>
                   <span class="col-label" title={simDiffLabel(peakSim)}>
@@ -353,7 +353,7 @@
                     <IconChevronDown size={14} />
                   </button>
                 {:else}
-                  <span class="alts-spacer"></span>
+                  <span class="alts-spacer" aria-hidden="true"></span>
                 {/if}
               </div>
 
@@ -364,28 +364,30 @@
                   transition:slide={{ duration: 180 }}
                 >
                   {#each group.sims.slice(1) as sim (sim.state_key)}
-                    <a
-                      href="/team-configs/{encodeURIComponent(sim.state_key)}"
-                      class="ladder-alt"
-                      class:is-near-best={isNearBest(sim.dps, peakSim.dps)}
-                    >
-                      <span class="col-cost"></span>
-                      <span class="col-label" title={simDiffLabel(sim)}>
-                        {simDiffLabel(sim)}
-                      </span>
-                      <span class="col-dps"
-                        >{(sim.dps / 1000).toFixed(1)}K</span
+                    <div class="ladder-row">
+                      <a
+                        href="/team-configs/{encodeURIComponent(sim.state_key)}"
+                        class="ladder-link"
+                        class:is-near-best={isNearBest(sim.dps, peakSim.dps)}
                       >
-                      <span class="col-delta"></span>
-                      <span class="col-base">
-                        {#if isDpsLoss(baselineSim?.dps, sim.dps)}
-                          {@render negPctTip(pctVsBaseline(sim.dps))}
-                        {:else}
-                          {pctVsBaseline(sim.dps)}
-                        {/if}
-                      </span>
-                      <span class="alts-spacer"></span>
-                    </a>
+                        <span class="col-cost"></span>
+                        <span class="col-label" title={simDiffLabel(sim)}>
+                          {simDiffLabel(sim)}
+                        </span>
+                        <span class="col-dps"
+                          >{(sim.dps / 1000).toFixed(1)}K</span
+                        >
+                        <span class="col-delta"></span>
+                        <span class="col-base">
+                          {#if isDpsLoss(baselineSim?.dps, sim.dps)}
+                            {@render negPctTip(pctVsBaseline(sim.dps))}
+                          {:else}
+                            {pctVsBaseline(sim.dps)}
+                          {/if}
+                        </span>
+                      </a>
+                      <span class="alts-spacer" aria-hidden="true"></span>
+                    </div>
                   {/each}
                 </div>
               {/if}
@@ -566,8 +568,9 @@
     color: var(--foreground-mid);
   }
 
-  /* Board hairlines are pure white — warm tones over blue mid mix to mud. */
-  .board {
+  /* Board hairlines are pure white — warm tones over blue mid mix to mud.
+     :global so tokens reach Surface's root (child-component scope). */
+  :global(.board) {
     --border-subtle: rgba(255, 255, 255, 0.14);
     --border-default: rgba(255, 255, 255, 0.24);
     --border-strong: rgba(255, 255, 255, 0.45);
@@ -609,16 +612,21 @@
     font-weight: 600;
   }
 
-  .board-row.is-near-best,
-  .ladder-main.is-near-best,
-  .ladder-alt.is-near-best {
+  .board-row.is-near-best {
     background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
     box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.45);
   }
 
-  .board-row.is-near-best:hover,
-  .ladder-main.is-near-best:hover,
-  .ladder-alt.is-near-best:hover {
+  .board-row.is-near-best:hover {
+    background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
+  }
+
+  .ladder-row:has(.is-near-best) {
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.45);
+  }
+
+  .ladder-row:has(.is-near-best):hover {
     background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
   }
 
@@ -643,8 +651,8 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--accent-1);
-    border: var(--border-width) solid color-mix(in srgb, var(--accent-1) 45%, transparent);
+    color: var(--accent-3);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.35);
     border-radius: var(--radius-sm);
     padding: 0.05rem 0.3rem;
   }
@@ -672,17 +680,16 @@
   }
 
   .ladder-head,
-  .ladder-main,
-  .ladder-alt {
+  .ladder-row {
     display: grid;
     grid-template-columns:
       2.5rem minmax(0, 1fr) 3.5rem 3.25rem 3.25rem 1.5rem;
-    gap: 0.5rem;
+    column-gap: 0.5rem;
     align-items: center;
+    padding: 0.55rem 0.75rem;
   }
 
   .ladder-head {
-    padding: 0.55rem 0.75rem;
     font-size: 0.65rem;
     letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
@@ -698,27 +705,19 @@
     border-top: var(--border-width) solid var(--border-subtle);
   }
 
-  .ladder-peak {
+  .ladder-link {
+    grid-column: 1 / 6;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 1.5rem;
-    align-items: stretch;
-  }
-
-  .ladder-main,
-  .ladder-alt {
-    padding: 0.65rem 0.75rem;
+    grid-template-columns: subgrid;
+    align-items: center;
+    min-width: 0;
+    padding: 0.1rem 0;
     text-decoration: none;
     color: inherit;
     font-size: var(--text-xs);
   }
 
-  .ladder-main {
-    grid-template-columns:
-      2.5rem minmax(0, 1fr) 3.5rem 3.25rem 3.25rem;
-  }
-
-  .ladder-main:hover,
-  .ladder-alt:hover {
+  .ladder-row:hover:not(:has(.is-near-best)) {
     background: var(--surface-quiet);
   }
 
@@ -745,6 +744,7 @@
     align-items: center;
     justify-content: center;
     width: 1.5rem;
+    height: 100%;
     border: none;
     background: transparent;
     color: var(--foreground-mid);
@@ -762,14 +762,15 @@
 
   .alts-spacer {
     width: 1.5rem;
+    height: 1rem;
   }
 
   .ladder-alts {
     background: color-mix(in srgb, var(--foreground-color) 3%, transparent);
   }
 
-  .ladder-alt {
-    opacity: 0.85;
+  .ladder-alts .ladder-link {
+    opacity: 0.9;
   }
 
   .methodology {
@@ -824,21 +825,19 @@
       display: none;
     }
 
-    .ladder-main,
-    .ladder-alt {
-      grid-template-columns: 2.25rem minmax(0, 1fr) 3.25rem;
-      gap: 0.35rem;
+    .ladder-head,
+    .ladder-row {
+      grid-template-columns: 2.25rem minmax(0, 1fr) 3.25rem 1.5rem;
+      column-gap: 0.35rem;
     }
 
-    .ladder-main .col-delta,
-    .ladder-main .col-base,
-    .ladder-alt .col-delta,
-    .ladder-alt .col-base {
+    .ladder-link {
+      grid-column: 1 / 4;
+    }
+
+    .ladder-link .col-delta,
+    .ladder-link .col-base {
       display: none;
-    }
-
-    .ladder-peak {
-      grid-template-columns: minmax(0, 1fr) 1.5rem;
     }
   }
 </style>
