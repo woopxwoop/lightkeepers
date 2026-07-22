@@ -364,7 +364,7 @@
       {/key}
 
       {#if hasMore}
-        <Button variant="secondary" class="self-start" onclick={showMore}>
+        <Button variant="secondary" class="self-center" onclick={showMore}>
           Show {Math.min(SPOTLIGHT_PAGE, remaining)} more ({remaining} remaining)
         </Button>
       {/if}

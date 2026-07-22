@@ -5,6 +5,12 @@
   import GameText from "$lib/ui/components/GameText.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
+  import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
+  import PageShell from "$lib/ui/components/PageShell.svelte";
+  import Surface from "$lib/ui/components/Surface.svelte";
+  import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import { elementColor } from "$lib/element-colors";
   import {
     artifactSetByKey,
     artifactSlotIconUrl,
@@ -26,43 +32,17 @@
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
   import type { CharacterIndex } from "$lib/types/investment";
-  import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
   let builds = $derived((data.builds ?? null) as CharacterIndex | null);
 
   type PageTab = "skills" | "builds";
-  const TABS: { id: PageTab; label: string }[] = [
-    { id: "builds", label: "Builds" },
-    { id: "skills", label: "Skills" },
+  const TAB_OPTIONS = [
+    { value: "builds" as const, label: "Builds" },
+    { value: "skills" as const, label: "Skills" },
   ];
   let activeTab = $state<PageTab>("builds");
-  let activeTabIndex = $derived(TABS.findIndex((t) => t.id === activeTab));
-
-  function setActiveTab(tab: PageTab) {
-    activeTab = tab;
-  }
-
-  function handlePointerAction(event: PointerEvent, action: () => void) {
-    if (event.button !== 0) return;
-    action();
-  }
-
-  function handleKeyboardClick(event: MouseEvent, action: () => void) {
-    if (event.detail !== 0) return;
-    action();
-  }
-
-  const ELEMENT_COLORS: Record<string, string> = {
-    Pyro: "#f07b4a",
-    Hydro: "#5eb8f5",
-    Anemo: "#6dd5a8",
-    Electro: "#c48ad5",
-    Dendro: "#b1d94c",
-    Cryo: "#8fd5e5",
-    Geo: "#f5c242",
-  };
 
   const SKILL_LABELS: Record<string, string> = {
     normal: "Normal Attack",
@@ -74,9 +54,7 @@
     $charactersOwned.find((c) => c.name_id === kit.name_id),
   );
 
-  let owned = $derived(character?.isOwned ?? false);
-
-  let elColor = $derived(ELEMENT_COLORS[kit.element] ?? "var(--accent-1)");
+  let elColor = $derived(elementColor(kit.element, "var(--foreground-color)"));
   let namecard = $derived(getNamecardUrl(kit.name_id));
   let region = $derived(associationLabel(kit.association));
   let elementIcon = $derived(elementIconUrl(kit.element));
@@ -130,9 +108,7 @@
     return `Ascension ${unlock}`;
   }
 
-  function passiveKindLabel(
-    passive: (typeof kit.passives)[number],
-  ): string {
+  function passiveKindLabel(passive: (typeof kit.passives)[number]): string {
     if (passive.kind === "hexerei") return "Hexerei";
     if (passive.kind === "polestar") return "Polestar Field";
     return passiveUnlockLabel(passive.unlock);
@@ -239,479 +215,370 @@
   {/if}
 {/snippet}
 
-<main
-  class="w-[85%] pb-20 flex flex-col gap-8"
-  style="--kit-flash: {elColor};{!$animationsEnabled
-    ? ' --sk-animation: none; --pulse-animation: none'
-    : ''}"
->
-  <!-- Hero -->
-  <section
-    class="hero relative overflow-hidden rounded-2xl"
-    style="border: 0.5px solid color-mix(in srgb, {elColor} 35%, transparent);"
+<PageShell class="char-detail {$animationsEnabled ? '' : 'no-page-anim'}">
+  <Surface
+    flush
+    class="char-board"
+    style="--kit-flash: {elColor}; --hero-accent: {elColor};"
   >
-    <div
-      class="hero-bg absolute inset-0"
-      style="background-image: url('{namecard}');"
-    ></div>
-    <div class="hero-shade absolute inset-0"></div>
-    <div
-      class="hero-body relative z-10 flex flex-row items-center gap-3 sm:gap-4 md:gap-5"
-    >
-      {#if character}
-        <div class="hero-portrait">
-          <CharacterIcon {character} />
-        </div>
-      {/if}
+    <section class="hero relative overflow-hidden">
       <div
-        class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
+        class="hero-bg absolute inset-0"
+        style="background-image: url('{namecard}');"
+      ></div>
+      <div class="hero-shade absolute inset-0"></div>
+      <div
+        class="hero-body relative z-10 flex flex-row items-center gap-3 sm:gap-4 md:gap-5"
       >
-        <p class="text-xs tracking-widest uppercase" style="color: {elColor};">
-          {kit.title || "Character"}
-        </p>
-        <h1
-          class="text-3xl md:text-4xl font-semibold leading-tight"
-          style="color: var(--foreground-color);"
-        >
-          {kit.name}
-        </h1>
+        {#if character}
+          <div class="hero-portrait">
+            <CharacterIcon {character} />
+          </div>
+        {/if}
         <div
-          class="flex flex-wrap items-center gap-2 text-sm"
-          style="color: var(--foreground-mid);"
+          class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
         >
-          {#if elementIcon}
-            <img
-              src={elementIcon}
-              alt={kit.element}
-              title={kit.element}
-              class="stat-icon hero-meta-icon"
-              loading="lazy"
-            />
-          {:else}
-            <span style="color: {elColor};">{kit.element}</span>
-          {/if}
-          <span aria-hidden="true">·</span>
-          {#if weaponIcon}
-            <img
-              src={weaponIcon}
-              alt={weaponLabel}
-              title={weaponLabel}
-              class="stat-icon hero-meta-icon"
-              loading="lazy"
-            />
-          {:else}
-            <span>{weaponLabel}</span>
-          {/if}
-          <span aria-hidden="true">·</span>
-          <span>{kit.rarity}★</span>
-          {#if region}
-            <span aria-hidden="true">·</span>
-            <span>{region}</span>
-          {/if}
-          {#if kit.birthday}
-            <span aria-hidden="true">·</span>
-            <span>{kit.birthday.month}/{kit.birthday.day}</span>
-          {/if}
-        </div>
-        <a
-          href="/characters"
-          class="text-xs mt-2 w-fit no-underline"
-          style="color: var(--foreground-mid);"
-        >
-          ← All characters
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Tabs -->
-  <div
-    role="tablist"
-    aria-label="Character sections"
-    class="relative flex rounded-xl overflow-hidden"
-    style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-  >
-    <span
-      class="absolute inset-y-0 pointer-events-none transition-[left,background-color] duration-150"
-      style="left: calc({activeTabIndex} * 100% / {TABS.length}); width: calc(100% / {TABS.length}); background: color-mix(in srgb, {elColor} 10%, var(--background-mid));"
-    ></span>
-    <span
-      class="absolute bottom-0 h-[1.5px] pointer-events-none transition-[left,background-color] duration-150"
-      style="left: calc({activeTabIndex} * 100% / {TABS.length}); width: calc(100% / {TABS.length}); background: {elColor};"
-    ></span>
-    {#each TABS as tab (tab.id)}
-      <button
-        type="button"
-        role="tab"
-        aria-selected={activeTab === tab.id}
-        onpointerdown={(event) =>
-          handlePointerAction(event, () => setActiveTab(tab.id))}
-        onclick={(event) =>
-          handleKeyboardClick(event, () => setActiveTab(tab.id))}
-        class="page-tab relative z-1 flex-1 py-2.5 text-xs font-medium transition-colors pointer-events-auto touch-manipulation"
-        class:page-tab-active={activeTab === tab.id}
-      >
-        {tab.label}
-      </button>
-    {/each}
-  </div>
-
-  {#if activeTab === "skills"}
-    <!-- Talents -->
-    <section class="flex flex-col gap-3">
-      <h2 class="tracking-widest" style="color: var(--foreground-color);">
-        Talents
-      </h2>
-      <div class="flex flex-col gap-2">
-        {#each kit.skills as skill}
-          {@const icon =
-            iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
-          {@const skillEnhance = enhanceExtra(
-            skill.description,
-            skill.enhanceDescription,
-          )}
-          <article
-            id="kit-S{skill.id}"
-            class="kit-card rounded-xl p-4 flex gap-3"
-            class:kit-card-flash={flashId === `kit-S${skill.id}`}
-            style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-          >
-            {#if icon}
-              <img src={icon} alt="" class="kit-icon shrink-0" loading="lazy" />
-            {/if}
-            <div class="min-w-0 flex-1 flex flex-col gap-1">
-              <div class="flex flex-wrap items-baseline gap-2">
-                <h3
-                  class="text-sm font-medium"
-                  style="color: var(--foreground-color);"
-                >
-                  {skill.name}
-                </h3>
-                <span
-                  class="text-[0.65rem] uppercase tracking-wider"
-                  style="color: var(--foreground-mid);"
-                >
-                  {SKILL_LABELS[skill.type] ?? skill.type}
-                </span>
-              </div>
-              {@render descriptionBlock(skill.description, skillEnhance)}
-            </div>
-          </article>
-        {/each}
-      </div>
-    </section>
-
-    <!-- Passives -->
-    <section class="flex flex-col gap-3">
-      <h2 class="tracking-widest" style="color: var(--foreground-color);">
-        Passives
-      </h2>
-      <div class="flex flex-col gap-2">
-        {#each kit.passives as passive}
-          {@const icon =
-            iconUrl(passive.icon, "talent") ?? getUiAssetUrl(passive.icon)}
-          {@const passiveEnhance = enhanceExtra(
-            passive.description,
-            passive.enhanceDescription,
-          )}
-          <article
-            id="kit-P{passive.id}"
-            class="kit-card rounded-xl p-4 flex gap-3"
-            class:kit-card-flash={flashId === `kit-P${passive.id}`}
-            style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-          >
-            {#if icon}
-              <img src={icon} alt="" class="kit-icon shrink-0" loading="lazy" />
-            {/if}
-            <div class="min-w-0 flex-1 flex flex-col gap-1">
-              <div class="flex flex-wrap items-baseline gap-2">
-                <h3
-                  class="text-sm font-medium"
-                  style="color: var(--foreground-color);"
-                >
-                  {passive.name}
-                </h3>
-                <span
-                  class="text-[0.65rem] uppercase tracking-wider"
-                  style="color: var(--foreground-mid);"
-                >
-                  {passiveKindLabel(passive)}
-                </span>
-              </div>
-              {@render descriptionBlock(passive.description, passiveEnhance)}
-            </div>
-          </article>
-        {/each}
-      </div>
-    </section>
-
-    <!-- Constellations -->
-    <section class="flex flex-col gap-3">
-      <h2 class="tracking-widest" style="color: var(--foreground-color);">
-        Constellations
-      </h2>
-      <div class="flex flex-col gap-2">
-        {#each kit.constellations as c}
-          {@const icon = iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
-          {@const constEnhance = enhanceExtra(
-            c.description,
-            c.enhanceDescription,
-          )}
-          <article
-            id="kit-T{c.id}"
-            class="kit-card rounded-xl p-4 flex gap-3"
-            class:kit-card-flash={flashId === `kit-T${c.id}`}
-            style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-          >
-            {#if icon}
-              <img src={icon} alt="" class="kit-icon shrink-0" loading="lazy" />
-            {/if}
-            <div class="min-w-0 flex-1 flex flex-col gap-1">
-              <div class="flex flex-wrap items-baseline gap-2">
-                <span
-                  class="text-[0.65rem] font-semibold tracking-wider"
-                  style="color: {elColor};"
-                >
-                  C{c.index}
-                </span>
-                <h3
-                  class="text-sm font-medium"
-                  style="color: var(--foreground-color);"
-                >
-                  {c.name}
-                </h3>
-              </div>
-              {@render descriptionBlock(c.description, constEnhance)}
-            </div>
-          </article>
-        {/each}
-      </div>
-    </section>
-  {:else if builds}
-    <!-- Weapons -->
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-col gap-1">
-        <h2 class="tracking-widest" style="color: var(--foreground-color);">
-          Weapons
-        </h2>
-      </div>
-      {#if rankedWeapons.length === 0}
-        <p class="text-xs" style="color: var(--foreground-mid);">
-          No weapon data yet.
-        </p>
-      {:else}
-        <div class="flex flex-wrap gap-2">
-          {#each rankedWeapons as w}
-            {@const weapon = weaponByKey.get(w.key)}
-            {@const icon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-            <div
-              class="weapon-card relative group rounded-xl overflow-hidden"
-              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-            >
-              <div class="weapon-icon-wrap">
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt={weapon?.name ?? w.key}
-                    class="weapon-icon"
-                    loading="lazy"
-                  />
-                {:else}
-                  <div
-                    class="weapon-icon flex items-center justify-center text-[0.65rem] px-1 text-center"
-                    style="color: var(--foreground-mid);"
-                  >
-                    {w.key}
-                  </div>
-                {/if}
-              </div>
-              <WeaponTooltip {weapon} weaponKey={w.key} />
-            </div>
-          {/each}
-        </div>
-      {/if}
-    </section>
-
-    <!-- Artifact sets -->
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-col gap-1">
-        <h2 class="tracking-widest" style="color: var(--foreground-color);">
-          Artifact sets
-        </h2>
-      </div>
-      {#if !builds.sets?.length}
-        <p class="text-xs" style="color: var(--foreground-mid);">
-          No set data yet.
-        </p>
-      {:else}
-        <div class="flex flex-wrap gap-2">
-          {#each builds.sets as s}
-            {@const set = artifactSetByKey.get(s.key)}
-            {@const icon = set ? artifactIconUrl(set.icon) : null}
-            <div
-              class="weapon-card relative group rounded-xl overflow-hidden"
-              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-            >
-              <div class="weapon-icon-wrap">
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt={set?.name ?? s.key}
-                    class="weapon-icon"
-                    loading="lazy"
-                  />
-                {:else}
-                  <div
-                    class="weapon-icon flex items-center justify-center text-[0.65rem] px-1 text-center"
-                    style="color: var(--foreground-mid);"
-                  >
-                    {s.key}
-                  </div>
-                {/if}
-                {#if s.count}
-                  <div
-                    class="absolute bottom-0 left-0 right-0 flex justify-end px-1.5 pb-1.5 pt-4 z-10"
-                    style="background: linear-gradient(transparent, color-mix(in srgb, var(--background-color) 85%, transparent));"
-                  >
-                    <span
-                      class="text-[0.65rem] font-semibold leading-tight tracking-wider"
-                      style="color: {elColor};"
-                    >
-                      {s.count}pc
-                    </span>
-                  </div>
-                {/if}
-              </div>
-              <ArtifactTooltip
-                {set}
-                setKey={s.key}
-                pieceCount={s.count ?? null}
-              />
-            </div>
-          {/each}
-        </div>
-      {/if}
-    </section>
-
-    <!-- Main stats -->
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-col gap-1">
-        <h2 class="tracking-widest" style="color: var(--foreground-color);">
-          Main stats
-        </h2>
-      </div>
-      <div class="grid gap-3 sm:grid-cols-3">
-        {#each MAIN_STAT_SLOTS as slot}
-          <div
-            class="rounded-xl p-3 flex flex-col gap-2"
-            style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 18%, transparent);"
-          >
-            <h3
-              class="flex items-center gap-1.5 text-[0.65rem] uppercase tracking-wider"
-              style="color: var(--foreground-mid);"
-            >
+          <a href="/characters" class="back-link">← All characters</a>
+          <p class="hero-eyebrow" style="color: {elColor};">
+            {kit.title || "Character"}
+          </p>
+          <h1 class="page-title">{kit.name}</h1>
+          <div class="hero-meta">
+            {#if elementIcon}
               <img
-                src={artifactSlotIconUrl(slot.key)}
-                alt=""
-                class="stat-icon main-stat-icon shrink-0"
+                src={elementIcon}
+                alt={kit.element}
+                title={kit.element}
+                class="stat-icon hero-meta-icon"
                 loading="lazy"
               />
-              {slot.label}
-            </h3>
-            {#if builds.main_stats[slot.key].length === 0}
-              <p class="text-xs" style="color: var(--foreground-mid);">—</p>
             {:else}
-              <ul class="flex flex-col gap-1.5">
-                {#each builds.main_stats[slot.key] as stat}
-                  {@const icon = statIconUrl(stat.key)}
-                  <li class="flex items-center justify-between gap-2 text-xs">
-                    <span class="flex items-center gap-1.5 min-w-0">
-                      {#if icon}
-                        <img
-                          src={icon}
-                          alt=""
-                          class="stat-icon main-stat-icon shrink-0"
-                          loading="lazy"
-                        />
-                      {/if}
-                      <span style="color: var(--foreground-color);"
-                        >{translateStatKey(stat.key)}</span
-                      >
-                    </span>
-                  </li>
-                {/each}
-              </ul>
+              <span style="color: {elColor};">{kit.element}</span>
+            {/if}
+            <span aria-hidden="true">·</span>
+            {#if weaponIcon}
+              <img
+                src={weaponIcon}
+                alt={weaponLabel}
+                title={weaponLabel}
+                class="stat-icon hero-meta-icon"
+                loading="lazy"
+              />
+            {:else}
+              <span>{weaponLabel}</span>
+            {/if}
+            <span aria-hidden="true">·</span>
+            <span>{kit.rarity}★</span>
+            {#if region}
+              <span aria-hidden="true">·</span>
+              <span>{region}</span>
+            {/if}
+            {#if kit.birthday}
+              <span aria-hidden="true">·</span>
+              <span>{kit.birthday.month}/{kit.birthday.day}</span>
             {/if}
           </div>
-        {/each}
+        </div>
       </div>
     </section>
 
-    <!-- Recommended substats -->
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-col gap-1">
-        <h2 class="tracking-widest" style="color: var(--foreground-color);">
-          Recommended substats
-        </h2>
-      </div>
-      {#if recommendedSubstats.length === 0}
-        <p class="text-xs" style="color: var(--foreground-mid);">
-          No substat data yet.
-        </p>
-      {:else}
-        <div class="flex flex-wrap gap-2">
-          {#each recommendedSubstats as roll}
-            {@const icon = statIconUrl(roll.key)}
-            <button
-              type="button"
-              class="stat-chip group relative flex items-center justify-center rounded-xl"
-              style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, {roll.matchesMain
-                ? elColor
-                : 'var(--accent-1)'} {roll.matchesMain
-                ? 40
-                : 18}%, transparent);"
-              aria-label={translateStatKey(roll.key)}
-            >
-              {#if icon}
-                <img src={icon} alt="" class="stat-icon" loading="lazy" />
-              {:else}
-                <span
-                  class="text-[0.65rem] px-1 text-center leading-tight"
-                  style="color: var(--foreground-mid);"
-                >
-                  {translateStatKey(roll.key)}
-                </span>
-              {/if}
-              <HoverTooltip class="max-w-56">
-                <div class="text-xs font-medium leading-tight">
-                  {translateStatKey(roll.key)}
-                </div>
-                {#if roll.matchesMain}
-                  <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                    Also a main on {roll.mainSlots.join(" / ")}
-                  </div>
+    <SlidingTabs
+      options={TAB_OPTIONS}
+      bind:value={activeTab}
+      accent={elColor}
+      aria-label="Character sections"
+      class="board-tabs"
+    />
+
+    <div class="board-body">
+      {#if activeTab === "skills"}
+        <section class="board-section">
+          <h2 class="section-title">Talents</h2>
+          <div class="kit-list">
+            {#each kit.skills as skill}
+              {@const icon =
+                iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
+              {@const skillEnhance = enhanceExtra(
+                skill.description,
+                skill.enhanceDescription,
+              )}
+              <article
+                id="kit-S{skill.id}"
+                class="kit-row"
+                class:kit-row-flash={flashId === `kit-S${skill.id}`}
+              >
+                {#if icon}
+                  <img
+                    src={icon}
+                    alt=""
+                    class="kit-icon shrink-0"
+                    loading="lazy"
+                  />
                 {/if}
-                <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                  {roll.mean.toFixed(1)} avg liquid rolls · {builds
-                    .substat_rolls_liquid.teams} team{builds
-                    .substat_rolls_liquid.teams === 1
-                    ? ""
-                    : "s"}
+                <div class="kit-copy">
+                  <div class="kit-heading">
+                    <h3 class="card-title">{skill.name}</h3>
+                    <span class="card-kicker">
+                      {SKILL_LABELS[skill.type] ?? skill.type}
+                    </span>
+                  </div>
+                  {@render descriptionBlock(skill.description, skillEnhance)}
                 </div>
-              </HoverTooltip>
-            </button>
-          {/each}
+              </article>
+            {/each}
+          </div>
+        </section>
+
+        <section class="board-section">
+          <h2 class="section-title">Passives</h2>
+          <div class="kit-list">
+            {#each kit.passives as passive}
+              {@const icon =
+                iconUrl(passive.icon, "talent") ?? getUiAssetUrl(passive.icon)}
+              {@const passiveEnhance = enhanceExtra(
+                passive.description,
+                passive.enhanceDescription,
+              )}
+              <article
+                id="kit-P{passive.id}"
+                class="kit-row"
+                class:kit-row-flash={flashId === `kit-P${passive.id}`}
+              >
+                {#if icon}
+                  <img
+                    src={icon}
+                    alt=""
+                    class="kit-icon shrink-0"
+                    loading="lazy"
+                  />
+                {/if}
+                <div class="kit-copy">
+                  <div class="kit-heading">
+                    <h3 class="card-title">{passive.name}</h3>
+                    <span class="card-kicker">{passiveKindLabel(passive)}</span>
+                  </div>
+                  {@render descriptionBlock(passive.description, passiveEnhance)}
+                </div>
+              </article>
+            {/each}
+          </div>
+        </section>
+
+        <section class="board-section">
+          <h2 class="section-title">Constellations</h2>
+          <div class="kit-list">
+            {#each kit.constellations as c}
+              {@const icon = iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
+              {@const constEnhance = enhanceExtra(
+                c.description,
+                c.enhanceDescription,
+              )}
+              <article
+                id="kit-T{c.id}"
+                class="kit-row"
+                class:kit-row-flash={flashId === `kit-T${c.id}`}
+              >
+                {#if icon}
+                  <img
+                    src={icon}
+                    alt=""
+                    class="kit-icon shrink-0"
+                    loading="lazy"
+                  />
+                {/if}
+                <div class="kit-copy">
+                  <div class="kit-heading">
+                    <span class="const-index" style="color: {elColor};">
+                      C{c.index}
+                    </span>
+                    <h3 class="card-title">{c.name}</h3>
+                  </div>
+                  {@render descriptionBlock(c.description, constEnhance)}
+                </div>
+              </article>
+            {/each}
+          </div>
+        </section>
+      {:else if builds}
+        <section class="board-section">
+          <h2 class="section-title">Weapons</h2>
+          {#if rankedWeapons.length === 0}
+            <p class="muted-note">No weapon data yet.</p>
+          {:else}
+            <div class="equip-grid">
+              {#each rankedWeapons as w}
+                {@const weapon = weaponByKey.get(w.key)}
+                {@const icon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
+                <div class="equip-tile relative group">
+                  <div class="equip-icon-wrap">
+                    {#if icon}
+                      <img
+                        src={icon}
+                        alt={weapon?.name ?? w.key}
+                        class="equip-icon"
+                        loading="lazy"
+                      />
+                    {:else}
+                      <div class="equip-fallback">{w.key}</div>
+                    {/if}
+                  </div>
+                  <WeaponTooltip {weapon} weaponKey={w.key} />
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </section>
+
+        <section class="board-section">
+          <h2 class="section-title">Artifact sets</h2>
+          {#if !builds.sets?.length}
+            <p class="muted-note">No set data yet.</p>
+          {:else}
+            <div class="equip-grid">
+              {#each builds.sets as s}
+                {@const set = artifactSetByKey.get(s.key)}
+                {@const icon = set ? artifactIconUrl(set.icon) : null}
+                <div class="equip-tile relative group">
+                  <div class="equip-icon-wrap">
+                    {#if icon}
+                      <img
+                        src={icon}
+                        alt={set?.name ?? s.key}
+                        class="equip-icon"
+                        loading="lazy"
+                      />
+                    {:else}
+                      <div class="equip-fallback">{s.key}</div>
+                    {/if}
+                    {#if s.count}
+                      <div class="piece-badge">
+                        <span style="color: {elColor};">{s.count}pc</span>
+                      </div>
+                    {/if}
+                  </div>
+                  <ArtifactTooltip
+                    {set}
+                    setKey={s.key}
+                    pieceCount={s.count ?? null}
+                  />
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </section>
+
+        <section class="board-section">
+          <h2 class="section-title">Main stats</h2>
+          <div class="main-stats">
+            {#each MAIN_STAT_SLOTS as slot}
+              <div class="main-stat-col">
+                <h3 class="slot-label">
+                  <img
+                    src={artifactSlotIconUrl(slot.key)}
+                    alt=""
+                    class="stat-icon main-stat-icon shrink-0"
+                    loading="lazy"
+                  />
+                  {slot.label}
+                </h3>
+                {#if builds.main_stats[slot.key].length === 0}
+                  <p class="muted-note">—</p>
+                {:else}
+                  <ul class="stat-list">
+                    {#each builds.main_stats[slot.key] as stat}
+                      {@const icon = statIconUrl(stat.key)}
+                      <li class="stat-row">
+                        <span class="flex items-center gap-1.5 min-w-0">
+                          {#if icon}
+                            <img
+                              src={icon}
+                              alt=""
+                              class="stat-icon main-stat-icon shrink-0"
+                              loading="lazy"
+                            />
+                          {/if}
+                          <span class="stat-name"
+                            >{translateStatKey(stat.key)}</span
+                          >
+                        </span>
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </section>
+
+        <section class="board-section">
+          <h2 class="section-title">Recommended substats</h2>
+          {#if recommendedSubstats.length === 0}
+            <p class="muted-note">No substat data yet.</p>
+          {:else}
+            <div class="substat-row">
+              {#each recommendedSubstats as roll}
+                {@const icon = statIconUrl(roll.key)}
+                <button
+                  type="button"
+                  class="stat-chip group relative flex items-center justify-center"
+                  class:is-main={roll.matchesMain}
+                  aria-label={translateStatKey(roll.key)}
+                >
+                  {#if icon}
+                    <img src={icon} alt="" class="stat-icon" loading="lazy" />
+                  {:else}
+                    <span class="stat-chip-fallback">
+                      {translateStatKey(roll.key)}
+                    </span>
+                  {/if}
+                  <HoverTooltip class="max-w-56">
+                    <div class="text-xs font-medium leading-tight">
+                      {translateStatKey(roll.key)}
+                    </div>
+                    {#if roll.matchesMain}
+                      <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
+                        Also a main on {roll.mainSlots.join(" / ")}
+                      </div>
+                    {/if}
+                    <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
+                      {roll.mean.toFixed(1)} avg liquid rolls · {builds
+                        .substat_rolls_liquid.teams} team{builds
+                        .substat_rolls_liquid.teams === 1
+                        ? ""
+                        : "s"}
+                    </div>
+                  </HoverTooltip>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </section>
+      {:else}
+        <div class="board-section">
+          <EmptyState message={`No gcsim build summary for ${kit.name} yet.`} />
         </div>
       {/if}
-    </section>
-  {:else}
-    <p class="text-sm" style="color: var(--foreground-mid);">
-      No gcsim build summary for {kit.name} yet.
-    </p>
-  {/if}
-</main>
+    </div>
+  </Surface>
+</PageShell>
 
 <style>
+  .back-link {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+    text-decoration: none;
+    width: fit-content;
+  }
+
+  .back-link:hover {
+    color: var(--foreground-color);
+  }
+
+  .hero {
+    border-bottom: var(--border-width) solid
+      color-mix(in srgb, var(--hero-accent, var(--foreground-mid)) 35%, transparent);
+  }
+
   .hero-bg {
     background-size: cover;
     background-position: center;
@@ -735,7 +602,7 @@
   .hero-portrait {
     width: clamp(5.5rem, 28vw, 9rem);
     flex-shrink: 0;
-    border-radius: 0.75rem;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
   }
@@ -756,42 +623,260 @@
     z-index: 1;
   }
 
-  .page-tab {
+  .hero-eyebrow {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.15;
+    color: var(--foreground-color);
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
     color: var(--foreground-mid);
   }
 
-  .page-tab-active {
-    color: var(--accent-1);
+  .section-title {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+    margin-bottom: var(--space-3);
+  }
+
+  .card-title {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--foreground-color);
+  }
+
+  .card-kicker,
+  .const-index,
+  .slot-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--foreground-mid);
+  }
+
+  .const-index {
+    font-weight: 600;
+  }
+
+  .slot-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .muted-note {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .stat-name {
+    color: var(--foreground-color);
+    font-size: var(--text-xs);
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .stat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  /* One board: white hairlines, no nested Surfaces */
+  :global(.char-board) {
+    --border-subtle: rgba(255, 255, 255, 0.14);
+    --border-default: rgba(255, 255, 255, 0.24);
+    --border-strong: rgba(255, 255, 255, 0.45);
+    overflow: hidden;
+  }
+
+  :global(.char-board .board-tabs.sliding-tabs),
+  :global(.char-board .sliding-tabs.board-tabs) {
+    border: none;
+    border-radius: 0;
+    border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+  }
+
+  .board-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .board-section {
+    padding: var(--space-4);
+  }
+
+  .kit-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .kit-row {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem 0;
+    scroll-margin-top: 5.5rem;
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .kit-row + .kit-row {
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.1);
+  }
+
+  .kit-copy {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .kit-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
   }
 
   .kit-icon {
     width: 48px;
     height: 48px;
     object-fit: contain;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--background-color) 70%, transparent);
   }
 
-  .weapon-card {
-    width: 4.5rem;
+  .equip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
-  .weapon-icon-wrap {
+  .equip-tile {
+    width: 4.5rem;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .equip-icon-wrap {
     width: 4.5rem;
     height: 4.5rem;
+    position: relative;
   }
 
-  .weapon-icon {
+  .equip-icon {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
+  .equip-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 0.25rem;
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--foreground-mid);
+  }
+
+  .piece-badge {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 0.35rem 0.35rem;
+    background: linear-gradient(
+      transparent,
+      color-mix(in srgb, var(--background-color) 85%, transparent)
+    );
+    z-index: 10;
+  }
+
+  .piece-badge span {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+  }
+
+  .main-stats {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  @media (min-width: 640px) {
+    .main-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+    }
+
+    .main-stat-col + .main-stat-col {
+      border-left: var(--border-width) solid rgba(255, 255, 255, 0.14);
+      padding-left: var(--space-3);
+      margin-left: var(--space-3);
+    }
+  }
+
+  .substat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
   .stat-chip {
     width: 2.75rem;
     height: 2.75rem;
     padding: 0.55rem;
+    border-radius: var(--radius-md);
+    background: transparent;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.24);
+    cursor: pointer;
+  }
+
+  .stat-chip.is-main {
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+
+  .stat-chip-fallback {
+    font-size: 0.65rem;
+    padding: 0.15rem;
+    text-align: center;
+    line-height: 1.15;
+    color: var(--foreground-mid);
   }
 
   .stat-icon {
@@ -799,7 +884,6 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    /* Lunaris icons are dark glyphs — force light on dark theme */
     filter: brightness(0) invert(1);
     opacity: 0.7;
   }
@@ -819,46 +903,38 @@
     opacity: 0.65;
   }
 
-  .kit-card {
-    scroll-margin-top: 5.5rem;
-    transition:
-      border-color 0.2s ease,
-      background-color 0.2s ease,
-      box-shadow 0.2s ease;
+  :global(.char-detail) {
+    --border-subtle: rgba(255, 255, 255, 0.14);
+    --border-default: rgba(255, 255, 255, 0.24);
+    --border-strong: rgba(255, 255, 255, 0.45);
   }
 
-  .kit-card-flash {
-    border-color: color-mix(
-      in srgb,
-      var(--kit-flash) 65%,
-      transparent
-    ) !important;
+  :global(.char-detail.no-page-anim) {
+    --sk-animation: none;
+    --pulse-animation: none;
+  }
+
+  .kit-row-flash {
+    margin-inline: calc(-1 * var(--space-4));
+    padding-inline: var(--space-4);
     background: color-mix(
       in srgb,
-      var(--kit-flash) 14%,
-      var(--background-mid)
-    ) !important;
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--kit-flash) 40%, transparent),
-      0 0 24px color-mix(in srgb, var(--kit-flash) 22%, transparent);
+      var(--kit-flash) 12%,
+      transparent
+    );
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 65%, transparent);
     animation: kit-target-flash 1.6s ease-out;
   }
 
   @keyframes kit-target-flash {
     0% {
-      box-shadow:
-        0 0 0 0 color-mix(in srgb, var(--kit-flash) 55%, transparent),
-        0 0 0 transparent;
+      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 0%, transparent);
     }
     35% {
-      box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--kit-flash) 45%, transparent),
-        0 0 28px color-mix(in srgb, var(--kit-flash) 30%, transparent);
+      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--kit-flash) 80%, transparent);
     }
     100% {
-      box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--kit-flash) 40%, transparent),
-        0 0 24px color-mix(in srgb, var(--kit-flash) 22%, transparent);
+      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 65%, transparent);
     }
   }
 

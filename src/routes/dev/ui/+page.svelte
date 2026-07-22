@@ -15,6 +15,8 @@
   import Badge from "$lib/ui/components/Badge.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
+  import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
+  import BrowseFlipCard from "$lib/ui/components/BrowseFlipCard.svelte";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
   import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
@@ -34,8 +36,13 @@
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
-  import type { AbyssTeam } from "$lib/definitions";
+  import type { AbyssTeam, CharacterOwned } from "$lib/definitions";
   import { toGoodKey, weaponTypeLabel, isNewCharacter } from "$lib/utils";
+  import {
+    filterAndSortCharacters,
+    type CharacterSortKey,
+    type OwnershipFilter,
+  } from "$lib/character-filter";
 
   let demoTags: string[] = $state([]);
   let demoTagOptions = $derived(
@@ -44,6 +51,54 @@
   let demoCharByKey = $derived(
     new Map($charactersOwned.map((c) => [toGoodKey(c.name), c])),
   );
+
+  // Character grid demo (browse + roster modes)
+  let gridMode = $state<"browse" | "roster">("browse");
+  let gridAffordance = $state<"hint" | "flip" | "both">("both");
+  let gridSearch = $state("");
+  let gridRarity = $state(new Set<string>());
+  let gridElements = $state(new Set<string>());
+  let gridWeapons = $state(new Set<string>());
+  let gridOwnership = $state<OwnershipFilter>("all");
+  let gridSortBy = $state<CharacterSortKey>("name");
+  let gridSortAsc = $state(true);
+  let gridRoster = $state<CharacterOwned[]>([]);
+  let showGridHint = $derived(
+    gridMode === "browse" &&
+      (gridAffordance === "hint" || gridAffordance === "both"),
+  );
+  let useFlipCards = $derived(
+    gridMode === "browse" &&
+      (gridAffordance === "flip" || gridAffordance === "both"),
+  );
+
+  $effect(() => {
+    // Clone roster once characters load so toggles don't mutate the store.
+    if (gridRoster.length === 0 && $charactersOwned.length > 0) {
+      gridRoster = $charactersOwned.map((c) => ({ ...c }));
+    }
+  });
+
+  let gridVisible = $derived(
+    filterAndSortCharacters(
+      gridMode === "roster" ? gridRoster : $charactersOwned,
+      {
+        search: gridSearch,
+        rarity: gridRarity,
+        elements: gridElements,
+        weapons: gridWeapons,
+        ownership: gridOwnership,
+        sortBy: gridSortBy,
+        sortAsc: gridSortAsc,
+      },
+    ).slice(0, 24),
+  );
+
+  function toggleGridOwned(nameId: string) {
+    gridRoster = gridRoster.map((c) =>
+      c.name_id === nameId ? { ...c, isOwned: !c.isOwned } : c,
+    );
+  }
 
   const COLOR_LABELS: Record<ThemeColorKey, string> = {
     "background-color": "Background",
@@ -334,8 +389,8 @@
       <h2>New patterns</h2>
       <p>
         Candidates for route migration — SlidingTabs, CharacterPortraitCard,
-        TeamCardHand, CharacterTagSearch, SolutionDots, EmptyState,
-        LoadingState.
+        CharacterFilterBar, TeamCardHand, CharacterTagSearch, SolutionDots,
+        EmptyState, LoadingState.
       </p>
     </div>
 
@@ -485,6 +540,119 @@
           </p>
         {:else}
           <p class="token-meta">Roster not loaded yet.</p>
+        {/if}
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">Character grid</p>
+        <p class="token-meta mb-2">
+          Shared filter bar + CharacterPortraitCard. Browse = links; Roster =
+          toggle owned with the same dim overlay. Affordance prototypes apply to
+          Browse only. Cap 24 for the gallery.
+        </p>
+        <SegmentedControl
+          options={[
+            { value: "browse", label: "Browse" },
+            { value: "roster", label: "Roster" },
+          ]}
+          bind:value={gridMode}
+          aria-label="Grid interaction mode"
+        />
+        {#if gridMode === "browse"}
+          <div class="mt-2">
+            <p class="token-meta mb-1">Affordance</p>
+            <SegmentedControl
+              options={[
+                { value: "hint", label: "Hint" },
+                { value: "flip", label: "Flip" },
+                { value: "both", label: "Both" },
+              ]}
+              bind:value={gridAffordance}
+              aria-label="Browse navigate affordance"
+            />
+          </div>
+        {/if}
+        <div class="mt-2">
+          <CharacterFilterBar
+            bind:search={gridSearch}
+            bind:rarityFilter={gridRarity}
+            bind:elementFilter={gridElements}
+            bind:weaponFilter={gridWeapons}
+            bind:ownershipFilter={gridOwnership}
+            bind:sortBy={gridSortBy}
+            bind:sortAsc={gridSortAsc}
+          />
+        </div>
+        {#if showGridHint}
+          <div class="grid-page-head mt-3">
+            <p class="grid-page-title">Characters</p>
+            <p class="grid-page-hint">Tap a character for details</p>
+          </div>
+        {/if}
+        <p class="token-meta mt-2 mb-2">{gridVisible.length} shown</p>
+        {#if gridVisible.length}
+          <div class="character-grid">
+            {#each gridVisible as character (character.name_id)}
+              {#if gridMode === "browse"}
+                {#if useFlipCards}
+                  <BrowseFlipCard
+                    {character}
+                    href="/characters/{character.name_id}"
+                    dimmed={!character.isOwned}
+                  />
+                {:else}
+                  <CharacterPortraitCard
+                    {character}
+                    href="/characters/{character.name_id}"
+                    tintBackground
+                    dimmed={!character.isOwned}
+                  >
+                    {#snippet badge()}
+                      {#if isNewCharacter(character.released_at)}
+                        <span class="new-badge absolute top-1.5 right-1.5 z-20"
+                          >NEW</span
+                        >
+                      {/if}
+                    {/snippet}
+                    {#snippet meta()}
+                      <div class="grid-meta-name">{character.name}</div>
+                      <div class="grid-meta-sub">
+                        {character.rarity}★ · {weaponTypeLabel(
+                          character.weapon_type ?? "",
+                        )}
+                      </div>
+                    {/snippet}
+                  </CharacterPortraitCard>
+                {/if}
+              {:else}
+                <CharacterPortraitCard
+                  {character}
+                  tintBackground
+                  dimmed={!character.isOwned}
+                  pressed={character.isOwned}
+                  onclick={() => toggleGridOwned(character.name_id)}
+                >
+                  {#snippet badge()}
+                    {#if isNewCharacter(character.released_at)}
+                      <span class="new-badge absolute top-1.5 right-1.5 z-20"
+                        >NEW</span
+                      >
+                    {/if}
+                  {/snippet}
+                  {#snippet meta()}
+                    <div class="grid-meta-name">{character.name}</div>
+                    <div class="grid-meta-sub">
+                      {character.rarity}★ · {weaponTypeLabel(
+                        character.weapon_type ?? "",
+                      )}
+                    </div>
+                  {/snippet}
+                </CharacterPortraitCard>
+              {/if}
+            {/each}
+          </div>
+        {:else}
+          <EmptyState message="No characters match." />
         {/if}
       </Surface>
 
@@ -790,6 +958,69 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 5.5rem));
     gap: var(--space-2);
+  }
+
+  .character-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  @media (min-width: 640px) {
+    .character-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 768px) {
+    .character-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .character-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+
+  .grid-page-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .grid-page-title {
+    font-family: var(--font-display);
+    font-size: var(--h2-size);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .grid-page-hint {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .grid-meta-name {
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--foreground-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .grid-meta-sub {
+    font-size: 0.6rem;
+    line-height: 1.15;
+    color: var(--foreground-mid);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .status-row {

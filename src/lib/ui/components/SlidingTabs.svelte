@@ -36,14 +36,15 @@
   role="tablist"
   aria-label={ariaLabel}
   class="sliding-tabs relative flex overflow-hidden {className}"
+  style="--tab-accent: {accent};"
 >
   <span
     class="indicator-fill absolute inset-y-0 pointer-events-none"
-    style="left: {left}; width: {width}; background: color-mix(in srgb, {accent} 10%, var(--background-mid));"
+    style="left: {left}; width: {width}; background: color-mix(in srgb, var(--tab-accent) 10%, var(--background-mid));"
   ></span>
   <span
     class="indicator-bar absolute bottom-0 h-[1.5px] pointer-events-none"
-    style="left: {left}; width: {width}; background: {accent};"
+    style="left: {left}; width: {width}; background: var(--tab-accent);"
   ></span>
   {#each options as option (option.value)}
     <button
@@ -82,6 +83,6 @@
   }
 
   .tab-active {
-    color: var(--accent-1);
+    color: var(--tab-accent, var(--foreground-color));
   }
 </style>

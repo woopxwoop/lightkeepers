@@ -7,6 +7,8 @@
   let {
     character,
     href,
+    onclick,
+    pressed = false,
     dimmed = false,
     tintBackground = false,
     class: className = "",
@@ -18,6 +20,10 @@
     character: CharacterOwned | Character | undefined;
     /** When set, the card renders as a link. */
     href?: string;
+    /** When set (and no href), the card renders as a toggle button. */
+    onclick?: (e: MouseEvent) => void;
+    /** Selection / owned pressed state for button mode. */
+    pressed?: boolean;
     /** Dim overlay (unowned / unavailable). */
     dimmed?: boolean;
     /** Soft element-tinted tile background (teams list/detail). */
@@ -36,6 +42,9 @@
     tintBackground ? elementBg(character?.element) : "var(--background-color)",
   );
   let tip = $derived(title ?? character?.name ?? "");
+  let shellClass = $derived(
+    `char-card relative overflow-hidden ${className}`.trim(),
+  );
 </script>
 
 {#snippet body()}
@@ -70,15 +79,27 @@
 {#if href}
   <a
     {href}
-    class="char-card relative overflow-hidden no-underline {className}"
+    class="{shellClass} no-underline"
     style="--shine: {shine}; background: {bg};"
     title={tip || undefined}
   >
     {@render body()}
   </a>
+{:else if onclick}
+  <button
+    type="button"
+    class={shellClass}
+    class:is-pressed={pressed}
+    style="--shine: {shine}; background: {bg};"
+    title={tip || undefined}
+    aria-pressed={pressed}
+    {onclick}
+  >
+    {@render body()}
+  </button>
 {:else}
   <div
-    class="char-card relative overflow-hidden {className}"
+    class={shellClass}
     style="--shine: {shine}; background: {bg};"
     title={tip || undefined}
   >
@@ -91,9 +112,24 @@
     aspect-ratio: 3 / 4;
     border-radius: var(--radius-md);
     display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    text-align: left;
+    cursor: inherit;
     transition:
       box-shadow 0.35s ease,
-      transform 0.2s ease;
+      transform 0.2s ease,
+      outline-color var(--control-duration) var(--control-ease);
+  }
+
+  button.char-card {
+    cursor: pointer;
+  }
+
+  button.char-card.is-pressed {
+    outline: var(--border-width) solid rgba(255, 255, 255, 0.4);
+    outline-offset: -1px;
   }
 
   .char-card::after {
