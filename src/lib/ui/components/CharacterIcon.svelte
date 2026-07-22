@@ -141,10 +141,10 @@
   /* ── TCG card (less zoom) ────────────────────────────────────── */
 
   .icon-container-tcg img {
-    /* Top-anchored: the card's own top edge stays at the frame top, so
-       heads keep their headroom without a black gap above the art. */
+    /* Top of frame = top of card art (also when parents force object-fit: cover). */
     transform-origin: 50% 0%;
     transform: scale(calc(1.2 * var(--czoom)));
+    object-position: top center;
   }
 
   /* ── Enka headshot (square) ──────────────────────────────────── */

@@ -453,6 +453,10 @@
     object-fit: cover;
   }
 
+  .build-art--tcg .build-avatar :global(img) {
+    object-position: top center;
+  }
+
   .build-art-fade {
     position: absolute;
     inset: 0;
@@ -466,7 +470,7 @@
 
   .build-art-meta {
     position: absolute;
-    left: 2.4rem;
+    left: 3rem;
     right: 0.75rem;
     bottom: 0.65rem;
     z-index: 2;
@@ -483,6 +487,7 @@
   .char-level {
     margin-top: 0.15rem;
     font-size: 0.7rem;
+    line-height: 1.2;
     color: var(--foreground-mid);
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
   }
@@ -490,8 +495,9 @@
   .cons-rail {
     position: absolute;
     left: 0.45rem;
-    top: 50%;
-    transform: translateY(-50%);
+    /* Match name/level block bottom; sit slightly above raw inset so circles
+       don't hang under the text baseline. */
+    bottom: 0.85rem;
     z-index: 2;
     display: flex;
     flex-direction: column;

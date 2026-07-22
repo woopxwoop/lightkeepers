@@ -747,6 +747,10 @@
     object-fit: cover;
   }
 
+  .hero-portrait :global(.icon-container-tcg img) {
+    object-position: top center;
+  }
+
   .hero-copy {
     position: relative;
     z-index: 1;
