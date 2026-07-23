@@ -242,12 +242,58 @@ export const teamsOwnedStygianBottom = derived<
   ),
 );
 
-// ── All-teams stores (seeded by abyss / stygian page loads) ────────────────
+// ── All-teams stores (warmed from /api/static; not shipped in page __data.json) ─
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
 export const allTeamsStygian = writable<StygianTeam[]>([]);
 
+/** True after a successful /api/static boards fetch (or empty payload). */
+export const staticBoardsLoaded = writable(false);
+
 /** True after a successful /api/teams fetch (or empty owned roster short-circuit). */
 export const teamsOwnedLoaded = writable(false);
+
+let staticBoardsInFlight: Promise<void> | null = null;
+
+/**
+ * Fetches the full meta team lists once via /api/static and seeds the stores.
+ * Kept out of abyss/stygian page loads so client navigations stay lean.
+ * Coalesces concurrent callers; no-ops once loaded.
+ */
+export async function ensureStaticBoards(): Promise<void> {
+  if (get(staticBoardsLoaded)) return;
+  if (staticBoardsInFlight) return staticBoardsInFlight;
+
+  const pending = (async () => {
+    const res = await fetch("/api/static");
+    if (!res.ok) throw new Error(`static boards fetch failed: ${res.status}`);
+    const data = (await res.json()) as {
+      allTeamsAbyss?: AbyssTeam[];
+      allTeamsStygian?: StygianTeam[];
+      latestAbyssVersion?: { version_number?: number };
+      latestStygianVersion?: { version_number?: number };
+    };
+    allTeamsAbyss.set(data.allTeamsAbyss ?? []);
+    allTeamsStygian.set(data.allTeamsStygian ?? []);
+    if (
+      typeof data.latestAbyssVersion?.version_number === "number" &&
+      typeof data.latestStygianVersion?.version_number === "number"
+    ) {
+      setVersionNumbers(
+        data.latestAbyssVersion.version_number,
+        data.latestStygianVersion.version_number,
+      );
+    }
+    staticBoardsLoaded.set(true);
+  })();
+
+  staticBoardsInFlight = pending;
+  void pending
+    .finally(() => {
+      if (staticBoardsInFlight === pending) staticBoardsInFlight = null;
+    })
+    .catch(() => {});
+  return pending;
+}
 
 // ── Near-miss stores ───────────────────────────────────────────────────────
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);

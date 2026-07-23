@@ -8,6 +8,10 @@ const emptyAbyssEnemies: AbyssEnemies = {
   openTime: null,
 };
 
+/**
+ * Keep this payload small so client nav from home isn't blocked on shipping
+ * the full abyss team list. Meta teams load via ensureStaticBoards() on the client.
+ */
 export const load: PageServerLoad = async ({ fetch }) => {
   const staticRes = await fetch("/api/static");
   const staticData = staticRes.ok ? await staticRes.json() : null;
@@ -18,7 +22,6 @@ export const load: PageServerLoad = async ({ fetch }) => {
       description:
         "Recommended Spiral Abyss team compositions for Genshin Impact.",
     },
-    allTeamsAbyss: staticData?.allTeamsAbyss ?? [],
     abyssEnemies: (staticData?.abyssEnemies ?? emptyAbyssEnemies) as AbyssEnemies,
   };
 };

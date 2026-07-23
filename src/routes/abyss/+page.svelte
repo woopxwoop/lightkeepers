@@ -1,10 +1,11 @@
 <script lang="ts">
   import {
     teamsOwned,
-    teamsOwnedLoaded,
     allTeamsAbyss,
+    staticBoardsLoaded,
     charactersOwned,
     ensureTeamsOwned,
+    ensureStaticBoards,
   } from "$lib/stores";
   import { solveAbyssWithFallback } from "$lib/solver";
   import Team from "$lib/ui/components/Team.svelte";
@@ -29,15 +30,9 @@
   let mapping = $derived(data.mapping);
   let abyssEnemies = $derived(data.abyssEnemies as AbyssEnemies);
 
-  // Page load owns the full meta team list (not root layout).
-  // Sync before paint — $effect alone leaves the store empty during SSR/hydration
-  // and keeps `loading` true until a client fetch finishes.
-  $effect.pre(() => {
-    allTeamsAbyss.set(data.allTeamsAbyss as AbyssTeam[]);
-  });
-
-  // Owned subset is lazy — not fetched on every app bootstrap.
+  // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
+    ensureStaticBoards().catch(console.error);
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
 
@@ -77,9 +72,7 @@
 
   let solution = $derived(displaySolutions[safeIndex]);
 
-  let loading = $derived(
-    !$teamsOwnedLoaded && data.allTeamsAbyss.length === 0,
-  );
+  let loading = $derived(!$staticBoardsLoaded && $allTeamsAbyss.length === 0);
 
   let updatedLabel = $derived.by(() => {
     if (!abyssEnemies?.openTime) return "";

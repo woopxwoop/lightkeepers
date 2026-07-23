@@ -6,6 +6,7 @@ import {
   setVersionNumbers,
   invalidateTeamsOwned,
   invalidateNearMissTeams,
+  ensureStaticBoards,
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/is-new-character";
 import { prefetchInvestment } from "$lib/app/investment";
@@ -100,7 +101,7 @@ async function loadDbRoster(
 
 /**
  * Client-side hydration from root layout SSR data.
- * Full allTeams* lists are seeded by abyss / stygian page loads only.
+ * Full allTeams* lists are warmed via ensureStaticBoards (not layout HTML).
  */
 export function seedClientStores(data: LayoutHydration): void {
   setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber);
@@ -116,9 +117,14 @@ export function seedClientStores(data: LayoutHydration): void {
 /**
  * Seeds layout stores, syncs DB roster if logged in.
  * Owned teams + near-miss load lazily on Abyss / Stygian / Pulls.
+ * Meta team boards warm in the background so home → abyss/stygian nav is snappy.
  */
 export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);
+
+  // Fire early — do not await; home stays interactive while boards warm.
+  ensureStaticBoards().catch(console.error);
+  prefetchInvestment();
 
   const dbRoster = await loadDbRoster(data.characters);
 
@@ -131,7 +137,4 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
     invalidateTeamsOwned();
     invalidateNearMissTeams();
   }
-
-  // Warm investment.json for /teams (shared client cache; non-blocking)
-  prefetchInvestment();
 }

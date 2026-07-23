@@ -1,10 +1,11 @@
 <script lang="ts">
   import {
     teamsOwnedStygian,
-    teamsOwnedLoaded,
     allTeamsStygian,
+    staticBoardsLoaded,
     charactersOwned,
     ensureTeamsOwned,
+    ensureStaticBoards,
   } from "$lib/stores";
   import { stygianSlotLabel } from "$lib/slotLabels";
   import { solveStygianWithFallback } from "$lib/solver";
@@ -35,12 +36,9 @@
   let enemies = $derived(data.stygianEnemies as StygianEnemies);
   let schedule = $derived(data.stygianSchedule as StygianSchedule | null);
 
-  // Page load owns the full meta team list (not root layout).
-  $effect.pre(() => {
-    allTeamsStygian.set(data.allTeamsStygian as StygianTeam[]);
-  });
-
+  // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
+    ensureStaticBoards().catch(console.error);
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
 
@@ -74,9 +72,7 @@
 
   let solution = $derived(displaySolutions[safeIndex]);
 
-  let loading = $derived(
-    !$teamsOwnedLoaded && data.allTeamsStygian.length === 0,
-  );
+  let loading = $derived(!$staticBoardsLoaded && $allTeamsStygian.length === 0);
 
   let updatedLabel = $derived.by(() => {
     if (!schedule?.openTime) return "";

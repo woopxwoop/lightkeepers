@@ -33,8 +33,18 @@
   ] as const;
 
   const mainLinks = [
-    { label: "Abyss", path: abyssPath, match: "exact" as const },
-    { label: "Stygian", path: stygianPath, match: "exact" as const },
+    {
+      label: "Abyss",
+      path: abyssPath,
+      match: "exact" as const,
+      preload: "hover" as const,
+    },
+    {
+      label: "Stygian",
+      path: stygianPath,
+      match: "exact" as const,
+      preload: "hover" as const,
+    },
     { label: "Pulls", path: pullsPath, match: "exact" as const },
     { label: "Teams", path: teamsPath, match: "prefix" as const },
     { label: "Characters", path: charactersPath, match: "prefix" as const },
@@ -257,12 +267,14 @@
       <a
         href={abyssPath}
         class="nav-link"
+        data-sveltekit-preload-data="hover"
         aria-current={page.url.pathname === abyssPath ? "page" : undefined}
         bind:this={navLinks.abyss}>Abyss</a
       >
       <a
         href={stygianPath}
         class="nav-link"
+        data-sveltekit-preload-data="hover"
         aria-current={page.url.pathname === stygianPath ? "page" : undefined}
         bind:this={navLinks.stygian}>Stygian</a
       >
@@ -384,6 +396,7 @@
           href={link.path}
           class="drawer-item"
           class:is-active={isMainActive(link)}
+          data-sveltekit-preload-data={"preload" in link ? link.preload : undefined}
           aria-current={isMainActive(link) ? "page" : undefined}
         >
           {link.label}

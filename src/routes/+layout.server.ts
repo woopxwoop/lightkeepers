@@ -5,9 +5,9 @@
  * Fetches slow-changing data via /api/static, which is Cloudflare-edge-cached
  * (and in-process LRU on the Node origin).
  *
- * Only version numbers ride in the root layout payload. Full team lists and
- * enemy/schedule boards live on abyss / stygian page loads so home/settings/
- * characters HTML stays lean.
+ * Only version numbers ride in the root layout payload. Full team lists load
+ * client-side via ensureStaticBoards(); enemy/schedule boards ride on abyss /
+ * stygian page loads so home/settings/characters HTML stays lean.
  */
 
 import type { LayoutServerLoad } from "./$types";
