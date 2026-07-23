@@ -52,7 +52,7 @@
 
   <div class="portrait">
     {#if character}
-      <CharacterIcon {character} />
+      <CharacterIcon {character} loading="lazy" />
     {:else}
       {@render children?.()}
     {/if}

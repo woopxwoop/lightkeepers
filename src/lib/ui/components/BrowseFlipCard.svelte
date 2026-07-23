@@ -30,7 +30,7 @@
         <span class="new-badge absolute top-1.5 right-1.5 z-20">NEW</span>
       {/if}
       <span class="portrait">
-        <CharacterIcon {character} />
+        <CharacterIcon {character} loading="lazy" />
       </span>
       <span class="overlay absolute bottom-0 left-0 right-0 z-10">
         <span class="meta-name">{character.name}</span>

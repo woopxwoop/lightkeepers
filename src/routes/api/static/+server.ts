@@ -64,6 +64,20 @@ async function fetchStaticData(): Promise<StaticPayload> {
       .limit(1),
   ]);
 
+  // Transient query failures must not become version_number: -1 — that yields
+  // empty team payloads which getOrSet would cache in L1/L2.
+  if (abyssVerRes.error) {
+    console.error("fetchStaticData: abyss_versions error", abyssVerRes.error);
+    throw error(500, "Failed to fetch Abyss version");
+  }
+  if (stygianVerRes.error) {
+    console.error(
+      "fetchStaticData: stygian_versions error",
+      stygianVerRes.error,
+    );
+    throw error(500, "Failed to fetch Stygian version");
+  }
+
   const latestAbyssVersion: Version = abyssVerRes.data?.[0] ?? {
     created_at: "",
     version_name: null,

@@ -235,7 +235,12 @@
                   </span>
                 </button>
 
-                <div class="row-details" class:row-details-open={isOpen}>
+                <div
+                  class="row-details"
+                  class:row-details-open={isOpen}
+                  aria-hidden={!isOpen}
+                  inert={!isOpen}
+                >
                   <div class="row-details-inner">
                     {#if suggestion.currentBestTeam}
                       {@const aligned = alignMembers(
@@ -355,7 +360,12 @@
                   </span>
                 </button>
 
-                <div class="row-details" class:row-details-open={isOpen}>
+                <div
+                  class="row-details"
+                  class:row-details-open={isOpen}
+                  aria-hidden={!isOpen}
+                  inert={!isOpen}
+                >
                   <div class="row-details-inner">
                     <div class="compare">
                       {#if suggestion.currentBestTeam}

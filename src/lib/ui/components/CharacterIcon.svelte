@@ -12,10 +12,13 @@
     character,
     zoom = 1,
     iconStyle = "preference",
+    /** Prefer eager for above-the-fold teams; lazy can stall until scroll/focus under transforms. */
+    loading = "eager",
   }: {
     character: CharacterOwned | Character | undefined;
     zoom?: number;
     iconStyle?: "preference" | "enka" | "coop" | "tcg";
+    loading?: "lazy" | "eager";
   } = $props();
 
   $effect(() => {
@@ -91,7 +94,7 @@
     bind:this={imgEl}
     src={imgSrc}
     alt={character?.name ?? "Character"}
-    loading="lazy"
+    {loading}
     decoding="async"
     style={settled ? "" : "transition: none"}
     onerror={() => {

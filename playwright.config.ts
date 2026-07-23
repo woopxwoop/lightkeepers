@@ -39,7 +39,10 @@ export default defineConfig({
   webServer: {
     command: 'pnpm dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    // Only reuse a server that was already started with PLAYWRIGHT_E2E=1.
+    // A plain `pnpm dev` would miss SSR fixtures and greenwash false failures.
+    reuseExistingServer:
+      !process.env.CI && process.env.PLAYWRIGHT_E2E === '1',
     timeout: 120_000,
     env: {
       ...process.env,

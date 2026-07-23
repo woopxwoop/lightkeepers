@@ -149,7 +149,8 @@ body {
     background-color 0.3s,
     color 0.3s;
   font-family: var(--font-body);
-  font-size: clamp(16px, 1.25vw + 0.1rem, 1rem);
+  /* Prefer a real range — previous max was 1rem (=16px), same as min, so vw never applied. */
+  font-size: clamp(15px, 0.35vw + 0.875rem, 1.0625rem);
 }
 
 @keyframes flip-in {
