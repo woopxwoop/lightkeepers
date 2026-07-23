@@ -9,12 +9,17 @@ function required(name: string): string {
 }
 
 function createAuth() {
+  const pool = new Pool({
+    connectionString: required("DATABASE_URL"),
+    max: 10,
+    idleTimeoutMillis: 30_000,
+  });
+  pool.on("error", (err) => {
+    console.error("[auth] idle pg client error:", err);
+  });
+
   return betterAuth({
-    database: new Pool({
-      connectionString: required("DATABASE_URL"),
-      max: 10,
-      idleTimeoutMillis: 30_000,
-    }),
+    database: pool,
     secret: required("BETTER_AUTH_SECRET"),
     socialProviders: {
       google: {

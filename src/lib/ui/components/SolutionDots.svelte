@@ -26,6 +26,7 @@
           handlePointerAction(event, () => (index = i))}
         onclick={(event) => handleKeyboardClick(event, () => (index = i))}
         aria-label="{ariaLabelPrefix} {i + 1}"
+        aria-current={index === i ? "true" : undefined}
         class="hit w-6 h-6 flex items-center justify-center"
       >
         <span

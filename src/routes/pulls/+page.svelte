@@ -81,9 +81,13 @@
   // Lazy: owned teams + near-miss (not from global bootstrap).
   $effect(() => {
     if (ownedCount === 0) return;
-    ensureTeamsOwned($charactersOwned).catch(console.error);
+    ensureTeamsOwned($charactersOwned).catch(() => {
+      pageState = "error";
+    });
     if (!nearMissReady) {
-      ensureNearMissTeams($charactersOwned).catch(console.error);
+      ensureNearMissTeams($charactersOwned).catch(() => {
+        pageState = "error";
+      });
     }
   });
 
@@ -96,7 +100,8 @@
     }
 
     if (!pullsDataReady) {
-      pageState = "waiting";
+      // Don't clobber a fetch failure with "waiting".
+      if (pageState !== "error") pageState = "waiting";
       return;
     }
 

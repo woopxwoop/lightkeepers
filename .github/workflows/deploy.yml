@@ -69,8 +69,10 @@ jobs:
                   value = os.environ.get(key) or ""
                   if not value:
                       continue
-                  escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-                  f.write(f'{key}="{escaped}"\n')
+                  # Single-quoted Compose env values preserve `$` literally.
+                  # Embed a single quote as: end quote, \', reopen quote.
+                  escaped = value.replace("'", "'\\''")
+                  f.write(f"{key}='{escaped}'\n")
           PY
 
       - name: Copy compose files to VPS

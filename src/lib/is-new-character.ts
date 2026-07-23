@@ -14,6 +14,9 @@ export function isNewCharacter(releasedAt: string | null | undefined): boolean {
   // to ISO 8601 format so `new Date()` parses reliably across runtimes.
   const released = new Date(releasedAt.replace(" ", "T"));
   if (isNaN(released.getTime())) return false;
-  const cutoff = Date.now() - NEW_CHARACTER_DAYS * 86_400_000;
+  const now = Date.now();
+  // Future-dated rows are not "new" yet (bad data / unreleased).
+  if (released.getTime() > now) return false;
+  const cutoff = now - NEW_CHARACTER_DAYS * 86_400_000;
   return released.getTime() > cutoff;
 }

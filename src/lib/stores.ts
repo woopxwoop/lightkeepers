@@ -297,12 +297,10 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     if (id !== teamsRequestId) return; // superseded
     teamsOwned.set(abyssTeams);
     teamsOwnedStygian.set(stygianTeams);
+    teamsOwnedLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
-  } finally {
-    if (id === teamsRequestId) {
-      teamsOwnedLoaded.set(true);
-    }
+    // Leave loaded=false so ensureTeamsOwned can retry.
   }
 }
 
@@ -360,15 +358,11 @@ export async function writeNearMissTeams(
     if (id !== nearMissRequestId) return; // superseded
     nearMissStygianTeams.set(nearMissTeams);
     nearMissPairTeams.set(nearMissPairs);
+    nearMissStygianLoaded.set(true);
+    nearMissPairLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeNearMissTeams failed:", err);
-    nearMissStygianTeams.set([]);
-    nearMissPairTeams.set([]);
-  } finally {
-    if (id === nearMissRequestId) {
-      nearMissStygianLoaded.set(true);
-      nearMissPairLoaded.set(true);
-    }
+    // Leave loaded=false so ensureNearMissTeams can retry.
   }
 }
 

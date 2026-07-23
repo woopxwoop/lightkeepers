@@ -14,8 +14,12 @@ import type {
 
 const gunzipAsync = promisify(gunzip);
 const CDN_INVESTMENT = "https://api.lightkeepers.moe/sim/investment.json.gz";
-const investmentCache = new LRUCache<InvestmentFile>(1, 15 * 60 * 1000);
-const configCache = new LRUCache<string | null>(200, 15 * 60 * 1000);
+const investmentCache = new LRUCache<InvestmentFile>(1, 15 * 60 * 1000, {
+  redisNamespace: "investment",
+});
+const configCache = new LRUCache<string | null>(200, 15 * 60 * 1000, {
+  redisNamespace: "team-config",
+});
 
 function isGzipped(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b;

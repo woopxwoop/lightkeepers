@@ -26,6 +26,7 @@ export async function getValkey(): Promise<RedisClientType | null> {
 
   const url = redisUrl();
   if (!url) {
+    // No URL configured — remember permanently (do not retry every call).
     client = null;
     return null;
   }
@@ -50,7 +51,7 @@ export async function getValkey(): Promise<RedisClientType | null> {
       return c;
     } catch (err) {
       console.error("[valkey] connect failed — using memory cache only:", err);
-      client = null;
+      // Leave `client` undefined so a later request can retry connect.
       return null;
     } finally {
       connecting = null;
@@ -61,12 +62,23 @@ export async function getValkey(): Promise<RedisClientType | null> {
 }
 
 export async function valkeyGetJson<T>(key: string): Promise<T | undefined> {
+  const hit = await valkeyGetJsonWithTtl<T>(key);
+  return hit?.value;
+}
+
+/** GET + PTTL so L1 can inherit the Redis entry's remaining lifetime. */
+export async function valkeyGetJsonWithTtl<T>(
+  key: string,
+): Promise<{ value: T; ttlMs: number } | undefined> {
   const c = await getValkey();
   if (!c) return undefined;
   try {
-    const raw = await c.get(key);
-    if (raw == null) return undefined;
-    return JSON.parse(raw) as T;
+    const [raw, pttl] = await Promise.all([c.get(key), c.pTTL(key)]);
+    if (raw == null || pttl === -2) return undefined;
+    // -1 = no expiry on the key; treat as "full window" at the caller.
+    const ttlMs = pttl < 0 ? Number.POSITIVE_INFINITY : pttl;
+    if (ttlMs === 0) return undefined;
+    return { value: JSON.parse(raw) as T, ttlMs };
   } catch (err) {
     console.error("[valkey] GET failed:", key, err);
     return undefined;

@@ -1,4 +1,4 @@
-import { valkeyGetJson, valkeySetJson } from "$lib/server/valkey";
+import { valkeyGetJsonWithTtl, valkeySetJson } from "$lib/server/valkey";
 
 // ── LRU Cache ──────────────────────────────────────────────────────────────
 
@@ -47,19 +47,21 @@ export class LRUCache<T> {
     return entry.value;
   }
 
-  set(key: string, value: T): void {
+  set(key: string, value: T, ttlMs = this.ttlMs): void {
     if (this.map.has(key)) this.map.delete(key);
     else if (this.map.size >= this.maxSize) {
       // Evict oldest entry
       this.map.delete(this.map.keys().next().value!);
     }
-    this.map.set(key, { value, expiresAt: Date.now() + this.ttlMs });
+    const ttl = Math.max(0, ttlMs);
+    this.map.set(key, { value, expiresAt: Date.now() + ttl });
   }
 
   /**
    * Return cached value or compute + store it.
    * Concurrent misses for the same key share one in-flight Promise (singleflight).
    * With `redisNamespace`, also checks/writes Valkey so workers share state.
+   * Valkey hits populate L1 with min(local ttl, remaining Redis TTL).
    */
   async getOrSet(key: string, fn: () => Promise<T>): Promise<T> {
     const cached = this.get(key);
@@ -75,10 +77,13 @@ export class LRUCache<T> {
 
         const rKey = this.redisKey(key);
         if (rKey) {
-          const remote = await valkeyGetJson<T>(rKey);
+          const remote = await valkeyGetJsonWithTtl<T>(rKey);
           if (remote !== undefined) {
-            this.set(key, remote);
-            return remote;
+            const ttl = Math.min(this.ttlMs, remote.ttlMs);
+            if (ttl > 0) {
+              this.set(key, remote.value, ttl);
+              return remote.value;
+            }
           }
         }
 
