@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { installApiMocks } from "./helpers";
 
+/** Client /api/* can lag SSR on cold Vite — keep waits aligned with config.timeout. */
+const CLIENT_API_TIMEOUT = 45_000;
+
 test.beforeEach(async ({ page }) => {
   await installApiMocks(page);
 });
@@ -26,7 +29,7 @@ test("abyss shows meta teams section", async ({ page }) => {
 test("abyss enemies toggle works", async ({ page }) => {
   const teamsRes = page.waitForResponse(
     (res) => new URL(res.url()).pathname.endsWith("/api/teams"),
-    { timeout: 15_000 },
+    { timeout: CLIENT_API_TIMEOUT },
   );
 
   await page.goto("/abyss");

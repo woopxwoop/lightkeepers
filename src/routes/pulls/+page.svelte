@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     charactersOwned,
+    charactersHydrated,
     teamsOwnedStygian,
     teamsOwnedLoaded,
     nearMissStygianTeams,
@@ -82,6 +83,7 @@
 
   // Lazy: owned teams + near-miss (not from global bootstrap).
   $effect(() => {
+    if (!$charactersHydrated) return;
     if (ownedCount === 0) return;
     ensureTeamsOwned($charactersOwned).catch(() => {
       pageState = "error";
@@ -94,6 +96,8 @@
   });
 
   $effect(() => {
+    if (!$charactersHydrated) return;
+
     if (ownedCount === 0) {
       suggestions = [];
       pairSuggestions = [];

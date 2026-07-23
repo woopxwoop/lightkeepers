@@ -5,6 +5,8 @@ import {
   STYGIAN_OWNED_BASELINE,
 } from "./helpers";
 
+const CLIENT_API_TIMEOUT = 45_000;
+
 test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
   await installApiMocks(page, {
     stygianTeams: [STYGIAN_OWNED_BASELINE],
@@ -13,6 +15,7 @@ test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
 
   const nearmiss = page.waitForRequest(
     (req) => new URL(req.url()).pathname.endsWith("/api/nearmiss"),
+    { timeout: CLIENT_API_TIMEOUT },
   );
 
   await page.goto("/pulls");
@@ -23,7 +26,7 @@ test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Best next pulls" }),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
   await expect(page.locator(".row-name", { hasText: "Hu Tao" })).toBeVisible();
 });
 
@@ -35,9 +38,19 @@ test("pulls shows empty state when near-miss has nothing useful", async ({
     nearMissTeams: [],
   });
 
+  const teamsReq = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/teams"),
+    { timeout: CLIENT_API_TIMEOUT },
+  );
+  const nearMissReq = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/nearmiss"),
+    { timeout: CLIENT_API_TIMEOUT },
+  );
+
   await page.goto("/pulls");
+  await Promise.all([teamsReq, nearMissReq]);
 
   await expect(
     page.getByText(/no single pull stands out|covers the high-usage/i),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
 });

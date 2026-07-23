@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { installApiMocks, trackApiPaths } from "./helpers";
 
+const CLIENT_API_TIMEOUT = 45_000;
+
 test("home and settings do not fetch owned teams or near-miss", async ({
   page,
 }) => {
@@ -26,6 +28,7 @@ test("abyss fetches /api/teams but not /api/nearmiss", async ({ page }) => {
 
   const teamsReq = page.waitForRequest(
     (req) => new URL(req.url()).pathname.endsWith("/api/teams"),
+    { timeout: CLIENT_API_TIMEOUT },
   );
 
   await page.goto("/abyss");
@@ -40,20 +43,24 @@ test("pulls fetches /api/teams and /api/nearmiss", async ({ page }) => {
   await installApiMocks(page);
   const hits = trackApiPaths(page, ["/api/teams", "/api/nearmiss"]);
 
+  const teamsReq = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/teams"),
+    { timeout: CLIENT_API_TIMEOUT },
+  );
+  const nearMissReq = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/nearmiss"),
+    { timeout: CLIENT_API_TIMEOUT },
+  );
+
   await page.goto("/pulls");
   await expect(
     page.getByRole("heading", { name: "Pull Suggestions" }),
   ).toBeVisible();
-  await expect(
-    page
-      .getByText(/Matching your roster|no single pull|Best next pulls|Set up your roster/i)
-      .first(),
-  ).toBeVisible({ timeout: 15_000 });
+  await Promise.all([teamsReq, nearMissReq]);
 
-  // Wait until waiting state has resolved (loaded flags set)
   await expect(
     page.getByText("Matching your roster against Stygian usage…"),
-  ).toHaveCount(0, { timeout: 15_000 });
+  ).toHaveCount(0, { timeout: CLIENT_API_TIMEOUT });
 
   expect(hits.some((p) => p.endsWith("/api/teams"))).toBe(true);
   expect(hits.some((p) => p.endsWith("/api/nearmiss"))).toBe(true);
