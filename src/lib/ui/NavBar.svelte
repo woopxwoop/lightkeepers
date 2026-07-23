@@ -370,7 +370,7 @@
 <!-- Backdrop -->
 {#if mobileOpen}
   <div
-    class="fixed inset-0 z-40 bg-black/60"
+    class="drawer-backdrop"
     role="presentation"
     transition:fade={{ duration: 200 }}
     onclick={() => {
@@ -388,26 +388,32 @@
     aria-modal="true"
     aria-label="Navigation menu"
     bind:this={drawerEl}
-    transition:fly={{ x: 280, duration: 260 }}
+    transition:fly={{ x: 300, duration: 280 }}
   >
+    <div class="drawer-glow" aria-hidden="true"></div>
+
     <nav class="drawer-nav" aria-label="Primary">
-      {#each mainLinks as link}
+      <p class="drawer-section-label">Navigate</p>
+      {#each mainLinks as link, i}
         <a
           href={link.path}
           class="drawer-item"
           class:is-active={isMainActive(link)}
+          style="--i: {i}"
           data-sveltekit-preload-data={"preload" in link ? link.preload : undefined}
           aria-current={isMainActive(link) ? "page" : undefined}
         >
-          {link.label}
+          <span class="drawer-item-label">{link.label}</span>
         </a>
       {/each}
 
       <div class="drawer-settings">
+        <p class="drawer-section-label">Account</p>
         <button
           type="button"
           class="drawer-item drawer-settings-toggle"
-          class:is-active={onSettingsPage}
+          class:is-active={onSettingsPage && !settingsDrawerExpanded}
+          style="--i: {mainLinks.length}"
           aria-expanded={settingsDrawerExpanded}
           aria-current={onSettingsPage ? "page" : undefined}
           onclick={() => (settingsDrawerExpanded = !settingsDrawerExpanded)}
@@ -430,7 +436,7 @@
           class:drawer-sub-open={settingsDrawerExpanded}
           inert={!settingsDrawerExpanded}
         >
-          {#each settingsLinks as link}
+          {#each settingsLinks as link, i}
             {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
             {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
             {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
@@ -439,6 +445,7 @@
               href={link.path}
               class="drawer-item drawer-item-sub"
               class:is-active={subActive}
+              style="--i: {mainLinks.length + 1 + i}"
               aria-current={subActive ? "page" : undefined}
             >
               <span class="drawer-item-icon" aria-hidden="true">
@@ -467,13 +474,18 @@
         <span class="drawer-item-icon" aria-hidden="true">
           <IconDiscord size={18} />
         </span>
-        <span class="drawer-item-label">Join Discord</span>
+        <span class="drawer-discord-copy">
+          <span class="drawer-item-label">Join Discord</span>
+          <span class="drawer-discord-hint">feedback & updates</span>
+        </span>
       </a>
-      <img
-        src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
-        alt=""
-        class="drawer-mascot"
-      />
+      <div class="drawer-mascot-wrap" aria-hidden="true">
+        <img
+          src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
+          alt=""
+          class="drawer-mascot"
+        />
+      </div>
     </div>
   </div>
 {/if}
@@ -626,10 +638,17 @@
     flex-direction: column;
     justify-content: center;
     gap: 5px;
-    padding: 6px;
+    padding: 0.5rem;
+    margin-right: -0.25rem;
     background: none;
     border: none;
+    border-radius: var(--radius-sm);
     cursor: pointer;
+    transition: background-color var(--control-duration) var(--control-ease);
+  }
+
+  .hamburger:hover {
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
   }
 
   .bar {
@@ -655,7 +674,15 @@
     transform: translateY(-7px) rotate(-45deg);
   }
 
-  /* ── Drawer (settings-board grammar) ── */
+  /* ── Drawer ── */
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: color-mix(in srgb, black 55%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
   .drawer {
     position: fixed;
     top: 0;
@@ -663,26 +690,76 @@
     z-index: 50;
     display: flex;
     flex-direction: column;
-    width: min(280px, 86vw);
+    width: min(300px, 88vw);
     height: 100%;
-    padding: 5.5rem 0 1.25rem;
+    padding: 4.75rem 0 1rem;
+    overflow: hidden;
     background: var(--surface-raised);
-    border-left: var(--border-width) solid rgba(255, 255, 255, 0.14);
-    box-shadow: -12px 0 40px color-mix(in srgb, black 45%, transparent);
+    /* Cream hairline on mid surface — avoid muddy low-opacity gold */
+    border-left: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 22%, transparent);
+    box-shadow: -16px 0 48px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .drawer-glow {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      transparent 8%,
+      color-mix(in srgb, var(--accent-1) 55%, transparent) 42%,
+      color-mix(in srgb, var(--accent-2) 35%, transparent) 58%,
+      transparent 92%
+    );
+    opacity: 0.85;
   }
 
   .drawer-nav {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
+    padding: 0 0.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .drawer-nav::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .drawer-section-label {
+    margin: 0.35rem 0.75rem 0.4rem;
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--foreground-mid) 70%, transparent);
+  }
+
+  .drawer-settings .drawer-section-label {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 16%, transparent);
   }
 
   .drawer-item {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     width: 100%;
-    padding: 0.85rem 1.25rem;
+    padding: 0.78rem 0.9rem;
+    border-radius: var(--radius-md);
     font-family: var(--font-display);
     font-size: var(--text-base);
     font-weight: 500;
@@ -692,28 +769,33 @@
     text-align: left;
     background: none;
     border: none;
-    border-top: var(--border-width) solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
     transition:
       color var(--control-duration) var(--control-ease),
-      background-color var(--control-duration) var(--control-ease),
-      box-shadow var(--control-duration) var(--control-ease);
-  }
-
-  .drawer-nav > .drawer-item:first-child,
-  .drawer-settings > .drawer-item:first-child {
-    border-top: none;
+      background-color var(--control-duration) var(--control-ease);
+    animation: drawer-item-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(40ms * var(--i, 0));
   }
 
   .drawer-item:hover {
     color: var(--foreground-color);
-    background: rgba(255, 255, 255, 0.06);
+    background: color-mix(in srgb, var(--foreground-color) 7%, transparent);
   }
 
   .drawer-item.is-active {
-    color: var(--foreground-color);
+    color: var(--accent-2);
     background: var(--surface-selected);
-    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .drawer-item.is-active::before {
+    content: "";
+    position: absolute;
+    left: 0.2rem;
+    top: 22%;
+    bottom: 22%;
+    width: 2px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-1);
   }
 
   .drawer-item-icon {
@@ -733,7 +815,6 @@
   .drawer-settings {
     display: flex;
     flex-direction: column;
-    border-top: var(--border-width) solid rgba(255, 255, 255, 0.1);
   }
 
   .drawer-chevron {
@@ -741,6 +822,7 @@
     flex-shrink: 0;
     transition: transform 0.2s ease;
     color: currentColor;
+    opacity: 0.75;
   }
 
   .drawer-chevron-open {
@@ -760,28 +842,32 @@
   }
 
   .drawer-item-sub {
-    padding-left: 1.75rem;
+    padding-left: 1.15rem;
     font-size: var(--text-md);
   }
 
   .drawer-foot {
+    position: relative;
+    z-index: 1;
     margin-top: auto;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-3);
-    padding-top: var(--space-3);
+    padding: 0.85rem 0.75rem 0.25rem;
+    border-top: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 16%, transparent);
   }
 
   .drawer-discord {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 0 0.75rem;
-    padding: 0.75rem 1rem;
+    padding: 0.7rem 0.85rem;
     border-radius: var(--radius-md);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.04);
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 22%, transparent);
+    background: color-mix(in srgb, var(--foreground-color) 5%, transparent);
     font-family: var(--font-display);
     font-size: var(--text-md);
     font-weight: 500;
@@ -793,17 +879,61 @@
   }
 
   .drawer-discord:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.32);
+    background: color-mix(in srgb, var(--foreground-color) 9%, transparent);
+    border-color: color-mix(in srgb, var(--accent-3) 40%, transparent);
+  }
+
+  .drawer-discord-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .drawer-discord-hint {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: color-mix(in srgb, var(--foreground-mid) 75%, transparent);
+  }
+
+  .drawer-mascot-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 0.15rem 0 0.35rem;
+    mask-image: linear-gradient(
+      180deg,
+      transparent 0%,
+      #000 28%,
+      #000 72%,
+      transparent 100%
+    );
   }
 
   .drawer-mascot {
-    width: 70%;
-    max-width: 9rem;
+    width: 58%;
+    max-width: 8rem;
     height: auto;
-    margin: 0 auto 0.5rem;
-    opacity: 0.4;
+    opacity: 0.55;
     pointer-events: none;
+    filter: saturate(0.9);
+  }
+
+  @keyframes drawer-item-in {
+    from {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drawer-item {
+      animation: none;
+    }
   }
 </style>
 
