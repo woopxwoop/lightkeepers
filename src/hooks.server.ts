@@ -5,7 +5,7 @@
 import { sequence } from "@sveltejs/kit/hooks";
 import { handleErrorWithSentry, sentryHandle } from "@sentry/sveltekit";
 import { metrics } from "$lib/server/metrics";
-import { auth } from "$lib/server/auth";
+import { getAuth } from "$lib/server/auth";
 import type { Handle } from "@sveltejs/kit";
 
 const metricsHandle: Handle = async ({ event, resolve }) => {
@@ -26,7 +26,8 @@ const metricsHandle: Handle = async ({ event, resolve }) => {
 };
 
 const SKIP_AUTH_PREFIXES = ["/_app/", "/favicon"];
-const SKIP_AUTH_PATHS = new Set(["/metrics"]);
+const SKIP_AUTH_PATHS = new Set(["/metrics", "/api/health"]);
+const SESSION_COOKIE = "better-auth.session_token";
 
 const authHandle: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
@@ -39,14 +40,25 @@ const authHandle: Handle = async ({ event, resolve }) => {
     return resolve(event);
   }
 
-  try {
-    const session = await auth.api.getSession({ headers: event.request.headers });
-    event.locals.user = session?.user ?? null;
-    event.locals.session = session?.session ?? null;
-  } catch (err) {
-    console.error("authHandle: getSession failed", err);
+  // Anonymous traffic: skip DB session lookup when no auth cookie is present.
+  const cookie = event.request.headers.get("cookie") ?? "";
+  const hasSessionCookie = cookie.includes(SESSION_COOKIE);
+
+  if (!hasSessionCookie) {
     event.locals.user = null;
     event.locals.session = null;
+  } else {
+    try {
+      const session = await getAuth().api.getSession({
+        headers: event.request.headers,
+      });
+      event.locals.user = session?.user ?? null;
+      event.locals.session = session?.session ?? null;
+    } catch (err) {
+      console.error("authHandle: getSession failed", err);
+      event.locals.user = null;
+      event.locals.session = null;
+    }
   }
 
   const response = await resolve(event);
@@ -61,7 +73,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
     !event.locals.user &&
     event.request.method === "GET" &&
     response.headers.get("content-type")?.startsWith("text/html") &&
-    !event.request.headers.get("cookie")?.includes("better-auth.session_token") &&
+    !hasSessionCookie &&
     !response.headers.has("set-cookie") &&
     !response.headers.has("cache-control")
   ) {

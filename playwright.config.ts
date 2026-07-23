@@ -1,45 +1,54 @@
-import { defineConfig, devices } from '@playwright/test';
+/// <reference types="node" />
+import { defineConfig, devices } from "@playwright/test";
+
+const onCI = !!process.env.CI;
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
+ * CI uses a production Node build — `vite dev` on Ubuntu runners was serving
+ * SSR HTML while client modules never hydrated enough to call /api/teams.
+ * Local keeps `vite dev` for fast iteration.
  */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+const webServerCommand = onCI
+  ? "pnpm build && PORT=5173 HOST=127.0.0.1 ORIGIN=http://127.0.0.1:5173 node build"
+  : process.platform === "win32"
+    ? "pnpm dev"
+    : "PLAYWRIGHT_E2E=1 pnpm dev";
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
-  testDir: './tests',
-  /* Run tests in files in parallel */
+  testDir: "./tests",
+  globalSetup: "./tests/global-setup.ts",
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  forbidOnly: onCI,
+  retries: onCI ? 2 : 0,
+  workers: onCI ? 1 : undefined,
+  timeout: 60_000,
+  expect: {
+    timeout: onCI ? 30_000 : 10_000,
+  },
+  reporter: "html",
   use: {
-    baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry',
+    baseURL: "http://127.0.0.1:5173",
+    trace: "on-first-retry",
+    serviceWorkers: "block",
+    navigationTimeout: 60_000,
   },
 
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    command: webServerCommand,
+    url: "http://127.0.0.1:5173",
+    reuseExistingServer: !onCI && process.env.PLAYWRIGHT_E2E === "1",
+    timeout: 180_000,
+    env: {
+      ...process.env,
+      PLAYWRIGHT_E2E: "1",
+      PLAYWRIGHT_DEBUG_NET: onCI ? "1" : process.env.PLAYWRIGHT_DEBUG_NET ?? "",
+    },
   },
 });

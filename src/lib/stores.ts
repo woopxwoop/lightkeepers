@@ -9,7 +9,7 @@
  *   - Service-role key stays server-side only
  */
 
-import { writable, derived, get, type Writable } from "svelte/store";
+import { writable, derived, get, readable, type Writable } from "svelte/store";
 import type { CharacterOwned, AbyssTeam, StygianTeam } from "$lib/definitions";
 import type {
   NearMissStygianTeam,
@@ -167,19 +167,8 @@ export function areAnimationsEnabled(): boolean {
   return get(displayPreferences).animationsEnabled;
 }
 
-export const faviconDataUri = derived(displayPreferences, ($prefs) => {
-  const accent = normalizeHexColor(
-    $prefs.themeColors?.["accent-1"] ?? DEFAULT_DARK_COLORS["accent-1"],
-  );
-  const r = parseInt(accent.slice(1, 3), 16);
-  const g = parseInt(accent.slice(3, 5), 16);
-  const b = parseInt(accent.slice(5, 7), 16);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <polygon points="50,4 59,41 96,50 59,59 50,96 41,59 4,50 41,41" fill="rgba(${r},${g},${b},0.15)" stroke="${accent}" stroke-width="3"/>
-    <circle cx="50" cy="50" r="30" fill="none" stroke="${accent}" stroke-width="2.5"/>
-  </svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-});
+/** Designed lighthouse mark — same asset as the navbar logo. */
+export const faviconDataUri = readable("/lightkeepers-mark.png");
 
 // ── Character store ────────────────────────────────────────────────────────
 export const charactersOwned = writable<CharacterOwned[]>([]);
@@ -253,9 +242,12 @@ export const teamsOwnedStygianBottom = derived<
   ),
 );
 
-// ── All-teams stores (pre-populated from layout server data) ───────────────
+// ── All-teams stores (seeded by abyss / stygian page loads) ────────────────
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
 export const allTeamsStygian = writable<StygianTeam[]>([]);
+
+/** True after a successful /api/teams fetch (or empty owned roster short-circuit). */
+export const teamsOwnedLoaded = writable(false);
 
 // ── Near-miss stores ───────────────────────────────────────────────────────
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
@@ -267,10 +259,20 @@ export const nearMissPairLoaded = writable(false);
 // Discard responses from superseded requests (fast roster changes).
 let teamsRequestId = 0;
 let nearMissRequestId = 0;
-
-// ── API helpers ────────────────────────────────────────────────────────────
+let teamsInFlight: Promise<void> | null = null;
 
 // ── Write functions ────────────────────────────────────────────────────────
+
+/**
+ * Clears owned-team stores so the next Abyss / Stygian / Pulls visit refetches.
+ */
+export function invalidateTeamsOwned(): void {
+  teamsRequestId++;
+  teamsInFlight = null;
+  teamsOwnedLoaded.set(false);
+  teamsOwned.set([]);
+  teamsOwnedStygian.set([]);
+}
 
 /**
  * Fetches both abyss and stygian owned-team lists in a single server round-trip.
@@ -279,6 +281,8 @@ let nearMissRequestId = 0;
 export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   const id = ++teamsRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
+
+  teamsOwnedLoaded.set(false);
 
   try {
     const { abyssTeams, stygianTeams } = await postJson<{
@@ -293,9 +297,46 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     if (id !== teamsRequestId) return; // superseded
     teamsOwned.set(abyssTeams);
     teamsOwnedStygian.set(stygianTeams);
+    teamsOwnedLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
+    // Leave loaded=false so ensureTeamsOwned can retry; rethrow for callers.
+    throw err;
   }
+}
+
+/**
+ * Load owned teams only when needed (Abyss / Stygian / Pulls).
+ * No-ops if already loaded; coalesces concurrent callers.
+ */
+export async function ensureTeamsOwned(
+  owned: CharacterOwned[],
+): Promise<void> {
+  if (get(teamsOwnedLoaded)) return;
+  if (teamsInFlight) return teamsInFlight;
+  const pending = writeTeamsOwned(owned);
+  teamsInFlight = pending;
+  // Consume rejection on the finally-derived promise so cleanup cannot
+  // surface as an unhandled rejection; callers still await `pending`.
+  void pending
+    .finally(() => {
+      if (teamsInFlight === pending) teamsInFlight = null;
+    })
+    .catch(() => {});
+  return pending;
+}
+
+/**
+ * Clears near-miss stores so the next /pulls visit refetches.
+ * Call after roster changes instead of eagerly hitting /api/nearmiss.
+ */
+export function invalidateNearMissTeams(): void {
+  nearMissRequestId++;
+  nearMissInFlight = null;
+  nearMissStygianLoaded.set(false);
+  nearMissPairLoaded.set(false);
+  nearMissStygianTeams.set([]);
+  nearMissPairTeams.set([]);
 }
 
 /**
@@ -324,14 +365,32 @@ export async function writeNearMissTeams(
     if (id !== nearMissRequestId) return; // superseded
     nearMissStygianTeams.set(nearMissTeams);
     nearMissPairTeams.set(nearMissPairs);
+    nearMissStygianLoaded.set(true);
+    nearMissPairLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeNearMissTeams failed:", err);
-    nearMissStygianTeams.set([]);
-    nearMissPairTeams.set([]);
-  } finally {
-    if (id === nearMissRequestId) {
-      nearMissStygianLoaded.set(true);
-      nearMissPairLoaded.set(true);
-    }
+    // Leave loaded=false so ensureNearMissTeams can retry; rethrow for callers.
+    throw err;
   }
+}
+
+/**
+ * Load near-miss only when needed (Pulls page). No-ops if already loaded;
+ * coalesces concurrent callers onto one in-flight request.
+ */
+let nearMissInFlight: Promise<void> | null = null;
+
+export async function ensureNearMissTeams(
+  owned: CharacterOwned[],
+): Promise<void> {
+  if (get(nearMissStygianLoaded) && get(nearMissPairLoaded)) return;
+  if (nearMissInFlight) return nearMissInFlight;
+  const pending = writeNearMissTeams(owned);
+  nearMissInFlight = pending;
+  void pending
+    .finally(() => {
+      if (nearMissInFlight === pending) nearMissInFlight = null;
+    })
+    .catch(() => {});
+  return pending;
 }

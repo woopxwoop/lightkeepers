@@ -14,13 +14,14 @@
   const GAP = 8;
 
   let tipEl: HTMLDivElement | undefined = $state();
+  let open = $state(false);
 
   /** Prefer above the trigger; flip below / clamp horizontally if needed. */
-  function place() {
+  function place(trigger: HTMLElement) {
     const tip = tipEl;
-    const trigger = tip?.parentElement;
-    if (!tip || !trigger) return;
+    if (!tip) return;
 
+    // Measure while visible so width/height are accurate, then keep open state.
     const t = trigger.getBoundingClientRect();
     const r = tip.getBoundingClientRect();
     const vw = window.innerWidth;
@@ -42,31 +43,57 @@
   }
 
   onMount(() => {
-    const trigger = tipEl?.parentElement;
+    const tip = tipEl;
+    if (!tip) return;
+
+    // Capture before reparenting — parent is the hover trigger (must have `.group`).
+    const trigger = tip.parentElement;
     if (!trigger) return;
 
-    const onEnter = () => place();
-    trigger.addEventListener("pointerenter", onEnter);
-    trigger.addEventListener("focusin", onEnter);
-    window.addEventListener("scroll", place, true);
-    window.addEventListener("resize", place);
+    // Portal to body so `position: fixed` is viewport-relative. Transformed
+    // ancestors (e.g. TeamCardHand fan cards) otherwise become the containing
+    // block and viewport coords from getBoundingClientRect land in the wrong place.
+    document.body.appendChild(tip);
+
+    const show = () => {
+      open = true;
+      // Next frame: tip is visible so layout size is correct before place().
+      requestAnimationFrame(() => place(trigger));
+    };
+    const hide = () => {
+      open = false;
+    };
+    const reposition = () => {
+      if (open) place(trigger);
+    };
+
+    trigger.addEventListener("pointerenter", show);
+    trigger.addEventListener("pointerleave", hide);
+    trigger.addEventListener("focusin", show);
+    trigger.addEventListener("focusout", hide);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
 
     return () => {
-      trigger.removeEventListener("pointerenter", onEnter);
-      trigger.removeEventListener("focusin", onEnter);
-      window.removeEventListener("scroll", place, true);
-      window.removeEventListener("resize", place);
+      trigger.removeEventListener("pointerenter", show);
+      trigger.removeEventListener("pointerleave", hide);
+      trigger.removeEventListener("focusin", show);
+      trigger.removeEventListener("focusout", hide);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+      tip.remove();
     };
   });
 </script>
 
 <!--
-  Parent must have Tailwind `group`. Uses position:fixed and repositions on
-  hover so the tip stays inside the viewport.
+  Parent must have Tailwind `group`. Tip portals to document.body so fixed
+  positioning survives transformed ancestors.
 -->
 <div
   bind:this={tipEl}
   class="hover-tooltip pointer-events-none fixed z-50 w-max max-w-56 rounded-lg px-2.5 py-1.5 text-left {className}"
+  class:hover-tooltip-open={open}
   style="top: 0; left: 0; background: var(--foreground-mid); color: var(--background-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);"
   role="tooltip"
 >
@@ -84,8 +111,7 @@
       visibility 0.15s ease;
   }
 
-  :global(.group:hover) > .hover-tooltip,
-  :global(.group:focus-within) > .hover-tooltip {
+  .hover-tooltip-open {
     opacity: 1;
     visibility: visible;
   }

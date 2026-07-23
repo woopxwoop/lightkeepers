@@ -20,6 +20,7 @@ import {
   getClientIp,
   buildRpcKey,
 } from "$lib/server/cache";
+import { isPlaywrightE2e } from "$lib/server/e2e";
 
 type NearMissBody = {
   characters: string[];
@@ -28,6 +29,11 @@ type NearMissBody = {
 };
 
 export const POST: RequestHandler = async ({ request }) => {
+  // Default empty; Playwright browser routes override with scenario fixtures.
+  if (isPlaywrightE2e()) {
+    return json({ nearMissTeams: [], nearMissPairs: [] });
+  }
+
   // ── Rate limiting ────────────────────────────────────────────────────────
   const ip = getClientIp(request);
   if (!apiRateLimiter.check(ip)) {

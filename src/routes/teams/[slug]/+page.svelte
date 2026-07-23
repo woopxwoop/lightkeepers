@@ -5,13 +5,23 @@
   import {
     buildGoodKeyMap,
     toGoodKey,
-    getSimConfigUrl,
-    humanizeInvestmentLabel,
-    weaponByKey,
+    humanizeTeamName,
   } from "$lib/utils";
+  import {
+    humanizeInvestmentLabel,
+    displayWeaponRefinement,
+    weaponByKey,
+  } from "$lib/equipment-data";
   import { weaponIconUrl } from "$lib/asset-urls";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
+  import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
+  import PageShell from "$lib/ui/components/PageShell.svelte";
+  import Surface from "$lib/ui/components/Surface.svelte";
+  import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
+  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type {
     InvestmentFile,
@@ -22,10 +32,10 @@
 
   let { data: layoutData } = $props();
 
-  let investment: InvestmentFile | null = $state(getInvestmentCached());
-  let team: InvestmentTeam | null = $state(null);
+  let investment = $state<InvestmentFile | null>(getInvestmentCached());
+  let team = $state<InvestmentTeam | null>(null);
   let loading = $derived(investment === null);
-  let error: string | null = $state(null);
+  let error = $state<string | null>(null);
 
   onMount(() => fetchData());
 
@@ -57,35 +67,22 @@
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
+  let characterNames = $derived(
+    new Map(
+      [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
+    ),
+  );
+
+  let teamTitle = $derived(
+    team ? humanizeTeamName(team.characters, characterNames) : "",
+  );
+
   let ownedKeys = $derived(
     new Set(
       $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
     ),
   );
 
-  function isOwned(key: string): boolean {
-    return ownedKeys.has(key);
-  }
-
-  // ── Element accent colours ────────────────────────────────────────────────
-  const ELEMENT_COLORS: Record<string, string> = {
-    Pyro: "#f07b4a",
-    Hydro: "#5eb8f5",
-    Anemo: "#6dd5a8",
-    Electro: "#c48ad5",
-    Dendro: "#b1d94c",
-    Cryo: "#8fd5e5",
-    Geo: "#f5c242",
-  };
-
-  /** Build a subtle element-tinted background colour for a character's element,
-   *  mixing the element colour at 8% into the page background. */
-  function elementBg(element: string | null): string {
-    if (!element || !ELEMENT_COLORS[element]) return "var(--background-color)";
-    return `color-mix(in srgb, ${ELEMENT_COLORS[element]} 8%, var(--background-color))`;
-  }
-
-  // ── Accordion: vertical sims by cost; baseline/f2p shown separately ─────
   let baselineSim = $derived.by((): InvestmentSim | null => {
     if (!team) return null;
     return team.results.find((r) => r.kind === "baseline") ?? null;
@@ -100,18 +97,15 @@
       .sort((a, b) => b.dps - a.dps);
   });
 
+  /** Vertical upgrades grouped by cost; sims within a cost are DPS-desc. */
   let costGroups = $derived.by(() => {
     if (!team) return [] as { cost: number; sims: InvestmentTeam["results"] }[];
     const groups = new Map<number, InvestmentTeam["results"]>();
-    // Investment priority path: paid vertical upgrades only
     for (const sim of team.results) {
       if (sim.kind !== "vertical") continue;
       const entry = groups.get(sim.cost);
-      if (entry) {
-        entry.push(sim);
-      } else {
-        groups.set(sim.cost, [sim]);
-      }
+      if (entry) entry.push(sim);
+      else groups.set(sim.cost, [sim]);
     }
     for (const sims of groups.values()) {
       sims.sort((a, b) => b.dps - a.dps);
@@ -123,24 +117,19 @@
 
   let openCosts = $state<Set<number>>(new Set());
 
-  /** Toggle a cost group in the accordion — open if closed, close if open. */
   function toggleCost(cost: number) {
     const next = new Set(openCosts);
-    if (next.has(cost)) {
-      next.delete(cost);
-    } else {
-      next.add(cost);
-    }
+    if (next.has(cost)) next.delete(cost);
+    else next.add(cost);
     openCosts = next;
   }
 
-  /**
-   * Short human label for a sim relative to baseline.
-   * Labels from merge are already diffs for f2p/vertical; baseline is named.
-   */
   function simDiffLabel(sim: InvestmentTeam["results"][number]): string {
     if (sim.kind === "baseline") return "Baseline";
-    return humanizeInvestmentLabel(sim.label?.trim() || "variant");
+    return humanizeInvestmentLabel(
+      sim.label?.trim() || "variant",
+      characterNames,
+    );
   }
 
   function pctVsBaseline(dps: number): string {
@@ -149,426 +138,722 @@
     const sign = pct >= 0 ? "+" : "";
     return `${sign}${pct.toFixed(1)}%`;
   }
+
+  function pctDelta(from: number, to: number): string {
+    if (from <= 0) return "";
+    const pct = ((to - from) / from) * 100;
+    const sign = pct >= 0 ? "+" : "";
+    return `${sign}${pct.toFixed(1)}%`;
+  }
+
+  /** True when `to` is below `from` (negative % for upgrades). */
+  function isDpsLoss(from: number | null | undefined, to: number): boolean {
+    return from != null && from > 0 && to < from;
+  }
+
+  const NEG_PCT_TIP =
+    "Probably just Monte Carlo variance in the simulation — these constellations likely yield no theoretical DPS increase in this instance.";
+
+  /** Within 2.5% of peak DPS at that cost: dps >= peak × 0.975 (relative, not ±2.5pp). */
+  const NEAR_BEST_RATIO = 0.975;
+
+  function isNearBest(dps: number, peakDps: number): boolean {
+    return peakDps > 0 && dps >= peakDps * NEAR_BEST_RATIO;
+  }
+
+  function baselineBuild(goodKey: string): CharacterBuild | undefined {
+    return baselineSim?.characters.find((c) => c.key === goodKey);
+  }
 </script>
 
-<main
-  class="w-[80%] pb-20 flex flex-col gap-6"
-  style={!$animationsEnabled
-    ? "--sk-animation: none; --pulse-animation: none"
-    : ""}
->
+{#snippet negPctTip(label: string)}
+  <span class="pct-tip group">
+    {label}
+    <HoverTooltip class="max-w-72">{NEG_PCT_TIP}</HoverTooltip>
+  </span>
+{/snippet}
+
+<PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   {#if loading}
-    <div
-      class="rounded-2xl p-8 text-center"
-      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-    >
-      <p style="color: var(--foreground-mid);">Loading…</p>
-    </div>
-  {:else if error}
-    <div
-      class="rounded-2xl p-8 text-center"
-      style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-    >
-      <p style="color: var(--foreground-mid);">{error}</p>
-    </div>
+    <LoadingState variant="pulse" message="Loading team…" />
+  {:else if error && !team}
+    <EmptyState message={error}>
+      {#snippet action()}
+        <div class="empty-actions">
+          <Button variant="secondary" onclick={fetchData}>Try again</Button>
+          <a href="/teams" class="back-link">← Back to teams</a>
+        </div>
+      {/snippet}
+    </EmptyState>
   {:else if team}
-    <!-- Team name + baseline -->
-    <div class="flex flex-col gap-1">
-      <h2
-        class="tracking-widest uppercase"
-        style="color: var(--foreground-color);"
-      >
-        {team.team_name}
-      </h2>
-    </div>
-    <!-- Character portrait cards (canonical baseline builds) -->
-    <div class="grid grid-cols-4 gap-1.5">
-      {#each team.characters as goodKey}
-        {@const char = goodKeyMap.get(goodKey)}
-        {@const owned = isOwned(goodKey)}
-        {@const elColor = ELEMENT_COLORS[char?.element ?? ""]}
-        {@const baselineBuild = baselineSim?.characters.find(
-          (c: CharacterBuild) => c.key === goodKey,
-        )}
-        <div
-          class="char-card rounded-md overflow-hidden relative"
-          style="--shine: {elColor ?? 'transparent'}; background: {elementBg(
-            char?.element ?? null,
-          )};"
-          title={char?.name ?? goodKey}
-        >
-          <!-- Element glow at top -->
-          {#if elColor}
-            <div
-              class="absolute top-0 left-0 right-0 z-10 pointer-events-none"
-              style="height: 2px; background: {elColor}; opacity: 0.7;"
-            ></div>
-          {/if}
-
-          <!-- Portrait -->
-          {#if char}
-            <div class="char-portrait-img">
-              <CharacterIcon character={char} />
-            </div>
+    <header class="page-head">
+      <a href="/teams" class="back-link">← Teams</a>
+      <div class="page-head-text">
+        <h1 class="page-title">{teamTitle}</h1>
+        <p class="page-meta">
+          {#if baselineSim}
+            Baseline · {team.baseline_cost} cost · {(
+              baselineSim.dps / 1000
+            ).toFixed(0)}K DPS
           {:else}
-            <div
-              class="char-portrait-img flex items-center justify-center text-xs"
-              style="color: var(--foreground-mid);"
-            >
-              {goodKey.slice(0, 4)}
-            </div>
+            gcsim investment path
           {/if}
+        </p>
+      </div>
+      {#if baselineSim}
+        <a
+          href="/team-configs/{encodeURIComponent(baselineSim.state_key)}"
+          class="config-link"
+        >
+          View build config →
+        </a>
+      {/if}
+    </header>
 
-          {#if baselineBuild}
-            <div
-              class="char-badge absolute bottom-0 left-0 right-0 flex justify-end px-1.5 pb-1.5 pt-4 z-10"
-            >
-              <span
-                class="text-[0.65rem] font-semibold leading-tight tracking-wider"
-                style="color: var(--accent-1);"
-              >
-                C{baselineBuild.cons}
-              </span>
-            </div>
-          {/if}
-
-          <!-- Dim unowned -->
-          {#if !owned}
-            <div
-              class="absolute inset-0 z-5"
-              style="background: rgba(2, 6, 11, 0.55);"
-            ></div>
-          {/if}
-        </div>
-      {/each}
-    </div>
-
-    <!-- Baseline weapon cards (gacha splash) -->
-    <div class="grid grid-cols-4 gap-1.5">
-      {#each team.characters as goodKey}
-        {@const baselineBuild = baselineSim?.characters.find(
-          (c: CharacterBuild) => c.key === goodKey,
-        )}
-        {@const weapon = baselineBuild
-          ? weaponByKey.get(baselineBuild.weapon.key)
+    <!-- Hero: flat 4-up baseline roster -->
+    <div class="roster">
+      {#each team.characters as goodKey (goodKey)}
+        {@const char = goodKeyMap.get(goodKey)}
+        {@const build = baselineBuild(goodKey)}
+        {@const weapon = build ? weaponByKey.get(build.weapon.key) : null}
+        {@const weaponIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
+        {@const refine = build
+          ? displayWeaponRefinement(build.weapon.key, build.weapon.refinement, {
+              weaponShown: Boolean(weaponIcon),
+            })
           : null}
-        {@const icon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-        {@const refine = baselineBuild?.weapon.refinement ?? null}
-        <div
-          class="weapon-card rounded-md relative group"
-          style="background: var(--background-color);"
+        <CharacterPortraitCard
+          character={char}
+          tintBackground
+          dimmed={!ownedKeys.has(goodKey)}
+          href={char?.name_id ? `/characters/${char.name_id}` : undefined}
+          class="roster-card"
         >
-          <div class="weapon-icon-wrap rounded-md overflow-hidden">
-            {#if icon}
-              <img
-                src={icon}
-                alt={weapon?.name ?? "Weapon"}
-                class="weapon-icon"
-                loading="lazy"
-              />
-            {:else}
-              <div
-                class="weapon-icon flex items-center justify-center text-[0.65rem] px-1 text-center"
-                style="color: var(--foreground-mid);"
-              >
-                —
+          {#snippet badge()}
+            {#if weaponIcon}
+              <div class="weapon group">
+                <img
+                  src={weaponIcon}
+                  alt={weapon?.name ?? "Weapon"}
+                  class="weapon-img"
+                  loading="lazy"
+                />
+                {#if refine !== null}
+                  <span class="weapon-r">R{refine}</span>
+                {/if}
+                <WeaponTooltip {weapon} refinement={refine} />
               </div>
             {/if}
-            {#if refine !== null}
-              <div
-                class="weapon-badge absolute bottom-0 left-0 right-0 flex justify-end px-1.5 pb-1.5 pt-4 z-10"
-              >
-                <span
-                  class="text-[0.65rem] font-semibold leading-tight tracking-wider"
-                  style="color: var(--accent-1);"
-                >
-                  R{refine}
-                </span>
-              </div>
+          {/snippet}
+          {#snippet meta()}
+            <div class="meta-name">{char?.name ?? goodKey}</div>
+            {#if build}
+              <div class="meta-build">C{build.cons}</div>
             {/if}
-          </div>
-          <WeaponTooltip {weapon} refinement={refine} />
-        </div>
+          {/snippet}
+          {#if !char}
+            <span class="fallback-key">{goodKey.slice(0, 4)}</span>
+          {/if}
+        </CharacterPortraitCard>
       {/each}
     </div>
 
-    {#if baselineSim}
-      <p class="text-xs" style="color: var(--foreground-mid);">
-        Baseline · {team.baseline_cost} cost · {(
-          baselineSim.dps / 1000
-        ).toFixed(0)}K DPS
-      </p>
-    {/if}
-
-    <!-- Baseline / F2P variants — compact diff rows, DPS ranked -->
     {#if baselineVariants.length > 0}
-      <div class="flex flex-col gap-1">
-        <h2 class="tracking-widest" style="color: var(--foreground-color);">
-          Baseline variants
-        </h2>
-      </div>
-
-      <div
-        class="rounded-xl overflow-hidden flex flex-col"
-        style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);"
-      >
-        {#each baselineVariants as sim, vi}
-          <a
-            href={getSimConfigUrl(sim.state_key)}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="diff-row flex items-center gap-2 px-3 py-2 text-xs no-underline"
-            class:sim-divider={vi > 0}
-            style="color: inherit;"
-          >
-            <span
-              class="min-w-0 flex-1 truncate"
-              style="color: var(--foreground-color);"
-              title={simDiffLabel(sim)}
+      <section class="section">
+        <h2 class="section-title">Baseline variants</h2>
+        <p class="section-lede">
+          Floor-cost options, ranked by DPS. Highlighted rows are within 2.5% of
+          the best.
+        </p>
+        <Surface flush class="board">
+          <div class="board-head" aria-hidden="true">
+            <span>Build</span>
+            <span>DPS</span>
+            <span>vs base</span>
+          </div>
+          {#each baselineVariants as sim, vi (sim.state_key)}
+            {@const peakDps = baselineVariants[0].dps}
+            <a
+              href="/team-configs/{encodeURIComponent(sim.state_key)}"
+              class="board-row"
+              class:board-divider={vi > 0}
+              class:is-baseline={sim.kind === "baseline"}
+              class:is-near-best={isNearBest(sim.dps, peakDps)}
             >
-              {simDiffLabel(sim)}
-            </span>
-            <span class="shrink-0 tabular-nums" style="color: var(--accent-1);">
-              {(sim.dps / 1000).toFixed(1)}K
-            </span>
-            {#if baselineSim && sim.kind !== "baseline"}
-              <span
-                class="shrink-0 tabular-nums w-12 text-right"
-                style="color: var(--foreground-mid);"
-              >
-                {pctVsBaseline(sim.dps)}
+              <span class="row-label" title={simDiffLabel(sim)}>
+                {simDiffLabel(sim)}
+                {#if sim.kind === "baseline"}
+                  <span class="row-tag">base</span>
+                {/if}
               </span>
-            {:else}
-              <span class="shrink-0 w-12"></span>
-            {/if}
-          </a>
-        {/each}
-      </div>
+              <span class="row-dps">{(sim.dps / 1000).toFixed(1)}K</span>
+              <span class="row-pct">
+                {sim.kind === "baseline" ? "—" : pctVsBaseline(sim.dps)}
+              </span>
+            </a>
+          {/each}
+        </Surface>
+      </section>
     {/if}
 
-    <!-- Investment Label -->
-    <div class="flex flex-col gap-1">
-      <h2 class="tracking-widest" style="color: var(--foreground-color);">
-        Best investment priority by cost
-      </h2>
-    </div>
-
-    <!-- Investment sims: accordion by cost (vertical upgrades) -->
-    <div class="flex flex-col gap-2">
-      {#each costGroups as group, gi}
-        {@const peakSim = group.sims[0]}
-        {@const baselineDps = baselineSim?.dps ?? peakSim.dps}
-        {@const prevBest = gi > 0 ? costGroups[gi - 1].sims[0] : null}
-        {@const pctGain = prevBest
-          ? ((peakSim.dps - prevBest.dps) / prevBest.dps) * 100
-          : baselineSim
-            ? ((peakSim.dps - baselineSim.dps) / baselineSim.dps) * 100
-            : 0}
-        {@const cumulative = (peakSim.dps / baselineDps) * 100}
-        <div
-          class="accordion rounded-xl overflow-hidden"
-          style="background: var(--background-mid); border: 0.5px solid color-mix(in srgb, var(--accent-1) 22%, transparent);{$animationsEnabled
-            ? ` animation: slide-up 0.3s ease-out both; animation-delay: ${gi * 60}ms;`
-            : ''}"
-        >
-          <!-- Accordion header: cost + peak DPS + label -->
-          <button
-            type="button"
-            onclick={() => toggleCost(group.cost)}
-            aria-expanded={openCosts.has(group.cost)}
-            aria-controls="cost-panel-{group.cost}"
-            class="accordion-header flex items-center justify-between w-full px-4 py-3 text-left"
-          >
-            <div class="flex items-baseline gap-2 min-w-0">
-              <span
-                class="text-sm font-medium"
-                style="color: var(--foreground-color);"
-              >
-                {group.cost} cost
-              </span>
-              <span
-                class="text-xs truncate hidden sm:inline"
-                style="color: var(--foreground-mid);"
-              >
-                — {humanizeInvestmentLabel(peakSim.label)}
-              </span>
-            </div>
-            <div class="accordion-stats">
-              <span style="color: var(--foreground-mid);">
-                {(peakSim.dps / 1000).toFixed(0)}K
-              </span>
-              <span style="color: var(--foreground-mid);">
-                {cumulative.toFixed(1)}%
-              </span>
-              <span style="color: var(--accent-1);">
-                {pctGain > 0 ? `+${pctGain.toFixed(1)}%` : ""}
-              </span>
-              <span
-                class="accordion-arrow transition-transform duration-200"
-                class:rotated={openCosts.has(group.cost)}
-                style="color: var(--foreground-mid);"
-              >
-                ▼
-              </span>
-            </div>
-          </button>
-
-          <!-- Accordion body: compact diffs only -->
-          {#if openCosts.has(group.cost)}
+    {#if costGroups.length > 0}
+      <section class="section">
+        <h2 class="section-title">Investment by cost</h2>
+        <p class="section-lede">
+          Best upgrade at each pull cost. Highlighted configs are within 2.5% of
+          the best at that cost — expand a row for alternatives.
+        </p>
+        <Surface flush class="board ladder">
+          <div class="ladder-head" aria-hidden="true">
+            <span>Cost</span>
+            <span>Best upgrade</span>
+            <span>DPS</span>
+            <span>Δ prev</span>
+            <span>vs base</span>
+            <span></span>
+          </div>
+          {#each costGroups as group, gi (group.cost)}
+            {@const peakSim = group.sims[0]}
+            {@const prevPeak = gi > 0 ? costGroups[gi - 1].sims[0] : baselineSim}
+            {@const deltaLabel = prevPeak
+              ? pctDelta(prevPeak.dps, peakSim.dps)
+              : "—"}
+            {@const vsBaseLabel = pctVsBaseline(peakSim.dps)}
+            {@const hasAlts = group.sims.length > 1}
+            {@const open = openCosts.has(group.cost)}
             <div
-              id="cost-panel-{group.cost}"
-              class="flex flex-col"
-              style="border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 12%, transparent);"
-              transition:slide={{ duration: 200 }}
+              class="ladder-block"
+              class:ladder-divider={gi > 0}
+              class:card-enter={$animationsEnabled}
+              style={$animationsEnabled
+                ? `animation-delay: ${gi * 40}ms`
+                : undefined}
             >
-              {#each group.sims as sim, si}
+              <div class="ladder-row">
                 <a
-                  href={getSimConfigUrl(sim.state_key)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="diff-row flex items-center gap-2 px-3 py-2 text-xs no-underline"
-                  class:sim-divider={si > 0}
-                  style="color: inherit;"
+                  href="/team-configs/{encodeURIComponent(peakSim.state_key)}"
+                  class="ladder-link is-near-best"
                 >
-                  <span
-                    class="min-w-0 flex-1 truncate"
-                    style="color: var(--foreground-color);"
-                    title={simDiffLabel(sim)}
-                  >
-                    {simDiffLabel(sim)}
+                  <span class="col-cost">{group.cost}</span>
+                  <span class="col-label" title={simDiffLabel(peakSim)}>
+                    {simDiffLabel(peakSim)}
                   </span>
-                  <span
-                    class="shrink-0 tabular-nums"
-                    style="color: var(--accent-1);"
+                  <span class="col-dps"
+                    >{(peakSim.dps / 1000).toFixed(1)}K</span
                   >
-                    {(sim.dps / 1000).toFixed(1)}K
+                  <span class="col-delta">
+                    {#if prevPeak && isDpsLoss(prevPeak.dps, peakSim.dps)}
+                      {@render negPctTip(deltaLabel)}
+                    {:else}
+                      {deltaLabel}
+                    {/if}
                   </span>
-                  <span
-                    class="shrink-0 tabular-nums w-12 text-right"
-                    style="color: var(--foreground-mid);"
-                  >
-                    {pctVsBaseline(sim.dps)}
+                  <span class="col-base">
+                    {#if isDpsLoss(baselineSim?.dps, peakSim.dps)}
+                      {@render negPctTip(vsBaseLabel)}
+                    {:else}
+                      {vsBaseLabel}
+                    {/if}
                   </span>
                 </a>
-              {/each}
+                {#if hasAlts}
+                  <button
+                    type="button"
+                    class="alts-toggle"
+                    class:rotated={open}
+                    onclick={() => toggleCost(group.cost)}
+                    aria-expanded={open}
+                    aria-controls="cost-alts-{group.cost}"
+                    aria-label="{open ? 'Hide' : 'Show'} alternatives at cost {group.cost}"
+                  >
+                    <IconChevronDown size={14} />
+                  </button>
+                {:else}
+                  <span class="alts-spacer" aria-hidden="true"></span>
+                {/if}
+              </div>
+
+              {#if hasAlts && open}
+                <div
+                  id="cost-alts-{group.cost}"
+                  class="ladder-alts"
+                  transition:slide={{ duration: 180 }}
+                >
+                  {#each group.sims.slice(1) as sim (sim.state_key)}
+                    <div class="ladder-row">
+                      <a
+                        href="/team-configs/{encodeURIComponent(sim.state_key)}"
+                        class="ladder-link"
+                        class:is-near-best={isNearBest(sim.dps, peakSim.dps)}
+                      >
+                        <span class="col-cost"></span>
+                        <span class="col-label" title={simDiffLabel(sim)}>
+                          {simDiffLabel(sim)}
+                        </span>
+                        <span class="col-dps"
+                          >{(sim.dps / 1000).toFixed(1)}K</span
+                        >
+                        <span class="col-delta"></span>
+                        <span class="col-base">
+                          {#if isDpsLoss(baselineSim?.dps, sim.dps)}
+                            {@render negPctTip(pctVsBaseline(sim.dps))}
+                          {:else}
+                            {pctVsBaseline(sim.dps)}
+                          {/if}
+                        </span>
+                      </a>
+                      <span class="alts-spacer" aria-hidden="true"></span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
             </div>
-          {/if}
-        </div>
-      {/each}
-    </div>
+          {/each}
+        </Surface>
+      </section>
+    {/if}
   {/if}
-</main>
+
+  <details class="methodology">
+    <summary>How team numbers work</summary>
+    <p>
+      Team damage is simulated with
+      <a href="https://gcsim.app/" target="_blank" rel="noopener noreferrer"
+        >gcsim</a
+      >
+      using
+      <a
+        href="https://compendium.keqingmains.com/"
+        target="_blank"
+        rel="noopener noreferrer">KQM artifact standards</a
+      >. Baseline variants compare floor-cost options; the cost ladder shows the
+      best paid upgrade at each pull cost.
+    </p>
+  </details>
+</PageShell>
 
 <style>
-  /* ── Accordion ─────────────────────────────────────────────────────────── */
-
-  .accordion-header {
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: inherit;
+  .page-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
   }
 
-  .accordion-header:hover {
-    background: color-mix(in srgb, var(--accent-1) 4%, transparent);
+  .page-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
   }
 
-  .accordion-stats {
+  .back-link {
+    width: fit-content;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .back-link:hover {
+    color: var(--accent-1);
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: var(--h2-size);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .page-meta {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .config-link {
+    width: fit-content;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--accent-1);
+  }
+
+  .config-link:hover {
+    text-decoration: underline;
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: center;
+  }
+
+  .roster {
     display: grid;
-    grid-template-columns: 2.5rem 3.5rem 3.5rem 0.75rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
-    align-items: baseline;
-    justify-items: end;
+    max-width: 36rem;
   }
 
-  .accordion-arrow {
-    display: inline-block;
-    font-size: 0.6rem;
+  .roster :global(.roster-card) {
+    min-width: 0;
   }
 
-  .accordion-arrow.rotated {
-    transform: rotate(180deg);
+  .roster :global(.roster-card:active) {
+    transform: scale(0.97);
   }
 
-  .sim-divider {
-    border-top: 0.5px solid color-mix(in srgb, var(--accent-1) 8%, transparent);
+  .fallback-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
   }
 
-  .diff-row:hover {
-    background: color-mix(in srgb, var(--accent-1) 6%, transparent);
-  }
-
-  /* Portrait cards (shared with list page spotlight) */
-  .char-card {
-    aspect-ratio: 3 / 4;
-    transition:
-      box-shadow 0.35s ease,
-      transform 0.2s ease;
-  }
-
-  .char-card::after {
-    content: "";
+  .weapon {
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(
-      ellipse 100% 70% at 50% 60%,
-      var(--shine) 0%,
-      transparent 60%
-    );
-    opacity: 0;
-    transition: opacity 0.35s ease;
-    pointer-events: none;
-    z-index: 10;
-  }
-
-  .char-card:hover {
-    box-shadow: 0 0 32px 6px color-mix(in srgb, var(--shine) 30%, transparent);
-    z-index: 5;
-  }
-
-  .char-card:hover::after {
-    opacity: 0.35;
-  }
-
-  .char-portrait-img {
-    width: 100%;
-    height: 100%;
-  }
-
-  .char-portrait-img :global(img) {
-    display: block;
-  }
-
-  .char-badge,
-  .weapon-badge {
-    background: linear-gradient(
-      to top,
-      rgba(2, 6, 11, 0.75) 0%,
-      transparent 100%
-    );
-  }
-
-  .weapon-card {
-    aspect-ratio: 1;
-  }
-
-  .weapon-card:hover {
+    top: 0.35rem;
+    left: 0.35rem;
     z-index: 20;
+    width: 28%;
+    aspect-ratio: 1;
+    border-radius: 0.2rem;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--background-color) 72%, transparent);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
   }
 
-  .weapon-icon-wrap {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-
-  .weapon-icon {
+  .weapon-img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    object-position: center;
-    display: block;
-    padding: 0.35rem;
+    padding: 0.1rem;
+  }
+
+  .weapon-r {
+    position: absolute;
+    right: 0.1rem;
+    bottom: 0.05rem;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: var(--accent-1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  }
+
+  .meta-name {
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--foreground-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .meta-build {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--accent-2);
+  }
+
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .section-lede {
+    margin-top: -0.25rem;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  /* Board hairlines are pure white — warm tones over blue mid mix to mud.
+     :global so tokens reach Surface's root (child-component scope). */
+  :global(.board) {
+    --border-subtle: rgba(255, 255, 255, 0.14);
+    --border-default: rgba(255, 255, 255, 0.24);
+    --border-strong: rgba(255, 255, 255, 0.45);
+  }
+
+  .board-head,
+  .board-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 3.5rem 3.25rem;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    font-size: var(--text-xs);
+  }
+
+  .board-head {
+    color: var(--foreground-mid);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    font-size: 0.65rem;
+    border-bottom: var(--border-width) solid var(--border-subtle);
+  }
+
+  .board-head span:nth-child(2),
+  .board-head span:nth-child(3) {
+    text-align: right;
+  }
+
+  .board-row {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .board-row:hover {
+    background: var(--surface-quiet);
+  }
+
+  .board-row.is-baseline .row-label {
+    font-weight: 600;
+  }
+
+  .board-row.is-near-best {
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.45);
+  }
+
+  .board-row.is-near-best:hover {
+    background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
+  }
+
+  .ladder-row:has(.is-near-best) {
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.45);
+  }
+
+  .ladder-row:has(.is-near-best):hover {
+    background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
+  }
+
+  .board-divider {
+    border-top: var(--border-width) solid var(--border-subtle);
+  }
+
+  .row-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--foreground-color);
+  }
+
+  .row-tag {
+    flex-shrink: 0;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent-3);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius-sm);
+    padding: 0.05rem 0.3rem;
+  }
+
+  .row-dps,
+  .col-dps {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--accent-1);
+  }
+
+  .row-pct,
+  .col-delta,
+  .col-base {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--foreground-mid);
+  }
+
+  .pct-tip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    border-bottom: var(--border-width) dashed rgba(255, 255, 255, 0.35);
+  }
+
+  .ladder-head,
+  .ladder-row {
+    display: grid;
+    grid-template-columns:
+      2.5rem minmax(0, 1fr) 3.5rem 3.25rem 3.25rem 1.5rem;
+    column-gap: 0.5rem;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .ladder-head {
+    font-size: 0.65rem;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--foreground-mid);
+    border-bottom: var(--border-width) solid var(--border-subtle);
+  }
+
+  .ladder-head span:nth-child(n + 3) {
+    text-align: right;
+  }
+
+  .ladder-divider {
+    border-top: var(--border-width) solid var(--border-subtle);
+  }
+
+  .ladder-link {
+    grid-column: 1 / 6;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: center;
+    min-width: 0;
+    padding: 0.1rem 0;
+    text-decoration: none;
+    color: inherit;
+    font-size: var(--text-xs);
+  }
+
+  .ladder-row:hover:not(:has(.is-near-best)) {
+    background: var(--surface-quiet);
+  }
+
+  .col-cost {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--foreground-color);
+  }
+
+  .col-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--foreground-color);
+  }
+
+  .col-delta {
+    color: var(--accent-1);
+  }
+
+  .alts-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--foreground-mid);
+    cursor: pointer;
+    transition: transform var(--control-duration) var(--control-ease);
+  }
+
+  .alts-toggle:hover {
+    color: var(--accent-1);
+  }
+
+  .alts-toggle.rotated {
+    transform: rotate(180deg);
+  }
+
+  .alts-spacer {
+    width: 1.5rem;
+    height: 1rem;
+  }
+
+  .ladder-alts {
+    background: color-mix(in srgb, var(--foreground-color) 3%, transparent);
+  }
+
+  .ladder-alts .ladder-link {
+    opacity: 0.9;
+  }
+
+  .methodology {
+    margin-top: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .methodology summary {
+    width: fit-content;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--foreground-mid);
+  }
+
+  .methodology summary:hover {
+    color: var(--foreground-color);
+  }
+
+  .methodology p {
+    max-width: 60ch;
+    margin-top: var(--space-2);
+    line-height: 1.55;
+  }
+
+  .methodology a {
+    color: var(--accent-2);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .card-enter {
+    animation: slide-up 0.3s ease-out both;
+  }
+
+  :global(.page-shell.no-page-anim) {
+    --sk-animation: none;
+    --pulse-animation: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-enter {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .ladder-head {
+      display: none;
+    }
+
+    .ladder-head,
+    .ladder-row {
+      grid-template-columns: 2.25rem minmax(0, 1fr) 3.25rem 1.5rem;
+      column-gap: 0.35rem;
+    }
+
+    .ladder-link {
+      grid-column: 1 / 4;
+    }
+
+    .ladder-link .col-delta,
+    .ladder-link .col-base {
+      display: none;
+    }
   }
 </style>

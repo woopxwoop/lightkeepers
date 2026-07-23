@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { artifactSetByKey, type ArtifactSetData } from "$lib/utils";
+  import { artifactSetByKey, type ArtifactSetData } from "$lib/equipment-data";
   import HoverTooltip from "./HoverTooltip.svelte";
 
   let {

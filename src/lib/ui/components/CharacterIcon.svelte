@@ -11,9 +11,14 @@
   let {
     character,
     zoom = 1,
+    iconStyle = "preference",
+    /** Prefer eager for above-the-fold teams; lazy can stall until scroll/focus under transforms. */
+    loading = "eager",
   }: {
     character: CharacterOwned | Character | undefined;
     zoom?: number;
+    iconStyle?: "preference" | "enka" | "coop" | "tcg";
+    loading?: "lazy" | "eager";
   } = $props();
 
   $effect(() => {
@@ -21,13 +26,17 @@
       console.error("invalid character passed in as prop to CharacterIcon");
   });
 
-  let useEnkaIcon = $derived($displayPreferences.iconStyle === "enka");
-  let useTcg = $derived($displayPreferences.iconStyle === "tcg");
+  let resolvedIconStyle = $derived(
+    iconStyle === "preference" ? $displayPreferences.iconStyle : iconStyle,
+  );
+  let useEnkaIcon = $derived(resolvedIconStyle === "enka");
+  let useTcg = $derived(resolvedIconStyle === "tcg");
 
   // When the TCG card image 404s, we fall back to the coop portrait.  But the
   // coop image needs the coop container styling (higher zoom, different origin)
   // — so we track whether the fallback fired and swap the container class.
   let tcgFailed = $state(false);
+  let assetFailed = $state(false);
   let settled = $state(false);
   let characterKey = $state("");
   let imgEl: HTMLImageElement | undefined = $state();
@@ -36,10 +45,11 @@
   // style actually changes — avoids replaying the TCG→coop fallback cycle
   // when the parent re-renders with the same character (e.g., after Cancel).
   $effect(() => {
-    const key = `${character?.name_id ?? ""}:${useTcg}`;
+    const key = `${character?.name_id ?? ""}:${resolvedIconStyle}`;
     if (key !== characterKey) {
       characterKey = key;
       tcgFailed = false;
+      assetFailed = false;
       settled = false;
     }
   });
@@ -60,57 +70,71 @@
   }
 
   let imgSrc = $derived(
-    character?.name_id
-      ? useEnkaIcon
+    assetFailed || !character?.name_id
+      ? avatarImg
+      : useEnkaIcon
         ? getCharacterPortrait(character.name_id)
         : useTcg && !tcgFailed
           ? getCharacterCard(character.name_id)
-          : getCharacterCoop(character.name_id)
-      : avatarImg,
+          : getCharacterCoop(character.name_id),
   );
 
   /** Whether the coop container styling should be used (including TCG fallback). */
-  let useCoopContainer = $derived(
-    character?.name_id && !useEnkaIcon && (!useTcg || tcgFailed),
-  );
+  let useCoopContainer = $derived(!useEnkaIcon && (!useTcg || tcgFailed));
 </script>
 
 <div
-  class="relative"
-  class:icon-container-tcg={character?.name_id && useTcg && !tcgFailed}
+  class="relative icon-root"
+  class:icon-container-tcg={useTcg && !tcgFailed}
   class:icon-container-coop={useCoopContainer}
-  class:icon-container-compact={!character?.name_id || useEnkaIcon}
+  class:icon-container-compact={useEnkaIcon}
   style:--czoom={zoom}
 >
-  {#if character}
-    <img
-      bind:this={imgEl}
-      src={imgSrc}
-      alt={character.name ?? "Character"}
-      style={settled ? "" : "transition: none"}
-      onerror={() => {
-        if (useTcg && !tcgFailed) {
-          tcgFailed = true;
-          // Don't settle yet — the coop fallback image hasn't loaded.
-          // Let the new image's own onload/onerror settle the component
-          // so the transition: none guard stays active during the swap.
-          return;
-        }
-        onImgSettled();
-      }}
-      onload={onImgSettled}
-    />
-  {/if}
+  <img
+    bind:this={imgEl}
+    src={imgSrc}
+    alt={character?.name ?? "Character"}
+    {loading}
+    decoding="async"
+    style={settled ? "" : "transition: none"}
+    onerror={() => {
+      if (useTcg && !tcgFailed) {
+        tcgFailed = true;
+        // Don't settle yet — the coop fallback image hasn't loaded.
+        // Let the new image's own onload/onerror settle the component
+        // so the transition: none guard stays active during the swap.
+        return;
+      }
+      // Final fallback — keep the reserved frame even if the asset is missing.
+      if (!assetFailed) {
+        assetFailed = true;
+        return;
+      }
+      onImgSettled();
+    }}
+    onload={onImgSettled}
+  />
 </div>
 
 <style>
+  /* Frame height comes from aspect-ratio; the image renders in normal flow
+     at its natural scale (no object-fit) so crops/zoom match the original
+     transform-based styling. */
+  .icon-root {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .icon-root img {
+    display: block;
+    width: 100%;
+  }
+
   /* ── Coop portrait & TCG card (shared 3:4 container) ──────────── */
 
   .icon-container-coop,
   .icon-container-tcg {
-    width: 100%;
-    aspect-ratio: 3/4;
-    overflow: hidden;
+    aspect-ratio: 3 / 4;
   }
 
   .icon-container-coop img {
@@ -122,15 +146,14 @@
   /* ── TCG card (less zoom) ────────────────────────────────────── */
 
   .icon-container-tcg img {
-    object-position: center 30%;
-    transform-origin: 50% 15%;
+    /* Top of frame = top of card art (also when parents force object-fit: cover). */
+    transform-origin: 50% 0%;
     transform: scale(calc(1.2 * var(--czoom)));
   }
 
   /* ── Enka headshot (square) ──────────────────────────────────── */
 
   .icon-container-compact {
-    width: 100%;
     aspect-ratio: 1;
   }
 </style>

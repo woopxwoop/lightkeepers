@@ -1,0 +1,1523 @@
+{
+  "KamisatoAyaka": {
+    "name_id": "Ayaka",
+    "name": "Kamisato Ayaka",
+    "level": 90,
+    "hp": 12858.2,
+    "atk": 342,
+    "def": 783.9,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Jean": {
+    "name_id": "Qin",
+    "name": "Jean",
+    "level": 90,
+    "hp": 14695.1,
+    "atk": 239.2,
+    "def": 768.6,
+    "ascension": {
+      "heal_": 0.2215
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Traveler": {
+    "name_id": "PlayerBoy",
+    "name": "Traveler",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Lisa": {
+    "name_id": "Lisa",
+    "name": "Lisa",
+    "level": 90,
+    "hp": 9569.9,
+    "atk": 231.5,
+    "def": 573.3,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Barbara": {
+    "name_id": "Barbara",
+    "name": "Barbara",
+    "level": 90,
+    "hp": 9787.4,
+    "atk": 159.3,
+    "def": 668.9,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Kaeya": {
+    "name_id": "Kaeya",
+    "name": "Kaeya",
+    "level": 90,
+    "hp": 11636.2,
+    "atk": 223,
+    "def": 791.7,
+    "ascension": {
+      "enerRech_": 0.2667
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Diluc": {
+    "name_id": "Diluc",
+    "name": "Diluc",
+    "level": 90,
+    "hp": 12980.7,
+    "atk": 334.8,
+    "def": 783.9,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Razor": {
+    "name_id": "Razor",
+    "name": "Razor",
+    "level": 90,
+    "hp": 11962.4,
+    "atk": 233.6,
+    "def": 750.8,
+    "ascension": {
+      "physical_dmg_": 0.3
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Amber": {
+    "name_id": "Ambor",
+    "name": "Amber",
+    "level": 90,
+    "hp": 9461.2,
+    "atk": 223,
+    "def": 600.6,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Venti": {
+    "name_id": "Venti",
+    "name": "Venti",
+    "level": 90,
+    "hp": 10531.5,
+    "atk": 263.1,
+    "def": 668.6,
+    "ascension": {
+      "enerRech_": 0.32
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Xiangling": {
+    "name_id": "Xiangling",
+    "name": "Xiangling",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 225.1,
+    "def": 668.9,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Beidou": {
+    "name_id": "Beidou",
+    "name": "Beidou",
+    "level": 90,
+    "hp": 13049.9,
+    "atk": 225.1,
+    "def": 648.4,
+    "ascension": {
+      "electro_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Xingqiu": {
+    "name_id": "Xingqiu",
+    "name": "Xingqiu",
+    "level": 90,
+    "hp": 10222.4,
+    "atk": 201.8,
+    "def": 757.6,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Xiao": {
+    "name_id": "Xiao",
+    "name": "Xiao",
+    "level": 90,
+    "hp": 12735.7,
+    "atk": 349.2,
+    "def": 799.3,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Ningguang": {
+    "name_id": "Ningguang",
+    "name": "Ningguang",
+    "level": 90,
+    "hp": 9787.4,
+    "atk": 212.4,
+    "def": 573.3,
+    "ascension": {
+      "geo_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Klee": {
+    "name_id": "Klee",
+    "name": "Klee",
+    "level": 90,
+    "hp": 10286.6,
+    "atk": 310.9,
+    "def": 614.8,
+    "ascension": {
+      "pyro_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Zhongli": {
+    "name_id": "Zhongli",
+    "name": "Zhongli",
+    "level": 90,
+    "hp": 14695.1,
+    "atk": 251.1,
+    "def": 737.8,
+    "ascension": {
+      "geo_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Fischl": {
+    "name_id": "Fischl",
+    "name": "Fischl",
+    "level": 90,
+    "hp": 9189.3,
+    "atk": 244.3,
+    "def": 593.8,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Bennett": {
+    "name_id": "Bennett",
+    "name": "Bennett",
+    "level": 90,
+    "hp": 12397.4,
+    "atk": 191.2,
+    "def": 771.2,
+    "ascension": {
+      "enerRech_": 0.2667
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Tartaglia": {
+    "name_id": "Tartaglia",
+    "name": "Tartaglia",
+    "level": 90,
+    "hp": 13103.1,
+    "atk": 301.4,
+    "def": 814.7,
+    "ascension": {
+      "hydro_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Noelle": {
+    "name_id": "Noel",
+    "name": "Noelle",
+    "level": 90,
+    "hp": 12071.2,
+    "atk": 191.2,
+    "def": 798.6,
+    "ascension": {
+      "def_": 0.3
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Qiqi": {
+    "name_id": "Qiqi",
+    "name": "Qiqi",
+    "level": 90,
+    "hp": 12368.4,
+    "atk": 287,
+    "def": 922.3,
+    "ascension": {
+      "heal_": 0.2215
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Chongyun": {
+    "name_id": "Chongyun",
+    "name": "Chongyun",
+    "level": 90,
+    "hp": 10983.7,
+    "atk": 223,
+    "def": 648.4,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Ganyu": {
+    "name_id": "Ganyu",
+    "name": "Ganyu",
+    "level": 90,
+    "hp": 9796.7,
+    "atk": 334.8,
+    "def": 630.2,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Albedo": {
+    "name_id": "Albedo",
+    "name": "Albedo",
+    "level": 90,
+    "hp": 13225.6,
+    "atk": 251.1,
+    "def": 876.2,
+    "ascension": {
+      "geo_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Diona": {
+    "name_id": "Diona",
+    "name": "Diona",
+    "level": 90,
+    "hp": 9569.9,
+    "atk": 212.4,
+    "def": 600.6,
+    "ascension": {
+      "cryo_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Mona": {
+    "name_id": "Mona",
+    "name": "Mona",
+    "level": 90,
+    "hp": 10409,
+    "atk": 287,
+    "def": 653.3,
+    "ascension": {
+      "enerRech_": 0.32
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Keqing": {
+    "name_id": "Keqing",
+    "name": "Keqing",
+    "level": 90,
+    "hp": 13103.1,
+    "atk": 322.9,
+    "def": 799.3,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Sucrose": {
+    "name_id": "Sucrose",
+    "name": "Sucrose",
+    "level": 90,
+    "hp": 9243.7,
+    "atk": 169.9,
+    "def": 703,
+    "ascension": {
+      "anemo_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Xinyan": {
+    "name_id": "Xinyan",
+    "name": "Xinyan",
+    "level": 90,
+    "hp": 11201.2,
+    "atk": 248.5,
+    "def": 798.6,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Rosaria": {
+    "name_id": "Rosaria",
+    "name": "Rosaria",
+    "level": 90,
+    "hp": 12288.7,
+    "atk": 240,
+    "def": 709.8,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "HuTao": {
+    "name_id": "Hutao",
+    "name": "Hu Tao",
+    "level": 90,
+    "hp": 15552.3,
+    "atk": 106.4,
+    "def": 876.2,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "KaedeharaKazuha": {
+    "name_id": "Kazuha",
+    "name": "Kaedehara Kazuha",
+    "level": 90,
+    "hp": 13348,
+    "atk": 296.6,
+    "def": 807,
+    "ascension": {
+      "eleMas": 115.2
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Yanfei": {
+    "name_id": "Feiyan",
+    "name": "Yanfei",
+    "level": 90,
+    "hp": 9352.4,
+    "atk": 240,
+    "def": 587,
+    "ascension": {
+      "pyro_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Yoimiya": {
+    "name_id": "Yoimiya",
+    "name": "Yoimiya",
+    "level": 90,
+    "hp": 10164.1,
+    "atk": 322.9,
+    "def": 614.8,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Thoma": {
+    "name_id": "Tohma",
+    "name": "Thoma",
+    "level": 90,
+    "hp": 10331.2,
+    "atk": 201.8,
+    "def": 750.8,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Eula": {
+    "name_id": "Eula",
+    "name": "Eula",
+    "level": 90,
+    "hp": 13225.6,
+    "atk": 342,
+    "def": 750.9,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "RaidenShogun": {
+    "name_id": "Shougun",
+    "name": "Raiden Shogun",
+    "level": 90,
+    "hp": 12907.2,
+    "atk": 337.2,
+    "def": 789.3,
+    "ascension": {
+      "enerRech_": 0.32
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Sayu": {
+    "name_id": "Sayu",
+    "name": "Sayu",
+    "level": 90,
+    "hp": 11853.7,
+    "atk": 244.3,
+    "def": 744.6,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "SangonomiyaKokomi": {
+    "name_id": "Kokomi",
+    "name": "Sangonomiya Kokomi",
+    "level": 90,
+    "hp": 13470.5,
+    "atk": 234.4,
+    "def": 657.1,
+    "ascension": {
+      "hydro_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Gorou": {
+    "name_id": "Gorou",
+    "name": "Gorou",
+    "level": 90,
+    "hp": 9569.9,
+    "atk": 182.7,
+    "def": 648.4,
+    "ascension": {
+      "geo_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "KujouSara": {
+    "name_id": "Sara",
+    "name": "Kujou Sara",
+    "level": 90,
+    "hp": 9569.9,
+    "atk": 195.4,
+    "def": 627.9,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "AratakiItto": {
+    "name_id": "Itto",
+    "name": "Arataki Itto",
+    "level": 90,
+    "hp": 12858.2,
+    "atk": 227.2,
+    "def": 959.2,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "YaeMiko": {
+    "name_id": "Yae",
+    "name": "Yae Miko",
+    "level": 90,
+    "hp": 10372.3,
+    "atk": 339.6,
+    "def": 568.7,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "ShikanoinHeizou": {
+    "name_id": "Heizo",
+    "name": "Shikanoin Heizou",
+    "level": 90,
+    "hp": 10657.4,
+    "atk": 225.1,
+    "def": 683.9,
+    "ascension": {
+      "anemo_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Yelan": {
+    "name_id": "Yelan",
+    "name": "Yelan",
+    "level": 90,
+    "hp": 14450.2,
+    "atk": 244,
+    "def": 548,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Kirara": {
+    "name_id": "Momoka",
+    "name": "Kirara",
+    "level": 90,
+    "hp": 12179.9,
+    "atk": 223,
+    "def": 546,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Aloy": {
+    "name_id": "Aloy",
+    "name": "Aloy",
+    "level": 90,
+    "hp": 10898.9,
+    "atk": 233.9,
+    "def": 676.3,
+    "ascension": {
+      "cryo_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Shenhe": {
+    "name_id": "Shenhe",
+    "name": "Shenhe",
+    "level": 90,
+    "hp": 12992.9,
+    "atk": 303.8,
+    "def": 830,
+    "ascension": {
+      "atk_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "YunJin": {
+    "name_id": "Yunjin",
+    "name": "Yun Jin",
+    "level": 90,
+    "hp": 10657.4,
+    "atk": 191.2,
+    "def": 734.4,
+    "ascension": {
+      "enerRech_": 0.2667
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "KukiShinobu": {
+    "name_id": "Shinobu",
+    "name": "Kuki Shinobu",
+    "level": 90,
+    "hp": 12288.7,
+    "atk": 212.4,
+    "def": 750.8,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "KamisatoAyato": {
+    "name_id": "Ayato",
+    "name": "Kamisato Ayato",
+    "level": 90,
+    "hp": 13715.4,
+    "atk": 299,
+    "def": 768.6,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Collei": {
+    "name_id": "Collei",
+    "name": "Collei",
+    "level": 90,
+    "hp": 9787.4,
+    "atk": 199.7,
+    "def": 600.6,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Dori": {
+    "name_id": "Dori",
+    "name": "Dori",
+    "level": 90,
+    "hp": 12397.4,
+    "atk": 223,
+    "def": 723.5,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Tighnari": {
+    "name_id": "Tighnari",
+    "name": "Tighnari",
+    "level": 90,
+    "hp": 10849.9,
+    "atk": 267.9,
+    "def": 630.2,
+    "ascension": {
+      "dendro_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Nilou": {
+    "name_id": "Nilou",
+    "name": "Nilou",
+    "level": 90,
+    "hp": 15184.9,
+    "atk": 229.6,
+    "def": 728.6,
+    "ascension": {
+      "hp_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Cyno": {
+    "name_id": "Cyno",
+    "name": "Cyno",
+    "level": 90,
+    "hp": 12490.8,
+    "atk": 318.1,
+    "def": 859.2,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Candace": {
+    "name_id": "Candace",
+    "name": "Candace",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Nahida": {
+    "name_id": "Nahida",
+    "name": "Nahida",
+    "level": 90,
+    "hp": 10360,
+    "atk": 299,
+    "def": 630.2,
+    "ascension": {
+      "eleMas": 115.2
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Layla": {
+    "name_id": "Layla",
+    "name": "Layla",
+    "level": 90,
+    "hp": 11092.4,
+    "atk": 216.6,
+    "def": 655.2,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Wanderer": {
+    "name_id": "Wanderer",
+    "name": "Wanderer",
+    "level": 90,
+    "hp": 10164.1,
+    "atk": 327.7,
+    "def": 607.2,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Faruzan": {
+    "name_id": "Faruzan",
+    "name": "Faruzan",
+    "level": 90,
+    "hp": 9569.9,
+    "atk": 196.5,
+    "def": 627.9,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Yaoyao": {
+    "name_id": "Yaoyao",
+    "name": "Yaoyao",
+    "level": 90,
+    "hp": 12288.7,
+    "atk": 212.4,
+    "def": 750.8,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Alhaitham": {
+    "name_id": "Alhatham",
+    "name": "Alhaitham",
+    "level": 90,
+    "hp": 13348,
+    "atk": 313.3,
+    "def": 781.6,
+    "ascension": {
+      "dendro_dmg_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Dehya": {
+    "name_id": "Dehya",
+    "name": "Dehya",
+    "level": 90,
+    "hp": 15674.8,
+    "atk": 265.5,
+    "def": 627.9,
+    "ascension": {
+      "hp_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Mika": {
+    "name_id": "Mika",
+    "name": "Mika",
+    "level": 90,
+    "hp": 12506.2,
+    "atk": 223,
+    "def": 713.2,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Kaveh": {
+    "name_id": "Kaveh",
+    "name": "Kaveh",
+    "level": 90,
+    "hp": 11962.4,
+    "atk": 233.6,
+    "def": 750.8,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Baizhu": {
+    "name_id": "Baizhuer",
+    "name": "Baizhu",
+    "level": 90,
+    "hp": 13348,
+    "atk": 192.5,
+    "def": 499.6,
+    "ascension": {
+      "hp_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Lynette": {
+    "name_id": "Linette",
+    "name": "Lynette",
+    "level": 90,
+    "hp": 12397.4,
+    "atk": 231.5,
+    "def": 711.9,
+    "ascension": {
+      "anemo_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Lyney": {
+    "name_id": "Liney",
+    "name": "Lyney",
+    "level": 90,
+    "hp": 11021.3,
+    "atk": 318.1,
+    "def": 538,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Freminet": {
+    "name_id": "Freminet",
+    "name": "Freminet",
+    "level": 90,
+    "hp": 12071.2,
+    "atk": 254.9,
+    "def": 708.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Wriothesley": {
+    "name_id": "Wriothesley",
+    "name": "Wriothesley",
+    "level": 90,
+    "hp": 13593,
+    "atk": 310.9,
+    "def": 763.2,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Neuvillette": {
+    "name_id": "Neuvillette",
+    "name": "Neuvillette",
+    "level": 90,
+    "hp": 14695.1,
+    "atk": 208.3,
+    "def": 576.4,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Charlotte": {
+    "name_id": "Charlotte",
+    "name": "Charlotte",
+    "level": 90,
+    "hp": 10766.2,
+    "atk": 173.1,
+    "def": 546,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Furina": {
+    "name_id": "Furina",
+    "name": "Furina",
+    "level": 90,
+    "hp": 15307.4,
+    "atk": 244,
+    "def": 695.5,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Chevreuse": {
+    "name_id": "Chevreuse",
+    "name": "Chevreuse",
+    "level": 90,
+    "hp": 11962.4,
+    "atk": 193.3,
+    "def": 604.7,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Navia": {
+    "name_id": "Navia",
+    "name": "Navia",
+    "level": 90,
+    "hp": 12650,
+    "atk": 351.6,
+    "def": 793.1,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Gaming": {
+    "name_id": "Gaming",
+    "name": "Gaming",
+    "level": 90,
+    "hp": 11418.7,
+    "atk": 301.6,
+    "def": 703,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Xianyun": {
+    "name_id": "Liuyun",
+    "name": "Xianyun",
+    "level": 90,
+    "hp": 10409,
+    "atk": 334.8,
+    "def": 572.6,
+    "ascension": {
+      "atk_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Chiori": {
+    "name_id": "Chiori",
+    "name": "Chiori",
+    "level": 90,
+    "hp": 11437.7,
+    "atk": 322.9,
+    "def": 953,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Sigewinne": {
+    "name_id": "Sigewinne",
+    "name": "Sigewinne",
+    "level": 90,
+    "hp": 13348,
+    "atk": 192.5,
+    "def": 499.6,
+    "ascension": {
+      "hp_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Arlecchino": {
+    "name_id": "Arlecchino",
+    "name": "Arlecchino",
+    "level": 90,
+    "hp": 13103.1,
+    "atk": 342,
+    "def": 764.7,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Sethos": {
+    "name_id": "Sethos",
+    "name": "Sethos",
+    "level": 90,
+    "hp": 9787.4,
+    "atk": 227.3,
+    "def": 559.7,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Clorinde": {
+    "name_id": "Clorinde",
+    "name": "Clorinde",
+    "level": 90,
+    "hp": 12956.2,
+    "atk": 337.2,
+    "def": 783.9,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Emilie": {
+    "name_id": "Emilie",
+    "name": "Emilie",
+    "level": 90,
+    "hp": 13568.5,
+    "atk": 334.8,
+    "def": 730.1,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Kachina": {
+    "name_id": "Kachina",
+    "name": "Kachina",
+    "level": 90,
+    "hp": 11799.3,
+    "atk": 216.6,
+    "def": 792.4,
+    "ascension": {
+      "geo_dmg_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Kinich": {
+    "name_id": "Kinich",
+    "name": "Kinich",
+    "level": 90,
+    "hp": 12858.2,
+    "atk": 332.5,
+    "def": 801.6,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Mualani": {
+    "name_id": "Mualani",
+    "name": "Mualani",
+    "level": 90,
+    "hp": 15184.9,
+    "atk": 181.8,
+    "def": 570.3,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Xilonen": {
+    "name_id": "Xilonen",
+    "name": "Xilonen",
+    "level": 90,
+    "hp": 12405.1,
+    "atk": 275.1,
+    "def": 930,
+    "ascension": {
+      "def_": 0.36
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Chasca": {
+    "name_id": "Chasca",
+    "name": "Chasca",
+    "level": 90,
+    "hp": 9796.7,
+    "atk": 346.8,
+    "def": 614.8,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Ororon": {
+    "name_id": "Olorun",
+    "name": "Ororon",
+    "level": 90,
+    "hp": 9243.7,
+    "atk": 244.3,
+    "def": 587,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Mavuika": {
+    "name_id": "Mavuika",
+    "name": "Mavuika",
+    "level": 90,
+    "hp": 12552.1,
+    "atk": 358.8,
+    "def": 791.6,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Citlali": {
+    "name_id": "Citlali",
+    "name": "Citlali",
+    "level": 90,
+    "hp": 11633.6,
+    "atk": 126.8,
+    "def": 763.2,
+    "ascension": {
+      "eleMas": 115.2
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "LanYan": {
+    "name_id": "Lanyan",
+    "name": "Lan Yan",
+    "level": 90,
+    "hp": 9243.7,
+    "atk": 250.6,
+    "def": 580.1,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "YumemizukiMizuki": {
+    "name_id": "Mizuki",
+    "name": "Yumemizuki Mizuki",
+    "level": 90,
+    "hp": 12735.7,
+    "atk": 215.3,
+    "def": 757,
+    "ascension": {
+      "eleMas": 115.2
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Iansan": {
+    "name_id": "Iansan",
+    "name": "Iansan",
+    "level": 90,
+    "hp": 10657.4,
+    "atk": 257,
+    "def": 638.2,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Varesa": {
+    "name_id": "Varesa",
+    "name": "Varesa",
+    "level": 90,
+    "hp": 12699,
+    "atk": 356.4,
+    "def": 781.6,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Escoffier": {
+    "name_id": "Escoffier",
+    "name": "Escoffier",
+    "level": 90,
+    "hp": 13348,
+    "atk": 346.8,
+    "def": 731.7,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Ifa": {
+    "name_id": "Ifa",
+    "name": "Ifa",
+    "level": 90,
+    "hp": 10081,
+    "atk": 178.4,
+    "def": 605.4,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Skirk": {
+    "name_id": "SkirkNew",
+    "name": "Skirk",
+    "level": 90,
+    "hp": 12417.4,
+    "atk": 358.8,
+    "def": 806.2,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Dahlia": {
+    "name_id": "Dahlia",
+    "name": "Dahlia",
+    "level": 90,
+    "hp": 12506.2,
+    "atk": 189,
+    "def": 559.7,
+    "ascension": {
+      "hp_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Ineffa": {
+    "name_id": "Ineffa",
+    "name": "Ineffa",
+    "level": 90,
+    "hp": 12613.3,
+    "atk": 330.1,
+    "def": 827.7,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Lauma": {
+    "name_id": "Lauma",
+    "name": "Lauma",
+    "level": 90,
+    "hp": 10653.9,
+    "atk": 255,
+    "def": 668.6,
+    "ascension": {
+      "eleMas": 115.2
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Flins": {
+    "name_id": "Flins",
+    "name": "Flins",
+    "level": 90,
+    "hp": 12490.8,
+    "atk": 351.6,
+    "def": 808.5,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Aino": {
+    "name_id": "Aino",
+    "name": "Aino",
+    "level": 90,
+    "hp": 11201.2,
+    "atk": 242.1,
+    "def": 607.4,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Nefer": {
+    "name_id": "Nefer",
+    "name": "Nefer",
+    "level": 90,
+    "hp": 12703.9,
+    "atk": 344.4,
+    "def": 799.3,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Durin": {
+    "name_id": "Durin",
+    "name": "Durin",
+    "level": 90,
+    "hp": 12429.6,
+    "atk": 346.8,
+    "def": 822.4,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Jahoda": {
+    "name_id": "Jahoda",
+    "name": "Jahoda",
+    "level": 90,
+    "hp": 9646,
+    "atk": 223,
+    "def": 580.1,
+    "ascension": {
+      "heal_": 0.1846
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Columbina": {
+    "name_id": "Columbina",
+    "name": "Columbina",
+    "level": 90,
+    "hp": 14695.1,
+    "atk": 95.7,
+    "def": 514.9,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Zibai": {
+    "name_id": "Zibai",
+    "name": "Zibai",
+    "level": 90,
+    "hp": 12919.4,
+    "atk": 224.8,
+    "def": 956.9,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Illuga": {
+    "name_id": "Illuga",
+    "name": "Illuga",
+    "level": 90,
+    "hp": 11962.4,
+    "atk": 191.2,
+    "def": 813.6,
+    "ascension": {
+      "eleMas": 96
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Varka": {
+    "name_id": "Varka",
+    "name": "Varka",
+    "level": 90,
+    "hp": 12613.3,
+    "atk": 352.8,
+    "def": 795.5,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Lohen": {
+    "name_id": "Lohen",
+    "name": "Lohen",
+    "level": 90,
+    "hp": 12858.2,
+    "atk": 344.4,
+    "def": 783.9,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Linnea": {
+    "name_id": "Linnea",
+    "name": "Linnea",
+    "level": 90,
+    "hp": 9894.7,
+    "atk": 143.5,
+    "def": 906.9,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Nicole": {
+    "name_id": "Nicole",
+    "name": "Nicole",
+    "level": 90,
+    "hp": 10409,
+    "atk": 342,
+    "def": 562.6,
+    "ascension": {
+      "atk_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Prune": {
+    "name_id": "Prune",
+    "name": "Prune",
+    "level": 90,
+    "hp": 9678.7,
+    "atk": 220.9,
+    "def": 580.1,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "Sandrone": {
+    "name_id": "MarionetteNew",
+    "name": "Sandrone",
+    "level": 90,
+    "hp": 13225.6,
+    "atk": 342,
+    "def": 752.4,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  }
+}

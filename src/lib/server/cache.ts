@@ -1,3 +1,5 @@
+import { valkeyGetJsonWithTtl, valkeySetJson } from "$lib/server/valkey";
+
 // ── LRU Cache ──────────────────────────────────────────────────────────────
 
 type CacheEntry<T> = {
@@ -5,13 +7,32 @@ type CacheEntry<T> = {
   expiresAt: number;
 };
 
+export type LRUCacheOptions = {
+  /**
+   * When set, getOrSet also reads/writes Valkey under `lk:{namespace}:…`
+   * so pm2 workers share one cache. Falls back to memory-only if VALKEY_URL
+   * is unset or Valkey is unreachable.
+   */
+  redisNamespace?: string;
+};
+
 export class LRUCache<T> {
   private map = new Map<string, CacheEntry<T>>();
+  /** In-flight computations keyed by cache key — collapses concurrent misses. */
+  private inflight = new Map<string, Promise<T>>();
+  private readonly redisNamespace: string | undefined;
 
   constructor(
     private readonly maxSize: number,
     private readonly ttlMs: number,
-  ) {}
+    options?: LRUCacheOptions,
+  ) {
+    this.redisNamespace = options?.redisNamespace;
+  }
+
+  private redisKey(key: string): string | null {
+    return this.redisNamespace ? `lk:${this.redisNamespace}:${key}` : null;
+  }
 
   get(key: string): T | undefined {
     const entry = this.map.get(key);
@@ -26,22 +47,61 @@ export class LRUCache<T> {
     return entry.value;
   }
 
-  set(key: string, value: T): void {
+  set(key: string, value: T, ttlMs = this.ttlMs): void {
     if (this.map.has(key)) this.map.delete(key);
     else if (this.map.size >= this.maxSize) {
       // Evict oldest entry
       this.map.delete(this.map.keys().next().value!);
     }
-    this.map.set(key, { value, expiresAt: Date.now() + this.ttlMs });
+    const ttl = Math.max(0, ttlMs);
+    this.map.set(key, { value, expiresAt: Date.now() + ttl });
   }
 
-  /** Convenience: return cached value or compute + store it. */
+  /**
+   * Return cached value or compute + store it.
+   * Concurrent misses for the same key share one in-flight Promise (singleflight).
+   * With `redisNamespace`, also checks/writes Valkey so workers share state.
+   * Valkey hits populate L1 with min(local ttl, remaining Redis TTL).
+   */
   async getOrSet(key: string, fn: () => Promise<T>): Promise<T> {
     const cached = this.get(key);
     if (cached !== undefined) return cached;
-    const value = await fn();
-    this.set(key, value);
-    return value;
+
+    const existing = this.inflight.get(key);
+    if (existing) return existing;
+
+    // Register before async work runs so concurrent callers share one promise
+    // even if fn() fails synchronously before the first await.
+    const pending = Promise.resolve().then(async () => {
+      try {
+        const again = this.get(key);
+        if (again !== undefined) return again;
+
+        const rKey = this.redisKey(key);
+        if (rKey) {
+          const remote = await valkeyGetJsonWithTtl<T>(rKey);
+          if (remote !== undefined) {
+            const ttl = Math.min(this.ttlMs, remote.ttlMs);
+            if (ttl > 0) {
+              this.set(key, remote.value, ttl);
+              return remote.value;
+            }
+          }
+        }
+
+        const value = await fn();
+        this.set(key, value);
+        if (rKey) {
+          void valkeySetJson(rKey, value, this.ttlMs);
+        }
+        return value;
+      } finally {
+        this.inflight.delete(key);
+      }
+    });
+
+    this.inflight.set(key, pending);
+    return pending;
   }
 
   invalidate(key: string): void {
@@ -107,7 +167,8 @@ export class RateLimiter {
 }
 
 // ── Shared singletons ──────────────────────────────────────────────────────
-// These live in server memory for the lifetime of the Node process.
+// Memory L1 per process + Valkey L2 when VALKEY_URL / REDIS_URL is set
+// (see docker-compose.yml). Keep pm2 -i max; workers share Valkey.
 
 import type { Tables } from "$lib/types/database.types";
 
@@ -119,18 +180,23 @@ const TTL_15_MIN = 15 * 60 * 1000;
  * Cache for the characters table — changes only on patch day.
  * Single entry; keyed by the constant string "characters".
  */
-export const charactersCache = new LRUCache<Character[]>(1, TTL_15_MIN);
+export const charactersCache = new LRUCache<Character[]>(1, TTL_15_MIN, {
+  redisNamespace: "characters",
+});
 
 /**
  * Cache for per-user Supabase RPC results.
  * Key: `${rpcName}:${versionNumber}:${sortedCharNames}`
- * Holds up to 2 000 distinct character-list combinations.
+ * Holds up to 2 000 distinct character-list combinations in L1.
  */
-export const rpcCache = new LRUCache<unknown>(2_000, TTL_15_MIN);
+export const rpcCache = new LRUCache<unknown>(2_000, TTL_15_MIN, {
+  redisNamespace: "rpc",
+});
 
 /**
  * Rate limiter for user-facing API routes.
  * 60 requests per minute per IP — generous for normal use, blocks scrapers.
+ * (Still per-process; move to Valkey later if needed.)
  */
 export const apiRateLimiter = new RateLimiter(60, 60_000);
 

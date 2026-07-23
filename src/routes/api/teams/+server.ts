@@ -6,7 +6,7 @@
  *
  * Body: { characters: string[]; abyssVersion: number; stygianVersion: number }
  *
- * Cache: in-memory LRU keyed by sorted character list + version numbers.
+ * Cache: memory L1 + optional Valkey L2 (VALKEY_URL), keyed by roster + version.
  * Rate limit: 60 requests / minute / IP.
  */
 
@@ -19,6 +19,14 @@ import {
   getClientIp,
   buildRpcKey,
 } from "$lib/server/cache";
+import { isPlaywrightE2e } from "$lib/server/e2e";
+import {
+  E2E_ABYSS_TEAM_BOTTOM,
+  E2E_ABYSS_TEAM_TOP,
+  E2E_STYGIAN_TEAM_BOTTOM,
+  E2E_STYGIAN_TEAM_MIDDLE,
+  E2E_STYGIAN_TEAM_TOP,
+} from "$lib/e2e/fixtures";
 
 type TeamsBody = {
   characters: string[];
@@ -27,6 +35,17 @@ type TeamsBody = {
 };
 
 export const POST: RequestHandler = async ({ request }) => {
+  if (isPlaywrightE2e()) {
+    return json({
+      abyssTeams: [E2E_ABYSS_TEAM_TOP, E2E_ABYSS_TEAM_BOTTOM],
+      stygianTeams: [
+        E2E_STYGIAN_TEAM_TOP,
+        E2E_STYGIAN_TEAM_MIDDLE,
+        E2E_STYGIAN_TEAM_BOTTOM,
+      ],
+    });
+  }
+
   // ── Rate limiting ────────────────────────────────────────────────────────
   const ip = getClientIp(request);
   if (!apiRateLimiter.check(ip)) {

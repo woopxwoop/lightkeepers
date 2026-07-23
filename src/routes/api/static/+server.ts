@@ -19,6 +19,8 @@ import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { LRUCache } from "$lib/server/cache";
+import { isPlaywrightE2e } from "$lib/server/e2e";
+import { e2eStaticPayload } from "$lib/e2e/fixtures";
 import type { Tables } from "$lib/types/database.types";
 import type {
   StygianEnemies,
@@ -42,7 +44,10 @@ type StaticPayload = {
 };
 
 // Single-entry cache — we only ever need the most recent fetch.
-const staticCache = new LRUCache<StaticPayload>(1, 15 * 60 * 1000);
+// Valkey L2 when VALKEY_URL is set so pm2 workers share cold SSR hits.
+const staticCache = new LRUCache<StaticPayload>(1, 15 * 60 * 1000, {
+  redisNamespace: "static",
+});
 const CACHE_KEY = "static";
 
 async function fetchStaticData(): Promise<StaticPayload> {
@@ -58,6 +63,20 @@ async function fetchStaticData(): Promise<StaticPayload> {
       .order("version_number", { ascending: false })
       .limit(1),
   ]);
+
+  // Transient query failures must not become version_number: -1 — that yields
+  // empty team payloads which getOrSet would cache in L1/L2.
+  if (abyssVerRes.error) {
+    console.error("fetchStaticData: abyss_versions error", abyssVerRes.error);
+    throw error(500, "Failed to fetch Abyss version");
+  }
+  if (stygianVerRes.error) {
+    console.error(
+      "fetchStaticData: stygian_versions error",
+      stygianVerRes.error,
+    );
+    throw error(500, "Failed to fetch Stygian version");
+  }
 
   const latestAbyssVersion: Version = abyssVerRes.data?.[0] ?? {
     created_at: "",
@@ -266,6 +285,15 @@ async function fetchStaticData(): Promise<StaticPayload> {
 }
 
 export const GET: RequestHandler = async () => {
+  if (isPlaywrightE2e()) {
+    return json(e2eStaticPayload(), {
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Playwright-E2E": "1",
+      },
+    });
+  }
+
   const payload = await staticCache.getOrSet(CACHE_KEY, fetchStaticData);
 
   return json(payload, {

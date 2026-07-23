@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { weaponByKey, weaponTypeLabel, type WeaponData } from "$lib/utils";
+  import { weaponByKey, type WeaponData } from "$lib/equipment-data";
+  import { weaponTypeLabel } from "$lib/utils";
   import HoverTooltip from "./HoverTooltip.svelte";
 
   let {

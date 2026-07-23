@@ -32,25 +32,73 @@ jobs:
           tags: ghcr.io/woopxwoop/lightkeepers:latest
           secrets: |
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
-            PRIVATE_SUPABASE_KEY=${{ secrets.PRIVATE_SUPABASE_KEY }}
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
-            DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
           build-args: |
             PUBLIC_SUPABASE_URL=${{ secrets.PUBLIC_SUPABASE_URL }}
             PUBLIC_SUPABASE_KEY=${{ secrets.PUBLIC_SUPABASE_KEY }}
             SENTRY_DSN=${{ secrets.SENTRY_DSN }}
 
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1
+      - name: Create runtime env file
+        env:
+          TUNNEL_TOKEN: ${{ secrets.TUNNEL_TOKEN }}
+          PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          VALKEY_URL: ${{ secrets.VALKEY_URL }}
+        run: |
+          python3 <<'PY'
+          import os
+          keys = [
+              "TUNNEL_TOKEN",
+              "PRIVATE_SUPABASE_KEY",
+              "DATABASE_URL",
+              "BETTER_AUTH_SECRET",
+              "BETTER_AUTH_URL",
+              "GOOGLE_CLIENT_ID",
+              "GOOGLE_CLIENT_SECRET",
+              "DISCORD_CLIENT_ID",
+              "DISCORD_CLIENT_SECRET",
+              "VALKEY_URL",
+          ]
+          with open("vps.env", "w", encoding="utf-8") as f:
+              for key in keys:
+                  value = os.environ.get(key) or ""
+                  if not value:
+                      continue
+                  # Single-quoted Compose env values preserve `$` literally.
+                  # Embed a single quote as: end quote, \', reopen quote.
+                  escaped = value.replace("'", "'\\''")
+                  f.write(f"{key}='{escaped}'\n")
+          PY
+
+      - name: Copy compose files to VPS
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
           key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.yml,prometheus.yml,vps.env"
+          target: app/
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_USER: ${{ github.repository_owner }}
+          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: GHCR_USER,GHCR_TOKEN
           script: |
             mkdir -p ~/app/data/immutable
+            mv ~/app/vps.env ~/app/.env
+            chmod 600 ~/app/.env
+            # Required once the GHCR package is private.
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
-            docker compose -f ~/app/docker-compose.yml up -d
+            docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d

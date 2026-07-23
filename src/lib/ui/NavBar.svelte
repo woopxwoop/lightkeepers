@@ -4,6 +4,12 @@
   import { tick, untrack } from "svelte";
   import { fly, fade } from "svelte/transition";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  import IconCog from "$lib/ui/icons/IconCog.svelte";
+  import IconUser from "$lib/ui/icons/IconUser.svelte";
+  import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
+  import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
+  import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
+  import { DISCORD_INVITE_URL } from "$lib/site";
 
   const homePath = resolve("/");
   const abyssPath = resolve("/abyss");
@@ -13,10 +19,32 @@
   const charactersPath = resolve("/characters");
   const settingsPath = resolve("/settings");
   const settingsLinks = [
-    { label: "Roster", path: resolve("/settings/roster") },
-    { label: "Account", path: resolve("/settings/account") },
-    { label: "Display", path: resolve("/settings/display") },
+    { label: "Roster", path: resolve("/settings"), icon: "users" as const },
+    {
+      label: "Account",
+      path: `${resolve("/settings")}?tab=account`,
+      icon: "cloud" as const,
+    },
+    {
+      label: "Display",
+      path: `${resolve("/settings")}?tab=display`,
+      icon: "monitor" as const,
+    },
   ] as const;
+
+  const mainLinks = [
+    { label: "Abyss", path: abyssPath, match: "exact" as const },
+    { label: "Stygian", path: stygianPath, match: "exact" as const },
+    { label: "Pulls", path: pullsPath, match: "exact" as const },
+    { label: "Teams", path: teamsPath, match: "prefix" as const },
+    { label: "Characters", path: charactersPath, match: "prefix" as const },
+  ] as const;
+
+  function isMainActive(link: (typeof mainLinks)[number]): boolean {
+    if (link.match === "exact") return page.url.pathname === link.path;
+    const path = page.url.pathname;
+    return path === link.path || path.startsWith(`${link.path}/`);
+  }
 
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(resolve("/settings")),
@@ -126,7 +154,8 @@
   let closedByNavigation = false;
 
   $effect(() => {
-    page.url.pathname;
+    // Include search so Settings ?tab= changes close the mobile drawer too.
+    page.url.href;
     untrack(() => {
       if (mobileOpen) {
         closedByNavigation = true;
@@ -202,14 +231,22 @@
 >
   <!-- Main row -->
   <div
-    class="flex items-center justify-between h-16 pl-[10%] pr-[10%]"
+    class="nav-row flex items-center justify-between h-16"
   >
     <a
       href={homePath}
-      class="nav-logo shrink-0"
+      class="nav-logo shrink-0 flex items-center gap-2.5"
       aria-current={page.url.pathname === homePath ? "page" : undefined}
     >
-      LIGHTKEEPERS
+      <img
+        class="nav-mark"
+        src="/lightkeepers-mark.png"
+        alt=""
+        width="28"
+        height="28"
+        decoding="async"
+      />
+      <span>Lightkeepers</span>
     </a>
 
     <!-- Desktop links -->
@@ -249,51 +286,48 @@
           : undefined}
         bind:this={navLinks.characters}>Characters</a
       >
-      <div class="relative">
-      <a
-        href={settingsPath}
-        class="nav-link"
-        aria-current={onSettingsPage ? "page" : undefined}
-        bind:this={navLinks.settings}
-        onmouseenter={onSettingsEnter}
-        onmouseleave={onSettingsLeave}
-        onfocus={onSettingsEnter}
-        onblur={onSettingsLeave}>Settings</a
-      >
+      <div class="settings-item">
+        <a
+          href={settingsPath}
+          class="nav-link"
+          aria-current={onSettingsPage ? "page" : undefined}
+          bind:this={navLinks.settings}
+          onmouseenter={onSettingsEnter}
+          onmouseleave={onSettingsLeave}
+          onfocus={onSettingsEnter}
+          onblur={onSettingsLeave}>Settings</a
+        >
 
-      <!-- Settings sub-links -->
-      <div
-        class="settings-sub-row absolute left-1/2 -translate-x-1/2 top-full flex items-center gap-4 pt-4 pb-2 transition-all duration-200 whitespace-nowrap"
-        class:settings-sub-row-open={settingsHovered}
-        inert={!settingsHovered}
-        role="presentation"
-        onmouseenter={onSettingsEnter}
-        onmouseleave={onSettingsLeave}
-        onfocusin={onSettingsEnter}
-        onfocusout={onSettingsLeave}
-      >
-        {#each settingsLinks as link}
-          <a
-            href={link.path}
-            class="nav-sub-link"
-            aria-current={page.url.pathname === link.path
-              ? "page"
-              : undefined}>{link.label}</a
-          >
-        {/each}
-      </div>
+        <!-- Settings sub-links -->
+        <div
+          class="settings-sub-row"
+          class:settings-sub-row-open={settingsHovered}
+          inert={!settingsHovered}
+          role="presentation"
+          onmouseenter={onSettingsEnter}
+          onmouseleave={onSettingsLeave}
+          onfocusin={onSettingsEnter}
+          onfocusout={onSettingsLeave}
+        >
+          {#each settingsLinks as link}
+            {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
+            {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
+            {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
+            <a
+              href={link.path}
+              class="nav-sub-link"
+              aria-current={onSettingsPage && activeTab === linkTab
+                ? "page"
+                : undefined}>{link.label}</a
+            >
+          {/each}
+        </div>
       </div>
 
       {#if underlineReady}
         <span
-          class="absolute bottom-0 h-[1.5px] pointer-events-none"
-          style="
-            left: {underlineLeft}px;
-            width: {underlineWidth}px;
-            background: var(--accent-1);
-            transition: left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                        width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-          "
+          class="nav-underline"
+          style="left: {underlineLeft}px; width: {underlineWidth}px;"
         ></span>
       {/if}
     </div>
@@ -304,7 +338,14 @@
       aria-label={mobileOpen ? "Close menu" : "Open menu"}
       aria-expanded={mobileOpen}
       bind:this={hamburgerEl}
-      onclick={() => (mobileOpen = !mobileOpen)}
+      onclick={() => {
+        mobileOpen = !mobileOpen;
+        if (!mobileOpen) {
+          settingsDrawerExpanded = false;
+        } else if (onSettingsPage) {
+          settingsDrawerExpanded = true;
+        }
+      }}
     >
       <span class="bar" class:open={mobileOpen}></span>
       <span class="bar" class:open={mobileOpen}></span>
@@ -330,82 +371,97 @@
 <!-- Side drawer -->
 {#if mobileOpen}
   <div
-    class="drawer fixed top-0 right-0 h-full z-50 flex flex-col pt-24 px-8 gap-8"
+    class="drawer"
     role="dialog"
     aria-modal="true"
     aria-label="Navigation menu"
     bind:this={drawerEl}
     transition:fly={{ x: 280, duration: 260 }}
   >
-    <a
-      href={abyssPath}
-      class="drawer-link"
-      aria-current={page.url.pathname === abyssPath ? "page" : undefined}
-      >Abyss</a
-    >
-    <a
-      href={stygianPath}
-      class="drawer-link"
-      aria-current={page.url.pathname === stygianPath ? "page" : undefined}
-      >Stygian</a
-    >
-    <a
-      href={pullsPath}
-      class="drawer-link"
-      aria-current={page.url.pathname === pullsPath ? "page" : undefined}
-      >Pulls</a
-    >
-    <a
-      href={teamsPath}
-      class="drawer-link"
-      aria-current={page.url.pathname.startsWith(teamsPath) ? "page" : undefined}
-      >Teams</a
-    >
-    <a
-      href={charactersPath}
-      class="drawer-link"
-      aria-current={page.url.pathname.startsWith(charactersPath)
-        ? "page"
-        : undefined}
-      >Characters</a
-    >
-
-    <!-- Collapsible Settings section -->
-    <div class="drawer-settings-group">
-      <button
-        class="drawer-link drawer-settings-toggle"
-        aria-expanded={settingsDrawerExpanded}
-        aria-current={onSettingsPage ? "page" : undefined}
-        onclick={() => (settingsDrawerExpanded = !settingsDrawerExpanded)}
-      >
-        Settings
-        <span
-          class="drawer-chevron"
-          class:drawer-chevron-open={settingsDrawerExpanded}
+    <nav class="drawer-nav" aria-label="Primary">
+      {#each mainLinks as link}
+        <a
+          href={link.path}
+          class="drawer-item"
+          class:is-active={isMainActive(link)}
+          aria-current={isMainActive(link) ? "page" : undefined}
         >
-          <IconChevronDown size={14} strokeWidth={2} />
-        </span>
-      </button>
-      <div class="drawer-sub-links" class:drawer-sub-links-open={settingsDrawerExpanded} inert={!settingsDrawerExpanded}>
-        {#each settingsLinks as link}
-          <a
-            href={link.path}
-            class="drawer-link drawer-sub-link"
-            aria-current={page.url.pathname === link.path
-              ? "page"
-              : undefined}
-          >
-            {link.label}
-          </a>
-        {/each}
-      </div>
-    </div>
+          {link.label}
+        </a>
+      {/each}
 
-    <img
-      src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
-      alt=""
-      class="w-full h-auto mt-auto opacity-50"
-    />
+      <div class="drawer-settings">
+        <button
+          type="button"
+          class="drawer-item drawer-settings-toggle"
+          class:is-active={onSettingsPage}
+          aria-expanded={settingsDrawerExpanded}
+          aria-current={onSettingsPage ? "page" : undefined}
+          onclick={() => (settingsDrawerExpanded = !settingsDrawerExpanded)}
+        >
+          <span class="drawer-item-icon" aria-hidden="true">
+            <IconCog size={18} />
+          </span>
+          <span class="drawer-item-label">Settings</span>
+          <span
+            class="drawer-chevron"
+            class:drawer-chevron-open={settingsDrawerExpanded}
+            aria-hidden="true"
+          >
+            <IconChevronDown size={14} strokeWidth={2.25} />
+          </span>
+        </button>
+
+        <div
+          class="drawer-sub"
+          class:drawer-sub-open={settingsDrawerExpanded}
+          inert={!settingsDrawerExpanded}
+        >
+          {#each settingsLinks as link}
+            {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
+            {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
+            {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
+            {@const subActive = onSettingsPage && activeTab === linkTab}
+            <a
+              href={link.path}
+              class="drawer-item drawer-item-sub"
+              class:is-active={subActive}
+              aria-current={subActive ? "page" : undefined}
+            >
+              <span class="drawer-item-icon" aria-hidden="true">
+                {#if link.icon === "users"}
+                  <IconUser size={16} />
+                {:else if link.icon === "cloud"}
+                  <IconCloudUp size={16} />
+                {:else}
+                  <IconMonitor size={16} />
+                {/if}
+              </span>
+              <span class="drawer-item-label">{link.label}</span>
+            </a>
+          {/each}
+        </div>
+      </div>
+    </nav>
+
+    <div class="drawer-foot">
+      <a
+        class="drawer-discord"
+        href={DISCORD_INVITE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span class="drawer-item-icon" aria-hidden="true">
+          <IconDiscord size={18} />
+        </span>
+        <span class="drawer-item-label">Join Discord</span>
+      </a>
+      <img
+        src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
+        alt=""
+        class="drawer-mascot"
+      />
+    </div>
   </div>
 {/if}
 
@@ -414,8 +470,15 @@
     pointer-events: none;
     transition:
       background-color 0.4s ease,
-      height 0.25s ease;
+      height 0.25s ease,
+      border-color 0.4s ease;
     height: 4rem;
+    border-bottom: var(--border-width) solid transparent;
+  }
+
+  .nav-row {
+    padding-left: var(--page-gutter);
+    padding-right: var(--page-gutter);
   }
 
   .nav-bar.nav-sub-open {
@@ -427,24 +490,46 @@
   }
 
   .opaque-bg {
-    background: color-mix(in srgb, var(--background-color) 80%, black 19%);
+    background: color-mix(in srgb, var(--background-color) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
   }
 
   .nav-logo {
-    letter-spacing: 0.1em;
-    font-size: var(--h2-size);
-    font-family: "Bonobo";
-    font-weight: 700;
-    color: var(--accent-1);
+    font-family: var(--font-brand);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    letter-spacing: var(--tracking-brand);
+    color: var(--foreground-color);
     pointer-events: auto;
+    transition: color var(--control-duration) var(--control-ease);
+    text-decoration: none;
+  }
+
+  /* Designed mark is dark-on-black — invert so it reads on the nav. */
+  .nav-mark {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+    filter: invert(1);
+    transition: filter 0.2s ease;
+  }
+
+  .nav-logo:hover .nav-mark {
+    filter: invert(1) brightness(1.15);
   }
 
   .nav-link {
     padding-bottom: 2px;
     border-bottom: 1.5px solid transparent;
-    transition:
-      color 0.15s,
-      border-color 0.15s;
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    color: var(--foreground-mid);
+    text-decoration: none;
+    transition: color var(--control-duration) var(--control-ease);
     pointer-events: auto;
   }
 
@@ -452,38 +537,73 @@
     pointer-events: auto;
   }
 
-  .nav-link:hover {
-    color: var(--accent-1);
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
+    color: var(--foreground-color);
   }
 
-  .nav-link[aria-current="page"] {
-    color: var(--accent-1);
+  .nav-underline {
+    position: absolute;
+    bottom: 0;
+    height: 1.5px;
+    pointer-events: none;
+    /* Gold on page-base nav — intentional lamp accent, not a mid-surface wash */
+    background: var(--accent-1);
+    transition:
+      left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   /* ── Settings sub-row ── */
+  .settings-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    /* Match other nav-link flex items so Settings doesn't sit low */
+    align-self: center;
+  }
+
   .settings-sub-row {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-2);
+    white-space: nowrap;
     max-height: 0;
     opacity: 0;
+    overflow: hidden;
     pointer-events: none;
+    transition:
+      max-height 0.2s ease,
+      opacity 0.2s ease;
   }
 
   .settings-sub-row.settings-sub-row-open {
     max-height: 2.5rem;
     opacity: 1;
+    overflow: visible;
     pointer-events: auto;
   }
 
   .nav-sub-link {
-    font-size: 0.85rem;
+    font-size: var(--text-md);
     letter-spacing: 0.03em;
+    font-family: var(--font-display);
+    font-weight: 500;
     color: var(--foreground-mid);
-    transition: color 0.15s;
+    text-decoration: none;
+    transition: color var(--control-duration) var(--control-ease);
     pointer-events: auto;
   }
 
   .nav-sub-link:hover,
   .nav-sub-link[aria-current="page"] {
-    color: var(--accent-1);
+    color: var(--foreground-color);
   }
 
   /* ── Hamburger ── */
@@ -522,67 +642,155 @@
     transform: translateY(-7px) rotate(-45deg);
   }
 
-  /* ── Drawer ── */
+  /* ── Drawer (settings-board grammar) ── */
   .drawer {
-    width: min(240px, 80vw);
-    background: color-mix(in srgb, var(--background-color) 97%, transparent);
-    backdrop-filter: blur(16px);
-    border-left: 1px solid color-mix(in srgb, var(--accent-1) 25%, transparent);
-  }
-
-  .drawer-link {
-    font-size: 1.2rem;
-    letter-spacing: 0.06em;
-    color: var(--foreground-mid);
-    transition: color 0.15s;
-  }
-
-  .drawer-link:hover,
-  .drawer-link[aria-current="page"] {
-    color: var(--accent-1);
-  }
-
-  /* ── Drawer settings collapsible ── */
-  .drawer-settings-group {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 50;
     display: flex;
     flex-direction: column;
+    width: min(280px, 86vw);
+    height: 100%;
+    padding: 5.5rem 0 1.25rem;
+    background: var(--surface-raised);
+    border-left: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    box-shadow: -12px 0 40px color-mix(in srgb, black 45%, transparent);
   }
 
-  .drawer-settings-toggle {
+  .drawer-nav {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .drawer-item {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem 1.25rem;
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--foreground-mid);
+    text-decoration: none;
+    text-align: left;
     background: none;
     border: none;
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
-    padding: 0;
-    font-family: inherit;
-    text-align: left;
+    transition:
+      color var(--control-duration) var(--control-ease),
+      background-color var(--control-duration) var(--control-ease),
+      box-shadow var(--control-duration) var(--control-ease);
+  }
+
+  .drawer-nav > .drawer-item:first-child,
+  .drawer-settings > .drawer-item:first-child {
+    border-top: none;
+  }
+
+  .drawer-item:hover {
+    color: var(--foreground-color);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .drawer-item.is-active {
+    color: var(--foreground-color);
+    background: var(--surface-selected);
+    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .drawer-item-icon {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    color: currentColor;
+    flex: 0 0 auto;
+  }
+
+  .drawer-item-label {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .drawer-settings {
+    display: flex;
+    flex-direction: column;
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.1);
   }
 
   .drawer-chevron {
-    transition: transform 0.2s ease;
+    margin-left: auto;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
+    color: currentColor;
   }
 
   .drawer-chevron-open {
     transform: rotate(180deg);
   }
 
-  .drawer-sub-links {
+  .drawer-sub {
+    display: flex;
+    flex-direction: column;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.25s ease;
+  }
+
+  .drawer-sub-open {
+    max-height: 12rem;
+  }
+
+  .drawer-item-sub {
+    padding-left: 1.75rem;
+    font-size: var(--text-md);
+  }
+
+  .drawer-foot {
+    margin-top: auto;
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
   }
 
-  .drawer-sub-links-open {
-    max-height: 10rem;
+  .drawer-discord {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: 500;
+    color: var(--foreground-color);
+    text-decoration: none;
+    transition:
+      background-color var(--control-duration) var(--control-ease),
+      border-color var(--control-duration) var(--control-ease);
   }
 
-  .drawer-sub-link {
-    font-size: 1rem;
-    margin-top: 0.6rem;
+  .drawer-discord:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.32);
+  }
+
+  .drawer-mascot {
+    width: 70%;
+    max-width: 9rem;
+    height: auto;
+    margin: 0 auto 0.5rem;
+    opacity: 0.4;
+    pointer-events: none;
   }
 </style>
+
