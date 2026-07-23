@@ -300,7 +300,8 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     teamsOwnedLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
-    // Leave loaded=false so ensureTeamsOwned can retry.
+    // Leave loaded=false so ensureTeamsOwned can retry; rethrow for callers.
+    throw err;
   }
 }
 
@@ -313,10 +314,12 @@ export async function ensureTeamsOwned(
 ): Promise<void> {
   if (get(teamsOwnedLoaded)) return;
   if (teamsInFlight) return teamsInFlight;
-  teamsInFlight = writeTeamsOwned(owned).finally(() => {
-    teamsInFlight = null;
+  const pending = writeTeamsOwned(owned);
+  teamsInFlight = pending;
+  pending.finally(() => {
+    if (teamsInFlight === pending) teamsInFlight = null;
   });
-  return teamsInFlight;
+  return pending;
 }
 
 /**
@@ -362,7 +365,8 @@ export async function writeNearMissTeams(
     nearMissPairLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeNearMissTeams failed:", err);
-    // Leave loaded=false so ensureNearMissTeams can retry.
+    // Leave loaded=false so ensureNearMissTeams can retry; rethrow for callers.
+    throw err;
   }
 }
 
@@ -377,8 +381,10 @@ export async function ensureNearMissTeams(
 ): Promise<void> {
   if (get(nearMissStygianLoaded) && get(nearMissPairLoaded)) return;
   if (nearMissInFlight) return nearMissInFlight;
-  nearMissInFlight = writeNearMissTeams(owned).finally(() => {
-    nearMissInFlight = null;
+  const pending = writeNearMissTeams(owned);
+  nearMissInFlight = pending;
+  pending.finally(() => {
+    if (nearMissInFlight === pending) nearMissInFlight = null;
   });
-  return nearMissInFlight;
+  return pending;
 }

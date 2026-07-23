@@ -9,6 +9,8 @@
     nearMissPairLoaded,
     ensureNearMissTeams,
     ensureTeamsOwned,
+    invalidateNearMissTeams,
+    invalidateTeamsOwned,
   } from "$lib/stores";
   import {
     computePullSuggestions,
@@ -122,6 +124,20 @@
   function pairKey(suggestion: PairSuggestion): string {
     return `${suggestion.charA}|${suggestion.charB}`;
   }
+
+  async function retryPulls() {
+    pageState = "waiting";
+    invalidateTeamsOwned();
+    invalidateNearMissTeams();
+    try {
+      await Promise.all([
+        ensureTeamsOwned($charactersOwned),
+        ensureNearMissTeams($charactersOwned),
+      ]);
+    } catch {
+      pageState = "error";
+    }
+  }
 </script>
 
 {#snippet teamGrid(
@@ -159,7 +175,7 @@
   {:else if pageState === "error"}
     <EmptyState message="Could not load pull suggestions right now.">
       {#snippet action()}
-        <Button variant="secondary" onclick={rankSuggestions}>Try again</Button>
+        <Button variant="secondary" onclick={retryPulls}>Try again</Button>
       {/snippet}
     </EmptyState>
   {:else if pageState === "empty"}
