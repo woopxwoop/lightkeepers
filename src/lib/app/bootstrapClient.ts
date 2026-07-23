@@ -1,3 +1,11 @@
+/**
+ * Client bootstrap after layout SSR.
+ *
+ * seedClientStores — sync, safe during SSR/hydration (versions + local roster).
+ * bootstrapClient — onMount only: warm /api/static, sync /api/roster if logged in.
+ * Owned teams stay lazy (Abyss / Stygian / Pulls call ensureTeamsOwned).
+ */
+
 import type { Character, CharacterOwned } from "$lib/definitions";
 import {
   charactersOwned,

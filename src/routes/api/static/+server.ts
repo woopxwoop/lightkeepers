@@ -1,18 +1,15 @@
 /**
  * GET /api/static
  *
- * Returns long lasting, high frequency data
- *   - latestAbyssVersion
- *   - latestStygianVersion
- *   - allTeamsAbyss
- *   - allTeamsStygian
+ * Long-lived meta payload used by Abyss / Stygian / bootstrap warm-up:
+ *   - latestAbyssVersion / latestStygianVersion
+ *   - allTeamsAbyss / allTeamsStygian
+ *   - abyssEnemies / stygianEnemies / stygianSchedule
  *
- * Cache strategy:
- *   s-maxage=300      — Cloudflare caches for 5 minutes at the edge
- *   stale-while-revalidate=60 — serve stale while refreshing in the background
- *
- * The server also keeps the result in a 15-minute in-process cache so that
- * even cache misses at the edge don't hammer Supabase.
+ * Cold builds can take several seconds (empty-roster team RPCs). Cache hard:
+ *   - Cloudflare: s-maxage=300, stale-while-revalidate=60
+ *   - L1 LRU 15m with stale-while-revalidate (serve expired, refresh behind)
+ *   - Valkey L2 when VALKEY_URL is set (shared across pm2 workers)
  */
 
 import { json, error } from "@sveltejs/kit";

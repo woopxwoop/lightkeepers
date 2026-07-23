@@ -1,12 +1,12 @@
 /**
- * stores.ts
+ * Client stores + fetch helpers for roster-scoped data.
  *
- * All Supabase calls now go through SvelteKit API routes instead of
- * hitting Supabase directly from the browser. Benefits:
- *   - Server-side in-memory LRU cache cuts duplicate Supabase round-trips
- *   - Static data (all teams) is Cloudflare-edge-cached via /api/static
- *   - Per-user data (/api/teams, /api/nearmiss) is cached by character list
- *   - Service-role key stays server-side only
+ * The browser never talks to Supabase directly — everything goes through
+ * `/api/*` so the service role key and caches stay on the server.
+ *
+ * Heavy meta boards: ensureStaticBoards() → GET /api/static
+ * Owned teams:       ensureTeamsOwned()  → POST /api/teams
+ * Pull suggestions:  ensureNearMissTeams() → POST /api/nearmiss
  */
 
 import { writable, derived, get, readable, type Writable } from "svelte/store";

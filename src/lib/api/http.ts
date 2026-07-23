@@ -1,3 +1,5 @@
+/** Tiny client helper for JSON POSTs to our own `/api/*` routes. */
+
 export async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",

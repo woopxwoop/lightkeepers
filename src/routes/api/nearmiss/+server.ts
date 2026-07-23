@@ -1,14 +1,14 @@
 /**
  * POST /api/nearmiss
  *
- * Returns near-miss Stygian teams for pull suggestions:
- *   - nearMissTeams   (one missing character)
- *   - nearMissPairs   (two missing characters, filtered by PMI)
+ * Pull-suggestion near-misses for Stygian:
+ *   - nearMissTeams  — one character short
+ *   - nearMissPairs  — two short, PMI-filtered
  *
  * Body: { characters: string[]; stygianVersion: number; minPmi?: number }
  *
- * Cache: in-memory LRU keyed by sorted character list + version.
- * Rate limit: shared 60 req/min/IP limiter from cache.ts.
+ * Cache: rpcCache (L1 + optional Valkey), keyed by roster + version.
+ * Rate limit: 60 req/min/IP via apiRateLimiter.
  */
 
 import { json, error } from "@sveltejs/kit";
