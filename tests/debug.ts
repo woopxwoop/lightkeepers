@@ -26,12 +26,20 @@ export function attachBrowserDebug(page: Page): void {
     }
   });
   page.on("requestfailed", (req) => {
+    let pathname = req.url();
+    try {
+      pathname = new URL(req.url()).pathname;
+    } catch {
+      /* keep raw url fallback only if unparseable — still avoid logging it below */
+      pathname = "(unparseable)";
+    }
+    const errText = req.failure()?.errorText?.replace(/\s+/g, " ").trim();
     // eslint-disable-next-line no-console
     console.log(
       "[browser FAIL]",
       req.method(),
-      req.url(),
-      req.failure()?.errorText,
+      pathname,
+      ...(errText ? [errText] : []),
     );
   });
 }
