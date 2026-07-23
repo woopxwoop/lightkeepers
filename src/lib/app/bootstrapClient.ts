@@ -123,7 +123,8 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);
 
   // Fire early — do not await; home stays interactive while boards warm.
-  ensureStaticBoards().catch(console.error);
+  // Failures land in staticBoardsError for Abyss/Stygian retry UI.
+  void ensureStaticBoards();
   prefetchInvestment();
 
   const dbRoster = await loadDbRoster(data.characters);

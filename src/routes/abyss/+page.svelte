@@ -3,6 +3,7 @@
     teamsOwned,
     allTeamsAbyss,
     staticBoardsLoaded,
+    staticBoardsError,
     charactersOwned,
     ensureTeamsOwned,
     ensureStaticBoards,
@@ -12,6 +13,8 @@
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { AbyssEnemies, AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
@@ -32,9 +35,17 @@
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
-    ensureStaticBoards().catch(console.error);
+    ensureStaticBoards().catch(() => {});
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
+
+  async function retryStaticBoards() {
+    try {
+      await ensureStaticBoards();
+    } catch {
+      // staticBoardsError already set
+    }
+  }
 
   const halfLabel: Record<Slot, string> = {
     top: "First Half",
@@ -72,7 +83,9 @@
 
   let solution = $derived(displaySolutions[safeIndex]);
 
-  let loading = $derived(!$staticBoardsLoaded && $allTeamsAbyss.length === 0);
+  let loading = $derived(
+    !$staticBoardsError && !$staticBoardsLoaded && $allTeamsAbyss.length === 0,
+  );
 
   let updatedLabel = $derived.by(() => {
     if (!abyssEnemies?.openTime) return "";
@@ -245,6 +258,12 @@
 
   {#if loading}
     <LoadingState />
+  {:else if $staticBoardsError}
+    <EmptyState message="Could not load Abyss teams right now.">
+      {#snippet action()}
+        <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+      {/snippet}
+    </EmptyState>
   {:else}
     <Surface flush class="solution-board">
       <div class="board-head">

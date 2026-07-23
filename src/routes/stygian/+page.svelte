@@ -3,6 +3,7 @@
     teamsOwnedStygian,
     allTeamsStygian,
     staticBoardsLoaded,
+    staticBoardsError,
     charactersOwned,
     ensureTeamsOwned,
     ensureStaticBoards,
@@ -13,6 +14,8 @@
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import {
     handleKeyboardClick,
@@ -38,9 +41,17 @@
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
-    ensureStaticBoards().catch(console.error);
+    ensureStaticBoards().catch(() => {});
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
+
+  async function retryStaticBoards() {
+    try {
+      await ensureStaticBoards();
+    } catch {
+      // staticBoardsError already set
+    }
+  }
 
   let selectedIndex = $state(0);
 
@@ -72,7 +83,11 @@
 
   let solution = $derived(displaySolutions[safeIndex]);
 
-  let loading = $derived(!$staticBoardsLoaded && $allTeamsStygian.length === 0);
+  let loading = $derived(
+    !$staticBoardsError &&
+      !$staticBoardsLoaded &&
+      $allTeamsStygian.length === 0,
+  );
 
   let updatedLabel = $derived.by(() => {
     if (!schedule?.openTime) return "";
@@ -223,6 +238,12 @@
 
   {#if loading}
     <LoadingState />
+  {:else if $staticBoardsError}
+    <EmptyState message="Could not load Stygian teams right now.">
+      {#snippet action()}
+        <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+      {/snippet}
+    </EmptyState>
   {:else}
     <Surface flush class="solution-board">
       <div class="board-head">

@@ -249,41 +249,70 @@ export const allTeamsStygian = writable<StygianTeam[]>([]);
 /** True after a successful /api/static boards fetch (or empty payload). */
 export const staticBoardsLoaded = writable(false);
 
+/** Last warm-up failure; cleared on success or a new attempt. */
+export const staticBoardsError = writable<string | null>(null);
+
 /** True after a successful /api/teams fetch (or empty owned roster short-circuit). */
 export const teamsOwnedLoaded = writable(false);
 
 let staticBoardsInFlight: Promise<void> | null = null;
+/** Versions the current allTeams* stores were fetched for. */
+let staticBoardsAbyssVersion = -1;
+let staticBoardsStygianVersion = -1;
+
+function staticBoardsMatchCurrentVersions(): boolean {
+  return (
+    get(staticBoardsLoaded) &&
+    staticBoardsAbyssVersion === abyssVersionNumber &&
+    staticBoardsStygianVersion === stygianVersionNumber
+  );
+}
 
 /**
- * Fetches the full meta team lists once via /api/static and seeds the stores.
+ * Fetches the full meta team lists via /api/static and seeds the stores.
  * Kept out of abyss/stygian page loads so client navigations stay lean.
- * Coalesces concurrent callers; no-ops once loaded.
+ * Coalesces concurrent callers; skips the network when boards already match
+ * the current Abyss/Stygian version numbers.
  */
 export async function ensureStaticBoards(): Promise<void> {
-  if (get(staticBoardsLoaded)) return;
+  if (staticBoardsMatchCurrentVersions()) return;
   if (staticBoardsInFlight) return staticBoardsInFlight;
 
+  staticBoardsError.set(null);
+
   const pending = (async () => {
-    const res = await fetch("/api/static");
-    if (!res.ok) throw new Error(`static boards fetch failed: ${res.status}`);
-    const data = (await res.json()) as {
-      allTeamsAbyss?: AbyssTeam[];
-      allTeamsStygian?: StygianTeam[];
-      latestAbyssVersion?: { version_number?: number };
-      latestStygianVersion?: { version_number?: number };
-    };
-    allTeamsAbyss.set(data.allTeamsAbyss ?? []);
-    allTeamsStygian.set(data.allTeamsStygian ?? []);
-    if (
-      typeof data.latestAbyssVersion?.version_number === "number" &&
-      typeof data.latestStygianVersion?.version_number === "number"
-    ) {
-      setVersionNumbers(
-        data.latestAbyssVersion.version_number,
-        data.latestStygianVersion.version_number,
-      );
+    try {
+      const res = await fetch("/api/static");
+      if (!res.ok) throw new Error(`static boards fetch failed: ${res.status}`);
+      const data = (await res.json()) as {
+        allTeamsAbyss?: AbyssTeam[];
+        allTeamsStygian?: StygianTeam[];
+        latestAbyssVersion?: { version_number?: number };
+        latestStygianVersion?: { version_number?: number };
+      };
+      allTeamsAbyss.set(data.allTeamsAbyss ?? []);
+      allTeamsStygian.set(data.allTeamsStygian ?? []);
+
+      const abyssVer = data.latestAbyssVersion?.version_number;
+      const stygianVer = data.latestStygianVersion?.version_number;
+      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+        staticBoardsAbyssVersion = abyssVer;
+        staticBoardsStygianVersion = stygianVer;
+        setVersionNumbers(abyssVer, stygianVer);
+      } else {
+        // No version payload — treat as matching whatever layout already set.
+        staticBoardsAbyssVersion = abyssVersionNumber;
+        staticBoardsStygianVersion = stygianVersionNumber;
+      }
+
+      staticBoardsError.set(null);
+      staticBoardsLoaded.set(true);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load team boards";
+      staticBoardsError.set(message);
+      throw err;
     }
-    staticBoardsLoaded.set(true);
   })();
 
   staticBoardsInFlight = pending;
