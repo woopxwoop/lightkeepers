@@ -31,7 +31,8 @@ export async function getValkey(): Promise<RedisClientType | null> {
     return null;
   }
 
-  connecting = (async () => {
+  // Assign before setup runs so concurrent getValkey() callers share one connect.
+  connecting = Promise.resolve().then(async () => {
     try {
       const c = createClient({
         url,
@@ -56,7 +57,7 @@ export async function getValkey(): Promise<RedisClientType | null> {
     } finally {
       connecting = null;
     }
-  })();
+  });
 
   return connecting;
 }

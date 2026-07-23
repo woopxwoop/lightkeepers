@@ -84,6 +84,7 @@
       type="button"
       role="tab"
       id="tab-{option.value}"
+      aria-controls="tabpanel-{option.value}"
       aria-selected={value === option.value}
       tabindex={value === option.value ? 0 : -1}
       onpointerdown={(event) =>

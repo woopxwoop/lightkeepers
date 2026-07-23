@@ -42,7 +42,8 @@
 
   function isMainActive(link: (typeof mainLinks)[number]): boolean {
     if (link.match === "exact") return page.url.pathname === link.path;
-    return page.url.pathname.startsWith(link.path);
+    const path = page.url.pathname;
+    return path === link.path || path.startsWith(`${link.path}/`);
   }
 
   const onSettingsPage = $derived(

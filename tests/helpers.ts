@@ -1,132 +1,57 @@
 import type { Page, Route } from "@playwright/test";
+import type {
+  AbyssTeam,
+  NearMissStygianPair,
+  NearMissStygianTeam,
+  StygianTeam,
+} from "../src/lib/definitions";
+import {
+  E2E_ABYSS_TEAM_BOTTOM,
+  E2E_ABYSS_TEAM_TOP,
+  E2E_EMPTY_ABYSS_ENEMIES,
+  E2E_EMPTY_STYGIAN_ENEMIES,
+  E2E_NEAR_MISS_SINGLE,
+  E2E_STYGIAN_OWNED_BASELINE,
+  E2E_STYGIAN_TEAM_BOTTOM,
+  E2E_STYGIAN_TEAM_MIDDLE,
+  E2E_STYGIAN_TEAM_TOP,
+  e2eStaticPayload,
+} from "../src/lib/e2e/fixtures";
 
 /** Abyss teams with no shared members — solver can fill both halves. */
-export const ABYSS_TEAM_TOP = {
-  team_key: "test-abyss-top",
-  version_number: 1,
-  members: ["Hutao", "Yelan", "Zhongli", "Albedo"],
-  members_names: ["Hu Tao", "Yelan", "Zhongli", "Albedo"],
-  usage_total: 45.5,
-  usage_rate: 45.5,
-  field_1_rate: 70,
-  field_2_rate: 30,
-  has_total: 1000,
-};
-
-export const ABYSS_TEAM_BOTTOM = {
-  team_key: "test-abyss-bottom",
-  version_number: 1,
-  members: ["RaidenShogun", "Kazuha", "Bennett", "Xiangling"],
-  members_names: ["Raiden Shogun", "Kazuha", "Bennett", "Xiangling"],
-  usage_total: 38.2,
-  usage_rate: 38.2,
-  field_1_rate: 25,
-  field_2_rate: 75,
-  has_total: 1000,
-};
+export const ABYSS_TEAM_TOP = E2E_ABYSS_TEAM_TOP;
+export const ABYSS_TEAM_BOTTOM = E2E_ABYSS_TEAM_BOTTOM;
 
 /** Stygian teams covering three fields without member collisions. */
-export const STYGIAN_TEAM_TOP = {
-  team_key: "test-stygian-top",
-  version_number: 1,
-  members: ["Hutao", "Yelan", "Zhongli", "Albedo"],
-  members_names: ["Hu Tao", "Yelan", "Zhongli", "Albedo"],
-  usage_total: 40,
-  usage_rate: 40,
-  avg_usage_rate: 40,
-  field_1_rate: 80,
-  field_2_rate: 10,
-  field_3_rate: 10,
-  has_total: 1000,
-};
-
-export const STYGIAN_TEAM_MIDDLE = {
-  team_key: "test-stygian-middle",
-  version_number: 1,
-  members: ["RaidenShogun", "Kazuha", "Bennett", "Xiangling"],
-  members_names: ["Raiden Shogun", "Kazuha", "Bennett", "Xiangling"],
-  usage_total: 35,
-  usage_rate: 35,
-  avg_usage_rate: 35,
-  field_1_rate: 10,
-  field_2_rate: 10,
-  field_3_rate: 80,
-  has_total: 1000,
-};
-
-export const STYGIAN_TEAM_BOTTOM = {
-  team_key: "test-stygian-bottom",
-  version_number: 1,
-  members: ["Neuvillette", "Furina", "Xingqiu", "Nahida"],
-  members_names: ["Neuvillette", "Furina", "Xingqiu", "Nahida"],
-  usage_total: 30,
-  usage_rate: 30,
-  avg_usage_rate: 30,
-  field_1_rate: 10,
-  field_2_rate: 80,
-  field_3_rate: 10,
-  has_total: 1000,
-};
+export const STYGIAN_TEAM_TOP = E2E_STYGIAN_TEAM_TOP;
+export const STYGIAN_TEAM_MIDDLE = E2E_STYGIAN_TEAM_MIDDLE;
+export const STYGIAN_TEAM_BOTTOM = E2E_STYGIAN_TEAM_BOTTOM;
 
 /** Owned Stygian team used as the weak baseline for pull improvement. */
-export const STYGIAN_OWNED_BASELINE = {
-  team_key: "test-stygian-owned-baseline",
-  version_number: 1,
-  members: ["Yelan", "Zhongli", "Albedo", "Bennett"],
-  members_names: ["Yelan", "Zhongli", "Albedo", "Bennett"],
-  usage_total: 12,
-  usage_rate: 12,
-  avg_usage_rate: 12,
-  field_1_rate: 50,
-  field_2_rate: 25,
-  field_3_rate: 25,
-  has_total: 500,
-};
+export const STYGIAN_OWNED_BASELINE = E2E_STYGIAN_OWNED_BASELINE;
 
 /**
  * Near-miss: same 3 as baseline + missing Hutao at much higher usage →
  * computePullSuggestions yields improvement > 0.
  */
-export const NEAR_MISS_SINGLE = {
-  team_key: "test-near-miss-hutao",
-  members: ["Hutao", "Yelan", "Zhongli", "Albedo"],
-  members_names: ["Hu Tao", "Yelan", "Zhongli", "Albedo"],
-  missing_character: "Hutao",
-  missing_character_name: "Hu Tao",
-  avg_usage_rate: 42,
-  usage_rate: 42,
-  usage_total: 42,
-  field_1_rate: 70,
-  field_2_rate: 15,
-  field_3_rate: 15,
-};
+export const NEAR_MISS_SINGLE = E2E_NEAR_MISS_SINGLE;
 
-export const emptyAbyssEnemies = {
-  top: [],
-  bottom: [],
-  buffName: null,
-  openTime: null,
-};
-
-export const emptyStygianEnemies = {
-  top: null,
-  middle: null,
-  bottom: null,
-};
+export const emptyAbyssEnemies = E2E_EMPTY_ABYSS_ENEMIES;
+export const emptyStygianEnemies = E2E_EMPTY_STYGIAN_ENEMIES;
 
 type ApiMockOptions = {
-  abyssTeams?: unknown[];
-  stygianTeams?: unknown[];
-  allTeamsAbyss?: unknown[];
-  allTeamsStygian?: unknown[];
-  nearMissTeams?: unknown[];
-  nearMissPairs?: unknown[];
+  abyssTeams?: AbyssTeam[];
+  stygianTeams?: StygianTeam[];
+  allTeamsAbyss?: AbyssTeam[];
+  allTeamsStygian?: StygianTeam[];
+  nearMissTeams?: NearMissStygianTeam[];
+  nearMissPairs?: NearMissStygianPair[];
 };
 
 /**
- * Mocks the client APIs used after hydration. SSR `/api/static` on first
- * document request may still hit the real handler; client navigations and
- * `/api/teams` / `/api/nearmiss` are fully covered.
+ * Mocks browser-side APIs after hydration.
+ * SSR `/api/static` and layout characters are served from e2e fixtures when
+ * the Playwright webServer sets PLAYWRIGHT_E2E=1 (see playwright.config.ts).
  */
 export async function installApiMocks(
   page: Page,
@@ -166,24 +91,15 @@ export async function installApiMocks(
     });
   });
 
+  const staticBase = e2eStaticPayload();
   await page.route("**/api/static", async (route: Route) => {
     await route.fulfill({
       json: {
+        ...staticBase,
         allTeamsAbyss,
         allTeamsStygian,
         abyssEnemies: emptyAbyssEnemies,
         stygianEnemies: emptyStygianEnemies,
-        stygianSchedule: null,
-        latestAbyssVersion: {
-          version_number: 1,
-          version_name: "test",
-          created_at: "",
-        },
-        latestStygianVersion: {
-          version_number: 1,
-          version_name: "test",
-          created_at: "",
-        },
       },
     });
   });

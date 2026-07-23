@@ -19,6 +19,8 @@ import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { LRUCache } from "$lib/server/cache";
+import { isPlaywrightE2e } from "$lib/server/e2e";
+import { e2eStaticPayload } from "$lib/e2e/fixtures";
 import type { Tables } from "$lib/types/database.types";
 import type {
   StygianEnemies,
@@ -269,6 +271,14 @@ async function fetchStaticData(): Promise<StaticPayload> {
 }
 
 export const GET: RequestHandler = async () => {
+  if (isPlaywrightE2e()) {
+    return json(e2eStaticPayload(), {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   const payload = await staticCache.getOrSet(CACHE_KEY, fetchStaticData);
 
   return json(payload, {

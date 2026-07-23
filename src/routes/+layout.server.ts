@@ -13,6 +13,8 @@
 import type { LayoutServerLoad } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { charactersCache } from "$lib/server/cache";
+import { isPlaywrightE2e } from "$lib/server/e2e";
+import { e2eCharacters } from "$lib/e2e/fixtures";
 import type { Tables } from "$lib/types/database.types";
 
 type Character = Tables<"characters">;
@@ -21,6 +23,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
   const [staticRes, characters] = await Promise.all([
     fetch("/api/static"),
     charactersCache.getOrSet("characters", async () => {
+      if (isPlaywrightE2e()) return e2eCharacters();
       const { data } = await serverDb
         .from("characters")
         .select("*")

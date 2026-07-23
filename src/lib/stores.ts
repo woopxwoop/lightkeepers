@@ -316,9 +316,13 @@ export async function ensureTeamsOwned(
   if (teamsInFlight) return teamsInFlight;
   const pending = writeTeamsOwned(owned);
   teamsInFlight = pending;
-  pending.finally(() => {
-    if (teamsInFlight === pending) teamsInFlight = null;
-  });
+  // Consume rejection on the finally-derived promise so cleanup cannot
+  // surface as an unhandled rejection; callers still await `pending`.
+  void pending
+    .finally(() => {
+      if (teamsInFlight === pending) teamsInFlight = null;
+    })
+    .catch(() => {});
   return pending;
 }
 
@@ -383,8 +387,10 @@ export async function ensureNearMissTeams(
   if (nearMissInFlight) return nearMissInFlight;
   const pending = writeNearMissTeams(owned);
   nearMissInFlight = pending;
-  pending.finally(() => {
-    if (nearMissInFlight === pending) nearMissInFlight = null;
-  });
+  void pending
+    .finally(() => {
+      if (nearMissInFlight === pending) nearMissInFlight = null;
+    })
+    .catch(() => {});
   return pending;
 }

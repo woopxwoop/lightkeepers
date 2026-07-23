@@ -70,7 +70,9 @@ export class LRUCache<T> {
     const existing = this.inflight.get(key);
     if (existing) return existing;
 
-    const pending = (async () => {
+    // Register before async work runs so concurrent callers share one promise
+    // even if fn() fails synchronously before the first await.
+    const pending = Promise.resolve().then(async () => {
       try {
         const again = this.get(key);
         if (again !== undefined) return again;
@@ -96,7 +98,7 @@ export class LRUCache<T> {
       } finally {
         this.inflight.delete(key);
       }
-    })();
+    });
 
     this.inflight.set(key, pending);
     return pending;

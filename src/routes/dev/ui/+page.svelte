@@ -408,7 +408,14 @@
           accent={slidingAccent}
           aria-label="Demo sliding tabs"
         />
-        <p class="token-meta mt-2">Active: {slidingTab}</p>
+        <div
+          role="tabpanel"
+          id="tabpanel-{slidingTab}"
+          aria-labelledby="tab-{slidingTab}"
+          class="token-meta mt-2"
+        >
+          Active: {slidingTab}
+        </div>
       </Surface>
 
       <Surface>

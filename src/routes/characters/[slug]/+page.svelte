@@ -291,6 +291,11 @@
 
     <div class="board-body">
       {#if activeTab === "skills"}
+        <div
+          role="tabpanel"
+          id="tabpanel-skills"
+          aria-labelledby="tab-skills"
+        >
         <section class="board-section">
           <h2 class="section-title">Talents</h2>
           <div class="kit-list">
@@ -398,7 +403,14 @@
             {/each}
           </div>
         </section>
-      {:else if builds}
+        </div>
+      {:else}
+        <div
+          role="tabpanel"
+          id="tabpanel-builds"
+          aria-labelledby="tab-builds"
+        >
+        {#if builds}
         <section class="board-section">
           <h2 class="section-title">Weapons</h2>
           {#if rankedWeapons.length === 0}
@@ -555,6 +567,8 @@
       {:else}
         <div class="board-section">
           <EmptyState message={`No gcsim build summary for ${kit.name} yet.`} />
+        </div>
+      {/if}
         </div>
       {/if}
     </div>
