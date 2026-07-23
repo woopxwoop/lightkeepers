@@ -2,6 +2,7 @@
   import {
     teamsOwned,
     allTeamsAbyss,
+    abyssEnemiesBoard,
     staticBoardsLoaded,
     staticBoardsError,
     charactersOwned,
@@ -16,7 +17,7 @@
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import type { AbyssEnemies, AbyssTeam } from "$lib/definitions";
+  import type { AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
   import {
     handleKeyboardClick,
@@ -31,7 +32,7 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let abyssEnemies = $derived(data.abyssEnemies as AbyssEnemies);
+  let abyssEnemies = $derived($abyssEnemiesBoard);
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {

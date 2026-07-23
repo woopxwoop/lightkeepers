@@ -47,6 +47,7 @@ type StaticPayload = {
 // Valkey L2 when VALKEY_URL is set so pm2 workers share cold SSR hits.
 const staticCache = new LRUCache<StaticPayload>(1, 15 * 60 * 1000, {
   redisNamespace: "static",
+  staleWhileRevalidate: true,
 });
 const CACHE_KEY = "static";
 

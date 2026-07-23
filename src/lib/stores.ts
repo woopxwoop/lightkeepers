@@ -10,7 +10,14 @@
  */
 
 import { writable, derived, get, readable, type Writable } from "svelte/store";
-import type { CharacterOwned, AbyssTeam, StygianTeam } from "$lib/definitions";
+import type {
+  CharacterOwned,
+  AbyssTeam,
+  StygianTeam,
+  AbyssEnemies,
+  StygianEnemies,
+  StygianSchedule,
+} from "$lib/definitions";
 import type {
   NearMissStygianTeam,
   NearMissPairTeam,
@@ -246,6 +253,22 @@ export const teamsOwnedStygianBottom = derived<
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
 export const allTeamsStygian = writable<StygianTeam[]>([]);
 
+const emptyAbyssEnemies: AbyssEnemies = {
+  top: [],
+  bottom: [],
+  buffName: null,
+  openTime: null,
+};
+const emptyStygianEnemies: StygianEnemies = {
+  top: null,
+  middle: null,
+  bottom: null,
+};
+
+export const abyssEnemiesBoard = writable<AbyssEnemies>(emptyAbyssEnemies);
+export const stygianEnemiesBoard = writable<StygianEnemies>(emptyStygianEnemies);
+export const stygianScheduleBoard = writable<StygianSchedule>(null);
+
 /** True after a successful /api/static boards fetch (or empty payload). */
 export const staticBoardsLoaded = writable(false);
 
@@ -315,13 +338,8 @@ export async function ensureStaticBoards(): Promise<void> {
       if (typeof abyssVer === "number" && typeof stygianVer === "number") {
         applyStaticBoardsPayload(data, abyssVer, stygianVer);
       } else {
-        // No version payload — keep layout versions, still seed teams.
-        allTeamsAbyss.set(data.allTeamsAbyss ?? []);
-        allTeamsStygian.set(data.allTeamsStygian ?? []);
-        staticBoardsAbyssVersion = expectedAbyss;
-        staticBoardsStygianVersion = expectedStygian;
-        staticBoardsError.set(null);
-        staticBoardsLoaded.set(true);
+        // No version payload — keep layout versions, still seed boards.
+        applyStaticBoardsPayload(data, expectedAbyss, expectedStygian);
       }
     } catch (err) {
       const message =
@@ -345,6 +363,9 @@ type StaticBoardsPayload = {
   allTeamsStygian?: StygianTeam[];
   latestAbyssVersion?: { version_number?: number };
   latestStygianVersion?: { version_number?: number };
+  abyssEnemies?: AbyssEnemies;
+  stygianEnemies?: StygianEnemies;
+  stygianSchedule?: StygianSchedule;
 };
 
 async function fetchStaticBoardsPayload(
@@ -363,6 +384,9 @@ function applyStaticBoardsPayload(
 ): void {
   allTeamsAbyss.set(data.allTeamsAbyss ?? []);
   allTeamsStygian.set(data.allTeamsStygian ?? []);
+  abyssEnemiesBoard.set(data.abyssEnemies ?? emptyAbyssEnemies);
+  stygianEnemiesBoard.set(data.stygianEnemies ?? emptyStygianEnemies);
+  stygianScheduleBoard.set(data.stygianSchedule ?? null);
   staticBoardsAbyssVersion = abyssVer;
   staticBoardsStygianVersion = stygianVer;
   setVersionNumbers(abyssVer, stygianVer);

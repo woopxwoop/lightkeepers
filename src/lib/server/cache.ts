@@ -1,4 +1,5 @@
 import { valkeyGetJsonWithTtl, valkeySetJson } from "$lib/server/valkey";
+import type { Tables } from "$lib/types/database.types";
 
 // ── LRU Cache ──────────────────────────────────────────────────────────────
 
@@ -14,6 +15,12 @@ export type LRUCacheOptions = {
    * is unset or Valkey is unreachable.
    */
   redisNamespace?: string;
+  /**
+   * When true, an expired L1 entry is served immediately while a background
+   * refresh runs (stale-while-revalidate). Avoids multi-second stalls on TTL
+   * expiry for heavy keys like /api/static.
+   */
+  staleWhileRevalidate?: boolean;
 };
 
 export class LRUCache<T> {
@@ -21,6 +28,7 @@ export class LRUCache<T> {
   /** In-flight computations keyed by cache key — collapses concurrent misses. */
   private inflight = new Map<string, Promise<T>>();
   private readonly redisNamespace: string | undefined;
+  private readonly staleWhileRevalidate: boolean;
 
   constructor(
     private readonly maxSize: number,
@@ -28,23 +36,32 @@ export class LRUCache<T> {
     options?: LRUCacheOptions,
   ) {
     this.redisNamespace = options?.redisNamespace;
+    this.staleWhileRevalidate = options?.staleWhileRevalidate ?? false;
   }
 
   private redisKey(key: string): string | null {
     return this.redisNamespace ? `lk:${this.redisNamespace}:${key}` : null;
   }
 
+  /** Fresh entry only — expired entries are removed (unless kept for SWR via peek). */
   get(key: string): T | undefined {
     const entry = this.map.get(key);
     if (!entry) return undefined;
     if (Date.now() > entry.expiresAt) {
-      this.map.delete(key);
+      if (!this.staleWhileRevalidate) {
+        this.map.delete(key);
+      }
       return undefined;
     }
     // Refresh LRU position
     this.map.delete(key);
     this.map.set(key, entry);
     return entry.value;
+  }
+
+  /** Return value even if TTL expired (does not promote LRU / does not delete). */
+  private getStale(key: string): T | undefined {
+    return this.map.get(key)?.value;
   }
 
   set(key: string, value: T, ttlMs = this.ttlMs): void {
@@ -62,18 +79,36 @@ export class LRUCache<T> {
    * Concurrent misses for the same key share one in-flight Promise (singleflight).
    * With `redisNamespace`, also checks/writes Valkey so workers share state.
    * Valkey hits populate L1 with min(local ttl, remaining Redis TTL).
+   * With `staleWhileRevalidate`, expired L1 hits return immediately and refresh
+   * in the background.
    */
   async getOrSet(key: string, fn: () => Promise<T>): Promise<T> {
     const cached = this.get(key);
     if (cached !== undefined) return cached;
 
+    if (this.staleWhileRevalidate) {
+      const stale = this.getStale(key);
+      if (stale !== undefined) {
+        if (!this.inflight.has(key)) {
+          const refresh = this.computeAndStore(key, fn);
+          this.inflight.set(key, refresh);
+          void refresh.catch(() => {});
+        }
+        return stale;
+      }
+    }
+
     const existing = this.inflight.get(key);
     if (existing) return existing;
 
-    // Register before async work runs so concurrent callers share one promise
-    // even if fn() fails synchronously before the first await.
-    const pending = Promise.resolve().then(async () => {
-      try {
+    const pending = this.computeAndStore(key, fn);
+    this.inflight.set(key, pending);
+    return pending;
+  }
+
+  private computeAndStore(key: string, fn: () => Promise<T>): Promise<T> {
+    return Promise.resolve()
+      .then(async () => {
         const again = this.get(key);
         if (again !== undefined) return again;
 
@@ -95,13 +130,10 @@ export class LRUCache<T> {
           void valkeySetJson(rKey, value, this.ttlMs);
         }
         return value;
-      } finally {
+      })
+      .finally(() => {
         this.inflight.delete(key);
-      }
-    });
-
-    this.inflight.set(key, pending);
-    return pending;
+      });
   }
 
   invalidate(key: string): void {
@@ -169,8 +201,6 @@ export class RateLimiter {
 // ── Shared singletons ──────────────────────────────────────────────────────
 // Memory L1 per process + Valkey L2 when VALKEY_URL / REDIS_URL is set
 // (see docker-compose.yml). Keep pm2 -i max; workers share Valkey.
-
-import type { Tables } from "$lib/types/database.types";
 
 type Character = Tables<"characters">;
 

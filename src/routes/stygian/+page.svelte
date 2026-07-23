@@ -2,6 +2,8 @@
   import {
     teamsOwnedStygian,
     allTeamsStygian,
+    stygianEnemiesBoard,
+    stygianScheduleBoard,
     staticBoardsLoaded,
     staticBoardsError,
     charactersOwned,
@@ -21,11 +23,7 @@
     handleKeyboardClick,
     handlePointerAction,
   } from "$lib/ui/pointer";
-  import type {
-    StygianEnemies,
-    StygianSchedule,
-    StygianTeam,
-  } from "$lib/definitions";
+  import type { StygianTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
@@ -36,8 +34,8 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let enemies = $derived(data.stygianEnemies as StygianEnemies);
-  let schedule = $derived(data.stygianSchedule as StygianSchedule | null);
+  let enemies = $derived($stygianEnemiesBoard);
+  let schedule = $derived($stygianScheduleBoard);
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
