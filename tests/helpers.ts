@@ -80,12 +80,20 @@ export async function installApiMocks(
   });
 
   await page.route("**/api/teams", async (route: Route) => {
+    if (process.env.PLAYWRIGHT_DEBUG_NET === "1" || process.env.CI) {
+      // eslint-disable-next-line no-console
+      console.log("[mock] /api/teams intercepted", route.request().method());
+    }
     await route.fulfill({
       json: { abyssTeams, stygianTeams },
     });
   });
 
   await page.route("**/api/nearmiss", async (route: Route) => {
+    if (process.env.PLAYWRIGHT_DEBUG_NET === "1" || process.env.CI) {
+      // eslint-disable-next-line no-console
+      console.log("[mock] /api/nearmiss intercepted", route.request().method());
+    }
     await route.fulfill({
       json: { nearMissTeams, nearMissPairs },
     });

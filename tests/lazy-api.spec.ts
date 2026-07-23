@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { installApiMocks, trackApiPaths } from "./helpers";
+import { attachBrowserDebug } from "./debug";
 
 const CLIENT_API_TIMEOUT = 45_000;
 
 test("home and settings do not fetch owned teams or near-miss", async ({
   page,
 }) => {
+  attachBrowserDebug(page);
   await installApiMocks(page);
   const hits = trackApiPaths(page, ["/api/teams", "/api/nearmiss"]);
 
@@ -23,6 +25,7 @@ test("home and settings do not fetch owned teams or near-miss", async ({
 });
 
 test("abyss fetches /api/teams but not /api/nearmiss", async ({ page }) => {
+  attachBrowserDebug(page);
   await installApiMocks(page);
   const hits = trackApiPaths(page, ["/api/teams", "/api/nearmiss"]);
 
@@ -40,6 +43,7 @@ test("abyss fetches /api/teams but not /api/nearmiss", async ({ page }) => {
 });
 
 test("pulls fetches /api/teams and /api/nearmiss", async ({ page }) => {
+  attachBrowserDebug(page);
   await installApiMocks(page);
   const hits = trackApiPaths(page, ["/api/teams", "/api/nearmiss"]);
 

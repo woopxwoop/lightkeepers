@@ -4,10 +4,12 @@ import {
   NEAR_MISS_SINGLE,
   STYGIAN_OWNED_BASELINE,
 } from "./helpers";
+import { attachBrowserDebug } from "./debug";
 
 const CLIENT_API_TIMEOUT = 45_000;
 
 test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
+  attachBrowserDebug(page);
   await installApiMocks(page, {
     stygianTeams: [STYGIAN_OWNED_BASELINE],
     nearMissTeams: [NEAR_MISS_SINGLE],
@@ -33,6 +35,7 @@ test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
 test("pulls shows empty state when near-miss has nothing useful", async ({
   page,
 }) => {
+  attachBrowserDebug(page);
   await installApiMocks(page, {
     stygianTeams: [STYGIAN_OWNED_BASELINE],
     nearMissTeams: [],

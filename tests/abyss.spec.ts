@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
 import { installApiMocks } from "./helpers";
+import { attachBrowserDebug } from "./debug";
 
-/** Client /api/* can lag SSR on cold Vite — keep waits aligned with config.timeout. */
 const CLIENT_API_TIMEOUT = 45_000;
 
 test.beforeEach(async ({ page }) => {
+  attachBrowserDebug(page);
   await installApiMocks(page);
 });
 
