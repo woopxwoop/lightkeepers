@@ -36,7 +36,7 @@
   let schedule = $derived(data.stygianSchedule as StygianSchedule | null);
 
   // Page load owns the full meta team list (not root layout).
-  $effect(() => {
+  $effect.pre(() => {
     allTeamsStygian.set(data.allTeamsStygian as StygianTeam[]);
   });
 
@@ -75,7 +75,7 @@
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
-    !$teamsOwnedLoaded && $allTeamsStygian.length === 0,
+    !$teamsOwnedLoaded && data.allTeamsStygian.length === 0,
   );
 
   let updatedLabel = $derived.by(() => {

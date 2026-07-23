@@ -289,6 +289,7 @@ export const GET: RequestHandler = async () => {
     return json(e2eStaticPayload(), {
       headers: {
         "Cache-Control": "no-store",
+        "X-Playwright-E2E": "1",
       },
     });
   }

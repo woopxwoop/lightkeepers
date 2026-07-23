@@ -14,6 +14,10 @@
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { AbyssEnemies, AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
+  import {
+    handleKeyboardClick,
+    handlePointerAction,
+  } from "$lib/ui/pointer";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -26,7 +30,9 @@
   let abyssEnemies = $derived(data.abyssEnemies as AbyssEnemies);
 
   // Page load owns the full meta team list (not root layout).
-  $effect(() => {
+  // Sync before paint — $effect alone leaves the store empty during SSR/hydration
+  // and keeps `loading` true until a client fetch finishes.
+  $effect.pre(() => {
     allTeamsAbyss.set(data.allTeamsAbyss as AbyssTeam[]);
   });
 
@@ -72,7 +78,7 @@
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
-    !$teamsOwnedLoaded && $allTeamsAbyss.length === 0,
+    !$teamsOwnedLoaded && data.allTeamsAbyss.length === 0,
   );
 
   let updatedLabel = $derived.by(() => {
@@ -257,14 +263,21 @@
         </div>
 
         <div class="board-actions">
-          <button
-            type="button"
-            class="enemy-toggle"
-            aria-expanded={enemiesExpanded}
-            aria-controls="abyss-enemies-top abyss-enemies-bottom"
-            aria-label={enemiesExpanded ? "Hide enemies" : "Show enemies"}
-            onclick={() => (enemiesExpanded = !enemiesExpanded)}
-          >
+            <button
+              type="button"
+              class="enemy-toggle"
+              aria-expanded={enemiesExpanded}
+              aria-controls="abyss-enemies-top abyss-enemies-bottom"
+              aria-label={enemiesExpanded ? "Hide enemies" : "Show enemies"}
+              onpointerdown={(event) =>
+                handlePointerAction(event, () => {
+                  enemiesExpanded = !enemiesExpanded;
+                })}
+              onclick={(event) =>
+                handleKeyboardClick(event, () => {
+                  enemiesExpanded = !enemiesExpanded;
+                })}
+            >
             <span>Enemies</span>
             <IconChevronDown size={14} strokeWidth={2.25} />
           </button>

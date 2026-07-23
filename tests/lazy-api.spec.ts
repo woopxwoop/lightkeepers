@@ -24,8 +24,13 @@ test("abyss fetches /api/teams but not /api/nearmiss", async ({ page }) => {
   await installApiMocks(page);
   const hits = trackApiPaths(page, ["/api/teams", "/api/nearmiss"]);
 
+  const teamsReq = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/teams"),
+  );
+
   await page.goto("/abyss");
   await expect(page.getByText("Solution 1")).toBeVisible({ timeout: 15_000 });
+  await teamsReq;
 
   expect(hits.some((p) => p.endsWith("/api/teams"))).toBe(true);
   expect(hits.some((p) => p.endsWith("/api/nearmiss"))).toBe(false);

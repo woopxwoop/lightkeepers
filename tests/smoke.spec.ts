@@ -2,6 +2,16 @@ import { test, expect } from "@playwright/test";
 
 // Verifies that all main routes render without SSR crashes or blank pages.
 
+test("playwright E2E fixtures are active on /api/static", async ({
+  request,
+}) => {
+  const res = await request.get("/api/static");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["x-playwright-e2e"]).toBe("1");
+  const body = await res.json();
+  expect(body.allTeamsAbyss?.[0]?.team_key).toBe("test-abyss-top");
+});
+
 const routes: Array<
   | { path: string; kind: "nav" }
   | { path: string; kind: "heading"; name: string }

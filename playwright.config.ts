@@ -37,7 +37,12 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm dev',
+    // Inline env so PLAYWRIGHT_E2E is set before Vite snapshots process.env
+    // (Kit's $env/dynamic/private is config-time; we also read process.env live).
+    command:
+      process.platform === 'win32'
+        ? 'pnpm dev'
+        : 'PLAYWRIGHT_E2E=1 pnpm dev',
     url: 'http://localhost:5173',
     // Only reuse a server that was already started with PLAYWRIGHT_E2E=1.
     // A plain `pnpm dev` would miss SSR fixtures and greenwash false failures.

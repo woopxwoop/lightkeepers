@@ -24,11 +24,18 @@ test("abyss shows meta teams section", async ({ page }) => {
 });
 
 test("abyss enemies toggle works", async ({ page }) => {
+  const teamsRes = page.waitForResponse(
+    (res) => new URL(res.url()).pathname.endsWith("/api/teams"),
+    { timeout: 15_000 },
+  );
+
   await page.goto("/abyss");
   await expect(page.getByText("Solution 1")).toBeVisible({ timeout: 15_000 });
+  await teamsRes;
 
   const toggle = page.getByRole("button", { name: /enemies/i });
   await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
 
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
