@@ -3,6 +3,7 @@
   import { resolve } from "$app/paths";
   import { tick, untrack } from "svelte";
   import { fly, fade } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import IconUser from "$lib/ui/icons/IconUser.svelte";
@@ -264,40 +265,17 @@
       class="hidden md:flex items-center gap-6 relative"
       bind:this={linksContainer}
     >
-      <a
-        href={abyssPath}
-        class="nav-link"
-        data-sveltekit-preload-data="hover"
-        aria-current={page.url.pathname === abyssPath ? "page" : undefined}
-        bind:this={navLinks.abyss}>Abyss</a
-      >
-      <a
-        href={stygianPath}
-        class="nav-link"
-        data-sveltekit-preload-data="hover"
-        aria-current={page.url.pathname === stygianPath ? "page" : undefined}
-        bind:this={navLinks.stygian}>Stygian</a
-      >
-      <a
-        href={pullsPath}
-        class="nav-link"
-        aria-current={page.url.pathname === pullsPath ? "page" : undefined}
-        bind:this={navLinks.pulls}>Pulls</a
-      >
-      <a
-        href={teamsPath}
-        class="nav-link"
-        aria-current={page.url.pathname.startsWith(teamsPath) ? "page" : undefined}
-        bind:this={navLinks.teams}>Teams</a
-      >
-      <a
-        href={charactersPath}
-        class="nav-link"
-        aria-current={page.url.pathname.startsWith(charactersPath)
-          ? "page"
-          : undefined}
-        bind:this={navLinks.characters}>Characters</a
-      >
+      {#each mainLinks as link}
+        <a
+          href={link.path}
+          class="nav-link"
+          data-sveltekit-preload-data={"preload" in link
+            ? link.preload
+            : undefined}
+          aria-current={isMainActive(link) ? "page" : undefined}
+          bind:this={navLinks[link.label.toLowerCase()]}>{link.label}</a
+        >
+      {/each}
       <div class="settings-item">
         <a
           href={settingsPath}
@@ -388,7 +366,10 @@
     aria-modal="true"
     aria-label="Navigation menu"
     bind:this={drawerEl}
-    transition:fly={{ x: 300, duration: 280 }}
+    transition:fly={{
+      x: prefersReducedMotion.current ? 0 : 300,
+      duration: prefersReducedMotion.current ? 0 : 280,
+    }}
   >
     <div class="drawer-glow" aria-hidden="true"></div>
 

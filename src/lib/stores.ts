@@ -281,32 +281,48 @@ export async function ensureStaticBoards(): Promise<void> {
   staticBoardsError.set(null);
 
   const pending = (async () => {
-    try {
-      const res = await fetch("/api/static");
-      if (!res.ok) throw new Error(`static boards fetch failed: ${res.status}`);
-      const data = (await res.json()) as {
-        allTeamsAbyss?: AbyssTeam[];
-        allTeamsStygian?: StygianTeam[];
-        latestAbyssVersion?: { version_number?: number };
-        latestStygianVersion?: { version_number?: number };
-      };
-      allTeamsAbyss.set(data.allTeamsAbyss ?? []);
-      allTeamsStygian.set(data.allTeamsStygian ?? []);
+    // Snapshot before the network round-trip so a stale edge hit cannot
+    // overwrite newer versions already seeded from layout.
+    const expectedAbyss = abyssVersionNumber;
+    const expectedStygian = stygianVersionNumber;
 
-      const abyssVer = data.latestAbyssVersion?.version_number;
-      const stygianVer = data.latestStygianVersion?.version_number;
-      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
-        staticBoardsAbyssVersion = abyssVer;
-        staticBoardsStygianVersion = stygianVer;
-        setVersionNumbers(abyssVer, stygianVer);
-      } else {
-        // No version payload — treat as matching whatever layout already set.
-        staticBoardsAbyssVersion = abyssVersionNumber;
-        staticBoardsStygianVersion = stygianVersionNumber;
+    try {
+      const data = await fetchStaticBoardsPayload(false);
+      let abyssVer = data.latestAbyssVersion?.version_number;
+      let stygianVer = data.latestStygianVersion?.version_number;
+
+      if (
+        typeof abyssVer === "number" &&
+        typeof stygianVer === "number" &&
+        (abyssVer < expectedAbyss || stygianVer < expectedStygian)
+      ) {
+        // Edge/CDN may still be serving the previous cycle — bust once.
+        const fresh = await fetchStaticBoardsPayload(true);
+        abyssVer = fresh.latestAbyssVersion?.version_number;
+        stygianVer = fresh.latestStygianVersion?.version_number;
+        if (
+          typeof abyssVer !== "number" ||
+          typeof stygianVer !== "number" ||
+          abyssVer < expectedAbyss ||
+          stygianVer < expectedStygian
+        ) {
+          throw new Error("static boards response is older than layout versions");
+        }
+        applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
+        return;
       }
 
-      staticBoardsError.set(null);
-      staticBoardsLoaded.set(true);
+      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+        applyStaticBoardsPayload(data, abyssVer, stygianVer);
+      } else {
+        // No version payload — keep layout versions, still seed teams.
+        allTeamsAbyss.set(data.allTeamsAbyss ?? []);
+        allTeamsStygian.set(data.allTeamsStygian ?? []);
+        staticBoardsAbyssVersion = expectedAbyss;
+        staticBoardsStygianVersion = expectedStygian;
+        staticBoardsError.set(null);
+        staticBoardsLoaded.set(true);
+      }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load team boards";
@@ -322,6 +338,36 @@ export async function ensureStaticBoards(): Promise<void> {
     })
     .catch(() => {});
   return pending;
+}
+
+type StaticBoardsPayload = {
+  allTeamsAbyss?: AbyssTeam[];
+  allTeamsStygian?: StygianTeam[];
+  latestAbyssVersion?: { version_number?: number };
+  latestStygianVersion?: { version_number?: number };
+};
+
+async function fetchStaticBoardsPayload(
+  cacheBust: boolean,
+): Promise<StaticBoardsPayload> {
+  const url = cacheBust ? `/api/static?_=${Date.now()}` : "/api/static";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`static boards fetch failed: ${res.status}`);
+  return (await res.json()) as StaticBoardsPayload;
+}
+
+function applyStaticBoardsPayload(
+  data: StaticBoardsPayload,
+  abyssVer: number,
+  stygianVer: number,
+): void {
+  allTeamsAbyss.set(data.allTeamsAbyss ?? []);
+  allTeamsStygian.set(data.allTeamsStygian ?? []);
+  staticBoardsAbyssVersion = abyssVer;
+  staticBoardsStygianVersion = stygianVer;
+  setVersionNumbers(abyssVer, stygianVer);
+  staticBoardsError.set(null);
+  staticBoardsLoaded.set(true);
 }
 
 // ── Near-miss stores ───────────────────────────────────────────────────────
