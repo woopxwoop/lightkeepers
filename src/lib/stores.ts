@@ -1,16 +1,23 @@
 /**
- * stores.ts
+ * Client stores + fetch helpers for roster-scoped data.
  *
- * All Supabase calls now go through SvelteKit API routes instead of
- * hitting Supabase directly from the browser. Benefits:
- *   - Server-side in-memory LRU cache cuts duplicate Supabase round-trips
- *   - Static data (all teams) is Cloudflare-edge-cached via /api/static
- *   - Per-user data (/api/teams, /api/nearmiss) is cached by character list
- *   - Service-role key stays server-side only
+ * The browser never talks to Supabase directly — everything goes through
+ * `/api/*` so the service role key and caches stay on the server.
+ *
+ * Heavy meta boards: ensureStaticBoards() → GET /api/static
+ * Owned teams:       ensureTeamsOwned()  → POST /api/teams
+ * Pull suggestions:  ensureNearMissTeams() → POST /api/nearmiss
  */
 
 import { writable, derived, get, readable, type Writable } from "svelte/store";
-import type { CharacterOwned, AbyssTeam, StygianTeam } from "$lib/definitions";
+import type {
+  CharacterOwned,
+  AbyssTeam,
+  StygianTeam,
+  AbyssEnemies,
+  StygianEnemies,
+  StygianSchedule,
+} from "$lib/definitions";
 import type {
   NearMissStygianTeam,
   NearMissPairTeam,
@@ -242,12 +249,157 @@ export const teamsOwnedStygianBottom = derived<
   ),
 );
 
-// ── All-teams stores (seeded by abyss / stygian page loads) ────────────────
+// ── All-teams stores (warmed from /api/static; not shipped in page __data.json) ─
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
 export const allTeamsStygian = writable<StygianTeam[]>([]);
 
+const emptyAbyssEnemies: AbyssEnemies = {
+  top: [],
+  bottom: [],
+  buffName: null,
+  openTime: null,
+};
+const emptyStygianEnemies: StygianEnemies = {
+  top: null,
+  middle: null,
+  bottom: null,
+};
+
+export const abyssEnemiesBoard = writable<AbyssEnemies>(emptyAbyssEnemies);
+export const stygianEnemiesBoard = writable<StygianEnemies>(emptyStygianEnemies);
+export const stygianScheduleBoard = writable<StygianSchedule>(null);
+
+/** True after a successful /api/static boards fetch (or empty payload). */
+export const staticBoardsLoaded = writable(false);
+
+/** Last warm-up failure; cleared on success or a new attempt. */
+export const staticBoardsError = writable<string | null>(null);
+
 /** True after a successful /api/teams fetch (or empty owned roster short-circuit). */
 export const teamsOwnedLoaded = writable(false);
+
+let staticBoardsInFlight: Promise<void> | null = null;
+/** Versions the current allTeams* stores were fetched for. */
+let staticBoardsAbyssVersion = -1;
+let staticBoardsStygianVersion = -1;
+
+function staticBoardsMatchCurrentVersions(): boolean {
+  return (
+    get(staticBoardsLoaded) &&
+    staticBoardsAbyssVersion === abyssVersionNumber &&
+    staticBoardsStygianVersion === stygianVersionNumber
+  );
+}
+
+/**
+ * Fetches the full meta team lists via /api/static and seeds the stores.
+ * Kept out of abyss/stygian page loads so client navigations stay lean.
+ * Coalesces concurrent callers; skips the network when boards already match
+ * the current Abyss/Stygian version numbers.
+ */
+export async function ensureStaticBoards(): Promise<void> {
+  if (staticBoardsMatchCurrentVersions()) return;
+  if (staticBoardsInFlight) return staticBoardsInFlight;
+
+  staticBoardsError.set(null);
+
+  const pending = (async () => {
+    try {
+      const data = await fetchStaticBoardsPayload(false);
+      if (applyStaticBoardsIfCurrent(data)) return;
+
+      // Edge/CDN may still be serving the previous cycle — bust once.
+      const fresh = await fetchStaticBoardsPayload(true);
+      if (applyStaticBoardsIfCurrent(fresh)) return;
+
+      // Still behind after bust — seed with the best body we got, keep the
+      // current layout version stamps, and resolve without erroring so
+      // already-loaded boards (or a slightly-stale first paint) stay usable.
+      applyStaticBoardsPayload(
+        fresh,
+        abyssVersionNumber,
+        stygianVersionNumber,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load team boards";
+      staticBoardsError.set(message);
+      throw err;
+    }
+  })();
+
+  staticBoardsInFlight = pending;
+  void pending
+    .finally(() => {
+      if (staticBoardsInFlight === pending) staticBoardsInFlight = null;
+    })
+    .catch(() => {});
+  return pending;
+}
+
+type StaticBoardsPayload = {
+  allTeamsAbyss?: AbyssTeam[];
+  allTeamsStygian?: StygianTeam[];
+  latestAbyssVersion?: { version_number?: number };
+  latestStygianVersion?: { version_number?: number };
+  abyssEnemies?: AbyssEnemies;
+  stygianEnemies?: StygianEnemies;
+  stygianSchedule?: StygianSchedule;
+};
+
+async function fetchStaticBoardsPayload(
+  cacheBust: boolean,
+): Promise<StaticBoardsPayload> {
+  const url = cacheBust ? `/api/static?_=${Date.now()}` : "/api/static";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`static boards fetch failed: ${res.status}`);
+  return (await res.json()) as StaticBoardsPayload;
+}
+
+/**
+ * Apply boards only when the payload is not behind the *current* layout
+ * version globals (re-read after each await). Returns false when versions
+ * are present but stale so the caller can retry / reject.
+ */
+function applyStaticBoardsIfCurrent(data: StaticBoardsPayload): boolean {
+  const currentAbyss = abyssVersionNumber;
+  const currentStygian = stygianVersionNumber;
+  const abyssVer = data.latestAbyssVersion?.version_number;
+  const stygianVer = data.latestStygianVersion?.version_number;
+
+  if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+    if (abyssVer < currentAbyss || stygianVer < currentStygian) {
+      return false;
+    }
+    applyStaticBoardsPayload(data, abyssVer, stygianVer);
+    return true;
+  }
+
+  // No version payload — keep whatever layout has now, still seed boards.
+  applyStaticBoardsPayload(data, currentAbyss, currentStygian);
+  return true;
+}
+
+function applyStaticBoardsPayload(
+  data: StaticBoardsPayload,
+  abyssVer: number,
+  stygianVer: number,
+): void {
+  allTeamsAbyss.set(data.allTeamsAbyss ?? []);
+  allTeamsStygian.set(data.allTeamsStygian ?? []);
+  abyssEnemiesBoard.set(data.abyssEnemies ?? emptyAbyssEnemies);
+  stygianEnemiesBoard.set(data.stygianEnemies ?? emptyStygianEnemies);
+  stygianScheduleBoard.set(data.stygianSchedule ?? null);
+  staticBoardsAbyssVersion = abyssVer;
+  staticBoardsStygianVersion = stygianVer;
+  // Never move layout versions backwards if something else advanced them.
+  setVersionNumbers(
+    Math.max(abyssVer, abyssVersionNumber),
+    Math.max(stygianVer, stygianVersionNumber),
+  );
+  staticBoardsError.set(null);
+  staticBoardsLoaded.set(true);
+}
 
 // ── Near-miss stores ───────────────────────────────────────────────────────
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);

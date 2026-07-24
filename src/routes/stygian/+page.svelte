@@ -1,10 +1,14 @@
 <script lang="ts">
   import {
     teamsOwnedStygian,
-    teamsOwnedLoaded,
     allTeamsStygian,
+    stygianEnemiesBoard,
+    stygianScheduleBoard,
+    staticBoardsLoaded,
+    staticBoardsError,
     charactersOwned,
     ensureTeamsOwned,
+    ensureStaticBoards,
   } from "$lib/stores";
   import { stygianSlotLabel } from "$lib/slotLabels";
   import { solveStygianWithFallback } from "$lib/solver";
@@ -12,16 +16,14 @@
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import {
     handleKeyboardClick,
     handlePointerAction,
   } from "$lib/ui/pointer";
-  import type {
-    StygianEnemies,
-    StygianSchedule,
-    StygianTeam,
-  } from "$lib/definitions";
+  import type { StygianTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
@@ -32,17 +34,22 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let enemies = $derived(data.stygianEnemies as StygianEnemies);
-  let schedule = $derived(data.stygianSchedule as StygianSchedule | null);
+  let enemies = $derived($stygianEnemiesBoard);
+  let schedule = $derived($stygianScheduleBoard);
 
-  // Page load owns the full meta team list (not root layout).
-  $effect.pre(() => {
-    allTeamsStygian.set(data.allTeamsStygian as StygianTeam[]);
-  });
-
+  // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
+    ensureStaticBoards().catch(() => {});
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
+
+  async function retryStaticBoards() {
+    try {
+      await ensureStaticBoards();
+    } catch {
+      // staticBoardsError already set
+    }
+  }
 
   let selectedIndex = $state(0);
 
@@ -75,7 +82,9 @@
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
-    !$teamsOwnedLoaded && data.allTeamsStygian.length === 0,
+    !$staticBoardsError &&
+      !$staticBoardsLoaded &&
+      $allTeamsStygian.length === 0,
   );
 
   let updatedLabel = $derived.by(() => {
@@ -227,6 +236,12 @@
 
   {#if loading}
     <LoadingState />
+  {:else if $staticBoardsError && $allTeamsStygian.length === 0}
+    <EmptyState message="Could not load Stygian teams right now.">
+      {#snippet action()}
+        <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+      {/snippet}
+    </EmptyState>
   {:else}
     <Surface flush class="solution-board">
       <div class="board-head">

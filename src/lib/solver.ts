@@ -1,3 +1,13 @@
+/**
+ * Greedy team assignment for Abyss (2 slots) and Stygian (3 slots).
+ *
+ * For each of the top CANDIDATE_DEPTH teams as a forced first pick, fill the
+ * remaining slots by usage rate without character overlap, then try pairwise
+ * swaps. Rank solutions by 0.6×weakest-link + 0.4×mean so one weak half tanks
+ * the score. Fallback helpers allow a small budget of missing characters when
+ * the owned roster can't cover every slot.
+ */
+
 import type { AbyssTeam, StygianTeam } from "$lib/definitions";
 
 // ---- Types ----------------------------------------------------------------

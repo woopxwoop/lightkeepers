@@ -33,12 +33,14 @@
       label: "Spiral Abyss",
       description: "Find your best teams for the current abyss cycle.",
       banner: "https://images.lightkeepers.moe/site/abyss_banner.webp",
+      preload: "hover" as const,
     },
     {
       href: stygianPath,
       label: "Stygian Onslaught",
       description: "Find your best teams for the current stygian cycle.",
       banner: "https://images.lightkeepers.moe/site/stygian_banner.webp",
+      preload: "hover" as const,
     },
     {
       href: pullsPath,
@@ -83,7 +85,11 @@
 
   <div class="feature-grid">
     {#each features as feature}
-      <a href={feature.href} class="feature-card group">
+      <a
+        href={feature.href}
+        class="feature-card group"
+        data-sveltekit-preload-data={"preload" in feature ? feature.preload : undefined}
+      >
         {#if feature.banner}
           <div
             class="feature-art"

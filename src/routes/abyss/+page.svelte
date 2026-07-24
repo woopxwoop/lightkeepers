@@ -1,18 +1,23 @@
 <script lang="ts">
   import {
     teamsOwned,
-    teamsOwnedLoaded,
     allTeamsAbyss,
+    abyssEnemiesBoard,
+    staticBoardsLoaded,
+    staticBoardsError,
     charactersOwned,
     ensureTeamsOwned,
+    ensureStaticBoards,
   } from "$lib/stores";
   import { solveAbyssWithFallback } from "$lib/solver";
   import Team from "$lib/ui/components/Team.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import type { AbyssEnemies, AbyssTeam } from "$lib/definitions";
+  import type { AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
   import {
     handleKeyboardClick,
@@ -27,19 +32,21 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let abyssEnemies = $derived(data.abyssEnemies as AbyssEnemies);
+  let abyssEnemies = $derived($abyssEnemiesBoard);
 
-  // Page load owns the full meta team list (not root layout).
-  // Sync before paint — $effect alone leaves the store empty during SSR/hydration
-  // and keeps `loading` true until a client fetch finishes.
-  $effect.pre(() => {
-    allTeamsAbyss.set(data.allTeamsAbyss as AbyssTeam[]);
-  });
-
-  // Owned subset is lazy — not fetched on every app bootstrap.
+  // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
+    ensureStaticBoards().catch(() => {});
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
+
+  async function retryStaticBoards() {
+    try {
+      await ensureStaticBoards();
+    } catch {
+      // staticBoardsError already set
+    }
+  }
 
   const halfLabel: Record<Slot, string> = {
     top: "First Half",
@@ -78,7 +85,7 @@
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
-    !$teamsOwnedLoaded && data.allTeamsAbyss.length === 0,
+    !$staticBoardsError && !$staticBoardsLoaded && $allTeamsAbyss.length === 0,
   );
 
   let updatedLabel = $derived.by(() => {
@@ -252,6 +259,12 @@
 
   {#if loading}
     <LoadingState />
+  {:else if $staticBoardsError && $allTeamsAbyss.length === 0}
+    <EmptyState message="Could not load Abyss teams right now.">
+      {#snippet action()}
+        <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+      {/snippet}
+    </EmptyState>
   {:else}
     <Surface flush class="solution-board">
       <div class="board-head">

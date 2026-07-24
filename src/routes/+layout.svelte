@@ -1,4 +1,8 @@
 <script lang="ts">
+  /**
+   * Root shell: seed stores from SSR, then bootstrapClient on mount
+   * (roster + background /api/static warm). Page chrome is NavBar + slot.
+   */
   import { page } from "$app/state";
   import { onMount } from "svelte";
   import { fly } from "svelte/transition";

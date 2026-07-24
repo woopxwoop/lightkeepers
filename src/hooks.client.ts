@@ -6,6 +6,8 @@ import { env } from "$env/dynamic/public";
 if (env.PUBLIC_SENTRY_DSN) {
   Sentry.init({
     dsn: env.PUBLIC_SENTRY_DSN,
+    // Keep DSN in .env for prod parity, but never report from vite/sveltekit dev.
+    enabled: !import.meta.env.DEV,
     tracesSampleRate: 1.0,
     enableLogs: true,
     replaysSessionSampleRate: 0.1,

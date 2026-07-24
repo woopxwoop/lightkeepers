@@ -152,19 +152,21 @@
     { key: "circlet" as const, label: "Circlet" },
   ];
 
-  /** Weapons: higher rarity first, then team usage. */
+  /** Weapons: higher rarity first, then team usage (stable within ties). */
   let rankedWeapons = $derived.by(() => {
     if (!builds?.weapons.length) return [];
     return [...builds.weapons].sort((a, b) => {
       const ra = weaponByKey.get(a.key)?.stars ?? 0;
       const rb = weaponByKey.get(b.key)?.stars ?? 0;
       if (ra !== rb) return rb - ra;
-      if (a.teams !== b.teams) return b.teams - a.teams;
-      return a.key.localeCompare(b.key);
+      return b.teams - a.teams;
     });
   });
 
-  /** Substats that also appear as main stats first, then by mean rolls. */
+  /**
+   * Recommended substats: sim liquid ranks, plus any pinned main-stat keys
+   * (Builds UI treats those as substat priorities too).
+   */
   let recommendedSubstats = $derived.by(() => {
     if (!builds) return [];
     const mainSlots = new Map<string, string[]>();
@@ -175,20 +177,44 @@
         mainSlots.set(s.key, list);
       }
     }
-    return builds.substat_rolls_liquid.ranked
-      .filter((r) => r.mean > 0.5 || mainSlots.has(r.key))
-      .map((r) => {
-        const slots = mainSlots.get(r.key) ?? [];
-        return {
-          ...r,
-          matchesMain: slots.length > 0,
-          mainSlots: slots,
-        };
-      })
-      .sort((a, b) => {
-        if (a.matchesMain !== b.matchesMain) return a.matchesMain ? -1 : 1;
-        return b.mean - a.mean;
+
+    const byKey = new Map<
+      string,
+      {
+        key: string;
+        mean: number;
+        matchesMain: boolean;
+        mainSlots: string[];
+      }
+    >();
+
+    for (const r of builds.substat_rolls_liquid.ranked) {
+      if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
+      const slots = mainSlots.get(r.key) ?? [];
+      byKey.set(r.key, {
+        key: r.key,
+        mean: r.mean,
+        matchesMain: slots.length > 0,
+        mainSlots: slots,
       });
+    }
+
+    // Guide / pinned mains with no liquid sample still show as substat chips
+    for (const [key, slots] of mainSlots) {
+      if (byKey.has(key)) continue;
+      byKey.set(key, {
+        key,
+        mean: 0,
+        matchesMain: true,
+        mainSlots: slots,
+      });
+    }
+
+    return [...byKey.values()].sort((a, b) => {
+      if (a.matchesMain !== b.matchesMain) return a.matchesMain ? -1 : 1;
+      if (a.mean !== b.mean) return b.mean - a.mean;
+      return a.key.localeCompare(b.key);
+    });
   });
 </script>
 
@@ -551,19 +577,28 @@
                         Also a main on {roll.mainSlots.join(" / ")}
                       </div>
                     {/if}
-                    <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                      {roll.mean.toFixed(1)} avg liquid rolls · {builds
-                        .substat_rolls_liquid.teams} team{builds
-                        .substat_rolls_liquid.teams === 1
-                        ? ""
-                        : "s"}
-                    </div>
+                    {#if roll.mean > 0}
+                      <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
+                        {roll.mean.toFixed(1)} avg liquid rolls · {builds
+                          .substat_rolls_liquid.teams} team{builds
+                          .substat_rolls_liquid.teams === 1
+                          ? ""
+                          : "s"}
+                      </div>
+                    {/if}
                   </HoverTooltip>
                 </button>
               {/each}
             </div>
           {/if}
         </section>
+
+        {#if builds.notes}
+          <section class="board-section notes-section">
+            <h2 class="section-title">Notes</h2>
+            <p class="build-notes">{builds.notes}</p>
+          </section>
+        {/if}
       {:else}
         <div class="board-section">
           <EmptyState message={`No gcsim build summary for ${kit.name} yet.`} />
@@ -698,6 +733,14 @@
   .muted-note {
     font-size: var(--text-xs);
     color: var(--foreground-mid);
+  }
+
+  .build-notes {
+    font-size: var(--text-sm);
+    color: var(--foreground-mid);
+    line-height: 1.55;
+    max-width: 42rem;
+    white-space: pre-wrap;
   }
 
   .stat-name {

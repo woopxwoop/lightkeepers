@@ -1,4 +1,13 @@
+/**
+ * Client bootstrap after layout SSR.
+ *
+ * seedClientStores — sync, safe during SSR/hydration (versions + local roster).
+ * bootstrapClient — onMount only: warm /api/static, sync /api/roster if logged in.
+ * Owned teams stay lazy (Abyss / Stygian / Pulls call ensureTeamsOwned).
+ */
+
 import type { Character, CharacterOwned } from "$lib/definitions";
+import { authClient } from "$lib/auth-client";
 import {
   charactersOwned,
   charactersHydrated,
@@ -6,6 +15,7 @@ import {
   setVersionNumbers,
   invalidateTeamsOwned,
   invalidateNearMissTeams,
+  ensureStaticBoards,
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/is-new-character";
 import { prefetchInvestment } from "$lib/app/investment";
@@ -88,8 +98,11 @@ async function loadDbRoster(
   characters: Character[],
 ): Promise<CharacterOwned[] | null> {
   try {
+    const { data: session } = await authClient.getSession();
+    if (!session) return null;
+
     const res = await fetch("/api/roster");
-    if (!res.ok) return null; // 401 = not logged in, 500 = error
+    if (!res.ok) return null;
     const { roster } = await res.json();
     if (!Array.isArray(roster)) return null;
     return mergeOwnedFlags(characters, roster);
@@ -100,7 +113,7 @@ async function loadDbRoster(
 
 /**
  * Client-side hydration from root layout SSR data.
- * Full allTeams* lists are seeded by abyss / stygian page loads only.
+ * Full allTeams* lists are warmed via ensureStaticBoards (not layout HTML).
  */
 export function seedClientStores(data: LayoutHydration): void {
   setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber);
@@ -116,9 +129,15 @@ export function seedClientStores(data: LayoutHydration): void {
 /**
  * Seeds layout stores, syncs DB roster if logged in.
  * Owned teams + near-miss load lazily on Abyss / Stygian / Pulls.
+ * Meta team boards warm in the background so home → abyss/stygian nav is snappy.
  */
 export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);
+
+  // Fire early — do not await; home stays interactive while boards warm.
+  // Failures land in staticBoardsError for Abyss/Stygian retry UI.
+  void ensureStaticBoards();
+  prefetchInvestment();
 
   const dbRoster = await loadDbRoster(data.characters);
 
@@ -131,7 +150,4 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
     invalidateTeamsOwned();
     invalidateNearMissTeams();
   }
-
-  // Warm investment.json for /teams (shared client cache; non-blocking)
-  prefetchInvestment();
 }

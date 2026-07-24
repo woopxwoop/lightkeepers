@@ -121,6 +121,8 @@ export interface CharacterIndex {
    * within a team, then average those team-means across teams.
    */
   substat_rolls_liquid: CharacterLiquidSubstats;
+  /** Optional editorial blurb from hand-authored guide (merge-time). */
+  notes?: string;
 }
 
 export interface CharacterWeaponRank {
