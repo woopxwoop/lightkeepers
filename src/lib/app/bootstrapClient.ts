@@ -7,6 +7,7 @@
  */
 
 import type { Character, CharacterOwned } from "$lib/definitions";
+import { authClient } from "$lib/auth-client";
 import {
   charactersOwned,
   charactersHydrated,
@@ -97,8 +98,11 @@ async function loadDbRoster(
   characters: Character[],
 ): Promise<CharacterOwned[] | null> {
   try {
+    const { data: session } = await authClient.getSession();
+    if (!session) return null;
+
     const res = await fetch("/api/roster");
-    if (!res.ok) return null; // 401 = not logged in, 500 = error
+    if (!res.ok) return null;
     const { roster } = await res.json();
     if (!Array.isArray(roster)) return null;
     return mergeOwnedFlags(characters, roster);
