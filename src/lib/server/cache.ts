@@ -1,4 +1,3 @@
-import { valkeyGetJsonWithTtl, valkeySetJson } from "$lib/server/valkey";
 import type { Tables } from "$lib/types/database.types";
 
 // ── LRU Cache ──────────────────────────────────────────────────────────────
@@ -156,6 +155,7 @@ export class LRUCache<T> {
 
         const rKey = this.redisKey(key);
         if (rKey) {
+          const { valkeyGetJsonWithTtl } = await import("$lib/server/valkey");
           const remote = await valkeyGetJsonWithTtl<T>(rKey);
           if (remote !== undefined) {
             const ttl = Math.min(this.ttlMs, remote.ttlMs);
@@ -169,6 +169,7 @@ export class LRUCache<T> {
         const value = await fn();
         this.set(key, value);
         if (rKey) {
+          const { valkeySetJson } = await import("$lib/server/valkey");
           void valkeySetJson(rKey, value, this.ttlMs);
         }
         return value;
@@ -210,8 +211,10 @@ export class RateLimiter {
     private readonly maxRequests: number,
     private readonly windowMs: number,
   ) {
-    // Periodically clean up expired windows to prevent unbounded growth
-    setInterval(() => this.cleanup(), this.windowMs * 2);
+    // Periodically clean up expired windows to prevent unbounded growth.
+    // unref so the timer does not keep a worker / test process alive alone.
+    const timer = setInterval(() => this.cleanup(), this.windowMs * 2);
+    timer.unref?.();
   }
 
   /**

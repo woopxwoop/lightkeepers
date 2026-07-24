@@ -259,7 +259,7 @@
 
   {#if loading}
     <LoadingState />
-  {:else if $staticBoardsError}
+  {:else if $staticBoardsError && $allTeamsAbyss.length === 0}
     <EmptyState message="Could not load Abyss teams right now.">
       {#snippet action()}
         <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>

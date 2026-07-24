@@ -236,7 +236,7 @@
 
   {#if loading}
     <LoadingState />
-  {:else if $staticBoardsError}
+  {:else if $staticBoardsError && $allTeamsStygian.length === 0}
     <EmptyState message="Could not load Stygian teams right now.">
       {#snippet action()}
         <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>

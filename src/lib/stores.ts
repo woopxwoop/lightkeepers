@@ -310,9 +310,16 @@ export async function ensureStaticBoards(): Promise<void> {
 
       // Edge/CDN may still be serving the previous cycle — bust once.
       const fresh = await fetchStaticBoardsPayload(true);
-      if (!applyStaticBoardsIfCurrent(fresh)) {
-        throw new Error("static boards response is older than layout versions");
-      }
+      if (applyStaticBoardsIfCurrent(fresh)) return;
+
+      // Still behind after bust — seed with the best body we got, keep the
+      // current layout version stamps, and resolve without erroring so
+      // already-loaded boards (or a slightly-stale first paint) stay usable.
+      applyStaticBoardsPayload(
+        fresh,
+        abyssVersionNumber,
+        stygianVersionNumber,
+      );
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load team boards";
