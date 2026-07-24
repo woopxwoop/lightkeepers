@@ -45,7 +45,11 @@
     humanizeTeamName(team.characters, characterNames),
   );
   let simLabel = $derived(
-    sim.label ? humanizeInvestmentLabel(sim.label, characterNames) : "",
+    sim.kind === "baseline"
+      ? "Baseline"
+      : sim.label
+        ? humanizeInvestmentLabel(sim.label, characterNames)
+        : "",
   );
   let iconStyle = $derived($displayPreferences.iconStyle);
 
