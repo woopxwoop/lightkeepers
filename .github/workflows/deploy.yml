@@ -76,7 +76,6 @@ jobs:
                   f.write(f"{key}='{escaped}'\n")
           PY
           printf '%s' "$PROMETHEUS_REMOTE_WRITE_PASSWORD" > remote_write_password
-          chmod 600 remote_write_password
 
       - name: Copy compose files to VPS
         uses: appleboy/scp-action@v0.1.7
