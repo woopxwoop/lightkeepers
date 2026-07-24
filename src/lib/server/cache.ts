@@ -21,14 +21,28 @@ export type LRUCacheOptions = {
    * expiry for heavy keys like /api/static.
    */
   staleWhileRevalidate?: boolean;
+  /**
+   * How long after TTL expiry a stale entry may still be served under SWR.
+   * Past this age the entry is evicted and callers wait on a fresh compute.
+   * Defaults to `ttlMs` (one extra TTL window of stale serving).
+   */
+  maxStaleMs?: number;
+};
+
+type RefreshFailure = {
+  failures: number;
+  retryAfter: number;
 };
 
 export class LRUCache<T> {
   private map = new Map<string, CacheEntry<T>>();
   /** In-flight computations keyed by cache key — collapses concurrent misses. */
   private inflight = new Map<string, Promise<T>>();
+  /** Failed SWR refreshes — backs off before starting another computeAndStore. */
+  private refreshFailures = new Map<string, RefreshFailure>();
   private readonly redisNamespace: string | undefined;
   private readonly staleWhileRevalidate: boolean;
+  private readonly maxStaleMs: number;
 
   constructor(
     private readonly maxSize: number,
@@ -37,6 +51,7 @@ export class LRUCache<T> {
   ) {
     this.redisNamespace = options?.redisNamespace;
     this.staleWhileRevalidate = options?.staleWhileRevalidate ?? false;
+    this.maxStaleMs = options?.maxStaleMs ?? ttlMs;
   }
 
   private redisKey(key: string): string | null {
@@ -59,11 +74,6 @@ export class LRUCache<T> {
     return entry.value;
   }
 
-  /** Return value even if TTL expired (does not promote LRU / does not delete). */
-  private getStale(key: string): T | undefined {
-    return this.map.get(key)?.value;
-  }
-
   set(key: string, value: T, ttlMs = this.ttlMs): void {
     if (this.map.has(key)) this.map.delete(key);
     else if (this.map.size >= this.maxSize) {
@@ -80,21 +90,33 @@ export class LRUCache<T> {
    * With `redisNamespace`, also checks/writes Valkey so workers share state.
    * Valkey hits populate L1 with min(local ttl, remaining Redis TTL).
    * With `staleWhileRevalidate`, expired L1 hits return immediately and refresh
-   * in the background.
+   * in the background — until `maxStaleMs` past expiry, after which the entry
+   * is dropped and callers wait on a fresh compute. Failed refreshes back off
+   * before another background attempt.
    */
   async getOrSet(key: string, fn: () => Promise<T>): Promise<T> {
     const cached = this.get(key);
     if (cached !== undefined) return cached;
 
     if (this.staleWhileRevalidate) {
-      const stale = this.getStale(key);
-      if (stale !== undefined) {
-        if (!this.inflight.has(key)) {
-          const refresh = this.computeAndStore(key, fn);
-          this.inflight.set(key, refresh);
-          void refresh.catch(() => {});
+      const entry = this.map.get(key);
+      if (entry !== undefined) {
+        const now = Date.now();
+        const staleAge = now - entry.expiresAt;
+        if (staleAge > this.maxStaleMs) {
+          this.map.delete(key);
+          this.refreshFailures.delete(key);
+        } else {
+          if (!this.inflight.has(key) && this.canStartRefresh(key, now)) {
+            const refresh = this.computeAndStore(key, fn);
+            this.inflight.set(key, refresh);
+            void refresh.then(
+              () => this.clearRefreshFailure(key),
+              () => this.recordRefreshFailure(key),
+            );
+          }
+          return entry.value;
         }
-        return stale;
       }
     }
 
@@ -104,6 +126,26 @@ export class LRUCache<T> {
     const pending = this.computeAndStore(key, fn);
     this.inflight.set(key, pending);
     return pending;
+  }
+
+  private canStartRefresh(key: string, now: number): boolean {
+    const failure = this.refreshFailures.get(key);
+    return !failure || now >= failure.retryAfter;
+  }
+
+  private clearRefreshFailure(key: string): void {
+    this.refreshFailures.delete(key);
+  }
+
+  private recordRefreshFailure(key: string): void {
+    const prev = this.refreshFailures.get(key);
+    const failures = (prev?.failures ?? 0) + 1;
+    // 1s, 2s, 4s, … capped at 30s
+    const backoffMs = Math.min(30_000, 1000 * 2 ** Math.min(failures - 1, 5));
+    this.refreshFailures.set(key, {
+      failures,
+      retryAfter: Date.now() + backoffMs,
+    });
   }
 
   private computeAndStore(key: string, fn: () => Promise<T>): Promise<T> {

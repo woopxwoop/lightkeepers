@@ -304,42 +304,14 @@ export async function ensureStaticBoards(): Promise<void> {
   staticBoardsError.set(null);
 
   const pending = (async () => {
-    // Snapshot before the network round-trip so a stale edge hit cannot
-    // overwrite newer versions already seeded from layout.
-    const expectedAbyss = abyssVersionNumber;
-    const expectedStygian = stygianVersionNumber;
-
     try {
       const data = await fetchStaticBoardsPayload(false);
-      let abyssVer = data.latestAbyssVersion?.version_number;
-      let stygianVer = data.latestStygianVersion?.version_number;
+      if (applyStaticBoardsIfCurrent(data)) return;
 
-      if (
-        typeof abyssVer === "number" &&
-        typeof stygianVer === "number" &&
-        (abyssVer < expectedAbyss || stygianVer < expectedStygian)
-      ) {
-        // Edge/CDN may still be serving the previous cycle — bust once.
-        const fresh = await fetchStaticBoardsPayload(true);
-        abyssVer = fresh.latestAbyssVersion?.version_number;
-        stygianVer = fresh.latestStygianVersion?.version_number;
-        if (
-          typeof abyssVer !== "number" ||
-          typeof stygianVer !== "number" ||
-          abyssVer < expectedAbyss ||
-          stygianVer < expectedStygian
-        ) {
-          throw new Error("static boards response is older than layout versions");
-        }
-        applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
-        return;
-      }
-
-      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
-        applyStaticBoardsPayload(data, abyssVer, stygianVer);
-      } else {
-        // No version payload — keep layout versions, still seed boards.
-        applyStaticBoardsPayload(data, expectedAbyss, expectedStygian);
+      // Edge/CDN may still be serving the previous cycle — bust once.
+      const fresh = await fetchStaticBoardsPayload(true);
+      if (!applyStaticBoardsIfCurrent(fresh)) {
+        throw new Error("static boards response is older than layout versions");
       }
     } catch (err) {
       const message =
@@ -377,6 +349,30 @@ async function fetchStaticBoardsPayload(
   return (await res.json()) as StaticBoardsPayload;
 }
 
+/**
+ * Apply boards only when the payload is not behind the *current* layout
+ * version globals (re-read after each await). Returns false when versions
+ * are present but stale so the caller can retry / reject.
+ */
+function applyStaticBoardsIfCurrent(data: StaticBoardsPayload): boolean {
+  const currentAbyss = abyssVersionNumber;
+  const currentStygian = stygianVersionNumber;
+  const abyssVer = data.latestAbyssVersion?.version_number;
+  const stygianVer = data.latestStygianVersion?.version_number;
+
+  if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+    if (abyssVer < currentAbyss || stygianVer < currentStygian) {
+      return false;
+    }
+    applyStaticBoardsPayload(data, abyssVer, stygianVer);
+    return true;
+  }
+
+  // No version payload — keep whatever layout has now, still seed boards.
+  applyStaticBoardsPayload(data, currentAbyss, currentStygian);
+  return true;
+}
+
 function applyStaticBoardsPayload(
   data: StaticBoardsPayload,
   abyssVer: number,
@@ -389,7 +385,11 @@ function applyStaticBoardsPayload(
   stygianScheduleBoard.set(data.stygianSchedule ?? null);
   staticBoardsAbyssVersion = abyssVer;
   staticBoardsStygianVersion = stygianVer;
-  setVersionNumbers(abyssVer, stygianVer);
+  // Never move layout versions backwards if something else advanced them.
+  setVersionNumbers(
+    Math.max(abyssVer, abyssVersionNumber),
+    Math.max(stygianVer, stygianVersionNumber),
+  );
   staticBoardsError.set(null);
   staticBoardsLoaded.set(true);
 }
