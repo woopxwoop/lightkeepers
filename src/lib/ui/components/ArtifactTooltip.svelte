@@ -32,7 +32,7 @@
           <div class="text-[0.65rem] font-medium leading-tight opacity-90">
             {bonus.needCount}-Piece
           </div>
-          <GameText class="text-[0.65rem] mt-0.5" text={bonus.description} />
+          <GameText class="text-[0.65rem] mt-0.5 opacity-85" text={bonus.description} />
         </div>
       {/if}
     {/each}

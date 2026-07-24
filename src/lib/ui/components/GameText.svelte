@@ -15,13 +15,19 @@
   let html = $derived(formatGameDescriptionHtml(text, { resolveLink }));
 </script>
 
-<div class="game-text {className}" style="color: var(--foreground-mid);">
+<div class="game-text {className}">
   {@html html}
 </div>
 
 <style>
   .game-text {
     line-height: 1.45;
+    /* Default for page surfaces; inverted tooltips inherit tip text color. */
+    color: var(--foreground-mid);
+  }
+
+  :global(.hover-tooltip) .game-text {
+    color: inherit;
   }
 
   /* app.css sets a global span font-size clamp — keep kit colors at parent size */

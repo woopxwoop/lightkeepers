@@ -51,7 +51,7 @@
       </div>
     {/if}
     {#if passive}
-      <GameText class="text-[0.65rem] mt-1.5" text={passive.description} />
+      <GameText class="text-[0.65rem] mt-1.5 opacity-85" text={passive.description} />
     {/if}
   </HoverTooltip>
 {/if}
