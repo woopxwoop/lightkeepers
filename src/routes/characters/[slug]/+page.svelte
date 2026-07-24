@@ -152,15 +152,14 @@
     { key: "circlet" as const, label: "Circlet" },
   ];
 
-  /** Weapons: higher rarity first, then team usage. */
+  /** Weapons: higher rarity first, then team usage (stable within ties). */
   let rankedWeapons = $derived.by(() => {
     if (!builds?.weapons.length) return [];
     return [...builds.weapons].sort((a, b) => {
       const ra = weaponByKey.get(a.key)?.stars ?? 0;
       const rb = weaponByKey.get(b.key)?.stars ?? 0;
       if (ra !== rb) return rb - ra;
-      if (a.teams !== b.teams) return b.teams - a.teams;
-      return a.key.localeCompare(b.key);
+      return b.teams - a.teams;
     });
   });
 
