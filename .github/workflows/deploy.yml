@@ -49,6 +49,7 @@ jobs:
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
           VALKEY_URL: ${{ secrets.VALKEY_URL }}
+          PROMETHEUS_REMOTE_WRITE_PASSWORD: ${{ secrets.PROMETHEUS_REMOTE_WRITE_PASSWORD }}
         run: |
           python3 <<'PY'
           import os
@@ -74,6 +75,8 @@ jobs:
                   escaped = value.replace("'", "'\\''")
                   f.write(f"{key}='{escaped}'\n")
           PY
+          printf '%s' "$PROMETHEUS_REMOTE_WRITE_PASSWORD" > remote_write_password
+          chmod 600 remote_write_password
 
       - name: Copy compose files to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -81,7 +84,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.yml,prometheus.yml,vps.env"
+          source: "docker-compose.yml,prometheus.yml,vps.env,remote_write_password"
           target: app/
 
       - name: Deploy to VPS
@@ -98,7 +101,9 @@ jobs:
             mkdir -p ~/app/data/immutable
             mv ~/app/vps.env ~/app/.env
             chmod 600 ~/app/.env
-            # Required once the GHCR package is private.
+            mkdir -p ~/app/secrets
+            mv ~/app/remote_write_password ~/app/secrets/remote_write_password
+            chmod 600 ~/app/secrets/remote_write_password
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
             docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d

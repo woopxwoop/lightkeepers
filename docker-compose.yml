@@ -51,6 +51,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./secrets/remote_write_password:/etc/prometheus/secrets/remote_write_password:ro
       - prometheus_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -58,7 +59,6 @@ services:
       # 7d keeps RAM/disk lighter on a 4GB box; bump if you need longer local history
       - --storage.tsdb.retention.time=7d
       - --web.listen-address=0.0.0.0:9090
-    # Localhost only — never expose 9090 on 0.0.0.0
     ports:
       - "127.0.0.1:9090:9090"
     networks:
