@@ -1,6 +1,7 @@
 <script lang="ts">
   import { weaponByKey, type WeaponData } from "$lib/equipment-data";
   import { weaponTypeLabel } from "$lib/utils";
+  import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
 
   let {
@@ -50,9 +51,7 @@
       </div>
     {/if}
     {#if passive}
-      <div class="text-[0.65rem] leading-snug mt-1.5 opacity-85">
-        {passive.description}
-      </div>
+      <GameText class="text-[0.65rem] mt-1.5" text={passive.description} />
     {/if}
   </HoverTooltip>
 {/if}
