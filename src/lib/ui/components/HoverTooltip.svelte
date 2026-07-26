@@ -19,9 +19,59 @@
   let tipEl: HTMLDivElement | undefined = $state();
   let sheetRootEl: HTMLDivElement | undefined = $state();
   let sheetEl: HTMLDivElement | undefined = $state();
+  let activeTriggerEl: HTMLElement | null = null;
   let open = $state(false);
   let detailOpen = $state(false);
   let truncated = $state(false);
+
+  function getFocusableElements(container: HTMLElement) {
+    return Array.from(
+      container.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((element) => element.getClientRects().length > 0);
+  }
+
+  function focusInitialDetailElement() {
+    const sheet = sheetEl;
+    if (!sheet) return;
+
+    const focusableElements = getFocusableElements(sheet);
+    (focusableElements[0] ?? sheet).focus();
+  }
+
+  function trapDetailFocus(event: KeyboardEvent) {
+    if (!detailOpen || event.key !== "Tab") return;
+
+    const sheet = sheetEl;
+    if (!sheet) return;
+
+    const focusableElements = getFocusableElements(sheet);
+    if (!focusableElements.length) {
+      event.preventDefault();
+      sheet.focus();
+      return;
+    }
+
+    const activeElement = document.activeElement as HTMLElement | null;
+    const currentIndex = activeElement
+      ? focusableElements.indexOf(activeElement)
+      : -1;
+
+    event.preventDefault();
+    if (event.shiftKey) {
+      focusableElements[
+        currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1
+      ].focus();
+      return;
+    }
+
+    focusableElements[
+      currentIndex === -1 || currentIndex === focusableElements.length - 1
+        ? 0
+        : currentIndex + 1
+    ].focus();
+  }
 
   /** Prefer above the trigger; flip below / clamp horizontally if needed. */
   function place(trigger: HTMLElement) {
@@ -72,17 +122,22 @@
   async function openDetail(event: Event) {
     event.preventDefault();
     event.stopPropagation();
+    activeTriggerEl = event.currentTarget as HTMLElement | null;
     open = false;
     detailOpen = true;
     await tick();
     if (sheetRootEl && sheetRootEl.parentElement !== document.body) {
       document.body.appendChild(sheetRootEl);
     }
-    sheetEl?.focus();
+    focusInitialDetailElement();
   }
 
-  function closeDetail() {
+  async function closeDetail() {
+    const trigger = activeTriggerEl;
     detailOpen = false;
+    await tick();
+    trigger?.focus();
+    activeTriggerEl = null;
   }
 
   onMount(() => {
@@ -106,10 +161,26 @@
     const reposition = () => {
       if (open) place(trigger);
     };
+    const onFocusIn = (event: FocusEvent) => {
+      if (!detailOpen || !sheetEl) return;
+
+      const target = event.target as Node | null;
+      if (target && sheetEl.contains(target)) return;
+
+      focusInitialDetailElement();
+    };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && detailOpen) {
+      if (!detailOpen) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
         event.stopPropagation();
-        closeDetail();
+        void closeDetail();
+        return;
+      }
+
+      if (event.key === "Tab") {
+        trapDetailFocus(event);
       }
     };
 
@@ -120,6 +191,7 @@
     trigger.addEventListener("click", onClick);
     window.addEventListener("scroll", reposition, true);
     window.addEventListener("resize", reposition);
+    document.addEventListener("focusin", onFocusIn, true);
     window.addEventListener("keydown", onKey);
 
     return () => {
@@ -130,6 +202,7 @@
       trigger.removeEventListener("click", onClick);
       window.removeEventListener("scroll", reposition, true);
       window.removeEventListener("resize", reposition);
+      document.removeEventListener("focusin", onFocusIn, true);
       window.removeEventListener("keydown", onKey);
       tip.remove();
       sheetRootEl?.remove();
@@ -174,6 +247,8 @@
     <button
       type="button"
       class="tip-sheet-backdrop"
+      tabindex="-1"
+      aria-hidden="true"
       aria-label="Close details"
       onclick={closeDetail}
     ></button>
@@ -228,11 +303,7 @@
     bottom: 0;
     height: 2.75rem;
     pointer-events: none;
-    background: linear-gradient(
-      to top,
-      var(--foreground-mid) 35%,
-      transparent
-    );
+    background: linear-gradient(to top, var(--foreground-mid) 35%, transparent);
   }
 
   .hover-tooltip-more {
