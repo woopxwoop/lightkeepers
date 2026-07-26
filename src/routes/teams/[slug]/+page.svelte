@@ -2,11 +2,7 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import {
-    buildGoodKeyMap,
-    toGoodKey,
-    humanizeTeamName,
-  } from "$lib/utils";
+  import { buildGoodKeyMap, toGoodKey, humanizeTeamName } from "$lib/utils";
   import {
     humanizeInvestmentLabel,
     displayWeaponRefinement,
@@ -68,9 +64,7 @@
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
   let characterNames = $derived(
-    new Map(
-      [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
-    ),
+    new Map([...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key])),
   );
 
   let teamTitle = $derived(
@@ -167,7 +161,7 @@
 </script>
 
 {#snippet negPctTip(label: string)}
-  <span class="pct-tip group">
+  <span class="pct-tip group tip-detail-text tip-detail-text--small">
     {label}
     <HoverTooltip class="max-w-72">{NEG_PCT_TIP}</HoverTooltip>
   </span>
@@ -314,7 +308,8 @@
           </div>
           {#each costGroups as group, gi (group.cost)}
             {@const peakSim = group.sims[0]}
-            {@const prevPeak = gi > 0 ? costGroups[gi - 1].sims[0] : baselineSim}
+            {@const prevPeak =
+              gi > 0 ? costGroups[gi - 1].sims[0] : baselineSim}
             {@const deltaLabel = prevPeak
               ? pctDelta(prevPeak.dps, peakSim.dps)
               : "—"}
@@ -338,8 +333,7 @@
                   <span class="col-label" title={simDiffLabel(peakSim)}>
                     {simDiffLabel(peakSim)}
                   </span>
-                  <span class="col-dps"
-                    >{(peakSim.dps / 1000).toFixed(1)}K</span
+                  <span class="col-dps">{(peakSim.dps / 1000).toFixed(1)}K</span
                   >
                   <span class="col-delta">
                     {#if prevPeak && isDpsLoss(prevPeak.dps, peakSim.dps)}
@@ -364,7 +358,9 @@
                     onclick={() => toggleCost(group.cost)}
                     aria-expanded={open}
                     aria-controls="cost-alts-{group.cost}"
-                    aria-label="{open ? 'Hide' : 'Show'} alternatives at cost {group.cost}"
+                    aria-label="{open
+                      ? 'Hide'
+                      : 'Show'} alternatives at cost {group.cost}"
                   >
                     <IconChevronDown size={14} />
                   </button>
@@ -698,8 +694,7 @@
   .ladder-head,
   .ladder-row {
     display: grid;
-    grid-template-columns:
-      2.5rem minmax(0, 1fr) 3.5rem 3.25rem 3.25rem 1.5rem;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 3.5rem 3.25rem 3.25rem 1.5rem;
     column-gap: 0.5rem;
     align-items: center;
     padding: 0.55rem 0.75rem;

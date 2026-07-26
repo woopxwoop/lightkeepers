@@ -317,293 +317,305 @@
 
     <div class="board-body">
       {#if activeTab === "skills"}
-        <div
-          role="tabpanel"
-          id="tabpanel-skills"
-          aria-labelledby="tab-skills"
-        >
-        <section class="board-section">
-          <h2 class="section-title">Talents</h2>
-          <div class="kit-list">
-            {#each kit.skills as skill}
-              {@const icon =
-                iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
-              {@const skillEnhance = enhanceExtra(
-                skill.description,
-                skill.enhanceDescription,
-              )}
-              <article
-                id="kit-S{skill.id}"
-                class="kit-row"
-                class:kit-row-flash={flashId === `kit-S${skill.id}`}
-              >
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt=""
-                    class="kit-icon shrink-0"
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="kit-copy">
-                  <div class="kit-heading">
-                    <h3 class="card-title">{skill.name}</h3>
-                    <span class="card-kicker">
-                      {SKILL_LABELS[skill.type] ?? skill.type}
-                    </span>
-                  </div>
-                  {@render descriptionBlock(skill.description, skillEnhance)}
-                </div>
-              </article>
-            {/each}
-          </div>
-        </section>
-
-        <section class="board-section">
-          <h2 class="section-title">Passives</h2>
-          <div class="kit-list">
-            {#each kit.passives as passive}
-              {@const icon =
-                iconUrl(passive.icon, "talent") ?? getUiAssetUrl(passive.icon)}
-              {@const passiveEnhance = enhanceExtra(
-                passive.description,
-                passive.enhanceDescription,
-              )}
-              <article
-                id="kit-P{passive.id}"
-                class="kit-row"
-                class:kit-row-flash={flashId === `kit-P${passive.id}`}
-              >
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt=""
-                    class="kit-icon shrink-0"
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="kit-copy">
-                  <div class="kit-heading">
-                    <h3 class="card-title">{passive.name}</h3>
-                    <span class="card-kicker">{passiveKindLabel(passive)}</span>
-                  </div>
-                  {@render descriptionBlock(passive.description, passiveEnhance)}
-                </div>
-              </article>
-            {/each}
-          </div>
-        </section>
-
-        <section class="board-section">
-          <h2 class="section-title">Constellations</h2>
-          <div class="kit-list">
-            {#each kit.constellations as c}
-              {@const icon = iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
-              {@const constEnhance = enhanceExtra(
-                c.description,
-                c.enhanceDescription,
-              )}
-              <article
-                id="kit-T{c.id}"
-                class="kit-row"
-                class:kit-row-flash={flashId === `kit-T${c.id}`}
-              >
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt=""
-                    class="kit-icon shrink-0"
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="kit-copy">
-                  <div class="kit-heading">
-                    <span class="const-index" style="color: {elColor};">
-                      C{c.index}
-                    </span>
-                    <h3 class="card-title">{c.name}</h3>
-                  </div>
-                  {@render descriptionBlock(c.description, constEnhance)}
-                </div>
-              </article>
-            {/each}
-          </div>
-        </section>
-        </div>
-      {:else}
-        <div
-          role="tabpanel"
-          id="tabpanel-builds"
-          aria-labelledby="tab-builds"
-        >
-        {#if builds}
-        <section class="board-section">
-          <h2 class="section-title">Weapons</h2>
-          {#if rankedWeapons.length === 0}
-            <p class="muted-note">No weapon data yet.</p>
-          {:else}
-            <div class="equip-grid">
-              {#each rankedWeapons as w}
-                {@const weapon = weaponByKey.get(w.key)}
-                {@const icon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-                <div class="equip-tile relative group">
-                  <div class="equip-icon-wrap">
-                    {#if icon}
-                      <img
-                        src={icon}
-                        alt={weapon?.name ?? w.key}
-                        class="equip-icon"
-                        loading="lazy"
-                      />
-                    {:else}
-                      <div class="equip-fallback">{w.key}</div>
-                    {/if}
-                  </div>
-                  <WeaponTooltip {weapon} weaponKey={w.key} />
-                </div>
-              {/each}
-            </div>
-          {/if}
-        </section>
-
-        <section class="board-section">
-          <h2 class="section-title">Artifact sets</h2>
-          {#if !builds.sets?.length}
-            <p class="muted-note">No set data yet.</p>
-          {:else}
-            <div class="equip-grid">
-              {#each builds.sets as s}
-                {@const set = artifactSetByKey.get(s.key)}
-                {@const icon = set ? artifactIconUrl(set.icon) : null}
-                <div class="equip-tile relative group">
-                  <div class="equip-icon-wrap">
-                    {#if icon}
-                      <img
-                        src={icon}
-                        alt={set?.name ?? s.key}
-                        class="equip-icon"
-                        loading="lazy"
-                      />
-                    {:else}
-                      <div class="equip-fallback">{s.key}</div>
-                    {/if}
-                    {#if s.count}
-                      <div class="piece-badge">
-                        <span style="color: {elColor};">{s.count}pc</span>
-                      </div>
-                    {/if}
-                  </div>
-                  <ArtifactTooltip
-                    {set}
-                    setKey={s.key}
-                    pieceCount={s.count ?? null}
-                  />
-                </div>
-              {/each}
-            </div>
-          {/if}
-        </section>
-
-        <section class="board-section">
-          <h2 class="section-title">Main stats</h2>
-          <div class="main-stats">
-            {#each MAIN_STAT_SLOTS as slot}
-              <div class="main-stat-col">
-                <h3 class="slot-label">
-                  <img
-                    src={artifactSlotIconUrl(slot.key)}
-                    alt=""
-                    class="stat-icon main-stat-icon shrink-0"
-                    loading="lazy"
-                  />
-                  {slot.label}
-                </h3>
-                {#if builds.main_stats[slot.key].length === 0}
-                  <p class="muted-note">—</p>
-                {:else}
-                  <ul class="stat-list">
-                    {#each builds.main_stats[slot.key] as stat}
-                      {@const icon = statIconUrl(stat.key)}
-                      <li class="stat-row">
-                        <span class="flex items-center gap-1.5 min-w-0">
-                          {#if icon}
-                            <img
-                              src={icon}
-                              alt=""
-                              class="stat-icon main-stat-icon shrink-0"
-                              loading="lazy"
-                            />
-                          {/if}
-                          <span class="stat-name"
-                            >{translateStatKey(stat.key)}</span
-                          >
-                        </span>
-                      </li>
-                    {/each}
-                  </ul>
-                {/if}
-              </div>
-            {/each}
-          </div>
-        </section>
-
-        <section class="board-section">
-          <h2 class="section-title">Recommended substats</h2>
-          {#if recommendedSubstats.length === 0}
-            <p class="muted-note">No substat data yet.</p>
-          {:else}
-            <div class="substat-row">
-              {#each recommendedSubstats as roll}
-                {@const icon = statIconUrl(roll.key)}
-                <button
-                  type="button"
-                  class="stat-chip group relative flex items-center justify-center"
-                  class:is-main={roll.matchesMain}
-                  aria-label={translateStatKey(roll.key)}
+        <div role="tabpanel" id="tabpanel-skills" aria-labelledby="tab-skills">
+          <section class="board-section">
+            <h2 class="section-title">Talents</h2>
+            <div class="kit-list">
+              {#each kit.skills as skill}
+                {@const icon =
+                  iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
+                {@const skillEnhance = enhanceExtra(
+                  skill.description,
+                  skill.enhanceDescription,
+                )}
+                <article
+                  id="kit-S{skill.id}"
+                  class="kit-row"
+                  class:kit-row-flash={flashId === `kit-S${skill.id}`}
                 >
                   {#if icon}
-                    <img src={icon} alt="" class="stat-icon" loading="lazy" />
-                  {:else}
-                    <span class="stat-chip-fallback">
-                      {translateStatKey(roll.key)}
-                    </span>
+                    <img
+                      src={icon}
+                      alt=""
+                      class="kit-icon shrink-0"
+                      loading="lazy"
+                    />
                   {/if}
-                  <HoverTooltip class="max-w-56">
-                    <div class="text-xs font-medium leading-tight">
-                      {translateStatKey(roll.key)}
+                  <div class="kit-copy">
+                    <div class="kit-heading">
+                      <h3 class="card-title">{skill.name}</h3>
+                      <span class="card-kicker">
+                        {SKILL_LABELS[skill.type] ?? skill.type}
+                      </span>
                     </div>
-                    {#if roll.matchesMain}
-                      <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                        Also a main on {roll.mainSlots.join(" / ")}
-                      </div>
-                    {/if}
-                    {#if roll.mean > 0}
-                      <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                        {roll.mean.toFixed(1)} avg liquid rolls · {builds
-                          .substat_rolls_liquid.teams} team{builds
-                          .substat_rolls_liquid.teams === 1
-                          ? ""
-                          : "s"}
-                      </div>
-                    {/if}
-                  </HoverTooltip>
-                </button>
+                    {@render descriptionBlock(skill.description, skillEnhance)}
+                  </div>
+                </article>
               {/each}
             </div>
-          {/if}
-        </section>
-
-        {#if builds.notes}
-          <section class="board-section notes-section">
-            <h2 class="section-title">Notes</h2>
-            <p class="build-notes">{builds.notes}</p>
           </section>
-        {/if}
-      {:else}
-        <div class="board-section">
-          <EmptyState message={`No gcsim build summary for ${kit.name} yet.`} />
+
+          <section class="board-section">
+            <h2 class="section-title">Passives</h2>
+            <div class="kit-list">
+              {#each kit.passives as passive}
+                {@const icon =
+                  iconUrl(passive.icon, "talent") ??
+                  getUiAssetUrl(passive.icon)}
+                {@const passiveEnhance = enhanceExtra(
+                  passive.description,
+                  passive.enhanceDescription,
+                )}
+                <article
+                  id="kit-P{passive.id}"
+                  class="kit-row"
+                  class:kit-row-flash={flashId === `kit-P${passive.id}`}
+                >
+                  {#if icon}
+                    <img
+                      src={icon}
+                      alt=""
+                      class="kit-icon shrink-0"
+                      loading="lazy"
+                    />
+                  {/if}
+                  <div class="kit-copy">
+                    <div class="kit-heading">
+                      <h3 class="card-title">{passive.name}</h3>
+                      <span class="card-kicker"
+                        >{passiveKindLabel(passive)}</span
+                      >
+                    </div>
+                    {@render descriptionBlock(
+                      passive.description,
+                      passiveEnhance,
+                    )}
+                  </div>
+                </article>
+              {/each}
+            </div>
+          </section>
+
+          <section class="board-section">
+            <h2 class="section-title">Constellations</h2>
+            <div class="kit-list">
+              {#each kit.constellations as c}
+                {@const icon =
+                  iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
+                {@const constEnhance = enhanceExtra(
+                  c.description,
+                  c.enhanceDescription,
+                )}
+                <article
+                  id="kit-T{c.id}"
+                  class="kit-row"
+                  class:kit-row-flash={flashId === `kit-T${c.id}`}
+                >
+                  {#if icon}
+                    <img
+                      src={icon}
+                      alt=""
+                      class="kit-icon shrink-0"
+                      loading="lazy"
+                    />
+                  {/if}
+                  <div class="kit-copy">
+                    <div class="kit-heading">
+                      <span class="const-index" style="color: {elColor};">
+                        C{c.index}
+                      </span>
+                      <h3 class="card-title">{c.name}</h3>
+                    </div>
+                    {@render descriptionBlock(c.description, constEnhance)}
+                  </div>
+                </article>
+              {/each}
+            </div>
+          </section>
         </div>
-      {/if}
+      {:else}
+        <div role="tabpanel" id="tabpanel-builds" aria-labelledby="tab-builds">
+          {#if builds}
+            <section class="board-section">
+              <h2 class="section-title">Weapons</h2>
+              {#if rankedWeapons.length === 0}
+                <p class="muted-note">No weapon data yet.</p>
+              {:else}
+                <div class="equip-grid">
+                  {#each rankedWeapons as w}
+                    {@const weapon = weaponByKey.get(w.key)}
+                    {@const icon = weapon
+                      ? weaponIconUrl(weapon.awakenIcon)
+                      : null}
+                    <div class="equip-tile relative group">
+                      <div class="equip-icon-wrap">
+                        {#if icon}
+                          <img
+                            src={icon}
+                            alt={weapon?.name ?? w.key}
+                            class="equip-icon"
+                            loading="lazy"
+                          />
+                        {:else}
+                          <div class="equip-fallback">{w.key}</div>
+                        {/if}
+                      </div>
+                      <WeaponTooltip {weapon} weaponKey={w.key} />
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </section>
+
+            <section class="board-section">
+              <h2 class="section-title">Artifact sets</h2>
+              {#if !builds.sets?.length}
+                <p class="muted-note">No set data yet.</p>
+              {:else}
+                <div class="equip-grid">
+                  {#each builds.sets as s}
+                    {@const set = artifactSetByKey.get(s.key)}
+                    {@const icon = set ? artifactIconUrl(set.icon) : null}
+                    <div class="equip-tile relative group">
+                      <div class="equip-icon-wrap">
+                        {#if icon}
+                          <img
+                            src={icon}
+                            alt={set?.name ?? s.key}
+                            class="equip-icon"
+                            loading="lazy"
+                          />
+                        {:else}
+                          <div class="equip-fallback">{s.key}</div>
+                        {/if}
+                        {#if s.count}
+                          <div class="piece-badge">
+                            <span style="color: {elColor};">{s.count}pc</span>
+                          </div>
+                        {/if}
+                      </div>
+                      <ArtifactTooltip
+                        {set}
+                        setKey={s.key}
+                        pieceCount={s.count ?? null}
+                      />
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </section>
+
+            <section class="board-section">
+              <h2 class="section-title">Main stats</h2>
+              <div class="main-stats">
+                {#each MAIN_STAT_SLOTS as slot}
+                  <div class="main-stat-col">
+                    <h3 class="slot-label">
+                      <img
+                        src={artifactSlotIconUrl(slot.key)}
+                        alt=""
+                        class="stat-icon main-stat-icon shrink-0"
+                        loading="lazy"
+                      />
+                      {slot.label}
+                    </h3>
+                    {#if builds.main_stats[slot.key].length === 0}
+                      <p class="muted-note">—</p>
+                    {:else}
+                      <ul class="stat-list">
+                        {#each builds.main_stats[slot.key] as stat}
+                          {@const icon = statIconUrl(stat.key)}
+                          <li class="stat-row">
+                            <span class="flex items-center gap-1.5 min-w-0">
+                              {#if icon}
+                                <img
+                                  src={icon}
+                                  alt=""
+                                  class="stat-icon main-stat-icon shrink-0"
+                                  loading="lazy"
+                                />
+                              {/if}
+                              <span class="stat-name"
+                                >{translateStatKey(stat.key)}</span
+                              >
+                            </span>
+                          </li>
+                        {/each}
+                      </ul>
+                    {/if}
+                  </div>
+                {/each}
+              </div>
+            </section>
+
+            <section class="board-section">
+              <h2 class="section-title">Recommended substats</h2>
+              {#if recommendedSubstats.length === 0}
+                <p class="muted-note">No substat data yet.</p>
+              {:else}
+                <div class="substat-row">
+                  {#each recommendedSubstats as roll}
+                    {@const icon = statIconUrl(roll.key)}
+                    <button
+                      type="button"
+                      class="stat-chip group relative flex items-center justify-center"
+                      class:is-main={roll.matchesMain}
+                      aria-label={translateStatKey(roll.key)}
+                    >
+                      {#if icon}
+                        <img
+                          src={icon}
+                          alt=""
+                          class="stat-icon"
+                          loading="lazy"
+                        />
+                      {:else}
+                        <span class="stat-chip-fallback">
+                          {translateStatKey(roll.key)}
+                        </span>
+                      {/if}
+                      <HoverTooltip class="max-w-56">
+                        <div class="tip-detail-text font-medium">
+                          {translateStatKey(roll.key)}
+                        </div>
+                        {#if roll.matchesMain}
+                          <div
+                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
+                          >
+                            Also a main on {roll.mainSlots.join(" / ")}
+                          </div>
+                        {/if}
+                        {#if roll.mean > 0}
+                          <div
+                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
+                          >
+                            {roll.mean.toFixed(1)} avg liquid rolls · {builds
+                              .substat_rolls_liquid.teams} team{builds
+                              .substat_rolls_liquid.teams === 1
+                              ? ""
+                              : "s"}
+                          </div>
+                        {/if}
+                      </HoverTooltip>
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </section>
+
+            {#if builds.notes}
+              <section class="board-section notes-section">
+                <h2 class="section-title">Notes</h2>
+                <p class="build-notes">{builds.notes}</p>
+              </section>
+            {/if}
+          {:else}
+            <div class="board-section">
+              <EmptyState
+                message={`No gcsim build summary for ${kit.name} yet.`}
+              />
+            </div>
+          {/if}
         </div>
       {/if}
     </div>
@@ -624,7 +636,11 @@
 
   .hero {
     border-bottom: var(--border-width) solid
-      color-mix(in srgb, var(--hero-accent, var(--foreground-mid)) 35%, transparent);
+      color-mix(
+        in srgb,
+        var(--hero-accent, var(--foreground-mid)) 35%,
+        transparent
+      );
   }
 
   .hero-bg {
@@ -652,7 +668,7 @@
     flex-shrink: 0;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
   }
 
   .hero-portrait :global(img) {
@@ -973,24 +989,24 @@
   .kit-row-flash {
     margin-inline: calc(-1 * var(--space-4));
     padding-inline: var(--space-4);
-    background: color-mix(
-      in srgb,
-      var(--kit-flash) 12%,
-      transparent
-    );
-    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 65%, transparent);
+    background: color-mix(in srgb, var(--kit-flash) 12%, transparent);
+    box-shadow: inset 2px 0 0
+      color-mix(in srgb, var(--kit-flash) 65%, transparent);
     animation: kit-target-flash 1.6s ease-out;
   }
 
   @keyframes kit-target-flash {
     0% {
-      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 0%, transparent);
+      box-shadow: inset 2px 0 0
+        color-mix(in srgb, var(--kit-flash) 0%, transparent);
     }
     35% {
-      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--kit-flash) 80%, transparent);
+      box-shadow: inset 3px 0 0
+        color-mix(in srgb, var(--kit-flash) 80%, transparent);
     }
     100% {
-      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 65%, transparent);
+      box-shadow: inset 2px 0 0
+        color-mix(in srgb, var(--kit-flash) 65%, transparent);
     }
   }
 

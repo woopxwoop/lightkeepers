@@ -134,15 +134,16 @@
     margin-left: calc(var(--card-width) / -2);
     transform-origin: 50% calc(100% + var(--radius));
     transform: rotate(var(--angle));
-    transition:
-      transform 220ms ease,
-      filter 220ms ease;
-    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+    border-radius: var(--radius-md);
+    /* Static box-shadow — cheaper than filter: drop-shadow while transforming. */
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.45);
+    transition: transform 220ms ease;
   }
 
   .hand-hand .card:hover,
   .hand-hand .card:focus-within {
     z-index: 20;
+    will-change: transform;
     transform: rotate(var(--angle)) scale(1.04);
   }
 
@@ -161,10 +162,9 @@
     width: var(--card-width);
     flex-shrink: 0;
     margin-left: var(--overlap);
-    transition:
-      transform 220ms ease,
-      filter 220ms ease;
-    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.45);
+    transition: transform 220ms ease;
   }
 
   .hand-flat .card:first-child {
@@ -174,6 +174,7 @@
   .hand-flat .card:hover,
   .hand-flat .card:focus-within {
     z-index: 20;
+    will-change: transform;
     transform: translateY(-10px) scale(1.03);
   }
 
@@ -186,6 +187,8 @@
     aspect-ratio: 1;
     border-radius: 0.2rem;
     overflow: hidden;
+    pointer-events: auto;
+    cursor: pointer;
     background: color-mix(in srgb, var(--background-color) 72%, transparent);
     border: var(--border-width) solid rgba(255, 255, 255, 0.28);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
@@ -219,7 +222,7 @@
     font-size: 0.75rem;
     line-height: 1;
     color: var(--accent-1);
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
   }
 
   .meta-name {

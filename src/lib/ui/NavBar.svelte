@@ -61,73 +61,6 @@
     page.url.pathname.startsWith(resolve("/settings")),
   );
 
-  // ── Sliding underline ──────────────────────────────────────────────────
-  let navLinks: Record<string, HTMLElement | null> = {
-    abyss: null,
-    stygian: null,
-    pulls: null,
-    teams: null,
-    characters: null,
-    settings: null,
-  };
-  let linksContainer: HTMLElement | null = $state(null);
-  let underlineLeft = $state(0);
-  let underlineWidth = $state(0);
-  let underlineReady = $state(false);
-  let underlineFrame = 0;
-
-  async function updateUnderline() {
-    await tick();
-    if (!linksContainer) return;
-
-    const active = Object.values(navLinks).find(
-      (el) => el?.getAttribute("aria-current") === "page",
-    );
-    if (!active) {
-      underlineReady = false;
-      return;
-    }
-
-    const containerRect = linksContainer.getBoundingClientRect();
-    const rect = active.getBoundingClientRect();
-    underlineLeft = rect.left - containerRect.left;
-    underlineWidth = rect.width;
-    underlineReady = true;
-  }
-
-  $effect(() => {
-    page.url.pathname;
-    updateUnderline();
-  });
-
-  function scheduleUnderlineUpdate() {
-    if (underlineFrame) cancelAnimationFrame(underlineFrame);
-    underlineFrame = requestAnimationFrame(() => {
-      underlineFrame = 0;
-      updateUnderline();
-    });
-  }
-
-  $effect(() => {
-    if (!linksContainer) return;
-
-    const observer = new ResizeObserver(scheduleUnderlineUpdate);
-    observer.observe(linksContainer);
-
-    const onResize = () => scheduleUnderlineUpdate();
-    window.addEventListener("resize", onResize, { passive: true });
-    scheduleUnderlineUpdate();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", onResize);
-      if (underlineFrame) {
-        cancelAnimationFrame(underlineFrame);
-        underlineFrame = 0;
-      }
-    };
-  });
-
   let scrolled = $state(false);
 
   $effect(() => {
@@ -261,10 +194,7 @@
     </a>
 
     <!-- Desktop links -->
-    <div
-      class="hidden md:flex items-center gap-6 relative"
-      bind:this={linksContainer}
-    >
+    <div class="hidden md:flex items-center gap-6 relative">
       {#each mainLinks as link}
         <a
           href={link.path}
@@ -273,7 +203,7 @@
             ? link.preload
             : undefined}
           aria-current={isMainActive(link) ? "page" : undefined}
-          bind:this={navLinks[link.label.toLowerCase()]}>{link.label}</a
+          >{link.label}</a
         >
       {/each}
       <div class="settings-item">
@@ -281,7 +211,6 @@
           href={settingsPath}
           class="nav-link"
           aria-current={onSettingsPage ? "page" : undefined}
-          bind:this={navLinks.settings}
           onmouseenter={onSettingsEnter}
           onmouseleave={onSettingsLeave}
           onfocus={onSettingsEnter}
@@ -313,13 +242,6 @@
           {/each}
         </div>
       </div>
-
-      {#if underlineReady}
-        <span
-          class="nav-underline"
-          style="left: {underlineLeft}px; width: {underlineWidth}px;"
-        ></span>
-      {/if}
     </div>
 
     <!-- Hamburger button (mobile only) -->
@@ -518,16 +440,16 @@
     height: 1.75rem;
     object-fit: contain;
     filter: invert(1);
-    transition: filter 0.2s ease;
+    transition: opacity 0.2s ease;
   }
 
   .nav-logo:hover .nav-mark {
-    filter: invert(1) brightness(1.15);
+    opacity: 0.85;
   }
 
   .nav-link {
+    position: relative;
     padding-bottom: 2px;
-    border-bottom: 1.5px solid transparent;
     font-family: var(--font-display);
     font-size: var(--text-md);
     font-weight: 500;
@@ -543,21 +465,33 @@
     pointer-events: auto;
   }
 
+  /* Gold underline bar. */
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1.5px;
+    pointer-events: none;
+    background: var(--accent-1);
+    opacity: 0;
+    transform: scaleX(0.55);
+    transform-origin: center;
+    transition:
+      opacity 180ms ease,
+      transform 180ms ease;
+  }
+
   .nav-link:hover,
   .nav-link[aria-current="page"] {
     color: var(--foreground-color);
   }
 
-  .nav-underline {
-    position: absolute;
-    bottom: 0;
-    height: 1.5px;
-    pointer-events: none;
-    /* Gold on page-base nav — intentional lamp accent, not a mid-surface wash */
-    background: var(--accent-1);
-    transition:
-      left 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      width 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  .nav-link:hover::after,
+  .nav-link[aria-current="page"]::after {
+    opacity: 1;
+    transform: scaleX(1);
   }
 
   /* ── Settings sub-row ── */
@@ -914,6 +848,10 @@
   @media (prefers-reduced-motion: reduce) {
     .drawer-item {
       animation: none;
+    }
+
+    .nav-link::after {
+      transition: none;
     }
   }
 </style>
