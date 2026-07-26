@@ -160,45 +160,47 @@
             </div>
 
             <div class="build-panel">
-              <div class="equip-block group">
-                {#if wIcon}
-                  <img
-                    src={wIcon}
-                    alt=""
-                    class="weapon-icon shrink-0"
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="min-w-0 flex-1">
-                  <div class="equip-title-row">
-                    <p class="equip-name">
-                      {weapon?.name ?? build.weapon.key}
-                    </p>
-                    <span class="r-badge">R{build.weapon.refinement}</span>
-                  </div>
-                  {#if weapon}
-                    <div class="star-row" aria-label="{weapon.stars} star">
-                      {#each Array.from({ length: starCount(weapon.stars) }, (_, i) => i) as i (i)}
-                        <span class="star">★</span>
-                      {/each}
-                    </div>
-                    <div class="equip-stats">
-                      <span>ATK {Math.round(weapon.baseAtk)}</span>
-                      {#if weapon.subStat}
-                        <span>
-                          {weapon.subStat.label}
-                          {weapon.subStat.isPercent
-                            ? `${(weapon.subStat.value * 100).toFixed(1)}%`
-                            : Math.round(weapon.subStat.value)}
-                        </span>
-                      {/if}
-                    </div>
+              <div class="equip-block">
+                <div class="equip-trigger group">
+                  {#if wIcon}
+                    <img
+                      src={wIcon}
+                      alt=""
+                      class="weapon-icon shrink-0"
+                      loading="lazy"
+                    />
                   {/if}
+                  <div class="min-w-0 flex-1">
+                    <div class="equip-title-row">
+                      <p class="equip-name">
+                        {weapon?.name ?? build.weapon.key}
+                      </p>
+                      <span class="r-badge">R{build.weapon.refinement}</span>
+                    </div>
+                    {#if weapon}
+                      <div class="star-row" aria-label="{weapon.stars} star">
+                        {#each Array.from({ length: starCount(weapon.stars) }, (_, i) => i) as i (i)}
+                          <span class="star">★</span>
+                        {/each}
+                      </div>
+                      <div class="equip-stats">
+                        <span>ATK {Math.round(weapon.baseAtk)}</span>
+                        {#if weapon.subStat}
+                          <span>
+                            {weapon.subStat.label}
+                            {weapon.subStat.isPercent
+                              ? `${(weapon.subStat.value * 100).toFixed(1)}%`
+                              : Math.round(weapon.subStat.value)}
+                          </span>
+                        {/if}
+                      </div>
+                    {/if}
+                  </div>
+                  <WeaponTooltip
+                    weaponKey={build.weapon.key}
+                    refinement={build.weapon.refinement}
+                  />
                 </div>
-                <WeaponTooltip
-                  weaponKey={build.weapon.key}
-                  refinement={build.weapon.refinement}
-                />
               </div>
 
               {#if sheet}
@@ -553,13 +555,19 @@
 
   .equip-block {
     position: relative;
-    display: flex;
-    gap: 0.65rem;
-    align-items: flex-start;
     padding: 0.5rem;
     border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
     border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .equip-trigger {
+    position: relative;
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    gap: 0.65rem;
+    align-items: flex-start;
   }
 
   .equip-title-row {
@@ -634,6 +642,8 @@
   .set-row {
     position: relative;
     display: flex;
+    width: fit-content;
+    max-width: 100%;
     gap: 0.5rem;
     align-items: center;
   }
@@ -754,5 +764,40 @@
   :global(.page-shell.no-page-anim) {
     --sk-animation: none;
     --pulse-animation: none;
+  }
+
+  @media (max-width: 640px) {
+    .build-grid {
+      min-height: 16rem;
+    }
+
+    .build-art--portrait {
+      width: 8rem;
+    }
+
+    .build-art--enka {
+      width: 7.5rem;
+    }
+
+    .build-art-meta {
+      left: 2.35rem;
+      right: 0.5rem;
+      bottom: 0.55rem;
+    }
+
+    .char-name {
+      font-size: var(--text-sm);
+    }
+
+    .cons-rail {
+      left: 0.35rem;
+      bottom: 0.7rem;
+      gap: 0.28rem;
+    }
+
+    .cons-node {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
   }
 </style>

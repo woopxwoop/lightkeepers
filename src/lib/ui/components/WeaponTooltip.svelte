@@ -38,7 +38,7 @@
 </script>
 
 {#if resolved}
-  <HoverTooltip class="max-w-72">
+  <HoverTooltip class="max-w-72" label={resolved.name}>
     <div class="text-xs font-medium leading-tight">{resolved.name}</div>
     <div class="text-[0.65rem] leading-tight mt-0.5 opacity-85">
       {resolved.stars}★ · {weaponTypeLabel(resolved.weaponType)}

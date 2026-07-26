@@ -652,7 +652,7 @@
     flex-shrink: 0;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
   }
 
   .hero-portrait :global(img) {
