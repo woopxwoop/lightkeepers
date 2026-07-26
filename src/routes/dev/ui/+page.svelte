@@ -243,8 +243,8 @@
     <div class="section-head mt-2">
       <h2>Semantic tokens</h2>
       <p>
-        Derived from paint. Accent is solid text/border only — selected fills use
-        neutral surface washes.
+        Derived from paint. Accent is solid text/border only — selected fills
+        use neutral surface washes.
       </p>
     </div>
     <div class="token-grid">
@@ -304,7 +304,9 @@
   <section class="gallery-section" id="surfaces">
     <div class="section-head">
       <h2>Surface</h2>
-      <p>Shared <code>Surface</code> primitive — default / interactive / inset / empty.</p>
+      <p>
+        Shared <code>Surface</code> primitive — default / interactive / inset / empty.
+      </p>
     </div>
     <div class="surface-row">
       <Surface>
@@ -331,7 +333,8 @@
     <div class="section-head">
       <h2>Controls</h2>
       <p>
-        Shared <code>SegmentedControl</code>, <code>Chip</code>, <code>Toggle</code>,
+        Shared <code>SegmentedControl</code>, <code>Chip</code>,
+        <code>Toggle</code>,
         <code>Button</code>, <code>Badge</code>.
       </p>
     </div>
@@ -430,8 +433,8 @@
       <Surface>
         <p class="surface-label">CharacterPortraitCard</p>
         <p class="token-meta mb-2">
-          Portrait tile with shine hover, optional dim / tint /
-          meta overlay. Link vs static.
+          Portrait tile with shine hover, optional dim / tint / meta overlay.
+          Link vs static.
         </p>
         {#if sampleChars.length}
           <div class="portrait-grid">
@@ -704,7 +707,9 @@
             {/each}
           </div>
         {:else}
-          <p class="token-meta">Roster not loaded yet — refresh after hydrate.</p>
+          <p class="token-meta">
+            Roster not loaded yet — refresh after hydrate.
+          </p>
         {/if}
       </Surface>
 
@@ -733,7 +738,8 @@
         <p class="surface-label">Tooltips</p>
         <p class="token-meta tip-palette-note">
           Hover shows a capped tip; click / tap opens a scrollable detail sheet.
-          Color candidates below are always-visible mockups (current shell stays).
+          Color candidates below are always-visible mockups (current shell
+          stays).
         </p>
         <div class="chip-row">
           <div class="group relative inline-flex">
@@ -750,84 +756,24 @@
               Current shell
             </Button>
             <HoverTooltip class="max-w-64">
-              <div class="text-xs font-medium leading-tight">Engulfing Lightning</div>
-              <div class="text-[0.65rem] leading-tight mt-0.5 opacity-85">
+              <div class="tip-detail-text font-medium">Engulfing Lightning</div>
+              <div
+                class="tip-detail-text tip-detail-text--small mt-0.5 opacity-85"
+              >
                 5★ · Polearm · Base ATK 608 · ER 55.1%
               </div>
-              <div class="text-[0.65rem] leading-snug mt-1.5 opacity-85">
-                Current: creamy --foreground-mid on near-black --background-color.
+              <div
+                class="tip-detail-text tip-detail-text--small mt-1.5 opacity-85"
+              >
+                Current: creamy --foreground-mid on near-black
+                --background-color.
               </div>
             </HoverTooltip>
           </div>
         </div>
 
         <div class="tip-palette">
-          {#each [
-            {
-              id: "current",
-              label: "Current",
-              note: "cream bg · near-black text",
-              bg: "var(--foreground-mid)",
-              fg: "var(--background-color)",
-              border: "color-mix(in srgb, var(--accent-1) 30%, transparent)",
-            },
-            {
-              id: "ink-on-paper",
-              label: "Ink on paper",
-              note: "brighter cream · soft charcoal",
-              bg: "var(--accent-3)",
-              fg: "#1a1610",
-              border: "color-mix(in srgb, var(--accent-1) 35%, transparent)",
-            },
-            {
-              id: "raised-invert",
-              label: "Raised invert",
-              note: "mid surface · cream text",
-              bg: "var(--background-mid)",
-              fg: "var(--foreground-color)",
-              border: "color-mix(in srgb, var(--foreground-color) 22%, transparent)",
-            },
-            {
-              id: "deep-panel",
-              label: "Deep panel",
-              note: "near-black · cream text · hairline",
-              bg: "var(--background-color)",
-              fg: "var(--foreground-color)",
-              border: "color-mix(in srgb, var(--foreground-color) 28%, transparent)",
-            },
-            {
-              id: "gold-rim",
-              label: "Gold rim",
-              note: "deep panel · gold edge",
-              bg: "color-mix(in srgb, var(--background-mid) 88%, #000)",
-              fg: "var(--foreground-color)",
-              border: "color-mix(in srgb, var(--accent-1) 55%, transparent)",
-            },
-            {
-              id: "warm-glass",
-              label: "Warm glass",
-              note: "translucent cream wash",
-              bg: "color-mix(in srgb, var(--accent-3) 82%, transparent)",
-              fg: "#16130e",
-              border: "color-mix(in srgb, var(--accent-1) 40%, transparent)",
-            },
-            {
-              id: "accent-wash",
-              label: "Accent wash",
-              note: "soft gold fill · dark text",
-              bg: "color-mix(in srgb, var(--accent-1) 28%, var(--background-mid))",
-              fg: "var(--foreground-color)",
-              border: "color-mix(in srgb, var(--accent-1) 50%, transparent)",
-            },
-            {
-              id: "neutral-chip",
-              label: "Neutral chip",
-              note: "selected surface · cream text",
-              bg: "var(--surface-selected)",
-              fg: "var(--foreground-color)",
-              border: "color-mix(in srgb, var(--foreground-color) 18%, transparent)",
-            },
-          ] as tone (tone.id)}
+          {#each [{ id: "current", label: "Current", note: "cream bg · near-black text", bg: "var(--foreground-mid)", fg: "var(--background-color)", border: "color-mix(in srgb, var(--accent-1) 30%, transparent)" }, { id: "ink-on-paper", label: "Ink on paper", note: "brighter cream · soft charcoal", bg: "var(--accent-3)", fg: "#1a1610", border: "color-mix(in srgb, var(--accent-1) 35%, transparent)" }, { id: "raised-invert", label: "Raised invert", note: "mid surface · cream text", bg: "var(--background-mid)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--foreground-color) 22%, transparent)" }, { id: "deep-panel", label: "Deep panel", note: "near-black · cream text · hairline", bg: "var(--background-color)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--foreground-color) 28%, transparent)" }, { id: "gold-rim", label: "Gold rim", note: "deep panel · gold edge", bg: "color-mix(in srgb, var(--background-mid) 88%, #000)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--accent-1) 55%, transparent)" }, { id: "warm-glass", label: "Warm glass", note: "translucent cream wash", bg: "color-mix(in srgb, var(--accent-3) 82%, transparent)", fg: "#16130e", border: "color-mix(in srgb, var(--accent-1) 40%, transparent)" }, { id: "accent-wash", label: "Accent wash", note: "soft gold fill · dark text", bg: "color-mix(in srgb, var(--accent-1) 28%, var(--background-mid))", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--accent-1) 50%, transparent)" }, { id: "neutral-chip", label: "Neutral chip", note: "selected surface · cream text", bg: "var(--surface-selected)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--foreground-color) 18%, transparent)" }] as tone (tone.id)}
             <div class="tip-candidate">
               <div class="tip-candidate-head">
                 <span class="tip-candidate-label">{tone.label}</span>
@@ -840,7 +786,9 @@
                 style:border-color={tone.border}
               >
                 <div class="tip-mock-title">Engulfing Lightning</div>
-                <div class="tip-mock-meta">5★ · Polearm · Base ATK 608 · ER 55.1%</div>
+                <div class="tip-mock-meta">
+                  5★ · Polearm · Base ATK 608 · ER 55.1%
+                </div>
                 <div class="tip-mock-body">
                   ATK increased by 28% of Energy Recharge over 100%. You can
                   gain a maximum of 80% ATK.
@@ -864,7 +812,8 @@
             <div class="perf-card perf-shadow-good">
               <span>Cheap shadow</span>
             </div>
-            <span class="token-meta">Shadow baked in; hover only moves it.</span>
+            <span class="token-meta">Shadow baked in; hover only moves it.</span
+            >
           </div>
 
           <div class="perf-pair">
@@ -941,10 +890,7 @@
       <p>Defer until the matching route migration.</p>
     </div>
     <div class="planned-grid">
-      {#each [
-        "StatRow",
-        "SectionLabel",
-      ] as name}
+      {#each ["StatRow", "SectionLabel"] as name}
         <Surface variant="empty">
           <p class="surface-label">{name}</p>
           <p class="token-meta">Not extracted yet</p>

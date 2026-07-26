@@ -15,6 +15,7 @@
 
   const EDGE = 8;
   const GAP = 8;
+  const tooltipId = $props.id();
 
   let tipEl: HTMLDivElement | undefined = $state();
   let sheetRootEl: HTMLDivElement | undefined = $state();
@@ -23,6 +24,29 @@
   let open = $state(false);
   let detailOpen = $state(false);
   let truncated = $state(false);
+
+  function updateTriggerDescription(trigger: HTMLElement | null, add: boolean) {
+    if (!trigger) return;
+
+    const describedBy = new Set(
+      (trigger.getAttribute("aria-describedby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+
+    if (add) {
+      describedBy.add(tooltipId);
+    } else {
+      describedBy.delete(tooltipId);
+    }
+
+    if (!describedBy.size) {
+      trigger.removeAttribute("aria-describedby");
+      return;
+    }
+
+    trigger.setAttribute("aria-describedby", [...describedBy].join(" "));
+  }
 
   function getFocusableElements(container: HTMLElement) {
     return Array.from(
@@ -123,6 +147,7 @@
     event.preventDefault();
     event.stopPropagation();
     activeTriggerEl = event.currentTarget as HTMLElement | null;
+    updateTriggerDescription(activeTriggerEl, true);
     open = false;
     detailOpen = true;
     await tick();
@@ -134,6 +159,7 @@
 
   async function closeDetail() {
     const trigger = activeTriggerEl;
+    updateTriggerDescription(trigger, false);
     detailOpen = false;
     await tick();
     trigger?.focus();
@@ -195,6 +221,7 @@
     window.addEventListener("keydown", onKey);
 
     return () => {
+      updateTriggerDescription(activeTriggerEl, false);
       trigger.removeEventListener("pointerenter", onEnter);
       trigger.removeEventListener("pointerleave", onLeave);
       trigger.removeEventListener("focusin", onEnter);
@@ -225,6 +252,7 @@
 -->
 <div
   bind:this={tipEl}
+  id={tooltipId}
   class="hover-tooltip pointer-events-none fixed z-50 w-max max-w-56 rounded-lg px-2.5 py-1.5 text-left {className}"
   class:hover-tooltip-open={open && !detailOpen}
   class:hover-tooltip-truncated={truncated}
@@ -362,14 +390,13 @@
     flex: 1 1 auto;
   }
 
-  /* Readable sizes in the sheet regardless of tip utility classes. */
-  .tip-sheet-body :global(.text-xs),
-  .tip-sheet-body :global(.text-sm) {
+  /* Readable sizes in the sheet regardless of caller utility classes. */
+  .tip-sheet-body :global(.tip-detail-text) {
     font-size: 0.9rem;
     line-height: 1.35;
   }
 
-  .tip-sheet-body :global(.text-\[0\.65rem\]) {
+  .tip-sheet-body :global(.tip-detail-text.tip-detail-text--small) {
     font-size: 0.8rem;
     line-height: 1.45;
   }
