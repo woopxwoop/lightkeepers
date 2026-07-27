@@ -118,21 +118,27 @@ export type Database = {
           character_id: number
           created_at: string
           ownership: number | null
+          ownership_rate: number | null
           usage: number | null
+          usage_rate: number | null
           version_number: number
         }
         Insert: {
           character_id: number
           created_at?: string
           ownership?: number | null
+          ownership_rate?: number | null
           usage?: number | null
+          usage_rate?: number | null
           version_number: number
         }
         Update: {
           character_id?: number
           created_at?: string
           ownership?: number | null
+          ownership_rate?: number | null
           usage?: number | null
+          usage_rate?: number | null
           version_number?: number
         }
         Relationships: [
@@ -157,21 +163,27 @@ export type Database = {
           character_id: number
           created_at: string
           ownership: number | null
+          ownership_rate: number | null
           usage: number | null
+          usage_rate: number | null
           version_number: number
         }
         Insert: {
           character_id: number
           created_at?: string
           ownership?: number | null
+          ownership_rate?: number | null
           usage?: number | null
+          usage_rate?: number | null
           version_number: number
         }
         Update: {
           character_id?: number
           created_at?: string
           ownership?: number | null
+          ownership_rate?: number | null
           usage?: number | null
+          usage_rate?: number | null
           version_number?: number
         }
         Relationships: [
