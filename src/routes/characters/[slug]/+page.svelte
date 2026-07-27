@@ -681,7 +681,7 @@
                 <ul class="talent-priority-list">
                   {#each talentImportanceRows as row, i}
                     <li
-                      class="talent-priority-row group relative"
+                      class="talent-priority-row"
                       data-priority={row.priority}
                     >
                       <span
@@ -705,16 +705,6 @@
                           {row.priorityLabel}
                         </div>
                       </div>
-                      <HoverTooltip class="max-w-56">
-                        <div class="text-xs font-medium leading-tight">
-                          −{row.mean.toFixed(1)}% mean DPS
-                        </div>
-                        <div
-                          class="text-[0.65rem] leading-snug mt-1 opacity-85"
-                        >
-                          Range {row.min.toFixed(1)}% – {row.max.toFixed(1)}%
-                        </div>
-                      </HoverTooltip>
                     </li>
                   {/each}
                 </ul>
@@ -726,7 +716,7 @@
                 <h2 class="section-title">Character level</h2>
                 <ul class="talent-priority-list">
                   <li
-                    class="talent-priority-row group relative"
+                    class="talent-priority-row"
                     data-priority={levelImportance.priority}
                   >
                     {#if levelImportance.icon}
@@ -746,15 +736,6 @@
                         {levelImportance.priorityLabel}
                       </div>
                     </div>
-                    <HoverTooltip class="max-w-56">
-                      <div class="text-xs font-medium leading-tight">
-                        −{levelImportance.mean.toFixed(1)}% mean DPS
-                      </div>
-                      <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                        Range {levelImportance.min.toFixed(1)}% –
-                        {levelImportance.max.toFixed(1)}%
-                      </div>
-                    </HoverTooltip>
                   </li>
                 </ul>
               </section>
@@ -777,7 +758,7 @@
                         getUiAssetUrl(constellation.icon))
                       : null}
                     <li
-                      class="talent-priority-row group relative"
+                      class="talent-priority-row"
                       data-priority={impact.tier}
                     >
                       <span
@@ -803,20 +784,6 @@
                           {impact.label}
                         </div>
                       </div>
-                      <HoverTooltip class="max-w-56">
-                        <div class="text-xs font-medium leading-tight">
-                          +{row.mean_pct_gain.toFixed(1)}% mean DPS
-                        </div>
-                        <div
-                          class="text-[0.65rem] leading-snug mt-1 opacity-85"
-                        >
-                          Range {row.min_pct_gain.toFixed(1)}% –
-                          {row.max_pct_gain.toFixed(1)}% · {row.teams} team{row.teams ===
-                          1
-                            ? ""
-                            : "s"}
-                        </div>
-                      </HoverTooltip>
                     </li>
                   {/each}
                 </ul>
@@ -837,7 +804,7 @@
                       SIGNATURE_UPGRADE,
                     )}
                     <li
-                      class="talent-priority-row group relative"
+                      class="talent-priority-row"
                       data-priority={impact.tier}
                     >
                       {#if icon}
@@ -859,20 +826,6 @@
                           {impact.label}
                         </div>
                       </div>
-                      <HoverTooltip class="max-w-56">
-                        <div class="text-xs font-medium leading-tight">
-                          +{row.mean_pct_gain.toFixed(1)}% mean DPS
-                        </div>
-                        <div
-                          class="text-[0.65rem] leading-snug mt-1 opacity-85"
-                        >
-                          Range {row.min_pct_gain.toFixed(1)}% –
-                          {row.max_pct_gain.toFixed(1)}% · {row.teams} team{row.teams ===
-                          1
-                            ? ""
-                            : "s"}
-                        </div>
-                      </HoverTooltip>
                     </li>
                   {/each}
                 </ul>
