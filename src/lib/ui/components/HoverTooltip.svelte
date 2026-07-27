@@ -20,6 +20,7 @@
   let tipEl: HTMLDivElement | undefined = $state();
   let sheetRootEl: HTMLDivElement | undefined = $state();
   let sheetEl: HTMLDivElement | undefined = $state();
+  let tipTriggerEl: HTMLElement | null = null;
   let activeTriggerEl: HTMLElement | null = null;
   let open = $state(false);
   let detailOpen = $state(false);
@@ -130,7 +131,9 @@
 
   function showTip(trigger: HTMLElement) {
     if (detailOpen) return;
+    tipTriggerEl = trigger;
     open = true;
+    updateTriggerDescription(trigger, true);
     requestAnimationFrame(() => {
       place(trigger);
       measureTruncation();
@@ -141,14 +144,38 @@
 
   function hideTip() {
     open = false;
+    if (!detailOpen) updateTriggerDescription(tipTriggerEl, false);
+    tipTriggerEl = null;
+  }
+
+  function isInteractiveDescendant(
+    target: EventTarget | null,
+    trigger: HTMLElement,
+  ): boolean {
+    if (!(target instanceof Element)) return false;
+    const interactive = target.closest(
+      'a[href], button, input, select, textarea, summary, [role="button"]',
+    );
+    return Boolean(
+      interactive && interactive !== trigger && trigger.contains(interactive),
+    );
   }
 
   async function openDetail(event: Event) {
+    const trigger = event.currentTarget as HTMLElement;
+    if (isInteractiveDescendant(event.target, trigger)) return;
+
+    // Measure truncation even if the hover tip never opened (e.g. tap).
+    place(trigger);
+    measureTruncation();
+    if (!truncated) return;
+
     event.preventDefault();
     event.stopPropagation();
-    activeTriggerEl = event.currentTarget as HTMLElement | null;
-    updateTriggerDescription(activeTriggerEl, true);
+    tipTriggerEl = null;
+    activeTriggerEl = trigger;
     open = false;
+    updateTriggerDescription(trigger, false);
     detailOpen = true;
     await tick();
     if (sheetRootEl && sheetRootEl.parentElement !== document.body) {
@@ -159,7 +186,6 @@
 
   async function closeDetail() {
     const trigger = activeTriggerEl;
-    updateTriggerDescription(trigger, false);
     detailOpen = false;
     await tick();
     trigger?.focus();
@@ -221,7 +247,9 @@
     window.addEventListener("keydown", onKey);
 
     return () => {
+      updateTriggerDescription(tipTriggerEl, false);
       updateTriggerDescription(activeTriggerEl, false);
+      tipTriggerEl = null;
       trigger.removeEventListener("pointerenter", onEnter);
       trigger.removeEventListener("pointerleave", onLeave);
       trigger.removeEventListener("focusin", onEnter);

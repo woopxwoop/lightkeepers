@@ -242,10 +242,13 @@
     <div class="page-head-text">
       <h1 class="page-title">Team Simulations</h1>
       <p class="page-meta">
-        Database of the {#if data}
-          {data.teams.length}
+        {#if data}
+          Database of the {data.teams.length} teams used for character build and
+          investment recommendations
+        {:else}
+          Database of teams used for character build and investment
+          recommendations
         {/if}
-        teams used for character build and investment recommendations
       </p>
     </div>
   </header>

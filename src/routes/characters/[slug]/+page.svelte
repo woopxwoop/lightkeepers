@@ -248,29 +248,31 @@
   let talentImportanceRows = $derived.by(() => {
     const ti = builds?.talent_importance;
     if (!ti || ti.teams <= 0) return [];
-    const slots = ti.priority.filter(
-      (slot): slot is TalentSlot =>
-        slot === "auto" || slot === "skill" || slot === "burst",
+    const slots = (["auto", "skill", "burst"] as const).filter(
+      (slot) => ti[slot],
     );
-    return slots.map((slot) => {
-      const stats = ti[slot];
-      const kitType = TALENT_SLOT_TO_KIT[slot];
-      const skill = kit.skills.find((s) => s.type === kitType);
-      const icon = skill
-        ? (iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon))
-        : null;
-      const impact = classifyUpgradeImpact(
-        stats.median_pct_drop,
-        TALENT_UPGRADE,
-      );
-      return {
-        slot,
-        label: TALENT_SLOT_LABELS[slot],
-        icon,
-        priority: impact.tier,
-        priorityLabel: impact.label,
-      };
-    });
+    return slots
+      .map((slot) => {
+        const stats = ti[slot];
+        const kitType = TALENT_SLOT_TO_KIT[slot];
+        const skill = kit.skills.find((s) => s.type === kitType);
+        const icon = skill
+          ? (iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon))
+          : null;
+        const impact = classifyUpgradeImpact(
+          stats.median_pct_drop,
+          TALENT_UPGRADE,
+        );
+        return {
+          slot,
+          label: TALENT_SLOT_LABELS[slot],
+          icon,
+          priority: impact.tier,
+          priorityLabel: impact.label,
+          median: stats.median_pct_drop,
+        };
+      })
+      .sort((a, b) => b.median - a.median || a.slot.localeCompare(b.slot));
   });
 
   /** Character level 80 importance for Builds tab (separate from talents). */
@@ -802,7 +804,7 @@
                     <section class="board-section">
                       <h2 class="section-title">Signature weapon impact</h2>
                       <ul class="talent-priority-list">
-                        {#each builds.vertical_importance.sig_weapons as row}
+                        {#each [...builds.vertical_importance.sig_weapons].sort( (a, b) => b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key), ) as row}
                           {@const weapon = weaponByKey.get(row.key)}
                           {@const icon = weapon
                             ? weaponIconUrl(weapon.awakenIcon)

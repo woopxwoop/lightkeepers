@@ -163,7 +163,7 @@
 {#snippet negPctTip(label: string)}
   <span class="pct-tip group tip-detail-text tip-detail-text--small">
     {label}
-    <HoverTooltip class="max-w-72" label={label}>
+    <HoverTooltip class="max-w-72" label="About negative percentages">
       <p class="tip-detail-text tip-detail-text--small">{NEG_PCT_TIP}</p>
     </HoverTooltip>
   </span>

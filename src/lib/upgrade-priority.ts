@@ -1,5 +1,5 @@
 /**
- * Qualitative upgrade tiers from a mean % DPS impact
+ * Qualitative upgrade tiers from a median % DPS impact
  * (gain for cons/sig, drop for talent/level).
  *
  * Each Builds section passes its own cutoffs + labels via
@@ -12,9 +12,9 @@ export type UpgradeTier =
   | "inconsequential";
 
 export interface UpgradeImpactConfig {
-  /** |mean %| ≥ this → highly_recommended */
+  /** |median %| ≥ this → highly_recommended */
   highPct: number;
-  /** |mean %| ≥ this → recommended (else inconsequential) */
+  /** |median %| ≥ this → recommended (else inconsequential) */
   recommendedPct: number;
   labels: Record<UpgradeTier, string>;
 }
@@ -51,7 +51,7 @@ export const SIGNATURE_UPGRADE: UpgradeImpactConfig = {
   highPct: 20,
   recommendedPct: 8,
   labels: {
-    highly_recommended: "High impact weapon ",
+    highly_recommended: "High impact weapon",
     recommended: "Mid impact weapon",
     inconsequential: "Pull for the drip",
   },
