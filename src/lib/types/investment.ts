@@ -148,6 +148,8 @@ export type TalentSlot = "auto" | "skill" | "burst";
 export interface CharacterTalentSlotImportance {
   /** Average % DPS drop vs baseline across teams. */
   mean_pct_drop: number;
+  /** Median % DPS drop vs baseline across teams. */
+  median_pct_drop: number;
   /** Smallest % DPS drop on any contributing team. */
   min_pct_drop: number;
   /** Largest % DPS drop on any contributing team. */
@@ -174,6 +176,8 @@ export interface CharacterVerticalGain {
   teams: number;
   /** Average % DPS gain vs that team's baseline. */
   mean_pct_gain: number;
+  /** Median % DPS gain vs that team's baseline. */
+  median_pct_gain: number;
   /** Smallest % DPS gain on any contributing team. */
   min_pct_gain: number;
   /** Largest % DPS gain on any contributing team. */

@@ -58,9 +58,9 @@
   };
 
   const TALENT_SLOT_LABELS: Record<TalentSlot, string> = {
-    auto: "Normal Attack",
-    skill: "Elemental Skill",
-    burst: "Elemental Burst",
+    auto: "Normal",
+    skill: "Skill",
+    burst: "Burst",
   };
 
   /** Map investment talent slots → kit skill types for icons. */
@@ -243,7 +243,7 @@
 
   /**
    * Talent priority rows for Builds tab: qualitative upgrade labels from
-   * mean % DPS drop when that talent is at 1.
+   * median % DPS drop when that talent is at 1.
    */
   let talentImportanceRows = $derived.by(() => {
     const ti = builds?.talent_importance;
@@ -259,16 +259,16 @@
       const icon = skill
         ? (iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon))
         : null;
-      const impact = classifyUpgradeImpact(stats.mean_pct_drop, TALENT_UPGRADE);
+      const impact = classifyUpgradeImpact(
+        stats.median_pct_drop,
+        TALENT_UPGRADE,
+      );
       return {
         slot,
-        label: skill?.name ?? TALENT_SLOT_LABELS[slot],
+        label: TALENT_SLOT_LABELS[slot],
         icon,
         priority: impact.tier,
         priorityLabel: impact.label,
-        mean: stats.mean_pct_drop,
-        min: stats.min_pct_drop,
-        max: stats.max_pct_drop,
       };
     });
   });
@@ -277,13 +277,10 @@
   let levelImportance = $derived.by(() => {
     const li = builds?.level_importance;
     if (!li || li.teams <= 0) return null;
-    const impact = classifyUpgradeImpact(li.mean_pct_drop, LEVEL_UPGRADE);
+    const impact = classifyUpgradeImpact(li.median_pct_drop, LEVEL_UPGRADE);
     return {
       priority: impact.tier,
       priorityLabel: impact.label,
-      mean: li.mean_pct_drop,
-      min: li.min_pct_drop,
-      max: li.max_pct_drop,
       teams: li.teams,
       icon: getUiAssetUrl("UI_ItemIcon_104003"),
     };
@@ -678,161 +675,172 @@
               {/if}
             </section>
 
-            {#if talentImportanceRows.length > 0 && builds?.talent_importance}
-              <section class="board-section">
-                <h2 class="section-title">Talent priority</h2>
-                <ul class="talent-priority-list">
-                  {#each talentImportanceRows as row, i}
-                    <li
-                      class="talent-priority-row"
-                      data-priority={row.priority}
-                    >
-                      <span
-                        class="talent-priority-rank"
-                        style="color: {elColor};">{i + 1}</span
-                      >
-                      {#if row.icon}
-                        <img
-                          src={row.icon}
-                          alt=""
-                          class="kit-icon talent-priority-icon shrink-0"
-                          loading="lazy"
-                        />
-                      {/if}
-                      <div class="talent-priority-copy">
-                        <div class="talent-priority-name">{row.label}</div>
-                        <div
-                          class="talent-priority-label"
-                          data-priority={row.priority}
-                        >
-                          {row.priorityLabel}
-                        </div>
-                      </div>
-                    </li>
-                  {/each}
-                </ul>
-              </section>
-            {/if}
+            {#if talentImportanceRows.length > 0 ||
+              levelImportance ||
+              builds.vertical_importance?.constellations?.length ||
+              builds.vertical_importance?.sig_weapons?.length}
+              <div class="invest-grid">
+                <div class="invest-col">
+                  {#if talentImportanceRows.length > 0 && builds?.talent_importance}
+                    <section class="board-section">
+                      <h2 class="section-title">Talent priority</h2>
+                      <ul class="talent-priority-list">
+                        {#each talentImportanceRows as row, i}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={row.priority}
+                          >
+                            <span
+                              class="talent-priority-rank"
+                              style="color: {elColor};">{i + 1}</span
+                            >
+                            {#if row.icon}
+                              <img
+                                src={row.icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">{row.label}</div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={row.priority}
+                              >
+                                {row.priorityLabel}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
 
-            {#if levelImportance}
-              <section class="board-section">
-                <h2 class="section-title">Character level</h2>
-                <ul class="talent-priority-list">
-                  <li
-                    class="talent-priority-row"
-                    data-priority={levelImportance.priority}
-                  >
-                    {#if levelImportance.icon}
-                      <img
-                        src={levelImportance.icon}
-                        alt=""
-                        class="kit-icon talent-priority-icon shrink-0"
-                        loading="lazy"
-                      />
-                    {/if}
-                    <div class="talent-priority-copy">
-                      <div class="talent-priority-name">Level 90</div>
-                      <div
-                        class="talent-priority-label"
-                        data-priority={levelImportance.priority}
-                      >
-                        {levelImportance.priorityLabel}
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </section>
-            {/if}
-
-            {#if builds.vertical_importance?.constellations?.length}
-              <section class="board-section">
-                <h2 class="section-title">Constellation Impact</h2>
-                <ul class="talent-priority-list">
-                  {#each builds.vertical_importance.constellations as row}
-                    {@const impact = classifyUpgradeImpact(
-                      row.mean_pct_gain,
-                      CONSTELLATION_UPGRADE,
-                    )}
-                    {@const constellation = kit.constellations.find(
-                      (c) => c.index === row.cons,
-                    )}
-                    {@const icon = constellation
-                      ? (iconUrl(constellation.icon, "talent") ??
-                        getUiAssetUrl(constellation.icon))
-                      : null}
-                    <li
-                      class="talent-priority-row"
-                      data-priority={impact.tier}
-                    >
-                      <span
-                        class="talent-priority-rank"
-                        style="color: {elColor};">C{row.cons}</span
-                      >
-                      {#if icon}
-                        <img
-                          src={icon}
-                          alt=""
-                          class="kit-icon talent-priority-icon shrink-0"
-                          loading="lazy"
-                        />
-                      {/if}
-                      <div class="talent-priority-copy">
-                        <div class="talent-priority-name">
-                          {constellation?.name ?? `C${row.cons}`}
-                        </div>
-                        <div
-                          class="talent-priority-label"
-                          data-priority={impact.tier}
+                  {#if levelImportance}
+                    <section class="board-section">
+                      <h2 class="section-title">Character level</h2>
+                      <ul class="talent-priority-list">
+                        <li
+                          class="talent-priority-row"
+                          data-priority={levelImportance.priority}
                         >
-                          {impact.label}
-                        </div>
-                      </div>
-                    </li>
-                  {/each}
-                </ul>
-              </section>
-            {/if}
+                          {#if levelImportance.icon}
+                            <img
+                              src={levelImportance.icon}
+                              alt=""
+                              class="kit-icon talent-priority-icon shrink-0"
+                              loading="lazy"
+                            />
+                          {/if}
+                          <div class="talent-priority-copy">
+                            <div class="talent-priority-name">Level 90</div>
+                            <div
+                              class="talent-priority-label"
+                              data-priority={levelImportance.priority}
+                            >
+                              {levelImportance.priorityLabel}
+                            </div>
+                          </div>
+                        </li>
+                      </ul>
+                    </section>
+                  {/if}
+                </div>
 
-            {#if builds.vertical_importance?.sig_weapons?.length}
-              <section class="board-section">
-                <h2 class="section-title">Signature weapon impact</h2>
-                <ul class="talent-priority-list">
-                  {#each builds.vertical_importance.sig_weapons as row}
-                    {@const weapon = weaponByKey.get(row.key)}
-                    {@const icon = weapon
-                      ? weaponIconUrl(weapon.awakenIcon)
-                      : null}
-                    {@const impact = classifyUpgradeImpact(
-                      row.mean_pct_gain,
-                      SIGNATURE_UPGRADE,
-                    )}
-                    <li
-                      class="talent-priority-row"
-                      data-priority={impact.tier}
-                    >
-                      {#if icon}
-                        <img
-                          src={icon}
-                          alt=""
-                          class="kit-icon talent-priority-icon shrink-0"
-                          loading="lazy"
-                        />
-                      {/if}
-                      <div class="talent-priority-copy">
-                        <div class="talent-priority-name">
-                          {weapon?.name ?? row.key}
-                        </div>
-                        <div
-                          class="talent-priority-label"
-                          data-priority={impact.tier}
-                        >
-                          {impact.label}
-                        </div>
-                      </div>
-                    </li>
-                  {/each}
-                </ul>
-              </section>
+                <div class="invest-col">
+                  {#if builds.vertical_importance?.constellations?.length}
+                    <section class="board-section">
+                      <h2 class="section-title">Constellation Impact</h2>
+                      <ul class="talent-priority-list">
+                        {#each builds.vertical_importance.constellations as row}
+                          {@const impact = classifyUpgradeImpact(
+                            row.median_pct_gain,
+                            CONSTELLATION_UPGRADE,
+                          )}
+                          {@const constellation = kit.constellations.find(
+                            (c) => c.index === row.cons,
+                          )}
+                          {@const icon = constellation
+                            ? (iconUrl(constellation.icon, "talent") ??
+                              getUiAssetUrl(constellation.icon))
+                            : null}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={impact.tier}
+                          >
+                            <span
+                              class="talent-priority-rank"
+                              style="color: {elColor};">C{row.cons}</span
+                            >
+                            {#if icon}
+                              <img
+                                src={icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">
+                                {constellation?.name ?? `C${row.cons}`}
+                              </div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={impact.tier}
+                              >
+                                {impact.label}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+
+                  {#if builds.vertical_importance?.sig_weapons?.length}
+                    <section class="board-section">
+                      <h2 class="section-title">Signature weapon impact</h2>
+                      <ul class="talent-priority-list">
+                        {#each builds.vertical_importance.sig_weapons as row}
+                          {@const weapon = weaponByKey.get(row.key)}
+                          {@const icon = weapon
+                            ? weaponIconUrl(weapon.awakenIcon)
+                            : null}
+                          {@const impact = classifyUpgradeImpact(
+                            row.median_pct_gain,
+                            SIGNATURE_UPGRADE,
+                          )}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={impact.tier}
+                          >
+                            {#if icon}
+                              <img
+                                src={icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">
+                                {weapon?.name ?? row.key}
+                              </div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={impact.tier}
+                              >
+                                {impact.label}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+                </div>
+              </div>
             {/if}
 
             {#if builds.notes}
@@ -1032,6 +1040,27 @@
 
   .board-section {
     padding: var(--space-4);
+  }
+
+  .invest-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .invest-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  @media (min-width: 1024px) {
+    .invest-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .invest-col + .invest-col {
+      border-left: var(--border-width) solid rgba(255, 255, 255, 0.1);
+    }
   }
 
   .kit-list {

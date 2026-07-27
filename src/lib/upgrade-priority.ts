@@ -67,12 +67,12 @@ export const LEVEL_UPGRADE: UpgradeImpactConfig = {
   },
 };
 
-/** Classify |meanPct| into a tier + label using section-specific cutoffs. */
+/** Classify |pct| into a tier + label using section-specific cutoffs. */
 export function classifyUpgradeImpact(
-  meanPct: number,
+  pct: number,
   config: UpgradeImpactConfig,
 ): UpgradeImpact {
-  const abs = Math.abs(meanPct);
+  const abs = Math.abs(pct);
   const tier: UpgradeTier =
     abs >= config.highPct
       ? "highly_recommended"
