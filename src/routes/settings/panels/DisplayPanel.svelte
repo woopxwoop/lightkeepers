@@ -62,9 +62,7 @@
 <div class="display-panel">
   <header class="panel-head">
     <h2 class="section-title">Display</h2>
-    <p class="lede">
-      Adjust animation and character portrait preferences.
-    </p>
+    <p class="lede">Adjust animation and character portrait preferences.</p>
   </header>
 
   <div class="preference-list">
@@ -98,7 +96,9 @@
         >
           <div
             class="char-preview char-preview--headshot"
-            style="background-image: url({getCharacterPortrait('Wriothesley')});"
+            style="background-image: url({getCharacterPortrait(
+              'Wriothesley',
+            )});"
           ></div>
           <span>Headshot</span>
         </button>
@@ -119,8 +119,8 @@
       {#if $displayPreferences.iconStyle === "tcg"}
         <p class="tcg-info">
           <IconInfo size={13} />
-          Not all characters have a TCG card yet — in that case, their portrait
-          will be shown instead.
+          Not all characters have a TCG card yet — in that case, their portrait will
+          be shown instead.
         </p>
       {/if}
     </div>
@@ -129,7 +129,7 @@
       <div>
         <span class="row-label">Background</span>
         <p class="row-desc">
-          Choose between the lighthouse image or a clean solid background.
+          Choose between the lighthouse image or a solid background.
         </p>
       </div>
       <div class="picker">

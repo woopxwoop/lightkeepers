@@ -745,8 +745,11 @@
               <IconInfo size={14} />
               Hover tip
             </Button>
-            <HoverTooltip>
-              <p class="text-xs" style="color: var(--foreground-color);">
+            <HoverTooltip label="Hover tip">
+              <p
+                class="tip-detail-text"
+                style="color: var(--foreground-color);"
+              >
                 Generic hover / focus tip shell.
               </p>
             </HoverTooltip>

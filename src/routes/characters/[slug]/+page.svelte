@@ -646,20 +646,23 @@
                           {translateStatKey(roll.key)}
                         </span>
                       {/if}
-                      <HoverTooltip class="max-w-56">
-                        <div class="text-xs font-medium leading-tight">
+                      <HoverTooltip
+                        class="max-w-56"
+                        label={translateStatKey(roll.key)}
+                      >
+                        <div class="tip-detail-text font-medium">
                           {translateStatKey(roll.key)}
                         </div>
                         {#if roll.matchesMain}
                           <div
-                            class="text-[0.65rem] leading-snug mt-1 opacity-85"
+                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
                           >
                             Also a main on {roll.mainSlots.join(" / ")}
                           </div>
                         {/if}
                         {#if roll.mean > 0}
                           <div
-                            class="text-[0.65rem] leading-snug mt-1 opacity-85"
+                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
                           >
                             {roll.mean.toFixed(1)} avg liquid rolls · {builds
                               .substat_rolls_liquid.teams} team{builds
