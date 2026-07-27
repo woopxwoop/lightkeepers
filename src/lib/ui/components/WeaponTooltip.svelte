@@ -1,5 +1,6 @@
 <script lang="ts">
   import { weaponByKey, weaponTypeLabel, type WeaponData } from "$lib/utils";
+  import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
 
   let {
@@ -36,22 +37,23 @@
 </script>
 
 {#if resolved}
-  <HoverTooltip class="max-w-72">
-    <div class="text-xs font-medium leading-tight">{resolved.name}</div>
-    <div class="text-[0.65rem] leading-tight mt-0.5 opacity-85">
+  <HoverTooltip class="max-w-72" label={resolved.name}>
+    <div class="tip-detail-text font-medium">{resolved.name}</div>
+    <div class="tip-detail-text tip-detail-text--small mt-0.5 opacity-85">
       {resolved.stars}★ · {weaponTypeLabel(resolved.weaponType)}
     </div>
     {#if resolved.baseAtk}
-      <div class="text-[0.65rem] leading-tight mt-1 opacity-85">
+      <div class="tip-detail-text tip-detail-text--small mt-1 opacity-85">
         Base ATK {Math.round(resolved.baseAtk)}{#if resolved.subStat}
           {" · "}{resolved.subStat.label}
           {formatSubStat(resolved.subStat)}{/if}
       </div>
     {/if}
     {#if passive}
-      <div class="text-[0.65rem] leading-snug mt-1.5 opacity-85">
-        {passive.description}
-      </div>
+      <GameText
+        class="tip-detail-text tip-detail-text--small mt-1.5 opacity-85"
+        text={passive.description}
+      />
     {/if}
   </HoverTooltip>
 {/if}

@@ -240,10 +240,12 @@
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
     <div class="page-head-text">
-      <h1 class="page-title">Teams</h1>
+      <h1 class="page-title">Team Simulations</h1>
       <p class="page-meta">
-        gcsim simulations · KQM artifact standards{#if data}
-          · {data.teams.length} teams{/if}
+        Database of the {#if data}
+          {data.teams.length}
+        {/if}
+        teams used for character build and investment recommendations
       </p>
     </div>
   </header>

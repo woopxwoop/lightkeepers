@@ -176,9 +176,7 @@
   <div class="roster-page">
     <header class="panel-head">
       <h2 class="section-title">Roster</h2>
-      <p class="lede">
-        Toggle ownership on each card. Select all applies to the current filter.
-      </p>
+      <p class="lede">Select the characters you own.</p>
     </header>
 
     <CharacterFilterBar
@@ -203,10 +201,7 @@
     {#if hasUnsavedChanges || isSaving || showSaved || rosterError}
       <div class="save-bar">
         <div class="save-status">
-          <span
-            class="save-dot"
-            class:saving={isSaving}
-            class:saved={showSaved}
+          <span class="save-dot" class:saving={isSaving} class:saved={showSaved}
           ></span>
           <span class="save-label">
             {isSaving ? "Saving..." : showSaved ? "Saved" : "Unsaved changes"}
@@ -263,7 +258,9 @@
           >
             {#snippet badge()}
               {#if showNew}
-                <span class="new-badge absolute top-1.5 right-1.5 z-20">NEW</span>
+                <span class="new-badge absolute top-1.5 right-1.5 z-20"
+                  >NEW</span
+                >
               {/if}
             {/snippet}
             {#snippet meta()}

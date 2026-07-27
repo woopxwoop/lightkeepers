@@ -1,5 +1,6 @@
 <script lang="ts">
   import { artifactSetByKey, type ArtifactSetData } from "$lib/utils";
+  import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
 
   let {
@@ -20,16 +21,28 @@
 </script>
 
 {#if resolved}
-  <HoverTooltip class="max-w-64">
-    <div class="text-sm font-medium leading-tight">
+  <HoverTooltip
+    class="max-w-64"
+    label={pieceCount != null
+      ? `${resolved.name} · ${pieceCount}pc`
+      : resolved.name}
+  >
+    <div class="tip-detail-text font-medium">
       {resolved.name}{#if pieceCount != null}
         {" "}· {pieceCount}pc{/if}
     </div>
     {#each resolved.bonuses as bonus}
       {#if pieceCount == null || bonus.needCount <= pieceCount}
-        <div class="text-xs leading-snug mt-1 opacity-85">
-          <span>{bonus.needCount}-Piece:</span>
-          {bonus.description}
+        <div class="mt-1.5">
+          <div
+            class="tip-detail-text tip-detail-text--small font-medium opacity-90"
+          >
+            {bonus.needCount}-Piece
+          </div>
+          <GameText
+            class="tip-detail-text tip-detail-text--small mt-0.5 opacity-85"
+            text={bonus.description}
+          />
         </div>
       {/if}
     {/each}
