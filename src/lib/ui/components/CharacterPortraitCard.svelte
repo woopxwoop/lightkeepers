@@ -110,8 +110,8 @@
     border: none;
     text-align: left;
     cursor: inherit;
+    /* Transform + opacity only — don't tween box-shadow (paint). */
     transition:
-      box-shadow 0.35s ease,
       transform 0.2s ease,
       outline-color var(--control-duration) var(--control-ease);
   }
@@ -143,6 +143,7 @@
 
   .char-card:hover {
     box-shadow: 0 0 28px 4px color-mix(in srgb, var(--shine) 28%, transparent);
+    will-change: transform;
     z-index: 5;
   }
 

@@ -588,10 +588,19 @@
     gap: var(--space-2);
   }
 
-  /* Spotlight hands sit on the page base — no raised card chrome. */
+  /* Spotlight hands sit on the page base — no raised card chrome.
+     Keep card/radius paired so the fan stays inside the page width;
+     oversized desktop values clip the leftmost weapon on phones. */
   .team-row :global(.hand) {
     --card-width: clamp(8.1rem, 18vw, 13.8rem);
     --radius: clamp(19.2rem, 46vw, 31.2rem);
+  }
+
+  @media (max-width: 640px) {
+    .team-row :global(.hand) {
+      --card-width: clamp(5.1rem, 26vw, 7.8rem);
+      --radius: clamp(13.2rem, 70vw, 19.2rem);
+    }
   }
 
   .team-footer {
