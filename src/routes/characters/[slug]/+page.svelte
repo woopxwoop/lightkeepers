@@ -23,6 +23,14 @@
     weaponTypeLabel,
   } from "$lib/utils";
   import { artifactSetByKey, weaponByKey } from "$lib/equipment-data";
+  import { isArtifactSubstatKey } from "$lib/build-stats";
+  import {
+    CONSTELLATION_UPGRADE,
+    LEVEL_UPGRADE,
+    SIGNATURE_UPGRADE,
+    TALENT_UPGRADE,
+    classifyUpgradeImpact,
+  } from "$lib/upgrade-priority";
   import {
     artifactIconUrl,
     skillIconUrl,
@@ -30,7 +38,7 @@
     weaponIconUrl,
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
-  import type { CharacterIndex } from "$lib/types/investment";
+  import type { CharacterIndex, TalentSlot } from "$lib/types/investment";
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
@@ -47,6 +55,19 @@
     normal: "Normal Attack",
     skill: "Elemental Skill",
     burst: "Elemental Burst",
+  };
+
+  const TALENT_SLOT_LABELS: Record<TalentSlot, string> = {
+    auto: "Normal",
+    skill: "Skill",
+    burst: "Burst",
+  };
+
+  /** Map investment talent slots → kit skill types for icons. */
+  const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
+    auto: "normal",
+    skill: "skill",
+    burst: "burst",
   };
 
   let character = $derived(
@@ -164,14 +185,16 @@
   });
 
   /**
-   * Recommended substats: sim liquid ranks, plus any pinned main-stat keys
-   * (Builds UI treats those as substat priorities too).
+   * Recommended substats from OptimFull liquid ranks, plus any recommended
+   * main that can also roll as a substat (e.g. EM sands → also recommend EM
+   * subs). Main-only keys (elemental DMG, heal, etc.) stay excluded.
    */
   let recommendedSubstats = $derived.by(() => {
     if (!builds) return [];
     const mainSlots = new Map<string, string[]>();
     for (const slot of MAIN_STAT_SLOTS) {
       for (const s of builds.main_stats[slot.key]) {
+        if (!isArtifactSubstatKey(s.key)) continue;
         const list = mainSlots.get(s.key) ?? [];
         list.push(slot.label);
         mainSlots.set(s.key, list);
@@ -189,6 +212,7 @@
     >();
 
     for (const r of builds.substat_rolls_liquid.ranked) {
+      if (!isArtifactSubstatKey(r.key)) continue;
       if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
       const slots = mainSlots.get(r.key) ?? [];
       byKey.set(r.key, {
@@ -199,7 +223,7 @@
       });
     }
 
-    // Guide / pinned mains with no liquid sample still show as substat chips
+    // Recommended mains that can be substats (e.g. EM) even without liquid rolls
     for (const [key, slots] of mainSlots) {
       if (byKey.has(key)) continue;
       byKey.set(key, {
@@ -215,6 +239,53 @@
       if (a.mean !== b.mean) return b.mean - a.mean;
       return a.key.localeCompare(b.key);
     });
+  });
+
+  /**
+   * Talent priority rows for Builds tab: qualitative upgrade labels from
+   * median % DPS drop when that talent is at 1.
+   */
+  let talentImportanceRows = $derived.by(() => {
+    const ti = builds?.talent_importance;
+    if (!ti || ti.teams <= 0) return [];
+    const slots = (["auto", "skill", "burst"] as const).filter(
+      (slot) => ti[slot],
+    );
+    return slots
+      .map((slot) => {
+        const stats = ti[slot];
+        const kitType = TALENT_SLOT_TO_KIT[slot];
+        const skill = kit.skills.find((s) => s.type === kitType);
+        const icon = skill
+          ? (iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon))
+          : null;
+        const impact = classifyUpgradeImpact(
+          stats.median_pct_drop,
+          TALENT_UPGRADE,
+        );
+        return {
+          slot,
+          label: TALENT_SLOT_LABELS[slot],
+          icon,
+          priority: impact.tier,
+          priorityLabel: impact.label,
+          median: stats.median_pct_drop,
+        };
+      })
+      .sort((a, b) => b.median - a.median || a.slot.localeCompare(b.slot));
+  });
+
+  /** Character level 80 importance for Builds tab (separate from talents). */
+  let levelImportance = $derived.by(() => {
+    const li = builds?.level_importance;
+    if (!li || li.teams <= 0) return null;
+    const impact = classifyUpgradeImpact(li.median_pct_drop, LEVEL_UPGRADE);
+    return {
+      priority: impact.tier,
+      priorityLabel: impact.label,
+      teams: li.teams,
+      icon: getUiAssetUrl("UI_ItemIcon_104003"),
+    };
   });
 </script>
 
@@ -574,7 +645,10 @@
                           {translateStatKey(roll.key)}
                         </span>
                       {/if}
-                      <HoverTooltip class="max-w-56">
+                      <HoverTooltip
+                        class="max-w-56"
+                        label={translateStatKey(roll.key)}
+                      >
                         <div class="tip-detail-text font-medium">
                           {translateStatKey(roll.key)}
                         </div>
@@ -602,6 +676,174 @@
                 </div>
               {/if}
             </section>
+
+            {#if talentImportanceRows.length > 0 ||
+              levelImportance ||
+              builds.vertical_importance?.constellations?.length ||
+              builds.vertical_importance?.sig_weapons?.length}
+              <div class="invest-grid">
+                <div class="invest-col">
+                  {#if talentImportanceRows.length > 0 && builds?.talent_importance}
+                    <section class="board-section">
+                      <h2 class="section-title">Talent priority</h2>
+                      <ul class="talent-priority-list">
+                        {#each talentImportanceRows as row, i}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={row.priority}
+                          >
+                            <span
+                              class="talent-priority-rank"
+                              style="color: {elColor};">{i + 1}</span
+                            >
+                            {#if row.icon}
+                              <img
+                                src={row.icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">{row.label}</div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={row.priority}
+                              >
+                                {row.priorityLabel}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+
+                  {#if levelImportance}
+                    <section class="board-section">
+                      <h2 class="section-title">Character level</h2>
+                      <ul class="talent-priority-list">
+                        <li
+                          class="talent-priority-row"
+                          data-priority={levelImportance.priority}
+                        >
+                          {#if levelImportance.icon}
+                            <img
+                              src={levelImportance.icon}
+                              alt=""
+                              class="kit-icon talent-priority-icon shrink-0"
+                              loading="lazy"
+                            />
+                          {/if}
+                          <div class="talent-priority-copy">
+                            <div class="talent-priority-name">Level 90</div>
+                            <div
+                              class="talent-priority-label"
+                              data-priority={levelImportance.priority}
+                            >
+                              {levelImportance.priorityLabel}
+                            </div>
+                          </div>
+                        </li>
+                      </ul>
+                    </section>
+                  {/if}
+                </div>
+
+                <div class="invest-col">
+                  {#if builds.vertical_importance?.constellations?.length}
+                    <section class="board-section">
+                      <h2 class="section-title">Constellation Impact</h2>
+                      <ul class="talent-priority-list">
+                        {#each builds.vertical_importance.constellations as row}
+                          {@const impact = classifyUpgradeImpact(
+                            row.median_pct_gain,
+                            CONSTELLATION_UPGRADE,
+                          )}
+                          {@const constellation = kit.constellations.find(
+                            (c) => c.index === row.cons,
+                          )}
+                          {@const icon = constellation
+                            ? (iconUrl(constellation.icon, "talent") ??
+                              getUiAssetUrl(constellation.icon))
+                            : null}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={impact.tier}
+                          >
+                            <span
+                              class="talent-priority-rank"
+                              style="color: {elColor};">C{row.cons}</span
+                            >
+                            {#if icon}
+                              <img
+                                src={icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">
+                                {constellation?.name ?? `C${row.cons}`}
+                              </div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={impact.tier}
+                              >
+                                {impact.label}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+
+                  {#if builds.vertical_importance?.sig_weapons?.length}
+                    <section class="board-section">
+                      <h2 class="section-title">Signature weapon impact</h2>
+                      <ul class="talent-priority-list">
+                        {#each [...builds.vertical_importance.sig_weapons].sort( (a, b) => b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key), ) as row}
+                          {@const weapon = weaponByKey.get(row.key)}
+                          {@const icon = weapon
+                            ? weaponIconUrl(weapon.awakenIcon)
+                            : null}
+                          {@const impact = classifyUpgradeImpact(
+                            row.median_pct_gain,
+                            SIGNATURE_UPGRADE,
+                          )}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={impact.tier}
+                          >
+                            {#if icon}
+                              <img
+                                src={icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">
+                                {weapon?.name ?? row.key}
+                              </div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={impact.tier}
+                              >
+                                {impact.label}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+                </div>
+              </div>
+            {/if}
 
             {#if builds.notes}
               <section class="board-section notes-section">
@@ -668,7 +910,7 @@
     flex-shrink: 0;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
   }
 
   .hero-portrait :global(img) {
@@ -800,6 +1042,27 @@
 
   .board-section {
     padding: var(--space-4);
+  }
+
+  .invest-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .invest-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  @media (min-width: 1024px) {
+    .invest-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .invest-col + .invest-col {
+      border-left: var(--border-width) solid rgba(255, 255, 255, 0.1);
+    }
   }
 
   .kit-list {
@@ -949,6 +1212,68 @@
     text-align: center;
     line-height: 1.15;
     color: var(--foreground-mid);
+  }
+
+  .talent-priority-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .talent-priority-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0;
+  }
+
+  .talent-priority-row + .talent-priority-row {
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.1);
+  }
+
+  .talent-priority-rank {
+    font-size: 0.85rem;
+    font-weight: 700;
+    width: 1.25rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .talent-priority-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .talent-priority-copy {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .talent-priority-name {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--foreground-color);
+  }
+
+  .talent-priority-label {
+    font-size: var(--text-xs);
+  }
+
+  .talent-priority-label[data-priority="highly_recommended"] {
+    color: var(--accent-1);
+  }
+
+  .talent-priority-label[data-priority="recommended"] {
+    color: var(--accent-2);
+  }
+
+  .talent-priority-label[data-priority="inconsequential"] {
+    color: var(--accent-3);
   }
 
   .stat-icon {

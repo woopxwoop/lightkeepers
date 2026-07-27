@@ -12,20 +12,16 @@
       id: "roster",
       label: "Roster",
       icon: "users",
-      description:
-        "Mark the characters you own. Saves locally and syncs when signed in.",
     },
     {
       id: "account",
       label: "Account",
       icon: "cloud",
-      description: "Log in to back up your roster and sync across devices.",
     },
     {
       id: "display",
       label: "Display",
       icon: "monitor",
-      description: "Adjust animation, portraits, background, and theme colors.",
     },
   ] as const;
 
@@ -52,7 +48,6 @@
 <PageShell class="settings-layout gap-6">
   <header class="page-head">
     <h1 class="page-title">Settings</h1>
-    <p class="page-hint">{activeSection.description}</p>
   </header>
 
   <Surface flush class="settings-board">

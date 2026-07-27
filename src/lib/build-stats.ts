@@ -66,6 +66,13 @@ export const SUBSTAT_ROLL_VALUE: Record<string, number> = {
   critDMG_: 0.0662,
 };
 
+/** Artifact substat keys only (excludes elemental DMG / heal / physical mains). */
+export const ARTIFACT_SUBSTAT_KEYS = new Set(Object.keys(SUBSTAT_ROLL_VALUE));
+
+export function isArtifactSubstatKey(key: string): boolean {
+  return ARTIFACT_SUBSTAT_KEYS.has(key);
+}
+
 const WEAPON_PROP_TO_GOOD: Record<string, string> = {
   FIGHT_PROP_HP_PERCENT: "hp_",
   FIGHT_PROP_ATTACK_PERCENT: "atk_",

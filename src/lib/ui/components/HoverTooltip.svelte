@@ -20,6 +20,7 @@
   let tipEl: HTMLDivElement | undefined = $state();
   let sheetRootEl: HTMLDivElement | undefined = $state();
   let sheetEl: HTMLDivElement | undefined = $state();
+  let tipTriggerEl: HTMLElement | null = null;
   let activeTriggerEl: HTMLElement | null = null;
   let open = $state(false);
   let detailOpen = $state(false);
@@ -130,7 +131,9 @@
 
   function showTip(trigger: HTMLElement) {
     if (detailOpen) return;
+    tipTriggerEl = trigger;
     open = true;
+    updateTriggerDescription(trigger, true);
     requestAnimationFrame(() => {
       place(trigger);
       measureTruncation();
@@ -141,14 +144,38 @@
 
   function hideTip() {
     open = false;
+    if (!detailOpen) updateTriggerDescription(tipTriggerEl, false);
+    tipTriggerEl = null;
+  }
+
+  function isInteractiveDescendant(
+    target: EventTarget | null,
+    trigger: HTMLElement,
+  ): boolean {
+    if (!(target instanceof Element)) return false;
+    const interactive = target.closest(
+      'a[href], button, input, select, textarea, summary, [role="button"]',
+    );
+    return Boolean(
+      interactive && interactive !== trigger && trigger.contains(interactive),
+    );
   }
 
   async function openDetail(event: Event) {
+    const trigger = event.currentTarget as HTMLElement;
+    if (isInteractiveDescendant(event.target, trigger)) return;
+
+    // Measure truncation even if the hover tip never opened (e.g. tap).
+    place(trigger);
+    measureTruncation();
+    if (!truncated) return;
+
     event.preventDefault();
     event.stopPropagation();
-    activeTriggerEl = event.currentTarget as HTMLElement | null;
-    updateTriggerDescription(activeTriggerEl, true);
+    tipTriggerEl = null;
+    activeTriggerEl = trigger;
     open = false;
+    updateTriggerDescription(trigger, false);
     detailOpen = true;
     await tick();
     if (sheetRootEl && sheetRootEl.parentElement !== document.body) {
@@ -159,7 +186,6 @@
 
   async function closeDetail() {
     const trigger = activeTriggerEl;
-    updateTriggerDescription(trigger, false);
     detailOpen = false;
     await tick();
     trigger?.focus();
@@ -221,7 +247,9 @@
     window.addEventListener("keydown", onKey);
 
     return () => {
+      updateTriggerDescription(tipTriggerEl, false);
       updateTriggerDescription(activeTriggerEl, false);
+      tipTriggerEl = null;
       trigger.removeEventListener("pointerenter", onEnter);
       trigger.removeEventListener("pointerleave", onLeave);
       trigger.removeEventListener("focusin", onEnter);
@@ -300,6 +328,9 @@
 
 <style>
   .hover-tooltip {
+    /* Fixed px — tip chrome stays compact; rem utilities would track root/body. */
+    font-size: 11px;
+    line-height: 1.35;
     white-space: normal;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     opacity: 0;
@@ -340,11 +371,26 @@
     right: 0.65rem;
     bottom: 0.35rem;
     z-index: 1;
-    font-size: 0.6rem;
+    font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: color-mix(in srgb, var(--background-color) 72%, transparent);
+  }
+
+  /* Callers may still pass rem utilities; keep hover tip from scaling up. */
+  .hover-tooltip :global(.text-sm),
+  .hover-tooltip :global(.text-xs),
+  .hover-tooltip :global(.text-\[0\.65rem\]),
+  .hover-tooltip :global(.tip-detail-text) {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .hover-tooltip :global(.text-\[0\.65rem\]),
+  .hover-tooltip :global(.tip-detail-text--small) {
+    font-size: 10px;
+    line-height: 1.4;
   }
 
   .tip-sheet-root {
@@ -390,21 +436,21 @@
     flex: 1 1 auto;
   }
 
-  /* Readable sizes in the sheet regardless of caller utility classes. */
+  /* Readable sheet sizes in px — larger than hover tip, not rem-scaled. */
   .tip-sheet-body :global(.tip-detail-text) {
-    font-size: 0.9rem;
+    font-size: 14px;
     line-height: 1.35;
   }
 
   .tip-sheet-body :global(.tip-detail-text.tip-detail-text--small) {
-    font-size: 0.8rem;
+    font-size: 13px;
     line-height: 1.45;
   }
 
   .tip-sheet-close {
     align-self: flex-end;
     flex-shrink: 0;
-    font-size: var(--text-xs);
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;

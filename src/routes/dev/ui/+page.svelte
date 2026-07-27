@@ -755,7 +755,7 @@
               <IconInfo size={14} />
               Current shell
             </Button>
-            <HoverTooltip class="max-w-64">
+            <HoverTooltip class="max-w-64" label="Current shell">
               <div class="tip-detail-text font-medium">Engulfing Lightning</div>
               <div
                 class="tip-detail-text tip-detail-text--small mt-0.5 opacity-85"

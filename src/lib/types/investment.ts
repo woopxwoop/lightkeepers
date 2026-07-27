@@ -29,7 +29,7 @@ export interface InvestmentTeam {
   results: InvestmentSim[];
 }
 
-export type SimKind = "baseline" | "f2p" | "vertical";
+export type SimKind = "baseline" | "f2p" | "vertical" | "talent";
 
 export interface InvestmentSim {
   /** Stable key: characters sorted, Char~C{cons}~{weapon}, joined by __ */
@@ -43,7 +43,8 @@ export interface InvestmentSim {
   /**
    * baseline = canonical starting build;
    * f2p = floor-cost alternative (free weapon / 4★ budget cons, etc.);
-   * vertical = limited-pull upgrades (extra cost above floor).
+   * vertical = limited-pull upgrades (extra cost above floor);
+   * talent = one-step talent drop from baseline (single char, one talent at 1).
    */
   kind: SimKind;
   /** Total cost in limited5 copies (baseline + upgrades). */
@@ -98,8 +99,9 @@ export interface CharacterIndexFile {
 export interface CharacterIndex {
   key: string;
   /**
-   * Weapons ranked by how many teams they appear on across all sim kinds
-   * (includes signature weapons from vertical). `teams` = distinct team_key count.
+   * Weapons ranked by distinct team count. Baseline weapons always count;
+   * F2P weapon alts only count teams where that f2p config beats baseline DPS;
+   * vertical/sig weapons still count every appearance.
    */
   weapons: CharacterWeaponRank[];
   /**
@@ -121,8 +123,82 @@ export interface CharacterIndex {
    * within a team, then average those team-means across teams.
    */
   substat_rolls_liquid: CharacterLiquidSubstats;
+  /**
+   * How much DPS drops when each talent is lowered to 1 (others stay baseline),
+   * aggregated across teams. Character level is tracked separately.
+   */
+  talent_importance?: CharacterTalentImportance;
+  /**
+   * How much DPS drops when the character runs at level 80 (talents stay
+   * baseline), aggregated across teams.
+   */
+  level_importance?: CharacterLevelImportance;
+  /**
+   * One-step vertical gains: constellations are stepwise vs the previous
+   * constellation (C2 vs C1); sig weapons are vs baseline. Combined cons+sig
+   * and multi-char verticals are excluded.
+   */
+  vertical_importance?: CharacterVerticalImportance;
   /** Optional editorial blurb from hand-authored guide (merge-time). */
   notes?: string;
+}
+
+export type TalentSlot = "auto" | "skill" | "burst";
+
+export interface CharacterTalentSlotImportance {
+  /** Average % DPS drop vs baseline across teams. */
+  mean_pct_drop: number;
+  /** Median % DPS drop vs baseline across teams. */
+  median_pct_drop: number;
+  /** Smallest % DPS drop on any contributing team. */
+  min_pct_drop: number;
+  /** Largest % DPS drop on any contributing team. */
+  max_pct_drop: number;
+}
+
+export interface CharacterTalentImportance {
+  /** Teams with baseline + all three talent drops for this character. */
+  teams: number;
+  auto: CharacterTalentSlotImportance;
+  skill: CharacterTalentSlotImportance;
+  burst: CharacterTalentSlotImportance;
+  /** Talent slots ranked by mean % drop (highest first). */
+  priority: TalentSlot[];
+}
+
+export interface CharacterLevelImportance extends CharacterTalentSlotImportance {
+  /** Teams with a level-80 drop sample for this character. */
+  teams: number;
+}
+
+export interface CharacterVerticalGain {
+  /** Teams that contributed a one-step vertical sample for this entry. */
+  teams: number;
+  /** Average % DPS gain vs that team's baseline. */
+  mean_pct_gain: number;
+  /** Median % DPS gain vs that team's baseline. */
+  median_pct_gain: number;
+  /** Smallest % DPS gain on any contributing team. */
+  min_pct_gain: number;
+  /** Largest % DPS gain on any contributing team. */
+  max_pct_gain: number;
+}
+
+export interface CharacterConsGain extends CharacterVerticalGain {
+  /** Absolute constellation level reached (e.g. 1 for C1). Gain is vs C{cons-1}. */
+  cons: number;
+}
+
+export interface CharacterSigGain extends CharacterVerticalGain {
+  /** Signature weapon GOOD key. */
+  key: string;
+}
+
+export interface CharacterVerticalImportance {
+  /** Cons-only upgrades, sorted by cons ascending. */
+  constellations: CharacterConsGain[];
+  /** Sig-weapon-only upgrades, sorted by mean gain descending. */
+  sig_weapons: CharacterSigGain[];
 }
 
 export interface CharacterWeaponRank {
