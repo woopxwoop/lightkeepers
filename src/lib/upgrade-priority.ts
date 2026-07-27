@@ -43,7 +43,7 @@ export const CONSTELLATION_UPGRADE: UpgradeImpactConfig = {
   labels: {
     highly_recommended: "High impact constellation",
     recommended: "Mid impact constellation",
-    inconsequential: "Inconsequential constellation",
+    inconsequential: "Low impact constellation",
   },
 };
 
@@ -53,7 +53,7 @@ export const SIGNATURE_UPGRADE: UpgradeImpactConfig = {
   labels: {
     highly_recommended: "High impact weapon",
     recommended: "Mid impact weapon",
-    inconsequential: "Pull for the drip",
+    inconsequential: "Low impact weapon",
   },
 };
 
