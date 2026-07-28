@@ -46,6 +46,7 @@ function isCharacterUi(name: string): boolean {
     name.startsWith("UI_CoopImg") ||
     name.startsWith("UI_NameCardPic") ||
     name.startsWith("UI_Gacha_AvatarImg") ||
+    name.startsWith("UI_Gacha_AvatarIcon") ||
     name.startsWith("UI_SkillIcon") ||
     name.startsWith("UI_Talent_")
   );
@@ -93,6 +94,12 @@ export function talentIconUrl(iconName: string | null): string | null {
 
 /** Character gacha / wish splash (`UI_Gacha_AvatarImg_*`). */
 export function characterSplashUrl(iconName: string | null): string | null {
+  if (!iconName) return null;
+  return uiUrl(iconName);
+}
+
+/** Wish-result portrait crop (`UI_Gacha_AvatarIcon_*`). */
+export function characterGachaIconUrl(iconName: string | null): string | null {
   if (!iconName) return null;
   return uiUrl(iconName);
 }

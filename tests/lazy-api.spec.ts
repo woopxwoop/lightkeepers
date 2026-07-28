@@ -42,10 +42,16 @@ test("abyss fetches /api/teams but not /api/nearmiss", async ({ page }) => {
   expect(hits.some((p) => p.endsWith("/api/nearmiss"))).toBe(false);
 });
 
-test("pulls fetches /api/teams and /api/nearmiss", async ({ page }) => {
+test("pulls fetches /api/teams, /api/nearmiss, and /api/tierlist", async ({
+  page,
+}) => {
   attachBrowserDebug(page);
   await installApiMocks(page);
-  const hits = trackApiPaths(page, ["/api/teams", "/api/nearmiss"]);
+  const hits = trackApiPaths(page, [
+    "/api/teams",
+    "/api/nearmiss",
+    "/api/tierlist",
+  ]);
 
   const teamsReq = page.waitForRequest(
     (req) => new URL(req.url()).pathname.endsWith("/api/teams"),
@@ -55,12 +61,16 @@ test("pulls fetches /api/teams and /api/nearmiss", async ({ page }) => {
     (req) => new URL(req.url()).pathname.endsWith("/api/nearmiss"),
     { timeout: CLIENT_API_TIMEOUT },
   );
+  const tierListReq = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/tierlist"),
+    { timeout: CLIENT_API_TIMEOUT },
+  );
 
   await page.goto("/pulls");
   await expect(
     page.getByRole("heading", { name: "Pull Suggestions" }),
   ).toBeVisible();
-  await Promise.all([teamsReq, nearMissReq]);
+  await Promise.all([teamsReq, nearMissReq, tierListReq]);
 
   await expect(
     page.getByText("Matching your roster against Stygian usage…"),
@@ -68,4 +78,5 @@ test("pulls fetches /api/teams and /api/nearmiss", async ({ page }) => {
 
   expect(hits.some((p) => p.endsWith("/api/teams"))).toBe(true);
   expect(hits.some((p) => p.endsWith("/api/nearmiss"))).toBe(true);
+  expect(hits.some((p) => p.endsWith("/api/tierlist"))).toBe(true);
 });

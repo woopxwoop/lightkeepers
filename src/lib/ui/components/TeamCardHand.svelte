@@ -45,7 +45,12 @@
   }
 </script>
 
-<div class="hand hand-{spread} {className}" role="group" aria-label="Team">
+<div
+  class="hand hand-{spread} {className}"
+  style:--cards={characters.length || 4}
+  role="group"
+  aria-label="Team"
+>
   {#each characters as character, i (character?.name_id ?? character?.name ?? i)}
     {@const key = character?.name_id ?? character?.name ?? ""}
     {@const build = builds[i]}
@@ -66,6 +71,9 @@
         {character}
         tintBackground
         dimmed={key !== "" && dimmedKeys.has(key)}
+        href={character?.name_id
+          ? `/characters/${character.name_id}`
+          : undefined}
       >
         {#snippet badge()}
           {#if weaponIcon}
@@ -148,27 +156,57 @@
 
   /* ── Flat overlap (no arc) ────────────────────────────────────────── */
   .hand-flat {
-    --overlap: calc(var(--card-width) * -0.42);
+    /* Never wider than 1/n of the row so a full unstack still fits. */
+    --flat-width: min(var(--card-width), calc(100% / var(--cards, 4)));
+    --overlap: calc(var(--flat-width) * -0.42);
+    /* Fit leftover space, but never open wider than the old fixed gap. */
+    --spread-gap-max: 0.4rem;
+    --spread-gap: min(
+      var(--spread-gap-max),
+      max(
+        0px,
+        calc(
+          (100% - (var(--cards, 4) * var(--flat-width))) /
+            max(1, calc(var(--cards, 4) - 1))
+        )
+      )
+    );
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-end;
+    box-sizing: border-box;
     padding: 1.75rem 1.25rem 0.5rem;
+    overflow: hidden;
   }
 
   .hand-flat .card {
     position: relative;
     z-index: var(--z);
-    width: var(--card-width);
+    width: var(--flat-width);
     flex-shrink: 0;
     margin-left: var(--overlap);
     transition:
-      transform 220ms ease,
-      filter 220ms ease;
+      margin-left 520ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 280ms ease,
+      filter 280ms ease;
     filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
   }
 
   .hand-flat .card:first-child {
     margin-left: 0;
+  }
+
+  /* Unstack into whatever gap still fits inside the row. */
+  @media (hover: hover) {
+    .hand-flat:hover .card,
+    .hand-flat:focus-within .card {
+      margin-left: var(--spread-gap);
+    }
+
+    .hand-flat:hover .card:first-child,
+    .hand-flat:focus-within .card:first-child {
+      margin-left: 0;
+    }
   }
 
   .hand-flat .card:hover,
@@ -249,7 +287,7 @@
     }
 
     .hand-flat {
-      --overlap: calc(var(--card-width) * -0.38);
+      --overlap: calc(var(--flat-width) * -0.38);
       padding: 1.25rem 0.5rem 0.25rem;
     }
   }

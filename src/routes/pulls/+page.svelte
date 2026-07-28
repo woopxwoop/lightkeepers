@@ -12,15 +12,22 @@
     ensureTeamsOwned,
     invalidateNearMissTeams,
     invalidateTeamsOwned,
+    tierList,
+    tierListLoaded,
+    tierListError,
+    ensureTierList,
+    invalidateTierList,
+    animationsEnabled,
   } from "$lib/stores";
   import {
     computePullSuggestions,
     computePairSuggestions,
   } from "$lib/pullSuggestions";
   import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
+  import type { TierListEntry } from "$lib/tierlist";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import WishSlot from "$lib/ui/components/WishSlot.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
@@ -36,39 +43,46 @@
   let pairSuggestions: PairSuggestion[] = $state([]);
   let expandedSingle = $state<string | null>(null);
   let expandedPair = $state<string | null>(null);
+  let expandedStandoutBoards = $state(new Set<string>());
+  let collapsingStandoutBoards = $state(new Set<string>());
+  const standoutCollapseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  const STANDOUT_DEAL_MS = 480;
+  const STANDOUT_STAGGER_MS = 85;
 
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
-
-  // Align single-missing: swap slot always last
-  function alignMembers(
-    bestMembers: string[],
-    currentMembers: string[],
-    missingCharacter: string,
-  ): { bestAligned: string[]; currentAligned: string[] } {
-    const shared = bestMembers.filter((m) => m !== missingCharacter);
-    const replaced = currentMembers.find((m) => !shared.includes(m)) ?? "";
-    return {
-      bestAligned: [...shared, missingCharacter],
-      currentAligned: [...shared, replaced],
-    };
-  }
-
-  let nearMissReady = $derived(
-    $nearMissStygianLoaded && $nearMissPairLoaded,
+  let ownedIds = $derived(
+    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
   );
 
-  let pullsDataReady = $derived(nearMissReady && $teamsOwnedLoaded);
+  let nearMissReady = $derived($nearMissStygianLoaded && $nearMissPairLoaded);
+
+  /** Near-miss + owned teams ready; tier cream optional (filters when present). */
+  let pullsDataReady = $derived(
+    nearMissReady && $teamsOwnedLoaded && ($tierListLoaded || !!$tierListError),
+  );
+
+  /** Limited cream name_ids — pull suggestions stay inside the standouts cut. */
+  let creamPullIds = $derived(
+    $tierList
+      ? new Set($tierList.fiveStar.map((e) => e.nameId))
+      : undefined,
+  );
 
   function rankSuggestions() {
     try {
       const singles = computePullSuggestions(
         $nearMissStygianTeams,
         $teamsOwnedStygian,
+        3,
+        creamPullIds,
       );
       const pairs = computePairSuggestions(
         $nearMissPairTeams,
         $teamsOwnedStygian,
         singles,
+        3,
+        creamPullIds,
       );
       suggestions = singles;
       pairSuggestions = pairs;
@@ -80,6 +94,11 @@
       console.error("pull suggestion ranking failed:", error);
     }
   }
+
+  // Tier list is roster-independent — warm as soon as the page mounts.
+  $effect(() => {
+    ensureTierList().catch(() => {});
+  });
 
   // Lazy: owned teams + near-miss (not from global bootstrap).
   $effect(() => {
@@ -114,6 +133,7 @@
     $nearMissStygianTeams;
     $nearMissPairTeams;
     $teamsOwnedStygian;
+    creamPullIds;
     rankSuggestions();
   });
 
@@ -125,8 +145,47 @@
     expandedPair = expandedPair === key ? null : key;
   }
 
+  function toggleStandoutBoard(id: string, count = 1) {
+    if (collapsingStandoutBoards.has(id)) return;
+
+    if (expandedStandoutBoards.has(id)) {
+      const collapsing = new Set(collapsingStandoutBoards);
+      collapsing.add(id);
+      collapsingStandoutBoards = collapsing;
+
+      const prior = standoutCollapseTimers.get(id);
+      if (prior) clearTimeout(prior);
+
+      const wait = window.matchMedia("(prefers-reduced-motion: reduce)")
+        .matches
+        ? 1
+        : STANDOUT_DEAL_MS + Math.max(0, count - 1) * STANDOUT_STAGGER_MS;
+      standoutCollapseTimers.set(
+        id,
+        setTimeout(() => {
+          standoutCollapseTimers.delete(id);
+          const expanded = new Set(expandedStandoutBoards);
+          expanded.delete(id);
+          expandedStandoutBoards = expanded;
+          const nextCollapsing = new Set(collapsingStandoutBoards);
+          nextCollapsing.delete(id);
+          collapsingStandoutBoards = nextCollapsing;
+        }, wait),
+      );
+      return;
+    }
+
+    const expanded = new Set(expandedStandoutBoards);
+    expanded.add(id);
+    expandedStandoutBoards = expanded;
+  }
+
   function pairKey(suggestion: PairSuggestion): string {
     return `${suggestion.charA}|${suggestion.charB}`;
+  }
+
+  function usagePct(entry: TierListEntry): string {
+    return `${entry.score.toFixed(entry.score >= 10 ? 0 : 1)}%`;
   }
 
   async function retryPulls() {
@@ -142,13 +201,18 @@
       pageState = "error";
     }
   }
+
+  async function retryTierList() {
+    invalidateTierList();
+    try {
+      await ensureTierList();
+    } catch {
+      /* tierListError store already set */
+    }
+  }
 </script>
 
-{#snippet teamGrid(
-  members: string[],
-  highlighted: string[],
-  dimmed: boolean,
-)}
+{#snippet teamGrid(members: string[], highlighted: string[], dimmed: boolean)}
   <div class="mini-grid" class:mini-grid-dimmed={dimmed}>
     {#each members as member (member)}
       <div
@@ -161,14 +225,80 @@
   </div>
 {/snippet}
 
-<PageShell class="gap-6">
+{#snippet standoutsBoard(id: string, label: string, entries: TierListEntry[])}
+  {@const open = expandedStandoutBoards.has(id)}
+  {@const collapsing = collapsingStandoutBoards.has(id)}
+  {@const shown = open || collapsing}
+  {@const restCount = Math.max(0, entries.length - 1)}
+  <div class="standouts">
+    <p class="standouts-status">Most used {label}</p>
+    {#if entries.length === 0}
+      <EmptyState message="No standouts on this board yet." />
+    {:else}
+      <div
+        class="standouts-deck"
+        class:open={shown}
+        class:collapsing
+        id="standouts-deck-{id}"
+        style="--n: {entries.length};"
+      >
+        <ol class="standouts-deck-list">
+          {#each entries as entry, i (entry.nameId)}
+            {@const owned = ownedIds.has(entry.nameId)}
+            {@const character = mapping.get(entry.nameId)}
+            <li
+              class="standout"
+              style="--i: {i};"
+              aria-hidden={!shown && i > 0 ? true : undefined}
+              aria-label="{entry.name}, {usagePct(entry)} average usage"
+              title="{entry.name} · {usagePct(entry)} avg usage"
+            >
+              <WishSlot
+                nameId={entry.nameId}
+                name={entry.name}
+                rarity={character?.rarity ?? 5}
+                dimmed={!owned}
+                loading={i === 0 ? "eager" : "lazy"}
+                onclick={!shown && i === 0 && restCount > 0
+                  ? () => toggleStandoutBoard(id, entries.length)
+                  : undefined}
+                cue={!shown && i === 0 && restCount > 0
+                  ? "Expand"
+                  : undefined}
+              />
+            </li>
+          {/each}
+          {#if restCount > 0}
+            <li class="standout-toggle-cell">
+              <button
+                type="button"
+                class="standouts-toggle"
+                aria-expanded={shown}
+                aria-controls="standouts-deck-{id}"
+                disabled={collapsing}
+                onclick={() => toggleStandoutBoard(id, entries.length)}
+              >
+                <span class="standouts-toggle-label">
+                  {shown ? "Collapse" : "Expand"}
+                </span>
+                <span class="standouts-toggle-chevron" class:open={shown}>
+                  <IconChevronDown size={18} strokeWidth={2.25} />
+                </span>
+              </button>
+            </li>
+          {/if}
+        </ol>
+      </div>
+    {/if}
+  </div>
+{/snippet}
+
+<PageShell class="pulls-page gap-8">
   <header class="page-head">
-    <div class="page-head-text">
-      <h1 class="page-title">Pull Suggestions</h1>
-      <p class="page-meta">
-        Based on your {ownedCount} characters · Stygian Onslaught usage
-      </p>
-    </div>
+    <h1 class="page-title">Pull Suggestions</h1>
+    <p class="page-meta">
+      Based on your {ownedCount} characters · Stygian Onslaught usage
+    </p>
   </header>
 
   {#if pageState === "waiting"}
@@ -189,178 +319,41 @@
         : "Your roster already covers the high-usage Stygian teams — no single pull stands out right now."}
     />
   {:else}
-    <!-- ── Best next pulls ─────────────────────────────────────────── -->
-    {#if suggestions.length > 0}
-      <section class="ledger-section">
-        <header class="ledger-head">
-          <h2 class="ledger-title">Best next pulls</h2>
-          <p class="ledger-lede">
-            Ranked by how much a character improves the teams your roster can
-            already field
-          </p>
-        </header>
+    <div class="suggest-columns">
+      <!-- ── Best next pulls ───────────────────────────────────────── -->
+      {#if suggestions.length > 0}
+        <section class="panel">
+          <header class="panel-head">
+            <div class="panel-head-text">
+              <h2 class="panel-title">Best next pulls</h2>
+              <p class="panel-lede">
+                Ranked by how much a character improves the teams your roster
+                can already field
+              </p>
+            </div>
+          </header>
 
-        <Surface flush class="ledger">
           <ol class="ledger-list">
-            {#each suggestions as suggestion, i (suggestion.character)}
+            {#each suggestions as suggestion (suggestion.character)}
               {@const isOpen = expandedSingle === suggestion.character}
+              {@const char = mapping.get(suggestion.character)}
               <li class="ledger-row">
+                <div class="row-art">
+                  <WishSlot
+                    nameId={suggestion.character}
+                    name={suggestion.characterName ?? suggestion.character}
+                    rarity={char?.rarity ?? 5}
+                  />
+                </div>
                 <button
                   type="button"
-                  class="row-head"
+                  class="row-toggle"
                   aria-expanded={isOpen}
+                  aria-label={isOpen ? "Show less" : "Learn more"}
                   onclick={() => toggleSingle(suggestion.character)}
                 >
-                  <span class="row-rank">{i + 1}</span>
-                  <span class="row-portrait">
-                    <CharacterIcon
-                      character={mapping.get(suggestion.character)}
-                      iconStyle="enka"
-                    />
-                  </span>
-                  <span class="row-text">
-                    <span class="row-name"
-                      >{suggestion.characterName ?? suggestion.character}</span
-                    >
-                    <span class="row-sub">
-                      unlocks {suggestion.unlocksTeams}
-                      {suggestion.unlocksTeams === 1 ? "team" : "teams"}
-                    </span>
-                  </span>
-                  <span
-                    class="row-delta"
-                    title={suggestion.currentBestTeam
-                      ? `${suggestion.avgUsage.toFixed(1)}% unlocked − ${suggestion.currentBestTeam.avg_usage_rate.toFixed(1)}% current best`
-                      : `${suggestion.avgUsage.toFixed(1)}% unlocked · no current alternative`}
-                    >+{suggestion.improvement.toFixed(1)} usage pts</span
-                  >
-                  <span class="row-chevron" class:row-chevron-open={isOpen}>
-                    <IconChevronDown size={16} strokeWidth={2.25} />
-                  </span>
-                </button>
-
-                <div
-                  class="row-details"
-                  class:row-details-open={isOpen}
-                  aria-hidden={!isOpen}
-                  inert={!isOpen}
-                >
-                  <div class="row-details-inner">
-                    {#if suggestion.currentBestTeam}
-                      {@const aligned = alignMembers(
-                        suggestion.bestTeam.members ?? [],
-                        suggestion.currentBestTeam.members ?? [],
-                        suggestion.character,
-                      )}
-                      <div class="compare">
-                        <div class="compare-side">
-                          <p class="compare-label">current best</p>
-                          {@render teamGrid(aligned.currentAligned, [], true)}
-                          <p class="compare-usage">
-                            {suggestion.currentBestTeam.avg_usage_rate.toFixed(
-                              1,
-                            )}% avg usage
-                          </p>
-                        </div>
-                        <span class="compare-arrow" aria-hidden="true">
-                          <IconChevronDown size={18} strokeWidth={2} />
-                        </span>
-                        <div class="compare-side">
-                          <p class="compare-label">
-                            with {suggestion.characterName ??
-                              suggestion.character}
-                          </p>
-                          {@render teamGrid(
-                            aligned.bestAligned,
-                            [suggestion.character],
-                            false,
-                          )}
-                          <p class="compare-usage compare-usage-accent">
-                            {suggestion.avgUsage.toFixed(1)}% avg usage
-                          </p>
-                        </div>
-                      </div>
-                    {:else}
-                      <div class="compare">
-                        <div class="compare-side">
-                          <p class="compare-label">
-                            best unlocked team — no current alternative
-                          </p>
-                          {@render teamGrid(
-                            suggestion.bestTeam.members ?? [],
-                            [suggestion.character],
-                            false,
-                          )}
-                          <p class="compare-usage compare-usage-accent">
-                            {suggestion.avgUsage.toFixed(1)}% avg usage
-                          </p>
-                        </div>
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-              </li>
-            {/each}
-          </ol>
-        </Surface>
-      </section>
-    {/if}
-
-    <!-- ── Pair opportunities ──────────────────────────────────────── -->
-    {#if pairSuggestions.length > 0}
-      <section class="ledger-section">
-        <header class="ledger-head">
-          <h2 class="ledger-title">Pair opportunities</h2>
-          <p class="ledger-lede">
-            Two characters that unlock teams neither would alone
-          </p>
-        </header>
-
-        <Surface flush class="ledger">
-          <ol class="ledger-list">
-            {#each pairSuggestions as suggestion, i (pairKey(suggestion))}
-              {@const key = pairKey(suggestion)}
-              {@const isOpen = expandedPair === key}
-              <li class="ledger-row">
-                <button
-                  type="button"
-                  class="row-head"
-                  aria-expanded={isOpen}
-                  onclick={() => togglePair(key)}
-                >
-                  <span class="row-rank">{i + 1}</span>
-                  <span class="row-portrait-pair">
-                    <span class="row-portrait">
-                      <CharacterIcon
-                        character={mapping.get(suggestion.charA)}
-                        iconStyle="enka"
-                      />
-                    </span>
-                    <span class="row-portrait">
-                      <CharacterIcon
-                        character={mapping.get(suggestion.charB)}
-                        iconStyle="enka"
-                      />
-                    </span>
-                  </span>
-                  <span class="row-text">
-                    <span class="row-name">
-                      {suggestion.charAName} + {suggestion.charBName}
-                    </span>
-                    <span class="row-sub">
-                      unlocks {suggestion.unlocksTeams}
-                      {suggestion.unlocksTeams === 1 ? "team" : "teams"}
-                    </span>
-                  </span>
-                  <span
-                    class="row-delta"
-                    title={suggestion.currentBestTeam
-                      ? `${suggestion.avgUsage.toFixed(1)}% unlocked − ${suggestion.currentBestTeam.avg_usage_rate.toFixed(1)}% current alternative`
-                      : `${suggestion.avgUsage.toFixed(1)}% unlocked · no current alternative`}
-                    >+{suggestion.improvement.toFixed(1)} usage pts</span
-                  >
-                  <span class="row-chevron" class:row-chevron-open={isOpen}>
-                    <IconChevronDown size={16} strokeWidth={2.25} />
+                  <span class="row-toggle-chevron" class:open={isOpen}>
+                    <IconChevronDown size={18} strokeWidth={2.25} />
                   </span>
                 </button>
 
@@ -372,75 +365,161 @@
                 >
                   <div class="row-details-inner">
                     <div class="compare">
-                      {#if suggestion.currentBestTeam}
-                        <div class="compare-side">
-                          <p class="compare-label">current alternative</p>
+                      <p class="compare-label">
+                        best unlocked: {(
+                          suggestion.topTeams[0]?.avg_usage_rate ?? 0
+                        ).toFixed(1)}%
+                      </p>
+                      {#each suggestion.topTeams as team, i (team.team_key)}
+                        <div
+                          class="compare-side"
+                          class:compare-side-best={i === 0}
+                        >
                           {@render teamGrid(
-                            suggestion.currentBestTeam.members ?? [],
-                            [],
-                            true,
+                            team.members ?? [],
+                            i === 0 ? [suggestion.character] : [],
+                            i !== 0,
                           )}
-                          <p class="compare-usage">
-                            {suggestion.currentBestTeam.avg_usage_rate.toFixed(
-                              1,
-                            )}% avg usage
-                          </p>
                         </div>
-                        <span class="compare-arrow" aria-hidden="true">
-                          <IconChevronDown size={18} strokeWidth={2} />
-                        </span>
-                      {/if}
-                      <div class="compare-side">
-                        <p class="compare-label">best unlocked team</p>
-                        {@render teamGrid(
-                          suggestion.bestTeam.members ?? [],
-                          [suggestion.charA, suggestion.charB],
-                          false,
-                        )}
-                        <p class="compare-usage compare-usage-accent">
-                          {suggestion.avgUsage.toFixed(1)}% avg usage
-                        </p>
-                      </div>
+                      {/each}
                     </div>
                   </div>
                 </div>
               </li>
             {/each}
           </ol>
-        </Surface>
-      </section>
-    {/if}
+        </section>
+      {/if}
+
+      <!-- ── Pair opportunities ────────────────────────────────────── -->
+      {#if pairSuggestions.length > 0}
+        <section class="panel">
+          <header class="panel-head">
+            <div class="panel-head-text">
+              <h2 class="panel-title">Pair opportunities</h2>
+              <p class="panel-lede">
+                Two characters that unlock teams neither would alone
+              </p>
+            </div>
+          </header>
+
+          <ol class="ledger-list">
+            {#each pairSuggestions as suggestion (pairKey(suggestion))}
+              {@const key = pairKey(suggestion)}
+              {@const isOpen = expandedPair === key}
+              {@const charA = mapping.get(suggestion.charA)}
+              {@const charB = mapping.get(suggestion.charB)}
+              <li class="ledger-row">
+                <div class="row-art row-art-pair">
+                  <WishSlot
+                    nameId={suggestion.charA}
+                    name={suggestion.charAName ?? suggestion.charA}
+                    rarity={charA?.rarity ?? 5}
+                  />
+                  <WishSlot
+                    nameId={suggestion.charB}
+                    name={suggestion.charBName ?? suggestion.charB}
+                    rarity={charB?.rarity ?? 5}
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="row-toggle"
+                  aria-expanded={isOpen}
+                  aria-label={isOpen ? "Show less" : "Learn more"}
+                  onclick={() => togglePair(key)}
+                >
+                  <span class="row-toggle-chevron" class:open={isOpen}>
+                    <IconChevronDown size={18} strokeWidth={2.25} />
+                  </span>
+                </button>
+
+                <div
+                  class="row-details"
+                  class:row-details-open={isOpen}
+                  aria-hidden={!isOpen}
+                  inert={!isOpen}
+                >
+                  <div class="row-details-inner">
+                    <div class="compare">
+                      <p class="compare-label">
+                        best unlocked: {(
+                          suggestion.topTeams[0]?.avg_usage_rate ?? 0
+                        ).toFixed(1)}%
+                      </p>
+                      {#each suggestion.topTeams as team, i (team.team_key)}
+                        <div
+                          class="compare-side"
+                          class:compare-side-best={i === 0}
+                        >
+                          {@render teamGrid(
+                            team.members ?? [],
+                            i === 0
+                              ? [suggestion.charA, suggestion.charB]
+                              : [],
+                            i !== 0,
+                          )}
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            {/each}
+          </ol>
+        </section>
+      {/if}
+    </div>
   {/if}
 
-  <!-- ── How suggestions work ──────────────────────────────────────── -->
-  <details class="methodology">
-    <summary>How suggestions work</summary>
-    <p>
-      Rankings weigh team usage rates in Stygian Onslaught fearless and dire: a
-      character scores higher when the teams they unlock are meaningfully
-      better than what your roster can already field with the same cores. They
-      do not account for vertical investment, unreleased content, or your
-      personal preferences.
-      <span class="methodology-accent"
-        >When in doubt, pull and build around your favorite characters.</span
-      >
-    </p>
-  </details>
+  <!-- ── Cream of the crop (roster-independent) ────────────────────── -->
+  <section class="panel">
+    <header class="panel-head">
+      <div class="panel-head-text">
+        <h2 class="panel-title">Characters used in Stygian</h2>
+        <p class="panel-lede">
+          Most used characters in Stygian over the last
+          {$tierList?.windowCycles ?? 5} cycles
+        </p>
+      </div>
+    </header>
+
+    {#if !$tierListLoaded && !$tierListError}
+      <LoadingState variant="pulse" message="Finding Stygian standouts…" />
+    {:else if $tierListError}
+      <EmptyState message="Could not load Stygian standouts right now.">
+        {#snippet action()}
+          <Button variant="secondary" onclick={retryTierList}>Try again</Button>
+        {/snippet}
+      </EmptyState>
+    {:else}
+      <div class="standouts-stack">
+        {@render standoutsBoard(
+          "limited",
+          "limited characters",
+          $tierList?.fiveStar ?? [],
+        )}
+        {@render standoutsBoard(
+          "nonLimited",
+          "non limited characters",
+          $tierList?.fourStar ?? [],
+        )}
+      </div>
+    {/if}
+  </section>
+
+  <p class="pulls-note">
+    When in doubt, pull and build around your favorite characters.
+  </p>
 </PageShell>
 
 <style>
   .page-head {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-  }
-
-  .page-head-text {
-    display: flex;
     flex-direction: column;
     gap: 0.2rem;
+    padding-bottom: var(--space-2);
+    border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
   .page-title {
@@ -457,20 +536,44 @@
     color: var(--foreground-mid);
   }
 
-  /* ── Ledger sections ────────────────────────────────────────────── */
-  .ledger-section {
+  /* ── Panels ─────────────────────────────────────────────────────── */
+  .suggest-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  @media (min-width: 960px) {
+    .suggest-columns {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      gap: var(--space-6);
+    }
+  }
+
+  .panel {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    min-width: 0;
   }
 
-  .ledger-head {
+  .panel-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .panel-head-text {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
+    min-width: 0;
   }
 
-  .ledger-title {
+  .panel-title {
     font-family: var(--font-display);
     font-size: var(--text-sm);
     font-weight: 600;
@@ -479,149 +582,356 @@
     color: var(--foreground-color);
   }
 
-  .ledger-lede {
+  .panel-lede {
     font-size: var(--text-xs);
     color: var(--foreground-mid);
     line-height: 1.45;
+    max-width: 48ch;
   }
 
-  /* Board hairlines are pure white — warm tones over blue mid mix to mud. */
-  :global(.ledger) {
-    overflow: hidden;
-    --border-subtle: rgba(255, 255, 255, 0.14);
-    --border-default: rgba(255, 255, 255, 0.24);
+  /* ── Standouts ──────────────────────────────────────────────────── */
+  .standouts-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
   }
 
-  .ledger-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  .standouts {
+    --standout-w: clamp(4.75rem, 18vw, 5.5rem);
+    --standout-gap-x: 0.55rem;
+    --standout-gap-y: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
   }
 
-  .ledger-row + .ledger-row {
-    border-top: var(--border-width) solid var(--border-subtle);
-  }
-
-  /* ── Row head ───────────────────────────────────────────────────── */
-  .row-head {
-    display: grid;
-    grid-template-columns: 1.5rem auto minmax(0, 1fr) auto 1rem;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    padding: var(--space-4);
-    text-align: left;
-    transition: background-color var(--control-duration) var(--control-ease);
-  }
-
-  .row-head:hover {
-    background: var(--surface-quiet);
-  }
-
-  .row-rank {
+  .standouts-status {
     font-family: var(--font-display);
     font-size: var(--text-xs);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    text-align: center;
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
     color: var(--foreground-mid);
   }
 
-  .row-portrait {
-    display: block;
-    width: 3.25rem;
-    height: 3.25rem;
-    overflow: hidden;
-    border-radius: var(--radius-md);
-    background: var(--background-color);
-    flex-shrink: 0;
-  }
-
-  .row-portrait-pair {
-    display: flex;
-    gap: 0.25rem;
-  }
-
-  .row-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
+  .standouts-deck {
+    --deal-stagger: 85ms;
+    --deal-duration: 480ms;
     min-width: 0;
   }
 
-  .row-name {
-    font-size: var(--text-md);
-    font-weight: 500;
-    color: var(--foreground-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .row-sub {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .row-delta {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    color: var(--accent-1);
-  }
-
-  .row-chevron {
-    display: inline-flex;
-    color: var(--foreground-mid);
-    transition: transform var(--control-duration) var(--control-ease);
-  }
-
-  .row-chevron-open {
-    transform: rotate(180deg);
-  }
-
-  .row-details {
+  .standouts-deck-list {
     display: grid;
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transition:
-      grid-template-rows var(--control-duration) var(--control-ease),
-      opacity var(--control-duration) var(--control-ease);
+    margin: 0;
+    padding: 0.35rem 0.15rem 0.5rem;
+    list-style: none;
+    align-items: center;
   }
 
-  .row-details-open {
-    grid-template-rows: 1fr;
+  /* Collapsed: stack in col 1, expand control tucked beside the lead. */
+  .standouts-deck:not(.open) .standouts-deck-list {
+    width: fit-content;
+    grid-template-columns: var(--standout-w) auto;
+    column-gap: 0.35rem;
+    min-height: calc(var(--standout-w) * 16 / 5 + 12px);
+  }
+
+  .standouts-deck:not(.open) .standout {
+    grid-area: 1 / 1;
+    width: var(--standout-w);
+    transform: translate(
+      calc(min(var(--i), 4) * 3px),
+      calc(min(var(--i), 4) * 3px)
+    );
+    z-index: calc(40 - var(--i));
+    animation: none;
+    transition: none;
+  }
+
+  .standouts-deck:not(.open) .standout:first-child {
+    z-index: 50;
     opacity: 1;
   }
 
+  .standouts-deck:not(.open) .standout:not(:first-child) {
+    pointer-events: none;
+  }
+
+  .standouts-deck:not(.open) .standout:nth-child(n + 6) {
+    opacity: 0;
+  }
+
+  .standouts-deck:not(.open) .standout-toggle-cell {
+    grid-area: 1 / 2;
+    align-self: center;
+    justify-self: start;
+  }
+
+  /* Expanded (and mid-collapse): flow right/down. */
+  .standouts-deck.open .standouts-deck-list {
+    grid-template-columns: repeat(auto-fill, minmax(var(--standout-w), 1fr));
+    gap: var(--standout-gap-y) var(--standout-gap-x);
+  }
+
+  .standouts-deck.open .standout {
+    position: relative;
+    z-index: 1;
+    width: auto;
+    pointer-events: auto;
+    transition: none;
+  }
+
+  .standouts-deck.open .standout:first-child {
+    transform: none;
+    opacity: 1;
+    animation: none;
+  }
+
+  .standouts-deck.open:not(.collapsing) .standout:not(:first-child) {
+    /* `both` keeps opacity 0 during the stagger delay so layout teleports stay hidden. */
+    animation: standout-deal var(--deal-duration) cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+    animation-delay: calc(var(--i) * var(--deal-stagger));
+  }
+
+  /* Collapse: keep the grid, pack last → first, then drop to the stack. */
+  .standouts-deck.open.collapsing .standout:not(:first-child) {
+    pointer-events: none;
+    animation: standout-pack var(--deal-duration) cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+    animation-delay: calc((var(--n) - 1 - var(--i)) * var(--deal-stagger));
+  }
+
+  @keyframes standout-deal {
+    from {
+      opacity: 0;
+      transform: translate(-0.85rem, -0.55rem) scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes standout-pack {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translate(-0.85rem, -0.55rem) scale(0.94);
+    }
+  }
+
+  .standout-toggle-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  .standouts-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.85rem;
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--accent-1);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--control-transition);
+  }
+
+  .standouts-toggle:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+
+  .standouts-toggle:hover:not(:disabled) {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
+  }
+
+  .standouts-toggle-label {
+    line-height: 1;
+  }
+
+  .standouts-toggle-chevron {
+    display: inline-flex;
+    transform: rotate(-90deg);
+    transition: transform 220ms ease;
+  }
+
+  .standouts-toggle-chevron.open {
+    transform: rotate(90deg);
+  }
+
+  .standout {
+    min-width: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .standouts-deck {
+      --deal-stagger: 0ms;
+      --deal-duration: 1ms;
+    }
+
+    .standouts-deck .standout {
+      transition: none;
+      animation: none !important;
+    }
+
+    .standouts-deck.open .standout:not(:first-child) {
+      opacity: 1;
+      transform: none;
+    }
+
+    .standouts-toggle-chevron {
+      transition: none;
+    }
+  }
+
+  /* ── Suggestion ledger ──────────────────────────────────────────── */
+  .ledger-list {
+    --standout-w: clamp(4.75rem, 18vw, 5.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0;
+    /* Room for WishSlot glow + best-team outline */
+    padding: 0.45rem 0.35rem 0.45rem 0.55rem;
+    list-style: none;
+  }
+
+  .ledger-row {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .row-art {
+    flex: 0 0 var(--standout-w);
+    width: var(--standout-w);
+  }
+
+  .row-art-pair {
+    display: flex;
+    flex: 0 0 auto;
+    width: auto;
+    gap: 0.45rem;
+  }
+
+  .row-art :global(.wish) {
+    width: var(--standout-w);
+  }
+
+  .row-toggle {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.35rem;
+    color: var(--accent-1);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--control-transition);
+  }
+
+  .row-toggle:hover {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
+  }
+
+  .row-toggle-chevron {
+    display: inline-flex;
+    transform: rotate(-90deg);
+    transition: transform 220ms ease;
+  }
+
+  .row-toggle-chevron.open {
+    transform: rotate(90deg);
+  }
+
+  .row-details {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 0fr;
+    min-width: 0;
+    opacity: 0;
+    transition:
+      grid-template-columns var(--control-duration) var(--control-ease),
+      opacity var(--control-duration) var(--control-ease),
+      margin-left var(--control-duration) var(--control-ease);
+  }
+
+  .row-details-open {
+    grid-template-columns: 1fr;
+    opacity: 1;
+    margin-left: var(--space-2);
+  }
+
   .row-details-inner {
-    min-height: 0;
+    min-width: 0;
     overflow: hidden;
-    border-top: var(--border-width) solid var(--border-subtle);
-    background: color-mix(
-      in srgb,
-      var(--foreground-color) 2%,
-      transparent
-    );
+    padding: 0.15rem 0.2rem 0.15rem 0.35rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .row-toggle-chevron,
+    .row-details {
+      transition: none;
+    }
   }
 
   /* ── Comparison ─────────────────────────────────────────────────── */
   .compare {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
+    align-items: stretch;
     gap: var(--space-3);
-    width: 100%;
-    padding: var(--space-5) var(--space-4);
+    width: min(100%, 13rem);
+    padding: 0;
+  }
+
+  @media (min-width: 960px) {
+    .compare {
+      width: min(100%, 18rem);
+      gap: var(--space-4);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .compare {
+      width: min(100%, 22rem);
+    }
   }
 
   .compare-side {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    width: min(100%, 22rem);
+    width: 100%;
+    border-radius: var(--radius-sm);
+  }
+
+  .compare-side-best {
+    outline: 1.5px solid var(--accent-1);
+    outline-offset: -1.5px;
   }
 
   .compare-label {
@@ -629,41 +939,6 @@
     text-transform: uppercase;
     letter-spacing: var(--tracking-eyebrow);
     color: var(--foreground-mid);
-  }
-
-  .compare-usage {
-    font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-    color: var(--foreground-mid);
-  }
-
-  .compare-usage-accent {
-    color: var(--accent-1);
-  }
-
-  /* Chevron points down (stacked mobile flow); rotates to point right
-     when sides sit next to each other on desktop. */
-  .compare-arrow {
-    display: inline-flex;
-    align-self: center;
-    color: var(--foreground-mid);
-  }
-
-  @media (min-width: 768px) {
-    .compare {
-      flex-direction: row;
-      align-items: center;
-      gap: var(--space-5);
-    }
-
-    .compare-arrow :global(svg) {
-      transform: rotate(-90deg);
-    }
-
-    .compare-side:only-child {
-      width: min(100%, 28rem);
-    }
   }
 
   .mini-grid {
@@ -683,65 +958,40 @@
   }
 
   .mini-slot-highlight {
-    outline: 1.5px solid var(--accent-1);
+    outline: 1.5px solid rgba(255, 255, 255, 0.55);
     outline-offset: -1.5px;
   }
 
   @media (max-width: 640px) {
-    .row-head {
-      grid-template-columns: 1rem auto minmax(0, 1fr) auto 1rem;
-      gap: var(--space-2);
-      padding: var(--space-3);
+    .standouts {
+      --standout-w: clamp(3.85rem, 22vw, 4.75rem);
+      --standout-gap-x: 0.35rem;
+      --standout-gap-y: 0.65rem;
     }
 
-    .row-portrait {
-      width: 3rem;
-      height: 3rem;
+    .ledger-list {
+      --standout-w: clamp(2.75rem, 15vw, 3.35rem);
+      gap: var(--space-3);
     }
 
-    .row-delta {
-      grid-column: auto;
-      justify-self: end;
+    .ledger-row {
+      overflow-x: auto;
+      scrollbar-width: thin;
     }
 
-    .row-chevron {
-      grid-column: auto;
-      grid-row: auto;
-    }
-
-    .compare {
-      padding: var(--space-3);
+    .row-art-pair {
+      gap: 0.3rem;
     }
   }
 
   /* ── Methodology ────────────────────────────────────────────────── */
-  .methodology {
+  .pulls-note {
     margin-top: var(--space-2);
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary {
-    width: fit-content;
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary:hover {
-    color: var(--foreground-color);
-  }
-
-  .methodology p {
+    padding-top: var(--space-4);
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.12);
     max-width: 60ch;
-    margin-top: var(--space-2);
+    font-size: var(--text-xs);
     line-height: 1.55;
-  }
-
-  .methodology-accent {
     color: var(--accent-2);
   }
 </style>

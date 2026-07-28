@@ -7,11 +7,11 @@ import type {
 export type PullSuggestion = {
   character: string;
   characterName: string | undefined;
-  improvement: number;
   unlocksTeams: number;
+  /** Top unlocked teams by avg usage (up to 2). */
+  topTeams: StygianTeam[];
   bestTeam: StygianTeam;
   score: number;
-  currentBestTeam: StygianTeam | null;
   avgUsage: number;
 };
 
@@ -22,30 +22,68 @@ export type PairSuggestion = {
   charBName: string | undefined;
   pmi: number;
   avgUsage: number;
-  improvement: number;
   unlocksTeams: number;
+  /** Top unlocked teams by avg usage (up to 2). */
+  topTeams: StygianTeam[];
   bestTeam: StygianTeam;
-  currentBestTeam: StygianTeam | null;
   score: number;
 };
 
+/** Unlocked team must itself be meta-relevant (avg usage %). */
+export const MIN_PULL_TEAM_USAGE = 10;
+
+const TOP_TEAMS_SHOWN = 2;
+
+function nearMissToTeam(team: NearMissStygianTeam): StygianTeam {
+  return {
+    team_key: team.team_key,
+    version_number: 0,
+    avg_usage_rate: team.avg_usage_rate,
+    usage_total: team.usage_total,
+    usage_rate: team.usage_rate,
+    field_1_rate: team.field_1_rate,
+    field_2_rate: team.field_2_rate,
+    field_3_rate: team.field_3_rate,
+    members: team.members,
+    members_names: team.members_names,
+    has_total: 0,
+  };
+}
+
+function nearMissPairToTeam(team: NearMissStygianPair): StygianTeam {
+  return {
+    team_key: team.team_key,
+    version_number: 0,
+    avg_usage_rate: team.avg_usage_rate,
+    usage_total: team.usage_total,
+    usage_rate: team.usage_rate,
+    field_1_rate: team.field_1_rate,
+    field_2_rate: team.field_2_rate,
+    field_3_rate: team.field_3_rate,
+    members: team.members,
+    members_names: team.members_names,
+    has_total: 0,
+  };
+}
+
 /**
- * Ranks pull suggestions by marginal improvement:
- *   improvement = best_unlocked_team.usage_total
- *               - best currently-owned team sharing the same 3 members
+ * Ranks pull suggestions by unlocked-team usage × how many teams they open.
  *
- * Measures how much the missing character actually adds over what you
- * could already run with those 3 characters + someone you own.
+ * When `allowedCharacters` is set, only those name_ids are considered
+ * (e.g. limited cream from the standouts board).
  */
 export function computePullSuggestions(
   nearMissTeams: NearMissStygianTeam[],
-  ownedTeams: StygianTeam[],
+  _ownedTeams: StygianTeam[],
   maxSuggestions = 3,
+  allowedCharacters?: ReadonlySet<string>,
 ): PullSuggestion[] {
-  // Group near-miss teams by missing character
   const byCharacter = new Map<string, NearMissStygianTeam[]>();
   for (const team of nearMissTeams) {
     if (!team.missing_character) continue;
+    if (allowedCharacters && !allowedCharacters.has(team.missing_character)) {
+      continue;
+    }
     const existing = byCharacter.get(team.missing_character) ?? [];
     existing.push(team);
     byCharacter.set(team.missing_character, existing);
@@ -54,88 +92,63 @@ export function computePullSuggestions(
   const suggestions: PullSuggestion[] = [];
 
   for (const [character, unlocked] of byCharacter) {
-    // Best near-miss team for this character
-    const topNearMiss = [...unlocked].sort(
+    const ranked = [...unlocked].sort(
       (a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0),
-    )[0];
+    );
+    const topNearMiss = ranked[0];
 
     if (topNearMiss.members.length !== 4) continue;
 
     const unlockedUsage = topNearMiss.avg_usage_rate ?? 0;
-
-    // The 3 owned members in this near-miss team
-    const ownedMembers = (topNearMiss.members ?? []).filter(
-      (m) => m !== character,
-    );
-
-    // Best currently-owned team that contains all 3 of those members
-    const bestCurrentAlternative = ownedTeams
-      .filter((t) => ownedMembers.every((m) => (t.members ?? []).includes(m)))
-      .filter((t) => t.members.length == 4)
-      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
-      .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
-
-    const alternativeUsage = bestCurrentAlternative?.avg_usage_rate ?? 0;
-
-    const improvement = unlockedUsage - alternativeUsage;
-
-    if (improvement <= 0) continue;
+    if (unlockedUsage < MIN_PULL_TEAM_USAGE) continue;
 
     const score =
-      improvement *
-      Math.pow(unlockedUsage / 100, 0.3) *
-      Math.log1p(unlocked.length);
+      Math.pow(unlockedUsage / 100, 0.3) * Math.log1p(unlocked.length);
 
-    const bestTeam: StygianTeam = {
-      team_key: topNearMiss.team_key,
-      version_number: 0,
-      avg_usage_rate: topNearMiss.avg_usage_rate,
-      usage_total: topNearMiss.usage_total,
-      usage_rate: topNearMiss.usage_rate,
-      field_1_rate: topNearMiss.field_1_rate,
-      field_2_rate: topNearMiss.field_2_rate,
-      field_3_rate: topNearMiss.field_3_rate,
-      members: topNearMiss.members,
-      members_names: topNearMiss.members_names,
-      has_total: 0,
-    };
+    const topTeams = ranked
+      .filter((t) => t.members.length === 4)
+      .slice(0, TOP_TEAMS_SHOWN)
+      .map(nearMissToTeam);
 
     suggestions.push({
       character,
       characterName: topNearMiss.missing_character_name,
-      improvement,
       score,
       unlocksTeams: unlocked.length,
-      bestTeam,
-      currentBestTeam: bestCurrentAlternative ?? null,
+      topTeams,
+      bestTeam: topTeams[0]!,
       avgUsage: topNearMiss.avg_usage_rate,
-    } as PullSuggestion);
+    });
   }
 
   return suggestions.sort((a, b) => b.score - a.score).slice(0, maxSuggestions);
 }
 
-// Re-export the DB-generated near-miss types for consumers of this module
 export type { NearMissStygianTeam } from "$lib/definitions";
 export type NearMissPairTeam = NearMissStygianPair;
 
 /**
- * Ranks pair pull suggestions by:
- *   score = (avgUsage + improvement) * log(1 + unlocksTeams) * pmi^0.3
+ * Ranks pair pull suggestions by avg usage × PMI.
  *
- * Adding improvement alongside avgUsage means niche pairs (e.g. Lauma+Nefer
- * for players without Columbina) still surface even when population usage is
- * suppressed by better alternatives other players have.
+ * When `allowedCharacters` is set, both missing characters must be in the set.
  */
 export function computePairSuggestions(
   nearMissPairs: NearMissPairTeam[],
-  ownedTeams: StygianTeam[],
-  singleSuggestions: PullSuggestion[] = [],
+  _ownedTeams: StygianTeam[],
+  _singleSuggestions: PullSuggestion[] = [],
   maxSuggestions = 3,
+  allowedCharacters?: ReadonlySet<string>,
 ): PairSuggestion[] {
   const byPair = new Map<string, NearMissPairTeam[]>();
   for (const team of nearMissPairs) {
     if (!team.missing_character_a || !team.missing_character_b) continue;
+    if (
+      allowedCharacters &&
+      (!allowedCharacters.has(team.missing_character_a) ||
+        !allowedCharacters.has(team.missing_character_b))
+    ) {
+      continue;
+    }
     const key = [team.missing_character_a, team.missing_character_b]
       .sort()
       .join("|||");
@@ -147,80 +160,38 @@ export function computePairSuggestions(
   const suggestions: PairSuggestion[] = [];
 
   for (const [, teams] of byPair) {
-    const topTeam = [...teams].sort(
+    const ranked = [...teams].sort(
       (a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0),
-    )[0];
-
-    const charA = topTeam.missing_character_a!;
-    const charB = topTeam.missing_character_b!;
+    );
+    const topTeam = ranked[0]!;
 
     const avgUsage = topTeam.avg_usage_rate ?? 0;
     const pmi = topTeam.pmi ?? 0;
 
-    const ownedMembers = (topTeam.members ?? []).filter(
-      (m) => m !== charA && m !== charB,
-    );
+    if (avgUsage < MIN_PULL_TEAM_USAGE) continue;
 
-    // Best team with ownedMembers + charA (one half of the pair)
-    const bestWithA = ownedTeams
-      .filter((t) =>
-        [...ownedMembers, charA].every((m) => (t.members ?? []).includes(m)),
-      )
-      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
-      .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
+    const score = avgUsage * Math.pow(Math.max(pmi, 0), 0.3);
 
-    // Best team with ownedMembers + charB (other half of the pair)
-    const bestWithB = ownedTeams
-      .filter((t) =>
-        [...ownedMembers, charB].every((m) => (t.members ?? []).includes(m)),
-      )
-      .filter((t) => (t.avg_usage_rate ?? 0) > 1)
-      .sort((a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0))[0];
-
-    // Best single-character alternative — pulling either one alone
-    const bestCurrentAlternative =
-      (bestWithA?.avg_usage_rate ?? 0) >= (bestWithB?.avg_usage_rate ?? 0)
-        ? (bestWithA ?? bestWithB ?? null)
-        : (bestWithB ?? bestWithA ?? null);
-
-    const alternativeUsage = bestCurrentAlternative?.avg_usage_rate ?? 0;
-    const improvement = avgUsage - alternativeUsage;
-
-    if (improvement <= 0) continue;
-
-    const score = (avgUsage + improvement) * Math.pow(pmi, 0.3);
-
-    const bestTeam: StygianTeam = {
-      team_key: topTeam.team_key,
-      version_number: 0,
-      avg_usage_rate: avgUsage,
-      usage_total: topTeam.usage_total,
-      usage_rate: topTeam.usage_rate,
-      field_1_rate: topTeam.field_1_rate,
-      field_2_rate: topTeam.field_2_rate,
-      field_3_rate: topTeam.field_3_rate,
-      members: topTeam.members,
-      members_names: topTeam.members_names,
-      has_total: 0,
-    };
+    const topTeams = ranked
+      .filter((t) => (t.members ?? []).length === 4)
+      .slice(0, TOP_TEAMS_SHOWN)
+      .map(nearMissPairToTeam);
 
     suggestions.push({
-      charA,
+      charA: topTeam.missing_character_a!,
       charAName: topTeam.missing_character_a_name,
-      charB,
+      charB: topTeam.missing_character_b!,
       charBName: topTeam.missing_character_b_name,
       pmi,
       avgUsage,
-      improvement,
       unlocksTeams: teams.length,
-      bestTeam,
-      currentBestTeam: bestCurrentAlternative ?? null,
+      topTeams,
+      bestTeam: topTeams[0]!,
       score,
     });
   }
 
   return suggestions
     .sort((a, b) => b.score - a.score)
-    .filter((a) => a.avgUsage >= 20)
     .slice(0, maxSuggestions);
 }

@@ -11,6 +11,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import Toggle from "$lib/ui/components/Toggle.svelte";
   import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
+  import Select from "$lib/ui/components/Select.svelte";
   import Chip from "$lib/ui/components/Chip.svelte";
   import Badge from "$lib/ui/components/Badge.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
@@ -135,6 +136,7 @@
   });
 
   let segment = $state<"roster" | "meta">("roster");
+  let selectDemo = $state("stygian");
   let chipOn = $state(true);
   let toggleOn = $state(true);
   let slidingTab = $state<"top" | "bottom" | "skills">("top");
@@ -331,8 +333,8 @@
     <div class="section-head">
       <h2>Controls</h2>
       <p>
-        Shared <code>SegmentedControl</code>, <code>Chip</code>, <code>Toggle</code>,
-        <code>Button</code>, <code>Badge</code>.
+        Shared <code>SegmentedControl</code>, <code>Select</code>, <code>Chip</code>,
+        <code>Toggle</code>, <code>Button</code>, <code>Badge</code>.
       </p>
     </div>
 
@@ -344,6 +346,37 @@
           bind:value={segment}
           aria-label="Demo segment"
         />
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">Select</p>
+        <p class="token-meta mb-2">
+          Custom listbox dropdown (same chrome as the character filter Sort
+          control). Menu anchors left/right from the trigger’s viewport side.
+          Optional fixed <code>trigger</code> label.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <Select
+            bind:value={selectDemo}
+            aria-label="Demo select"
+            options={[
+              { value: "stygian", label: "Stygian" },
+              { value: "abyss", label: "Abyss" },
+              { value: "simulated", label: "Simulated" },
+            ]}
+          />
+          <Select
+            bind:value={selectDemo}
+            trigger="Sort"
+            aria-label="Demo sort"
+            options={[
+              { value: "stygian", label: "Stygian" },
+              { value: "abyss", label: "Abyss" },
+              { value: "simulated", label: "Simulated" },
+            ]}
+          />
+        </div>
+        <p class="token-meta mt-2">Value: {selectDemo}</p>
       </Surface>
 
       <Surface>

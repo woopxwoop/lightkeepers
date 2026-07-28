@@ -11,6 +11,13 @@
   } from "$lib/character-filter";
   import IconFilter from "$lib/ui/icons/IconFilter.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  import Select from "$lib/ui/components/Select.svelte";
+
+  const SORT_OPTIONS = [
+    { value: "name", label: "Alphabetical" },
+    { value: "release_date", label: "Release Date" },
+    { value: "game_id", label: "Game ID" },
+  ] as const;
 
   let {
     search = $bindable(""),
@@ -33,8 +40,6 @@
   } = $props();
 
   let filtersOpen = $state(false);
-  let sortOpen = $state(false);
-  let sortTriggerEl: HTMLButtonElement | null = $state(null);
 
   let isFiltered = $derived(
     characterFiltersActive({
@@ -44,25 +49,6 @@
       ownership: ownershipFilter,
     }),
   );
-
-  $effect(() => {
-    if (!sortOpen) return;
-    function onKeydown(e: KeyboardEvent) {
-      if (e.key === "Escape") sortOpen = false;
-    }
-    function onClick(e: MouseEvent) {
-      if (sortTriggerEl && !sortTriggerEl.contains(e.target as Node)) {
-        const dropdown = document.querySelector(".char-filter-sort-dropdown");
-        if (dropdown && !dropdown.contains(e.target as Node)) sortOpen = false;
-      }
-    }
-    window.addEventListener("keydown", onKeydown);
-    window.addEventListener("click", onClick);
-    return () => {
-      window.removeEventListener("keydown", onKeydown);
-      window.removeEventListener("click", onClick);
-    };
-  });
 
   function toggleOwnership(value: "owned" | "unowned") {
     ownershipFilter = ownershipFilter === value ? "all" : value;
@@ -88,62 +74,12 @@
       <IconFilter size={14} />
       Filters
     </button>
-    <div class="relative">
-      <button
-        type="button"
-        class="tool-btn"
-        bind:this={sortTriggerEl}
-        onclick={() => (sortOpen = !sortOpen)}
-        aria-expanded={sortOpen}
-      >
-        Sort
-        <span class:chevron-flip={!sortAsc}>
-          <IconChevronDown size={10} strokeWidth={2.5} />
-        </span>
-      </button>
-      {#if sortOpen}
-        <div
-          class="char-filter-sort-dropdown sort-dropdown"
-          role="listbox"
-          aria-label="Sort by"
-          transition:slide={{ duration: 150 }}
-        >
-          <button
-            type="button"
-            role="option"
-            aria-selected={sortBy === "name"}
-            class="sort-option"
-            class:selected={sortBy === "name"}
-            onclick={() => {
-              sortBy = "name";
-              sortOpen = false;
-            }}>Alphabetical</button
-          >
-          <button
-            type="button"
-            role="option"
-            aria-selected={sortBy === "release_date"}
-            class="sort-option"
-            class:selected={sortBy === "release_date"}
-            onclick={() => {
-              sortBy = "release_date";
-              sortOpen = false;
-            }}>Release Date</button
-          >
-          <button
-            type="button"
-            role="option"
-            aria-selected={sortBy === "game_id"}
-            class="sort-option"
-            class:selected={sortBy === "game_id"}
-            onclick={() => {
-              sortBy = "game_id";
-              sortOpen = false;
-            }}>Game ID</button
-          >
-        </div>
-      {/if}
-    </div>
+    <Select
+      options={[...SORT_OPTIONS]}
+      bind:value={sortBy}
+      trigger="Sort"
+      aria-label="Sort by"
+    />
     <button
       type="button"
       class="tool-btn"
@@ -275,36 +211,6 @@
   .chevron-flip {
     display: inline-flex;
     transform: rotate(180deg);
-  }
-
-  .sort-dropdown {
-    position: absolute;
-    top: calc(100% + 0.35rem);
-    right: 0;
-    z-index: 30;
-    min-width: 10rem;
-    padding: 0.25rem;
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.24);
-  }
-
-  .sort-option {
-    display: block;
-    width: 100%;
-    padding: 0.45rem 0.65rem;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground-color);
-    font-size: var(--text-xs);
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .sort-option:hover,
-  .sort-option.selected {
-    background: var(--surface-quiet);
   }
 
   .filters-panel {

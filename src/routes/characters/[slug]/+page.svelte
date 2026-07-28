@@ -1,6 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { animationsEnabled, charactersOwned } from "$lib/stores";
+  import {
+    animationsEnabled,
+    charactersOwned,
+    allTeamsAbyss,
+    allTeamsStygian,
+    staticBoardsLoaded,
+    staticBoardsError,
+    ensureStaticBoards,
+  } from "$lib/stores";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import GameText from "$lib/ui/components/GameText.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
@@ -10,14 +18,30 @@
   import Surface from "$lib/ui/components/Surface.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
+  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
+  import Select from "$lib/ui/components/Select.svelte";
   import { elementColor } from "$lib/element-colors";
+  import {
+    CHARACTER_SIM_COST,
+    TOP_TEAMS_LIMIT,
+    topSimTeamsForCharacter,
+    topTeamsForCharacter,
+  } from "$lib/character-teams";
+  import {
+    loadInvestment,
+    getInvestmentCached,
+  } from "$lib/app/investment";
   import {
     artifactSlotIconUrl,
     associationLabel,
+    buildGoodKeyMap,
     elementIconUrl,
     getNamecardUrl,
     getUiAssetUrl,
     statIconUrl,
+    toGoodKey,
     translateStatKey,
     weaponTypeIconUrl,
     weaponTypeLabel,
@@ -30,18 +54,157 @@
     weaponIconUrl,
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
-  import type { CharacterIndex } from "$lib/types/investment";
+  import type {
+    CharacterIndex,
+    InvestmentFile,
+    InvestmentSim,
+    InvestmentTeam,
+  } from "$lib/types/investment";
+  import type { Character } from "$lib/definitions";
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
   let builds = $derived((data.builds ?? null) as CharacterIndex | null);
+  let mapping = $derived(data.mapping as Map<string, Character>);
 
-  type PageTab = "skills" | "builds";
+  type PageTab = "skills" | "builds" | "teams";
+  type TeamsMode = "stygian" | "abyss" | "simulated";
+
   const TAB_OPTIONS = [
     { value: "builds" as const, label: "Builds" },
+    { value: "teams" as const, label: "Teams" },
     { value: "skills" as const, label: "Skills" },
   ];
+  const TEAMS_MODE_OPTIONS = [
+    { value: "stygian" as const, label: "Stygian" },
+    { value: "abyss" as const, label: "Abyss" },
+    { value: "simulated" as const, label: "Simulated" },
+  ];
+
   let activeTab = $state<PageTab>("builds");
+  let teamsMode = $state<TeamsMode>("stygian");
+
+  let investment = $state<InvestmentFile | null>(getInvestmentCached());
+  let investmentError = $state<string | null>(null);
+  let investmentLoading = $state(false);
+
+  $effect(() => {
+    if (activeTab !== "teams") return;
+    if (teamsMode === "simulated") {
+      void ensureInvestment();
+    } else {
+      ensureStaticBoards().catch(() => {});
+    }
+  });
+
+  async function ensureInvestment() {
+    if (investment) return;
+    investmentLoading = true;
+    investmentError = null;
+    try {
+      investment = await loadInvestment();
+    } catch (e) {
+      investmentError =
+        e instanceof Error ? e.message : "Failed to load simulated teams";
+    } finally {
+      investmentLoading = false;
+    }
+  }
+
+  let popularTeams = $derived(
+    teamsMode === "simulated"
+      ? []
+      : topTeamsForCharacter(
+          teamsMode === "stygian" ? $allTeamsStygian : $allTeamsAbyss,
+          kit.name_id,
+          TOP_TEAMS_LIMIT,
+        ),
+  );
+
+  let goodKey = $derived(toGoodKey(kit.name));
+  let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
+
+  let ownedKeys = $derived(
+    new Set(
+      $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
+    ),
+  );
+
+  let ownedNameIds = $derived(
+    new Set(
+      $charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id),
+    ),
+  );
+
+  let simulatedTeams = $derived(
+    investment
+      ? topSimTeamsForCharacter(
+          investment.teams,
+          goodKey,
+          CHARACTER_SIM_COST,
+          TOP_TEAMS_LIMIT,
+        )
+      : [],
+  );
+
+  let teamsLoading = $derived(
+    teamsMode === "simulated"
+      ? investmentLoading && !investment
+      : !$staticBoardsError && !$staticBoardsLoaded && popularTeams.length === 0,
+  );
+
+  async function retryTeams() {
+    if (teamsMode === "simulated") {
+      investment = null;
+      await ensureInvestment();
+      return;
+    }
+    try {
+      await ensureStaticBoards();
+    } catch {
+      /* staticBoardsError store already set */
+    }
+  }
+
+  function formatDps(dps: number): string {
+    return `${(dps / 1000).toFixed(0)}K`;
+  }
+
+  function handCharactersFromKeys(keys: string[]) {
+    return keys.map((key) => goodKeyMap.get(key));
+  }
+
+  function handCharactersFromMembers(members: string[]) {
+    return members.map((id) => mapping.get(id));
+  }
+
+  function handBuilds(team: InvestmentTeam, sim: InvestmentSim) {
+    return team.characters.map((key) => {
+      const build = sim.characters.find((c) => c.key === key);
+      if (!build) return null;
+      return {
+        cons: build.cons,
+        weaponRefinement: build.weapon.refinement,
+        weaponKey: build.weapon.key,
+      };
+    });
+  }
+
+  function dimmedKeysFromGoodKeys(keys: string[]): Set<string> {
+    return new Set(
+      keys
+        .filter((key) => !ownedKeys.has(key))
+        .flatMap((key) => {
+          const char = goodKeyMap.get(key);
+          const id = char?.name_id ?? char?.name;
+          return id ? [id] : [];
+        }),
+    );
+  }
+
+  function dimmedKeysFromMembers(members: string[]): Set<string> {
+    return new Set(members.filter((id) => !ownedNameIds.has(id)));
+  }
 
   const SKILL_LABELS: Record<string, string> = {
     normal: "Normal Attack",
@@ -430,6 +593,117 @@
           </div>
         </section>
         </div>
+      {:else if activeTab === "teams"}
+        <div
+          role="tabpanel"
+          id="tabpanel-teams"
+          aria-labelledby="tab-teams"
+        >
+          <section class="board-section">
+            <div class="teams-head">
+              <label class="teams-label">
+                <span class="teams-label-text">Teams:</span>
+                <Select
+                  options={TEAMS_MODE_OPTIONS}
+                  bind:value={teamsMode}
+                  aria-label="Team source"
+                />
+              </label>
+              {#if teamsMode === "simulated"}
+                <span class="teams-cost">{CHARACTER_SIM_COST} cost</span>
+              {:else}
+                <span class="teams-cost">Usage rate</span>
+              {/if}
+            </div>
+
+            {#if teamsMode === "simulated"}
+              {#if teamsLoading}
+                <LoadingState
+                  variant="pulse"
+                  message="Loading simulated teams…"
+                />
+              {:else if investmentError && simulatedTeams.length === 0}
+                <EmptyState message="Could not load simulated teams right now.">
+                  {#snippet action()}
+                    <Button variant="secondary" onclick={retryTeams}
+                      >Try again</Button
+                    >
+                  {/snippet}
+                </EmptyState>
+              {:else if simulatedTeams.length === 0}
+                <EmptyState
+                  message="No {CHARACTER_SIM_COST}-cost sims featuring {kit.name} yet."
+                />
+              {:else}
+                <ol class="team-hands">
+                  {#each simulatedTeams as row, i (row.team.team_key)}
+                    <li class="team-hand-row">
+                      <TeamCardHand
+                        characters={handCharactersFromKeys(row.team.characters)}
+                        builds={handBuilds(row.team, row.sim)}
+                        dimmedKeys={dimmedKeysFromGoodKeys(row.team.characters)}
+                        spread="flat"
+                      />
+                      <div class="team-hand-footer">
+                        <span class="team-hand-meta">
+                          <span class="team-hand-rank">#{i + 1}</span>
+                          <span
+                            >{CHARACTER_SIM_COST} cost · {formatDps(row.dps)} DPS</span
+                          >
+                        </span>
+                        <a
+                          href="/teams/{row.team.team_key}"
+                          class="team-hand-link"
+                        >
+                          View team details →
+                        </a>
+                      </div>
+                    </li>
+                  {/each}
+                </ol>
+              {/if}
+            {:else if teamsLoading}
+              <LoadingState
+                variant="pulse"
+                message="Loading meta teams…"
+              />
+            {:else if $staticBoardsError && popularTeams.length === 0}
+              <EmptyState message="Could not load teams right now.">
+                {#snippet action()}
+                  <Button variant="secondary" onclick={retryTeams}
+                    >Try again</Button
+                  >
+                {/snippet}
+              </EmptyState>
+            {:else if popularTeams.length === 0}
+              <EmptyState
+                message="No {teamsMode === 'stygian'
+                  ? 'Stygian'
+                  : 'Abyss'} teams featuring {kit.name} yet."
+              />
+            {:else}
+              <ol class="team-hands">
+                {#each popularTeams as team, i (team.team_key ?? i)}
+                  <li class="team-hand-row">
+                    <TeamCardHand
+                      characters={handCharactersFromMembers(team.members)}
+                      dimmedKeys={dimmedKeysFromMembers(team.members)}
+                      spread="flat"
+                    />
+                    <div class="team-hand-footer">
+                      <span class="team-hand-meta">
+                        <span class="team-hand-rank">#{i + 1}</span>
+                        <span
+                          >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                        >
+                      </span>
+                    </div>
+                  </li>
+                {/each}
+              </ol>
+            {/if}
+          </section>
+        </div>
       {:else}
         <div
           role="tabpanel"
@@ -733,6 +1007,125 @@
   .muted-note {
     font-size: var(--text-xs);
     color: var(--foreground-mid);
+  }
+
+  .teams-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .teams-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+  }
+
+  .teams-label-text {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .teams-cost {
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground-mid);
+  }
+
+  .team-hands {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 1024px) {
+    .team-hands {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--space-6);
+      row-gap: var(--space-5);
+    }
+  }
+
+  .team-hand-row {
+    position: relative;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .team-hand-row:hover,
+  .team-hand-row:focus-within {
+    z-index: 5;
+  }
+
+  .team-hand-row :global(.hand) {
+    --card-width: min(7.25rem, 25%);
+    width: 100%;
+  }
+
+  .team-hand-row :global(.hand-flat) {
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding: 0.35rem 0 0;
+    overflow: hidden;
+  }
+
+  @media (min-width: 1024px) {
+    .team-hand-row :global(.hand) {
+      --card-width: min(6.5rem, 25%);
+    }
+  }
+
+  .team-hand-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: var(--space-2) var(--space-3);
+    min-height: 1.25rem;
+    padding: 0;
+  }
+
+  .team-hand-meta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground-mid);
+  }
+
+  .team-hand-rank {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--foreground-mid);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .team-hand-link {
+    flex-shrink: 0;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--accent-1);
+    cursor: pointer;
+  }
+
+  .team-hand-link:hover {
+    text-decoration: underline;
   }
 
   .build-notes {
