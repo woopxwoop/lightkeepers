@@ -8,6 +8,7 @@ import { describe, it } from "node:test";
 import {
   bestSimAtCost,
   dimmedKeysFromGoodKeys,
+  handBuilds,
   topSimTeamsForCharacter,
 } from "./character-teams.ts";
 import type { InvestmentSim, InvestmentTeam } from "./types/investment.ts";
@@ -104,5 +105,28 @@ describe("dimmedKeysFromGoodKeys", () => {
     );
 
     assert.deepEqual([...dimmed].sort(), ["Yelan"]);
+  });
+});
+
+describe("handBuilds", () => {
+  it("returns all-null slots when sim is null", () => {
+    const t = team(["A", "B"], [sim(4, 100, ["A", "B"])]);
+    assert.deepEqual(handBuilds(t, null), [null, null]);
+  });
+
+  it("maps cons/weapon for present keys and nulls absent ones", () => {
+    const t = team(["A", "B"], []);
+    const s = sim(4, 100, ["A"]);
+    s.characters[0]!.cons = 2;
+    s.characters[0]!.weapon = {
+      key: "StaffOfHoma",
+      refinement: 5,
+      level: 90,
+    };
+
+    assert.deepEqual(handBuilds(t, s), [
+      { cons: 2, weaponRefinement: 5, weaponKey: "StaffOfHoma" },
+      null,
+    ]);
   });
 });

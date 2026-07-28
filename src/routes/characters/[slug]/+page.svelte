@@ -396,12 +396,10 @@
   let talentImportanceRows = $derived.by(() => {
     const ti = builds?.talent_importance;
     if (!ti || ti.teams <= 0) return [];
-    const slots = (["auto", "skill", "burst"] as const).filter(
-      (slot) => ti[slot],
-    );
-    return slots
-      .map((slot) => {
+    return (["auto", "skill", "burst"] as const)
+      .flatMap((slot) => {
         const stats = ti[slot];
+        if (!stats) return [];
         const kitType = TALENT_SLOT_TO_KIT[slot];
         const skill = kit.skills.find((s) => s.type === kitType);
         const icon = skill
@@ -411,19 +409,21 @@
           stats.median_pct_drop,
           TALENT_UPGRADE,
         );
-        return {
-          slot,
-          label: TALENT_SLOT_LABELS[slot],
-          icon,
-          priority: impact.tier,
-          priorityLabel: impact.label,
-          median: stats.median_pct_drop,
-        };
+        return [
+          {
+            slot,
+            label: TALENT_SLOT_LABELS[slot],
+            icon,
+            priority: impact.tier,
+            priorityLabel: impact.label,
+            median: stats.median_pct_drop,
+          },
+        ];
       })
       .sort((a, b) => b.median - a.median || a.slot.localeCompare(b.slot));
   });
 
-  /** Character level 80 importance for Builds tab (separate from talents). */
+  /** Character level 90 importance for Builds tab (separate from talents). */
   let levelImportance = $derived.by(() => {
     const li = builds?.level_importance;
     if (!li || li.teams <= 0) return null;
