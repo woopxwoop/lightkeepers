@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
+  import { get } from "svelte/store";
   import {
     charactersOwned,
     charactersHydrated,
@@ -47,6 +49,11 @@
   let collapsingStandoutBoards = $state(new Set<string>());
   const standoutCollapseTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+  onDestroy(() => {
+    for (const timer of standoutCollapseTimers.values()) clearTimeout(timer);
+    standoutCollapseTimers.clear();
+  });
+
   const STANDOUT_DEAL_MS = 480;
   const STANDOUT_STAGGER_MS = 85;
 
@@ -73,14 +80,11 @@
     try {
       const singles = computePullSuggestions(
         $nearMissStygianTeams,
-        $teamsOwnedStygian,
         3,
         creamPullIds,
       );
       const pairs = computePairSuggestions(
         $nearMissPairTeams,
-        $teamsOwnedStygian,
-        singles,
         3,
         creamPullIds,
       );
@@ -156,8 +160,7 @@
       const prior = standoutCollapseTimers.get(id);
       if (prior) clearTimeout(prior);
 
-      const wait = window.matchMedia("(prefers-reduced-motion: reduce)")
-        .matches
+      const wait = !get(animationsEnabled)
         ? 1
         : STANDOUT_DEAL_MS + Math.max(0, count - 1) * STANDOUT_STAGGER_MS;
       standoutCollapseTimers.set(
@@ -327,8 +330,8 @@
             <div class="panel-head-text">
               <h2 class="panel-title">Best next pulls</h2>
               <p class="panel-lede">
-                Ranked by how much a character improves the teams your roster
-                can already field
+                Ranked by high-usage teams a character unlocks for your roster
+                and how many of those teams they open
               </p>
             </div>
           </header>
@@ -501,7 +504,7 @@
         )}
         {@render standoutsBoard(
           "nonLimited",
-          "non limited characters",
+          "non-limited characters",
           $tierList?.fourStar ?? [],
         )}
       </div>

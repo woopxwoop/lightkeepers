@@ -11,6 +11,11 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import Select from "$lib/ui/components/Select.svelte";
+  import {
+    handCharactersFromGoodKeys,
+    handBuilds,
+    dimmedKeysFromGoodKeys,
+  } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type {
     InvestmentFile,
@@ -208,34 +213,6 @@
   let listKey = $derived(
     `${tags.join(",")}|${selectedCost ?? "any"}|${sortBy}|${sortOwnedFirst}`,
   );
-
-  function handCharacters(team: InvestmentTeam) {
-    return team.characters.map((key) => goodKeyMap.get(key));
-  }
-
-  function handBuilds(team: InvestmentTeam, sim: InvestmentSim | null) {
-    return team.characters.map((key) => {
-      const build = sim?.characters.find((c) => c.key === key);
-      if (!build) return null;
-      return {
-        cons: build.cons,
-        weaponRefinement: build.weapon.refinement,
-        weaponKey: build.weapon.key,
-      };
-    });
-  }
-
-  function dimmedKeysFor(team: InvestmentTeam): Set<string> {
-    return new Set(
-      team.characters
-        .filter((key) => !ownedKeys.has(key))
-        .flatMap((key) => {
-          const char = goodKeyMap.get(key);
-          const id = char?.name_id ?? char?.name;
-          return id ? [id] : [];
-        }),
-    );
-  }
 </script>
 
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
@@ -349,9 +326,16 @@
               style="animation-delay: {i * 50}ms;"
             >
               <TeamCardHand
-                characters={handCharacters(team)}
+                characters={handCharactersFromGoodKeys(
+                  team.characters,
+                  goodKeyMap,
+                )}
                 builds={handBuilds(team, sim)}
-                dimmedKeys={dimmedKeysFor(team)}
+                dimmedKeys={dimmedKeysFromGoodKeys(
+                  team.characters,
+                  ownedKeys,
+                  goodKeyMap,
+                )}
               />
 
               <div class="team-footer">

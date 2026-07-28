@@ -28,6 +28,9 @@
     TOP_TEAMS_LIMIT,
     topSimTeamsForCharacter,
     topTeamsForCharacter,
+    handCharactersFromGoodKeys,
+    handBuilds,
+    dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
   import {
     loadInvestment,
@@ -57,8 +60,6 @@
   import type {
     CharacterIndex,
     InvestmentFile,
-    InvestmentSim,
-    InvestmentTeam,
   } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
 
@@ -87,6 +88,7 @@
   let investment = $state<InvestmentFile | null>(getInvestmentCached());
   let investmentError = $state<string | null>(null);
   let investmentLoading = $state(false);
+  let investmentInFlight: Promise<void> | null = null;
 
   $effect(() => {
     if (activeTab !== "teams") return;
@@ -99,15 +101,25 @@
 
   async function ensureInvestment() {
     if (investment) return;
+    if (investmentInFlight) return investmentInFlight;
+
     investmentLoading = true;
     investmentError = null;
+    const pending = (async () => {
+      try {
+        investment = await loadInvestment();
+      } catch (e) {
+        investmentError =
+          e instanceof Error ? e.message : "Failed to load simulated teams";
+      } finally {
+        investmentLoading = false;
+      }
+    })();
+    investmentInFlight = pending;
     try {
-      investment = await loadInvestment();
-    } catch (e) {
-      investmentError =
-        e instanceof Error ? e.message : "Failed to load simulated teams";
+      await pending;
     } finally {
-      investmentLoading = false;
+      if (investmentInFlight === pending) investmentInFlight = null;
     }
   }
 
@@ -170,36 +182,8 @@
     return `${(dps / 1000).toFixed(0)}K`;
   }
 
-  function handCharactersFromKeys(keys: string[]) {
-    return keys.map((key) => goodKeyMap.get(key));
-  }
-
   function handCharactersFromMembers(members: string[]) {
     return members.map((id) => mapping.get(id));
-  }
-
-  function handBuilds(team: InvestmentTeam, sim: InvestmentSim) {
-    return team.characters.map((key) => {
-      const build = sim.characters.find((c) => c.key === key);
-      if (!build) return null;
-      return {
-        cons: build.cons,
-        weaponRefinement: build.weapon.refinement,
-        weaponKey: build.weapon.key,
-      };
-    });
-  }
-
-  function dimmedKeysFromGoodKeys(keys: string[]): Set<string> {
-    return new Set(
-      keys
-        .filter((key) => !ownedKeys.has(key))
-        .flatMap((key) => {
-          const char = goodKeyMap.get(key);
-          const id = char?.name_id ?? char?.name;
-          return id ? [id] : [];
-        }),
-    );
   }
 
   function dimmedKeysFromMembers(members: string[]): Set<string> {
@@ -639,9 +623,16 @@
                   {#each simulatedTeams as row, i (row.team.team_key)}
                     <li class="team-hand-row">
                       <TeamCardHand
-                        characters={handCharactersFromKeys(row.team.characters)}
+                        characters={handCharactersFromGoodKeys(
+                          row.team.characters,
+                          goodKeyMap,
+                        )}
                         builds={handBuilds(row.team, row.sim)}
-                        dimmedKeys={dimmedKeysFromGoodKeys(row.team.characters)}
+                        dimmedKeys={dimmedKeysFromGoodKeys(
+                          row.team.characters,
+                          ownedKeys,
+                          goodKeyMap,
+                        )}
                         spread="flat"
                       />
                       <div class="team-hand-footer">

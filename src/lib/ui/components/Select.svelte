@@ -1,26 +1,31 @@
-<script lang="ts">
+<script lang="ts" module>
+  export type SelectOption<T extends string = string> = {
+    value: T;
+    label: string;
+  };
+</script>
+
+<script lang="ts" generics="Value extends string = string">
   import { slide } from "svelte/transition";
   import type { HTMLAttributes } from "svelte/elements";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
 
-  export type SelectOption = {
-    value: string;
-    label: string;
-  };
-
   let {
-    value = $bindable(""),
+    value = $bindable("" as Value),
     options = [],
     /** Fixed trigger text (e.g. "Sort"). Defaults to the selected option label. */
     trigger,
     class: className = "",
     ...rest
   }: {
-    value?: string;
-    options?: SelectOption[];
+    value?: Value;
+    options?: SelectOption<Value>[];
     trigger?: string;
     class?: string;
-  } & Omit<HTMLAttributes<HTMLDivElement>, "class" | "children"> = $props();
+  } & Omit<
+    HTMLAttributes<HTMLButtonElement>,
+    "class" | "children" | "type" | "onclick"
+  > = $props();
 
   let open = $state(false);
   let rootEl: HTMLDivElement | null = $state(null);
@@ -60,13 +65,13 @@
     };
   });
 
-  function choose(next: string) {
+  function choose(next: Value) {
     value = next;
     open = false;
   }
 </script>
 
-<div class="select {className}" bind:this={rootEl} {...rest}>
+<div class="select {className}" bind:this={rootEl}>
   <button
     type="button"
     class="select-trigger"
@@ -74,6 +79,7 @@
     aria-expanded={open}
     aria-haspopup="listbox"
     onclick={toggle}
+    {...rest}
   >
     {triggerText}
     <span class="chevron" class:open>
@@ -118,7 +124,7 @@
     font-size: var(--text-xs);
     color: var(--foreground-mid);
     background: transparent;
-    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.22);
     cursor: pointer;
     transition: var(--control-transition);
   }
@@ -143,12 +149,13 @@
     position: absolute;
     top: calc(100% + 0.35rem);
     left: 0;
-    z-index: 30;
+    z-index: 40;
     min-width: max(100%, 10rem);
     padding: 0.25rem;
     border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.24);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.22);
+    background: var(--background-mid);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
   .select-menu.align-right {
@@ -160,17 +167,23 @@
     display: block;
     width: 100%;
     padding: 0.45rem 0.65rem;
+    text-align: left;
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+    background: transparent;
     border: none;
     border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground-color);
-    font-size: var(--text-xs);
-    text-align: left;
     cursor: pointer;
+    transition: var(--control-transition);
   }
 
-  .select-option:hover,
-  .select-option.selected {
+  .select-option:hover {
+    color: var(--foreground-color);
     background: var(--surface-quiet);
+  }
+
+  .select-option.selected {
+    color: var(--foreground-color);
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
   }
 </style>

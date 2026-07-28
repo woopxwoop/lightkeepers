@@ -1,4 +1,4 @@
-import type { AbyssTeam, StygianTeam } from "$lib/definitions";
+import type { AbyssTeam, StygianTeam, Character } from "$lib/definitions";
 import type { InvestmentSim, InvestmentTeam } from "$lib/types/investment";
 
 /** Character-page team lists (meta + simulated). */
@@ -61,4 +61,51 @@ export function topSimTeamsForCharacter(
   }
   ranked.sort((a, b) => b.dps - a.dps);
   return ranked.slice(0, limit);
+}
+
+export type HandBuild = {
+  cons: number;
+  weaponRefinement: number;
+  weaponKey: string;
+};
+
+/** Resolve GOOD keys to catalog characters for TeamCardHand. */
+export function handCharactersFromGoodKeys<T extends Character>(
+  keys: string[],
+  goodKeyMap: Map<string, T>,
+): (T | undefined)[] {
+  return keys.map((key) => goodKeyMap.get(key));
+}
+
+/** Per-slot build chips for a sim (null when the key is missing). */
+export function handBuilds(
+  team: InvestmentTeam,
+  sim: InvestmentSim | null,
+): (HandBuild | null)[] {
+  return team.characters.map((key) => {
+    const build = sim?.characters.find((c) => c.key === key);
+    if (!build) return null;
+    return {
+      cons: build.cons,
+      weaponRefinement: build.weapon.refinement,
+      weaponKey: build.weapon.key,
+    };
+  });
+}
+
+/** name_ids to dim for unowned GOOD-key roster members. */
+export function dimmedKeysFromGoodKeys<T extends Character>(
+  keys: string[],
+  ownedKeys: ReadonlySet<string>,
+  goodKeyMap: Map<string, T>,
+): Set<string> {
+  return new Set(
+    keys
+      .filter((key) => !ownedKeys.has(key))
+      .flatMap((key) => {
+        const char = goodKeyMap.get(key);
+        const id = char?.name_id ?? char?.name;
+        return id ? [id] : [];
+      }),
+  );
 }

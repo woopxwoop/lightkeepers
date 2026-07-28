@@ -197,7 +197,7 @@
   }
 
   /* Unstack into whatever gap still fits inside the row. */
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     .hand-flat:hover .card,
     .hand-flat:focus-within .card {
       margin-left: var(--spread-gap);

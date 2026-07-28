@@ -32,6 +32,9 @@ export type PairSuggestion = {
 /** Unlocked team must itself be meta-relevant (avg usage %). */
 export const MIN_PULL_TEAM_USAGE = 10;
 
+/** Floor so non-positive PMI pairs still order by avgUsage. */
+const PMI_SCORE_FLOOR = 1e-6;
+
 const TOP_TEAMS_SHOWN = 2;
 
 function nearMissToTeam(team: NearMissStygianTeam): StygianTeam {
@@ -74,7 +77,6 @@ function nearMissPairToTeam(team: NearMissStygianPair): StygianTeam {
  */
 export function computePullSuggestions(
   nearMissTeams: NearMissStygianTeam[],
-  _ownedTeams: StygianTeam[],
   maxSuggestions = 3,
   allowedCharacters?: ReadonlySet<string>,
 ): PullSuggestion[] {
@@ -92,29 +94,27 @@ export function computePullSuggestions(
   const suggestions: PullSuggestion[] = [];
 
   for (const [character, unlocked] of byCharacter) {
-    const ranked = [...unlocked].sort(
+    const fours = unlocked.filter((t) => (t.members ?? []).length === 4);
+    if (fours.length === 0) continue;
+
+    const ranked = [...fours].sort(
       (a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0),
     );
-    const topNearMiss = ranked[0];
-
-    if (topNearMiss.members.length !== 4) continue;
+    const topNearMiss = ranked[0]!;
 
     const unlockedUsage = topNearMiss.avg_usage_rate ?? 0;
     if (unlockedUsage < MIN_PULL_TEAM_USAGE) continue;
 
     const score =
-      Math.pow(unlockedUsage / 100, 0.3) * Math.log1p(unlocked.length);
+      Math.pow(unlockedUsage / 100, 0.3) * Math.log1p(fours.length);
 
-    const topTeams = ranked
-      .filter((t) => t.members.length === 4)
-      .slice(0, TOP_TEAMS_SHOWN)
-      .map(nearMissToTeam);
+    const topTeams = ranked.slice(0, TOP_TEAMS_SHOWN).map(nearMissToTeam);
 
     suggestions.push({
       character,
       characterName: topNearMiss.missing_character_name,
       score,
-      unlocksTeams: unlocked.length,
+      unlocksTeams: fours.length,
       topTeams,
       bestTeam: topTeams[0]!,
       avgUsage: topNearMiss.avg_usage_rate,
@@ -134,8 +134,6 @@ export type NearMissPairTeam = NearMissStygianPair;
  */
 export function computePairSuggestions(
   nearMissPairs: NearMissPairTeam[],
-  _ownedTeams: StygianTeam[],
-  _singleSuggestions: PullSuggestion[] = [],
   maxSuggestions = 3,
   allowedCharacters?: ReadonlySet<string>,
 ): PairSuggestion[] {
@@ -160,7 +158,10 @@ export function computePairSuggestions(
   const suggestions: PairSuggestion[] = [];
 
   for (const [, teams] of byPair) {
-    const ranked = [...teams].sort(
+    const fours = teams.filter((t) => (t.members ?? []).length === 4);
+    if (fours.length === 0) continue;
+
+    const ranked = [...fours].sort(
       (a, b) => (b.avg_usage_rate ?? 0) - (a.avg_usage_rate ?? 0),
     );
     const topTeam = ranked[0]!;
@@ -170,12 +171,10 @@ export function computePairSuggestions(
 
     if (avgUsage < MIN_PULL_TEAM_USAGE) continue;
 
-    const score = avgUsage * Math.pow(Math.max(pmi, 0), 0.3);
+    const score =
+      avgUsage * Math.pow(Math.max(pmi, PMI_SCORE_FLOOR), 0.3);
 
-    const topTeams = ranked
-      .filter((t) => (t.members ?? []).length === 4)
-      .slice(0, TOP_TEAMS_SHOWN)
-      .map(nearMissPairToTeam);
+    const topTeams = ranked.slice(0, TOP_TEAMS_SHOWN).map(nearMissPairToTeam);
 
     suggestions.push({
       charA: topTeam.missing_character_a!,
@@ -184,7 +183,7 @@ export function computePairSuggestions(
       charBName: topTeam.missing_character_b_name,
       pmi,
       avgUsage,
-      unlocksTeams: teams.length,
+      unlocksTeams: fours.length,
       topTeams,
       bestTeam: topTeams[0]!,
       score,

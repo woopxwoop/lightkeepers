@@ -107,4 +107,45 @@ describe("computeTierList", () => {
       false,
     );
   });
+
+  it("cuts non-limited cream in the 24–32 window and clamps at 32", () => {
+    const characters: CharacterMeta[] = [];
+    const usage: CharacterUsageRow[] = [];
+
+    // 40 non-limited 4★ with a cliff after rank 28
+    for (let i = 0; i < 40; i++) {
+      characters.push({
+        game_id: 400 + i,
+        name_id: `NL${i}`,
+        name: `NonLimited ${i}`,
+        rarity: 4,
+      });
+      usage.push({
+        character_id: 400 + i,
+        avg_usage_rate: i < 28 ? 90 - i * 0.5 : 20 - (i - 28) * 0.3,
+        cycles: 5,
+      });
+    }
+
+    // Enough limited 5★ so the limited board still computes
+    for (let i = 0; i < 12; i++) {
+      characters.push({
+        game_id: 500 + i,
+        name_id: `Lim${i}`,
+        name: `Limited ${i}`,
+        rarity: 5,
+      });
+      usage.push({
+        character_id: 500 + i,
+        avg_usage_rate: 70 - i,
+        cycles: 5,
+      });
+    }
+
+    const result = computeTierList(usage, characters);
+    assert.equal(result.fourStarCutoff, 28);
+    assert.equal(result.fourStar.length, 28);
+    assert.equal(result.fourStar[0]?.nameId, "NL0");
+    assert.ok(result.fourStarCutoff >= 24 && result.fourStarCutoff <= 32);
+  });
 });
