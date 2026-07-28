@@ -94,7 +94,9 @@ export function handBuilds(
 }
 
 /** name_ids to dim for unowned GOOD-key roster members. */
-export function dimmedKeysFromGoodKeys<T extends Character>(
+export function dimmedKeysFromGoodKeys<
+  T extends { name_id?: string | null; name?: string | null },
+>(
   keys: string[],
   ownedKeys: ReadonlySet<string>,
   goodKeyMap: Map<string, T>,

@@ -158,11 +158,6 @@ export function siteAssetUrl(stem: string) {
   return `${CDN_BASE}/site/${encodeURIComponent(base)}.webp`;
 }
 
-/** Luma silhouette for wish-result slots. */
-export function gachaSlotMaskUrl() {
-  return siteAssetUrl("gacha-slot-mask");
-}
-
 /** CDN URL for a skill / talent UI_* icon name from character kit JSON. */
 export function getUiAssetUrl(uiName: string) {
   return genshinUiUrl(uiName.replace(/\.(png|webp|jpe?g)$/i, ""));

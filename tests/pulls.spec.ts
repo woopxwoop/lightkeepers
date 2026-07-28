@@ -19,25 +19,34 @@ test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
     (req) => new URL(req.url()).pathname.endsWith("/api/nearmiss"),
     { timeout: CLIENT_API_TIMEOUT },
   );
+  const tierlist = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/tierlist"),
+    { timeout: CLIENT_API_TIMEOUT },
+  );
 
   await page.goto("/pulls");
-  await nearmiss;
+  await Promise.all([nearmiss, tierlist]);
 
   await expect(
     page.getByRole("heading", { name: "Pull Suggestions" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Stygian standouts" }),
+    page.getByRole("heading", { name: "Characters used in Stygian" }),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
-  await expect(
-    page.getByRole("heading", { name: "Best next pulls" }),
-  ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
-  await expect(page.locator(".row-name", { hasText: "Hu Tao" })).toBeVisible();
+
+  const bestNext = page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "Best next pulls" }) });
+
+  await expect(bestNext).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
+  await expect(bestNext.getByRole("link", { name: "Hu Tao" })).toBeVisible();
+
+  await bestNext.getByRole("button", { name: "Learn more" }).click();
+  await expect(bestNext.getByText(/best unlocked:\s*42\.0%/i)).toBeVisible();
+  await expect(bestNext.getByRole("button", { name: "Show less" })).toBeVisible();
 });
 
-test("pulls shows stygian standouts without a roster", async ({
-  page,
-}) => {
+test("pulls shows stygian standouts without a roster", async ({ page }) => {
   attachBrowserDebug(page);
   await installApiMocks(page);
 
@@ -73,8 +82,10 @@ test("pulls shows stygian standouts without a roster", async ({
   await tierlist;
 
   await expect(
-    page.getByRole("heading", { name: "Stygian standouts" }),
+    page.getByRole("heading", { name: "Characters used in Stygian" }),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
+  await expect(page.getByText("Most used limited characters")).toBeVisible();
+  await expect(page.getByText("Most used non-limited characters")).toBeVisible();
   await expect(page.locator(".wish").first()).toBeVisible();
   await expect(
     page.getByRole("listitem", { name: /Hu Tao/i }),
@@ -82,6 +93,9 @@ test("pulls shows stygian standouts without a roster", async ({
   await expect(
     page.getByText(/Set up your roster in Settings/i),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
+  await expect(
+    page.getByRole("heading", { name: "Best next pulls" }),
+  ).toHaveCount(0);
 });
 
 test("pulls shows empty state when near-miss has nothing useful", async ({
@@ -107,5 +121,8 @@ test("pulls shows empty state when near-miss has nothing useful", async ({
 
   await expect(
     page.getByText(/no single pull stands out|covers the high-usage/i),
+  ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
+  await expect(
+    page.getByRole("heading", { name: "Characters used in Stygian" }),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
 });

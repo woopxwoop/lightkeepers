@@ -37,23 +37,9 @@ const PMI_SCORE_FLOOR = 1e-6;
 
 const TOP_TEAMS_SHOWN = 2;
 
-function nearMissToTeam(team: NearMissStygianTeam): StygianTeam {
-  return {
-    team_key: team.team_key,
-    version_number: 0,
-    avg_usage_rate: team.avg_usage_rate,
-    usage_total: team.usage_total,
-    usage_rate: team.usage_rate,
-    field_1_rate: team.field_1_rate,
-    field_2_rate: team.field_2_rate,
-    field_3_rate: team.field_3_rate,
-    members: team.members,
-    members_names: team.members_names,
-    has_total: 0,
-  };
-}
-
-function nearMissPairToTeam(team: NearMissStygianPair): StygianTeam {
+function nearMissToTeam(
+  team: NearMissStygianTeam | NearMissStygianPair,
+): StygianTeam {
   return {
     team_key: team.team_key,
     version_number: 0,
@@ -117,7 +103,7 @@ export function computePullSuggestions(
       unlocksTeams: fours.length,
       topTeams,
       bestTeam: topTeams[0]!,
-      avgUsage: topNearMiss.avg_usage_rate,
+      avgUsage: unlockedUsage,
     });
   }
 
@@ -174,7 +160,7 @@ export function computePairSuggestions(
     const score =
       avgUsage * Math.pow(Math.max(pmi, PMI_SCORE_FLOOR), 0.3);
 
-    const topTeams = ranked.slice(0, TOP_TEAMS_SHOWN).map(nearMissPairToTeam);
+    const topTeams = ranked.slice(0, TOP_TEAMS_SHOWN).map(nearMissToTeam);
 
     suggestions.push({
       charA: topTeam.missing_character_a!,

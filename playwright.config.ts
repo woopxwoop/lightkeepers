@@ -8,11 +8,15 @@ const onCI = !!process.env.CI;
  * SSR HTML while client modules never hydrated enough to call /api/teams.
  * Local keeps `vite dev` for fast iteration.
  */
+/**
+ * Pin IPv4 — on Windows Vite may listen on [::1] only, while Playwright probes
+ * http://127.0.0.1:5173 and times out waiting for the webServer URL.
+ */
 const webServerCommand = onCI
   ? "pnpm build && PORT=5173 HOST=127.0.0.1 ORIGIN=http://127.0.0.1:5173 node build"
   : process.platform === "win32"
-    ? "pnpm dev"
-    : "PLAYWRIGHT_E2E=1 pnpm dev";
+    ? "pnpm exec vite dev --host 127.0.0.1 --port 5173 --strictPort"
+    : "PLAYWRIGHT_E2E=1 pnpm exec vite dev --host 127.0.0.1 --port 5173 --strictPort";
 
 export default defineConfig({
   testDir: "./tests",

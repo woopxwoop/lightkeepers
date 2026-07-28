@@ -13,17 +13,17 @@
 /** Documented averaging window for the usage view (matches DB). */
 export const TIER_LIST_WINDOW_CYCLES = 5;
 
-/** Inclusive search window for the gap cut (1-based ranks). */
-export const CREAM_SEARCH_LO = 8;
-export const CREAM_SEARCH_HI = 16;
 /** Hard floor / ceiling on how many characters we show (limited 5★). */
 export const CREAM_MIN = 8;
 export const CREAM_MAX = 16;
+/** Inclusive search window for the gap cut (1-based ranks). */
+export const CREAM_SEARCH_LO = CREAM_MIN;
+export const CREAM_SEARCH_HI = CREAM_MAX;
 /** Non-limited board can run longer — more 4★ / standard 5★ to surface. */
 export const CREAM_NONLIMITED_MIN = 24;
-export const CREAM_NONLIMITED_SEARCH_LO = 24;
-export const CREAM_NONLIMITED_SEARCH_HI = 32;
 export const CREAM_NONLIMITED_MAX = 32;
+export const CREAM_NONLIMITED_SEARCH_LO = CREAM_NONLIMITED_MIN;
+export const CREAM_NONLIMITED_SEARCH_HI = CREAM_NONLIMITED_MAX;
 
 /**
  * Permanently available 5★ on the standard wish.
@@ -104,7 +104,7 @@ export function creamCutoff(
   if (n === 0) return 0;
   if (n <= minK) return n;
 
-  const lo = Math.max(1, Math.min(searchLo, n - 1));
+  const lo = Math.max(minK, Math.min(searchLo, n - 1));
   const hi = Math.max(lo, Math.min(searchHi, n - 1));
 
   let bestK = Math.min(Math.max(minK, lo), Math.min(maxK, n));
