@@ -15,6 +15,7 @@ import type {
   StygianTeam,
   StygianVersion,
 } from "$lib/definitions";
+import type { TierListPayload } from "$lib/tierlist";
 
 export const E2E_ABYSS_TEAM_TOP = {
   team_key: "test-abyss-top",
@@ -205,3 +206,52 @@ export function e2eStaticPayload(): E2eStaticPayload {
 
 /** Empty near-miss pair list typed for API mocks. */
 export const E2E_NEAR_MISS_PAIRS: NearMissStygianPair[] = [];
+
+/** Deterministic /api/tierlist body for Playwright. */
+export function e2eTierListPayload(): TierListPayload {
+  return {
+    windowCycles: 5,
+    cutoffMethod: "relative-gap",
+    fiveStarCutoff: 3,
+    fourStarCutoff: 2,
+    fiveStar: [
+      {
+        nameId: "Hutao",
+        name: "Hu Tao",
+        score: 55,
+        cycles: 5,
+        rank: 1,
+      },
+      {
+        nameId: "Yelan",
+        name: "Yelan",
+        score: 42,
+        cycles: 5,
+        rank: 2,
+      },
+      {
+        nameId: "Furina",
+        name: "Furina",
+        score: 28,
+        cycles: 5,
+        rank: 3,
+      },
+    ],
+    fourStar: [
+      {
+        nameId: "Bennett",
+        name: "Bennett",
+        score: 60,
+        cycles: 5,
+        rank: 1,
+      },
+      {
+        nameId: "Xiangling",
+        name: "Xiangling",
+        score: 18,
+        cycles: 5,
+        rank: 2,
+      },
+    ],
+  };
+}

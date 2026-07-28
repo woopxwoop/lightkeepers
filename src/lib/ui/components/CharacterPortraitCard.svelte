@@ -116,6 +116,7 @@
       outline-color var(--control-duration) var(--control-ease);
   }
 
+  a.char-card,
   button.char-card {
     cursor: pointer;
   }

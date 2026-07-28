@@ -11,6 +11,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import Toggle from "$lib/ui/components/Toggle.svelte";
   import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
+  import Select from "$lib/ui/components/Select.svelte";
   import Chip from "$lib/ui/components/Chip.svelte";
   import Badge from "$lib/ui/components/Badge.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
@@ -135,6 +136,7 @@
   });
 
   let segment = $state<"roster" | "meta">("roster");
+  let selectDemo = $state("stygian");
   let chipOn = $state(true);
   let toggleOn = $state(true);
   let slidingTab = $state<"top" | "bottom" | "skills">("top");
@@ -211,6 +213,73 @@
   let typePairing = $derived(
     TYPE_PAIRINGS.find((p) => p.id === typePairingId) ?? TYPE_PAIRINGS[0],
   );
+
+  const TIP_TONE_OPTIONS = [
+    {
+      id: "current",
+      label: "Current",
+      note: "cream bg · near-black text",
+      bg: "var(--foreground-mid)",
+      fg: "var(--background-color)",
+      border: "color-mix(in srgb, var(--accent-1) 30%, transparent)",
+    },
+    {
+      id: "ink-on-paper",
+      label: "Ink on paper",
+      note: "brighter cream · soft charcoal",
+      bg: "var(--accent-3)",
+      fg: "#1a1610",
+      border: "color-mix(in srgb, var(--accent-1) 35%, transparent)",
+    },
+    {
+      id: "raised-invert",
+      label: "Raised invert",
+      note: "mid surface · cream text",
+      bg: "var(--background-mid)",
+      fg: "var(--foreground-color)",
+      border: "color-mix(in srgb, var(--foreground-color) 22%, transparent)",
+    },
+    {
+      id: "deep-panel",
+      label: "Deep panel",
+      note: "near-black · cream text · hairline",
+      bg: "var(--background-color)",
+      fg: "var(--foreground-color)",
+      border: "color-mix(in srgb, var(--foreground-color) 28%, transparent)",
+    },
+    {
+      id: "gold-rim",
+      label: "Gold rim",
+      note: "deep panel · gold edge",
+      bg: "color-mix(in srgb, var(--background-mid) 88%, #000)",
+      fg: "var(--foreground-color)",
+      border: "color-mix(in srgb, var(--accent-1) 55%, transparent)",
+    },
+    {
+      id: "warm-glass",
+      label: "Warm glass",
+      note: "translucent cream wash",
+      bg: "color-mix(in srgb, var(--accent-3) 82%, transparent)",
+      fg: "#16130e",
+      border: "color-mix(in srgb, var(--accent-1) 40%, transparent)",
+    },
+    {
+      id: "accent-wash",
+      label: "Accent wash",
+      note: "soft gold fill · dark text",
+      bg: "color-mix(in srgb, var(--accent-1) 28%, var(--background-mid))",
+      fg: "var(--foreground-color)",
+      border: "color-mix(in srgb, var(--accent-1) 50%, transparent)",
+    },
+    {
+      id: "neutral-chip",
+      label: "Neutral chip",
+      note: "selected surface · cream text",
+      bg: "var(--surface-selected)",
+      fg: "var(--foreground-color)",
+      border: "color-mix(in srgb, var(--foreground-color) 18%, transparent)",
+    },
+  ] as const;
 </script>
 
 <PageShell class="gap-10">
@@ -333,9 +402,8 @@
     <div class="section-head">
       <h2>Controls</h2>
       <p>
-        Shared <code>SegmentedControl</code>, <code>Chip</code>,
-        <code>Toggle</code>,
-        <code>Button</code>, <code>Badge</code>.
+        Shared <code>SegmentedControl</code>, <code>Select</code>, <code>Chip</code>,
+        <code>Toggle</code>, <code>Button</code>, <code>Badge</code>.
       </p>
     </div>
 
@@ -347,6 +415,37 @@
           bind:value={segment}
           aria-label="Demo segment"
         />
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">Select</p>
+        <p class="token-meta mb-2">
+          Custom listbox dropdown (same chrome as the character filter Sort
+          control). Menu anchors left/right from the trigger’s viewport side.
+          Optional fixed <code>trigger</code> label.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <Select
+            bind:value={selectDemo}
+            aria-label="Demo select"
+            options={[
+              { value: "stygian", label: "Stygian" },
+              { value: "abyss", label: "Abyss" },
+              { value: "simulated", label: "Simulated" },
+            ]}
+          />
+          <Select
+            bind:value={selectDemo}
+            trigger="Sort"
+            aria-label="Demo sort"
+            options={[
+              { value: "stygian", label: "Stygian" },
+              { value: "abyss", label: "Abyss" },
+              { value: "simulated", label: "Simulated" },
+            ]}
+          />
+        </div>
+        <p class="token-meta mt-2">Value: {selectDemo}</p>
       </Surface>
 
       <Surface>
@@ -773,7 +872,7 @@
         </div>
 
         <div class="tip-palette">
-          {#each [{ id: "current", label: "Current", note: "cream bg · near-black text", bg: "var(--foreground-mid)", fg: "var(--background-color)", border: "color-mix(in srgb, var(--accent-1) 30%, transparent)" }, { id: "ink-on-paper", label: "Ink on paper", note: "brighter cream · soft charcoal", bg: "var(--accent-3)", fg: "#1a1610", border: "color-mix(in srgb, var(--accent-1) 35%, transparent)" }, { id: "raised-invert", label: "Raised invert", note: "mid surface · cream text", bg: "var(--background-mid)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--foreground-color) 22%, transparent)" }, { id: "deep-panel", label: "Deep panel", note: "near-black · cream text · hairline", bg: "var(--background-color)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--foreground-color) 28%, transparent)" }, { id: "gold-rim", label: "Gold rim", note: "deep panel · gold edge", bg: "color-mix(in srgb, var(--background-mid) 88%, #000)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--accent-1) 55%, transparent)" }, { id: "warm-glass", label: "Warm glass", note: "translucent cream wash", bg: "color-mix(in srgb, var(--accent-3) 82%, transparent)", fg: "#16130e", border: "color-mix(in srgb, var(--accent-1) 40%, transparent)" }, { id: "accent-wash", label: "Accent wash", note: "soft gold fill · dark text", bg: "color-mix(in srgb, var(--accent-1) 28%, var(--background-mid))", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--accent-1) 50%, transparent)" }, { id: "neutral-chip", label: "Neutral chip", note: "selected surface · cream text", bg: "var(--surface-selected)", fg: "var(--foreground-color)", border: "color-mix(in srgb, var(--foreground-color) 18%, transparent)" }] as tone (tone.id)}
+          {#each TIP_TONE_OPTIONS as tone (tone.id)}
             <div class="tip-candidate">
               <div class="tip-candidate-head">
                 <span class="tip-candidate-label">{tone.label}</span>

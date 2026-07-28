@@ -5,6 +5,7 @@ import type {
   NearMissStygianTeam,
   StygianTeam,
 } from "../src/lib/definitions";
+import type { TierListPayload } from "../src/lib/tierlist";
 import {
   E2E_ABYSS_TEAM_BOTTOM,
   E2E_ABYSS_TEAM_TOP,
@@ -16,6 +17,7 @@ import {
   E2E_STYGIAN_TEAM_MIDDLE,
   E2E_STYGIAN_TEAM_TOP,
   e2eStaticPayload,
+  e2eTierListPayload,
 } from "../src/lib/e2e/fixtures";
 
 /** Abyss teams with no shared members — solver can fill both halves. */
@@ -27,12 +29,12 @@ export const STYGIAN_TEAM_TOP = E2E_STYGIAN_TEAM_TOP;
 export const STYGIAN_TEAM_MIDDLE = E2E_STYGIAN_TEAM_MIDDLE;
 export const STYGIAN_TEAM_BOTTOM = E2E_STYGIAN_TEAM_BOTTOM;
 
-/** Owned Stygian team used as the weak baseline for pull improvement. */
+/** Owned Stygian team for /api/teams mocks on the Pulls page. */
 export const STYGIAN_OWNED_BASELINE = E2E_STYGIAN_OWNED_BASELINE;
 
 /**
- * Near-miss: same 3 as baseline + missing Hutao at much higher usage →
- * computePullSuggestions yields improvement > 0.
+ * Near-miss: Hu Tao missing from a high-usage team the roster almost fields.
+ * avg_usage_rate clears MIN_PULL_TEAM_USAGE (10).
  */
 export const NEAR_MISS_SINGLE = E2E_NEAR_MISS_SINGLE;
 
@@ -46,6 +48,7 @@ type ApiMockOptions = {
   allTeamsStygian?: StygianTeam[];
   nearMissTeams?: NearMissStygianTeam[];
   nearMissPairs?: NearMissStygianPair[];
+  tierList?: TierListPayload;
 };
 
 /**
@@ -74,6 +77,7 @@ export async function installApiMocks(
   ];
   const nearMissTeams = options.nearMissTeams ?? [];
   const nearMissPairs = options.nearMissPairs ?? [];
+  const tierList = options.tierList ?? e2eTierListPayload();
 
   await page.route("**/api/roster", async (route: Route) => {
     await route.fulfill({ status: 401, body: "Unauthorized" });
@@ -97,6 +101,10 @@ export async function installApiMocks(
     await route.fulfill({
       json: { nearMissTeams, nearMissPairs },
     });
+  });
+
+  await page.route("**/api/tierlist", async (route: Route) => {
+    await route.fulfill({ json: tierList });
   });
 
   const staticBase = e2eStaticPayload();

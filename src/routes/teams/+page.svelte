@@ -10,6 +10,12 @@
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
+  import Select from "$lib/ui/components/Select.svelte";
+  import {
+    handCharactersFromGoodKeys,
+    handBuilds,
+    dimmedKeysFromGoodKeys,
+  } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type {
     InvestmentFile,
@@ -207,34 +213,6 @@
   let listKey = $derived(
     `${tags.join(",")}|${selectedCost ?? "any"}|${sortBy}|${sortOwnedFirst}`,
   );
-
-  function handCharacters(team: InvestmentTeam) {
-    return team.characters.map((key) => goodKeyMap.get(key));
-  }
-
-  function handBuilds(team: InvestmentTeam, sim: InvestmentSim | null) {
-    return team.characters.map((key) => {
-      const build = sim?.characters.find((c) => c.key === key);
-      if (!build) return null;
-      return {
-        cons: build.cons,
-        weaponRefinement: build.weapon.refinement,
-        weaponKey: build.weapon.key,
-      };
-    });
-  }
-
-  function dimmedKeysFor(team: InvestmentTeam): Set<string> {
-    return new Set(
-      team.characters
-        .filter((key) => !ownedKeys.has(key))
-        .flatMap((key) => {
-          const char = goodKeyMap.get(key);
-          const id = char?.name_id ?? char?.name;
-          return id ? [id] : [];
-        }),
-    );
-  }
 </script>
 
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
@@ -299,10 +277,14 @@
 
           <div class="flex items-center gap-1.5">
             <span class="settings-caption">Sort</span>
-            <select bind:value={sortBy} class="sort-select">
-              <option value="dps-desc">DPS ↓</option>
-              <option value="dps-asc">DPS ↑</option>
-            </select>
+            <Select
+              bind:value={sortBy}
+              aria-label="Sort teams"
+              options={[
+                { value: "dps-desc", label: "DPS ↓" },
+                { value: "dps-asc", label: "DPS ↑" },
+              ]}
+            />
           </div>
 
           <span class="settings-sep" aria-hidden="true"></span>
@@ -349,9 +331,16 @@
               style="animation-delay: {i * 50}ms;"
             >
               <TeamCardHand
-                characters={handCharacters(team)}
+                characters={handCharactersFromGoodKeys(
+                  team.characters,
+                  goodKeyMap,
+                )}
                 builds={handBuilds(team, sim)}
-                dimmedKeys={dimmedKeysFor(team)}
+                dimmedKeys={dimmedKeysFromGoodKeys(
+                  team.characters,
+                  ownedKeys,
+                  goodKeyMap,
+                )}
               />
 
               <div class="team-footer">
@@ -475,26 +464,6 @@
     width: 1px;
     height: 1.25rem;
     background: rgba(255, 255, 255, 0.14);
-  }
-
-  .sort-select {
-    padding: 0.25rem 1.75rem 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    outline: none;
-    font-size: var(--text-xs);
-    appearance: none;
-    -webkit-appearance: none;
-    background-color: var(--background-color);
-    color: var(--foreground-color);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23d79a3e'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.4rem center;
-  }
-
-  .sort-select:focus {
-    border-color: rgba(255, 255, 255, 0.32);
   }
 
   .cost-input {
@@ -627,6 +596,7 @@
     font-size: var(--text-xs);
     font-weight: 500;
     color: var(--accent-1);
+    cursor: pointer;
   }
 
   .team-link:hover {

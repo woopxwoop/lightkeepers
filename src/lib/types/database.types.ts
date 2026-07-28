@@ -655,6 +655,38 @@ export type Database = {
       }
     }
     Views: {
+      character_usage_avg_abyss: {
+        Row: {
+          avg_usage_rate: number | null
+          character_id: number | null
+          cycles: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_stats_abyss_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["game_id"]
+          },
+        ]
+      }
+      character_usage_avg_stygian: {
+        Row: {
+          avg_usage_rate: number | null
+          character_id: number | null
+          cycles: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_stats_stygian_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["game_id"]
+          },
+        ]
+      }
       stygian_character_pair_pmi: {
         Row: {
           char_a: string | null

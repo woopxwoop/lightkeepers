@@ -147,6 +147,17 @@ export function getCharacterGachaSplash(nameId: string) {
   return genshinUiUrl(`UI_Gacha_AvatarImg_${nameId}`);
 }
 
+/** Wish-result portrait crop (`UI_Gacha_AvatarIcon_*`). */
+export function getCharacterGachaIcon(nameId: string) {
+  return genshinUiUrl(`UI_Gacha_AvatarIcon_${nameId}`);
+}
+
+/** Marketing / UI stills under `site/` on the CDN. */
+export function siteAssetUrl(stem: string) {
+  const base = stem.replace(/\.(png|webp|jpe?g)$/i, "");
+  return `${CDN_BASE}/site/${encodeURIComponent(base)}.webp`;
+}
+
 /** CDN URL for a skill / talent UI_* icon name from character kit JSON. */
 export function getUiAssetUrl(uiName: string) {
   return genshinUiUrl(uiName.replace(/\.(png|webp|jpe?g)$/i, ""));
