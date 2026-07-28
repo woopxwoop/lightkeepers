@@ -26,7 +26,8 @@
     color: var(--foreground-mid);
   }
 
-  :global(.hover-tooltip) .game-text {
+  :global(.hover-tooltip) .game-text,
+  :global(.tip-sheet) .game-text {
     color: inherit;
   }
 

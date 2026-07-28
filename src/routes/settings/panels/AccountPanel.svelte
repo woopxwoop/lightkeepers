@@ -75,9 +75,7 @@
 <div class="account-panel">
   <header class="panel-head">
     <h2 class="section-title">Account / Sync</h2>
-    <p class="lede">
-      Log in to back up your roster and sync across devices.
-    </p>
+    <p class="lede">Log in to back up your roster and sync across devices.</p>
   </header>
 
   {#if $session.isPending}

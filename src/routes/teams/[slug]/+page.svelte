@@ -2,11 +2,7 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import {
-    buildGoodKeyMap,
-    toGoodKey,
-    humanizeTeamName,
-  } from "$lib/utils";
+  import { buildGoodKeyMap, toGoodKey, humanizeTeamName } from "$lib/utils";
   import {
     humanizeInvestmentLabel,
     displayWeaponRefinement,
@@ -68,9 +64,7 @@
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
   let characterNames = $derived(
-    new Map(
-      [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
-    ),
+    new Map([...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key])),
   );
 
   let teamTitle = $derived(
@@ -146,13 +140,38 @@
     return `${sign}${pct.toFixed(1)}%`;
   }
 
-  /** True when `to` is below `from` (negative % for upgrades). */
-  function isDpsLoss(from: number | null | undefined, to: number): boolean {
-    return from != null && from > 0 && to < from;
-  }
+  /** Small dips (≤ 2.5pp) get a variance tip; larger ones get a warning tip. */
+  const NEG_PCT_CLAMP = 2.5;
 
-  const NEG_PCT_TIP =
-    "Probably just Monte Carlo variance in the simulation — these constellations likely yield no theoretical DPS increase in this instance.";
+  const NEG_PCT_TIP_VARIANCE =
+    "Probably just Monte Carlo variance in the simulation — these upgrades likely yield no theoretical DPS increase in this instance.";
+
+  const NEG_PCT_TIP_UNEXPECTED =
+    "Something unexpected occurred in this simulation — best to ignore these results.";
+
+  type NegPctInfo = { label: string; tip: string; tipLabel: string };
+
+  /** When `to` is below `from`, return display + tip; else null. */
+  function negPctInfo(
+    from: number | null | undefined,
+    to: number,
+  ): NegPctInfo | null {
+    if (from == null || from <= 0 || to >= from) return null;
+    const pct = ((to - from) / from) * 100;
+    const label = `${pct.toFixed(1)}%`;
+    if (Math.abs(pct) <= NEG_PCT_CLAMP) {
+      return {
+        label,
+        tip: NEG_PCT_TIP_VARIANCE,
+        tipLabel: "About near-zero percentages",
+      };
+    }
+    return {
+      label,
+      tip: NEG_PCT_TIP_UNEXPECTED,
+      tipLabel: "About unexpected simulation results",
+    };
+  }
 
   /** Within 2.5% of peak DPS at that cost: dps >= peak × 0.975 (relative, not ±2.5pp). */
   const NEAR_BEST_RATIO = 0.975;
@@ -166,11 +185,16 @@
   }
 </script>
 
-{#snippet negPctTip(label: string)}
-  <span class="pct-tip group">
-    {label}
-    <HoverTooltip class="max-w-72">{NEG_PCT_TIP}</HoverTooltip>
-  </span>
+{#snippet negPctTip(info: NegPctInfo)}
+  <button
+    type="button"
+    class="pct-tip group tip-detail-text tip-detail-text--small"
+  >
+    {info.label}
+    <HoverTooltip class="max-w-72" label={info.tipLabel}>
+      <p class="tip-detail-text tip-detail-text--small">{info.tip}</p>
+    </HoverTooltip>
+  </button>
 {/snippet}
 
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
@@ -314,10 +338,15 @@
           </div>
           {#each costGroups as group, gi (group.cost)}
             {@const peakSim = group.sims[0]}
-            {@const prevPeak = gi > 0 ? costGroups[gi - 1].sims[0] : baselineSim}
+            {@const prevPeak =
+              gi > 0 ? costGroups[gi - 1].sims[0] : baselineSim}
+            {@const deltaNeg = prevPeak
+              ? negPctInfo(prevPeak.dps, peakSim.dps)
+              : null}
             {@const deltaLabel = prevPeak
               ? pctDelta(prevPeak.dps, peakSim.dps)
               : "—"}
+            {@const vsBaseNeg = negPctInfo(baselineSim?.dps, peakSim.dps)}
             {@const vsBaseLabel = pctVsBaseline(peakSim.dps)}
             {@const hasAlts = group.sims.length > 1}
             {@const open = openCosts.has(group.cost)}
@@ -338,24 +367,22 @@
                   <span class="col-label" title={simDiffLabel(peakSim)}>
                     {simDiffLabel(peakSim)}
                   </span>
-                  <span class="col-dps"
-                    >{(peakSim.dps / 1000).toFixed(1)}K</span
-                  >
-                  <span class="col-delta">
-                    {#if prevPeak && isDpsLoss(prevPeak.dps, peakSim.dps)}
-                      {@render negPctTip(deltaLabel)}
-                    {:else}
-                      {deltaLabel}
-                    {/if}
-                  </span>
-                  <span class="col-base">
-                    {#if isDpsLoss(baselineSim?.dps, peakSim.dps)}
-                      {@render negPctTip(vsBaseLabel)}
-                    {:else}
-                      {vsBaseLabel}
-                    {/if}
-                  </span>
+                  <span class="col-dps">{(peakSim.dps / 1000).toFixed(1)}K</span>
                 </a>
+                <span class="col-delta">
+                  {#if deltaNeg}
+                    {@render negPctTip(deltaNeg)}
+                  {:else}
+                    {deltaLabel}
+                  {/if}
+                </span>
+                <span class="col-base">
+                  {#if vsBaseNeg}
+                    {@render negPctTip(vsBaseNeg)}
+                  {:else}
+                    {vsBaseLabel}
+                  {/if}
+                </span>
                 {#if hasAlts}
                   <button
                     type="button"
@@ -364,7 +391,9 @@
                     onclick={() => toggleCost(group.cost)}
                     aria-expanded={open}
                     aria-controls="cost-alts-{group.cost}"
-                    aria-label="{open ? 'Hide' : 'Show'} alternatives at cost {group.cost}"
+                    aria-label="{open
+                      ? 'Hide'
+                      : 'Show'} alternatives at cost {group.cost}"
                   >
                     <IconChevronDown size={14} />
                   </button>
@@ -380,6 +409,7 @@
                   transition:slide={{ duration: 180 }}
                 >
                   {#each group.sims.slice(1) as sim (sim.state_key)}
+                    {@const altVsBaseNeg = negPctInfo(baselineSim?.dps, sim.dps)}
                     <div class="ladder-row">
                       <a
                         href="/team-configs/{encodeURIComponent(sim.state_key)}"
@@ -393,15 +423,15 @@
                         <span class="col-dps"
                           >{(sim.dps / 1000).toFixed(1)}K</span
                         >
-                        <span class="col-delta"></span>
-                        <span class="col-base">
-                          {#if isDpsLoss(baselineSim?.dps, sim.dps)}
-                            {@render negPctTip(pctVsBaseline(sim.dps))}
-                          {:else}
-                            {pctVsBaseline(sim.dps)}
-                          {/if}
-                        </span>
                       </a>
+                      <span class="col-delta"></span>
+                      <span class="col-base">
+                        {#if altVsBaseNeg}
+                          {@render negPctTip(altVsBaseNeg)}
+                        {:else}
+                          {pctVsBaseline(sim.dps)}
+                        {/if}
+                      </span>
                       <span class="alts-spacer" aria-hidden="true"></span>
                     </div>
                   {/each}
@@ -691,15 +721,26 @@
   .pct-tip {
     position: relative;
     display: inline-block;
-    cursor: help;
+    margin: 0;
+    padding: 0;
+    border: none;
     border-bottom: var(--border-width) dashed rgba(255, 255, 255, 0.35);
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: help;
+    text-align: inherit;
+  }
+
+  .pct-tip:focus-visible {
+    outline: 2px solid var(--accent-1);
+    outline-offset: 2px;
   }
 
   .ladder-head,
   .ladder-row {
     display: grid;
-    grid-template-columns:
-      2.5rem minmax(0, 1fr) 3.5rem 3.25rem 3.25rem 1.5rem;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 3.5rem 3.25rem 3.25rem 1.5rem;
     column-gap: 0.5rem;
     align-items: center;
     padding: 0.55rem 0.75rem;
@@ -722,7 +763,7 @@
   }
 
   .ladder-link {
-    grid-column: 1 / 6;
+    grid-column: 1 / 4;
     display: grid;
     grid-template-columns: subgrid;
     align-items: center;
@@ -730,6 +771,11 @@
     padding: 0.1rem 0;
     text-decoration: none;
     color: inherit;
+    font-size: var(--text-xs);
+  }
+
+  .col-delta,
+  .col-base {
     font-size: var(--text-xs);
   }
 
@@ -851,8 +897,8 @@
       grid-column: 1 / 4;
     }
 
-    .ladder-link .col-delta,
-    .ladder-link .col-base {
+    .col-delta,
+    .col-base {
       display: none;
     }
   }

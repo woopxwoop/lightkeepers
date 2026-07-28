@@ -218,10 +218,15 @@
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
     <div class="page-head-text">
-      <h1 class="page-title">Teams</h1>
+      <h1 class="page-title">Team Simulations</h1>
       <p class="page-meta">
-        gcsim simulations · KQM artifact standards{#if data}
-          · {data.teams.length} teams{/if}
+        {#if data}
+          Database of the {data.teams.length} teams used for character build and
+          investment recommendations
+        {:else}
+          Database of teams used for character build and investment
+          recommendations
+        {/if}
       </p>
     </div>
   </header>
@@ -555,10 +560,19 @@
     gap: var(--space-2);
   }
 
-  /* Spotlight hands sit on the page base — no raised card chrome. */
+  /* Spotlight hands sit on the page base — no raised card chrome.
+     Keep card/radius paired so the fan stays inside the page width;
+     oversized desktop values clip the leftmost weapon on phones. */
   .team-row :global(.hand) {
     --card-width: clamp(8.1rem, 18vw, 13.8rem);
     --radius: clamp(19.2rem, 46vw, 31.2rem);
+  }
+
+  @media (max-width: 640px) {
+    .team-row :global(.hand) {
+      --card-width: clamp(5.1rem, 26vw, 7.8rem);
+      --radius: clamp(13.2rem, 70vw, 19.2rem);
+    }
   }
 
   .team-footer {

@@ -18,21 +18,31 @@
   let resolved = $derived(
     set ?? (setKey ? (artifactSetByKey.get(setKey) ?? null) : null),
   );
+
+  let title = $derived(
+    resolved
+      ? pieceCount != null
+        ? `${resolved.name} · ${pieceCount}pc`
+        : resolved.name
+      : "",
+  );
 </script>
 
 {#if resolved}
-  <HoverTooltip class="max-w-64">
-    <div class="text-sm font-medium leading-tight">
-      {resolved.name}{#if pieceCount != null}
-        {" "}· {pieceCount}pc{/if}
-    </div>
+  <HoverTooltip class="max-w-64" label={title}>
+    <div class="tip-detail-text font-medium">{title}</div>
     {#each resolved.bonuses as bonus}
       {#if pieceCount == null || bonus.needCount <= pieceCount}
         <div class="mt-1.5">
-          <div class="text-[0.65rem] font-medium leading-tight opacity-90">
+          <div
+            class="tip-detail-text tip-detail-text--small font-medium opacity-90"
+          >
             {bonus.needCount}-Piece
           </div>
-          <GameText class="text-[0.65rem] mt-0.5 opacity-85" text={bonus.description} />
+          <GameText
+            class="tip-detail-text tip-detail-text--small mt-0.5 opacity-85"
+            text={bonus.description}
+          />
         </div>
       {/if}
     {/each}

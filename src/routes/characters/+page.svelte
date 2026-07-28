@@ -34,7 +34,7 @@
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
     <h1 class="page-title">Characters</h1>
-    <p class="page-hint">Tap a character for details</p>
+    <p class="page-hint">View character build guides</p>
   </header>
 
   <CharacterFilterBar

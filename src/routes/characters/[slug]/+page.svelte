@@ -50,6 +50,14 @@
     weaponTypeLabel,
   } from "$lib/utils";
   import { artifactSetByKey, weaponByKey } from "$lib/equipment-data";
+  import { isArtifactSubstatKey } from "$lib/build-stats";
+  import {
+    CONSTELLATION_UPGRADE,
+    LEVEL_UPGRADE,
+    SIGNATURE_UPGRADE,
+    TALENT_UPGRADE,
+    classifyUpgradeImpact,
+  } from "$lib/upgrade-priority";
   import {
     artifactIconUrl,
     skillIconUrl,
@@ -60,6 +68,7 @@
   import type {
     CharacterIndex,
     InvestmentFile,
+    TalentSlot,
   } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
 
@@ -196,6 +205,19 @@
     burst: "Elemental Burst",
   };
 
+  const TALENT_SLOT_LABELS: Record<TalentSlot, string> = {
+    auto: "Normal",
+    skill: "Skill",
+    burst: "Burst",
+  };
+
+  /** Map investment talent slots → kit skill types for icons. */
+  const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
+    auto: "normal",
+    skill: "skill",
+    burst: "burst",
+  };
+
   let character = $derived(
     $charactersOwned.find((c) => c.name_id === kit.name_id),
   );
@@ -311,14 +333,16 @@
   });
 
   /**
-   * Recommended substats: sim liquid ranks, plus any pinned main-stat keys
-   * (Builds UI treats those as substat priorities too).
+   * Recommended substats from OptimFull liquid ranks, plus any recommended
+   * main that can also roll as a substat (e.g. EM sands → also recommend EM
+   * subs). Main-only keys (elemental DMG, heal, etc.) stay excluded.
    */
   let recommendedSubstats = $derived.by(() => {
     if (!builds) return [];
     const mainSlots = new Map<string, string[]>();
     for (const slot of MAIN_STAT_SLOTS) {
       for (const s of builds.main_stats[slot.key]) {
+        if (!isArtifactSubstatKey(s.key)) continue;
         const list = mainSlots.get(s.key) ?? [];
         list.push(slot.label);
         mainSlots.set(s.key, list);
@@ -336,6 +360,7 @@
     >();
 
     for (const r of builds.substat_rolls_liquid.ranked) {
+      if (!isArtifactSubstatKey(r.key)) continue;
       if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
       const slots = mainSlots.get(r.key) ?? [];
       byKey.set(r.key, {
@@ -346,7 +371,7 @@
       });
     }
 
-    // Guide / pinned mains with no liquid sample still show as substat chips
+    // Recommended mains that can be substats (e.g. EM) even without liquid rolls
     for (const [key, slots] of mainSlots) {
       if (byKey.has(key)) continue;
       byKey.set(key, {
@@ -362,6 +387,53 @@
       if (a.mean !== b.mean) return b.mean - a.mean;
       return a.key.localeCompare(b.key);
     });
+  });
+
+  /**
+   * Talent priority rows for Builds tab: qualitative upgrade labels from
+   * median % DPS drop when that talent is at 1.
+   */
+  let talentImportanceRows = $derived.by(() => {
+    const ti = builds?.talent_importance;
+    if (!ti || ti.teams <= 0) return [];
+    const slots = (["auto", "skill", "burst"] as const).filter(
+      (slot) => ti[slot],
+    );
+    return slots
+      .map((slot) => {
+        const stats = ti[slot];
+        const kitType = TALENT_SLOT_TO_KIT[slot];
+        const skill = kit.skills.find((s) => s.type === kitType);
+        const icon = skill
+          ? (iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon))
+          : null;
+        const impact = classifyUpgradeImpact(
+          stats.median_pct_drop,
+          TALENT_UPGRADE,
+        );
+        return {
+          slot,
+          label: TALENT_SLOT_LABELS[slot],
+          icon,
+          priority: impact.tier,
+          priorityLabel: impact.label,
+          median: stats.median_pct_drop,
+        };
+      })
+      .sort((a, b) => b.median - a.median || a.slot.localeCompare(b.slot));
+  });
+
+  /** Character level 80 importance for Builds tab (separate from talents). */
+  let levelImportance = $derived.by(() => {
+    const li = builds?.level_importance;
+    if (!li || li.teams <= 0) return null;
+    const impact = classifyUpgradeImpact(li.median_pct_drop, LEVEL_UPGRADE);
+    return {
+      priority: impact.tier,
+      priorityLabel: impact.label,
+      teams: li.teams,
+      icon: getUiAssetUrl("UI_ItemIcon_104003"),
+    };
   });
 </script>
 
@@ -464,118 +536,121 @@
 
     <div class="board-body">
       {#if activeTab === "skills"}
-        <div
-          role="tabpanel"
-          id="tabpanel-skills"
-          aria-labelledby="tab-skills"
-        >
-        <section class="board-section">
-          <h2 class="section-title">Talents</h2>
-          <div class="kit-list">
-            {#each kit.skills as skill}
-              {@const icon =
-                iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
-              {@const skillEnhance = enhanceExtra(
-                skill.description,
-                skill.enhanceDescription,
-              )}
-              <article
-                id="kit-S{skill.id}"
-                class="kit-row"
-                class:kit-row-flash={flashId === `kit-S${skill.id}`}
-              >
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt=""
-                    class="kit-icon shrink-0"
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="kit-copy">
-                  <div class="kit-heading">
-                    <h3 class="card-title">{skill.name}</h3>
-                    <span class="card-kicker">
-                      {SKILL_LABELS[skill.type] ?? skill.type}
-                    </span>
+        <div role="tabpanel" id="tabpanel-skills" aria-labelledby="tab-skills">
+          <section class="board-section">
+            <h2 class="section-title">Talents</h2>
+            <div class="kit-list">
+              {#each kit.skills as skill}
+                {@const icon =
+                  iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
+                {@const skillEnhance = enhanceExtra(
+                  skill.description,
+                  skill.enhanceDescription,
+                )}
+                <article
+                  id="kit-S{skill.id}"
+                  class="kit-row"
+                  class:kit-row-flash={flashId === `kit-S${skill.id}`}
+                >
+                  {#if icon}
+                    <img
+                      src={icon}
+                      alt=""
+                      class="kit-icon shrink-0"
+                      loading="lazy"
+                    />
+                  {/if}
+                  <div class="kit-copy">
+                    <div class="kit-heading">
+                      <h3 class="card-title">{skill.name}</h3>
+                      <span class="card-kicker">
+                        {SKILL_LABELS[skill.type] ?? skill.type}
+                      </span>
+                    </div>
+                    {@render descriptionBlock(skill.description, skillEnhance)}
                   </div>
-                  {@render descriptionBlock(skill.description, skillEnhance)}
-                </div>
-              </article>
-            {/each}
-          </div>
-        </section>
+                </article>
+              {/each}
+            </div>
+          </section>
 
-        <section class="board-section">
-          <h2 class="section-title">Passives</h2>
-          <div class="kit-list">
-            {#each kit.passives as passive}
-              {@const icon =
-                iconUrl(passive.icon, "talent") ?? getUiAssetUrl(passive.icon)}
-              {@const passiveEnhance = enhanceExtra(
-                passive.description,
-                passive.enhanceDescription,
-              )}
-              <article
-                id="kit-P{passive.id}"
-                class="kit-row"
-                class:kit-row-flash={flashId === `kit-P${passive.id}`}
-              >
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt=""
-                    class="kit-icon shrink-0"
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="kit-copy">
-                  <div class="kit-heading">
-                    <h3 class="card-title">{passive.name}</h3>
-                    <span class="card-kicker">{passiveKindLabel(passive)}</span>
+          <section class="board-section">
+            <h2 class="section-title">Passives</h2>
+            <div class="kit-list">
+              {#each kit.passives as passive}
+                {@const icon =
+                  iconUrl(passive.icon, "talent") ??
+                  getUiAssetUrl(passive.icon)}
+                {@const passiveEnhance = enhanceExtra(
+                  passive.description,
+                  passive.enhanceDescription,
+                )}
+                <article
+                  id="kit-P{passive.id}"
+                  class="kit-row"
+                  class:kit-row-flash={flashId === `kit-P${passive.id}`}
+                >
+                  {#if icon}
+                    <img
+                      src={icon}
+                      alt=""
+                      class="kit-icon shrink-0"
+                      loading="lazy"
+                    />
+                  {/if}
+                  <div class="kit-copy">
+                    <div class="kit-heading">
+                      <h3 class="card-title">{passive.name}</h3>
+                      <span class="card-kicker"
+                        >{passiveKindLabel(passive)}</span
+                      >
+                    </div>
+                    {@render descriptionBlock(
+                      passive.description,
+                      passiveEnhance,
+                    )}
                   </div>
-                  {@render descriptionBlock(passive.description, passiveEnhance)}
-                </div>
-              </article>
-            {/each}
-          </div>
-        </section>
+                </article>
+              {/each}
+            </div>
+          </section>
 
-        <section class="board-section">
-          <h2 class="section-title">Constellations</h2>
-          <div class="kit-list">
-            {#each kit.constellations as c}
-              {@const icon = iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
-              {@const constEnhance = enhanceExtra(
-                c.description,
-                c.enhanceDescription,
-              )}
-              <article
-                id="kit-T{c.id}"
-                class="kit-row"
-                class:kit-row-flash={flashId === `kit-T${c.id}`}
-              >
-                {#if icon}
-                  <img
-                    src={icon}
-                    alt=""
-                    class="kit-icon shrink-0"
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="kit-copy">
-                  <div class="kit-heading">
-                    <span class="const-index" style="color: {elColor};">
-                      C{c.index}
-                    </span>
-                    <h3 class="card-title">{c.name}</h3>
+          <section class="board-section">
+            <h2 class="section-title">Constellations</h2>
+            <div class="kit-list">
+              {#each kit.constellations as c}
+                {@const icon =
+                  iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
+                {@const constEnhance = enhanceExtra(
+                  c.description,
+                  c.enhanceDescription,
+                )}
+                <article
+                  id="kit-T{c.id}"
+                  class="kit-row"
+                  class:kit-row-flash={flashId === `kit-T${c.id}`}
+                >
+                  {#if icon}
+                    <img
+                      src={icon}
+                      alt=""
+                      class="kit-icon shrink-0"
+                      loading="lazy"
+                    />
+                  {/if}
+                  <div class="kit-copy">
+                    <div class="kit-heading">
+                      <span class="const-index" style="color: {elColor};">
+                        C{c.index}
+                      </span>
+                      <h3 class="card-title">{c.name}</h3>
+                    </div>
+                    {@render descriptionBlock(c.description, constEnhance)}
                   </div>
-                  {@render descriptionBlock(c.description, constEnhance)}
-                </div>
-              </article>
-            {/each}
-          </div>
-        </section>
+                </article>
+              {/each}
+            </div>
+          </section>
         </div>
       {:else if activeTab === "teams"}
         <div
@@ -696,179 +771,359 @@
           </section>
         </div>
       {:else}
-        <div
-          role="tabpanel"
-          id="tabpanel-builds"
-          aria-labelledby="tab-builds"
-        >
-        {#if builds}
-        <section class="board-section">
-          <h2 class="section-title">Weapons</h2>
-          {#if rankedWeapons.length === 0}
-            <p class="muted-note">No weapon data yet.</p>
-          {:else}
-            <div class="equip-grid">
-              {#each rankedWeapons as w}
-                {@const weapon = weaponByKey.get(w.key)}
-                {@const icon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-                <div class="equip-tile relative group">
-                  <div class="equip-icon-wrap">
-                    {#if icon}
-                      <img
-                        src={icon}
-                        alt={weapon?.name ?? w.key}
-                        class="equip-icon"
-                        loading="lazy"
-                      />
-                    {:else}
-                      <div class="equip-fallback">{w.key}</div>
-                    {/if}
-                  </div>
-                  <WeaponTooltip {weapon} weaponKey={w.key} />
-                </div>
-              {/each}
-            </div>
-          {/if}
-        </section>
-
-        <section class="board-section">
-          <h2 class="section-title">Artifact sets</h2>
-          {#if !builds.sets?.length}
-            <p class="muted-note">No set data yet.</p>
-          {:else}
-            <div class="equip-grid">
-              {#each builds.sets as s}
-                {@const set = artifactSetByKey.get(s.key)}
-                {@const icon = set ? artifactIconUrl(set.icon) : null}
-                <div class="equip-tile relative group">
-                  <div class="equip-icon-wrap">
-                    {#if icon}
-                      <img
-                        src={icon}
-                        alt={set?.name ?? s.key}
-                        class="equip-icon"
-                        loading="lazy"
-                      />
-                    {:else}
-                      <div class="equip-fallback">{s.key}</div>
-                    {/if}
-                    {#if s.count}
-                      <div class="piece-badge">
-                        <span style="color: {elColor};">{s.count}pc</span>
+        <div role="tabpanel" id="tabpanel-builds" aria-labelledby="tab-builds">
+          {#if builds}
+            <section class="board-section">
+              <h2 class="section-title">Weapons</h2>
+              {#if rankedWeapons.length === 0}
+                <p class="muted-note">No weapon data yet.</p>
+              {:else}
+                <div class="equip-grid">
+                  {#each rankedWeapons as w}
+                    {@const weapon = weaponByKey.get(w.key)}
+                    {@const icon = weapon
+                      ? weaponIconUrl(weapon.awakenIcon)
+                      : null}
+                    <div class="equip-tile relative group">
+                      <div class="equip-icon-wrap">
+                        {#if icon}
+                          <img
+                            src={icon}
+                            alt={weapon?.name ?? w.key}
+                            class="equip-icon"
+                            loading="lazy"
+                          />
+                        {:else}
+                          <div class="equip-fallback">{w.key}</div>
+                        {/if}
                       </div>
+                      <WeaponTooltip {weapon} weaponKey={w.key} />
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </section>
+
+            <section class="board-section">
+              <h2 class="section-title">Artifact sets</h2>
+              {#if !builds.sets?.length}
+                <p class="muted-note">No set data yet.</p>
+              {:else}
+                <div class="equip-grid">
+                  {#each builds.sets as s}
+                    {@const set = artifactSetByKey.get(s.key)}
+                    {@const icon = set ? artifactIconUrl(set.icon) : null}
+                    <div class="equip-tile relative group">
+                      <div class="equip-icon-wrap">
+                        {#if icon}
+                          <img
+                            src={icon}
+                            alt={set?.name ?? s.key}
+                            class="equip-icon"
+                            loading="lazy"
+                          />
+                        {:else}
+                          <div class="equip-fallback">{s.key}</div>
+                        {/if}
+                        {#if s.count}
+                          <div class="piece-badge">
+                            <span style="color: {elColor};">{s.count}pc</span>
+                          </div>
+                        {/if}
+                      </div>
+                      <ArtifactTooltip
+                        {set}
+                        setKey={s.key}
+                        pieceCount={s.count ?? null}
+                      />
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </section>
+
+            <section class="board-section">
+              <h2 class="section-title">Main stats</h2>
+              <div class="main-stats">
+                {#each MAIN_STAT_SLOTS as slot}
+                  <div class="main-stat-col">
+                    <h3 class="slot-label">
+                      <img
+                        src={artifactSlotIconUrl(slot.key)}
+                        alt=""
+                        class="stat-icon main-stat-icon shrink-0"
+                        loading="lazy"
+                      />
+                      {slot.label}
+                    </h3>
+                    {#if builds.main_stats[slot.key].length === 0}
+                      <p class="muted-note">—</p>
+                    {:else}
+                      <ul class="stat-list">
+                        {#each builds.main_stats[slot.key] as stat}
+                          {@const icon = statIconUrl(stat.key)}
+                          <li class="stat-row">
+                            <span class="flex items-center gap-1.5 min-w-0">
+                              {#if icon}
+                                <img
+                                  src={icon}
+                                  alt=""
+                                  class="stat-icon main-stat-icon shrink-0"
+                                  loading="lazy"
+                                />
+                              {/if}
+                              <span class="stat-name"
+                                >{translateStatKey(stat.key)}</span
+                              >
+                            </span>
+                          </li>
+                        {/each}
+                      </ul>
                     {/if}
                   </div>
-                  <ArtifactTooltip
-                    {set}
-                    setKey={s.key}
-                    pieceCount={s.count ?? null}
-                  />
-                </div>
-              {/each}
-            </div>
-          {/if}
-        </section>
+                {/each}
+              </div>
+            </section>
 
-        <section class="board-section">
-          <h2 class="section-title">Main stats</h2>
-          <div class="main-stats">
-            {#each MAIN_STAT_SLOTS as slot}
-              <div class="main-stat-col">
-                <h3 class="slot-label">
-                  <img
-                    src={artifactSlotIconUrl(slot.key)}
-                    alt=""
-                    class="stat-icon main-stat-icon shrink-0"
-                    loading="lazy"
-                  />
-                  {slot.label}
-                </h3>
-                {#if builds.main_stats[slot.key].length === 0}
-                  <p class="muted-note">—</p>
-                {:else}
-                  <ul class="stat-list">
-                    {#each builds.main_stats[slot.key] as stat}
-                      {@const icon = statIconUrl(stat.key)}
-                      <li class="stat-row">
-                        <span class="flex items-center gap-1.5 min-w-0">
-                          {#if icon}
+            <section class="board-section">
+              <h2 class="section-title">Recommended substats</h2>
+              {#if recommendedSubstats.length === 0}
+                <p class="muted-note">No substat data yet.</p>
+              {:else}
+                <div class="substat-row">
+                  {#each recommendedSubstats as roll}
+                    {@const icon = statIconUrl(roll.key)}
+                    <button
+                      type="button"
+                      class="stat-chip group relative flex items-center justify-center"
+                      class:is-main={roll.matchesMain}
+                      aria-label={translateStatKey(roll.key)}
+                    >
+                      {#if icon}
+                        <img
+                          src={icon}
+                          alt=""
+                          class="stat-icon"
+                          loading="lazy"
+                        />
+                      {:else}
+                        <span class="stat-chip-fallback">
+                          {translateStatKey(roll.key)}
+                        </span>
+                      {/if}
+                      <HoverTooltip
+                        class="max-w-56"
+                        label={translateStatKey(roll.key)}
+                      >
+                        <div class="tip-detail-text font-medium">
+                          {translateStatKey(roll.key)}
+                        </div>
+                        {#if roll.matchesMain}
+                          <div
+                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
+                          >
+                            Also a main on {roll.mainSlots.join(" / ")}
+                          </div>
+                        {/if}
+                        {#if roll.mean > 0}
+                          <div
+                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
+                          >
+                            {roll.mean.toFixed(1)} avg liquid rolls · {builds
+                              .substat_rolls_liquid.teams} team{builds
+                              .substat_rolls_liquid.teams === 1
+                              ? ""
+                              : "s"}
+                          </div>
+                        {/if}
+                      </HoverTooltip>
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </section>
+
+            {#if talentImportanceRows.length > 0 ||
+              levelImportance ||
+              builds.vertical_importance?.constellations?.length ||
+              builds.vertical_importance?.sig_weapons?.length}
+              <div class="invest-grid">
+                <div class="invest-col">
+                  {#if talentImportanceRows.length > 0 && builds?.talent_importance}
+                    <section class="board-section">
+                      <h2 class="section-title">Talent priority</h2>
+                      <ul class="talent-priority-list">
+                        {#each talentImportanceRows as row, i}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={row.priority}
+                          >
+                            <span
+                              class="talent-priority-rank"
+                              style="color: {elColor};">{i + 1}</span
+                            >
+                            {#if row.icon}
+                              <img
+                                src={row.icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">{row.label}</div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={row.priority}
+                              >
+                                {row.priorityLabel}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+
+                  {#if levelImportance}
+                    <section class="board-section">
+                      <h2 class="section-title">Character level</h2>
+                      <ul class="talent-priority-list">
+                        <li
+                          class="talent-priority-row"
+                          data-priority={levelImportance.priority}
+                        >
+                          {#if levelImportance.icon}
                             <img
-                              src={icon}
+                              src={levelImportance.icon}
                               alt=""
-                              class="stat-icon main-stat-icon shrink-0"
+                              class="kit-icon talent-priority-icon shrink-0"
                               loading="lazy"
                             />
                           {/if}
-                          <span class="stat-name"
-                            >{translateStatKey(stat.key)}</span
-                          >
-                        </span>
-                      </li>
-                    {/each}
-                  </ul>
-                {/if}
-              </div>
-            {/each}
-          </div>
-        </section>
-
-        <section class="board-section">
-          <h2 class="section-title">Recommended substats</h2>
-          {#if recommendedSubstats.length === 0}
-            <p class="muted-note">No substat data yet.</p>
-          {:else}
-            <div class="substat-row">
-              {#each recommendedSubstats as roll}
-                {@const icon = statIconUrl(roll.key)}
-                <button
-                  type="button"
-                  class="stat-chip group relative flex items-center justify-center"
-                  class:is-main={roll.matchesMain}
-                  aria-label={translateStatKey(roll.key)}
-                >
-                  {#if icon}
-                    <img src={icon} alt="" class="stat-icon" loading="lazy" />
-                  {:else}
-                    <span class="stat-chip-fallback">
-                      {translateStatKey(roll.key)}
-                    </span>
+                          <div class="talent-priority-copy">
+                            <div class="talent-priority-name">Level 90</div>
+                            <div
+                              class="talent-priority-label"
+                              data-priority={levelImportance.priority}
+                            >
+                              {levelImportance.priorityLabel}
+                            </div>
+                          </div>
+                        </li>
+                      </ul>
+                    </section>
                   {/if}
-                  <HoverTooltip class="max-w-56">
-                    <div class="text-xs font-medium leading-tight">
-                      {translateStatKey(roll.key)}
-                    </div>
-                    {#if roll.matchesMain}
-                      <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                        Also a main on {roll.mainSlots.join(" / ")}
-                      </div>
-                    {/if}
-                    {#if roll.mean > 0}
-                      <div class="text-[0.65rem] leading-snug mt-1 opacity-85">
-                        {roll.mean.toFixed(1)} avg liquid rolls · {builds
-                          .substat_rolls_liquid.teams} team{builds
-                          .substat_rolls_liquid.teams === 1
-                          ? ""
-                          : "s"}
-                      </div>
-                    {/if}
-                  </HoverTooltip>
-                </button>
-              {/each}
+                </div>
+
+                <div class="invest-col">
+                  {#if builds.vertical_importance?.constellations?.length}
+                    <section class="board-section">
+                      <h2 class="section-title">Constellation Impact</h2>
+                      <ul class="talent-priority-list">
+                        {#each builds.vertical_importance.constellations as row}
+                          {@const impact = classifyUpgradeImpact(
+                            row.median_pct_gain,
+                            CONSTELLATION_UPGRADE,
+                          )}
+                          {@const constellation = kit.constellations.find(
+                            (c) => c.index === row.cons,
+                          )}
+                          {@const icon = constellation
+                            ? (iconUrl(constellation.icon, "talent") ??
+                              getUiAssetUrl(constellation.icon))
+                            : null}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={impact.tier}
+                          >
+                            <span
+                              class="talent-priority-rank"
+                              style="color: {elColor};">C{row.cons}</span
+                            >
+                            {#if icon}
+                              <img
+                                src={icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">
+                                {constellation?.name ?? `C${row.cons}`}
+                              </div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={impact.tier}
+                              >
+                                {impact.label}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+
+                  {#if builds.vertical_importance?.sig_weapons?.length}
+                    <section class="board-section">
+                      <h2 class="section-title">Signature weapon impact</h2>
+                      <ul class="talent-priority-list">
+                        {#each [...builds.vertical_importance.sig_weapons].sort( (a, b) => b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key), ) as row}
+                          {@const weapon = weaponByKey.get(row.key)}
+                          {@const icon = weapon
+                            ? weaponIconUrl(weapon.awakenIcon)
+                            : null}
+                          {@const impact = classifyUpgradeImpact(
+                            row.median_pct_gain,
+                            SIGNATURE_UPGRADE,
+                          )}
+                          <li
+                            class="talent-priority-row"
+                            data-priority={impact.tier}
+                          >
+                            {#if icon}
+                              <img
+                                src={icon}
+                                alt=""
+                                class="kit-icon talent-priority-icon shrink-0"
+                                loading="lazy"
+                              />
+                            {/if}
+                            <div class="talent-priority-copy">
+                              <div class="talent-priority-name">
+                                {weapon?.name ?? row.key}
+                              </div>
+                              <div
+                                class="talent-priority-label"
+                                data-priority={impact.tier}
+                              >
+                                {impact.label}
+                              </div>
+                            </div>
+                          </li>
+                        {/each}
+                      </ul>
+                    </section>
+                  {/if}
+                </div>
+              </div>
+            {/if}
+
+            {#if builds.notes}
+              <section class="board-section notes-section">
+                <h2 class="section-title">Notes</h2>
+                <p class="build-notes">{builds.notes}</p>
+              </section>
+            {/if}
+          {:else}
+            <div class="board-section">
+              <EmptyState
+                message={`No gcsim build summary for ${kit.name} yet.`}
+              />
             </div>
           {/if}
-        </section>
-
-        {#if builds.notes}
-          <section class="board-section notes-section">
-            <h2 class="section-title">Notes</h2>
-            <p class="build-notes">{builds.notes}</p>
-          </section>
-        {/if}
-      {:else}
-        <div class="board-section">
-          <EmptyState message={`No gcsim build summary for ${kit.name} yet.`} />
-        </div>
-      {/if}
         </div>
       {/if}
     </div>
@@ -889,7 +1144,11 @@
 
   .hero {
     border-bottom: var(--border-width) solid
-      color-mix(in srgb, var(--hero-accent, var(--foreground-mid)) 35%, transparent);
+      color-mix(
+        in srgb,
+        var(--hero-accent, var(--foreground-mid)) 35%,
+        transparent
+      );
   }
 
   .hero-bg {
@@ -1170,6 +1429,27 @@
     padding: var(--space-4);
   }
 
+  .invest-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .invest-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  @media (min-width: 1024px) {
+    .invest-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .invest-col + .invest-col {
+      border-left: var(--border-width) solid rgba(255, 255, 255, 0.1);
+    }
+  }
+
   .kit-list {
     display: flex;
     flex-direction: column;
@@ -1319,6 +1599,68 @@
     color: var(--foreground-mid);
   }
 
+  .talent-priority-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .talent-priority-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0;
+  }
+
+  .talent-priority-row + .talent-priority-row {
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.1);
+  }
+
+  .talent-priority-rank {
+    font-size: 0.85rem;
+    font-weight: 700;
+    width: 1.25rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .talent-priority-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .talent-priority-copy {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .talent-priority-name {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--foreground-color);
+  }
+
+  .talent-priority-label {
+    font-size: var(--text-xs);
+  }
+
+  .talent-priority-label[data-priority="highly_recommended"] {
+    color: var(--accent-1);
+  }
+
+  .talent-priority-label[data-priority="recommended"] {
+    color: var(--accent-2);
+  }
+
+  .talent-priority-label[data-priority="inconsequential"] {
+    color: var(--accent-3);
+  }
+
   .stat-icon {
     display: block;
     width: 100%;
@@ -1357,24 +1699,24 @@
   .kit-row-flash {
     margin-inline: calc(-1 * var(--space-4));
     padding-inline: var(--space-4);
-    background: color-mix(
-      in srgb,
-      var(--kit-flash) 12%,
-      transparent
-    );
-    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 65%, transparent);
+    background: color-mix(in srgb, var(--kit-flash) 12%, transparent);
+    box-shadow: inset 2px 0 0
+      color-mix(in srgb, var(--kit-flash) 65%, transparent);
     animation: kit-target-flash 1.6s ease-out;
   }
 
   @keyframes kit-target-flash {
     0% {
-      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 0%, transparent);
+      box-shadow: inset 2px 0 0
+        color-mix(in srgb, var(--kit-flash) 0%, transparent);
     }
     35% {
-      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--kit-flash) 80%, transparent);
+      box-shadow: inset 3px 0 0
+        color-mix(in srgb, var(--kit-flash) 80%, transparent);
     }
     100% {
-      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--kit-flash) 65%, transparent);
+      box-shadow: inset 2px 0 0
+        color-mix(in srgb, var(--kit-flash) 65%, transparent);
     }
   }
 
