@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import { buildGoodKeyMap, toGoodKey } from "$lib/utils";
+  import { buildGoodKeyMap, ownedGoodKeys } from "$lib/utils";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
@@ -16,12 +16,17 @@
     handBuilds,
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
+  import {
+    allTeamCharacterKeys,
+    availableInvestmentCosts,
+    displayDps,
+    displaySim,
+    sortTeamsForDisplay,
+    teamsMatchingTags,
+    type TeamDpsSort,
+  } from "$lib/investment-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
-  import type {
-    InvestmentFile,
-    InvestmentTeam,
-    InvestmentSim,
-  } from "$lib/types/investment";
+  import type { InvestmentFile } from "$lib/types/investment";
 
   let data: InvestmentFile | null = $state(getInvestmentCached());
   let loading = $derived(data === null);
@@ -47,7 +52,7 @@
 
   // ── Sort & filter state ──────────────────────────────────────────────────
   let sortOwnedFirst = $state(true);
-  let sortBy = $state<"dps-desc" | "dps-asc">("dps-desc");
+  let sortBy = $state<TeamDpsSort>("dps-desc");
   /** Selected cost level — show DPS of the best sim at (or nearest to) this cost. */
   let selectedCost = $state<number | null>(null);
 
@@ -57,7 +62,7 @@
 
   onMount(() => fetchData());
 
-  /** Use shared session cache (prefetched from bootstrap when possible). */
+  /** Use shared session cache (loaded on this route, not global bootstrap). */
   async function fetchData() {
     if (data) {
       loading = false;
@@ -74,142 +79,28 @@
     }
   }
 
-  // GOOD key → Character for icon display
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
-
-  // All unique character keys present in the investment data
-  let allCharacterKeys = $derived.by(() => {
-    if (!data) return [] as string[];
-    const set = new Set<string>();
-    for (const t of data.teams) {
-      for (const k of t.characters) {
-        set.add(k);
-      }
-    }
-    return [...set];
-  });
-
-  // Which GOOD keys the user owns
-  let ownedKeys = $derived(
-    new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
-    ),
+  let allCharacterKeys = $derived(
+    data ? allTeamCharacterKeys(data.teams) : ([] as string[]),
+  );
+  let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
+  let availableCosts = $derived(
+    data ? availableInvestmentCosts(data) : ([] as number[]),
+  );
+  let displayTeams = $derived(
+    data
+      ? sortTeamsForDisplay(teamsMatchingTags(data.teams, tags), {
+          selectedCost,
+          sortBy,
+          sortOwnedFirst,
+          ownedKeys,
+        })
+      : [],
   );
 
-  // Filtering: intersection of all tagged characters
-  let filteredTeams = $derived.by(() => {
-    if (!data) return [];
-    if (tags.length === 0) return data.teams;
-    return data.teams.filter((t) =>
-      tags.every((tag) => t.characters.includes(tag)),
-    );
-  });
-
-  // All unique cost values (prefer merge-time list; fall back to scan)
-  let availableCosts = $derived.by(() => {
-    if (!data) return [] as number[];
-    if (data.available_costs?.length) return data.available_costs;
-    const set = new Set<number>();
-    for (const t of data.teams) {
-      for (const r of t.results) set.add(r.cost);
-    }
-    return [...set].sort((a, b) => a - b);
-  });
-
-  // Final display list: tag → cost → sorted
-  let displayTeams = $derived.by(() => {
-    if (!data) return [];
-    let teams = filteredTeams;
-
-    // When a cost is selected, only show teams that have a sim at exactly that cost
-    if (selectedCost !== null) {
-      teams = teams.filter((t) =>
-        t.results.some((r) => r.cost === selectedCost),
-      );
-    }
-
-    const sorted = [...teams];
-    const comparator = getSortComparator(sortBy);
-
-    if (sortOwnedFirst) {
-      const owned = sorted.filter((t) => ownsTeam(t));
-      const notOwned = sorted.filter((t) => !ownsTeam(t));
-      owned.sort(comparator);
-      notOwned.sort(comparator);
-      return [...owned, ...notOwned];
-    }
-
-    sorted.sort(comparator);
-    return sorted;
-  });
-
-  /**
-   * Find the best sim for a team at (or nearest to) the given cost.
-   * Returns the DPS of the sim whose cost is closest to the target,
-   * preferring the lower cost on ties.
-   */
-  function getDpsAtCost(team: InvestmentTeam, cost: number): number {
-    if (team.results.length === 0) return 0;
-    let best = team.results[0];
-    let bestDist = Math.abs(best.cost - cost);
-    for (let i = 1; i < team.results.length; i++) {
-      const dist = Math.abs(team.results[i].cost - cost);
-      if (
-        dist < bestDist ||
-        (dist === bestDist && team.results[i].cost < best.cost)
-      ) {
-        best = team.results[i];
-        bestDist = dist;
-      }
-    }
-    return best.dps;
-  }
-
-  /** Canonical baseline sim for a team (not peak floor / f2p). */
-  function getBaselineSim(team: InvestmentTeam): InvestmentSim | null {
-    return team.results.find((r) => r.kind === "baseline") ?? null;
-  }
-
-  /** DPS shown on cards — baseline when no cost filter; else best at that cost. */
-  function displayDps(team: InvestmentTeam): number {
-    if (selectedCost !== null) return getDpsAtCost(team, selectedCost);
-    return getBaselineSim(team)?.dps ?? 0;
-  }
-
-  /** Find the simulation result at exactly `cost`, or null if none exists. */
-  function getSimAtCost(team: InvestmentTeam, cost: number) {
-    return team.results.find((r) => r.cost === cost) ?? null;
-  }
-
-  /** Sim driving the hand builds + meta for the current cost filter. */
-  function displaySim(team: InvestmentTeam): InvestmentSim | null {
-    if (selectedCost !== null) return getSimAtCost(team, selectedCost);
-    return getBaselineSim(team);
-  }
-
-  /** Build a comparator for the active sort mode (DPS ascending or descending). */
-  function getSortComparator(
-    mode: typeof sortBy,
-  ): (a: InvestmentTeam, b: InvestmentTeam) => number {
-    switch (mode) {
-      case "dps-desc":
-        return (a, b) => displayDps(b) - displayDps(a);
-      case "dps-asc":
-        return (a, b) => displayDps(a) - displayDps(b);
-    }
-  }
-
-  /** Whether the current user owns every character in the given team. */
-  function ownsTeam(team: InvestmentTeam): boolean {
-    return team.characters.every((k) => ownedKeys.has(k));
-  }
-
-  // ── Spotlight pagination ──────────────────────────────────────────────────
   let spotlightTeams = $derived(displayTeams.slice(0, spotlightCount));
   let hasMore = $derived(spotlightCount < displayTeams.length);
   let remaining = $derived(displayTeams.length - spotlightCount);
-
-  // Animation re-trigger key — changes whenever filters, sort, or cost change
   let listKey = $derived(
     `${tags.join(",")}|${selectedCost ?? "any"}|${sortBy}|${sortOwnedFirst}`,
   );
@@ -325,7 +216,7 @@
       {#key listKey}
         <div class="team-list" class:no-anim={!$animationsEnabled}>
           {#each spotlightTeams as team, i (team.team_key)}
-            {@const sim = displaySim(team)}
+            {@const sim = displaySim(team, selectedCost)}
             <article
               class="team-row card-enter"
               style="animation-delay: {i * 50}ms;"
@@ -346,7 +237,7 @@
               <div class="team-footer">
                 <span class="team-meta">
                   {selectedCost !== null ? selectedCost : team.baseline_cost}
-                  cost · {(displayDps(team) / 1000).toFixed(0)}K DPS
+                  cost · {(displayDps(team, selectedCost) / 1000).toFixed(0)}K DPS
                 </span>
                 <a href="/teams/{team.team_key}" class="team-link">
                   View details →
@@ -385,26 +276,6 @@
 </PageShell>
 
 <style>
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-meta {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
   .filter-block {
     display: flex;
     flex-direction: column;

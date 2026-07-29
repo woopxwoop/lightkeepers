@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { artifactSetByKey, type ArtifactSetData } from "$lib/equipment-data";
+  import { onMount } from "svelte";
+  import {
+    artifactSetByKey,
+    equipmentVersion,
+    ensureEquipmentData,
+    type ArtifactSetData,
+  } from "$lib/equipment-data";
   import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
 
@@ -15,9 +21,14 @@
     pieceCount?: number | null;
   } = $props();
 
-  let resolved = $derived(
-    set ?? (setKey ? (artifactSetByKey.get(setKey) ?? null) : null),
-  );
+  onMount(() => {
+    void ensureEquipmentData();
+  });
+
+  let resolved = $derived.by(() => {
+    $equipmentVersion;
+    return set ?? (setKey ? (artifactSetByKey.get(setKey) ?? null) : null);
+  });
 
   let title = $derived(
     resolved

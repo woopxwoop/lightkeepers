@@ -8,8 +8,24 @@
     charactersOwned,
     ensureTeamsOwned,
     ensureStaticBoards,
+    abyssVersionNumber,
   } from "$lib/stores";
   import { solveAbyssWithFallback } from "$lib/solver";
+  import {
+    SOLUTIONS_COUNT,
+    META_LEADERBOARD_COUNT,
+    boardSlotRate,
+    boardSlotScore,
+    filterDisplaySolutions,
+    clampSolutionIndex,
+    stepSolutionIndex,
+    assignmentKeyFor,
+    metaLeaderboardBySlot,
+    rosterFingerprint,
+    teamsFingerprint,
+    createMemo,
+  } from "$lib/board-solutions";
+  import { ownedNameIds } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
@@ -26,9 +42,6 @@
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
-
-  const SOLUTIONS_COUNT = 6;
-  const META_LEADERBOARD_COUNT = 5;
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -54,28 +67,36 @@
   };
 
   let selectedIndex = $state(0);
+
   let enemiesExpanded = $state(true);
 
-  let ownedNames = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
-  );
+  const memoSolutions = createMemo<ReturnType<typeof solveAbyssWithFallback>>();
 
-  let solutions = $derived(
-    solveAbyssWithFallback(
-      $teamsOwned,
-      $allTeamsAbyss,
-      ownedNames,
+  let solutions = $derived.by(() => {
+    const owned = $teamsOwned;
+    const all = $allTeamsAbyss;
+    const chars = $charactersOwned;
+    const key = [
+      abyssVersionNumber,
+      rosterFingerprint(chars),
+      teamsFingerprint(owned),
+      teamsFingerprint(all),
       SOLUTIONS_COUNT,
-    ),
-  );
-
-  let displaySolutions = $derived.by(() => {
-    const complete = solutions.filter((s) => s.unfilled.length === 0);
-    return complete.length > 0 ? complete : solutions.slice(0, 3);
+    ].join("\0");
+    return memoSolutions(key, () =>
+      solveAbyssWithFallback(
+        owned,
+        all,
+        ownedNameIds(chars),
+        SOLUTIONS_COUNT,
+      ),
+    );
   });
 
+  let displaySolutions = $derived(filterDisplaySolutions(solutions));
+
   let safeIndex = $derived(
-    Math.min(selectedIndex, Math.max(0, displaySolutions.length - 1)),
+    clampSolutionIndex(selectedIndex, displaySolutions.length),
   );
 
   $effect(() => {
@@ -97,40 +118,40 @@
     });
   });
 
+  let metaParts = $derived(
+    [
+      abyssEnemies?.buffName
+        ? { text: abyssEnemies.buffName, title: "Abyssal Moon blessing" }
+        : null,
+      updatedLabel ? { text: `Updated ${updatedLabel}` } : null,
+    ].filter(
+      (part): part is { text: string; title?: string } => part !== null,
+    ),
+  );
+
   function slotRate(team: AbyssTeam, slot: Slot): number {
-    if (slot === "top") return team.field_1_rate ?? 0;
-    return team.field_2_rate ?? 0;
+    return boardSlotRate(team, slot);
   }
 
-  /** Popularity × half preference — ranks teams for a specific half. */
   function halfScore(team: AbyssTeam, slot: Slot): number {
-    return (team.usage_rate ?? 0) * (slotRate(team, slot) / 100);
+    return boardSlotScore(team, slot);
   }
 
-  let metaByHalf = $derived.by(() => {
-    const teams = $allTeamsAbyss.filter(
-      (team) => (team.members ?? []).length === 4,
-    );
-    return Object.fromEntries(
-      SLOTS.map((slot) => [
-        slot,
-        [...teams]
-          .sort((a, b) => halfScore(b, slot) - halfScore(a, slot))
-          .slice(0, META_LEADERBOARD_COUNT),
-      ]),
-    ) as Record<Slot, AbyssTeam[]>;
-  });
+  let metaByHalf = $derived(
+    metaLeaderboardBySlot(
+      $allTeamsAbyss,
+      SLOTS,
+      META_LEADERBOARD_COUNT,
+    ) as Record<Slot, AbyssTeam[]>,
+  );
 
   function assignmentKey(slot: Slot): string {
-    const teamKey = solution?.assignments.find(
-      (assignment) => assignment.slot === slot,
-    )?.team.team_key;
-    return `${slot}:${String(teamKey ?? "empty")}`;
+    return assignmentKeyFor(solution, slot);
   }
 
   function stepSolution(delta: number) {
-    const next = safeIndex + delta;
-    if (next < 0 || next > displaySolutions.length - 1) return;
+    const next = stepSolutionIndex(safeIndex, delta, displaySolutions.length);
+    if (next == null) return;
     selectedIndex = next;
   }
 </script>
@@ -241,17 +262,14 @@
   <header class="page-head">
     <div class="page-head-text">
       <h1 class="page-title">Spiral Abyss</h1>
-      {#if updatedLabel || abyssEnemies?.buffName}
+      {#if metaParts.length > 0}
         <p class="page-meta">
-          {#if abyssEnemies?.buffName}
-            <span title="Abyssal Moon blessing">{abyssEnemies.buffName}</span>
-          {/if}
-          {#if updatedLabel && abyssEnemies?.buffName}
-            <span class="page-meta-sep" aria-hidden="true">·</span>
-          {/if}
-          {#if updatedLabel}
-            <span>Updated {updatedLabel}</span>
-          {/if}
+          {#each metaParts as part, index (part.text)}
+            {#if index > 0}
+              <span class="page-meta-sep" aria-hidden="true">·</span>
+            {/if}
+            <span title={part.title}>{part.text}</span>
+          {/each}
         </p>
       {/if}
     </div>
@@ -302,7 +320,10 @@
                 class="pager-btn"
                 aria-label="Previous solution"
                 disabled={safeIndex === 0}
-                onclick={() => stepSolution(-1)}
+                onpointerdown={(event) =>
+                  handlePointerAction(event, () => stepSolution(-1))}
+                onclick={(event) =>
+                  handleKeyboardClick(event, () => stepSolution(-1))}
               >
                 <IconChevronDown size={16} strokeWidth={2.25} />
               </button>
@@ -311,7 +332,10 @@
                 class="pager-btn pager-btn-next"
                 aria-label="Next solution"
                 disabled={safeIndex === displaySolutions.length - 1}
-                onclick={() => stepSolution(1)}
+                onpointerdown={(event) =>
+                  handlePointerAction(event, () => stepSolution(1))}
+                onclick={(event) =>
+                  handleKeyboardClick(event, () => stepSolution(1))}
               >
                 <IconChevronDown size={16} strokeWidth={2.25} />
               </button>
@@ -369,32 +393,11 @@
     flex-wrap: wrap;
   }
 
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .page-meta {
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
     flex-wrap: wrap;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .page-meta-sep {
-    opacity: 0.6;
   }
 
   /* ── Solution board ─────────────────────────────────────────────── */

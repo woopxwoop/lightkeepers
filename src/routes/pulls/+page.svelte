@@ -21,6 +21,7 @@
     invalidateTierList,
     animationsEnabled,
   } from "$lib/stores";
+  import { ownedNameIds } from "$lib/utils";
   import {
     computePullSuggestions,
     computePairSuggestions,
@@ -57,10 +58,8 @@
   const STANDOUT_DEAL_MS = 480;
   const STANDOUT_STAGGER_MS = 85;
 
-  let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
-  let ownedIds = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
-  );
+  let ownedIds = $derived(ownedNameIds($charactersOwned));
+  let ownedCount = $derived(ownedIds.size);
 
   let nearMissReady = $derived($nearMissStygianLoaded && $nearMissPairLoaded);
 
@@ -523,20 +522,6 @@
     gap: 0.2rem;
     padding-bottom: var(--space-2);
     border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-meta {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
   }
 
   /* ── Panels ─────────────────────────────────────────────────────── */

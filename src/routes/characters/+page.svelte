@@ -34,7 +34,7 @@
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
     <h1 class="page-title">Characters</h1>
-    <p class="page-hint">View character build guides</p>
+    <p class="page-meta">View character build guides</p>
   </header>
 
   <CharacterFilterBar
@@ -69,25 +69,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-hint {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .page-meta {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
   }
 
   .character-grid {

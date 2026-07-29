@@ -14,13 +14,20 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { CharacterOwned } from "$lib/definitions";
-  import { weaponTypeLabel } from "$lib/utils";
+  import { weaponTypeLabel, ownedNameIds } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
   } from "$lib/character-filter";
+  import {
+    captureRoster,
+    postRoster,
+    rosterDiffersFromSnapshot,
+    writeRosterLocal,
+    type RosterCapture,
+  } from "$lib/roster-snapshot";
 
   const session = authClient.useSession();
 
@@ -28,9 +35,13 @@
   let synced = $state(false);
   let showSaved = $state(false);
   let isSaving = $state(false);
-  let hasUnsavedChanges = $state(false);
   let rosterError = $state("");
   let savedSnapshot = $state("");
+  let hasUnsavedChanges = $derived(
+    synced &&
+      rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
+  );
+  let savedVisible = $derived(showSaved && !hasUnsavedChanges);
 
   let rarityFilter = $state<Set<string>>(new Set());
   let elementFilter = $state<Set<string>>(new Set());
@@ -52,17 +63,10 @@
     }),
   );
 
-  function updateUnsavedState() {
-    const changed = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
-    hasUnsavedChanges = changed;
-    if (changed) showSaved = false;
-  }
-
   function toggleOwned(name_id: string) {
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
     );
-    updateUnsavedState();
   }
 
   function selectAll() {
@@ -70,7 +74,6 @@
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: true } : c,
     );
-    updateUnsavedState();
   }
 
   function deselectAll() {
@@ -78,7 +81,19 @@
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: false } : c,
     );
-    updateUnsavedState();
+  }
+
+  function restoreSavedSnapshot() {
+    writeRosterLocal(savedSnapshot);
+  }
+
+  function commitSaved(pending: RosterCapture) {
+    savedSnapshot = pending.json;
+    charactersOwned.set(pending.roster);
+    invalidateTeamsOwned();
+    invalidateNearMissTeams();
+    showSaved = true;
+    setHasSavedRoster();
   }
 
   async function saveCharacters() {
@@ -86,37 +101,27 @@
     isSaving = true;
     rosterError = "";
 
+    // Freeze the editor state before any await so concurrent toggles stay unsaved.
+    const pending = captureRoster(tempCharactersOwned);
+
     try {
-      try {
-        localStorage.setItem(
-          "charactersOwned",
-          JSON.stringify(tempCharactersOwned),
-        );
-      } catch {
+      if (!writeRosterLocal(pending.json)) {
         console.warn("localStorage unavailable — saving to memory only");
       }
 
-      invalidateTeamsOwned();
-      invalidateNearMissTeams();
-
       if ($session.data) {
-        const res = await fetch("/api/roster", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roster: tempCharactersOwned }),
-        });
-        if (!res.ok) {
-          rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
+        const result = await postRoster(pending.roster);
+        if (!result.ok) {
+          restoreSavedSnapshot();
+          rosterError = `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
+        commitSaved(pending);
+      } else {
+        commitSaved(pending);
       }
-
-      savedSnapshot = JSON.stringify(tempCharactersOwned);
-      charactersOwned.set(tempCharactersOwned.map((c) => ({ ...c })));
-      showSaved = true;
-      hasUnsavedChanges = false;
-      setHasSavedRoster();
     } catch (e) {
+      restoreSavedSnapshot();
       console.error("Roster save error:", e);
       rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
     } finally {
@@ -130,21 +135,21 @@
 
   $effect(() => {
     if ($charactersHydrated && !synced) {
-      tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
-      savedSnapshot = JSON.stringify(tempCharactersOwned);
+      const pending = captureRoster($charactersOwned);
+      tempCharactersOwned = pending.roster;
+      savedSnapshot = pending.json;
       synced = true;
     } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
       const storeJson = JSON.stringify($charactersOwned);
       if (storeJson !== savedSnapshot) {
-        tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
-        savedSnapshot = storeJson;
+        const pending = captureRoster($charactersOwned);
+        tempCharactersOwned = pending.roster;
+        savedSnapshot = pending.json;
       }
     }
   });
 
-  let savedOwnedSet = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
-  );
+  let savedOwnedSet = $derived(ownedNameIds($charactersOwned));
 
   let ownedCount = $derived(
     tempCharactersOwned.filter((c) => c.isOwned).length,
@@ -156,11 +161,7 @@
   let changedCount = $derived(
     tempCharactersOwned.reduce(
       (count, c) =>
-        count +
-        (c.isOwned !==
-        $charactersOwned.find((o) => o.name_id === c.name_id)?.isOwned
-          ? 1
-          : 0),
+        count + (c.isOwned !== savedOwnedSet.has(c.name_id) ? 1 : 0),
       0,
     ),
   );
@@ -199,26 +200,26 @@
       <span class="owned-count">{ownedCount} / {totalCount}</span>
     </div>
 
-    {#if hasUnsavedChanges || isSaving || showSaved || rosterError}
+    {#if hasUnsavedChanges || isSaving || savedVisible || rosterError}
       <div class="save-bar">
         <div class="save-status">
-          <span class="save-dot" class:saving={isSaving} class:saved={showSaved}
+          <span class="save-dot" class:saving={isSaving} class:saved={savedVisible}
           ></span>
           <span class="save-label">
-            {isSaving ? "Saving..." : showSaved ? "Saved" : "Unsaved changes"}
+            {isSaving ? "Saving..." : savedVisible ? "Saved" : "Unsaved changes"}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
           {/if}
         </div>
-        {#if hasUnsavedChanges && !isSaving && !showSaved}
+        {#if hasUnsavedChanges && !isSaving}
           <div class="save-actions">
             <Button
               variant="ghost"
               onclick={() => {
-                tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
-                savedSnapshot = JSON.stringify($charactersOwned);
-                hasUnsavedChanges = false;
+                const pending = captureRoster($charactersOwned);
+                tempCharactersOwned = pending.roster;
+                savedSnapshot = pending.json;
               }}
             >
               Cancel
@@ -297,15 +298,6 @@
     max-width: 42rem;
   }
 
-  .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .lede {
     margin: 0;
     font-size: var(--text-sm);
@@ -348,25 +340,6 @@
     .character-grid {
       grid-template-columns: repeat(6, minmax(0, 1fr));
     }
-  }
-
-  .meta-name {
-    font-size: 0.7rem;
-    font-weight: 500;
-    line-height: 1.15;
-    color: var(--foreground-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .meta-sub {
-    font-size: 0.6rem;
-    line-height: 1.15;
-    color: var(--foreground-mid);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .new-badge {

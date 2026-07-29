@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { weaponByKey, type WeaponData } from "$lib/equipment-data";
+  import { onMount } from "svelte";
+  import {
+    weaponByKey,
+    equipmentVersion,
+    ensureEquipmentData,
+    type WeaponData,
+  } from "$lib/equipment-data";
   import { weaponTypeLabel } from "$lib/utils";
   import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
@@ -16,9 +22,14 @@
     refinement?: number | null;
   } = $props();
 
-  let resolved = $derived(
-    weapon ?? (weaponKey ? (weaponByKey.get(weaponKey) ?? null) : null),
-  );
+  onMount(() => {
+    void ensureEquipmentData();
+  });
+
+  let resolved = $derived.by(() => {
+    $equipmentVersion; // re-resolve after lazy JSON load
+    return weapon ?? (weaponKey ? (weaponByKey.get(weaponKey) ?? null) : null);
+  });
 
   let passive = $derived.by(() => {
     if (!resolved?.refinements.length) return null;

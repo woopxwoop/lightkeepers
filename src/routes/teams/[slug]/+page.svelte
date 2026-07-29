@@ -2,15 +2,19 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import { buildGoodKeyMap, toGoodKey, humanizeTeamName } from "$lib/utils";
+  import {
+    buildGoodKeyMap,
+    humanizeTeamName,
+    namesFromGoodKeyMap,
+    ownedGoodKeys,
+  } from "$lib/utils";
   import {
     humanizeInvestmentLabel,
-    displayWeaponRefinement,
-    weaponByKey,
+    ensureEquipmentData,
+    equipmentVersion,
   } from "$lib/equipment-data";
-  import { weaponIconUrl } from "$lib/asset-urls";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
+  import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
@@ -19,9 +23,14 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  import {
+    baselineSim as findBaselineSim,
+    baselineVariants,
+    findInvestmentTeam,
+    groupVerticalSimsByCost,
+  } from "$lib/investment-teams";
   import type {
     InvestmentFile,
-    InvestmentTeam,
     InvestmentSim,
     CharacterBuild,
   } from "$lib/types/investment";
@@ -29,13 +38,22 @@
   let { data: layoutData } = $props();
 
   let investment = $state<InvestmentFile | null>(getInvestmentCached());
-  let team = $state<InvestmentTeam | null>(null);
   let loading = $derived(investment === null);
   let error = $state<string | null>(null);
+  let team = $derived(findInvestmentTeam(investment, layoutData.slug));
+  let pageError = $derived(
+    error ??
+      (investment && !team
+        ? `Team "${layoutData.slug}" not found`
+        : null),
+  );
 
-  onMount(() => fetchData());
+  onMount(() => {
+    void ensureEquipmentData();
+    fetchData();
+  });
 
-  /** Use shared session cache (prefetched from bootstrap when possible). */
+  /** Use shared session cache (loaded on this route, not global bootstrap). */
   async function fetchData() {
     if (investment) {
       loading = false;
@@ -52,63 +70,19 @@
     }
   }
 
-  // Reactively select team when data or slug changes (handles client-side nav)
-  $effect(() => {
-    if (investment) {
-      team =
-        investment.teams.find((t) => t.team_key === layoutData.slug) ?? null;
-      if (!team) error = `Team "${layoutData.slug}" not found`;
-    }
-  });
-
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
-
-  let characterNames = $derived(
-    new Map([...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key])),
-  );
-
+  let characterNames = $derived(namesFromGoodKeyMap(goodKeyMap));
   let teamTitle = $derived(
     team ? humanizeTeamName(team.characters, characterNames) : "",
   );
-
-  let ownedKeys = $derived(
-    new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
-    ),
+  let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
+  let baselineSim = $derived(team ? findBaselineSim(team) : null);
+  let baselineVariantsList = $derived(
+    team ? baselineVariants(team) : ([] as InvestmentSim[]),
   );
-
-  let baselineSim = $derived.by((): InvestmentSim | null => {
-    if (!team) return null;
-    return team.results.find((r) => r.kind === "baseline") ?? null;
-  });
-
-  /** Floor-cost alternatives (baseline + f2p), highest DPS first. */
-  let baselineVariants = $derived.by(() => {
-    if (!team) return [] as InvestmentTeam["results"];
-    return team.results
-      .filter((r) => r.kind === "baseline" || r.kind === "f2p")
-      .slice()
-      .sort((a, b) => b.dps - a.dps);
-  });
-
-  /** Vertical upgrades grouped by cost; sims within a cost are DPS-desc. */
-  let costGroups = $derived.by(() => {
-    if (!team) return [] as { cost: number; sims: InvestmentTeam["results"] }[];
-    const groups = new Map<number, InvestmentTeam["results"]>();
-    for (const sim of team.results) {
-      if (sim.kind !== "vertical") continue;
-      const entry = groups.get(sim.cost);
-      if (entry) entry.push(sim);
-      else groups.set(sim.cost, [sim]);
-    }
-    for (const sims of groups.values()) {
-      sims.sort((a, b) => b.dps - a.dps);
-    }
-    return [...groups.entries()]
-      .sort(([a], [b]) => a - b)
-      .map(([cost, sims]) => ({ cost, sims }));
-  });
-
+  let costGroups = $derived(
+    team ? groupVerticalSimsByCost(team) : [],
+  );
   let openCosts = $state<Set<number>>(new Set());
 
   function toggleCost(cost: number) {
@@ -118,13 +92,17 @@
     openCosts = next;
   }
 
-  function simDiffLabel(sim: InvestmentTeam["results"][number]): string {
-    if (sim.kind === "baseline") return "Baseline";
-    return humanizeInvestmentLabel(
-      sim.label?.trim() || "variant",
-      characterNames,
-    );
-  }
+  let simDiffLabel = $derived.by(() => {
+    $equipmentVersion;
+    const names = characterNames;
+    return (sim: InvestmentSim): string => {
+      if (sim.kind === "baseline") return "Baseline";
+      return humanizeInvestmentLabel(
+        sim.label?.trim() || "variant",
+        names,
+      );
+    };
+  });
 
   function pctVsBaseline(dps: number): string {
     if (!baselineSim || baselineSim.dps <= 0) return "";
@@ -200,8 +178,8 @@
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   {#if loading}
     <LoadingState variant="pulse" message="Loading team…" />
-  {:else if error && !team}
-    <EmptyState message={error}>
+  {:else if pageError && !team}
+    <EmptyState message={pageError}>
       {#snippet action()}
         <div class="empty-actions">
           <Button variant="secondary" onclick={fetchData}>Try again</Button>
@@ -239,13 +217,6 @@
       {#each team.characters as goodKey (goodKey)}
         {@const char = goodKeyMap.get(goodKey)}
         {@const build = baselineBuild(goodKey)}
-        {@const weapon = build ? weaponByKey.get(build.weapon.key) : null}
-        {@const weaponIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-        {@const refine = build
-          ? displayWeaponRefinement(build.weapon.key, build.weapon.refinement, {
-              weaponShown: Boolean(weaponIcon),
-            })
-          : null}
         <CharacterPortraitCard
           character={char}
           tintBackground
@@ -254,19 +225,11 @@
           class="roster-card"
         >
           {#snippet badge()}
-            {#if weaponIcon}
-              <div class="weapon group">
-                <img
-                  src={weaponIcon}
-                  alt={weapon?.name ?? "Weapon"}
-                  class="weapon-img"
-                  loading="lazy"
-                />
-                {#if refine !== null}
-                  <span class="weapon-r">R{refine}</span>
-                {/if}
-                <WeaponTooltip {weapon} refinement={refine} />
-              </div>
+            {#if build}
+              <WeaponBadge
+                weaponKey={build.weapon.key}
+                refinement={build.weapon.refinement}
+              />
             {/if}
           {/snippet}
           {#snippet meta()}
@@ -282,7 +245,7 @@
       {/each}
     </div>
 
-    {#if baselineVariants.length > 0}
+    {#if baselineVariantsList.length > 0}
       <section class="section">
         <h2 class="section-title">Baseline variants</h2>
         <p class="section-lede">
@@ -295,8 +258,8 @@
             <span>DPS</span>
             <span>vs base</span>
           </div>
-          {#each baselineVariants as sim, vi (sim.state_key)}
-            {@const peakDps = baselineVariants[0].dps}
+          {#each baselineVariantsList as sim, vi (sim.state_key)}
+            {@const peakDps = baselineVariantsList[0].dps}
             <a
               href="/team-configs/{encodeURIComponent(sim.state_key)}"
               class="board-row"
@@ -469,36 +432,6 @@
     gap: var(--space-2);
   }
 
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .back-link {
-    width: fit-content;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .back-link:hover {
-    color: var(--accent-1);
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-meta {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
   .config-link {
     width: fit-content;
     font-size: var(--text-xs);
@@ -542,76 +475,10 @@
     color: var(--foreground-mid);
   }
 
-  .weapon {
-    position: absolute;
-    top: 0.35rem;
-    left: 0.35rem;
-    z-index: 20;
-    width: 28%;
-    aspect-ratio: 1;
-    border-radius: 0.2rem;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--background-color) 72%, transparent);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-  }
-
-  .weapon-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 0.1rem;
-  }
-
-  .weapon-r {
-    position: absolute;
-    right: 0.1rem;
-    bottom: 0.05rem;
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    line-height: 1;
-    color: var(--accent-1);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
-  }
-
-  .meta-name {
-    font-size: 0.7rem;
-    font-weight: 500;
-    line-height: 1.15;
-    color: var(--foreground-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .meta-build {
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    color: var(--accent-2);
-  }
-
   .section {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-  }
-
-  .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .section-lede {
-    margin-top: -0.25rem;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
   }
 
   /* Board hairlines are pure white — warm tones over blue mid mix to mud.

@@ -166,7 +166,6 @@
     display: block;
   }
 
-  .meta-name,
   .back-name {
     font-size: 0.7rem;
     font-weight: 500;
@@ -175,21 +174,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .back-name {
     max-width: 100%;
     text-align: center;
     padding: 0 0.25rem;
-  }
-
-  .meta-sub {
-    font-size: 0.6rem;
-    line-height: 1.15;
-    color: var(--foreground-mid);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .dim {

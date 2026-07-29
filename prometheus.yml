@@ -8,6 +8,9 @@ scrape_configs:
       # Docker Compose service name for the app container.
       - targets: ["app:3000"]
     metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/metrics_token
 
   - url: https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push
     basic_auth:

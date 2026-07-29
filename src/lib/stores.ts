@@ -8,6 +8,9 @@
  * Owned teams:       ensureTeamsOwned()  → POST /api/teams
  * Pull suggestions:  ensureNearMissTeams() → POST /api/nearmiss
  * Stygian tier list: ensureTierList() → GET /api/tierlist
+ *
+ * Abyss/Stygian solution pager + meta ranking helpers: `$lib/board-solutions`
+ * (not this file). Solver: `$lib/solver`.
  */
 
 import { writable, derived, get, readable, type Writable } from "svelte/store";
@@ -284,6 +287,12 @@ let staticBoardsInFlight: Promise<void> | null = null;
 /** Versions the current allTeams* stores were fetched for. */
 let staticBoardsAbyssVersion = -1;
 let staticBoardsStygianVersion = -1;
+/** Don't hammer /api/static while CDN/L1 is still on the previous cycle. */
+let staticBoardsRetryAfterMs = 0;
+let staticBoardsRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let staticBoardsRetryAttempt = 0;
+const STATIC_BOARDS_RETRY_BASE_MS = 30_000;
+const STATIC_BOARDS_RETRY_MAX_MS = 5 * 60_000;
 
 function staticBoardsMatchCurrentVersions(): boolean {
   return (
@@ -293,14 +302,48 @@ function staticBoardsMatchCurrentVersions(): boolean {
   );
 }
 
+function clearStaticBoardsRetry(): void {
+  staticBoardsRetryAfterMs = 0;
+  staticBoardsRetryAttempt = 0;
+  if (staticBoardsRetryTimer != null) {
+    clearTimeout(staticBoardsRetryTimer);
+    staticBoardsRetryTimer = null;
+  }
+}
+
+function scheduleStaticBoardsRetry(): void {
+  if (staticBoardsRetryTimer != null) return;
+  const base = Math.min(
+    STATIC_BOARDS_RETRY_MAX_MS,
+    STATIC_BOARDS_RETRY_BASE_MS * 2 ** staticBoardsRetryAttempt,
+  );
+  // Full jitter in [0, base] so clients don't retry in lockstep after a rollover.
+  const delay = Math.floor(Math.random() * (base + 1));
+  staticBoardsRetryAttempt += 1;
+  staticBoardsRetryAfterMs = Date.now() + delay;
+  staticBoardsRetryTimer = setTimeout(() => {
+    staticBoardsRetryTimer = null;
+    // Clear before invoke so a slightly-early timer isn't blocked by the gate.
+    staticBoardsRetryAfterMs = 0;
+    void ensureStaticBoards().catch(() => {});
+  }, delay);
+}
+
 /**
  * Fetches the full meta team lists via /api/static and seeds the stores.
  * Kept out of abyss/stygian page loads so client navigations stay lean.
  * Coalesces concurrent callers; skips the network when boards already match
  * the current Abyss/Stygian version numbers.
+ *
+ * If CDN/L1 is still on the previous cycle after one cache-bust, seeds with
+ * the payload's own version stamps (never pretends layout versions matched)
+ * and retries on a backoff until current. While a retry is scheduled,
+ * further callers return early until the backoff elapses.
  */
 export async function ensureStaticBoards(): Promise<void> {
   if (staticBoardsMatchCurrentVersions()) return;
+  // Backoff after a stale/failed fetch — skip whether boards loaded or not.
+  if (Date.now() < staticBoardsRetryAfterMs) return;
   if (staticBoardsInFlight) return staticBoardsInFlight;
 
   staticBoardsError.set(null);
@@ -314,18 +357,18 @@ export async function ensureStaticBoards(): Promise<void> {
       const fresh = await fetchStaticBoardsPayload(true);
       if (applyStaticBoardsIfCurrent(fresh)) return;
 
-      // Still behind after bust — seed with the best body we got, keep the
-      // current layout version stamps, and resolve without erroring so
-      // already-loaded boards (or a slightly-stale first paint) stay usable.
-      applyStaticBoardsPayload(
-        fresh,
-        abyssVersionNumber,
-        stygianVersionNumber,
-      );
+      // Still behind — show last cycle with honest stamps; match stays false.
+      const abyssVer = fresh.latestAbyssVersion?.version_number;
+      const stygianVer = fresh.latestStygianVersion?.version_number;
+      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+        applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
+      }
+      scheduleStaticBoardsRetry();
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load team boards";
       staticBoardsError.set(message);
+      scheduleStaticBoardsRetry();
       throw err;
     }
   })();
@@ -401,6 +444,12 @@ function applyStaticBoardsPayload(
   );
   staticBoardsError.set(null);
   staticBoardsLoaded.set(true);
+  if (
+    staticBoardsAbyssVersion === abyssVersionNumber &&
+    staticBoardsStygianVersion === stygianVersionNumber
+  ) {
+    clearStaticBoardsRetry();
+  }
 }
 
 // ── Near-miss stores ───────────────────────────────────────────────────────

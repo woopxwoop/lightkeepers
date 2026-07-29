@@ -9,9 +9,25 @@
     charactersOwned,
     ensureTeamsOwned,
     ensureStaticBoards,
+    stygianVersionNumber,
   } from "$lib/stores";
   import { stygianSlotLabel } from "$lib/slotLabels";
   import { solveStygianWithFallback } from "$lib/solver";
+  import {
+    SOLUTIONS_COUNT,
+    META_LEADERBOARD_COUNT,
+    boardSlotRate,
+    boardSlotScore,
+    filterDisplaySolutions,
+    clampSolutionIndex,
+    stepSolutionIndex,
+    assignmentKeyFor,
+    metaLeaderboardBySlot,
+    rosterFingerprint,
+    teamsFingerprint,
+    createMemo,
+  } from "$lib/board-solutions";
+  import { ownedNameIds } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
@@ -28,9 +44,6 @@
 
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
-
-  const SOLUTIONS_COUNT = 6;
-  const META_LEADERBOARD_COUNT = 5;
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -53,26 +66,35 @@
 
   let selectedIndex = $state(0);
 
-  let ownedNames = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
-  );
+  const memoSolutions = createMemo<
+    ReturnType<typeof solveStygianWithFallback>
+  >();
 
-  let solutions = $derived(
-    solveStygianWithFallback(
-      $teamsOwnedStygian,
-      $allTeamsStygian,
-      ownedNames,
+  let solutions = $derived.by(() => {
+    const owned = $teamsOwnedStygian;
+    const all = $allTeamsStygian;
+    const chars = $charactersOwned;
+    const key = [
+      stygianVersionNumber,
+      rosterFingerprint(chars),
+      teamsFingerprint(owned),
+      teamsFingerprint(all),
       SOLUTIONS_COUNT,
-    ),
-  );
-
-  let displaySolutions = $derived.by(() => {
-    const complete = solutions.filter((s) => s.unfilled.length === 0);
-    return complete.length > 0 ? complete : solutions.slice(0, 3);
+    ].join("\0");
+    return memoSolutions(key, () =>
+      solveStygianWithFallback(
+        owned,
+        all,
+        ownedNameIds(chars),
+        SOLUTIONS_COUNT,
+      ),
+    );
   });
 
+  let displaySolutions = $derived(filterDisplaySolutions(solutions));
+
   let safeIndex = $derived(
-    Math.min(selectedIndex, Math.max(0, displaySolutions.length - 1)),
+    clampSolutionIndex(selectedIndex, displaySolutions.length),
   );
 
   $effect(() => {
@@ -96,41 +118,36 @@
     });
   });
 
+  let metaParts = $derived(
+    [
+      schedule?.challengeName,
+      updatedLabel ? `Updated ${updatedLabel}` : "",
+    ].filter((part): part is string => Boolean(part)),
+  );
+
   function slotRate(team: StygianTeam, slot: Slot): number {
-    if (slot === "top") return team.field_1_rate ?? 0;
-    if (slot === "middle") return team.field_3_rate ?? 0;
-    return team.field_2_rate ?? 0;
+    return boardSlotRate(team, slot);
   }
 
-  /** Popularity × field preference — ranks teams for a specific field. */
   function fieldScore(team: StygianTeam, slot: Slot): number {
-    return (team.usage_rate ?? 0) * (slotRate(team, slot) / 100);
+    return boardSlotScore(team, slot);
   }
 
-  let metaByField = $derived.by(() => {
-    const teams = $allTeamsStygian.filter(
-      (team) => (team.members ?? []).length === 4,
-    );
-    return Object.fromEntries(
-      SLOTS.map((slot) => [
-        slot,
-        [...teams]
-          .sort((a, b) => fieldScore(b, slot) - fieldScore(a, slot))
-          .slice(0, META_LEADERBOARD_COUNT),
-      ]),
-    ) as Record<Slot, StygianTeam[]>;
-  });
+  let metaByField = $derived(
+    metaLeaderboardBySlot(
+      $allTeamsStygian,
+      SLOTS,
+      META_LEADERBOARD_COUNT,
+    ) as Record<Slot, StygianTeam[]>,
+  );
 
   function assignmentKey(slot: Slot): string {
-    const teamKey = solution?.assignments.find(
-      (assignment) => assignment.slot === slot,
-    )?.team.team_key;
-    return `${slot}:${String(teamKey ?? "empty")}`;
+    return assignmentKeyFor(solution, slot);
   }
 
   function stepSolution(delta: number) {
-    const next = safeIndex + delta;
-    if (next < 0 || next > displaySolutions.length - 1) return;
+    const next = stepSolutionIndex(safeIndex, delta, displaySolutions.length);
+    if (next == null) return;
     selectedIndex = next;
   }
 </script>
@@ -218,17 +235,14 @@
   <header class="page-head">
     <div class="page-head-text">
       <h1 class="page-title">Stygian Onslaught</h1>
-      {#if schedule?.challengeName || updatedLabel}
+      {#if metaParts.length > 0}
         <p class="page-meta">
-          {#if schedule?.challengeName}
-            <span>{schedule.challengeName}</span>
-          {/if}
-          {#if schedule?.challengeName && updatedLabel}
-            <span class="page-meta-sep" aria-hidden="true">·</span>
-          {/if}
-          {#if updatedLabel}
-            <span>Updated {updatedLabel}</span>
-          {/if}
+          {#each metaParts as part, index (part)}
+            {#if index > 0}
+              <span class="page-meta-sep" aria-hidden="true">·</span>
+            {/if}
+            <span>{part}</span>
+          {/each}
         </p>
       {/if}
     </div>
@@ -333,32 +347,11 @@
     flex-wrap: wrap;
   }
 
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .page-meta {
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
     flex-wrap: wrap;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .page-meta-sep {
-    opacity: 0.6;
   }
 
   /* ── Solution board ─────────────────────────────────────────────── */
