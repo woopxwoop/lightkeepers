@@ -53,6 +53,7 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./secrets/remote_write_password:/etc/prometheus/secrets/remote_write_password:ro
+      - ./secrets/metrics_token:/etc/prometheus/secrets/metrics_token:ro
       - prometheus_data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml

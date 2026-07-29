@@ -240,6 +240,7 @@
     </header>
 
     <!-- Hero: flat 4-up baseline roster -->
+    {#key $equipmentVersion}
     <div class="roster">
       {#each team.characters as goodKey (goodKey)}
         {@const char = goodKeyMap.get(goodKey)}
@@ -286,6 +287,7 @@
         </CharacterPortraitCard>
       {/each}
     </div>
+    {/key}
 
     {#if baselineVariants.length > 0}
       <section class="section">

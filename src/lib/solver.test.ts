@@ -231,6 +231,49 @@ describe("solveStygian", () => {
     assert.equal(best.unfilled.length, 0);
     assert.equal(best.assignments.length, 3);
   });
+
+  it("recomputes score after pairwise slot swaps (three-way affinity)", () => {
+    // Higher usage may land on the wrong field; optimizeSlots + preferredStygianSlot
+    // should seat each team on its preferred of top / middle / bottom.
+    const bottomPref = stygianTeam({
+      team_key: "wants-bottom",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 100,
+      field_1_rate: 5,
+      field_2_rate: 90,
+      field_3_rate: 5,
+    });
+    const topPref = stygianTeam({
+      team_key: "wants-top",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 50,
+      field_1_rate: 90,
+      field_2_rate: 5,
+      field_3_rate: 5,
+    });
+    const middlePref = stygianTeam({
+      team_key: "wants-middle",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 40,
+      field_1_rate: 5,
+      field_2_rate: 5,
+      field_3_rate: 90,
+    });
+
+    const [sol] = solveStygian([bottomPref, topPref, middlePref], 1);
+    assert.ok(sol);
+    const bySlot = Object.fromEntries(
+      sol.assignments.map((a) => [a.slot, a.team.team_key]),
+    );
+    assert.equal(bySlot.top, "wants-top");
+    assert.equal(bySlot.middle, "wants-middle");
+    assert.equal(bySlot.bottom, "wants-bottom");
+    assert.equal(
+      sol.score,
+      scoreAssignments(sol.assignments),
+      "stored score must match post-swap affinity score",
+    );
+  });
 });
 
 describe("solveAbyssWithFallback", () => {

@@ -4,9 +4,58 @@ import { serverDb } from "$lib/server/supabaseServer";
 import {
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,
+  checkApiRateLimit,
+  getClientIp,
 } from "$lib/server/cache";
 
-export const GET: RequestHandler = async ({ locals }) => {
+type RosterEntry = { name_id: string; isOwned: boolean };
+
+function rateLimited(request: Request) {
+  return checkApiRateLimit(getClientIp(request)).then((ok) => {
+    if (!ok) throw error(429, "Too many requests");
+  });
+}
+
+function parseAndNormalizeRoster(raw: unknown): RosterEntry[] {
+  if (!Array.isArray(raw)) {
+    throw error(400, "Invalid roster payload");
+  }
+  if (raw.length > MAX_ROSTER_CHARACTERS) {
+    throw error(
+      400,
+      `roster must have at most ${MAX_ROSTER_CHARACTERS} entries`,
+    );
+  }
+
+  const normalized: RosterEntry[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) {
+      throw error(400, "Invalid roster payload");
+    }
+    const keys = Object.keys(item);
+    if (
+      keys.length !== 2 ||
+      !keys.includes("name_id") ||
+      !keys.includes("isOwned")
+    ) {
+      throw error(400, "Invalid roster payload");
+    }
+    const { name_id, isOwned } = item as Record<string, unknown>;
+    if (
+      typeof name_id !== "string" ||
+      name_id.length === 0 ||
+      name_id.length > MAX_NAME_ID_LENGTH ||
+      typeof isOwned !== "boolean"
+    ) {
+      throw error(400, "Invalid roster payload");
+    }
+    normalized.push({ name_id, isOwned });
+  }
+  return normalized;
+}
+
+export const GET: RequestHandler = async ({ locals, request }) => {
+  await rateLimited(request);
   if (!locals.user) throw error(401, "Unauthorized");
 
   const { data, error: err } = await serverDb
@@ -24,44 +73,31 @@ export const GET: RequestHandler = async ({ locals }) => {
 };
 
 export const POST: RequestHandler = async ({ locals, request }) => {
+  await rateLimited(request);
   if (!locals.user) throw error(401, "Unauthorized");
 
-  let roster: unknown;
+  let body: unknown;
   try {
-    const body = await request.json();
-    if (typeof body !== "object" || body === null) throw new Error();
-    roster = (body as Record<string, unknown>).roster;
+    body = await request.json();
   } catch {
     throw error(400, "Invalid roster payload");
   }
+  if (typeof body !== "object" || body === null) {
+    throw error(400, "Invalid roster payload");
+  }
 
-  if (!Array.isArray(roster)) {
-    throw error(400, "Invalid roster payload");
-  }
-  if (roster.length > MAX_ROSTER_CHARACTERS) {
-    throw error(
-      400,
-      `roster must have at most ${MAX_ROSTER_CHARACTERS} entries`,
-    );
-  }
-  if (
-    !roster.every(
-      (item) =>
-        typeof item === "object" &&
-        item !== null &&
-        typeof (item as { name_id?: unknown }).name_id === "string" &&
-        (item as { name_id: string }).name_id.length > 0 &&
-        (item as { name_id: string }).name_id.length <= MAX_NAME_ID_LENGTH &&
-        typeof (item as { isOwned?: unknown }).isOwned === "boolean",
-    )
-  ) {
-    throw error(400, "Invalid roster payload");
-  }
+  const roster = parseAndNormalizeRoster(
+    (body as Record<string, unknown>).roster,
+  );
 
   const { error: err } = await serverDb
     .from("user_rosters")
     .upsert(
-      { user_id: locals.user.id, roster, updated_at: new Date().toISOString() },
+      {
+        user_id: locals.user.id,
+        roster,
+        updated_at: new Date().toISOString(),
+      },
       { onConflict: "user_id" },
     );
 
@@ -73,7 +109,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   return json({ ok: true });
 };
 
-export const DELETE: RequestHandler = async ({ locals }) => {
+export const DELETE: RequestHandler = async ({ locals, request }) => {
+  await rateLimited(request);
   if (!locals.user) throw error(401, "Unauthorized");
 
   const { error: err } = await serverDb

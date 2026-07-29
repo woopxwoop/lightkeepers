@@ -290,7 +290,9 @@ let staticBoardsStygianVersion = -1;
 /** Don't hammer /api/static while CDN/L1 is still on the previous cycle. */
 let staticBoardsRetryAfterMs = 0;
 let staticBoardsRetryTimer: ReturnType<typeof setTimeout> | null = null;
-const STATIC_BOARDS_RETRY_MS = 30_000;
+let staticBoardsRetryAttempt = 0;
+const STATIC_BOARDS_RETRY_BASE_MS = 30_000;
+const STATIC_BOARDS_RETRY_MAX_MS = 5 * 60_000;
 
 function staticBoardsMatchCurrentVersions(): boolean {
   return (
@@ -302,6 +304,7 @@ function staticBoardsMatchCurrentVersions(): boolean {
 
 function clearStaticBoardsRetry(): void {
   staticBoardsRetryAfterMs = 0;
+  staticBoardsRetryAttempt = 0;
   if (staticBoardsRetryTimer != null) {
     clearTimeout(staticBoardsRetryTimer);
     staticBoardsRetryTimer = null;
@@ -310,11 +313,16 @@ function clearStaticBoardsRetry(): void {
 
 function scheduleStaticBoardsRetry(): void {
   if (staticBoardsRetryTimer != null) return;
-  staticBoardsRetryAfterMs = Date.now() + STATIC_BOARDS_RETRY_MS;
+  const delay = Math.min(
+    STATIC_BOARDS_RETRY_MAX_MS,
+    STATIC_BOARDS_RETRY_BASE_MS * 2 ** staticBoardsRetryAttempt,
+  );
+  staticBoardsRetryAttempt += 1;
+  staticBoardsRetryAfterMs = Date.now() + delay;
   staticBoardsRetryTimer = setTimeout(() => {
     staticBoardsRetryTimer = null;
     void ensureStaticBoards().catch(() => {});
-  }, STATIC_BOARDS_RETRY_MS);
+  }, delay);
 }
 
 /**
@@ -325,14 +333,13 @@ function scheduleStaticBoardsRetry(): void {
  *
  * If CDN/L1 is still on the previous cycle after one cache-bust, seeds with
  * the payload's own version stamps (never pretends layout versions matched)
- * and retries on a 30s backoff until current.
+ * and retries on a backoff until current. While a retry is scheduled,
+ * further callers return early until the backoff elapses.
  */
 export async function ensureStaticBoards(): Promise<void> {
   if (staticBoardsMatchCurrentVersions()) return;
-  // Have usable (possibly previous-cycle) boards and a retry already scheduled.
-  if (get(staticBoardsLoaded) && Date.now() < staticBoardsRetryAfterMs) {
-    return;
-  }
+  // Backoff after a stale/failed fetch — skip whether boards loaded or not.
+  if (Date.now() < staticBoardsRetryAfterMs) return;
   if (staticBoardsInFlight) return staticBoardsInFlight;
 
   staticBoardsError.set(null);

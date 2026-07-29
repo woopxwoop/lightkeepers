@@ -10,6 +10,7 @@
  */
 
 import type { AbyssTeam, StygianTeam } from "$lib/definitions";
+import { teamSlotFieldRate } from "$lib/slot-fields";
 
 // ---- Types ----------------------------------------------------------------
 
@@ -66,18 +67,17 @@ function preferredStygianSlot(team: StygianTeam): StygianSlot {
 // Teams below this threshold on a slot are treated as if that slot doesn't exist.
 const MIN_SLOT_RATE = 10; // 10% — teams below this on a slot won't be assigned there
 
-const SLOT_TO_FIELD: Record<string, string> = {
-  top: "field_1_rate",
-  bottom: "field_2_rate",
-  middle: "field_3_rate",
+type FieldRateTeamLike = {
+  field_1_rate?: number | null;
+  field_2_rate?: number | null;
+  field_3_rate?: number | null;
 };
 
-function slotRate<TTeam extends Record<string, any>>(
+function slotRate<TTeam extends FieldRateTeamLike>(
   team: TTeam,
   slot: string,
 ): number {
-  const key = SLOT_TO_FIELD[slot] ?? `field_1_rate`;
-  return team[key] ?? 0;
+  return teamSlotFieldRate(team, slot);
 }
 
 // ---- Core greedy pass -----------------------------------------------------
@@ -91,8 +91,11 @@ function placementScore(
     [key: string]: unknown;
   },
   slot: string,
+  enforceMinSlotRate = true,
 ): number {
-  if (slotRate(team, slot) < MIN_SLOT_RATE) return Number.NEGATIVE_INFINITY;
+  if (enforceMinSlotRate && slotRate(team, slot) < MIN_SLOT_RATE) {
+    return Number.NEGATIVE_INFINITY;
+  }
   return (team.usage_rate ?? 0) * slotAffinityRate(team, slot);
 }
 
@@ -100,6 +103,8 @@ function placementScore(
  * Slot-aware greedy: after an optional forced first pick, repeatedly assign the
  * unused team × open slot pair with the highest placement score (no character
  * overlap). Beats “walk list by usage, park in preferred-or-first-open.”
+ * When MIN_SLOT_RATE leaves open slots with unused non-overlapping teams,
+ * a second pass fills without the floor so the board can still complete.
  */
 function greedyPass<
   TTeam extends Record<string, unknown> & {
@@ -129,6 +134,31 @@ function greedyPass<
     team.members?.forEach((m) => usedCharacters.add(m));
   };
 
+  const pickBest = (enforceMinSlotRate: boolean): boolean => {
+    let bestTeam: TTeam | null = null;
+    let bestSlot: TSlot | null = null;
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const team of teams) {
+      if (usedTeams.has(team)) continue;
+      if (team.members?.some((m) => usedCharacters.has(m))) continue;
+
+      for (const slot of allSlots) {
+        if (filledSlots.has(slot)) continue;
+        const score = placementScore(team, slot, enforceMinSlotRate);
+        if (score > bestScore) {
+          bestScore = score;
+          bestTeam = team;
+          bestSlot = slot;
+        }
+      }
+    }
+
+    if (bestTeam == null || bestSlot == null) return false;
+    commit(bestTeam, bestSlot);
+    return true;
+  };
+
   if (forcedFirst) {
     const open = allSlots.filter(
       (s) => placementScore(forcedFirst, s) !== Number.NEGATIVE_INFINITY,
@@ -147,27 +177,12 @@ function greedyPass<
   }
 
   while (filledSlots.size < allSlots.length) {
-    let bestTeam: TTeam | null = null;
-    let bestSlot: TSlot | null = null;
-    let bestScore = Number.NEGATIVE_INFINITY;
+    if (!pickBest(true)) break;
+  }
 
-    for (const team of teams) {
-      if (usedTeams.has(team)) continue;
-      if (team.members?.some((m) => usedCharacters.has(m))) continue;
-
-      for (const slot of allSlots) {
-        if (filledSlots.has(slot)) continue;
-        const score = placementScore(team, slot);
-        if (score > bestScore) {
-          bestScore = score;
-          bestTeam = team;
-          bestSlot = slot;
-        }
-      }
-    }
-
-    if (bestTeam == null || bestSlot == null) break;
-    commit(bestTeam, bestSlot);
+  // Last resort: allow sub-threshold slot rates so remaining fields can fill.
+  while (filledSlots.size < allSlots.length) {
+    if (!pickBest(false)) break;
   }
 
   return {

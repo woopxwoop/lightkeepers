@@ -8,7 +8,8 @@ import { env } from "$env/dynamic/private";
  * Server-only Supabase client.
  * Uses the service role key so it bypasses RLS — never expose to the client.
  * Falls back to the anon key only in `vite dev` when the service key isn't set.
- * Production / `node build` refuse to start without PRIVATE_SUPABASE_KEY.
+ * Outside vite dev, missing PRIVATE_SUPABASE_KEY throws on first DB access
+ * (lazy init — the process can still boot; the first query fails closed).
  *
  * Lazy-init so private keys stay runtime-only (not baked into the Docker image).
  */

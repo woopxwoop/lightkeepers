@@ -81,6 +81,14 @@
     updateUnsavedState();
   }
 
+  function restoreSavedSnapshot() {
+    try {
+      localStorage.setItem("charactersOwned", savedSnapshot);
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function saveCharacters() {
     if (isSaving) return;
     isSaving = true;
@@ -103,12 +111,7 @@
           body: JSON.stringify({ roster: tempCharactersOwned }),
         });
         if (!res.ok) {
-          // Revert local write so store / storage / cloud stay aligned.
-          try {
-            localStorage.setItem("charactersOwned", savedSnapshot);
-          } catch {
-            /* ignore */
-          }
+          restoreSavedSnapshot();
           rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
           return;
         }
@@ -122,6 +125,7 @@
       hasUnsavedChanges = false;
       setHasSavedRoster();
     } catch (e) {
+      restoreSavedSnapshot();
       console.error("Roster save error:", e);
       rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
     } finally {

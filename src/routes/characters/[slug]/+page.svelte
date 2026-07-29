@@ -811,6 +811,7 @@
               {#if !builds.sets?.length}
                 <p class="muted-note">No set data yet.</p>
               {:else}
+                {#key $equipmentVersion}
                 <div class="equip-grid">
                   {#each builds.sets as s}
                     {@const set = artifactSetByKey.get(s.key)}
@@ -841,6 +842,7 @@
                     </div>
                   {/each}
                 </div>
+                {/key}
               {/if}
             </section>
 

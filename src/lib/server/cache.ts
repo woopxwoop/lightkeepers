@@ -356,10 +356,10 @@ export function buildRpcKey(
   versionNumber: number,
   characters: string[],
 ): string {
-  const sorted = [...characters].sort().join(",");
+  const sortedJson = JSON.stringify([...characters].sort());
   const rosterPart =
-    sorted.length > RPC_KEY_ROSTER_HASH_AFTER
-      ? createHash("sha256").update(sorted).digest("hex")
-      : sorted;
+    sortedJson.length > RPC_KEY_ROSTER_HASH_AFTER
+      ? createHash("sha256").update(sortedJson).digest("hex")
+      : sortedJson;
   return `${rpcName}:${versionNumber}:${rosterPart}`;
 }

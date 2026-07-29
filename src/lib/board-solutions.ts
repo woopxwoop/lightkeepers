@@ -3,6 +3,8 @@
  * Mode-specific markup stays in the route pages.
  */
 
+import { teamSlotFieldRate } from "$lib/slot-fields";
+
 export const SOLUTIONS_COUNT = 6;
 export const META_LEADERBOARD_COUNT = 5;
 
@@ -22,11 +24,9 @@ type SolutionLike = {
   assignments: { slot: string; team: { team_key: string | null } }[];
 };
 
-/** Slot → field_*_rate (matches solver SLOT_TO_FIELD). */
+/** Slot → field_*_rate (shared mapping with solver via slot-fields). */
 export function boardSlotRate(team: SlotRateTeam, slot: string): number {
-  if (slot === "top") return team.field_1_rate ?? 0;
-  if (slot === "middle") return team.field_3_rate ?? 0;
-  return team.field_2_rate ?? 0;
+  return teamSlotFieldRate(team, slot);
 }
 
 /** Popularity × slot preference — ranks teams for a specific half/field. */

@@ -101,6 +101,7 @@
 
   <section class="section">
     <div class="builds-grid">
+      {#key $equipmentVersion}
       {#each sim.characters as build (build.key)}
         {@const character = characterFor(build.key)}
         {@const weapon = weaponByKey.get(build.weapon.key)}
@@ -315,6 +316,7 @@
           </div>
         </Surface>
       {/each}
+      {/key}
     </div>
     <p class="footnote">
       Sheet totals exclude artifact set bonuses and weapon passives.
