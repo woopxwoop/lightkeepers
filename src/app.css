@@ -200,6 +200,43 @@ a:focus-visible {
   box-shadow: var(--focus-ring);
 }
 
+/* ── Page chrome ───────────────────────────────────────────────────────── */
+/* `.page-head` layout stays per-page (column vs. space-between row). */
+.page-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: var(--h2-size);
+  font-weight: 600;
+  letter-spacing: var(--tracking-title);
+  text-transform: uppercase;
+  color: var(--foreground-color);
+}
+
+/* Pages that need a row of meta chips add their own flex/gap on top. */
+.page-meta {
+  font-size: var(--text-xs);
+  color: var(--foreground-mid);
+}
+
+.page-meta-sep {
+  opacity: 0.6;
+}
+
+.back-link {
+  width: fit-content;
+  font-size: var(--text-xs);
+  color: var(--foreground-mid);
+}
+
+.back-link:hover {
+  color: var(--accent-1);
+}
+
 /* ── Shared text utilities (pages + portrait meta) ─────────────────────── */
 .section-title {
   font-family: var(--font-display);
