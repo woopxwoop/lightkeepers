@@ -284,6 +284,10 @@ let staticBoardsInFlight: Promise<void> | null = null;
 /** Versions the current allTeams* stores were fetched for. */
 let staticBoardsAbyssVersion = -1;
 let staticBoardsStygianVersion = -1;
+/** Don't hammer /api/static while CDN/L1 is still on the previous cycle. */
+let staticBoardsRetryAfterMs = 0;
+let staticBoardsRetryTimer: ReturnType<typeof setTimeout> | null = null;
+const STATIC_BOARDS_RETRY_MS = 30_000;
 
 function staticBoardsMatchCurrentVersions(): boolean {
   return (
@@ -293,14 +297,39 @@ function staticBoardsMatchCurrentVersions(): boolean {
   );
 }
 
+function clearStaticBoardsRetry(): void {
+  staticBoardsRetryAfterMs = 0;
+  if (staticBoardsRetryTimer != null) {
+    clearTimeout(staticBoardsRetryTimer);
+    staticBoardsRetryTimer = null;
+  }
+}
+
+function scheduleStaticBoardsRetry(): void {
+  if (staticBoardsRetryTimer != null) return;
+  staticBoardsRetryAfterMs = Date.now() + STATIC_BOARDS_RETRY_MS;
+  staticBoardsRetryTimer = setTimeout(() => {
+    staticBoardsRetryTimer = null;
+    void ensureStaticBoards().catch(() => {});
+  }, STATIC_BOARDS_RETRY_MS);
+}
+
 /**
  * Fetches the full meta team lists via /api/static and seeds the stores.
  * Kept out of abyss/stygian page loads so client navigations stay lean.
  * Coalesces concurrent callers; skips the network when boards already match
  * the current Abyss/Stygian version numbers.
+ *
+ * If CDN/L1 is still on the previous cycle after one cache-bust, seeds with
+ * the payload's own version stamps (never pretends layout versions matched)
+ * and retries on a 30s backoff until current.
  */
 export async function ensureStaticBoards(): Promise<void> {
   if (staticBoardsMatchCurrentVersions()) return;
+  // Have usable (possibly previous-cycle) boards and a retry already scheduled.
+  if (get(staticBoardsLoaded) && Date.now() < staticBoardsRetryAfterMs) {
+    return;
+  }
   if (staticBoardsInFlight) return staticBoardsInFlight;
 
   staticBoardsError.set(null);
@@ -314,18 +343,18 @@ export async function ensureStaticBoards(): Promise<void> {
       const fresh = await fetchStaticBoardsPayload(true);
       if (applyStaticBoardsIfCurrent(fresh)) return;
 
-      // Still behind after bust — seed with the best body we got, keep the
-      // current layout version stamps, and resolve without erroring so
-      // already-loaded boards (or a slightly-stale first paint) stay usable.
-      applyStaticBoardsPayload(
-        fresh,
-        abyssVersionNumber,
-        stygianVersionNumber,
-      );
+      // Still behind — show last cycle with honest stamps; match stays false.
+      const abyssVer = fresh.latestAbyssVersion?.version_number;
+      const stygianVer = fresh.latestStygianVersion?.version_number;
+      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+        applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
+      }
+      scheduleStaticBoardsRetry();
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load team boards";
       staticBoardsError.set(message);
+      scheduleStaticBoardsRetry();
       throw err;
     }
   })();
@@ -401,6 +430,12 @@ function applyStaticBoardsPayload(
   );
   staticBoardsError.set(null);
   staticBoardsLoaded.set(true);
+  if (
+    staticBoardsAbyssVersion === abyssVersionNumber &&
+    staticBoardsStygianVersion === stygianVersionNumber
+  ) {
+    clearStaticBoardsRetry();
+  }
 }
 
 // ── Near-miss stores ───────────────────────────────────────────────────────
