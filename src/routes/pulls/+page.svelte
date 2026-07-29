@@ -51,7 +51,9 @@
   /** Active team per revealed row — rows page through their teams separately. */
   let singleTeamIndex = $state<Record<string, number>>({});
   let pairTeamIndex = $state<Record<string, number>>({});
-  let openedByDefault = false;
+  /** Auto-reveal gating is per column — one column ready early must not skip the other. */
+  let openedSinglesByDefault = false;
+  let openedPairsByDefault = false;
   let expandedStandoutBoards = $state(new Set<string>());
   let collapsingStandoutBoards = $state(new Set<string>());
   const standoutCollapseTimers = new Map<
@@ -107,38 +109,55 @@
   }
 
   /**
-   * Reveals the leading row of a multi-row column on first ranking, then only
-   * drops ids that no longer exist — a manual hide must not spring back open.
+   * Reveals the leading row of a multi-row column on that column's first
+   * ranking, then only drops ids that no longer exist — a manual hide must
+   * not spring back open.
    */
   function syncRevealed(
     singles: PullSuggestion[],
     pairs: PairSuggestion[],
   ): void {
+    const singleIds = singles.map((s) => s.character);
+    if (!openedSinglesByDefault) {
+      const first = singleIds.length > 1 ? singleIds[0] : undefined;
+      if (first) singleTeamIndex[first] ??= 0;
+    }
     revealedSingles = nextRevealed(
       revealedSingles,
-      singles.map((s) => s.character),
-      singleTeamIndex,
+      singleIds,
+      openedSinglesByDefault,
     );
-    revealedPairs = nextRevealed(
-      revealedPairs,
-      pairs.map(pairKey),
-      pairTeamIndex,
-    );
+    if (singleIds.length > 0) openedSinglesByDefault = true;
+    for (const suggestion of singles) {
+      safeTeamIndex(
+        singleTeamIndex,
+        suggestion.character,
+        suggestion.topTeams,
+      );
+    }
 
-    if (singles.length > 0 || pairs.length > 0) openedByDefault = true;
+    const pairIds = pairs.map(pairKey);
+    if (!openedPairsByDefault) {
+      const first = pairIds.length > 1 ? pairIds[0] : undefined;
+      if (first) pairTeamIndex[first] ??= 0;
+    }
+    revealedPairs = nextRevealed(revealedPairs, pairIds, openedPairsByDefault);
+    if (pairIds.length > 0) openedPairsByDefault = true;
+    for (const suggestion of pairs) {
+      safeTeamIndex(pairTeamIndex, pairKey(suggestion), suggestion.topTeams);
+    }
   }
 
   /** Returns the same set when nothing changed, so re-ranking is a no-op. */
   function nextRevealed(
     revealed: Set<string>,
     ids: string[],
-    indices: Record<string, number>,
+    openedByDefault: boolean,
   ): Set<string> {
     if (!openedByDefault) {
       // A lone suggestion stays hidden — let it be opened deliberately.
       const first = ids.length > 1 ? ids[0] : undefined;
       if (!first) return revealed;
-      indices[first] ??= 0;
       return new Set([first]);
     }
     const live = new Set(ids);
@@ -260,9 +279,15 @@
     return (team?.members ?? []).filter((member) => !skip.has(member));
   }
 
-  function safeTeamIndex(index: number, teams: StygianTeam[]): number {
-    if (teams.length === 0) return 0;
-    return Math.min(index, teams.length - 1);
+  function safeTeamIndex(
+    indices: Record<string, number>,
+    id: string,
+    teams: StygianTeam[],
+  ): number {
+    const current = indices[id] ?? 0;
+    const next = teams.length === 0 ? 0 : Math.min(current, teams.length - 1);
+    if (indices[id] !== next) indices[id] = next;
+    return next;
   }
 
   function usagePct(entry: TierListEntry): string {
@@ -314,6 +339,79 @@
       {/if}
     </div>
   {/each}
+{/snippet}
+
+{#snippet ledgerRow(
+  rowId: string,
+  targets: { nameId: string; name: string; rarity: number }[],
+  mates: string[],
+  mateCount: number,
+  isOpen: boolean,
+  teams: StygianTeam[],
+  teamIdx: number,
+  cycleTeam: StygianTeam | undefined,
+  onToggle: () => void,
+  indices: Record<string, number>,
+  indexKey: string,
+)}
+  <li class="ledger-row" id={rowId}>
+    <div class="row-team">
+      {#each targets as target (target.nameId)}
+        <div class="team-slot">
+          <WishSlot
+            nameId={target.nameId}
+            name={target.name}
+            rarity={target.rarity}
+            highlight
+          />
+        </div>
+      {/each}
+
+      {#if isOpen}
+        {#key teamIdx}
+          {@render teammateSlots(mates, mateCount, true)}
+        {/key}
+      {:else}
+        {@render teammateSlots([], mateCount, false)}
+      {/if}
+
+      <button
+        type="button"
+        class="row-toggle"
+        aria-expanded={isOpen}
+        aria-controls={rowId}
+        aria-label={isOpen ? "Hide team" : "Reveal team"}
+        onclick={onToggle}
+      >
+        <span class="row-toggle-icon" class:open={isOpen}>
+          <span class="row-toggle-face row-toggle-face-closed">
+            <IconEyeOff size={18} strokeWidth={2.25} />
+          </span>
+          <span class="row-toggle-face row-toggle-face-open">
+            <IconEye size={18} strokeWidth={2.25} />
+          </span>
+        </span>
+      </button>
+    </div>
+
+    {#if isOpen}
+      <div class="team-cycle-meta">
+        <p class="team-cycle-label">
+          {(cycleTeam?.avg_usage_rate ?? 0).toFixed(1)}% usage
+          {#if teams.length > 1}
+            <span class="team-cycle-count"
+              >· team {teamIdx + 1} of {teams.length}</span
+            >
+          {/if}
+        </p>
+        <SolutionDots
+          count={teams.length}
+          bind:index={indices[indexKey]}
+          aria-label-prefix="Unlocked team"
+        />
+      </div>
+    {/if}
+  </li>
 {/snippet}
 
 {#snippet standoutsBoard(id: string, label: string, entries: TierListEntry[])}
@@ -426,69 +524,33 @@
               {@const isOpen = revealedSingles.has(suggestion.character)}
               {@const char = mapping.get(suggestion.character)}
               {@const teamIdx = safeTeamIndex(
-                singleTeamIndex[suggestion.character] ?? 0,
+                singleTeamIndex,
+                suggestion.character,
                 suggestion.topTeams,
               )}
               {@const cycleTeam = suggestion.topTeams[teamIdx]}
               {@const mates = remainingMembers(cycleTeam, [
                 suggestion.character,
               ])}
-              <li class="ledger-row">
-                <div class="row-team">
-                  <div class="team-slot">
-                    <WishSlot
-                      nameId={suggestion.character}
-                      name={suggestion.characterName ?? suggestion.character}
-                      rarity={char?.rarity ?? 5}
-                      highlight
-                    />
-                  </div>
-
-                  {#if isOpen}
-                    {#key teamIdx}
-                      {@render teammateSlots(mates, 3, true)}
-                    {/key}
-                  {:else}
-                    {@render teammateSlots([], 3, false)}
-                  {/if}
-
-                  <button
-                    type="button"
-                    class="row-toggle"
-                    aria-expanded={isOpen}
-                    aria-label={isOpen ? "Hide team" : "Reveal team"}
-                    onclick={() => toggleSingle(suggestion.character)}
-                  >
-                    <span class="row-toggle-icon" class:open={isOpen}>
-                      <span class="row-toggle-face row-toggle-face-closed">
-                        <IconEyeOff size={18} strokeWidth={2.25} />
-                      </span>
-                      <span class="row-toggle-face row-toggle-face-open">
-                        <IconEye size={18} strokeWidth={2.25} />
-                      </span>
-                    </span>
-                  </button>
-                </div>
-
-                {#if isOpen}
-                  <div class="team-cycle-meta">
-                    <p class="team-cycle-label">
-                      {(cycleTeam?.avg_usage_rate ?? 0).toFixed(1)}% usage
-                      {#if suggestion.topTeams.length > 1}
-                        <span class="team-cycle-count"
-                          >· team {teamIdx + 1} of {suggestion.topTeams
-                            .length}</span
-                        >
-                      {/if}
-                    </p>
-                    <SolutionDots
-                      count={suggestion.topTeams.length}
-                      bind:index={singleTeamIndex[suggestion.character]}
-                      aria-label-prefix="Unlocked team"
-                    />
-                  </div>
-                {/if}
-              </li>
+              {@render ledgerRow(
+                `pull-single-${suggestion.character}`,
+                [
+                  {
+                    nameId: suggestion.character,
+                    name: suggestion.characterName ?? suggestion.character,
+                    rarity: char?.rarity ?? 5,
+                  },
+                ],
+                mates,
+                3,
+                isOpen,
+                suggestion.topTeams,
+                teamIdx,
+                cycleTeam,
+                () => toggleSingle(suggestion.character),
+                singleTeamIndex,
+                suggestion.character,
+              )}
             {/each}
           </ol>
         </section>
@@ -511,7 +573,8 @@
               {@const charA = mapping.get(suggestion.charA)}
               {@const charB = mapping.get(suggestion.charB)}
               {@const teamIdx = safeTeamIndex(
-                pairTeamIndex[key] ?? 0,
+                pairTeamIndex,
+                key,
                 suggestion.topTeams,
               )}
               {@const cycleTeam = suggestion.topTeams[teamIdx]}
@@ -519,70 +582,30 @@
                 suggestion.charA,
                 suggestion.charB,
               ])}
-              <li class="ledger-row">
-                <div class="row-team">
-                  <div class="team-slot">
-                    <WishSlot
-                      nameId={suggestion.charA}
-                      name={suggestion.charAName ?? suggestion.charA}
-                      rarity={charA?.rarity ?? 5}
-                      highlight
-                    />
-                  </div>
-                  <div class="team-slot">
-                    <WishSlot
-                      nameId={suggestion.charB}
-                      name={suggestion.charBName ?? suggestion.charB}
-                      rarity={charB?.rarity ?? 5}
-                      highlight
-                    />
-                  </div>
-
-                  {#if isOpen}
-                    {#key teamIdx}
-                      {@render teammateSlots(mates, 2, true)}
-                    {/key}
-                  {:else}
-                    {@render teammateSlots([], 2, false)}
-                  {/if}
-
-                  <button
-                    type="button"
-                    class="row-toggle"
-                    aria-expanded={isOpen}
-                    aria-label={isOpen ? "Hide team" : "Reveal team"}
-                    onclick={() => togglePair(key)}
-                  >
-                    <span class="row-toggle-icon" class:open={isOpen}>
-                      <span class="row-toggle-face row-toggle-face-closed">
-                        <IconEyeOff size={18} strokeWidth={2.25} />
-                      </span>
-                      <span class="row-toggle-face row-toggle-face-open">
-                        <IconEye size={18} strokeWidth={2.25} />
-                      </span>
-                    </span>
-                  </button>
-                </div>
-
-                {#if isOpen}
-                  <div class="team-cycle-meta">
-                    <p class="team-cycle-label">
-                      {(cycleTeam?.avg_usage_rate ?? 0).toFixed(1)}% usage
-                      {#if suggestion.topTeams.length > 1}
-                        <span class="team-cycle-count"
-                          >· team {teamIdx + 1} of {suggestion.topTeams
-                            .length}</span
-                        >
-                      {/if}
-                    </p>
-                    <SolutionDots
-                      count={suggestion.topTeams.length}
-                      bind:index={pairTeamIndex[key]}
-                      aria-label-prefix="Unlocked team"
-                    />
-                  </div>
-                {/if}
-              </li>
+              {@render ledgerRow(
+                `pull-pair-${key}`,
+                [
+                  {
+                    nameId: suggestion.charA,
+                    name: suggestion.charAName ?? suggestion.charA,
+                    rarity: charA?.rarity ?? 5,
+                  },
+                  {
+                    nameId: suggestion.charB,
+                    name: suggestion.charBName ?? suggestion.charB,
+                    rarity: charB?.rarity ?? 5,
+                  },
+                ],
+                mates,
+                2,
+                isOpen,
+                suggestion.topTeams,
+                teamIdx,
+                cycleTeam,
+                () => togglePair(key),
+                pairTeamIndex,
+                key,
+              )}
             {/each}
           </ol>
         </section>
