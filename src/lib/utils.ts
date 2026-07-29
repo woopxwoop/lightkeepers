@@ -204,13 +204,17 @@ export function buildGoodKeyMap<T extends { name: string | null }>(
   return map;
 }
 
-/** GOOD keys for owned roster entries. */
+/** GOOD keys for owned roster entries (unnamed entries are skipped). */
 export function ownedGoodKeys(
   characters: { isOwned: boolean; name: string | null }[],
 ): Set<string> {
-  return new Set(
-    characters.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
-  );
+  const keys = new Set<string>();
+  for (const character of characters) {
+    if (!character.isOwned) continue;
+    const key = toGoodKey(character.name);
+    if (key) keys.add(key);
+  }
+  return keys;
 }
 
 /** name_ids for owned roster entries. */

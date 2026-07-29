@@ -2,12 +2,7 @@
   /**
    * Display name for a GOOD weapon key; falls back to the key until loaded.
    */
-  import { onMount } from "svelte";
-  import {
-    ensureEquipmentData,
-    equipmentVersion,
-    weaponByKey,
-  } from "$lib/equipment-data";
+  import { useWeapon } from "$lib/equipment-data.svelte";
 
   let {
     weaponKey,
@@ -15,14 +10,9 @@
     weaponKey: string;
   } = $props();
 
-  onMount(() => {
-    void ensureEquipmentData();
-  });
+  const lookup = useWeapon(() => weaponKey);
 
-  let name = $derived.by(() => {
-    $equipmentVersion;
-    return weaponByKey.get(weaponKey)?.name ?? weaponKey;
-  });
+  let name = $derived(lookup.weapon?.name ?? weaponKey);
 </script>
 
 {name}

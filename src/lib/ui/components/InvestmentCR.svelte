@@ -2,12 +2,8 @@
   /**
    * C#R# string that respects 5★ refinement rules after equipment data loads.
    */
-  import { onMount } from "svelte";
-  import {
-    ensureEquipmentData,
-    equipmentVersion,
-    formatInvestmentCR,
-  } from "$lib/equipment-data";
+  import { formatInvestmentCR } from "$lib/equipment-data";
+  import { useEquipmentData } from "$lib/equipment-data.svelte";
 
   let {
     cons,
@@ -19,12 +15,10 @@
     weaponKey: string;
   } = $props();
 
-  onMount(() => {
-    void ensureEquipmentData();
-  });
+  const equipment = useEquipmentData();
 
   let text = $derived.by(() => {
-    $equipmentVersion;
+    void equipment.version;
     return formatInvestmentCR(cons, refinement, weaponKey);
   });
 </script>

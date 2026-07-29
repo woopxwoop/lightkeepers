@@ -11,87 +11,101 @@ import { serverDb } from "$lib/server/supabaseServer";
 
 const TTL_15_MIN = 15 * 60 * 1000;
 
-const abyssVersionsCache = new LRUCache<number[]>(1, TTL_15_MIN, {
-  redisNamespace: "abyss_versions",
-});
-const stygianVersionsCache = new LRUCache<number[]>(1, TTL_15_MIN, {
-  redisNamespace: "stygian_versions",
-});
+type VersionRows = { data: { version_number: number }[] | null; error: unknown };
 
-async function loadAbyssVersions(): Promise<number[]> {
-  return abyssVersionsCache.getOrSet("all", async () => {
-    const { data, error: err } = await serverDb
-      .from("abyss_versions")
-      .select("version_number");
-    if (err) throw err;
-    return (data ?? []).map((row) => row.version_number);
-  });
+/**
+ * One cached version domain (a `*_versions` table).
+ *
+ * `fetchVersions` stays a closure at the call site so the table name is a
+ * literal and the generated row types still apply.
+ */
+function createVersionDomain(
+  redisNamespace: string,
+  fetchVersions: () => PromiseLike<VersionRows>,
+) {
+  const cache = new LRUCache<number[]>(1, TTL_15_MIN, { redisNamespace });
+
+  async function load(): Promise<number[]> {
+    return cache.getOrSet("all", async () => {
+      const { data, error: err } = await fetchVersions();
+      if (err) throw err;
+      return (data ?? []).map((row) => row.version_number);
+    });
+  }
+
+  return {
+    async isSupported(version: number): Promise<boolean> {
+      const versions = await load();
+      return versions.includes(version);
+    },
+  };
 }
 
-async function loadStygianVersions(): Promise<number[]> {
-  return stygianVersionsCache.getOrSet("all", async () => {
-    const { data, error: err } = await serverDb
-      .from("stygian_versions")
-      .select("version_number");
-    if (err) throw err;
-    return (data ?? []).map((row) => row.version_number);
-  });
-}
+const abyssVersions = createVersionDomain("abyss_versions", () =>
+  serverDb.from("abyss_versions").select("version_number"),
+);
+
+const stygianVersions = createVersionDomain("stygian_versions", () =>
+  serverDb.from("stygian_versions").select("version_number"),
+);
 
 /** Whether an Abyss version exists in the database-supported domain. */
 export async function isSupportedAbyssVersion(
   version: number,
 ): Promise<boolean> {
-  const versions = await loadAbyssVersions();
-  return versions.includes(version);
+  return abyssVersions.isSupported(version);
 }
 
 /** Whether a Stygian version exists in the database-supported domain. */
 export async function isSupportedStygianVersion(
   version: number,
 ): Promise<boolean> {
-  const versions = await loadStygianVersions();
-  return versions.includes(version);
+  return stygianVersions.isSupported(version);
 }
 
 /**
- * Require a supported Stygian version.
- * Lookup failures → 500; unsupported → 400 with the caller's message.
+ * Require every checked version to be supported.
+ * Lookup failures → 500; any unsupported → 400 with the caller's message.
  */
+async function requireSupportedVersions(
+  checks: Promise<boolean>[],
+  logLabel: string,
+  unsupportedMessage: string,
+): Promise<void> {
+  let supported: boolean[];
+  try {
+    supported = await Promise.all(checks);
+  } catch (e) {
+    console.error(`[version-validation] ${logLabel} lookup failed:`, e);
+    throw error(500, "Internal server error");
+  }
+  if (supported.some((ok) => !ok)) throw error(400, unsupportedMessage);
+}
+
+/** Require a supported Stygian version. */
 export async function requireSupportedStygianVersion(
   version: number,
   unsupportedMessage = "stygianVersion is not a supported version.",
 ): Promise<void> {
-  let supported: boolean;
-  try {
-    supported = await isSupportedStygianVersion(version);
-  } catch (e) {
-    console.error("[version-validation] stygian version lookup failed:", e);
-    throw error(500, "Internal server error");
-  }
-  if (!supported) throw error(400, unsupportedMessage);
+  await requireSupportedVersions(
+    [isSupportedStygianVersion(version)],
+    "stygian version",
+    unsupportedMessage,
+  );
 }
 
-/**
- * Require supported Abyss and Stygian versions.
- * Lookup failures → 500; either unsupported → 400 with the caller's message.
- */
+/** Require supported Abyss and Stygian versions. */
 export async function requireSupportedAbyssAndStygianVersions(
   abyssVersion: number,
   stygianVersion: number,
   unsupportedMessage = "abyssVersion and stygianVersion are not supported versions.",
 ): Promise<void> {
-  let supportedVersions: [boolean, boolean];
-  try {
-    supportedVersions = await Promise.all([
+  await requireSupportedVersions(
+    [
       isSupportedAbyssVersion(abyssVersion),
       isSupportedStygianVersion(stygianVersion),
-    ]);
-  } catch (e) {
-    console.error("[version-validation] version lookup failed:", e);
-    throw error(500, "Internal server error");
-  }
-  if (!supportedVersions[0] || !supportedVersions[1]) {
-    throw error(400, unsupportedMessage);
-  }
+    ],
+    "version",
+    unsupportedMessage,
+  );
 }

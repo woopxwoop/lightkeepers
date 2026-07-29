@@ -169,7 +169,7 @@ describe("filter helpers", () => {
   });
 
   it("collects unique character keys and costs", () => {
-    assert.deepEqual(allTeamCharacterKeys([a, b, c]).sort(), ["A", "B", "C"]);
+    assert.deepEqual(allTeamCharacterKeys([c, b, a]), ["A", "B", "C"]);
     assert.deepEqual(
       availableInvestmentCosts({
         teams: [a, b, c],

@@ -142,13 +142,13 @@ export function availableInvestmentCosts(
   return [...set].sort((a, b) => a - b);
 }
 
-/** Unique character GOOD keys across all teams. */
+/** Unique character GOOD keys across all teams, alphabetically ordered. */
 export function allTeamCharacterKeys(teams: InvestmentTeam[]): string[] {
   const set = new Set<string>();
   for (const t of teams) {
     for (const k of t.characters) set.add(k);
   }
-  return [...set];
+  return [...set].sort();
 }
 
 export type SortTeamsForDisplayOptions = {

@@ -3,13 +3,8 @@
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
   import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
   import InvestmentCR from "$lib/ui/components/InvestmentCR.svelte";
-  import { weaponIconUrl } from "$lib/asset-urls";
-  import {
-    equipmentVersion,
-    ensureEquipmentData,
-    weaponByKey,
-  } from "$lib/equipment-data";
-  import { onMount } from "svelte";
+  import { weaponIconSrc } from "$lib/equipment-data";
+  import { useEquipmentData } from "$lib/equipment-data.svelte";
 
   type BuildBadge = {
     cons: number;
@@ -39,9 +34,7 @@
     class?: string;
   } = $props();
 
-  onMount(() => {
-    void ensureEquipmentData();
-  });
+  const equipment = useEquipmentData();
 
   // Equal angular steps around a shared circle center below the hand.
   const HAND_ANGLES = [-24, -8, 8, 24] as const;
@@ -50,11 +43,14 @@
     return stack === "left" ? total - index : index + 1;
   }
 
-  /** True when the weapon icon is available (after equipment JSON loads). */
-  function weaponIconShown(weaponKey: string): boolean {
-    const weapon = weaponByKey.get(weaponKey);
-    return Boolean(weapon && weaponIconUrl(weapon.awakenIcon));
-  }
+  /**
+   * WeaponBadge renders an icon exactly when `weaponIconSrc` resolves, so the
+   * C-only vs C#R# meta below it keys off the same check.
+   */
+  let weaponIconShown = $derived.by(() => {
+    void equipment.version;
+    return (weaponKey: string) => weaponIconSrc(weaponKey) !== null;
+  });
 </script>
 
 <div
@@ -67,9 +63,7 @@
     {@const key = character?.name_id ?? character?.name ?? ""}
     {@const build = builds[i]}
     {@const angle = HAND_ANGLES[i] ?? 0}
-    {@const showWeapon = Boolean(
-      build && $equipmentVersion >= 0 && weaponIconShown(build.weaponKey),
-    )}
+    {@const showWeapon = build ? weaponIconShown(build.weaponKey) : false}
     <div
       class="card"
       style:--angle="{angle}deg"

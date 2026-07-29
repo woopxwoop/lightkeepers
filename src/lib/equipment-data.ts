@@ -7,6 +7,7 @@
  * `equipmentVersion` bumps after load so Svelte dependents can re-derive.
  */
 import { writable } from "svelte/store";
+import { weaponIconUrl } from "$lib/asset-urls";
 import { buildGoodKeyMap } from "$lib/utils";
 
 export interface WeaponData {
@@ -93,6 +94,16 @@ export function ensureEquipmentData(): Promise<void> {
 void ensureEquipmentData().catch(() => {
   /* page / tooltip will retry via ensureEquipmentData() */
 });
+
+/**
+ * Displayable icon URL for a GOOD weapon key.
+ * Null while the tables are still loading, for unknown keys, and for weapons
+ * without an awaken icon — the single source of truth for "icon is shown".
+ */
+export function weaponIconSrc(weaponKey: string): string | null {
+  const weapon = weaponByKey.get(weaponKey);
+  return weapon ? weaponIconUrl(weapon.awakenIcon) : null;
+}
 
 /**
  * True only for known 5★ weapons. Missing keys are treated as not-5★.

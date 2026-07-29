@@ -1,17 +1,11 @@
 <script lang="ts">
   /**
    * Portrait-corner weapon icon + refinement badge.
-   * Subscribes to equipmentVersion so lazy JSON load updates without a
-   * caller-side {#key $equipmentVersion} wrapper.
+   * Resolves through the shared equipment helper so the lazy JSON load
+   * updates it without a caller-side {#key $equipmentVersion} wrapper.
    */
-  import { onMount } from "svelte";
-  import {
-    displayWeaponRefinement,
-    ensureEquipmentData,
-    equipmentVersion,
-    weaponByKey,
-  } from "$lib/equipment-data";
-  import { weaponIconUrl } from "$lib/asset-urls";
+  import { displayWeaponRefinement } from "$lib/equipment-data";
+  import { useWeapon } from "$lib/equipment-data.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
 
   let {
@@ -22,16 +16,10 @@
     refinement: number;
   } = $props();
 
-  onMount(() => {
-    void ensureEquipmentData();
-  });
+  const lookup = useWeapon(() => weaponKey);
 
-  let weapon = $derived.by(() => {
-    $equipmentVersion;
-    return weaponByKey.get(weaponKey) ?? null;
-  });
-
-  let icon = $derived(weapon ? weaponIconUrl(weapon.awakenIcon) : null);
+  let weapon = $derived(lookup.weapon);
+  let icon = $derived(lookup.icon);
 
   let refine = $derived(
     displayWeaponRefinement(weaponKey, refinement, {
