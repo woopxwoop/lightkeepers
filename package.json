@@ -16,7 +16,6 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "tsx --test src/lib/tierlist.test.ts src/lib/server/cache.test.ts src/lib/character-teams.test.ts src/lib/solver.test.ts",
     "test": "pnpm test:unit && pnpm exec playwright test",
-    "update-types": "npx supabase gen types --lang=typescript --project-id oihiyebudfruomyzllql > ./src/lib/types/database.types.ts",
     "sync:schedules": "tsx scripts/workflows/sync-schedules.ts",
     "sync:character-assets": "tsx scripts/workflows/sync-character-assets.ts",
     "sync:equipment": "tsx scripts/workflows/sync-equipment.ts"
