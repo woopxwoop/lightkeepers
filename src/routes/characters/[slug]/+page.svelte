@@ -490,7 +490,7 @@
           <p class="hero-eyebrow" style="color: {elColor};">
             {kit.title || "Character"}
           </p>
-          <h1 class="page-title">{kit.name}</h1>
+          <h1 class="hero-title">{kit.name}</h1>
           <div class="hero-meta">
             {#if elementIcon}
               <img
@@ -1131,10 +1131,7 @@
 
 <style>
   .back-link {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
     text-decoration: none;
-    width: fit-content;
   }
 
   .back-link:hover {
@@ -1200,7 +1197,8 @@
     text-transform: uppercase;
   }
 
-  .page-title {
+  /* Mixed-case hero title — deliberately not the uppercase `.page-title`. */
+  .hero-title {
     font-family: var(--font-display);
     font-size: clamp(1.75rem, 4vw, 2.25rem);
     font-weight: 600;

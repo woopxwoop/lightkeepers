@@ -117,6 +117,15 @@
     });
   });
 
+  let metaParts = $derived(
+    [
+      abyssEnemies?.buffName
+        ? { text: abyssEnemies.buffName, title: "Abyssal Moon blessing" }
+        : null,
+      updatedLabel ? { text: `Updated ${updatedLabel}` } : null,
+    ].filter((part) => part !== null),
+  );
+
   function slotRate(team: AbyssTeam, slot: Slot): number {
     return boardSlotRate(team, slot);
   }
@@ -250,17 +259,14 @@
   <header class="page-head">
     <div class="page-head-text">
       <h1 class="page-title">Spiral Abyss</h1>
-      {#if updatedLabel || abyssEnemies?.buffName}
+      {#if metaParts.length > 0}
         <p class="page-meta">
-          {#if abyssEnemies?.buffName}
-            <span title="Abyssal Moon blessing">{abyssEnemies.buffName}</span>
-          {/if}
-          {#if updatedLabel && abyssEnemies?.buffName}
-            <span class="page-meta-sep" aria-hidden="true">·</span>
-          {/if}
-          {#if updatedLabel}
-            <span>Updated {updatedLabel}</span>
-          {/if}
+          {#each metaParts as part, index (part.text)}
+            {#if index > 0}
+              <span class="page-meta-sep" aria-hidden="true">·</span>
+            {/if}
+            <span title={part.title}>{part.text}</span>
+          {/each}
         </p>
       {/if}
     </div>
@@ -384,32 +390,11 @@
     flex-wrap: wrap;
   }
 
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .page-meta {
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
     flex-wrap: wrap;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .page-meta-sep {
-    opacity: 0.6;
   }
 
   /* ── Solution board ─────────────────────────────────────────────── */

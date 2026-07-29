@@ -525,20 +525,6 @@
     border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-meta {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
   /* ── Panels ─────────────────────────────────────────────────────── */
   .suggest-columns {
     display: grid;

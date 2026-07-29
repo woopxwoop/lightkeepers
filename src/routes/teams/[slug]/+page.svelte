@@ -460,36 +460,6 @@
     gap: var(--space-2);
   }
 
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .back-link {
-    width: fit-content;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .back-link:hover {
-    color: var(--accent-1);
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-meta {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
   .config-link {
     width: fit-content;
     font-size: var(--text-xs);

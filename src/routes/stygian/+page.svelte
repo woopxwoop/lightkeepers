@@ -117,6 +117,13 @@
     });
   });
 
+  let metaParts = $derived(
+    [
+      schedule?.challengeName,
+      updatedLabel ? `Updated ${updatedLabel}` : "",
+    ].filter((part): part is string => Boolean(part)),
+  );
+
   function slotRate(team: StygianTeam, slot: Slot): number {
     return boardSlotRate(team, slot);
   }
@@ -227,17 +234,14 @@
   <header class="page-head">
     <div class="page-head-text">
       <h1 class="page-title">Stygian Onslaught</h1>
-      {#if schedule?.challengeName || updatedLabel}
+      {#if metaParts.length > 0}
         <p class="page-meta">
-          {#if schedule?.challengeName}
-            <span>{schedule.challengeName}</span>
-          {/if}
-          {#if schedule?.challengeName && updatedLabel}
-            <span class="page-meta-sep" aria-hidden="true">·</span>
-          {/if}
-          {#if updatedLabel}
-            <span>Updated {updatedLabel}</span>
-          {/if}
+          {#each metaParts as part, index (part)}
+            {#if index > 0}
+              <span class="page-meta-sep" aria-hidden="true">·</span>
+            {/if}
+            <span>{part}</span>
+          {/each}
         </p>
       {/if}
     </div>
@@ -342,32 +346,11 @@
     flex-wrap: wrap;
   }
 
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .page-meta {
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
     flex-wrap: wrap;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .page-meta-sep {
-    opacity: 0.6;
   }
 
   /* ── Solution board ─────────────────────────────────────────────── */
