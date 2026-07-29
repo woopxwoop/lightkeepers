@@ -1,21 +1,13 @@
 import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
-import { checkApiRateLimit, getClientIp } from "$lib/server/cache";
+import { enforceApiRateLimit } from "$lib/server/rate-limit";
 import {
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,
 } from "$lib/server/request-validation";
 
 type RosterEntry = { name_id: string; isOwned: boolean };
-
-function rateLimited(request: Request, getClientAddress?: () => string) {
-  return checkApiRateLimit(getClientIp(request, getClientAddress)).then(
-    (ok) => {
-      if (!ok) throw error(429, "Too many requests");
-    },
-  );
-}
 
 function parseAndNormalizeRoster(raw: unknown): RosterEntry[] {
   if (!Array.isArray(raw)) {
@@ -60,7 +52,7 @@ export const GET: RequestHandler = async ({
   request,
   getClientAddress,
 }) => {
-  await rateLimited(request, getClientAddress);
+  await enforceApiRateLimit({ request, getClientAddress });
   if (!locals.user) throw error(401, "Unauthorized");
 
   const { data, error: err } = await serverDb
@@ -82,7 +74,7 @@ export const POST: RequestHandler = async ({
   request,
   getClientAddress,
 }) => {
-  await rateLimited(request, getClientAddress);
+  await enforceApiRateLimit({ request, getClientAddress });
   if (!locals.user) throw error(401, "Unauthorized");
 
   let body: unknown;
@@ -123,7 +115,7 @@ export const DELETE: RequestHandler = async ({
   request,
   getClientAddress,
 }) => {
-  await rateLimited(request, getClientAddress);
+  await enforceApiRateLimit({ request, getClientAddress });
   if (!locals.user) throw error(401, "Unauthorized");
 
   const { error: err } = await serverDb

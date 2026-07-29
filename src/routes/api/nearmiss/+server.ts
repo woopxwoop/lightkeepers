@@ -14,12 +14,8 @@
 import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
-import {
-  rpcCache,
-  checkApiRateLimit,
-  getClientIp,
-  buildRpcKey,
-} from "$lib/server/cache";
+import { rpcCache, buildRpcKey } from "$lib/server/cache";
+import { enforceApiRateLimit } from "$lib/server/rate-limit";
 import { isPlaywrightE2e } from "$lib/server/e2e";
 import {
   requireCharacterNameIds,
@@ -35,11 +31,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     return json({ nearMissTeams: [], nearMissPairs: [] });
   }
 
-  // ── Rate limiting ────────────────────────────────────────────────────────
-  const ip = getClientIp(request, getClientAddress);
-  if (!(await checkApiRateLimit(ip))) {
-    throw error(429, "Too many requests — please wait a moment.");
-  }
+  await enforceApiRateLimit({ request, getClientAddress });
 
   // ── Parse body ───────────────────────────────────────────────────────────
   const body = await requireJsonObject(request);
