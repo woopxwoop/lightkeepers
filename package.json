@@ -14,7 +14,7 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test:unit": "tsx --test src/lib/tierlist.test.ts src/lib/server/cache.test.ts src/lib/character-teams.test.ts src/lib/solver.test.ts",
+    "test:unit": "tsx --test src/lib/tierlist.test.ts src/lib/server/cache.test.ts src/lib/server/request-validation.test.ts src/lib/character-teams.test.ts src/lib/solver.test.ts",
     "test": "pnpm test:unit && pnpm exec playwright test",
     "update-types": "supabase gen types typescript --project-id oihiyebudfruomyzllql --schema public --schema graphql_public > src/lib/types/database.types.ts",
     "sync:schedules": "tsx scripts/workflows/sync-schedules.ts",

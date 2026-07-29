@@ -18,7 +18,6 @@ import {
   checkApiRateLimit,
   getClientIp,
   buildRpcKey,
-  assertCharacterNameIds,
 } from "$lib/server/cache";
 import { isPlaywrightE2e } from "$lib/server/e2e";
 import {
@@ -29,15 +28,14 @@ import {
   E2E_STYGIAN_TEAM_TOP,
 } from "$lib/e2e/fixtures";
 import {
+  requireCharacterNameIds,
+  requireFiniteInteger,
+  requireJsonObject,
+} from "$lib/server/request-validation";
+import {
   isSupportedAbyssVersion,
   isSupportedStygianVersion,
 } from "$lib/server/version-validation";
-
-type TeamsBody = {
-  characters: string[];
-  abyssVersion: number;
-  stygianVersion: number;
-};
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (isPlaywrightE2e()) {
@@ -58,36 +56,14 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   }
 
   // ── Parse body ───────────────────────────────────────────────────────────
-  let parsed: unknown;
-  try {
-    parsed = await request.json();
-  } catch {
-    throw error(400, "Invalid JSON body.");
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw error(400, "Invalid JSON body.");
-  }
-  const body = parsed as TeamsBody;
-
-  const { characters: rawCharacters, abyssVersion, stygianVersion } = body;
-
-  let characters: string[];
-  try {
-    characters = assertCharacterNameIds(rawCharacters);
-  } catch (e) {
-    throw error(400, e instanceof Error ? e.message : "Invalid characters.");
-  }
-
-  if (
-    typeof abyssVersion !== "number" ||
-    !Number.isFinite(abyssVersion) ||
-    !Number.isInteger(abyssVersion) ||
-    typeof stygianVersion !== "number" ||
-    !Number.isFinite(stygianVersion) ||
-    !Number.isInteger(stygianVersion)
-  ) {
-    throw error(400, "abyssVersion and stygianVersion must be numbers.");
-  }
+  const body = await requireJsonObject(request);
+  const characters = requireCharacterNameIds(body.characters);
+  const versionError = "abyssVersion and stygianVersion must be numbers.";
+  const abyssVersion = requireFiniteInteger(body.abyssVersion, versionError);
+  const stygianVersion = requireFiniteInteger(
+    body.stygianVersion,
+    versionError,
+  );
 
   let supportedVersions: [boolean, boolean];
   try {

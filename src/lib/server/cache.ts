@@ -301,9 +301,6 @@ export async function checkApiRateLimit(
   }
 }
 
-/** Soft cap — Genshin roster is ~100; leave headroom without allowing megabyte keys. */
-export const MAX_ROSTER_CHARACTERS = 256;
-export const MAX_NAME_ID_LENGTH = 64;
 /** Above this joined-key length, hash the roster segment of buildRpcKey. */
 const RPC_KEY_ROSTER_HASH_AFTER = 180;
 
@@ -341,32 +338,6 @@ function safeClientAddress(getClientAddress?: () => string): string | null {
   } catch {
     return null;
   }
-}
-
-/**
- * Validates a roster / owned-characters name_id list for RPC routes.
- * Returns the array on success; throws Error with a 400-ready message.
- */
-export function assertCharacterNameIds(characters: unknown): string[] {
-  if (!Array.isArray(characters)) {
-    throw new Error("characters must be an array of strings.");
-  }
-  if (characters.length > MAX_ROSTER_CHARACTERS) {
-    throw new Error(
-      `characters must have at most ${MAX_ROSTER_CHARACTERS} entries.`,
-    );
-  }
-  for (const item of characters) {
-    if (typeof item !== "string" || item.length === 0) {
-      throw new Error("characters must be an array of non-empty strings.");
-    }
-    if (item.length > MAX_NAME_ID_LENGTH) {
-      throw new Error(
-        `character name_id must be at most ${MAX_NAME_ID_LENGTH} characters.`,
-      );
-    }
-  }
-  return characters as string[];
 }
 
 /**

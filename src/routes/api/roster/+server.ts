@@ -1,12 +1,11 @@
 import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
+import { checkApiRateLimit, getClientIp } from "$lib/server/cache";
 import {
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,
-  checkApiRateLimit,
-  getClientIp,
-} from "$lib/server/cache";
+} from "$lib/server/request-validation";
 
 type RosterEntry = { name_id: string; isOwned: boolean };
 

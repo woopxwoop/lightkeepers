@@ -19,16 +19,15 @@ import {
   checkApiRateLimit,
   getClientIp,
   buildRpcKey,
-  assertCharacterNameIds,
 } from "$lib/server/cache";
 import { isPlaywrightE2e } from "$lib/server/e2e";
+import {
+  requireCharacterNameIds,
+  requireFiniteInteger,
+  requireJsonObject,
+  requireNumberInRange,
+} from "$lib/server/request-validation";
 import { isSupportedStygianVersion } from "$lib/server/version-validation";
-
-type NearMissBody = {
-  characters: string[];
-  stygianVersion: number;
-  minPmi?: number;
-};
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   // Default empty; Playwright browser routes override with scenario fixtures.
@@ -43,41 +42,18 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   }
 
   // ── Parse body ───────────────────────────────────────────────────────────
-  let parsed: unknown;
-  try {
-    parsed = await request.json();
-  } catch {
-    throw error(400, "Invalid JSON body.");
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw error(400, "Invalid JSON body.");
-  }
-  const body = parsed as NearMissBody;
-
-  const { characters: rawCharacters, stygianVersion, minPmi = 0.3 } = body;
-
-  let characters: string[];
-  try {
-    characters = assertCharacterNameIds(rawCharacters);
-  } catch (e) {
-    throw error(400, e instanceof Error ? e.message : "Invalid characters.");
-  }
-
-  if (
-    typeof stygianVersion !== "number" ||
-    !Number.isFinite(stygianVersion) ||
-    !Number.isInteger(stygianVersion)
-  ) {
-    throw error(400, "stygianVersion must be a number.");
-  }
-  if (
-    typeof minPmi !== "number" ||
-    !Number.isFinite(minPmi) ||
-    minPmi < 0 ||
-    minPmi > 1
-  ) {
-    throw error(400, "minPmi must be a number between 0 and 1.");
-  }
+  const body = await requireJsonObject(request);
+  const characters = requireCharacterNameIds(body.characters);
+  const stygianVersion = requireFiniteInteger(
+    body.stygianVersion,
+    "stygianVersion must be a number.",
+  );
+  const minPmi = requireNumberInRange(
+    body.minPmi ?? 0.3,
+    0,
+    1,
+    "minPmi must be a number between 0 and 1.",
+  );
 
   let supportedVersion: boolean;
   try {
