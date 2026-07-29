@@ -28,10 +28,14 @@ export function useEquipmentData(): EquipmentData {
   let version = $state(get(equipmentVersion));
 
   onMount(() => {
-    void ensureEquipmentData();
-    return equipmentVersion.subscribe((next) => {
+    const unsubscribe = equipmentVersion.subscribe((next) => {
       version = next;
     });
+    void ensureEquipmentData().catch((error) => {
+      console.error("[equipment-data] load failed:", error);
+      version += 1;
+    });
+    return unsubscribe;
   });
 
   return {

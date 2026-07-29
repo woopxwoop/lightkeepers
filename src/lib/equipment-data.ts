@@ -102,7 +102,8 @@ void ensureEquipmentData().catch(() => {
  */
 export function weaponIconSrc(weaponKey: string): string | null {
   const weapon = weaponByKey.get(weaponKey);
-  return weapon ? weaponIconUrl(weapon.awakenIcon) : null;
+  if (!weapon?.awakenIcon) return null;
+  return weaponIconUrl(weapon.awakenIcon);
 }
 
 /**
