@@ -1218,12 +1218,6 @@
   }
 
   .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
     margin-bottom: var(--space-3);
   }
 

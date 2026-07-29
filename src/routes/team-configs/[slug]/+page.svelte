@@ -402,15 +402,6 @@
     gap: var(--space-2);
   }
 
-  .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .builds-grid {
     display: grid;
     grid-template-columns: 1fr;

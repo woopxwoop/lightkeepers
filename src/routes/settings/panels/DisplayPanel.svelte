@@ -285,15 +285,6 @@
     max-width: 42rem;
   }
 
-  .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .lede {
     margin: 0;
     font-size: var(--text-sm);

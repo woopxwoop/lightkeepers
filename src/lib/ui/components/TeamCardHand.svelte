@@ -229,23 +229,6 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
   }
 
-  .meta-name {
-    font-size: 0.7rem;
-    font-weight: 500;
-    line-height: 1.15;
-    color: var(--foreground-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .meta-build {
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    color: var(--accent-2);
-  }
-
   @media (max-width: 640px) {
     .hand {
       --card-width: clamp(5.1rem, 26vw, 7.8rem);

@@ -533,42 +533,10 @@
     color: var(--foreground-mid);
   }
 
-  .meta-name {
-    font-size: 0.7rem;
-    font-weight: 500;
-    line-height: 1.15;
-    color: var(--foreground-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .meta-build {
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    color: var(--accent-2);
-  }
-
   .section {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-  }
-
-  .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .section-lede {
-    margin-top: -0.25rem;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
   }
 
   /* Board hairlines are pure white — warm tones over blue mid mix to mud.

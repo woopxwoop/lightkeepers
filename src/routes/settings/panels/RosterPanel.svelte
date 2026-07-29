@@ -313,15 +313,6 @@
     max-width: 42rem;
   }
 
-  .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .lede {
     margin: 0;
     font-size: var(--text-sm);
@@ -364,25 +355,6 @@
     .character-grid {
       grid-template-columns: repeat(6, minmax(0, 1fr));
     }
-  }
-
-  .meta-name {
-    font-size: 0.7rem;
-    font-weight: 500;
-    line-height: 1.15;
-    color: var(--foreground-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .meta-sub {
-    font-size: 0.6rem;
-    line-height: 1.15;
-    color: var(--foreground-mid);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .new-badge {
