@@ -313,14 +313,18 @@ function clearStaticBoardsRetry(): void {
 
 function scheduleStaticBoardsRetry(): void {
   if (staticBoardsRetryTimer != null) return;
-  const delay = Math.min(
+  const base = Math.min(
     STATIC_BOARDS_RETRY_MAX_MS,
     STATIC_BOARDS_RETRY_BASE_MS * 2 ** staticBoardsRetryAttempt,
   );
+  // Full jitter in [0, base] so clients don't retry in lockstep after a rollover.
+  const delay = Math.floor(Math.random() * (base + 1));
   staticBoardsRetryAttempt += 1;
   staticBoardsRetryAfterMs = Date.now() + delay;
   staticBoardsRetryTimer = setTimeout(() => {
     staticBoardsRetryTimer = null;
+    // Clear before invoke so a slightly-early timer isn't blocked by the gate.
+    staticBoardsRetryAfterMs = 0;
     void ensureStaticBoards().catch(() => {});
   }, delay);
 }

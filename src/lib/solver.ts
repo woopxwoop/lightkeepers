@@ -121,7 +121,7 @@ function greedyPass<
   allSlots: TSlot[],
   getPreferredSlot: (team: TTeam) => TSlot,
   forcedFirst?: TTeam,
-): Solution<{ team: TTeam; slot: TSlot }> {
+): Solution<{ team: TTeam; slot: TSlot }> & { usedRelaxedFill: boolean } {
   const usedCharacters = new Set<string>();
   const filledSlots = new Set<TSlot>();
   const usedTeams = new Set<TTeam>();
@@ -181,8 +181,10 @@ function greedyPass<
   }
 
   // Last resort: allow sub-threshold slot rates so remaining fields can fill.
+  let usedRelaxedFill = false;
   while (filledSlots.size < allSlots.length) {
     if (!pickBest(false)) break;
+    usedRelaxedFill = true;
   }
 
   return {
@@ -191,6 +193,7 @@ function greedyPass<
     unfilled: allSlots.filter((s) => !filledSlots.has(s)),
     isFallback: false,
     neededCharacters: [],
+    usedRelaxedFill,
   };
 }
 
@@ -253,43 +256,66 @@ export function slotAffinityRate(
   if (slot === "middle") return m / total;
   return 1;
 }
-// After the greedy pass, check if any two teams would both prefer each
-// other's slots and swap them. Handles the case where forcedFirst grabs
-// a slot that a later team would prefer, even though both could swap happily.
+/** Heap's algorithm — all orderings of `items` (2! / 3! for board sizes). */
+function permutations<T>(items: T[]): T[][] {
+  if (items.length <= 1) return [items.slice()];
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i++) {
+    const head = items[i]!;
+    const rest = [...items.slice(0, i), ...items.slice(i + 1)];
+    for (const tail of permutations(rest)) out.push([head, ...tail]);
+  }
+  return out;
+}
 
+/**
+ * Reassign the same teams across their filled slots, picking the seating with
+ * the best scoreAssignments. Evaluates all 2-/3-slot permutations (covers
+ * pairwise swaps and three-cycles). When `enforceMinSlotRate` is false
+ * (after a relaxed greedy fill), sub-threshold seats stay eligible so
+ * fallback boards can still rotate into better affinity.
+ */
 function optimizeSlots<
   TTeam extends Record<string, unknown>,
   TSlot extends string,
 >(
   assignments: { team: TTeam; slot: TSlot }[],
-  getPreferredSlot: (team: TTeam) => TSlot,
+  enforceMinSlotRate = true,
 ): { team: TTeam; slot: TSlot }[] {
-  const result = assignments.map((a) => ({ ...a }));
-  let swapped = true;
-  // Keep iterating until no more beneficial swaps exist
-  while (swapped) {
-    swapped = false;
-    for (let i = 0; i < result.length; i++) {
-      for (let j = i + 1; j < result.length; j++) {
-        const a = result[i];
-        const b = result[j];
-        const aPref = getPreferredSlot(a.team);
-        const bPref = getPreferredSlot(b.team);
-        // Swap only if both prefer each other's slot AND both are viable there
-        if (
-          aPref === b.slot &&
-          bPref === a.slot &&
-          slotRate(a.team, b.slot as string) >= MIN_SLOT_RATE &&
-          slotRate(b.team, a.slot as string) >= MIN_SLOT_RATE
-        ) {
-          result[i] = { ...a, slot: b.slot };
-          result[j] = { ...b, slot: a.slot };
-          swapped = true;
-        }
-      }
+  if (assignments.length <= 1) {
+    return assignments.map((a) => ({ ...a }));
+  }
+
+  const teams = assignments.map((a) => a.team);
+  const slots = assignments.map((a) => a.slot);
+  let best = assignments.map((a) => ({ ...a }));
+  let bestScore = scoreAssignments(best);
+
+  for (const perm of permutations(slots)) {
+    const candidate = teams.map((team, i) => ({ team, slot: perm[i]! }));
+    if (
+      enforceMinSlotRate &&
+      candidate.some(
+        (a) => slotRate(a.team, a.slot as string) < MIN_SLOT_RATE,
+      )
+    ) {
+      continue;
+    }
+    const score = scoreAssignments(candidate);
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidate;
     }
   }
-  return result;
+  return best;
+}
+
+/** @internal Exported for unit tests — Stygian seat permutation search. */
+export function optimizeStygianSlotAssignments(
+  assignments: { team: StygianTeam; slot: StygianSlot }[],
+  enforceMinSlotRate = true,
+): { team: StygianTeam; slot: StygianSlot }[] {
+  return optimizeSlots(assignments, enforceMinSlotRate);
 }
 
 /** How many teams to try as forced first pick when exploring solutions */
@@ -322,13 +348,16 @@ export function solveAbyss(
   const candidates = validTeams.slice(0, CANDIDATE_DEPTH);
 
   const solutions = candidates.map((forcedFirst) => {
-    const sol = greedyPass(
+    const { usedRelaxedFill, ...sol } = greedyPass(
       validTeams,
       allSlots,
       preferredAbyssSlot,
       forcedFirst,
     );
-    const optimized = optimizeSlots(sol.assignments, preferredAbyssSlot);
+    const optimized = optimizeSlots(
+      sol.assignments,
+      !usedRelaxedFill,
+    );
     const assignments = sortAssignments(optimized, allSlots).map((a) => ({
       ...a,
       missingCharacters: [] as string[],
@@ -356,13 +385,16 @@ export function solveStygian(
   const candidates = validTeams.slice(0, CANDIDATE_DEPTH);
 
   const solutions = candidates.map((forcedFirst) => {
-    const sol = greedyPass(
+    const { usedRelaxedFill, ...sol } = greedyPass(
       validTeams,
       allSlots,
       preferredStygianSlot,
       forcedFirst,
     );
-    const optimized = optimizeSlots(sol.assignments, preferredStygianSlot);
+    const optimized = optimizeSlots(
+      sol.assignments,
+      !usedRelaxedFill,
+    );
     const assignments = sortAssignments(optimized, allSlots).map((a) => ({
       ...a,
       missingCharacters: [] as string[],

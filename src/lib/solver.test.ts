@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AbyssTeam, StygianTeam } from "./definitions.ts";
 import {
+  optimizeStygianSlotAssignments,
   scoreAssignments,
   slotAffinityRate,
   solveAbyss,
@@ -233,41 +234,67 @@ describe("solveStygian", () => {
   });
 
   it("recomputes score after pairwise slot swaps (three-way affinity)", () => {
-    // Higher usage may land on the wrong field; optimizeSlots + preferredStygianSlot
-    // should seat each team on its preferred of top / middle / bottom.
+    // Prefer each of top / middle / bottom. A cyclic seating (each team one
+    // slot past its preferred) cannot be fixed by mutual pairwise swap —
+    // optimizeSlots must rotate. Rates on the wrong seats stay ≥ MIN_SLOT_RATE
+    // so a floor-enforcing optimizer could sit there, but score favors home seats.
     const bottomPref = stygianTeam({
       team_key: "wants-bottom",
       members: ["a", "b", "c", "d"],
       usage_rate: 100,
-      field_1_rate: 5,
+      field_1_rate: 15,
       field_2_rate: 90,
-      field_3_rate: 5,
+      field_3_rate: 15,
     });
     const topPref = stygianTeam({
       team_key: "wants-top",
       members: ["e", "f", "g", "h"],
-      usage_rate: 50,
+      usage_rate: 100,
       field_1_rate: 90,
-      field_2_rate: 5,
-      field_3_rate: 5,
+      field_2_rate: 15,
+      field_3_rate: 15,
     });
     const middlePref = stygianTeam({
       team_key: "wants-middle",
       members: ["i", "j", "k", "l"],
-      usage_rate: 40,
-      field_1_rate: 5,
-      field_2_rate: 5,
+      usage_rate: 100,
+      field_1_rate: 15,
+      field_2_rate: 15,
       field_3_rate: 90,
     });
 
-    const [sol] = solveStygian([bottomPref, topPref, middlePref], 1);
-    assert.ok(sol);
+    // top→middle→bottom→top: no pair mutually prefers each other's seat.
+    const cyclic = [
+      { team: topPref, slot: "middle" as const },
+      { team: middlePref, slot: "bottom" as const },
+      { team: bottomPref, slot: "top" as const },
+    ];
+    assert.notEqual(
+      scoreAssignments(cyclic),
+      scoreAssignments([
+        { team: topPref, slot: "top" },
+        { team: middlePref, slot: "middle" },
+        { team: bottomPref, slot: "bottom" },
+      ]),
+      "fixture must start away from the preferred seating score",
+    );
+
+    const rotated = optimizeStygianSlotAssignments(cyclic, true);
     const bySlot = Object.fromEntries(
-      sol.assignments.map((a) => [a.slot, a.team.team_key]),
+      rotated.map((a) => [a.slot, a.team.team_key]),
     );
     assert.equal(bySlot.top, "wants-top");
     assert.equal(bySlot.middle, "wants-middle");
     assert.equal(bySlot.bottom, "wants-bottom");
+
+    const [sol] = solveStygian([bottomPref, topPref, middlePref], 1);
+    assert.ok(sol);
+    const solvedBySlot = Object.fromEntries(
+      sol.assignments.map((a) => [a.slot, a.team.team_key]),
+    );
+    assert.equal(solvedBySlot.top, "wants-top");
+    assert.equal(solvedBySlot.middle, "wants-middle");
+    assert.equal(solvedBySlot.bottom, "wants-bottom");
     assert.equal(
       sol.score,
       scoreAssignments(sol.assignments),
