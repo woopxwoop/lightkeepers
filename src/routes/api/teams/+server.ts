@@ -13,7 +13,7 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
-import { rpcCache, buildRpcKey } from "$lib/server/cache";
+import { cachedRosterRpc } from "$lib/server/cached-rpc";
 import { enforceApiRateLimit } from "$lib/server/rate-limit";
 import { isPlaywrightE2e } from "$lib/server/e2e";
 import {
@@ -57,32 +57,27 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   await requireSupportedAbyssAndStygianVersions(abyssVersion, stygianVersion);
 
   // ── Cache lookup ─────────────────────────────────────────────────────────
-  const abyssKey = buildRpcKey("owned_abyss", abyssVersion, characters);
-  const stygianKey = buildRpcKey("owned_stygian", stygianVersion, characters);
-
   const [abyssTeams, stygianTeams] = await Promise.all([
-    rpcCache.getOrSet(abyssKey, async () => {
-      const { data, error: err } = await serverDb.rpc(
-        "get_teams_with_characters_subset",
-        {
+    cachedRosterRpc({
+      cacheName: "owned_abyss",
+      versionNumber: abyssVersion,
+      characters,
+      run: () =>
+        serverDb.rpc("get_teams_with_characters_subset", {
           p_name_ids: characters,
           p_version_number: abyssVersion,
-        },
-      );
-      if (err) throw new Error(err.message);
-      return data ?? [];
+        }),
     }),
 
-    rpcCache.getOrSet(stygianKey, async () => {
-      const { data, error: err } = await serverDb.rpc(
-        "get_teams_with_characters_subset_stygian",
-        {
+    cachedRosterRpc({
+      cacheName: "owned_stygian",
+      versionNumber: stygianVersion,
+      characters,
+      run: () =>
+        serverDb.rpc("get_teams_with_characters_subset_stygian", {
           p_name_ids: characters,
           p_version_number: stygianVersion,
-        },
-      );
-      if (err) throw new Error(err.message);
-      return data ?? [];
+        }),
     }),
   ]);
 
