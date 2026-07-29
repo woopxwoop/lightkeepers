@@ -21,6 +21,7 @@
     invalidateTierList,
     animationsEnabled,
   } from "$lib/stores";
+  import { ownedNameIds } from "$lib/utils";
   import {
     computePullSuggestions,
     computePairSuggestions,
@@ -57,10 +58,8 @@
   const STANDOUT_DEAL_MS = 480;
   const STANDOUT_STAGGER_MS = 85;
 
-  let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
-  let ownedIds = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
-  );
+  let ownedIds = $derived(ownedNameIds($charactersOwned));
+  let ownedCount = $derived(ownedIds.size);
 
   let nearMissReady = $derived($nearMissStygianLoaded && $nearMissPairLoaded);
 

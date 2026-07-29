@@ -204,6 +204,33 @@ export function buildGoodKeyMap<T extends { name: string | null }>(
   return map;
 }
 
+/** GOOD keys for owned roster entries. */
+export function ownedGoodKeys(
+  characters: { isOwned: boolean; name: string | null }[],
+): Set<string> {
+  return new Set(
+    characters.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
+  );
+}
+
+/** name_ids for owned roster entries. */
+export function ownedNameIds(
+  characters: { isOwned: boolean; name_id: string }[],
+): Set<string> {
+  return new Set(
+    characters.filter((c) => c.isOwned).map((c) => c.name_id),
+  );
+}
+
+/** GOOD key → display name map for humanize helpers. */
+export function namesFromGoodKeyMap<T extends { name?: string | null }>(
+  goodKeyMap: Map<string, T>,
+): Map<string, string> {
+  return new Map(
+    [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
+  );
+}
+
 /** Join character GOOD keys as display names (roster order). */
 export function humanizeTeamName(
   characterKeys: string[],

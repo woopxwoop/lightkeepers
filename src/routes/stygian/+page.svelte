@@ -27,6 +27,7 @@
     teamsFingerprint,
     createMemo,
   } from "$lib/board-solutions";
+  import { ownedNameIds } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
@@ -84,7 +85,7 @@
       solveStygianWithFallback(
         owned,
         all,
-        new Set(chars.filter((c) => c.isOwned).map((c) => c.name_id)),
+        ownedNameIds(chars),
         SOLUTIONS_COUNT,
       ),
     );

@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import { buildGoodKeyMap, toGoodKey } from "$lib/utils";
+  import { buildGoodKeyMap, ownedGoodKeys } from "$lib/utils";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
@@ -83,11 +83,7 @@
   let allCharacterKeys = $derived(
     data ? allTeamCharacterKeys(data.teams) : ([] as string[]),
   );
-  let ownedKeys = $derived(
-    new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
-    ),
-  );
+  let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
   let availableCosts = $derived(
     data ? availableInvestmentCosts(data) : ([] as number[]),
   );

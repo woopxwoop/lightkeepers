@@ -2,7 +2,12 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import { buildGoodKeyMap, toGoodKey, humanizeTeamName } from "$lib/utils";
+  import {
+    buildGoodKeyMap,
+    humanizeTeamName,
+    namesFromGoodKeyMap,
+    ownedGoodKeys,
+  } from "$lib/utils";
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
@@ -18,9 +23,14 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  import {
+    baselineSim as findBaselineSim,
+    baselineVariants,
+    findInvestmentTeam,
+    groupVerticalSimsByCost,
+  } from "$lib/investment-teams";
   import type {
     InvestmentFile,
-    InvestmentTeam,
     InvestmentSim,
     CharacterBuild,
   } from "$lib/types/investment";
@@ -28,9 +38,15 @@
   let { data: layoutData } = $props();
 
   let investment = $state<InvestmentFile | null>(getInvestmentCached());
-  let team = $state<InvestmentTeam | null>(null);
   let loading = $derived(investment === null);
   let error = $state<string | null>(null);
+  let team = $derived(findInvestmentTeam(investment, layoutData.slug));
+  let pageError = $derived(
+    error ??
+      (investment && !team
+        ? `Team "${layoutData.slug}" not found`
+        : null),
+  );
 
   onMount(() => {
     void ensureEquipmentData();
@@ -54,63 +70,19 @@
     }
   }
 
-  // Reactively select team when data or slug changes (handles client-side nav)
-  $effect(() => {
-    if (investment) {
-      team =
-        investment.teams.find((t) => t.team_key === layoutData.slug) ?? null;
-      if (!team) error = `Team "${layoutData.slug}" not found`;
-    }
-  });
-
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
-
-  let characterNames = $derived(
-    new Map([...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key])),
-  );
-
+  let characterNames = $derived(namesFromGoodKeyMap(goodKeyMap));
   let teamTitle = $derived(
     team ? humanizeTeamName(team.characters, characterNames) : "",
   );
-
-  let ownedKeys = $derived(
-    new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
-    ),
+  let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
+  let baselineSim = $derived(team ? findBaselineSim(team) : null);
+  let baselineVariantsList = $derived(
+    team ? baselineVariants(team) : ([] as InvestmentSim[]),
   );
-
-  let baselineSim = $derived.by((): InvestmentSim | null => {
-    if (!team) return null;
-    return team.results.find((r) => r.kind === "baseline") ?? null;
-  });
-
-  /** Floor-cost alternatives (baseline + f2p), highest DPS first. */
-  let baselineVariants = $derived.by(() => {
-    if (!team) return [] as InvestmentTeam["results"];
-    return team.results
-      .filter((r) => r.kind === "baseline" || r.kind === "f2p")
-      .slice()
-      .sort((a, b) => b.dps - a.dps);
-  });
-
-  /** Vertical upgrades grouped by cost; sims within a cost are DPS-desc. */
-  let costGroups = $derived.by(() => {
-    if (!team) return [] as { cost: number; sims: InvestmentTeam["results"] }[];
-    const groups = new Map<number, InvestmentTeam["results"]>();
-    for (const sim of team.results) {
-      if (sim.kind !== "vertical") continue;
-      const entry = groups.get(sim.cost);
-      if (entry) entry.push(sim);
-      else groups.set(sim.cost, [sim]);
-    }
-    for (const sims of groups.values()) {
-      sims.sort((a, b) => b.dps - a.dps);
-    }
-    return [...groups.entries()]
-      .sort(([a], [b]) => a - b)
-      .map(([cost, sims]) => ({ cost, sims }));
-  });
-
+  let costGroups = $derived(
+    team ? groupVerticalSimsByCost(team) : [],
+  );
   let openCosts = $state<Set<number>>(new Set());
 
   function toggleCost(cost: number) {
@@ -123,7 +95,7 @@
   let simDiffLabel = $derived.by(() => {
     $equipmentVersion;
     const names = characterNames;
-    return (sim: InvestmentTeam["results"][number]): string => {
+    return (sim: InvestmentSim): string => {
       if (sim.kind === "baseline") return "Baseline";
       return humanizeInvestmentLabel(
         sim.label?.trim() || "variant",
@@ -206,8 +178,8 @@
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   {#if loading}
     <LoadingState variant="pulse" message="Loading team…" />
-  {:else if error && !team}
-    <EmptyState message={error}>
+  {:else if pageError && !team}
+    <EmptyState message={pageError}>
       {#snippet action()}
         <div class="empty-actions">
           <Button variant="secondary" onclick={fetchData}>Try again</Button>
@@ -273,7 +245,7 @@
       {/each}
     </div>
 
-    {#if baselineVariants.length > 0}
+    {#if baselineVariantsList.length > 0}
       <section class="section">
         <h2 class="section-title">Baseline variants</h2>
         <p class="section-lede">
@@ -286,8 +258,8 @@
             <span>DPS</span>
             <span>vs base</span>
           </div>
-          {#each baselineVariants as sim, vi (sim.state_key)}
-            {@const peakDps = baselineVariants[0].dps}
+          {#each baselineVariantsList as sim, vi (sim.state_key)}
+            {@const peakDps = baselineVariantsList[0].dps}
             <a
               href="/team-configs/{encodeURIComponent(sim.state_key)}"
               class="board-row"

@@ -14,7 +14,7 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test:unit": "tsx --test src/lib/tierlist.test.ts src/lib/server/cache.test.ts src/lib/server/request-validation.test.ts src/lib/character-teams.test.ts src/lib/investment-teams.test.ts src/lib/solver.test.ts src/lib/roster-snapshot.test.ts",
+    "test:unit": "tsx --test src/lib/tierlist.test.ts src/lib/server/cache.test.ts src/lib/server/request-validation.test.ts src/lib/character-teams.test.ts src/lib/character-builds.test.ts src/lib/investment-teams.test.ts src/lib/solver.test.ts src/lib/roster-snapshot.test.ts",
     "test": "pnpm test:unit && pnpm exec playwright test",
     "sync:schedules": "tsx scripts/workflows/sync-schedules.ts",
     "sync:character-assets": "tsx scripts/workflows/sync-character-assets.ts",

@@ -14,7 +14,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { CharacterOwned } from "$lib/definitions";
-  import { weaponTypeLabel } from "$lib/utils";
+  import { weaponTypeLabel, ownedNameIds } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
@@ -149,9 +149,7 @@
     }
   });
 
-  let savedOwnedSet = $derived(
-    new Set($charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id)),
-  );
+  let savedOwnedSet = $derived(ownedNameIds($charactersOwned));
 
   let ownedCount = $derived(
     tempCharactersOwned.filter((c) => c.isOwned).length,

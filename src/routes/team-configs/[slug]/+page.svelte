@@ -7,6 +7,7 @@
   import {
     buildGoodKeyMap,
     humanizeTeamName,
+    namesFromGoodKeyMap,
     translateStatKey,
     statIconUrl,
   } from "$lib/utils";
@@ -39,11 +40,7 @@
   let kitsByKey = $derived(data.kitsByKey);
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
-  let characterNames = $derived(
-    new Map(
-      [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
-    ),
-  );
+  let characterNames = $derived(namesFromGoodKeyMap(goodKeyMap));
   let teamTitle = $derived(
     humanizeTeamName(team.characters, characterNames),
   );

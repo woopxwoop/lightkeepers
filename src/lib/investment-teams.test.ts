@@ -9,8 +9,11 @@ import {
   allTeamCharacterKeys,
   availableInvestmentCosts,
   baselineSim,
+  baselineVariants,
   displayDps,
   displaySim,
+  findInvestmentTeam,
+  groupVerticalSimsByCost,
   nearestCostDps,
   ownsInvestmentTeam,
   simAtExactCost,
@@ -18,13 +21,17 @@ import {
   teamsMatchingTags,
   teamsWithExactCost,
 } from "./investment-teams.ts";
-import type { InvestmentSim, InvestmentTeam } from "./types/investment.ts";
+import type {
+  InvestmentFile,
+  InvestmentSim,
+  InvestmentTeam,
+} from "./types/investment.ts";
 
 function sim(
   partial: Partial<InvestmentSim> & Pick<InvestmentSim, "cost" | "dps">,
 ): InvestmentSim {
   return {
-    state_key: `c${partial.cost}-d${partial.dps}`,
+    state_key: `c${partial.cost}-d${partial.dps}-${partial.kind ?? "baseline"}`,
     label: partial.label ?? `cost ${partial.cost}`,
     kind: partial.kind ?? "baseline",
     cost: partial.cost,
@@ -57,6 +64,44 @@ describe("baselineSim / simAtExactCost", () => {
     assert.equal(baselineSim(t)?.dps, 200);
     assert.equal(simAtExactCost(t, 4)?.dps, 200);
     assert.equal(simAtExactCost(t, 3), null);
+  });
+});
+
+describe("baselineVariants / groupVerticalSimsByCost", () => {
+  it("lists floor variants by DPS and groups verticals by cost", () => {
+    const t = team(
+      ["A"],
+      [
+        sim({ cost: 2, dps: 100, kind: "f2p" }),
+        sim({ cost: 2, dps: 150, kind: "baseline" }),
+        sim({ cost: 4, dps: 200, kind: "vertical" }),
+        sim({ cost: 4, dps: 250, kind: "vertical" }),
+        sim({ cost: 6, dps: 300, kind: "vertical" }),
+      ],
+    );
+    assert.deepEqual(
+      baselineVariants(t).map((r) => r.dps),
+      [150, 100],
+    );
+    const groups = groupVerticalSimsByCost(t);
+    assert.deepEqual(
+      groups.map((g) => [g.cost, g.sims.map((s) => s.dps)]),
+      [
+        [4, [250, 200]],
+        [6, [300]],
+      ],
+    );
+  });
+
+  it("finds a team by key in an investment file", () => {
+    const a = team(["A"], [sim({ cost: 4, dps: 1 })]);
+    const file: InvestmentFile = {
+      teams: [a],
+      available_costs: [4],
+    };
+    assert.equal(findInvestmentTeam(file, a.team_key), a);
+    assert.equal(findInvestmentTeam(file, "missing"), null);
+    assert.equal(findInvestmentTeam(null, a.team_key), null);
   });
 });
 

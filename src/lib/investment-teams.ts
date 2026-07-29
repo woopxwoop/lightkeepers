@@ -11,9 +11,49 @@ import type { InvestmentFile, InvestmentSim, InvestmentTeam } from "$lib/types/i
 
 export type TeamDpsSort = "dps-desc" | "dps-asc";
 
+/** Look up a team by key, or null when missing. */
+export function findInvestmentTeam(
+  file: InvestmentFile | null | undefined,
+  teamKey: string,
+): InvestmentTeam | null {
+  return file?.teams.find((t) => t.team_key === teamKey) ?? null;
+}
+
 /** Canonical baseline sim (not peak floor / f2p). */
 export function baselineSim(team: InvestmentTeam): InvestmentSim | null {
   return team.results.find((r) => r.kind === "baseline") ?? null;
+}
+
+/** Floor-cost alternatives (baseline + f2p), highest DPS first. */
+export function baselineVariants(team: InvestmentTeam): InvestmentSim[] {
+  return team.results
+    .filter((r) => r.kind === "baseline" || r.kind === "f2p")
+    .slice()
+    .sort((a, b) => b.dps - a.dps);
+}
+
+export type VerticalCostGroup = {
+  cost: number;
+  sims: InvestmentSim[];
+};
+
+/** Vertical upgrades grouped by cost; sims within a cost are DPS-desc. */
+export function groupVerticalSimsByCost(
+  team: InvestmentTeam,
+): VerticalCostGroup[] {
+  const groups = new Map<number, InvestmentSim[]>();
+  for (const sim of team.results) {
+    if (sim.kind !== "vertical") continue;
+    const entry = groups.get(sim.cost);
+    if (entry) entry.push(sim);
+    else groups.set(sim.cost, [sim]);
+  }
+  for (const sims of groups.values()) {
+    sims.sort((a, b) => b.dps - a.dps);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([cost, sims]) => ({ cost, sims }));
 }
 
 /** First sim at exactly `cost`, or null. */

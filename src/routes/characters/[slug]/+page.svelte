@@ -45,6 +45,8 @@
     elementIconUrl,
     getNamecardUrl,
     getUiAssetUrl,
+    ownedGoodKeys,
+    ownedNameIds,
     statIconUrl,
     toGoodKey,
     translateStatKey,
@@ -52,12 +54,17 @@
     weaponTypeLabel,
   } from "$lib/utils";
   import { artifactSetByKey, weaponByKey, equipmentVersion, ensureEquipmentData } from "$lib/equipment-data";
-  import { isArtifactSubstatKey } from "$lib/build-stats";
+  import {
+    MAIN_STAT_SLOTS,
+    levelImportanceFromBuilds,
+    rankSigWeaponsByGain,
+    rankWeaponsByRarityAndTeams,
+    recommendedSubstatsFromBuilds,
+    talentImportanceRows as buildTalentImportanceRows,
+  } from "$lib/character-builds";
   import {
     CONSTELLATION_UPGRADE,
-    LEVEL_UPGRADE,
     SIGNATURE_UPGRADE,
-    TALENT_UPGRADE,
     classifyUpgradeImpact,
   } from "$lib/upgrade-priority";
   import {
@@ -70,7 +77,6 @@
   import type {
     CharacterIndex,
     InvestmentFile,
-    TalentSlot,
   } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
 
@@ -147,17 +153,8 @@
   let goodKey = $derived(toGoodKey(kit.name));
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
-  let ownedKeys = $derived(
-    new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
-    ),
-  );
-
-  let ownedNameIds = $derived(
-    new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => c.name_id),
-    ),
-  );
+  let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
+  let ownedNameIdsSet = $derived(ownedNameIds($charactersOwned));
 
   let simulatedTeams = $derived(
     investment
@@ -198,26 +195,13 @@
   }
 
   function dimmedKeysFromMembers(members: string[]): Set<string> {
-    return new Set(members.filter((id) => !ownedNameIds.has(id)));
+    return new Set(members.filter((id) => !ownedNameIdsSet.has(id)));
   }
 
   const SKILL_LABELS: Record<string, string> = {
     normal: "Normal Attack",
     skill: "Elemental Skill",
     burst: "Elemental Burst",
-  };
-
-  const TALENT_SLOT_LABELS: Record<TalentSlot, string> = {
-    auto: "Normal",
-    skill: "Skill",
-    burst: "Burst",
-  };
-
-  /** Map investment talent slots → kit skill types for icons. */
-  const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
-    auto: "normal",
-    skill: "skill",
-    burst: "burst",
   };
 
   let character = $derived(
@@ -318,124 +302,39 @@
     return kitLinkIds.has(ref) ? `#kit-${ref}` : null;
   }
 
-  const MAIN_STAT_SLOTS = [
-    { key: "sands" as const, label: "Sands" },
-    { key: "goblet" as const, label: "Goblet" },
-    { key: "circlet" as const, label: "Circlet" },
-  ];
-
   /** Weapons: higher rarity first, then team usage (stable within ties). */
   let rankedWeapons = $derived.by(() => {
     $equipmentVersion;
-    if (!builds?.weapons.length) return [];
-    return [...builds.weapons].sort((a, b) => {
-      const ra = weaponByKey.get(a.key)?.stars ?? 0;
-      const rb = weaponByKey.get(b.key)?.stars ?? 0;
-      if (ra !== rb) return rb - ra;
-      return b.teams - a.teams;
-    });
+    return rankWeaponsByRarityAndTeams(
+      builds?.weapons,
+      (key) => weaponByKey.get(key)?.stars ?? 0,
+    );
   });
 
-  /**
-   * Recommended substats from OptimFull liquid ranks, plus any recommended
-   * main that can also roll as a substat (e.g. EM sands → also recommend EM
-   * subs). Main-only keys (elemental DMG, heal, etc.) stay excluded.
-   */
-  let recommendedSubstats = $derived.by(() => {
-    if (!builds) return [];
-    const mainSlots = new Map<string, string[]>();
-    for (const slot of MAIN_STAT_SLOTS) {
-      for (const s of builds.main_stats[slot.key]) {
-        if (!isArtifactSubstatKey(s.key)) continue;
-        const list = mainSlots.get(s.key) ?? [];
-        list.push(slot.label);
-        mainSlots.set(s.key, list);
-      }
-    }
+  let recommendedSubstats = $derived(recommendedSubstatsFromBuilds(builds));
 
-    const byKey = new Map<
-      string,
-      {
-        key: string;
-        mean: number;
-        matchesMain: boolean;
-        mainSlots: string[];
-      }
-    >();
-
-    for (const r of builds.substat_rolls_liquid.ranked) {
-      if (!isArtifactSubstatKey(r.key)) continue;
-      if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
-      const slots = mainSlots.get(r.key) ?? [];
-      byKey.set(r.key, {
-        key: r.key,
-        mean: r.mean,
-        matchesMain: slots.length > 0,
-        mainSlots: slots,
-      });
-    }
-
-    // Recommended mains that can be substats (e.g. EM) even without liquid rolls
-    for (const [key, slots] of mainSlots) {
-      if (byKey.has(key)) continue;
-      byKey.set(key, {
-        key,
-        mean: 0,
-        matchesMain: true,
-        mainSlots: slots,
-      });
-    }
-
-    return [...byKey.values()].sort((a, b) => {
-      if (a.matchesMain !== b.matchesMain) return a.matchesMain ? -1 : 1;
-      if (a.mean !== b.mean) return b.mean - a.mean;
-      return a.key.localeCompare(b.key);
-    });
-  });
+  let rankedSigWeapons = $derived(
+    rankSigWeaponsByGain(builds?.vertical_importance?.sig_weapons),
+  );
 
   /**
    * Talent priority rows for Builds tab: qualitative upgrade labels from
    * median % DPS drop when that talent is at 1.
    */
-  let talentImportanceRows = $derived.by(() => {
-    const ti = builds?.talent_importance;
-    if (!ti || ti.teams <= 0) return [];
-    return (["auto", "skill", "burst"] as const)
-      .flatMap((slot) => {
-        const stats = ti[slot];
-        if (!stats) return [];
-        const kitType = TALENT_SLOT_TO_KIT[slot];
-        const skill = kit.skills.find((s) => s.type === kitType);
-        const icon = skill
-          ? (iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon))
-          : null;
-        const impact = classifyUpgradeImpact(
-          stats.median_pct_drop,
-          TALENT_UPGRADE,
-        );
-        return [
-          {
-            slot,
-            label: TALENT_SLOT_LABELS[slot],
-            icon,
-            priority: impact.tier,
-            priorityLabel: impact.label,
-            median: stats.median_pct_drop,
-          },
-        ];
-      })
-      .sort((a, b) => b.median - a.median || a.slot.localeCompare(b.slot));
-  });
+  let talentImportanceRows = $derived(
+    buildTalentImportanceRows(builds?.talent_importance, (kitType) => {
+      const skill = kit.skills.find((s) => s.type === kitType);
+      if (!skill) return null;
+      return iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon);
+    }),
+  );
 
   /** Character level 90 importance for Builds tab (separate from talents). */
   let levelImportance = $derived.by(() => {
-    const li = builds?.level_importance;
-    if (!li || li.teams <= 0) return null;
-    const impact = classifyUpgradeImpact(li.median_pct_drop, LEVEL_UPGRADE);
+    const row = levelImportanceFromBuilds(builds);
+    if (!row) return null;
     return {
-      priority: impact.tier,
-      priorityLabel: impact.label,
-      teams: li.teams,
+      ...row,
       icon: getUiAssetUrl("UI_ItemIcon_104003"),
     };
   });
@@ -952,7 +851,7 @@
             {#if talentImportanceRows.length > 0 ||
               levelImportance ||
               builds.vertical_importance?.constellations?.length ||
-              builds.vertical_importance?.sig_weapons?.length}
+              rankedSigWeapons.length}
               <div class="invest-grid">
                 <div class="invest-col">
                   {#if talentImportanceRows.length > 0 && builds?.talent_importance}
@@ -1072,11 +971,11 @@
                     </section>
                   {/if}
 
-                  {#if builds.vertical_importance?.sig_weapons?.length}
+                  {#if rankedSigWeapons.length}
                     <section class="board-section">
                       <h2 class="section-title">Signature weapon impact</h2>
                       <ul class="talent-priority-list">
-                        {#each [...builds.vertical_importance.sig_weapons].sort( (a, b) => b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key), ) as row}
+                        {#each rankedSigWeapons as row}
                           {@const impact = classifyUpgradeImpact(
                             row.median_pct_gain,
                             SIGNATURE_UPGRADE,
