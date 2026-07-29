@@ -96,9 +96,6 @@
         console.warn("localStorage unavailable — saving to memory only");
       }
 
-      invalidateTeamsOwned();
-      invalidateNearMissTeams();
-
       if ($session.data) {
         const res = await fetch("/api/roster", {
           method: "POST",
@@ -106,6 +103,12 @@
           body: JSON.stringify({ roster: tempCharactersOwned }),
         });
         if (!res.ok) {
+          // Revert local write so store / storage / cloud stay aligned.
+          try {
+            localStorage.setItem("charactersOwned", savedSnapshot);
+          } catch {
+            /* ignore */
+          }
           rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
           return;
         }
@@ -113,6 +116,8 @@
 
       savedSnapshot = JSON.stringify(tempCharactersOwned);
       charactersOwned.set(tempCharactersOwned.map((c) => ({ ...c })));
+      invalidateTeamsOwned();
+      invalidateNearMissTeams();
       showSaved = true;
       hasUnsavedChanges = false;
       setHasSavedRoster();

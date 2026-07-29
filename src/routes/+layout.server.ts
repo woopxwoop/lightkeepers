@@ -54,10 +54,15 @@ export const load: LayoutServerLoad = async () => {
     })(),
     charactersCache.getOrSet("characters", async () => {
       if (isPlaywrightE2e()) return e2eCharacters();
-      const { data } = await serverDb
+      const { data, error: err } = await serverDb
         .from("characters")
         .select("*")
         .order("name", { ascending: true });
+      if (err) {
+        console.error("layout: characters error", err);
+        // Throw so charactersCache does not poison L1 with [] for 15m.
+        throw err;
+      }
       return data ?? [];
     }),
   ]);
