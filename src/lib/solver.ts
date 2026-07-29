@@ -99,6 +99,58 @@ function placementScore(
   return (team.usage_rate ?? 0) * slotAffinityRate(team, slot);
 }
 
+type PlacementTeamLike = {
+  members: string[] | null;
+};
+
+/**
+ * Mutable state for one greedy board build. Recording relaxed mode inside
+ * commit keeps optimizer policy in sync with every placement path.
+ */
+function createPlacementContext<
+  TTeam extends PlacementTeamLike,
+  TSlot extends string,
+>(allSlots: TSlot[]) {
+  const usedCharacters = new Set<string>();
+  const filledSlots = new Set<TSlot>();
+  const usedTeams = new Set<TTeam>();
+  const assignments: { team: TTeam; slot: TSlot }[] = [];
+  let usedRelaxedFill = false;
+
+  return {
+    assignments,
+    canUseTeam(team: TTeam): boolean {
+      return (
+        !usedTeams.has(team) &&
+        !team.members?.some((member) => usedCharacters.has(member))
+      );
+    },
+    isSlotFilled(slot: TSlot): boolean {
+      return filledSlots.has(slot);
+    },
+    commit(
+      team: TTeam,
+      slot: TSlot,
+      options: { relaxed?: boolean } = {},
+    ): void {
+      assignments.push({ team, slot });
+      filledSlots.add(slot);
+      usedTeams.add(team);
+      team.members?.forEach((member) => usedCharacters.add(member));
+      if (options.relaxed) usedRelaxedFill = true;
+    },
+    get isComplete(): boolean {
+      return filledSlots.size >= allSlots.length;
+    },
+    get unfilled(): TSlot[] {
+      return allSlots.filter((slot) => !filledSlots.has(slot));
+    },
+    get usedRelaxedFill(): boolean {
+      return usedRelaxedFill;
+    },
+  };
+}
+
 /**
  * Slot-aware greedy: after an optional forced first pick, repeatedly assign the
  * unused team × open slot pair with the highest placement score (no character
@@ -122,17 +174,7 @@ function greedyPass<
   getPreferredSlot: (team: TTeam) => TSlot,
   forcedFirst?: TTeam,
 ): Solution<{ team: TTeam; slot: TSlot }> & { usedRelaxedFill: boolean } {
-  const usedCharacters = new Set<string>();
-  const filledSlots = new Set<TSlot>();
-  const usedTeams = new Set<TTeam>();
-  const assignments: { team: TTeam; slot: TSlot }[] = [];
-
-  const commit = (team: TTeam, slot: TSlot) => {
-    assignments.push({ team, slot });
-    filledSlots.add(slot);
-    usedTeams.add(team);
-    team.members?.forEach((m) => usedCharacters.add(m));
-  };
+  const placement = createPlacementContext<TTeam, TSlot>(allSlots);
 
   const pickBest = (enforceMinSlotRate: boolean): boolean => {
     let bestTeam: TTeam | null = null;
@@ -140,11 +182,10 @@ function greedyPass<
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const team of teams) {
-      if (usedTeams.has(team)) continue;
-      if (team.members?.some((m) => usedCharacters.has(m))) continue;
+      if (!placement.canUseTeam(team)) continue;
 
       for (const slot of allSlots) {
-        if (filledSlots.has(slot)) continue;
+        if (placement.isSlotFilled(slot)) continue;
         const score = placementScore(team, slot, enforceMinSlotRate);
         if (score > bestScore) {
           bestScore = score;
@@ -155,11 +196,11 @@ function greedyPass<
     }
 
     if (bestTeam == null || bestSlot == null) return false;
-    commit(bestTeam, bestSlot);
+    placement.commit(bestTeam, bestSlot, {
+      relaxed: !enforceMinSlotRate,
+    });
     return true;
   };
-
-  let usedRelaxedFill = false;
 
   if (forcedFirst) {
     const open = allSlots.filter(
@@ -176,31 +217,29 @@ function greedyPass<
       );
     };
     if (open.length > 0) {
-      commit(forcedFirst, pickSlot(open));
+      placement.commit(forcedFirst, pickSlot(open));
     } else if (allSlots.length > 0) {
       // No seat clears MIN_SLOT_RATE — still place so this candidate is distinct.
-      commit(forcedFirst, pickSlot(allSlots));
-      usedRelaxedFill = true;
+      placement.commit(forcedFirst, pickSlot(allSlots), { relaxed: true });
     }
   }
 
-  while (filledSlots.size < allSlots.length) {
+  while (!placement.isComplete) {
     if (!pickBest(true)) break;
   }
 
   // Last resort: allow sub-threshold slot rates so remaining fields can fill.
-  while (filledSlots.size < allSlots.length) {
+  while (!placement.isComplete) {
     if (!pickBest(false)) break;
-    usedRelaxedFill = true;
   }
 
   return {
-    assignments,
-    score: scoreAssignments(assignments),
-    unfilled: allSlots.filter((s) => !filledSlots.has(s)),
+    assignments: placement.assignments,
+    score: scoreAssignments(placement.assignments),
+    unfilled: placement.unfilled,
     isFallback: false,
     neededCharacters: [],
-    usedRelaxedFill,
+    usedRelaxedFill: placement.usedRelaxedFill,
   };
 }
 
