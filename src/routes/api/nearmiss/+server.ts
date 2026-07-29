@@ -23,7 +23,7 @@ import {
   requireJsonObject,
   requireNumberInRange,
 } from "$lib/server/request-validation";
-import { isSupportedStygianVersion } from "$lib/server/version-validation";
+import { requireSupportedStygianVersion } from "$lib/server/version-validation";
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   // Default empty; Playwright browser routes override with scenario fixtures.
@@ -47,16 +47,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     "minPmi must be a number between 0 and 1.",
   );
 
-  let supportedVersion: boolean;
-  try {
-    supportedVersion = await isSupportedStygianVersion(stygianVersion);
-  } catch (e) {
-    console.error("[nearmiss] stygian version validation failed:", e);
-    throw error(500, "Internal server error");
-  }
-  if (!supportedVersion) {
-    throw error(400, "stygianVersion must be a number.");
-  }
+  await requireSupportedStygianVersion(stygianVersion);
 
   // ── Cache lookup ─────────────────────────────────────────────────────────
   // Key on the caller's exact threshold — rounding could widen the filter.

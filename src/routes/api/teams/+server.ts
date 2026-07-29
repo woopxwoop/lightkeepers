@@ -10,7 +10,7 @@
  * Rate limit: 60 requests / minute / IP (Valkey-shared when configured).
  */
 
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { rpcCache, buildRpcKey } from "$lib/server/cache";
@@ -28,10 +28,7 @@ import {
   requireFiniteInteger,
   requireJsonObject,
 } from "$lib/server/request-validation";
-import {
-  isSupportedAbyssVersion,
-  isSupportedStygianVersion,
-} from "$lib/server/version-validation";
+import { requireSupportedAbyssAndStygianVersions } from "$lib/server/version-validation";
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (isPlaywrightE2e()) {
@@ -57,19 +54,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     versionError,
   );
 
-  let supportedVersions: [boolean, boolean];
-  try {
-    supportedVersions = await Promise.all([
-      isSupportedAbyssVersion(abyssVersion),
-      isSupportedStygianVersion(stygianVersion),
-    ]);
-  } catch (e) {
-    console.error("[teams] version validation failed:", e);
-    throw error(500, "Internal server error");
-  }
-  if (!supportedVersions[0] || !supportedVersions[1]) {
-    throw error(400, "abyssVersion and stygianVersion must be numbers.");
-  }
+  await requireSupportedAbyssAndStygianVersions(abyssVersion, stygianVersion);
 
   // ── Cache lookup ─────────────────────────────────────────────────────────
   const abyssKey = buildRpcKey("owned_abyss", abyssVersion, characters);
