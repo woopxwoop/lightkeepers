@@ -162,6 +162,39 @@ describe("solveAbyss", () => {
       "stored score must match post-swap affinity score",
     );
   });
+
+  it("prefers slot specialists over a high-usage flex that steals a half", () => {
+    // Old fill walked by usage and parked the flex on top first, locking out
+    // the top specialist. Slot-aware placement score should seat both specialists.
+    const flex = abyssTeam({
+      team_key: "flex",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 100,
+      field_1_rate: 50,
+      field_2_rate: 50,
+    });
+    const bottomSpec = abyssTeam({
+      team_key: "bottom-spec",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 60,
+      field_1_rate: 5,
+      field_2_rate: 95,
+    });
+    const topSpec = abyssTeam({
+      team_key: "top-spec",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 55,
+      field_1_rate: 95,
+      field_2_rate: 5,
+    });
+
+    const [sol] = solveAbyss([flex, bottomSpec, topSpec], 1);
+    assert.ok(sol);
+    const keys = new Set(sol.assignments.map((a) => a.team.team_key));
+    assert.ok(keys.has("top-spec"));
+    assert.ok(keys.has("bottom-spec"));
+    assert.equal(keys.has("flex"), false);
+  });
 });
 
 describe("solveStygian", () => {

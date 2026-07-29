@@ -2,7 +2,8 @@
  * Greedy team assignment for Abyss (2 slots) and Stygian (3 slots).
  *
  * For each of the top CANDIDATE_DEPTH teams as a forced first pick, fill the
- * remaining slots by usage rate without character overlap, then try pairwise
+ * remaining slots by repeatedly choosing the best (team × open slot) pair
+ * (usage × slot affinity, with a minimum slot-rate floor), then try pairwise
  * swaps. Rank solutions by 0.6×weakest-link + 0.4×mean so one weak half tanks
  * the score. Fallback helpers allow a small budget of missing characters when
  * the owned roster can't cover every slot.
@@ -81,6 +82,25 @@ function slotRate<TTeam extends Record<string, any>>(
 
 // ---- Core greedy pass -----------------------------------------------------
 
+/** Per-assignment weight used both for fill decisions and final scoring. */
+function placementScore(
+  team: {
+    usage_rate: number | null;
+    field_1_rate: number | null;
+    field_2_rate: number | null;
+    [key: string]: unknown;
+  },
+  slot: string,
+): number {
+  if (slotRate(team, slot) < MIN_SLOT_RATE) return Number.NEGATIVE_INFINITY;
+  return (team.usage_rate ?? 0) * slotAffinityRate(team, slot);
+}
+
+/**
+ * Slot-aware greedy: after an optional forced first pick, repeatedly assign the
+ * unused team × open slot pair with the highest placement score (no character
+ * overlap). Beats “walk list by usage, park in preferred-or-first-open.”
+ */
 function greedyPass<
   TTeam extends Record<string, unknown> & {
     members: string[] | null;
@@ -99,31 +119,55 @@ function greedyPass<
 ): Solution<{ team: TTeam; slot: TSlot }> {
   const usedCharacters = new Set<string>();
   const filledSlots = new Set<TSlot>();
+  const usedTeams = new Set<TTeam>();
   const assignments: { team: TTeam; slot: TSlot }[] = [];
 
-  const assign = (team: TTeam): boolean => {
-    const preferred = getPreferredSlot(team);
-    // Only consider slots where this team has meaningful usage
-    const viableSlots = allSlots.filter(
-      (s) => !filledSlots.has(s) && slotRate(team, s) >= MIN_SLOT_RATE,
-    );
-    // Prefer natural slot if viable, otherwise first viable open slot
-    const slot = viableSlots.includes(preferred) ? preferred : viableSlots[0];
-    if (!slot) return false;
-
+  const commit = (team: TTeam, slot: TSlot) => {
     assignments.push({ team, slot });
     filledSlots.add(slot);
+    usedTeams.add(team);
     team.members?.forEach((m) => usedCharacters.add(m));
-    return true;
   };
 
-  if (forcedFirst) assign(forcedFirst);
+  if (forcedFirst) {
+    const open = allSlots.filter(
+      (s) => placementScore(forcedFirst, s) !== Number.NEGATIVE_INFINITY,
+    );
+    if (open.length > 0) {
+      const preferred = getPreferredSlot(forcedFirst);
+      const slot = open.includes(preferred)
+        ? preferred
+        : open.reduce((best, s) =>
+            placementScore(forcedFirst, s) > placementScore(forcedFirst, best)
+              ? s
+              : best,
+          );
+      commit(forcedFirst, slot);
+    }
+  }
 
-  for (const team of teams) {
-    if (filledSlots.size === allSlots.length) break;
-    if (team === forcedFirst) continue;
-    if (team.members?.some((m) => usedCharacters.has(m))) continue;
-    assign(team);
+  while (filledSlots.size < allSlots.length) {
+    let bestTeam: TTeam | null = null;
+    let bestSlot: TSlot | null = null;
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const team of teams) {
+      if (usedTeams.has(team)) continue;
+      if (team.members?.some((m) => usedCharacters.has(m))) continue;
+
+      for (const slot of allSlots) {
+        if (filledSlots.has(slot)) continue;
+        const score = placementScore(team, slot);
+        if (score > bestScore) {
+          bestScore = score;
+          bestTeam = team;
+          bestSlot = slot;
+        }
+      }
+    }
+
+    if (bestTeam == null || bestSlot == null) break;
+    commit(bestTeam, bestSlot);
   }
 
   return {
