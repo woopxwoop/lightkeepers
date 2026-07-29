@@ -12,6 +12,8 @@
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import GameText from "$lib/ui/components/GameText.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
+  import WeaponIcon from "$lib/ui/components/WeaponIcon.svelte";
+  import WeaponName from "$lib/ui/components/WeaponName.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
@@ -1073,13 +1075,8 @@
                   {#if builds.vertical_importance?.sig_weapons?.length}
                     <section class="board-section">
                       <h2 class="section-title">Signature weapon impact</h2>
-                      {#key $equipmentVersion}
                       <ul class="talent-priority-list">
                         {#each [...builds.vertical_importance.sig_weapons].sort( (a, b) => b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key), ) as row}
-                          {@const weapon = weaponByKey.get(row.key)}
-                          {@const icon = weapon
-                            ? weaponIconUrl(weapon.awakenIcon)
-                            : null}
                           {@const impact = classifyUpgradeImpact(
                             row.median_pct_gain,
                             SIGNATURE_UPGRADE,
@@ -1088,17 +1085,14 @@
                             class="talent-priority-row"
                             data-priority={impact.tier}
                           >
-                            {#if icon}
-                              <img
-                                src={icon}
-                                alt=""
-                                class="kit-icon talent-priority-icon shrink-0"
-                                loading="lazy"
-                              />
-                            {/if}
+                            <WeaponIcon
+                              weaponKey={row.key}
+                              alt=""
+                              class="kit-icon talent-priority-icon shrink-0"
+                            />
                             <div class="talent-priority-copy">
                               <div class="talent-priority-name">
-                                {weapon?.name ?? row.key}
+                                <WeaponName weaponKey={row.key} />
                               </div>
                               <div
                                 class="talent-priority-label"
@@ -1110,7 +1104,6 @@
                           </li>
                         {/each}
                       </ul>
-                      {/key}
                     </section>
                   {/if}
                 </div>

@@ -5,14 +5,11 @@
   import { buildGoodKeyMap, toGoodKey, humanizeTeamName } from "$lib/utils";
   import {
     humanizeInvestmentLabel,
-    displayWeaponRefinement,
-    weaponByKey,
-    equipmentVersion,
     ensureEquipmentData,
+    equipmentVersion,
   } from "$lib/equipment-data";
-  import { weaponIconUrl } from "$lib/asset-urls";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
+  import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
@@ -123,13 +120,17 @@
     openCosts = next;
   }
 
-  function simDiffLabel(sim: InvestmentTeam["results"][number]): string {
-    if (sim.kind === "baseline") return "Baseline";
-    return humanizeInvestmentLabel(
-      sim.label?.trim() || "variant",
-      characterNames,
-    );
-  }
+  let simDiffLabel = $derived.by(() => {
+    $equipmentVersion;
+    const names = characterNames;
+    return (sim: InvestmentTeam["results"][number]): string => {
+      if (sim.kind === "baseline") return "Baseline";
+      return humanizeInvestmentLabel(
+        sim.label?.trim() || "variant",
+        names,
+      );
+    };
+  });
 
   function pctVsBaseline(dps: number): string {
     if (!baselineSim || baselineSim.dps <= 0) return "";
@@ -240,18 +241,10 @@
     </header>
 
     <!-- Hero: flat 4-up baseline roster -->
-    {#key $equipmentVersion}
     <div class="roster">
       {#each team.characters as goodKey (goodKey)}
         {@const char = goodKeyMap.get(goodKey)}
         {@const build = baselineBuild(goodKey)}
-        {@const weapon = build ? weaponByKey.get(build.weapon.key) : null}
-        {@const weaponIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-        {@const refine = build
-          ? displayWeaponRefinement(build.weapon.key, build.weapon.refinement, {
-              weaponShown: Boolean(weaponIcon),
-            })
-          : null}
         <CharacterPortraitCard
           character={char}
           tintBackground
@@ -260,19 +253,11 @@
           class="roster-card"
         >
           {#snippet badge()}
-            {#if weaponIcon}
-              <div class="weapon group">
-                <img
-                  src={weaponIcon}
-                  alt={weapon?.name ?? "Weapon"}
-                  class="weapon-img"
-                  loading="lazy"
-                />
-                {#if refine !== null}
-                  <span class="weapon-r">R{refine}</span>
-                {/if}
-                <WeaponTooltip {weapon} refinement={refine} />
-              </div>
+            {#if build}
+              <WeaponBadge
+                weaponKey={build.weapon.key}
+                refinement={build.weapon.refinement}
+              />
             {/if}
           {/snippet}
           {#snippet meta()}
@@ -287,7 +272,6 @@
         </CharacterPortraitCard>
       {/each}
     </div>
-    {/key}
 
     {#if baselineVariants.length > 0}
       <section class="section">
@@ -547,40 +531,6 @@
     height: 100%;
     font-size: var(--text-xs);
     color: var(--foreground-mid);
-  }
-
-  .weapon {
-    position: absolute;
-    top: 0.35rem;
-    left: 0.35rem;
-    z-index: 20;
-    width: 28%;
-    aspect-ratio: 1;
-    border-radius: 0.2rem;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--background-color) 72%, transparent);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-  }
-
-  .weapon-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 0.1rem;
-  }
-
-  .weapon-r {
-    position: absolute;
-    right: 0.1rem;
-    bottom: 0.05rem;
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    line-height: 1;
-    color: var(--accent-1);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
   }
 
   .meta-name {

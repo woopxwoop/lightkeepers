@@ -1,14 +1,13 @@
 <script lang="ts">
   import type { Character, CharacterOwned } from "$lib/definitions";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
+  import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
+  import InvestmentCR from "$lib/ui/components/InvestmentCR.svelte";
   import { weaponIconUrl } from "$lib/asset-urls";
   import {
-    displayWeaponRefinement,
-    formatInvestmentCR,
-    weaponByKey,
     equipmentVersion,
     ensureEquipmentData,
+    weaponByKey,
   } from "$lib/equipment-data";
   import { onMount } from "svelte";
 
@@ -50,6 +49,12 @@
   function zFor(index: number, total: number): number {
     return stack === "left" ? total - index : index + 1;
   }
+
+  /** True when the weapon icon is available (after equipment JSON loads). */
+  function weaponIconShown(weaponKey: string): boolean {
+    const weapon = weaponByKey.get(weaponKey);
+    return Boolean(weapon && weaponIconUrl(weapon.awakenIcon));
+  }
 </script>
 
 <div
@@ -58,18 +63,13 @@
   role="group"
   aria-label="Team"
 >
-  {#key $equipmentVersion}
   {#each characters as character, i (character?.name_id ?? character?.name ?? i)}
     {@const key = character?.name_id ?? character?.name ?? ""}
     {@const build = builds[i]}
     {@const angle = HAND_ANGLES[i] ?? 0}
-    {@const weapon = build ? weaponByKey.get(build.weaponKey) : null}
-    {@const weaponIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-    {@const refine = build
-      ? displayWeaponRefinement(build.weaponKey, build.weaponRefinement, {
-          weaponShown: Boolean(weaponIcon),
-        })
-      : null}
+    {@const showWeapon = Boolean(
+      build && $equipmentVersion >= 0 && weaponIconShown(build.weaponKey),
+    )}
     <div
       class="card"
       style:--angle="{angle}deg"
@@ -84,19 +84,11 @@
           : undefined}
       >
         {#snippet badge()}
-          {#if weaponIcon}
-            <div class="weapon group">
-              <img
-                src={weaponIcon}
-                alt={weapon?.name ?? "Weapon"}
-                class="weapon-img"
-                loading="lazy"
-              />
-              {#if refine !== null}
-                <span class="weapon-r">R{refine}</span>
-              {/if}
-              <WeaponTooltip {weapon} refinement={refine} />
-            </div>
+          {#if build}
+            <WeaponBadge
+              weaponKey={build.weaponKey}
+              refinement={build.weaponRefinement}
+            />
           {/if}
           {#if key && starredKeys.has(key)}
             <span class="star" aria-label="Best team for this character">★</span>
@@ -106,14 +98,14 @@
           <div class="meta-name">{character?.name ?? "—"}</div>
           {#if build}
             <div class="meta-build">
-              {#if weaponIcon}
+              {#if showWeapon}
                 C{build.cons}
               {:else}
-                {formatInvestmentCR(
-                  build.cons,
-                  build.weaponRefinement,
-                  build.weaponKey,
-                )}
+                <InvestmentCR
+                  cons={build.cons}
+                  refinement={build.weaponRefinement}
+                  weaponKey={build.weaponKey}
+                />
               {/if}
             </div>
           {/if}
@@ -121,7 +113,6 @@
       </CharacterPortraitCard>
     </div>
   {/each}
-  {/key}
 </div>
 
 <style>
@@ -225,42 +216,6 @@
     z-index: 20;
     will-change: transform;
     transform: translateY(-10px) scale(1.03);
-  }
-
-  .weapon {
-    position: absolute;
-    top: 0.35rem;
-    left: 0.35rem;
-    z-index: 20;
-    width: 28%;
-    aspect-ratio: 1;
-    border-radius: 0.2rem;
-    overflow: hidden;
-    pointer-events: auto;
-    cursor: pointer;
-    background: color-mix(in srgb, var(--background-color) 72%, transparent);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-  }
-
-  .weapon-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 0.1rem;
-  }
-
-  .weapon-r {
-    position: absolute;
-    right: 0.1rem;
-    bottom: 0.05rem;
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    line-height: 1;
-    color: var(--accent-1);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
   }
 
   .star {
