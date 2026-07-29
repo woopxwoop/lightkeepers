@@ -4,9 +4,6 @@
  * Used by Better Stack as the uptime monitor endpoint.
  * Returns 200 + JSON when healthy, 503 when Supabase is unreachable.
  *
- * Also triggers a metrics flush as a secondary mechanism — the primary
- * flush is the setInterval in metrics.ts (reliable on VPS/Node.js).
- *
  * Cache: no-store so Better Stack always hits the live app.
  */
 

@@ -8,6 +8,9 @@
  * Owned teams:       ensureTeamsOwned()  → POST /api/teams
  * Pull suggestions:  ensureNearMissTeams() → POST /api/nearmiss
  * Stygian tier list: ensureTierList() → GET /api/tierlist
+ *
+ * Abyss/Stygian solution pager + meta ranking helpers: `$lib/board-solutions`
+ * (not this file). Solver: `$lib/solver`.
  */
 
 import { writable, derived, get, readable, type Writable } from "svelte/store";

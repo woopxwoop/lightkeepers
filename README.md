@@ -1,18 +1,28 @@
-# Lightkeepers 
+# Lightkeepers
 
-[Lightkeepers](https://lightkeepers.moe) is a website dedicated to making Genshin Impact's meta accessible to all.
+[Lightkeepers](https://lightkeepers.moe) makes Genshin Impact’s endgame meta (Spiral Abyss, Stygian Onslaught) accessible — roster-aware team suggestions, pulls, character kits, and investment sims.
 
-## Tech stack
-- **SvelteKit + TypeScript + Tailwind** 
-- **Postgres** (currently managed by supabase)
-- **Sentry, Grafana, BetterStack** 
+## Stack
 
-## Project structure 
+SvelteKit 5 + TypeScript + Tailwind · Postgres (Supabase) · Better Auth · Valkey · Sentry / Grafana / Better Stack
 
-- `src/routes/`: pages + API routes
-- `src/lib/app/`: app bootstrap + dev tooling
-- `src/lib/ui/`: UI shell + reusable UI components
-- `src/lib/server/`: server-only utilities (Supabase server client, caching, metrics)
-- `src/lib/api/`: client-side API helpers
+## Develop
 
-Inspired by other Genshin projects such as [Lunaris](https://lunaris.moe/), [Genshin Optimizer](https://github.com/frzyc/genshin-optimizer), [Akasha](https://akasha.cv/profile/621003558), [Enka](https://enka.network/), [YShelper](https://app.yshelper.com/#/)
+```bash
+cp .env.example .env   # fill keys
+pnpm install
+pnpm dev
+pnpm check
+pnpm test:unit
+```
+
+## Layout
+
+- `src/routes/` — pages + API
+- `src/lib/app/` — client bootstrap
+- `src/lib/ui/` — shell + components
+- `src/lib/server/` — auth, Supabase, cache, metrics
+- `src/lib/solver.ts` / `board-solutions.ts` — team assignment + board helpers
+- `scripts/` — data sync (separate tooling)
+
+Inspired by [Lunaris](https://lunaris.moe/), [Genshin Optimizer](https://github.com/frzyc/genshin-optimizer), [Akasha](https://akasha.cv/), [Enka](https://enka.network/), [YShelper](https://app.yshelper.com/).

@@ -5,8 +5,8 @@ export const NEW_CHARACTER_DAYS = 20;
  * Whether a character was released recently enough to be flagged as "new".
  * Characters with no `released_at` are not considered new.
  *
- * Kept in its own module so call sites (e.g. root layout bootstrap) do not
- * pull `$lib/utils` — that file eagerly imports weapons.json (~400KB).
+ * Kept in its own module so bootstrap/layout can import it without pulling
+ * heavier client modules (equipment JSON, large utils graphs).
  */
 export function isNewCharacter(releasedAt: string | null | undefined): boolean {
   if (!releasedAt) return false;
