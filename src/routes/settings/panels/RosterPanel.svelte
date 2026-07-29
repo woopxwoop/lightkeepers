@@ -35,9 +35,13 @@
   let synced = $state(false);
   let showSaved = $state(false);
   let isSaving = $state(false);
-  let hasUnsavedChanges = $state(false);
   let rosterError = $state("");
   let savedSnapshot = $state("");
+  let hasUnsavedChanges = $derived(
+    synced &&
+      rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
+  );
+  let savedVisible = $derived(showSaved && !hasUnsavedChanges);
 
   let rarityFilter = $state<Set<string>>(new Set());
   let elementFilter = $state<Set<string>>(new Set());
@@ -59,19 +63,10 @@
     }),
   );
 
-  function updateUnsavedState() {
-    hasUnsavedChanges = rosterDiffersFromSnapshot(
-      tempCharactersOwned,
-      savedSnapshot,
-    );
-    if (hasUnsavedChanges) showSaved = false;
-  }
-
   function toggleOwned(name_id: string) {
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
     );
-    updateUnsavedState();
   }
 
   function selectAll() {
@@ -79,7 +74,6 @@
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: true } : c,
     );
-    updateUnsavedState();
   }
 
   function deselectAll() {
@@ -87,7 +81,6 @@
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: false } : c,
     );
-    updateUnsavedState();
   }
 
   function restoreSavedSnapshot() {
@@ -100,7 +93,6 @@
     invalidateTeamsOwned();
     invalidateNearMissTeams();
     showSaved = true;
-    hasUnsavedChanges = pending.differsFrom(tempCharactersOwned);
     setHasSavedRoster();
   }
 
@@ -171,11 +163,7 @@
   let changedCount = $derived(
     tempCharactersOwned.reduce(
       (count, c) =>
-        count +
-        (c.isOwned !==
-        $charactersOwned.find((o) => o.name_id === c.name_id)?.isOwned
-          ? 1
-          : 0),
+        count + (c.isOwned !== savedOwnedSet.has(c.name_id) ? 1 : 0),
       0,
     ),
   );
@@ -214,19 +202,19 @@
       <span class="owned-count">{ownedCount} / {totalCount}</span>
     </div>
 
-    {#if hasUnsavedChanges || isSaving || showSaved || rosterError}
+    {#if hasUnsavedChanges || isSaving || savedVisible || rosterError}
       <div class="save-bar">
         <div class="save-status">
-          <span class="save-dot" class:saving={isSaving} class:saved={showSaved}
+          <span class="save-dot" class:saving={isSaving} class:saved={savedVisible}
           ></span>
           <span class="save-label">
-            {isSaving ? "Saving..." : showSaved ? "Saved" : "Unsaved changes"}
+            {isSaving ? "Saving..." : savedVisible ? "Saved" : "Unsaved changes"}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
           {/if}
         </div>
-        {#if hasUnsavedChanges && !isSaving && !showSaved}
+        {#if hasUnsavedChanges && !isSaving}
           <div class="save-actions">
             <Button
               variant="ghost"
@@ -234,7 +222,6 @@
                 const pending = captureRoster($charactersOwned);
                 tempCharactersOwned = pending.roster;
                 savedSnapshot = pending.json;
-                hasUnsavedChanges = false;
               }}
             >
               Cancel
