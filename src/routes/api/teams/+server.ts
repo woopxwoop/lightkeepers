@@ -28,6 +28,10 @@ import {
   E2E_STYGIAN_TEAM_MIDDLE,
   E2E_STYGIAN_TEAM_TOP,
 } from "$lib/e2e/fixtures";
+import {
+  isSupportedAbyssVersion,
+  isSupportedStygianVersion,
+} from "$lib/server/version-validation";
 
 type TeamsBody = {
   characters: string[];
@@ -77,9 +81,25 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (
     typeof abyssVersion !== "number" ||
     !Number.isFinite(abyssVersion) ||
+    !Number.isInteger(abyssVersion) ||
     typeof stygianVersion !== "number" ||
-    !Number.isFinite(stygianVersion)
+    !Number.isFinite(stygianVersion) ||
+    !Number.isInteger(stygianVersion)
   ) {
+    throw error(400, "abyssVersion and stygianVersion must be numbers.");
+  }
+
+  let supportedVersions: [boolean, boolean];
+  try {
+    supportedVersions = await Promise.all([
+      isSupportedAbyssVersion(abyssVersion),
+      isSupportedStygianVersion(stygianVersion),
+    ]);
+  } catch (e) {
+    console.error("[teams] version validation failed:", e);
+    throw error(500, "Internal server error");
+  }
+  if (!supportedVersions[0] || !supportedVersions[1]) {
     throw error(400, "abyssVersion and stygianVersion must be numbers.");
   }
 

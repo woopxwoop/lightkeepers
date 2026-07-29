@@ -354,6 +354,43 @@ describe("solveStygian", () => {
       "relaxed optimize keeps unique slots",
     );
   });
+
+  it("relaxes optimization when only forced-first is sub-threshold", () => {
+    const forcedSoft = stygianTeam({
+      team_key: "forced-soft",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 100,
+      field_1_rate: 9,
+      field_2_rate: 8.9,
+      field_3_rate: 8,
+    });
+    const topPref = stygianTeam({
+      team_key: "top-pref",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 90,
+      field_1_rate: 90,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const middlePref = stygianTeam({
+      team_key: "middle-pref",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 80,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 90,
+    });
+
+    const [sol] = solveStygian([forcedSoft, topPref, middlePref], 1);
+    assert.ok(sol);
+    const bySlot = Object.fromEntries(
+      sol.assignments.map((a) => [a.slot, a.team.team_key]),
+    );
+    assert.equal(bySlot.top, "top-pref");
+    assert.equal(bySlot.middle, "middle-pref");
+    assert.equal(bySlot.bottom, "forced-soft");
+    assert.equal(sol.unfilled.length, 0);
+  });
 });
 
 describe("solveAbyssWithFallback", () => {

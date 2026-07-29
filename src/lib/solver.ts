@@ -159,6 +159,8 @@ function greedyPass<
     return true;
   };
 
+  let usedRelaxedFill = false;
+
   if (forcedFirst) {
     const open = allSlots.filter(
       (s) => placementScore(forcedFirst, s) !== Number.NEGATIVE_INFINITY,
@@ -178,6 +180,7 @@ function greedyPass<
     } else if (allSlots.length > 0) {
       // No seat clears MIN_SLOT_RATE — still place so this candidate is distinct.
       commit(forcedFirst, pickSlot(allSlots));
+      usedRelaxedFill = true;
     }
   }
 
@@ -186,7 +189,6 @@ function greedyPass<
   }
 
   // Last resort: allow sub-threshold slot rates so remaining fields can fill.
-  let usedRelaxedFill = false;
   while (filledSlots.size < allSlots.length) {
     if (!pickBest(false)) break;
     usedRelaxedFill = true;

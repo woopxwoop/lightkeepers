@@ -22,6 +22,7 @@ import {
   assertCharacterNameIds,
 } from "$lib/server/cache";
 import { isPlaywrightE2e } from "$lib/server/e2e";
+import { isSupportedStygianVersion } from "$lib/server/version-validation";
 
 type NearMissBody = {
   characters: string[];
@@ -62,7 +63,11 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     throw error(400, e instanceof Error ? e.message : "Invalid characters.");
   }
 
-  if (typeof stygianVersion !== "number" || !Number.isFinite(stygianVersion)) {
+  if (
+    typeof stygianVersion !== "number" ||
+    !Number.isFinite(stygianVersion) ||
+    !Number.isInteger(stygianVersion)
+  ) {
     throw error(400, "stygianVersion must be a number.");
   }
   if (
@@ -72,6 +77,17 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     minPmi > 1
   ) {
     throw error(400, "minPmi must be a number between 0 and 1.");
+  }
+
+  let supportedVersion: boolean;
+  try {
+    supportedVersion = await isSupportedStygianVersion(stygianVersion);
+  } catch (e) {
+    console.error("[nearmiss] stygian version validation failed:", e);
+    throw error(500, "Internal server error");
+  }
+  if (!supportedVersion) {
+    throw error(400, "stygianVersion must be a number.");
   }
 
   // ── Cache lookup ─────────────────────────────────────────────────────────
