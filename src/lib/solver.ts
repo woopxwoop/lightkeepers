@@ -104,8 +104,9 @@ type PlacementTeamLike = {
 };
 
 /**
- * Mutable state for one greedy board build. Recording relaxed mode inside
- * commit keeps optimizer policy in sync with every placement path.
+ * Mutable state for one greedy board build. Recording which teams were placed
+ * under relaxed rules inside commit keeps optimizer policy in sync with every
+ * placement path — only those teams may later sit below MIN_SLOT_RATE.
  */
 function createPlacementContext<
   TTeam extends PlacementTeamLike,
@@ -114,8 +115,8 @@ function createPlacementContext<
   const usedCharacters = new Set<string>();
   const filledSlots = new Set<TSlot>();
   const usedTeams = new Set<TTeam>();
+  const relaxedTeams = new Set<TTeam>();
   const assignments: { team: TTeam; slot: TSlot }[] = [];
-  let usedRelaxedFill = false;
 
   return {
     assignments,
@@ -137,7 +138,7 @@ function createPlacementContext<
       filledSlots.add(slot);
       usedTeams.add(team);
       team.members?.forEach((member) => usedCharacters.add(member));
-      if (options.relaxed) usedRelaxedFill = true;
+      if (options.relaxed) relaxedTeams.add(team);
     },
     get isComplete(): boolean {
       return filledSlots.size >= allSlots.length;
@@ -145,8 +146,8 @@ function createPlacementContext<
     get unfilled(): TSlot[] {
       return allSlots.filter((slot) => !filledSlots.has(slot));
     },
-    get usedRelaxedFill(): boolean {
-      return usedRelaxedFill;
+    get relaxedTeams(): Set<TTeam> {
+      return relaxedTeams;
     },
   };
 }
@@ -173,7 +174,7 @@ function greedyPass<
   allSlots: TSlot[],
   getPreferredSlot: (team: TTeam) => TSlot,
   forcedFirst?: TTeam,
-): Solution<{ team: TTeam; slot: TSlot }> & { usedRelaxedFill: boolean } {
+): Solution<{ team: TTeam; slot: TSlot }> & { relaxedTeams: Set<TTeam> } {
   const placement = createPlacementContext<TTeam, TSlot>(allSlots);
 
   const pickBest = (enforceMinSlotRate: boolean): boolean => {
@@ -239,7 +240,7 @@ function greedyPass<
     unfilled: placement.unfilled,
     isFallback: false,
     neededCharacters: [],
-    usedRelaxedFill: placement.usedRelaxedFill,
+    relaxedTeams: placement.relaxedTeams,
   };
 }
 
@@ -302,7 +303,9 @@ export function slotAffinityRate(
   if (slot === "middle") return m / total;
   return 1;
 }
-/** Heap's algorithm — all orderings of `items` (2! / 3! for board sizes). */
+/** Heap’s algorithm is not used here — recursive head-selection of all
+ *  orderings. Cost is O(n!) in the length of `items` (2! / 3! for board sizes).
+ */
 function permutations<T>(items: T[]): T[][] {
   if (items.length <= 1) return [items.slice()];
   const out: T[][] = [];
@@ -317,9 +320,9 @@ function permutations<T>(items: T[]): T[][] {
 /**
  * Reassign the same teams across their filled slots, picking the seating with
  * the best scoreAssignments. Evaluates all 2-/3-slot permutations (covers
- * pairwise swaps and three-cycles). When `enforceMinSlotRate` is false
- * (after a relaxed greedy fill), sub-threshold seats stay eligible so
- * fallback boards can still rotate into better affinity.
+ * pairwise swaps and three-cycles). Teams in `relaxedTeams` may sit below
+ * MIN_SLOT_RATE; every other team still respects the floor so a single
+ * relaxed placement cannot drag compliant teammates under threshold.
  */
 function optimizeSlots<
   TTeam extends Record<string, unknown> & {
@@ -331,7 +334,7 @@ function optimizeSlots<
   TSlot extends string,
 >(
   assignments: { team: TTeam; slot: TSlot }[],
-  enforceMinSlotRate = true,
+  relaxedTeams: ReadonlySet<TTeam> = new Set(),
 ): { team: TTeam; slot: TSlot }[] {
   if (assignments.length <= 1) {
     return assignments.map((a) => ({ ...a }));
@@ -345,9 +348,10 @@ function optimizeSlots<
   for (const perm of permutations(slots)) {
     const candidate = teams.map((team, i) => ({ team, slot: perm[i]! }));
     if (
-      enforceMinSlotRate &&
       candidate.some(
-        (a) => slotRate(a.team, a.slot as string) < MIN_SLOT_RATE,
+        (a) =>
+          !relaxedTeams.has(a.team) &&
+          slotRate(a.team, a.slot as string) < MIN_SLOT_RATE,
       )
     ) {
       continue;
@@ -366,7 +370,10 @@ export function optimizeStygianSlotAssignments(
   assignments: { team: StygianTeam; slot: StygianSlot }[],
   enforceMinSlotRate = true,
 ): { team: StygianTeam; slot: StygianSlot }[] {
-  return optimizeSlots(assignments, enforceMinSlotRate);
+  const relaxedTeams = enforceMinSlotRate
+    ? new Set<StygianTeam>()
+    : new Set(assignments.map((a) => a.team));
+  return optimizeSlots(assignments, relaxedTeams);
 }
 
 /** How many teams to try as forced first pick when exploring solutions */
@@ -399,16 +406,13 @@ export function solveAbyss(
   const candidates = validTeams.slice(0, CANDIDATE_DEPTH);
 
   const solutions = candidates.map((forcedFirst) => {
-    const { usedRelaxedFill, ...sol } = greedyPass(
+    const { relaxedTeams, ...sol } = greedyPass(
       validTeams,
       allSlots,
       preferredAbyssSlot,
       forcedFirst,
     );
-    const optimized = optimizeSlots(
-      sol.assignments,
-      !usedRelaxedFill,
-    );
+    const optimized = optimizeSlots(sol.assignments, relaxedTeams);
     const assignments = sortAssignments(optimized, allSlots).map((a) => ({
       ...a,
       missingCharacters: [] as string[],
@@ -436,16 +440,13 @@ export function solveStygian(
   const candidates = validTeams.slice(0, CANDIDATE_DEPTH);
 
   const solutions = candidates.map((forcedFirst) => {
-    const { usedRelaxedFill, ...sol } = greedyPass(
+    const { relaxedTeams, ...sol } = greedyPass(
       validTeams,
       allSlots,
       preferredStygianSlot,
       forcedFirst,
     );
-    const optimized = optimizeSlots(
-      sol.assignments,
-      !usedRelaxedFill,
-    );
+    const optimized = optimizeSlots(sol.assignments, relaxedTeams);
     const assignments = sortAssignments(optimized, allSlots).map((a) => ({
       ...a,
       missingCharacters: [] as string[],

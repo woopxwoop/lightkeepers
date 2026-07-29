@@ -60,7 +60,7 @@ export async function isSupportedStygianVersion(
  */
 export async function requireSupportedStygianVersion(
   version: number,
-  unsupportedMessage = "stygianVersion must be a number.",
+  unsupportedMessage = "stygianVersion is not a supported version.",
 ): Promise<void> {
   let supported: boolean;
   try {
@@ -79,7 +79,7 @@ export async function requireSupportedStygianVersion(
 export async function requireSupportedAbyssAndStygianVersions(
   abyssVersion: number,
   stygianVersion: number,
-  unsupportedMessage = "abyssVersion and stygianVersion must be numbers.",
+  unsupportedMessage = "abyssVersion and stygianVersion are not supported versions.",
 ): Promise<void> {
   let supportedVersions: [boolean, boolean];
   try {

@@ -343,15 +343,18 @@ describe("solveStygian", () => {
     );
 
     // Same teams seated sub-threshold: optimizer with floor off can rearrange.
-    const rotated = optimizeStygianSlotAssignments(
-      sol.assignments.map((a) => ({ team: a.team, slot: a.slot })),
-      false,
-    );
+    const seated = sol.assignments.map((a) => ({ team: a.team, slot: a.slot }));
+    const before = scoreAssignments(seated);
+    const rotated = optimizeStygianSlotAssignments(seated, false);
     assert.equal(rotated.length, 3);
     assert.equal(
       new Set(rotated.map((a) => a.slot)).size,
       3,
       "relaxed optimize keeps unique slots",
+    );
+    assert.ok(
+      scoreAssignments(rotated) >= before,
+      "relaxed optimize must not lower affinity score",
     );
   });
 

@@ -6,19 +6,21 @@
  * (e.g. CF-Connecting-IP) is never treated as authorization.
  */
 
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { env } from "$env/dynamic/private";
 import { registry } from "$lib/server/metrics";
 
+/** Case-insensitive Bearer scheme; compares SHA-256 digests in constant time. */
 function bearerMatches(authHeader: string | null, token: string): boolean {
-  if (!authHeader?.startsWith("Bearer ")) return false;
-  const provided = authHeader.slice("Bearer ".length);
-  const expected = Buffer.from(token);
-  const actual = Buffer.from(provided);
-  if (expected.length !== actual.length) return false;
-  return timingSafeEqual(expected, actual);
+  if (!authHeader) return false;
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader);
+  if (!match) return false;
+  const provided = match[1]!;
+  const expectedDigest = createHash("sha256").update(token).digest();
+  const actualDigest = createHash("sha256").update(provided).digest();
+  return timingSafeEqual(expectedDigest, actualDigest);
 }
 
 export const GET: RequestHandler = async ({ request }) => {

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  MAX_NAME_ID_LENGTH,
+  MAX_ROSTER_CHARACTERS,
   requireCharacterNameIds,
   requireFiniteInteger,
   requireJsonObject,
@@ -15,7 +17,7 @@ const isBadRequest = (value: unknown): boolean =>
   value.status === 400;
 
 describe("request validation", () => {
-  it("accepts object JSON and rejects null or malformed JSON", async () => {
+  it("accepts object JSON and rejects null, array, or malformed JSON", async () => {
     const body = await requireJsonObject(
       new Request("http://localhost", {
         method: "POST",
@@ -32,6 +34,15 @@ describe("request validation", () => {
     );
     await assert.rejects(
       requireJsonObject(
+        new Request("http://localhost", {
+          method: "POST",
+          body: JSON.stringify([1, 2]),
+        }),
+      ),
+      isBadRequest,
+    );
+    await assert.rejects(
+      requireJsonObject(
         new Request("http://localhost", { method: "POST", body: "{" }),
       ),
       isBadRequest,
@@ -41,17 +52,40 @@ describe("request validation", () => {
   it("requires finite integers and bounded finite numbers", () => {
     assert.equal(requireFiniteInteger(3, "bad"), 3);
     assert.throws(() => requireFiniteInteger(3.5, "bad"), isBadRequest);
+    assert.throws(() => requireFiniteInteger("3", "bad"), isBadRequest);
+    assert.throws(() => requireFiniteInteger(Number.NaN, "bad"), isBadRequest);
+    assert.throws(
+      () => requireFiniteInteger(Number.POSITIVE_INFINITY, "bad"),
+      isBadRequest,
+    );
+
     assert.equal(requireNumberInRange(0.3, 0, 1, "bad"), 0.3);
+    assert.equal(requireNumberInRange(0, 0, 1, "bad"), 0);
+    assert.equal(requireNumberInRange(1, 0, 1, "bad"), 1);
     assert.throws(
       () => requireNumberInRange(Number.NaN, 0, 1, "bad"),
       isBadRequest,
     );
+    assert.throws(() => requireNumberInRange(-0.1, 0, 1, "bad"), isBadRequest);
+    assert.throws(() => requireNumberInRange(1.1, 0, 1, "bad"), isBadRequest);
+    assert.throws(() => requireNumberInRange("0.3", 0, 1, "bad"), isBadRequest);
   });
 
   it("validates character name_id arrays", () => {
     assert.deepEqual(requireCharacterNameIds(["Furina"]), ["Furina"]);
     assert.throws(() => requireCharacterNameIds(null), isBadRequest);
     assert.throws(() => requireCharacterNameIds([""]), isBadRequest);
+    assert.throws(
+      () =>
+        requireCharacterNameIds(
+          Array.from({ length: MAX_ROSTER_CHARACTERS + 1 }, (_, i) => `c${i}`),
+        ),
+      isBadRequest,
+    );
+    assert.throws(
+      () => requireCharacterNameIds(["x".repeat(MAX_NAME_ID_LENGTH + 1)]),
+      isBadRequest,
+    );
   });
 
   it("validates roster entries and rejects extra or wrong-typed keys", () => {
