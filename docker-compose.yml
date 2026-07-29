@@ -11,10 +11,11 @@ services:
     environment:
       VALKEY_URL: ${VALKEY_URL:-redis://valkey:6379}
     restart: unless-stopped
-    # Optional host bind for curl/debug. Cloudflare Tunnel reaches app via the
-    # internal network — drop this publish if you don't need direct access.
+    # Optional host bind for curl/debug. Bound to loopback so the public
+    # internet cannot bypass Cloudflare Tunnel (rate limits, /metrics, etc.).
+    # Drop this publish entirely if you don't need direct access.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       valkey:
         condition: service_healthy

@@ -18,6 +18,7 @@ import {
   apiRateLimiter,
   getClientIp,
   buildRpcKey,
+  assertCharacterNameIds,
 } from "$lib/server/cache";
 import { isPlaywrightE2e } from "$lib/server/e2e";
 import {
@@ -60,10 +61,22 @@ export const POST: RequestHandler = async ({ request }) => {
     throw error(400, "Invalid JSON body.");
   }
 
-  const { characters, abyssVersion, stygianVersion } = body;
+  const { characters: rawCharacters, abyssVersion, stygianVersion } = body;
 
-  if (!Array.isArray(characters)) {
-    throw error(400, "characters must be an array of strings.");
+  let characters: string[];
+  try {
+    characters = assertCharacterNameIds(rawCharacters);
+  } catch (e) {
+    throw error(400, e instanceof Error ? e.message : "Invalid characters.");
+  }
+
+  if (
+    typeof abyssVersion !== "number" ||
+    !Number.isFinite(abyssVersion) ||
+    typeof stygianVersion !== "number" ||
+    !Number.isFinite(stygianVersion)
+  ) {
+    throw error(400, "abyssVersion and stygianVersion must be numbers.");
   }
 
   // ── Cache lookup ─────────────────────────────────────────────────────────

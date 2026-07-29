@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Tables } from "$lib/types/database.types";
 
 // ── LRU Cache ──────────────────────────────────────────────────────────────
@@ -275,28 +276,69 @@ export const rpcCache = new LRUCache<unknown>(2_000, TTL_15_MIN, {
  */
 export const apiRateLimiter = new RateLimiter(60, 60_000);
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+/** Soft cap — Genshin roster is ~100; leave headroom without allowing megabyte keys. */
+export const MAX_ROSTER_CHARACTERS = 256;
+export const MAX_NAME_ID_LENGTH = 64;
+/** Above this joined-key length, hash the roster segment of buildRpcKey. */
+const RPC_KEY_ROSTER_HASH_AFTER = 180;
 
 /**
- * Extracts the client IP from a SvelteKit RequestEvent.
- * Respects Cloudflare's CF-Connecting-IP header when present.
+ * Extracts the client IP for rate limiting.
+ * Prefer Cloudflare's CF-Connecting-IP. Do not trust X-Forwarded-For in
+ * production (spoofable if the app port is reachable outside the tunnel).
  */
 export function getClientIp(request: Request): string {
-  return (
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown"
-  );
+  const cf = request.headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
+  // vite dev / non-production only — XFF is not trustworthy on a public bind.
+  if (process.env.NODE_ENV !== "production") {
+    return (
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+    );
+  }
+  return "unknown";
+}
+
+/**
+ * Validates a roster / owned-characters name_id list for RPC routes.
+ * Returns the array on success; throws Error with a 400-ready message.
+ */
+export function assertCharacterNameIds(characters: unknown): string[] {
+  if (!Array.isArray(characters)) {
+    throw new Error("characters must be an array of strings.");
+  }
+  if (characters.length > MAX_ROSTER_CHARACTERS) {
+    throw new Error(
+      `characters must have at most ${MAX_ROSTER_CHARACTERS} entries.`,
+    );
+  }
+  for (const item of characters) {
+    if (typeof item !== "string" || item.length === 0) {
+      throw new Error("characters must be an array of non-empty strings.");
+    }
+    if (item.length > MAX_NAME_ID_LENGTH) {
+      throw new Error(
+        `character name_id must be at most ${MAX_NAME_ID_LENGTH} characters.`,
+      );
+    }
+  }
+  return characters as string[];
 }
 
 /**
  * Builds a stable cache key from an RPC name, version, and character list.
  * Sorting ensures ["Furina","Xilonen"] and ["Xilonen","Furina"] hit the same entry.
+ * Long rosters are hashed so Valkey/L1 keys stay bounded.
  */
 export function buildRpcKey(
   rpcName: string,
   versionNumber: number,
   characters: string[],
 ): string {
-  return `${rpcName}:${versionNumber}:${[...characters].sort().join(",")}`;
+  const sorted = [...characters].sort().join(",");
+  const rosterPart =
+    sorted.length > RPC_KEY_ROSTER_HASH_AFTER
+      ? createHash("sha256").update(sorted).digest("hex")
+      : sorted;
+  return `${rpcName}:${versionNumber}:${rosterPart}`;
 }

@@ -1,6 +1,10 @@
 import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
+import {
+  MAX_NAME_ID_LENGTH,
+  MAX_ROSTER_CHARACTERS,
+} from "$lib/server/cache";
 
 export const GET: RequestHandler = async ({ locals }) => {
   if (!locals.user) throw error(401, "Unauthorized");
@@ -31,14 +35,24 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     throw error(400, "Invalid roster payload");
   }
 
+  if (!Array.isArray(roster)) {
+    throw error(400, "Invalid roster payload");
+  }
+  if (roster.length > MAX_ROSTER_CHARACTERS) {
+    throw error(
+      400,
+      `roster must have at most ${MAX_ROSTER_CHARACTERS} entries`,
+    );
+  }
   if (
-    !Array.isArray(roster) ||
     !roster.every(
       (item) =>
         typeof item === "object" &&
         item !== null &&
-        typeof item.name_id === "string" &&
-        typeof item.isOwned === "boolean",
+        typeof (item as { name_id?: unknown }).name_id === "string" &&
+        (item as { name_id: string }).name_id.length > 0 &&
+        (item as { name_id: string }).name_id.length <= MAX_NAME_ID_LENGTH &&
+        typeof (item as { isOwned?: unknown }).isOwned === "boolean",
     )
   ) {
     throw error(400, "Invalid roster payload");
