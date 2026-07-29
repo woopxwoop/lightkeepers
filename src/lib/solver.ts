@@ -128,21 +128,34 @@ function greedyPass<
 
   return {
     assignments,
-    score: (() => {
-      if (assignments.length === 0) return 0;
-      const weighted = assignments.map(
-        (a) => (a.team.usage_rate ?? 0) * slotAffinityRate(a.team, a.slot),
-      );
-      const min = Math.min(...weighted);
-      const mean = weighted.reduce((s, v) => s + v, 0) / weighted.length;
-      // 60% weakest-link, 40% average — penalises lopsided solutions
-      // without ignoring the strength of the other teams
-      return 0.6 * min + 0.4 * mean;
-    })(),
+    score: scoreAssignments(assignments),
     unfilled: allSlots.filter((s) => !filledSlots.has(s)),
     isFallback: false,
     neededCharacters: [],
   };
+}
+
+/** Score after slot placement — must be recomputed if assignments are swapped. */
+export function scoreAssignments(
+  assignments: {
+    team: {
+      usage_rate: number | null;
+      field_1_rate: number | null;
+      field_2_rate: number | null;
+      [key: string]: unknown;
+    };
+    slot: string;
+  }[],
+): number {
+  if (assignments.length === 0) return 0;
+  const weighted = assignments.map(
+    (a) => (a.team.usage_rate ?? 0) * slotAffinityRate(a.team, a.slot),
+  );
+  const min = Math.min(...weighted);
+  const mean = weighted.reduce((s, v) => s + v, 0) / weighted.length;
+  // 60% weakest-link, 40% average — penalises lopsided solutions
+  // without ignoring the strength of the other teams
+  return 0.6 * min + 0.4 * mean;
 }
 
 // ---- Deduplication --------------------------------------------------------
@@ -257,12 +270,15 @@ export function solveAbyss(
       forcedFirst,
     );
     const optimized = optimizeSlots(sol.assignments, preferredAbyssSlot);
+    const assignments = sortAssignments(optimized, allSlots).map((a) => ({
+      ...a,
+      missingCharacters: [] as string[],
+    }));
     return {
       ...sol,
-      assignments: sortAssignments(optimized, allSlots).map((a) => ({
-        ...a,
-        missingCharacters: [] as string[],
-      })),
+      assignments,
+      // Affinity is slot-dependent — recompute after optimizeSlots swaps.
+      score: scoreAssignments(assignments),
     };
   });
 
@@ -288,12 +304,14 @@ export function solveStygian(
       forcedFirst,
     );
     const optimized = optimizeSlots(sol.assignments, preferredStygianSlot);
+    const assignments = sortAssignments(optimized, allSlots).map((a) => ({
+      ...a,
+      missingCharacters: [] as string[],
+    }));
     return {
       ...sol,
-      assignments: sortAssignments(optimized, allSlots).map((a) => ({
-        ...a,
-        missingCharacters: [] as string[],
-      })),
+      assignments,
+      score: scoreAssignments(assignments),
     };
   });
 
