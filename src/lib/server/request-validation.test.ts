@@ -5,6 +5,7 @@ import {
   requireFiniteInteger,
   requireJsonObject,
   requireNumberInRange,
+  requireRosterEntries,
 } from "./request-validation.ts";
 
 const isBadRequest = (value: unknown): boolean =>
@@ -51,5 +52,27 @@ describe("request validation", () => {
     assert.deepEqual(requireCharacterNameIds(["Furina"]), ["Furina"]);
     assert.throws(() => requireCharacterNameIds(null), isBadRequest);
     assert.throws(() => requireCharacterNameIds([""]), isBadRequest);
+  });
+
+  it("validates roster entries and rejects extra or wrong-typed keys", () => {
+    assert.deepEqual(requireRosterEntries([{ name_id: "furina", isOwned: true }]), [
+      { name_id: "furina", isOwned: true },
+    ]);
+    assert.throws(() => requireRosterEntries(null), isBadRequest);
+    assert.throws(
+      () => requireRosterEntries([{ name_id: "furina" }]),
+      isBadRequest,
+    );
+    assert.throws(
+      () => requireRosterEntries([{ name_id: "furina", isOwned: "yes" }]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireRosterEntries([
+          { name_id: "furina", isOwned: true, extra: 1 },
+        ]),
+      isBadRequest,
+    );
   });
 });

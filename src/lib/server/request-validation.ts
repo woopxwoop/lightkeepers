@@ -53,6 +53,45 @@ export function requireNumberInRange(
   return value;
 }
 
+/** Persisted roster entry accepted by `/api/roster`. */
+export type RosterEntry = { name_id: string; isOwned: boolean };
+
+/** Validate a `{ name_id, isOwned }[]` roster payload, rejecting extra keys. */
+export function requireRosterEntries(value: unknown): RosterEntry[] {
+  if (!Array.isArray(value)) {
+    throw error(400, "Invalid roster payload");
+  }
+  if (value.length > MAX_ROSTER_CHARACTERS) {
+    throw error(
+      400,
+      `roster must have at most ${MAX_ROSTER_CHARACTERS} entries`,
+    );
+  }
+  return value.map((item) => {
+    if (typeof item !== "object" || item === null) {
+      throw error(400, "Invalid roster payload");
+    }
+    const keys = Object.keys(item);
+    if (
+      keys.length !== 2 ||
+      !keys.includes("name_id") ||
+      !keys.includes("isOwned")
+    ) {
+      throw error(400, "Invalid roster payload");
+    }
+    const { name_id, isOwned } = item as Record<string, unknown>;
+    if (
+      typeof name_id !== "string" ||
+      name_id.length === 0 ||
+      name_id.length > MAX_NAME_ID_LENGTH ||
+      typeof isOwned !== "boolean"
+    ) {
+      throw error(400, "Invalid roster payload");
+    }
+    return { name_id, isOwned };
+  });
+}
+
 /** Validate a roster / owned-character name_id list for RPC routes. */
 export function requireCharacterNameIds(value: unknown): string[] {
   if (!Array.isArray(value)) {
