@@ -21,6 +21,13 @@
     type CharacterSortKey,
     type OwnershipFilter,
   } from "$lib/character-filter";
+  import {
+    captureRoster,
+    postRoster,
+    rosterDiffersFromSnapshot,
+    writeRosterLocal,
+    type RosterCapture,
+  } from "$lib/roster-snapshot";
 
   const session = authClient.useSession();
 
@@ -53,9 +60,11 @@
   );
 
   function updateUnsavedState() {
-    const changed = JSON.stringify(tempCharactersOwned) !== savedSnapshot;
-    hasUnsavedChanges = changed;
-    if (changed) showSaved = false;
+    hasUnsavedChanges = rosterDiffersFromSnapshot(
+      tempCharactersOwned,
+      savedSnapshot,
+    );
+    if (hasUnsavedChanges) showSaved = false;
   }
 
   function toggleOwned(name_id: string) {
@@ -82,11 +91,17 @@
   }
 
   function restoreSavedSnapshot() {
-    try {
-      localStorage.setItem("charactersOwned", savedSnapshot);
-    } catch {
-      /* ignore */
-    }
+    writeRosterLocal(savedSnapshot);
+  }
+
+  function commitSaved(pending: RosterCapture) {
+    savedSnapshot = pending.json;
+    charactersOwned.set(pending.roster);
+    invalidateTeamsOwned();
+    invalidateNearMissTeams();
+    showSaved = true;
+    hasUnsavedChanges = pending.differsFrom(tempCharactersOwned);
+    setHasSavedRoster();
   }
 
   async function saveCharacters() {
@@ -94,45 +109,24 @@
     isSaving = true;
     rosterError = "";
 
+    // Freeze the editor state before any await so concurrent toggles stay unsaved.
+    const pending = captureRoster(tempCharactersOwned);
+
     try {
-      try {
-        localStorage.setItem(
-          "charactersOwned",
-          JSON.stringify(tempCharactersOwned),
-        );
-      } catch {
+      if (!writeRosterLocal(pending.json)) {
         console.warn("localStorage unavailable — saving to memory only");
       }
 
       if ($session.data) {
-        const rosterToSave = tempCharactersOwned.map((c) => ({ ...c }));
-        const snapshot = JSON.stringify(rosterToSave);
-        const res = await fetch("/api/roster", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roster: rosterToSave }),
-        });
-        if (!res.ok) {
+        const result = await postRoster(pending.roster);
+        if (!result.ok) {
           restoreSavedSnapshot();
-          rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
+          rosterError = `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
-        savedSnapshot = snapshot;
-        charactersOwned.set(rosterToSave);
-        invalidateTeamsOwned();
-        invalidateNearMissTeams();
-        showSaved = true;
-        hasUnsavedChanges =
-          JSON.stringify(tempCharactersOwned) !== savedSnapshot;
-        setHasSavedRoster();
+        commitSaved(pending);
       } else {
-        savedSnapshot = JSON.stringify(tempCharactersOwned);
-        charactersOwned.set(tempCharactersOwned.map((c) => ({ ...c })));
-        invalidateTeamsOwned();
-        invalidateNearMissTeams();
-        showSaved = true;
-        hasUnsavedChanges = false;
-        setHasSavedRoster();
+        commitSaved(pending);
       }
     } catch (e) {
       restoreSavedSnapshot();
@@ -149,14 +143,16 @@
 
   $effect(() => {
     if ($charactersHydrated && !synced) {
-      tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
-      savedSnapshot = JSON.stringify(tempCharactersOwned);
+      const pending = captureRoster($charactersOwned);
+      tempCharactersOwned = pending.roster;
+      savedSnapshot = pending.json;
       synced = true;
     } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
       const storeJson = JSON.stringify($charactersOwned);
       if (storeJson !== savedSnapshot) {
-        tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
-        savedSnapshot = storeJson;
+        const pending = captureRoster($charactersOwned);
+        tempCharactersOwned = pending.roster;
+        savedSnapshot = pending.json;
       }
     }
   });
@@ -235,8 +231,9 @@
             <Button
               variant="ghost"
               onclick={() => {
-                tempCharactersOwned = $charactersOwned.map((c) => ({ ...c }));
-                savedSnapshot = JSON.stringify($charactersOwned);
+                const pending = captureRoster($charactersOwned);
+                tempCharactersOwned = pending.roster;
+                savedSnapshot = pending.json;
                 hasUnsavedChanges = false;
               }}
             >
