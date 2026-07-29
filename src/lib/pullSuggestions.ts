@@ -8,7 +8,7 @@ export type PullSuggestion = {
   character: string;
   characterName: string | undefined;
   unlocksTeams: number;
-  /** Top unlocked teams by avg usage (up to 2). */
+  /** Top unlocked teams by avg usage (for the expand cycle). */
   topTeams: StygianTeam[];
   bestTeam: StygianTeam;
   score: number;
@@ -23,7 +23,7 @@ export type PairSuggestion = {
   pmi: number;
   avgUsage: number;
   unlocksTeams: number;
-  /** Top unlocked teams by avg usage (up to 2). */
+  /** Top unlocked teams by avg usage (for the expand cycle). */
   topTeams: StygianTeam[];
   bestTeam: StygianTeam;
   score: number;
@@ -35,7 +35,8 @@ export const MIN_PULL_TEAM_USAGE = 10;
 /** Floor so non-positive PMI pairs still order by avgUsage. */
 const PMI_SCORE_FLOOR = 1e-6;
 
-const TOP_TEAMS_SHOWN = 2;
+/** How many popular unlocked teams the pulls expand pager can cycle. */
+const TOP_TEAMS_SHOWN = 4;
 
 function nearMissToTeam(
   team: NearMissStygianTeam | NearMissStygianPair,

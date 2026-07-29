@@ -41,9 +41,81 @@ test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
   await expect(bestNext).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
   await expect(bestNext.getByRole("link", { name: "Hu Tao" })).toBeVisible();
 
-  await bestNext.getByRole("button", { name: "Learn more" }).click();
-  await expect(bestNext.getByText(/best unlocked:\s*42\.0%/i)).toBeVisible();
-  await expect(bestNext.getByRole("button", { name: "Show less" })).toBeVisible();
+  // A lone suggestion starts hidden: pull target plus three blank slots.
+  await expect(
+    bestNext.getByRole("button", { name: "Reveal team" }),
+  ).toBeVisible();
+  await expect(
+    bestNext.getByRole("img", { name: "Unrevealed teammate" }),
+  ).toHaveCount(3);
+  await expect(bestNext.getByRole("link", { name: "Yelan" })).toHaveCount(0);
+
+  // Revealing fills the blanks with the unlocked team.
+  await bestNext.getByRole("button", { name: "Reveal team" }).click();
+  await expect(bestNext.getByText(/42\.0%\s*usage/i)).toBeVisible();
+  await expect(bestNext.getByRole("link", { name: "Yelan" })).toBeVisible();
+  await expect(bestNext.getByRole("link", { name: "Zhongli" })).toBeVisible();
+  await expect(bestNext.getByRole("link", { name: "Albedo" })).toBeVisible();
+  await expect(
+    bestNext.getByRole("img", { name: "Unrevealed teammate" }),
+  ).toHaveCount(0);
+
+  // Hiding restores blank teammate slots and keeps the pull target.
+  await bestNext.getByRole("button", { name: "Hide team" }).click();
+  await expect(bestNext.getByRole("link", { name: "Yelan" })).toHaveCount(0);
+  await expect(bestNext.getByRole("link", { name: "Hu Tao" })).toBeVisible();
+  await expect(
+    bestNext.getByRole("img", { name: "Unrevealed teammate" }),
+  ).toHaveCount(3);
+});
+
+test("pulls reveals suggestion rows independently", async ({ page }) => {
+  attachBrowserDebug(page);
+  // Second cream near-miss so the column renders two rows.
+  const nearMissFurina = {
+    ...NEAR_MISS_SINGLE,
+    team_key: "test-near-miss-furina",
+    members: ["Furina", "Neuvillette", "Kazuha", "Bennett"],
+    members_names: ["Furina", "Neuvillette", "Kazuha", "Bennett"],
+    missing_character: "Furina",
+    missing_character_name: "Furina",
+    avg_usage_rate: 30,
+    usage_rate: 30,
+    usage_total: 30,
+  };
+  await installApiMocks(page, {
+    stygianTeams: [STYGIAN_OWNED_BASELINE],
+    nearMissTeams: [NEAR_MISS_SINGLE, nearMissFurina],
+  });
+
+  const nearmiss = page.waitForRequest(
+    (req) => new URL(req.url()).pathname.endsWith("/api/nearmiss"),
+    { timeout: CLIENT_API_TIMEOUT },
+  );
+
+  await page.goto("/pulls");
+  await nearmiss;
+
+  const bestNext = page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "Best next pulls" }) });
+  await expect(bestNext).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
+
+  // Only the leading row starts revealed.
+  await expect(bestNext.getByRole("button", { name: "Hide team" })).toHaveCount(
+    1,
+  );
+  const secondRow = bestNext.getByRole("button", { name: "Reveal team" });
+  await expect(secondRow).toHaveCount(1);
+
+  // Revealing the second row leaves the first one open.
+  await secondRow.click();
+  await expect(bestNext.getByRole("button", { name: "Hide team" })).toHaveCount(
+    2,
+  );
+  await expect(
+    bestNext.getByRole("button", { name: "Reveal team" }),
+  ).toHaveCount(0);
 });
 
 test("pulls shows stygian standouts without a roster", async ({ page }) => {

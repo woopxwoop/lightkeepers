@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { get } from "svelte/store";
   import {
     charactersOwned,
@@ -27,13 +27,16 @@
   } from "$lib/pullSuggestions";
   import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
   import type { TierListEntry } from "$lib/tierlist";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import type { StygianTeam } from "$lib/definitions";
   import WishSlot from "$lib/ui/components/WishSlot.svelte";
+  import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  import IconEye from "$lib/ui/icons/IconEye.svelte";
+  import IconEyeOff from "$lib/ui/icons/IconEyeOff.svelte";
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -43,11 +46,18 @@
   let pageState: PageState = $state("waiting");
   let suggestions: PullSuggestion[] = $state([]);
   let pairSuggestions: PairSuggestion[] = $state([]);
-  let expandedSingle = $state<string | null>(null);
-  let expandedPair = $state<string | null>(null);
+  let revealedSingles = $state(new Set<string>());
+  let revealedPairs = $state(new Set<string>());
+  /** Active team per revealed row — rows page through their teams separately. */
+  let singleTeamIndex = $state<Record<string, number>>({});
+  let pairTeamIndex = $state<Record<string, number>>({});
+  let openedByDefault = false;
   let expandedStandoutBoards = $state(new Set<string>());
   let collapsingStandoutBoards = $state(new Set<string>());
-  const standoutCollapseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  const standoutCollapseTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
 
   onDestroy(() => {
     for (const timer of standoutCollapseTimers.values()) clearTimeout(timer);
@@ -71,9 +81,7 @@
 
   /** Limited cream name_ids — pull suggestions stay inside the standouts cut. */
   let creamPullIds = $derived(
-    $tierList
-      ? new Set($tierList.fiveStar.map((e) => e.nameId))
-      : undefined,
+    $tierList ? new Set($tierList.fiveStar.map((e) => e.nameId)) : undefined,
   );
 
   function rankSuggestions() {
@@ -83,13 +91,12 @@
         3,
         creamPullIds,
       );
-      const pairs = computePairSuggestions(
-        $nearMissPairTeams,
-        3,
-        creamPullIds,
-      );
+      const pairs = computePairSuggestions($nearMissPairTeams, 3, creamPullIds);
       suggestions = singles;
       pairSuggestions = pairs;
+      // Reveal state is read here but owned by the toggles — don't make
+      // ranking depend on it.
+      untrack(() => syncRevealed(singles, pairs));
       pageState = singles.length > 0 || pairs.length > 0 ? "done" : "empty";
     } catch (error) {
       suggestions = [];
@@ -97,6 +104,46 @@
       pageState = "error";
       console.error("pull suggestion ranking failed:", error);
     }
+  }
+
+  /**
+   * Reveals the leading row of a multi-row column on first ranking, then only
+   * drops ids that no longer exist — a manual hide must not spring back open.
+   */
+  function syncRevealed(
+    singles: PullSuggestion[],
+    pairs: PairSuggestion[],
+  ): void {
+    revealedSingles = nextRevealed(
+      revealedSingles,
+      singles.map((s) => s.character),
+      singleTeamIndex,
+    );
+    revealedPairs = nextRevealed(
+      revealedPairs,
+      pairs.map(pairKey),
+      pairTeamIndex,
+    );
+
+    if (singles.length > 0 || pairs.length > 0) openedByDefault = true;
+  }
+
+  /** Returns the same set when nothing changed, so re-ranking is a no-op. */
+  function nextRevealed(
+    revealed: Set<string>,
+    ids: string[],
+    indices: Record<string, number>,
+  ): Set<string> {
+    if (!openedByDefault) {
+      // A lone suggestion stays hidden — let it be opened deliberately.
+      const first = ids.length > 1 ? ids[0] : undefined;
+      if (!first) return revealed;
+      indices[first] ??= 0;
+      return new Set([first]);
+    }
+    const live = new Set(ids);
+    const kept = [...revealed].filter((id) => live.has(id));
+    return kept.length === revealed.size ? revealed : new Set(kept);
   }
 
   // Tier list is roster-independent — warm as soon as the page mounts.
@@ -142,11 +189,28 @@
   });
 
   function toggleSingle(character: string) {
-    expandedSingle = expandedSingle === character ? null : character;
+    revealedSingles = toggleRevealed(
+      revealedSingles,
+      character,
+      singleTeamIndex,
+    );
   }
 
   function togglePair(key: string) {
-    expandedPair = expandedPair === key ? null : key;
+    revealedPairs = toggleRevealed(revealedPairs, key, pairTeamIndex);
+  }
+
+  function toggleRevealed(
+    revealed: Set<string>,
+    id: string,
+    indices: Record<string, number>,
+  ): Set<string> {
+    const next = new Set(revealed);
+    if (!next.delete(id)) {
+      next.add(id);
+      indices[id] ??= 0;
+    }
+    return next;
   }
 
   function toggleStandoutBoard(id: string, count = 1) {
@@ -187,6 +251,20 @@
     return `${suggestion.charA}|${suggestion.charB}`;
   }
 
+  /** Teammates beside the pull target(s), which already lead the row. */
+  function remainingMembers(
+    team: StygianTeam | undefined,
+    exclude: string[],
+  ): string[] {
+    const skip = new Set(exclude);
+    return (team?.members ?? []).filter((member) => !skip.has(member));
+  }
+
+  function safeTeamIndex(index: number, teams: StygianTeam[]): number {
+    if (teams.length === 0) return 0;
+    return Math.min(index, teams.length - 1);
+  }
+
   function usagePct(entry: TierListEntry): string {
     return `${entry.score.toFixed(entry.score >= 10 ? 0 : 1)}%`;
   }
@@ -215,17 +293,27 @@
   }
 </script>
 
-{#snippet teamGrid(members: string[], highlighted: string[], dimmed: boolean)}
-  <div class="mini-grid" class:mini-grid-dimmed={dimmed}>
-    {#each members as member (member)}
-      <div
-        class="mini-slot"
-        class:mini-slot-highlight={highlighted.includes(member)}
-      >
-        <CharacterIcon character={mapping.get(member)} />
-      </div>
-    {/each}
-  </div>
+{#snippet teammateSlots(members: string[], count: number, revealed: boolean)}
+  {#each Array(count) as _, i}
+    {@const member = members[i]}
+    {@const character = member ? mapping.get(member) : undefined}
+    <div
+      class="team-slot team-slot-mate"
+      class:team-slot-revealed={revealed && Boolean(member)}
+      style="--i: {i};"
+    >
+      {#if member}
+        <WishSlot
+          nameId={member}
+          name={character?.name ?? member}
+          rarity={character?.rarity ?? 4}
+          dimmed={!ownedIds.has(member)}
+        />
+      {:else}
+        <WishSlot empty name="Unrevealed teammate" />
+      {/if}
+    </div>
+  {/each}
 {/snippet}
 
 {#snippet standoutsBoard(id: string, label: string, entries: TierListEntry[])}
@@ -265,9 +353,7 @@
                 onclick={!shown && i === 0 && restCount > 0
                   ? () => toggleStandoutBoard(id, entries.length)
                   : undefined}
-                cue={!shown && i === 0 && restCount > 0
-                  ? "Expand"
-                  : undefined}
+                cue={!shown && i === 0 && restCount > 0 ? "Expand" : undefined}
               />
             </li>
           {/each}
@@ -331,142 +417,171 @@
               <h2 class="panel-title">Best next pulls</h2>
               <p class="panel-lede">
                 Ranked by high-usage teams a character unlocks for your roster
-                and how many of those teams they open
               </p>
             </div>
           </header>
 
           <ol class="ledger-list">
             {#each suggestions as suggestion (suggestion.character)}
-              {@const isOpen = expandedSingle === suggestion.character}
+              {@const isOpen = revealedSingles.has(suggestion.character)}
               {@const char = mapping.get(suggestion.character)}
+              {@const teamIdx = safeTeamIndex(
+                singleTeamIndex[suggestion.character] ?? 0,
+                suggestion.topTeams,
+              )}
+              {@const cycleTeam = suggestion.topTeams[teamIdx]}
+              {@const mates = remainingMembers(cycleTeam, [
+                suggestion.character,
+              ])}
               <li class="ledger-row">
-                <div class="row-art">
-                  <WishSlot
-                    nameId={suggestion.character}
-                    name={suggestion.characterName ?? suggestion.character}
-                    rarity={char?.rarity ?? 5}
-                  />
-                </div>
-                <button
-                  type="button"
-                  class="row-toggle"
-                  aria-expanded={isOpen}
-                  aria-label={isOpen ? "Show less" : "Learn more"}
-                  onclick={() => toggleSingle(suggestion.character)}
-                >
-                  <span class="row-toggle-chevron" class:open={isOpen}>
-                    <IconChevronDown size={18} strokeWidth={2.25} />
-                  </span>
-                </button>
-
-                <div
-                  class="row-details"
-                  class:row-details-open={isOpen}
-                  aria-hidden={!isOpen}
-                  inert={!isOpen}
-                >
-                  <div class="row-details-inner">
-                    <div class="compare">
-                      <p class="compare-label">
-                        best unlocked: {(
-                          suggestion.topTeams[0]?.avg_usage_rate ?? 0
-                        ).toFixed(1)}%
-                      </p>
-                      {#each suggestion.topTeams as team, i (team.team_key)}
-                        <div
-                          class="compare-side"
-                          class:compare-side-best={i === 0}
-                        >
-                          {@render teamGrid(
-                            team.members ?? [],
-                            i === 0 ? [suggestion.character] : [],
-                            i !== 0,
-                          )}
-                        </div>
-                      {/each}
-                    </div>
+                <div class="row-team">
+                  <div class="team-slot">
+                    <WishSlot
+                      nameId={suggestion.character}
+                      name={suggestion.characterName ?? suggestion.character}
+                      rarity={char?.rarity ?? 5}
+                      highlight
+                    />
                   </div>
+
+                  {#if isOpen}
+                    {#key teamIdx}
+                      {@render teammateSlots(mates, 3, true)}
+                    {/key}
+                  {:else}
+                    {@render teammateSlots([], 3, false)}
+                  {/if}
+
+                  <button
+                    type="button"
+                    class="row-toggle"
+                    aria-expanded={isOpen}
+                    aria-label={isOpen ? "Hide team" : "Reveal team"}
+                    onclick={() => toggleSingle(suggestion.character)}
+                  >
+                    <span class="row-toggle-icon" class:open={isOpen}>
+                      <span class="row-toggle-face row-toggle-face-closed">
+                        <IconEyeOff size={18} strokeWidth={2.25} />
+                      </span>
+                      <span class="row-toggle-face row-toggle-face-open">
+                        <IconEye size={18} strokeWidth={2.25} />
+                      </span>
+                    </span>
+                  </button>
                 </div>
+
+                {#if isOpen}
+                  <div class="team-cycle-meta">
+                    <p class="team-cycle-label">
+                      {(cycleTeam?.avg_usage_rate ?? 0).toFixed(1)}% usage
+                      {#if suggestion.topTeams.length > 1}
+                        <span class="team-cycle-count"
+                          >· team {teamIdx + 1} of {suggestion.topTeams
+                            .length}</span
+                        >
+                      {/if}
+                    </p>
+                    <SolutionDots
+                      count={suggestion.topTeams.length}
+                      bind:index={singleTeamIndex[suggestion.character]}
+                      aria-label-prefix="Unlocked team"
+                    />
+                  </div>
+                {/if}
               </li>
             {/each}
           </ol>
         </section>
       {/if}
 
-      <!-- ── Pair opportunities ────────────────────────────────────── -->
+      <!-- ── Pair pulls ────────────────────────────────────── -->
       {#if pairSuggestions.length > 0}
         <section class="panel">
           <header class="panel-head">
             <div class="panel-head-text">
-              <h2 class="panel-title">Pair opportunities</h2>
-              <p class="panel-lede">
-                Two characters that unlock teams neither would alone
-              </p>
+              <h2 class="panel-title">Pair Pulls</h2>
+              <p class="panel-lede">Two characters that form a strong core</p>
             </div>
           </header>
 
           <ol class="ledger-list">
             {#each pairSuggestions as suggestion (pairKey(suggestion))}
               {@const key = pairKey(suggestion)}
-              {@const isOpen = expandedPair === key}
+              {@const isOpen = revealedPairs.has(key)}
               {@const charA = mapping.get(suggestion.charA)}
               {@const charB = mapping.get(suggestion.charB)}
+              {@const teamIdx = safeTeamIndex(
+                pairTeamIndex[key] ?? 0,
+                suggestion.topTeams,
+              )}
+              {@const cycleTeam = suggestion.topTeams[teamIdx]}
+              {@const mates = remainingMembers(cycleTeam, [
+                suggestion.charA,
+                suggestion.charB,
+              ])}
               <li class="ledger-row">
-                <div class="row-art row-art-pair">
-                  <WishSlot
-                    nameId={suggestion.charA}
-                    name={suggestion.charAName ?? suggestion.charA}
-                    rarity={charA?.rarity ?? 5}
-                  />
-                  <WishSlot
-                    nameId={suggestion.charB}
-                    name={suggestion.charBName ?? suggestion.charB}
-                    rarity={charB?.rarity ?? 5}
-                  />
-                </div>
-                <button
-                  type="button"
-                  class="row-toggle"
-                  aria-expanded={isOpen}
-                  aria-label={isOpen ? "Show less" : "Learn more"}
-                  onclick={() => togglePair(key)}
-                >
-                  <span class="row-toggle-chevron" class:open={isOpen}>
-                    <IconChevronDown size={18} strokeWidth={2.25} />
-                  </span>
-                </button>
-
-                <div
-                  class="row-details"
-                  class:row-details-open={isOpen}
-                  aria-hidden={!isOpen}
-                  inert={!isOpen}
-                >
-                  <div class="row-details-inner">
-                    <div class="compare">
-                      <p class="compare-label">
-                        best unlocked: {(
-                          suggestion.topTeams[0]?.avg_usage_rate ?? 0
-                        ).toFixed(1)}%
-                      </p>
-                      {#each suggestion.topTeams as team, i (team.team_key)}
-                        <div
-                          class="compare-side"
-                          class:compare-side-best={i === 0}
-                        >
-                          {@render teamGrid(
-                            team.members ?? [],
-                            i === 0
-                              ? [suggestion.charA, suggestion.charB]
-                              : [],
-                            i !== 0,
-                          )}
-                        </div>
-                      {/each}
-                    </div>
+                <div class="row-team">
+                  <div class="team-slot">
+                    <WishSlot
+                      nameId={suggestion.charA}
+                      name={suggestion.charAName ?? suggestion.charA}
+                      rarity={charA?.rarity ?? 5}
+                      highlight
+                    />
                   </div>
+                  <div class="team-slot">
+                    <WishSlot
+                      nameId={suggestion.charB}
+                      name={suggestion.charBName ?? suggestion.charB}
+                      rarity={charB?.rarity ?? 5}
+                      highlight
+                    />
+                  </div>
+
+                  {#if isOpen}
+                    {#key teamIdx}
+                      {@render teammateSlots(mates, 2, true)}
+                    {/key}
+                  {:else}
+                    {@render teammateSlots([], 2, false)}
+                  {/if}
+
+                  <button
+                    type="button"
+                    class="row-toggle"
+                    aria-expanded={isOpen}
+                    aria-label={isOpen ? "Hide team" : "Reveal team"}
+                    onclick={() => togglePair(key)}
+                  >
+                    <span class="row-toggle-icon" class:open={isOpen}>
+                      <span class="row-toggle-face row-toggle-face-closed">
+                        <IconEyeOff size={18} strokeWidth={2.25} />
+                      </span>
+                      <span class="row-toggle-face row-toggle-face-open">
+                        <IconEye size={18} strokeWidth={2.25} />
+                      </span>
+                    </span>
+                  </button>
                 </div>
+
+                {#if isOpen}
+                  <div class="team-cycle-meta">
+                    <p class="team-cycle-label">
+                      {(cycleTeam?.avg_usage_rate ?? 0).toFixed(1)}% usage
+                      {#if suggestion.topTeams.length > 1}
+                        <span class="team-cycle-count"
+                          >· team {teamIdx + 1} of {suggestion.topTeams
+                            .length}</span
+                        >
+                      {/if}
+                    </p>
+                    <SolutionDots
+                      count={suggestion.topTeams.length}
+                      bind:index={pairTeamIndex[key]}
+                      aria-label-prefix="Unlocked team"
+                    />
+                  </div>
+                {/if}
               </li>
             {/each}
           </ol>
@@ -549,7 +664,7 @@
 
   @media (min-width: 960px) {
     .suggest-columns {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--space-6);
     }
   }
@@ -590,6 +705,13 @@
     color: var(--foreground-mid);
     line-height: 1.45;
     max-width: 48ch;
+  }
+
+  /* Side-by-side columns: reserve two lines so both team rows start level. */
+  @media (min-width: 960px) {
+    .suggest-columns .panel-lede {
+      min-height: 2.9em;
+    }
   }
 
   /* ── Standouts ──────────────────────────────────────────────────── */
@@ -806,6 +928,7 @@
   /* ── Suggestion ledger ──────────────────────────────────────────── */
   .ledger-list {
     --standout-w: clamp(4.75rem, 18vw, 5.5rem);
+    --team-slot-gap: 0.45rem;
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
@@ -817,26 +940,18 @@
 
   .ledger-row {
     display: flex;
-    align-items: center;
-    gap: 0.2rem;
+    flex-direction: column;
+    gap: 0.35rem;
     width: 100%;
     min-width: 0;
   }
 
-  .row-art {
-    flex: 0 0 var(--standout-w);
-    width: var(--standout-w);
-  }
-
-  .row-art-pair {
+  /* Pull target + revealed teammates read as one four-slot team. */
+  .row-team {
     display: flex;
-    flex: 0 0 auto;
-    width: auto;
-    gap: 0.45rem;
-  }
-
-  .row-art :global(.wish) {
-    width: var(--standout-w);
+    align-items: center;
+    gap: var(--team-slot-gap);
+    min-width: 0;
   }
 
   .row-toggle {
@@ -844,6 +959,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
+    margin-left: -0.15rem;
     min-width: 2rem;
     min-height: 2rem;
     padding: 0.35rem;
@@ -860,109 +977,103 @@
     background: var(--surface-quiet);
   }
 
-  .row-toggle-chevron {
+  /* Stacked eye / eye-off; open state crossfades instead of rotating. */
+  .row-toggle-icon {
+    position: relative;
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .row-toggle-face {
+    position: absolute;
+    inset: 0;
     display: inline-flex;
-    transform: rotate(-90deg);
-    transition: transform 220ms ease;
-  }
-
-  .row-toggle-chevron.open {
-    transform: rotate(90deg);
-  }
-
-  .row-details {
-    flex: 1 1 auto;
-    display: grid;
-    grid-template-columns: 0fr;
-    min-width: 0;
-    opacity: 0;
+    align-items: center;
+    justify-content: center;
     transition:
-      grid-template-columns var(--control-duration) var(--control-ease),
-      opacity var(--control-duration) var(--control-ease),
-      margin-left var(--control-duration) var(--control-ease);
+      opacity 180ms var(--control-ease),
+      transform 180ms var(--control-ease);
   }
 
-  .row-details-open {
-    grid-template-columns: 1fr;
+  .row-toggle-face-closed {
     opacity: 1;
-    margin-left: var(--space-2);
+    transform: scale(1);
   }
 
-  .row-details-inner {
-    min-width: 0;
-    overflow: hidden;
-    padding: 0.15rem 0.2rem 0.15rem 0.35rem;
+  .row-toggle-face-open {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+
+  .row-toggle-icon.open .row-toggle-face-closed {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+
+  .row-toggle-icon.open .row-toggle-face-open {
+    opacity: 1;
+    transform: scale(1);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .row-toggle-chevron,
-    .row-details {
+    .row-toggle-face {
       transition: none;
     }
   }
 
-  /* ── Comparison ─────────────────────────────────────────────────── */
-  .compare {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-3);
-    width: min(100%, 13rem);
-    padding: 0;
+  /* ── Unlocked team cycle ────────────────────────────────────────── */
+  /* Slots share the row evenly so a full team fits an equal-width column,
+     and never grow past the standalone slot width. */
+  .team-slot {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: var(--standout-w);
   }
 
-  @media (min-width: 960px) {
-    .compare {
-      width: min(100%, 18rem);
-      gap: var(--space-4);
+  /* Blanks already occupy the row — reveal is a soft materialize, not a slide. */
+  .team-slot-revealed {
+    animation: mate-reveal 240ms var(--control-ease) both;
+    animation-delay: calc(var(--i, 0) * 40ms);
+  }
+
+  @keyframes mate-reveal {
+    from {
+      opacity: 0.35;
+      filter: brightness(0.55);
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      filter: brightness(1);
+      transform: scale(1);
     }
   }
 
-  @media (min-width: 1280px) {
-    .compare {
-      width: min(100%, 22rem);
+  @media (prefers-reduced-motion: reduce) {
+    .team-slot-revealed {
+      animation: none;
     }
   }
 
-  .compare-side {
+  .team-cycle-meta {
     display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    width: 100%;
-    border-radius: var(--radius-sm);
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    padding-left: 0.1rem;
   }
 
-  .compare-side-best {
-    outline: 1.5px solid var(--accent-1);
-    outline-offset: -1.5px;
-  }
-
-  .compare-label {
+  .team-cycle-label {
     font-size: var(--text-xs);
-    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
     letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
     color: var(--foreground-mid);
   }
 
-  .mini-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.1875rem;
-  }
-
-  .mini-grid-dimmed {
-    opacity: 0.5;
-  }
-
-  .mini-slot {
-    overflow: hidden;
-    border-radius: var(--radius-sm);
-    background: var(--background-color);
-  }
-
-  .mini-slot-highlight {
-    outline: 1.5px solid rgba(255, 255, 255, 0.55);
-    outline-offset: -1.5px;
+  .team-cycle-count {
+    color: color-mix(in srgb, var(--foreground-mid) 75%, transparent);
   }
 
   @media (max-width: 640px) {
@@ -972,18 +1083,11 @@
       --standout-gap-y: 0.65rem;
     }
 
+    /* Slots shrink to share the row, so this stays a cap rather than a size. */
     .ledger-list {
-      --standout-w: clamp(2.75rem, 15vw, 3.35rem);
+      --standout-w: 4.75rem;
+      --team-slot-gap: 0.3rem;
       gap: var(--space-3);
-    }
-
-    .ledger-row {
-      overflow-x: auto;
-      scrollbar-width: thin;
-    }
-
-    .row-art-pair {
-      gap: 0.3rem;
     }
   }
 

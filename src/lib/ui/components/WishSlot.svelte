@@ -2,10 +2,12 @@
   import { getCharacterGachaIcon, getCharacterPortrait } from "$lib/utils";
 
   let {
-    nameId,
+    nameId = "",
     name = "",
     rarity = 5,
     dimmed = false,
+    highlight = false,
+    empty = false,
     loading = "lazy",
     /** When set, slot is a button instead of a character link. */
     onclick,
@@ -14,11 +16,15 @@
     /** When false, render a non-interactive slot (e.g. inside another button). */
     link = true,
   }: {
-    nameId: string;
+    nameId?: string;
     name?: string;
     rarity?: number | null;
     /** Unowned — darkened until hover / focus. */
     dimmed?: boolean;
+    /** Subject of the slot group — keeps the rim and glow lit at rest. */
+    highlight?: boolean;
+    /** Masked, non-interactive placeholder for an unrevealed team member. */
+    empty?: boolean;
     loading?: "lazy" | "eager";
     onclick?: (e: MouseEvent) => void;
     cue?: string;
@@ -38,18 +44,25 @@
 
 {#snippet body()}
   <div class="wish-body">
-    <img
-      class="wish-art"
-      src={artSrc}
-      alt={name || nameId}
-      {loading}
-      decoding="async"
-      onerror={() => {
-        if (!artFailed) artFailed = true;
-      }}
-    />
+    {#if empty}
+      <span class="wish-empty-mark" aria-hidden="true"></span>
+    {:else}
+      <img
+        class="wish-art"
+        src={artSrc}
+        alt={name || nameId}
+        {loading}
+        decoding="async"
+        onerror={() => {
+          if (!artFailed) artFailed = true;
+        }}
+      />
+    {/if}
     {#if dimmed}
       <div class="wish-dim" aria-hidden="true"></div>
+    {/if}
+    {#if highlight}
+      <div class="wish-rim" aria-hidden="true"></div>
     {/if}
     {#if showCue}
       <span class="wish-cue" aria-hidden="true">{cueText}</span>
@@ -57,13 +70,23 @@
   </div>
 {/snippet}
 
-{#if onclick}
+{#if empty}
+  <div
+    class="wish wish-static wish-empty"
+    title={name || "Unrevealed teammate"}
+    role="img"
+    aria-label={name || "Unrevealed teammate"}
+  >
+    {@render body()}
+  </div>
+{:else if onclick}
   <button
     type="button"
     class="wish"
     class:wish-gold={tone === "gold"}
     class:wish-purple={tone === "purple"}
     class:wish-dimmed={dimmed}
+    class:wish-highlight={highlight}
     title={tip}
     {onclick}
   >
@@ -75,6 +98,7 @@
     class:wish-gold={tone === "gold"}
     class:wish-purple={tone === "purple"}
     class:wish-dimmed={dimmed}
+    class:wish-highlight={highlight}
     {href}
     title={tip}
   >
@@ -86,6 +110,7 @@
     class:wish-gold={tone === "gold"}
     class:wish-purple={tone === "purple"}
     class:wish-dimmed={dimmed}
+    class:wish-highlight={highlight}
     title={tip}
   >
     {@render body()}
@@ -129,6 +154,28 @@
   .wish-dimmed {
     --wish-glow-size: 0.2rem;
     --wish-glow-alpha: 0.2;
+  }
+
+  .wish-highlight {
+    --wish-glow-size: 0.55rem;
+    --wish-glow-alpha: 0.85;
+  }
+
+  .wish-empty {
+    --wish-glow: 142, 151, 166;
+    --wish-glow-size: 0.18rem;
+    --wish-glow-alpha: 0.22;
+  }
+
+  /* Clipped to the gacha silhouette by the mask on .wish-body. */
+  .wish-rim {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    box-shadow:
+      inset 0 0 0 1px rgba(var(--wish-glow), 0.8),
+      inset 0 0 1rem rgba(var(--wish-glow), 0.3);
   }
 
   .wish-dim {
@@ -202,6 +249,33 @@
     height: 100%;
     object-fit: cover;
     object-position: center 12%;
+  }
+
+  .wish-empty .wish-body {
+    background:
+      radial-gradient(
+        circle at 50% 42%,
+        rgba(232, 225, 207, 0.08),
+        transparent 34%
+      ),
+      linear-gradient(180deg, #111a25 0%, #09111b 58%, #050a10 100%);
+  }
+
+  .wish-empty-mark {
+    position: absolute;
+    top: 43%;
+    left: 50%;
+    width: 0.62rem;
+    aspect-ratio: 1;
+    border: 1px solid rgba(232, 225, 207, 0.22);
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .wish-empty-mark::after {
+    content: "";
+    position: absolute;
+    inset: 0.16rem;
+    background: rgba(232, 225, 207, 0.16);
   }
 
   .wish-cue {
