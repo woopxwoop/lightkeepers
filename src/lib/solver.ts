@@ -281,7 +281,12 @@ function permutations<T>(items: T[]): T[][] {
  * fallback boards can still rotate into better affinity.
  */
 function optimizeSlots<
-  TTeam extends Record<string, unknown>,
+  TTeam extends Record<string, unknown> & {
+    usage_rate: number | null;
+    field_1_rate: number | null;
+    field_2_rate: number | null;
+    field_3_rate?: number | null;
+  },
   TSlot extends string,
 >(
   assignments: { team: TTeam; slot: TSlot }[],

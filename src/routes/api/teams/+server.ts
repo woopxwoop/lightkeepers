@@ -54,12 +54,16 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   }
 
   // ── Parse body ───────────────────────────────────────────────────────────
-  let body: TeamsBody;
+  let parsed: unknown;
   try {
-    body = await request.json();
+    parsed = await request.json();
   } catch {
     throw error(400, "Invalid JSON body.");
   }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw error(400, "Invalid JSON body.");
+  }
+  const body = parsed as TeamsBody;
 
   const { characters: rawCharacters, abyssVersion, stygianVersion } = body;
 

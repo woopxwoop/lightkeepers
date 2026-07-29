@@ -62,7 +62,8 @@ export const load: LayoutServerLoad = async () => {
       if (err) {
         console.error("layout: characters error", err);
         // Throw so charactersCache does not poison L1 with [] for 15m.
-        throw error(500, err.message ?? "Failed to load characters");
+        // Generic message — never surface PostgREST details to the client.
+        throw error(500, "Failed to load characters.");
       }
       return data ?? [];
     }),

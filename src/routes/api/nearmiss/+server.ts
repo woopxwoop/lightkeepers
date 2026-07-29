@@ -42,12 +42,16 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   }
 
   // ── Parse body ───────────────────────────────────────────────────────────
-  let body: NearMissBody;
+  let parsed: unknown;
   try {
-    body = await request.json();
+    parsed = await request.json();
   } catch {
     throw error(400, "Invalid JSON body.");
   }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw error(400, "Invalid JSON body.");
+  }
+  const body = parsed as NearMissBody;
 
   const { characters: rawCharacters, stygianVersion, minPmi = 0.3 } = body;
 
@@ -70,13 +74,11 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     throw error(400, "minPmi must be a number between 0 and 1.");
   }
 
-  // Quantize for stable cache keys / RPC args (avoid float key churn).
-  const minPmiKey = Math.round(minPmi * 100) / 100;
-
   // ── Cache lookup ─────────────────────────────────────────────────────────
+  // Key on the caller's exact threshold — rounding could widen the filter.
   const singleKey = buildRpcKey("near_miss_single", stygianVersion, characters);
   const pairKey = buildRpcKey(
-    `near_miss_pair_pmi${minPmiKey}`,
+    `near_miss_pair_pmi${minPmi}`,
     stygianVersion,
     characters,
   );
@@ -105,7 +107,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
           {
             p_name_ids: characters,
             p_version_number: stygianVersion,
-            p_min_pmi: minPmiKey,
+            p_min_pmi: minPmi,
           },
         );
         if (err) {
