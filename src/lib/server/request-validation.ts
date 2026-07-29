@@ -1,8 +1,22 @@
 import { error } from "@sveltejs/kit";
+import type { User } from "better-auth";
 
 /** Soft cap — Genshin roster is ~100; leave headroom for future growth. */
 export const MAX_ROSTER_CHARACTERS = 256;
 export const MAX_NAME_ID_LENGTH = 64;
+
+/** Require a signed-in user; auth-gated rows are always scoped to this id. */
+export function requireUser(locals: App.Locals): User {
+  if (!locals.user) throw error(401, "Unauthorized");
+  return locals.user;
+}
+
+/** Log the real PostgREST error, return a generic 500. */
+export function assertNoDbError(label: string, err: unknown): void {
+  if (!err) return;
+  console.error(`${label} failed:`, err);
+  throw error(500, "Internal server error");
+}
 
 /** Parse a request body and require a plain JSON object. */
 export async function requireJsonObject(

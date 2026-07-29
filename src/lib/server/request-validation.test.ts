@@ -3,11 +3,13 @@ import { describe, it } from "node:test";
 import {
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,
+  assertNoDbError,
   requireCharacterNameIds,
   requireFiniteInteger,
   requireJsonObject,
   requireNumberInRange,
   requireRosterEntries,
+  requireUser,
 } from "./request-validation.ts";
 
 const isBadRequest = (value: unknown): boolean =>
@@ -15,6 +17,14 @@ const isBadRequest = (value: unknown): boolean =>
   value !== null &&
   "status" in value &&
   value.status === 400;
+
+const hasStatus =
+  (status: number) =>
+  (value: unknown): boolean =>
+    typeof value === "object" &&
+    value !== null &&
+    "status" in value &&
+    value.status === status;
 
 describe("request validation", () => {
   it("accepts object JSON and rejects null, array, or malformed JSON", async () => {
@@ -108,5 +118,16 @@ describe("request validation", () => {
         ]),
       isBadRequest,
     );
+  });
+
+  it("requireUser returns the session user or 401", () => {
+    const user = { id: "u1" } as App.Locals["user"];
+    assert.equal(requireUser({ user, session: null }), user);
+    assert.throws(() => requireUser({ user: null, session: null }), hasStatus(401));
+  });
+
+  it("assertNoDbError ignores null and maps real errors to 500", () => {
+    assert.doesNotThrow(() => assertNoDbError("test", null));
+    assert.throws(() => assertNoDbError("test", new Error("db")), hasStatus(500));
   });
 });

@@ -124,7 +124,9 @@
         ? { text: abyssEnemies.buffName, title: "Abyssal Moon blessing" }
         : null,
       updatedLabel ? { text: `Updated ${updatedLabel}` } : null,
-    ].filter((part) => part !== null),
+    ].filter(
+      (part): part is { text: string; title?: string } => part !== null,
+    ),
   );
 
   function slotRate(team: AbyssTeam, slot: Slot): number {

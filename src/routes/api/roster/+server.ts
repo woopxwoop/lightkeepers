@@ -5,28 +5,16 @@
  * requires a session, and scopes reads/writes to that user's row.
  */
 
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import type { User } from "better-auth";
 import { serverDb } from "$lib/server/supabaseServer";
 import { enforceApiRateLimit } from "$lib/server/rate-limit";
 import {
+  assertNoDbError,
   requireJsonObject,
   requireRosterEntries,
+  requireUser,
 } from "$lib/server/request-validation";
-
-/** Require a signed-in user; roster rows are always scoped to this id. */
-function requireUser(locals: App.Locals): User {
-  if (!locals.user) throw error(401, "Unauthorized");
-  return locals.user;
-}
-
-/** Log the real PostgREST error, return a generic 500. */
-function assertNoDbError(label: string, err: unknown): void {
-  if (!err) return;
-  console.error(`${label} failed:`, err);
-  throw error(500, "Internal server error");
-}
 
 export const GET: RequestHandler = async ({
   locals,
