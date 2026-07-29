@@ -7,6 +7,8 @@
     humanizeInvestmentLabel,
     displayWeaponRefinement,
     weaponByKey,
+    equipmentVersion,
+    ensureEquipmentData,
   } from "$lib/equipment-data";
   import { weaponIconUrl } from "$lib/asset-urls";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
@@ -33,9 +35,12 @@
   let loading = $derived(investment === null);
   let error = $state<string | null>(null);
 
-  onMount(() => fetchData());
+  onMount(() => {
+    void ensureEquipmentData();
+    fetchData();
+  });
 
-  /** Use shared session cache (prefetched from bootstrap when possible). */
+  /** Use shared session cache (loaded on this route, not global bootstrap). */
   async function fetchData() {
     if (investment) {
       loading = false;

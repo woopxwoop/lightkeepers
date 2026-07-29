@@ -100,3 +100,25 @@ export async function valkeySetJson(
     console.error("[valkey] SET failed:", key, err);
   }
 }
+
+/**
+ * Fixed-window INCR rate limit shared across pm2 workers.
+ * Returns the new count, or null if Valkey is unavailable.
+ */
+export async function valkeyIncrWithTtl(
+  key: string,
+  ttlMs: number,
+): Promise<number | null> {
+  const c = await getValkey();
+  if (!c) return null;
+  try {
+    const count = await c.incr(key);
+    if (count === 1) {
+      await c.pExpire(key, Math.max(1, ttlMs));
+    }
+    return count;
+  } catch (err) {
+    console.error("[valkey] INCR failed:", key, err);
+    return null;
+  }
+}

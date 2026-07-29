@@ -201,7 +201,8 @@ type RateWindow = {
 };
 
 /**
- * Fixed-window rate limiter keyed by IP address.
+ * Fixed-window rate limiter keyed by IP address (per-process memory).
+ * Prefer `checkApiRateLimit` for shared limits across pm2 workers.
  * @param maxRequests — allowed requests per window
  * @param windowMs    — window duration in milliseconds
  */
@@ -269,12 +270,32 @@ export const rpcCache = new LRUCache<unknown>(2_000, TTL_15_MIN, {
   redisNamespace: "rpc",
 });
 
+const API_RATE_MAX = 60;
+const API_RATE_WINDOW_MS = 60_000;
+
 /**
- * Rate limiter for user-facing API routes.
- * 60 requests per minute per IP — generous for normal use, blocks scrapers.
- * (Still per-process; move to Valkey later if needed.)
+ * In-process fallback when Valkey is unset / unreachable.
+ * (Still per-process — used only as fallback.)
  */
-export const apiRateLimiter = new RateLimiter(60, 60_000);
+export const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
+
+/**
+ * Shared API rate limit (60/min/IP) via Valkey when configured; otherwise
+ * falls back to the per-process limiter so local dev / unit tests still work.
+ * Valkey is imported dynamically so cache unit tests do not need `$env`.
+ */
+export async function checkApiRateLimit(ip: string): Promise<boolean> {
+  try {
+    const { valkeyIncrWithTtl } = await import("$lib/server/valkey");
+    const window = Math.floor(Date.now() / API_RATE_WINDOW_MS);
+    const key = `lk:ratelimit:api:${ip}:${window}`;
+    const count = await valkeyIncrWithTtl(key, API_RATE_WINDOW_MS);
+    if (count == null) return apiRateLimiter.check(ip);
+    return count <= API_RATE_MAX;
+  } catch {
+    return apiRateLimiter.check(ip);
+  }
+}
 
 /** Soft cap — Genshin roster is ~100; leave headroom without allowing megabyte keys. */
 export const MAX_ROSTER_CHARACTERS = 256;

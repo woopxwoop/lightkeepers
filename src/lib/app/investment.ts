@@ -2,8 +2,8 @@
  * Shared client fetch for `/api/investment`.
  *
  * Both `/teams` and `/teams/[slug]` need the same payload — fetch once per
- * session and reuse the in-flight / resolved promise. Prefetched from
- * `bootstrapClient` so navigating to Teams is usually already warm.
+ * session and reuse the in-flight / resolved promise. Prefetch from those
+ * routes (not global bootstrap) so home visitors skip the gunzip cost.
  */
 
 import type { InvestmentFile } from "$lib/types/investment";

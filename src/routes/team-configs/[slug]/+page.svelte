@@ -14,7 +14,10 @@
     artifactSetByKey,
     humanizeInvestmentLabel,
     weaponByKey,
+    equipmentVersion,
+    ensureEquipmentData,
   } from "$lib/equipment-data";
+  import { onMount } from "svelte";
   import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
@@ -44,14 +47,19 @@
   let teamTitle = $derived(
     humanizeTeamName(team.characters, characterNames),
   );
-  let simLabel = $derived(
-    sim.kind === "baseline"
+  let simLabel = $derived.by(() => {
+    $equipmentVersion;
+    return sim.kind === "baseline"
       ? "Baseline"
       : sim.label
         ? humanizeInvestmentLabel(sim.label, characterNames)
-        : "",
-  );
+        : "";
+  });
   let iconStyle = $derived($displayPreferences.iconStyle);
+
+  onMount(() => {
+    void ensureEquipmentData();
+  });
 
   function characterFor(key: string) {
     return goodKeyMap.get(key) ?? null;

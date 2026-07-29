@@ -7,7 +7,10 @@
     displayWeaponRefinement,
     formatInvestmentCR,
     weaponByKey,
+    equipmentVersion,
+    ensureEquipmentData,
   } from "$lib/equipment-data";
+  import { onMount } from "svelte";
 
   type BuildBadge = {
     cons: number;
@@ -37,6 +40,10 @@
     class?: string;
   } = $props();
 
+  onMount(() => {
+    void ensureEquipmentData();
+  });
+
   // Equal angular steps around a shared circle center below the hand.
   const HAND_ANGLES = [-24, -8, 8, 24] as const;
 
@@ -51,6 +58,7 @@
   role="group"
   aria-label="Team"
 >
+  {#key $equipmentVersion}
   {#each characters as character, i (character?.name_id ?? character?.name ?? i)}
     {@const key = character?.name_id ?? character?.name ?? ""}
     {@const build = builds[i]}
@@ -113,6 +121,7 @@
       </CharacterPortraitCard>
     </div>
   {/each}
+  {/key}
 </div>
 
 <style>

@@ -7,7 +7,7 @@
  * Body: { characters: string[]; abyssVersion: number; stygianVersion: number }
  *
  * Cache: memory L1 + optional Valkey L2 (VALKEY_URL), keyed by roster + version.
- * Rate limit: 60 requests / minute / IP.
+ * Rate limit: 60 requests / minute / IP (Valkey-shared when configured).
  */
 
 import { json, error } from "@sveltejs/kit";
@@ -15,7 +15,7 @@ import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import {
   rpcCache,
-  apiRateLimiter,
+  checkApiRateLimit,
   getClientIp,
   buildRpcKey,
   assertCharacterNameIds,
@@ -49,7 +49,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
   // ── Rate limiting ────────────────────────────────────────────────────────
   const ip = getClientIp(request);
-  if (!apiRateLimiter.check(ip)) {
+  if (!(await checkApiRateLimit(ip))) {
     throw error(429, "Too many requests — please wait a moment.");
   }
 

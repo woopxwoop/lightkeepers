@@ -18,7 +18,6 @@ import {
   ensureStaticBoards,
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/is-new-character";
-import { prefetchInvestment } from "$lib/app/investment";
 
 type LayoutHydration = {
   characters: Character[];
@@ -136,8 +135,8 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
 
   // Fire early — do not await; home stays interactive while boards warm.
   // Failures land in staticBoardsError for Abyss/Stygian retry UI.
+  // Investment JSON is loaded on Teams / character routes (not every visit).
   void ensureStaticBoards();
-  prefetchInvestment();
 
   const dbRoster = await loadDbRoster(data.characters);
 

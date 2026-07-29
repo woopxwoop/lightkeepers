@@ -57,7 +57,7 @@
 
   onMount(() => fetchData());
 
-  /** Use shared session cache (prefetched from bootstrap when possible). */
+  /** Use shared session cache (loaded on this route, not global bootstrap). */
   async function fetchData() {
     if (data) {
       loading = false;

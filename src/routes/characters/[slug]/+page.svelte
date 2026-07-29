@@ -49,7 +49,7 @@
     weaponTypeIconUrl,
     weaponTypeLabel,
   } from "$lib/utils";
-  import { artifactSetByKey, weaponByKey } from "$lib/equipment-data";
+  import { artifactSetByKey, weaponByKey, equipmentVersion, ensureEquipmentData } from "$lib/equipment-data";
   import { isArtifactSubstatKey } from "$lib/build-stats";
   import {
     CONSTELLATION_UPGRADE,
@@ -249,6 +249,7 @@
   }
 
   onMount(() => {
+    void ensureEquipmentData();
     flashKitTarget(window.location.hash);
 
     const onHash = () => flashKitTarget(window.location.hash);
@@ -323,6 +324,7 @@
 
   /** Weapons: higher rarity first, then team usage (stable within ties). */
   let rankedWeapons = $derived.by(() => {
+    $equipmentVersion;
     if (!builds?.weapons.length) return [];
     return [...builds.weapons].sort((a, b) => {
       const ra = weaponByKey.get(a.key)?.stars ?? 0;
