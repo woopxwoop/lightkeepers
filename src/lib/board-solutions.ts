@@ -124,8 +124,9 @@ export function createMemo<T>(): (key: string, compute: () => T) => T {
   let lastValue: T | undefined;
   return (key, compute) => {
     if (key === lastKey && lastValue !== undefined) return lastValue;
+    const value = compute();
     lastKey = key;
-    lastValue = compute();
-    return lastValue;
+    lastValue = value;
+    return value;
   };
 }

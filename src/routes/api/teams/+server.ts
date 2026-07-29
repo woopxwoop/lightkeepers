@@ -35,7 +35,7 @@ type TeamsBody = {
   stygianVersion: number;
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (isPlaywrightE2e()) {
     return json({
       abyssTeams: [E2E_ABYSS_TEAM_TOP, E2E_ABYSS_TEAM_BOTTOM],
@@ -48,7 +48,7 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   // ── Rate limiting ────────────────────────────────────────────────────────
-  const ip = getClientIp(request);
+  const ip = getClientIp(request, getClientAddress);
   if (!(await checkApiRateLimit(ip))) {
     throw error(429, "Too many requests — please wait a moment.");
   }

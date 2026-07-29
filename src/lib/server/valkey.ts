@@ -125,7 +125,8 @@ export async function valkeyIncrWithTtl(
       keys: [key],
       arguments: [String(Math.max(1, ttlMs))],
     });
-    return typeof count === "number" ? count : Number(count);
+    const n = typeof count === "number" ? count : Number(count);
+    return Number.isFinite(n) ? n : null;
   } catch (err) {
     console.error("[valkey] INCR failed:", key, err);
     return null;

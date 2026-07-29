@@ -7,6 +7,7 @@
  * via ensureStaticBoards().
  */
 
+import { error } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
 import { charactersCache } from "$lib/server/cache";
@@ -61,7 +62,7 @@ export const load: LayoutServerLoad = async () => {
       if (err) {
         console.error("layout: characters error", err);
         // Throw so charactersCache does not poison L1 with [] for 15m.
-        throw err;
+        throw error(500, err.message ?? "Failed to load characters");
       }
       return data ?? [];
     }),

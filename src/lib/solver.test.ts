@@ -301,6 +301,59 @@ describe("solveStygian", () => {
       "stored score must match post-swap affinity score",
     );
   });
+
+  it("fills all fields via relaxed MIN_SLOT_RATE fallback", () => {
+    // Every seat rate is below MIN_SLOT_RATE (10), so the strict pass cannot
+    // place anyone; relaxed fill + floor-free optimize must still complete.
+    const teams = [
+      stygianTeam({
+        team_key: "soft-a",
+        members: ["a", "b", "c", "d"],
+        usage_rate: 90,
+        field_1_rate: 9,
+        field_2_rate: 8,
+        field_3_rate: 7,
+      }),
+      stygianTeam({
+        team_key: "soft-b",
+        members: ["e", "f", "g", "h"],
+        usage_rate: 80,
+        field_1_rate: 8,
+        field_2_rate: 9,
+        field_3_rate: 7,
+      }),
+      stygianTeam({
+        team_key: "soft-c",
+        members: ["i", "j", "k", "l"],
+        usage_rate: 70,
+        field_1_rate: 7,
+        field_2_rate: 8,
+        field_3_rate: 9,
+      }),
+    ];
+
+    const [sol] = solveStygian(teams, 1);
+    assert.ok(sol);
+    assert.equal(sol.unfilled.length, 0);
+    assert.equal(sol.assignments.length, 3);
+    assert.equal(
+      sol.score,
+      scoreAssignments(sol.assignments),
+      "stored score must match post-swap affinity score",
+    );
+
+    // Same teams seated sub-threshold: optimizer with floor off can rearrange.
+    const rotated = optimizeStygianSlotAssignments(
+      sol.assignments.map((a) => ({ team: a.team, slot: a.slot })),
+      false,
+    );
+    assert.equal(rotated.length, 3);
+    assert.equal(
+      new Set(rotated.map((a) => a.slot)).size,
+      3,
+      "relaxed optimize keeps unique slots",
+    );
+  });
 });
 
 describe("solveAbyssWithFallback", () => {

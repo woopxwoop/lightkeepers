@@ -163,16 +163,21 @@ function greedyPass<
     const open = allSlots.filter(
       (s) => placementScore(forcedFirst, s) !== Number.NEGATIVE_INFINITY,
     );
-    if (open.length > 0) {
+    const pickSlot = (slots: TSlot[]): TSlot => {
       const preferred = getPreferredSlot(forcedFirst);
-      const slot = open.includes(preferred)
-        ? preferred
-        : open.reduce((best, s) =>
-            placementScore(forcedFirst, s) > placementScore(forcedFirst, best)
-              ? s
-              : best,
-          );
-      commit(forcedFirst, slot);
+      if (slots.includes(preferred)) return preferred;
+      return slots.reduce((best, s) =>
+        placementScore(forcedFirst, s, false) >
+        placementScore(forcedFirst, best, false)
+          ? s
+          : best,
+      );
+    };
+    if (open.length > 0) {
+      commit(forcedFirst, pickSlot(open));
+    } else if (allSlots.length > 0) {
+      // No seat clears MIN_SLOT_RATE — still place so this candidate is distinct.
+      commit(forcedFirst, pickSlot(allSlots));
     }
   }
 

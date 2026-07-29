@@ -1073,6 +1073,7 @@
                   {#if builds.vertical_importance?.sig_weapons?.length}
                     <section class="board-section">
                       <h2 class="section-title">Signature weapon impact</h2>
+                      {#key $equipmentVersion}
                       <ul class="talent-priority-list">
                         {#each [...builds.vertical_importance.sig_weapons].sort( (a, b) => b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key), ) as row}
                           {@const weapon = weaponByKey.get(row.key)}
@@ -1109,6 +1110,7 @@
                           </li>
                         {/each}
                       </ul>
+                      {/key}
                     </section>
                   {/if}
                 </div>

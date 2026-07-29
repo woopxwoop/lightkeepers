@@ -105,25 +105,35 @@
       }
 
       if ($session.data) {
+        const rosterToSave = tempCharactersOwned.map((c) => ({ ...c }));
+        const snapshot = JSON.stringify(rosterToSave);
         const res = await fetch("/api/roster", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roster: tempCharactersOwned }),
+          body: JSON.stringify({ roster: rosterToSave }),
         });
         if (!res.ok) {
           restoreSavedSnapshot();
           rosterError = `Sync failed (${res.status}) — roster not saved to cloud`;
           return;
         }
+        savedSnapshot = snapshot;
+        charactersOwned.set(rosterToSave);
+        invalidateTeamsOwned();
+        invalidateNearMissTeams();
+        showSaved = true;
+        hasUnsavedChanges =
+          JSON.stringify(tempCharactersOwned) !== savedSnapshot;
+        setHasSavedRoster();
+      } else {
+        savedSnapshot = JSON.stringify(tempCharactersOwned);
+        charactersOwned.set(tempCharactersOwned.map((c) => ({ ...c })));
+        invalidateTeamsOwned();
+        invalidateNearMissTeams();
+        showSaved = true;
+        hasUnsavedChanges = false;
+        setHasSavedRoster();
       }
-
-      savedSnapshot = JSON.stringify(tempCharactersOwned);
-      charactersOwned.set(tempCharactersOwned.map((c) => ({ ...c })));
-      invalidateTeamsOwned();
-      invalidateNearMissTeams();
-      showSaved = true;
-      hasUnsavedChanges = false;
-      setHasSavedRoster();
     } catch (e) {
       restoreSavedSnapshot();
       console.error("Roster save error:", e);

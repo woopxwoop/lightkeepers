@@ -10,10 +10,12 @@ import {
 
 type RosterEntry = { name_id: string; isOwned: boolean };
 
-function rateLimited(request: Request) {
-  return checkApiRateLimit(getClientIp(request)).then((ok) => {
-    if (!ok) throw error(429, "Too many requests");
-  });
+function rateLimited(request: Request, getClientAddress?: () => string) {
+  return checkApiRateLimit(getClientIp(request, getClientAddress)).then(
+    (ok) => {
+      if (!ok) throw error(429, "Too many requests");
+    },
+  );
 }
 
 function parseAndNormalizeRoster(raw: unknown): RosterEntry[] {
@@ -54,8 +56,12 @@ function parseAndNormalizeRoster(raw: unknown): RosterEntry[] {
   return normalized;
 }
 
-export const GET: RequestHandler = async ({ locals, request }) => {
-  await rateLimited(request);
+export const GET: RequestHandler = async ({
+  locals,
+  request,
+  getClientAddress,
+}) => {
+  await rateLimited(request, getClientAddress);
   if (!locals.user) throw error(401, "Unauthorized");
 
   const { data, error: err } = await serverDb
@@ -72,8 +78,12 @@ export const GET: RequestHandler = async ({ locals, request }) => {
   return json({ roster: data?.roster ?? null });
 };
 
-export const POST: RequestHandler = async ({ locals, request }) => {
-  await rateLimited(request);
+export const POST: RequestHandler = async ({
+  locals,
+  request,
+  getClientAddress,
+}) => {
+  await rateLimited(request, getClientAddress);
   if (!locals.user) throw error(401, "Unauthorized");
 
   let body: unknown;
@@ -109,8 +119,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   return json({ ok: true });
 };
 
-export const DELETE: RequestHandler = async ({ locals, request }) => {
-  await rateLimited(request);
+export const DELETE: RequestHandler = async ({
+  locals,
+  request,
+  getClientAddress,
+}) => {
+  await rateLimited(request, getClientAddress);
   if (!locals.user) throw error(401, "Unauthorized");
 
   const { error: err } = await serverDb

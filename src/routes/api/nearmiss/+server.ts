@@ -29,14 +29,14 @@ type NearMissBody = {
   minPmi?: number;
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   // Default empty; Playwright browser routes override with scenario fixtures.
   if (isPlaywrightE2e()) {
     return json({ nearMissTeams: [], nearMissPairs: [] });
   }
 
   // ── Rate limiting ────────────────────────────────────────────────────────
-  const ip = getClientIp(request);
+  const ip = getClientIp(request, getClientAddress);
   if (!(await checkApiRateLimit(ip))) {
     throw error(429, "Too many requests — please wait a moment.");
   }
@@ -70,10 +70,13 @@ export const POST: RequestHandler = async ({ request }) => {
     throw error(400, "minPmi must be a number between 0 and 1.");
   }
 
+  // Quantize for stable cache keys / RPC args (avoid float key churn).
+  const minPmiKey = Math.round(minPmi * 100) / 100;
+
   // ── Cache lookup ─────────────────────────────────────────────────────────
   const singleKey = buildRpcKey("near_miss_single", stygianVersion, characters);
   const pairKey = buildRpcKey(
-    `near_miss_pair_pmi${minPmi}`,
+    `near_miss_pair_pmi${minPmiKey}`,
     stygianVersion,
     characters,
   );
@@ -102,7 +105,7 @@ export const POST: RequestHandler = async ({ request }) => {
           {
             p_name_ids: characters,
             p_version_number: stygianVersion,
-            p_min_pmi: minPmi,
+            p_min_pmi: minPmiKey,
           },
         );
         if (err) {

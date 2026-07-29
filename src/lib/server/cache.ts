@@ -283,8 +283,12 @@ export const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
  * Shared API rate limit (60/min/IP) via Valkey when configured; otherwise
  * falls back to the per-process limiter so local dev / unit tests still work.
  * Valkey is imported dynamically so cache unit tests do not need `$env`.
+ * Missing/unknown IP fails open so production clients are not bucketed together.
  */
-export async function checkApiRateLimit(ip: string): Promise<boolean> {
+export async function checkApiRateLimit(
+  ip: string | null,
+): Promise<boolean> {
+  if (ip == null || ip === "") return true;
   try {
     const { valkeyIncrWithTtl } = await import("$lib/server/valkey");
     const window = Math.floor(Date.now() / API_RATE_WINDOW_MS);
@@ -307,17 +311,36 @@ const RPC_KEY_ROSTER_HASH_AFTER = 180;
  * Extracts the client IP for rate limiting.
  * Prefer Cloudflare's CF-Connecting-IP. Do not trust X-Forwarded-For in
  * production (spoofable if the app port is reachable outside the tunnel).
+ *
+ * Pass SvelteKit's `getClientAddress` when available. In production without
+ * CF-Connecting-IP, returns null so rate limiting fails open instead of
+ * collapsing every client into one "unknown" bucket.
  */
-export function getClientIp(request: Request): string {
+export function getClientIp(
+  request: Request,
+  getClientAddress?: () => string,
+): string | null {
   const cf = request.headers.get("cf-connecting-ip")?.trim();
   if (cf) return cf;
   // vite dev / non-production only — XFF is not trustworthy on a public bind.
   if (process.env.NODE_ENV !== "production") {
     return (
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      safeClientAddress(getClientAddress) ??
+      "unknown"
     );
   }
-  return "unknown";
+  return safeClientAddress(getClientAddress);
+}
+
+function safeClientAddress(getClientAddress?: () => string): string | null {
+  if (typeof getClientAddress !== "function") return null;
+  try {
+    const addr = getClientAddress()?.trim();
+    return addr || null;
+  } catch {
+    return null;
+  }
 }
 
 /**
