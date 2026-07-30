@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import type { Snippet } from "svelte";
   import type { Character, CharacterOwned } from "$lib/definitions";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
@@ -30,10 +31,16 @@
     class?: string;
   } = $props();
 
+  const GAP = 4;
+  const EDGE = 8;
+  const listboxId = $props.id();
+
   let inputText = $state("");
   let suggestionIndex = $state(0);
   let focused = $state(false);
   let inputEl: HTMLInputElement | null = $state(null);
+  let fieldEl: HTMLDivElement | null = $state(null);
+  let menuEl: HTMLDivElement | null = $state(null);
 
   let suggestions = $derived.by(() => {
     const q = inputText.trim().toLowerCase();
@@ -48,6 +55,55 @@
   $effect(() => {
     suggestions;
     suggestionIndex = 0;
+  });
+
+  function placeMenu() {
+    const field = fieldEl;
+    const menu = menuEl;
+    if (!field || !menu) return;
+
+    const rect = field.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const vh = window.innerHeight;
+
+    let top = rect.bottom + GAP;
+    if (top + menuRect.height > vh - EDGE) {
+      const above = rect.top - menuRect.height - GAP;
+      if (above >= EDGE) top = above;
+    }
+
+    menu.style.top = `${top}px`;
+    menu.style.left = `${rect.left}px`;
+    menu.style.width = `${rect.width}px`;
+  }
+
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      },
+    };
+  }
+
+  $effect(() => {
+    if (!showSuggestions) return;
+
+    void tick().then(() => {
+      placeMenu();
+      requestAnimationFrame(placeMenu);
+    });
+
+    function reposition() {
+      placeMenu();
+    }
+
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
   });
 
   function addTag(key: string) {
@@ -85,8 +141,12 @@
   }
 </script>
 
-<div class="tag-search-root relative {className}">
-  <div class="tag-search" class:tag-search-focus={focused}>
+<div class="tag-search-root {className}">
+  <div
+    class="tag-search"
+    class:tag-search-focus={focused}
+    bind:this={fieldEl}
+  >
     {#if leading}
       {@render leading()}
     {/if}
@@ -117,7 +177,7 @@
       role="combobox"
       aria-label={ariaLabel}
       aria-expanded={showSuggestions}
-      aria-controls="character-tag-listbox"
+      aria-controls={listboxId}
       aria-activedescendant={showSuggestions &&
       suggestionIndex < suggestions.length
         ? `character-tag-${suggestions[suggestionIndex]}`
@@ -131,9 +191,11 @@
 
   {#if showSuggestions}
     <div
-      id="character-tag-listbox"
+      id={listboxId}
       role="listbox"
-      class="suggestions-dropdown absolute left-0 right-0 top-full mt-1 z-20"
+      class="suggestions-dropdown"
+      use:portal
+      bind:this={menuEl}
     >
       {#each suggestions as key, i (key)}
         {@const char = getCharacter?.(key)}
@@ -224,13 +286,19 @@
     white-space: nowrap;
   }
 
+  .tag-search-root {
+    position: relative;
+  }
+
   .suggestions-dropdown {
+    position: fixed;
+    z-index: 200;
     max-height: 240px;
     overflow-y: auto;
     border-radius: var(--radius-md);
-    background: transparent;
+    background: var(--background-mid);
     border: var(--border-width) solid rgba(255, 255, 255, 0.24);
-    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
   .suggestion-item {
