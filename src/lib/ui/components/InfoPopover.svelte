@@ -41,12 +41,19 @@
       event.stopPropagation();
       close();
     };
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as Node | null;
+      if (target && rootEl?.contains(target)) return;
+      close();
+    };
 
     window.addEventListener("pointerdown", onPointerDown, true);
     window.addEventListener("keydown", onKey);
+    document.addEventListener("focusin", onFocusIn);
     return () => {
       window.removeEventListener("pointerdown", onPointerDown, true);
       window.removeEventListener("keydown", onKey);
+      document.removeEventListener("focusin", onFocusIn);
     };
   });
 </script>
@@ -57,6 +64,7 @@
     class="info-trigger"
     aria-expanded={open}
     aria-controls={panelId}
+    aria-describedby={open ? panelId : undefined}
     onclick={toggle}
   >
     {label}

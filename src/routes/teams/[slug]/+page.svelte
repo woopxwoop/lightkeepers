@@ -60,7 +60,7 @@
     if (investment) {
       team =
         investment.teams.find((t) => t.team_key === layoutData.slug) ?? null;
-      if (!team) error = `Team "${layoutData.slug}" not found`;
+      error = team ? null : `Team "${layoutData.slug}" not found`;
     }
   });
 

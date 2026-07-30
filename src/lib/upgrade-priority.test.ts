@@ -45,6 +45,17 @@ describe("upgrade priority", () => {
     assert.equal(classifyUpgradeImpact(-22, ladder).tier, "high");
   });
 
+  it("falls back without throwing for invalid statistics", () => {
+    assert.deepEqual(classifyUpgradeImpact(Number.NaN, ladder), {
+      tier: "negligible",
+      label: "Data unavailable",
+    });
+    assert.deepEqual(classifyUpgradeImpact(Number.POSITIVE_INFINITY, ladder), {
+      tier: "negligible",
+      label: "Data unavailable",
+    });
+  });
+
   it("throws when a ladder has no zero-percent band", () => {
     assert.throws(() =>
       classifyUpgradeImpact(1, [{ minPct: 5, tier: "high", label: "High" }]),

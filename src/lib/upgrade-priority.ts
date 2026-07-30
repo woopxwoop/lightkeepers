@@ -66,6 +66,10 @@ export function classifyUpgradeImpact(
   pct: number,
   ladder: UpgradeImpactLadder,
 ): UpgradeImpact {
+  if (!Number.isFinite(pct)) {
+    return { tier: "negligible", label: "Data unavailable" };
+  }
+
   const abs = Math.abs(pct);
   const band = ladder.find(({ minPct }) => abs >= minPct);
   if (!band) {

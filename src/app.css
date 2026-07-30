@@ -220,7 +220,7 @@ h2 {
   opacity: 0.65;
 }
 
-button:hover {
+button:not(:disabled):hover {
   cursor: pointer;
 }
 
@@ -228,6 +228,15 @@ button:focus-visible,
 a:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+@media (forced-colors: active) {
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -65,7 +65,7 @@
   let sortBy = $state<SortBy>(
     readEnum(page.url, "sort", SORT_KEYS, "dps-desc"),
   );
-  /** Selected cost level — show DPS of the best sim at (or nearest to) this cost. */
+  /** Selected cost level — show DPS of the best sim at exactly this cost. */
   let selectedCost = $state<number | null>(
     parseCost(page.url.searchParams.get("cost")),
   );
@@ -176,26 +176,13 @@
     return sorted;
   });
 
-  /**
-   * Find the best sim for a team at (or nearest to) the given cost.
-   * Returns the DPS of the sim whose cost is closest to the target,
-   * preferring the lower cost on ties.
-   */
+  /** Return the best DPS at exactly `cost`, or 0 when no result matches. */
   function getDpsAtCost(team: InvestmentTeam, cost: number): number {
-    if (team.results.length === 0) return 0;
-    let best = team.results[0];
-    let bestDist = Math.abs(best.cost - cost);
-    for (let i = 1; i < team.results.length; i++) {
-      const dist = Math.abs(team.results[i].cost - cost);
-      if (
-        dist < bestDist ||
-        (dist === bestDist && team.results[i].cost < best.cost)
-      ) {
-        best = team.results[i];
-        bestDist = dist;
-      }
+    let bestDps = 0;
+    for (const result of team.results) {
+      if (result.cost === cost) bestDps = Math.max(bestDps, result.dps);
     }
-    return best.dps;
+    return bestDps;
   }
 
   /** Canonical baseline sim for a team (not peak floor / f2p). */
@@ -326,7 +313,8 @@
             <span class="settings-caption">Cost</span>
             <input
               type="number"
-              bind:value={selectedCost}
+              bind:value={() => selectedCost ?? undefined, (value) =>
+                (selectedCost = value ?? null)}
               placeholder="{availableCosts[0] ?? 0}–{availableCosts[
                 availableCosts.length - 1
               ] ?? 0}"

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import type { UpgradeTier } from "$lib/upgrade-priority";
+  import {
+    primaryUpgradePct,
+    type UpgradeTier,
+  } from "$lib/upgrade-priority";
   import InfoPopover from "./InfoPopover.svelte";
 
   let {
@@ -24,9 +27,7 @@
     align?: "start" | "center" | "end";
   } = $props();
 
-  const primary = $derived(Math.max(mean, median));
-  const isGain = $derived(kind === "constellation" || kind === "signature");
-  const direction = $derived(isGain ? "+" : "−");
+  const primary = $derived(primaryUpgradePct(mean, median));
 
   const summary = $derived(
     kind === "level"
@@ -38,12 +39,17 @@
           : "Equipping this signature adds this much DPS across teams using F2P options.",
   );
 
+  function signed(value: number) {
+    const formatted = value.toFixed(1).replace("-", "−");
+    return value > 0 ? `+${formatted}` : formatted;
+  }
+
   function percent(value: number) {
-    return `${direction}${Math.abs(value).toFixed(1)}%`;
+    return `${signed(value)}%`;
   }
 
   function rangePercent(low: number, high: number) {
-    return `${direction}${Math.abs(low).toFixed(1)}–${Math.abs(high).toFixed(1)}%`;
+    return `${signed(low)}–${signed(high)}%`;
   }
 </script>
 

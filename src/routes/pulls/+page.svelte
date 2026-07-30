@@ -118,13 +118,22 @@
     const singleIds = singles.map((s) => s.character);
     revealedSingles = nextRevealed(revealedSingles, singleIds);
     for (const suggestion of singles) {
-      safeTeamIndex(singleTeamIndex, suggestion.character, suggestion.topTeams);
+      singleTeamIndex[suggestion.character] = safeTeamIndex(
+        singleTeamIndex,
+        suggestion.character,
+        suggestion.topTeams,
+      );
     }
 
     const pairIds = pairs.map(pairKey);
     revealedPairs = nextRevealed(revealedPairs, pairIds);
     for (const suggestion of pairs) {
-      safeTeamIndex(pairTeamIndex, pairKey(suggestion), suggestion.topTeams);
+      const key = pairKey(suggestion);
+      pairTeamIndex[key] = safeTeamIndex(
+        pairTeamIndex,
+        key,
+        suggestion.topTeams,
+      );
     }
   }
 
@@ -294,9 +303,7 @@
     teams: StygianTeam[],
   ): number {
     const current = indices[id] ?? 0;
-    const next = teams.length === 0 ? 0 : Math.min(current, teams.length - 1);
-    if (indices[id] !== next) indices[id] = next;
-    return next;
+    return teams.length === 0 ? 0 : Math.min(current, teams.length - 1);
   }
 
   function cycleTeamIndex(
@@ -1213,7 +1220,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .team-slot-revealed {
+    .team-slot-revealed,
+    .team-slot-cycle-previous,
+    .team-slot-cycle-next,
+    .team-slot-hiding {
       animation: none;
     }
   }

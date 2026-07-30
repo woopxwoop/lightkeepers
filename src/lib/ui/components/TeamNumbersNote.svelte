@@ -11,7 +11,7 @@
       target="_blank"
       rel="noopener noreferrer">KQM artifact standards</a
     >. These rotations are not optimized to simulate the highest theoretical DPS
-    but aims to replicate rotations achieveable by the average player (no sweaty
+    but aim to replicate rotations achievable by the average player (no sweaty
     Mavuika combos... yet).
   </p>
 </details>
