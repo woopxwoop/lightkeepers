@@ -170,13 +170,28 @@ export function setIconCompact(compact: boolean) {
   setDisplayPreferences({ iconStyle: compact ? "enka" : "coop" });
 }
 
+/** OS reduced-motion preference. Stays false during SSR. */
+export const prefersReducedMotion = readable(false, (set) => {
+  if (typeof window === "undefined" || !window.matchMedia) return;
+  const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+  set(query.matches);
+  const onChange = (e: MediaQueryListEvent) => set(e.matches);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+});
+
+/**
+ * Whether animations actually run. `app.css` collapses every duration under
+ * reduced motion, so JS timings must honour it too or they'll wait on
+ * animations that already finished.
+ */
 export const animationsEnabled = derived(
-  displayPreferences,
-  ($preferences) => $preferences.animationsEnabled,
+  [displayPreferences, prefersReducedMotion],
+  ([$preferences, $reduced]) => $preferences.animationsEnabled && !$reduced,
 );
 
 export function areAnimationsEnabled(): boolean {
-  return get(displayPreferences).animationsEnabled;
+  return get(animationsEnabled);
 }
 
 /** Designed lighthouse mark — same asset as the navbar logo. */

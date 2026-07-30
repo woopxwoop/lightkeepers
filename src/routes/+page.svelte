@@ -66,7 +66,7 @@
 
 <PageShell class="home-page gap-10">
   <header class="hero">
-    <p class="hero-eyebrow">Genshin Impact meta resources</p>
+    <p class="eyebrow hero-eyebrow">Genshin Impact meta resources</p>
     <h1 class="hook">
       Find your best<br />
       <span class="hook-accent">teams, builds, and pulls.</span>
@@ -118,11 +118,6 @@
   }
 
   .hero-eyebrow {
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
     color: var(--accent-1);
   }
 

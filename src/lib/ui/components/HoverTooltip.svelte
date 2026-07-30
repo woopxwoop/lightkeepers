@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import type { Snippet } from "svelte";
+  import IconX from "../icons/IconX.svelte";
 
   let {
     children,
@@ -165,11 +166,8 @@
     const trigger = event.currentTarget as HTMLElement;
     if (isInteractiveDescendant(event.target, trigger)) return;
 
-    // Measure truncation even if the hover tip never opened (e.g. tap).
-    place(trigger);
-    measureTruncation();
-    if (!truncated) return;
-
+    // Every tip opens its sheet on tap / click, truncated or not, so touch
+    // users get the same affordance everywhere.
     event.preventDefault();
     event.stopPropagation();
     tipTriggerEl = null;
@@ -316,12 +314,17 @@
       aria-label={label}
       tabindex="-1"
     >
+      <button
+        type="button"
+        class="tip-sheet-close"
+        aria-label="Close details"
+        onclick={closeDetail}
+      >
+        <IconX size={16} strokeWidth={2.25} />
+      </button>
       <div class="tip-sheet-body">
         {@render children()}
       </div>
-      <button type="button" class="tip-sheet-close" onclick={closeDetail}>
-        Close
-      </button>
     </div>
   </div>
 {/if}
@@ -417,10 +420,9 @@
     z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
     width: min(24rem, 100%);
     max-height: min(70dvh, 32rem);
-    padding: 1rem 1rem 0.85rem;
+    padding: 1rem;
     border-radius: var(--radius-lg);
     background: var(--foreground-mid);
     color: var(--background-color);
@@ -434,6 +436,8 @@
     -webkit-overflow-scrolling: touch;
     min-height: 0;
     flex: 1 1 auto;
+    /* Keeps the first line clear of the floating close button. */
+    padding-right: 1.5rem;
   }
 
   /* Readable sheet sizes in px — larger than hover tip, not rem-scaled. */
@@ -448,22 +452,24 @@
   }
 
   .tip-sheet-close {
-    align-self: flex-end;
-    flex-shrink: 0;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--background-color);
-    background: color-mix(in srgb, var(--background-color) 10%, transparent);
-    border: 0.5px solid
-      color-mix(in srgb, var(--background-color) 22%, transparent);
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 0;
     border-radius: var(--radius-md);
-    padding: 0.4rem 0.7rem;
+    background: transparent;
+    color: color-mix(in srgb, var(--background-color) 65%, transparent);
+    cursor: pointer;
+    transition: var(--control-transition);
   }
 
   .tip-sheet-close:hover {
-    background: color-mix(in srgb, var(--background-color) 16%, transparent);
+    color: var(--background-color);
+    background: color-mix(in srgb, var(--background-color) 12%, transparent);
   }
 
   @media (min-width: 640px) {

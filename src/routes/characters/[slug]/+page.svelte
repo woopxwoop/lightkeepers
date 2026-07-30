@@ -24,6 +24,9 @@
   import Button from "$lib/ui/components/Button.svelte";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import Select from "$lib/ui/components/Select.svelte";
+  import BackLink from "$lib/ui/components/BackLink.svelte";
+  import CostPopover from "$lib/ui/components/CostPopover.svelte";
+  import UpgradeImpactPopover from "$lib/ui/components/UpgradeImpactPopover.svelte";
   import { elementColor } from "$lib/element-colors";
   import {
     CHARACTER_SIM_COST,
@@ -56,17 +59,13 @@
   import { artifactSetByKey, weaponByKey, equipmentVersion, ensureEquipmentData } from "$lib/equipment-data";
   import {
     MAIN_STAT_SLOTS,
+    constellationImpactRows,
     levelImportanceFromBuilds,
     rankSigWeaponsByGain,
     rankWeaponsByRarityAndTeams,
     recommendedSubstatsFromBuilds,
     talentImportanceRows as buildTalentImportanceRows,
   } from "$lib/character-builds";
-  import {
-    CONSTELLATION_UPGRADE,
-    SIGNATURE_UPGRADE,
-    classifyUpgradeImpact,
-  } from "$lib/upgrade-priority";
   import {
     artifactIconUrl,
     skillIconUrl,
@@ -313,13 +312,17 @@
 
   let recommendedSubstats = $derived(recommendedSubstatsFromBuilds(builds));
 
+  let constellationRows = $derived(
+    constellationImpactRows(builds?.vertical_importance?.constellations),
+  );
+
   let rankedSigWeapons = $derived(
     rankSigWeaponsByGain(builds?.vertical_importance?.sig_weapons),
   );
 
   /**
    * Talent priority rows for Builds tab: qualitative upgrade labels from
-   * median % DPS drop when that talent is at 1.
+   * max(mean, median) % DPS drop when that talent is at 1.
    */
   let talentImportanceRows = $derived(
     buildTalentImportanceRows(builds?.talent_importance, (kitType) => {
@@ -385,7 +388,7 @@
         <div
           class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
         >
-          <a href="/characters" class="back-link">← All characters</a>
+          <BackLink href="/characters">← All characters</BackLink>
           <p class="hero-eyebrow" style="color: {elColor};">
             {kit.title || "Character"}
           </p>
@@ -572,7 +575,9 @@
                 />
               </label>
               {#if teamsMode === "simulated"}
-                <span class="teams-cost">{CHARACTER_SIM_COST} cost</span>
+                <span class="teams-cost"
+                  >{CHARACTER_SIM_COST} <CostPopover /></span
+                >
               {:else}
                 <span class="teams-cost">Usage rate</span>
               {/if}
@@ -767,7 +772,7 @@
                       <ul class="stat-list">
                         {#each builds.main_stats[slot.key] as stat}
                           {@const icon = statIconUrl(stat.key)}
-                          <li class="stat-row">
+                          <li class="main-stat-item">
                             <span class="flex items-center gap-1.5 min-w-0">
                               {#if icon}
                                 <img
@@ -877,12 +882,16 @@
                             {/if}
                             <div class="talent-priority-copy">
                               <div class="talent-priority-name">{row.label}</div>
-                              <div
-                                class="talent-priority-label"
-                                data-priority={row.priority}
-                              >
-                                {row.priorityLabel}
-                              </div>
+                              <UpgradeImpactPopover
+                                label={row.priorityLabel}
+                                tier={row.priority}
+                                kind="talent"
+                                mean={row.mean}
+                                median={row.median}
+                                min={row.min}
+                                max={row.max}
+                                teams={row.teams}
+                              />
                             </div>
                           </li>
                         {/each}
@@ -908,12 +917,16 @@
                           {/if}
                           <div class="talent-priority-copy">
                             <div class="talent-priority-name">Level 90</div>
-                            <div
-                              class="talent-priority-label"
-                              data-priority={levelImportance.priority}
-                            >
-                              {levelImportance.priorityLabel}
-                            </div>
+                            <UpgradeImpactPopover
+                              label={levelImportance.priorityLabel}
+                              tier={levelImportance.priority}
+                              kind="level"
+                              mean={levelImportance.mean}
+                              median={levelImportance.median}
+                              min={levelImportance.min}
+                              max={levelImportance.max}
+                              teams={levelImportance.teams}
+                            />
                           </div>
                         </li>
                       </ul>
@@ -922,15 +935,11 @@
                 </div>
 
                 <div class="invest-col">
-                  {#if builds.vertical_importance?.constellations?.length}
+                  {#if constellationRows.length}
                     <section class="board-section">
                       <h2 class="section-title">Constellation Impact</h2>
                       <ul class="talent-priority-list">
-                        {#each builds.vertical_importance.constellations as row}
-                          {@const impact = classifyUpgradeImpact(
-                            row.median_pct_gain,
-                            CONSTELLATION_UPGRADE,
-                          )}
+                        {#each constellationRows as row}
                           {@const constellation = kit.constellations.find(
                             (c) => c.index === row.cons,
                           )}
@@ -940,7 +949,7 @@
                             : null}
                           <li
                             class="talent-priority-row"
-                            data-priority={impact.tier}
+                            data-priority={row.priority}
                           >
                             <span
                               class="talent-priority-rank"
@@ -958,12 +967,16 @@
                               <div class="talent-priority-name">
                                 {constellation?.name ?? `C${row.cons}`}
                               </div>
-                              <div
-                                class="talent-priority-label"
-                                data-priority={impact.tier}
-                              >
-                                {impact.label}
-                              </div>
+                              <UpgradeImpactPopover
+                                label={row.priorityLabel}
+                                tier={row.priority}
+                                kind="constellation"
+                                mean={row.mean_pct_gain}
+                                median={row.median_pct_gain}
+                                min={row.min_pct_gain}
+                                max={row.max_pct_gain}
+                                teams={row.teams}
+                              />
                             </div>
                           </li>
                         {/each}
@@ -976,29 +989,31 @@
                       <h2 class="section-title">Signature weapon impact</h2>
                       <ul class="talent-priority-list">
                         {#each rankedSigWeapons as row}
-                          {@const impact = classifyUpgradeImpact(
-                            row.median_pct_gain,
-                            SIGNATURE_UPGRADE,
-                          )}
                           <li
                             class="talent-priority-row"
-                            data-priority={impact.tier}
+                            data-priority={row.priority}
                           >
-                            <WeaponIcon
-                              weaponKey={row.key}
-                              alt=""
-                              class="kit-icon talent-priority-icon shrink-0"
-                            />
+                            <span class="kit-icon talent-priority-icon shrink-0">
+                              <WeaponIcon
+                                weaponKey={row.key}
+                                alt=""
+                                class="h-full w-full object-contain"
+                              />
+                            </span>
                             <div class="talent-priority-copy">
                               <div class="talent-priority-name">
                                 <WeaponName weaponKey={row.key} />
                               </div>
-                              <div
-                                class="talent-priority-label"
-                                data-priority={impact.tier}
-                              >
-                                {impact.label}
-                              </div>
+                              <UpgradeImpactPopover
+                                label={row.priorityLabel}
+                                tier={row.priority}
+                                kind="signature"
+                                mean={row.mean_pct_gain}
+                                median={row.median_pct_gain}
+                                min={row.min_pct_gain}
+                                max={row.max_pct_gain}
+                                teams={row.teams}
+                              />
                             </div>
                           </li>
                         {/each}
@@ -1029,14 +1044,6 @@
 </PageShell>
 
 <style>
-  .back-link {
-    text-decoration: none;
-  }
-
-  .back-link:hover {
-    color: var(--foreground-color);
-  }
-
   .hero {
     border-bottom: var(--border-width) solid
       color-mix(
@@ -1281,10 +1288,9 @@
     font-size: var(--text-xs);
   }
 
-  .stat-row {
+  .main-stat-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.5rem;
   }
 
@@ -1535,29 +1541,10 @@
     color: var(--foreground-color);
   }
 
-  .talent-priority-label {
-    font-size: var(--text-xs);
-  }
-
-  .talent-priority-label[data-priority="highly_recommended"] {
-    color: var(--accent-1);
-  }
-
-  .talent-priority-label[data-priority="recommended"] {
-    color: var(--accent-2);
-  }
-
-  .talent-priority-label[data-priority="inconsequential"] {
-    color: var(--accent-3);
-  }
-
+  /* Fills its parent chip unless a sized variant below overrides it. */
   .stat-icon {
-    display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.7;
   }
 
   .main-stat-icon {
@@ -1568,11 +1555,6 @@
   .hero-meta-icon {
     width: 1.4rem;
     height: 1.4rem;
-  }
-
-  :global([data-theme="light"]) .stat-icon {
-    filter: brightness(0);
-    opacity: 0.65;
   }
 
   :global(.char-detail) {

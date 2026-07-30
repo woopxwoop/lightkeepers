@@ -25,6 +25,9 @@
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
+  import BackLink from "$lib/ui/components/BackLink.svelte";
+  import CostPopover from "$lib/ui/components/CostPopover.svelte";
+  import StatRow from "$lib/ui/components/StatRow.svelte";
   import {
     computeBuildSheetStats,
     formatSheetStat,
@@ -87,12 +90,12 @@
 
 <PageShell class="gap-8 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
-    <a href="/teams/{team.team_key}" class="back-link">← {teamTitle}</a>
+    <BackLink href="/teams/{team.team_key}">← {teamTitle}</BackLink>
     <h1 class="page-title">{simLabel || teamTitle}</h1>
     <p class="page-meta">
       <span>{(sim.dps / 1000).toFixed(1)}K DPS</span>
       <span aria-hidden="true">·</span>
-      <span>Cost {sim.cost}</span>
+      <span><CostPopover label="Cost" /> {sim.cost}</span>
     </p>
   </header>
 
@@ -234,18 +237,11 @@
                 ]}
                 <div class="stat-list">
                   {#each coreStats as row (row.key)}
-                    {@const icon = statIconUrl(iconKeyFor(row.key))}
-                    <div class="stat-row">
-                      <span class="stat-label">
-                        {#if icon}
-                          <img src={icon} alt="" class="stat-icon" />
-                        {/if}
-                        {row.label}
-                      </span>
-                      <span class="stat-total"
-                        >{formatSheetStat(row.key, row.value)}</span
-                      >
-                    </div>
+                    <StatRow
+                      label={row.label}
+                      value={formatSheetStat(row.key, row.value)}
+                      icon={statIconUrl(iconKeyFor(row.key))}
+                    />
                   {/each}
                 </div>
               {:else}
@@ -384,9 +380,9 @@
     gap: var(--space-4);
   }
 
-  @media (min-width: 1536px) {
+  @media (min-width: 1024px) {
     .builds-grid {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -532,10 +528,8 @@
 
   .equip-block {
     position: relative;
-    padding: 0.5rem;
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    padding-bottom: 0.5rem;
+    border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
   .equip-trigger {
@@ -551,7 +545,6 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    flex-wrap: wrap;
   }
 
   .equip-name {
@@ -592,6 +585,7 @@
   }
 
   .r-badge {
+    flex-shrink: 0;
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -653,43 +647,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-  }
-
-  .stat-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    font-size: 0.7rem;
-    line-height: 1.35;
-  }
-
-  .stat-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    color: var(--foreground-mid);
-    min-width: 0;
-  }
-
-  .stat-icon {
-    width: 0.95rem;
-    height: 0.95rem;
-    object-fit: contain;
-    flex-shrink: 0;
-    filter: brightness(0) invert(1);
-    opacity: 0.7;
-  }
-
-  :global([data-theme="light"]) .stat-icon {
-    filter: brightness(0);
-    opacity: 0.65;
-  }
-
-  .stat-total {
-    font-weight: 600;
-    color: var(--foreground-color);
-    font-variant-numeric: tabular-nums;
   }
 
   .talent-row {

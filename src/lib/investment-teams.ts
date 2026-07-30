@@ -1,10 +1,8 @@
 /**
  * Investment team list helpers.
  *
- * Owns the Teams-page display pipeline: tag / cost filters, baseline vs
- * nearest-cost DPS, and owned-first sorting. Exact-cost "best DPS" for
- * character pages lives in `character-teams.ts` (`bestSimAtCost`) — different
- * invariant (highest at exact cost vs first / nearest).
+ * Owns the Teams-page display pipeline: tag / exact-cost filters, baseline
+ * DPS, and owned-first sorting.
  */
 
 import type { InvestmentFile, InvestmentSim, InvestmentTeam } from "$lib/types/investment";
@@ -64,35 +62,23 @@ export function simAtExactCost(
   return team.results.find((r) => r.cost === cost) ?? null;
 }
 
-/**
- * DPS of the sim whose cost is closest to `cost`.
- * On equal distance, prefers the lower cost; on a further tie, keeps the
- * earlier result in `team.results`.
- */
-export function nearestCostDps(team: InvestmentTeam, cost: number): number {
-  if (team.results.length === 0) return 0;
-  let best = team.results[0]!;
-  let bestDist = Math.abs(best.cost - cost);
-  for (let i = 1; i < team.results.length; i++) {
-    const candidate = team.results[i]!;
-    const dist = Math.abs(candidate.cost - cost);
-    if (
-      dist < bestDist ||
-      (dist === bestDist && candidate.cost < best.cost)
-    ) {
-      best = candidate;
-      bestDist = dist;
+/** Best DPS at exactly `cost`, or 0 when no result matches. */
+export function exactCostDps(team: InvestmentTeam, cost: number): number {
+  let bestDps = 0;
+  for (const result of team.results) {
+    if (result.cost === cost) {
+      bestDps = Math.max(bestDps, result.dps);
     }
   }
-  return best.dps;
+  return bestDps;
 }
 
-/** DPS shown on list cards — baseline, or nearest to the selected cost. */
+/** DPS shown on list cards — baseline, or best at the selected exact cost. */
 export function displayDps(
   team: InvestmentTeam,
   selectedCost: number | null,
 ): number {
-  if (selectedCost !== null) return nearestCostDps(team, selectedCost);
+  if (selectedCost !== null) return exactCostDps(team, selectedCost);
   return baselineSim(team)?.dps ?? 0;
 }
 
