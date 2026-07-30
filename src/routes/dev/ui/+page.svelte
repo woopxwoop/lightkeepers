@@ -21,6 +21,7 @@
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
   import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
+  import StatRow from "$lib/ui/components/StatRow.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
@@ -38,7 +39,7 @@
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
   import type { AbyssTeam, CharacterOwned } from "$lib/definitions";
-  import { toGoodKey, weaponTypeLabel } from "$lib/utils";
+  import { statIconUrl, toGoodKey, weaponTypeLabel } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
@@ -982,19 +983,37 @@
     </div>
   </section>
 
-  <!-- ── Planned ────────────────────────────────────────────────────────── -->
-  <section class="gallery-section" id="planned">
+  <!-- ── Sheet primitives ───────────────────────────────────────────────── -->
+  <section class="gallery-section" id="sheet">
     <div class="section-head">
-      <h2>Still to extract</h2>
-      <p>Defer until the matching route migration.</p>
+      <h2>Sheet primitives</h2>
+      <p>Build-sheet rows and the shared section label recipe.</p>
     </div>
-    <div class="planned-grid">
-      {#each ["StatRow", "SectionLabel"] as name}
-        <Surface variant="empty">
-          <p class="surface-label">{name}</p>
-          <p class="token-meta">Not extracted yet</p>
-        </Surface>
-      {/each}
+    <div class="surface-row">
+      <Surface>
+        <p class="surface-label">StatRow</p>
+        <p class="token-meta mb-2">
+          Label/value row for build sheets (<code>/team-configs/[slug]</code>).
+          Icon optional.
+        </p>
+        <div class="stat-stack">
+          <StatRow label="ATK" value="2,184" icon={statIconUrl("atk")} />
+          <StatRow label="CRIT Rate" value="72.4%" icon={statIconUrl("critRate")} />
+          <StatRow label="Energy Recharge" value="128.5%" />
+        </div>
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">.eyebrow</p>
+        <p class="token-meta mb-2">
+          Global utility in <code>app.css</code>, not a component — pages layer
+          color and spacing on top.
+        </p>
+        <div class="eyebrow-stack">
+          <p class="eyebrow">Most used 5★</p>
+          <p class="eyebrow eyebrow-accent">Solution 1 of 4</p>
+        </div>
+      </Surface>
     </div>
   </section>
 </PageShell>
@@ -1150,8 +1169,7 @@
   }
 
   .surface-row,
-  .control-stack,
-  .planned-grid {
+  .control-stack {
     display: grid;
     gap: var(--space-3);
   }
@@ -1160,8 +1178,15 @@
     grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
   }
 
-  .planned-grid {
-    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  .stat-stack,
+  .eyebrow-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .eyebrow-accent {
+    color: var(--accent-1);
   }
 
   .chip-row {

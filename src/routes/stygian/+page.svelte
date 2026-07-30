@@ -186,7 +186,7 @@
   {@const teams = metaByField[slot]}
 
   <section class="meta-column">
-    <h3 class="meta-field-heading">
+    <h3 class="eyebrow meta-field-heading">
       {enemies?.[slot]?.enemy_name ?? stygianSlotLabel[slot]}
     </h3>
 
@@ -247,7 +247,7 @@
     <Surface flush class="solution-board">
       <div class="board-head">
         <div class="board-head-left">
-          <span class="board-eyebrow">
+          <span class="eyebrow board-eyebrow">
             Solution {safeIndex + 1}
             <span class="board-eyebrow-total">of {displaySolutions.length}</span>
           </span>
@@ -386,11 +386,6 @@
   }
 
   .board-eyebrow {
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
     color: var(--foreground-color);
     white-space: nowrap;
   }
@@ -622,12 +617,6 @@
 
   .meta-field-heading {
     margin-bottom: var(--space-3);
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
   }
 
   .meta-list {

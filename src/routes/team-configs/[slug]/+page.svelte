@@ -23,6 +23,7 @@
   import Surface from "$lib/ui/components/Surface.svelte";
   import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
+  import StatRow from "$lib/ui/components/StatRow.svelte";
   import {
     computeBuildSheetStats,
     formatSheetStat,
@@ -230,18 +231,11 @@
                 ]}
                 <div class="stat-list">
                   {#each coreStats as row (row.key)}
-                    {@const icon = statIconUrl(iconKeyFor(row.key))}
-                    <div class="stat-row">
-                      <span class="stat-label">
-                        {#if icon}
-                          <img src={icon} alt="" class="stat-icon" />
-                        {/if}
-                        {row.label}
-                      </span>
-                      <span class="stat-total"
-                        >{formatSheetStat(row.key, row.value)}</span
-                      >
-                    </div>
+                    <StatRow
+                      label={row.label}
+                      value={formatSheetStat(row.key, row.value)}
+                      icon={statIconUrl(iconKeyFor(row.key))}
+                    />
                   {/each}
                 </div>
               {:else}
@@ -666,43 +660,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-  }
-
-  .stat-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    font-size: 0.7rem;
-    line-height: 1.35;
-  }
-
-  .stat-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    color: var(--foreground-mid);
-    min-width: 0;
-  }
-
-  .stat-icon {
-    width: 0.95rem;
-    height: 0.95rem;
-    object-fit: contain;
-    flex-shrink: 0;
-    filter: brightness(0) invert(1);
-    opacity: 0.7;
-  }
-
-  :global([data-theme="light"]) .stat-icon {
-    filter: brightness(0);
-    opacity: 0.65;
-  }
-
-  .stat-total {
-    font-weight: 600;
-    color: var(--foreground-color);
-    font-variant-numeric: tabular-nums;
   }
 
   .talent-row {

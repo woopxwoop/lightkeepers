@@ -34,13 +34,6 @@
     gap: var(--space-2);
   }
 
-  .eyebrow {
-    font-size: var(--text-xs);
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
   .title {
     font-size: var(--h1-size);
     font-weight: 600;

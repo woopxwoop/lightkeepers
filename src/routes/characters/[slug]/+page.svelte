@@ -890,7 +890,7 @@
                       <ul class="stat-list">
                         {#each builds.main_stats[slot.key] as stat}
                           {@const icon = statIconUrl(stat.key)}
-                          <li class="stat-row">
+                          <li class="main-stat-item">
                             <span class="flex items-center gap-1.5 min-w-0">
                               {#if icon}
                                 <img
@@ -1432,10 +1432,9 @@
     font-size: var(--text-xs);
   }
 
-  .stat-row {
+  .main-stat-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.5rem;
   }
 
@@ -1686,13 +1685,10 @@
     color: var(--foreground-color);
   }
 
+  /* Fills its parent chip unless a sized variant below overrides it. */
   .stat-icon {
-    display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.7;
   }
 
   .main-stat-icon {
@@ -1703,11 +1699,6 @@
   .hero-meta-icon {
     width: 1.4rem;
     height: 1.4rem;
-  }
-
-  :global([data-theme="light"]) .stat-icon {
-    filter: brightness(0);
-    opacity: 0.65;
   }
 
   :global(.char-detail) {

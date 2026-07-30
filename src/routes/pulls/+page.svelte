@@ -489,7 +489,7 @@
   {@const shown = open || collapsing}
   {@const restCount = Math.max(0, entries.length - 1)}
   <div class="standouts">
-    <p class="standouts-status">Most used {label}</p>
+    <p class="eyebrow standouts-status">Most used {label}</p>
     {#if entries.length === 0}
       <EmptyState message="No standouts on this board yet." />
     {:else}
@@ -528,7 +528,7 @@
             <li class="standout-toggle-cell">
               <button
                 type="button"
-                class="standouts-toggle"
+                class="eyebrow standouts-toggle"
                 aria-expanded={shown}
                 aria-controls="standouts-deck-{id}"
                 disabled={collapsing}
@@ -819,12 +819,7 @@
   }
 
   .standouts-status {
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
     font-weight: 500;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
   }
 
   .standouts-deck {
@@ -958,11 +953,6 @@
     gap: 0.4rem;
     min-height: 2.75rem;
     padding: 0.55rem 0.85rem;
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
     color: var(--accent-1);
     background: transparent;
     border: none;

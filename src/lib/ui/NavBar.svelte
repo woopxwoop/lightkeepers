@@ -296,7 +296,7 @@
     <div class="drawer-glow" aria-hidden="true"></div>
 
     <nav class="drawer-nav" aria-label="Primary">
-      <p class="drawer-section-label">Navigate</p>
+      <p class="eyebrow drawer-section-label">Navigate</p>
       {#each mainLinks as link, i}
         <a
           href={link.path}
@@ -311,7 +311,7 @@
       {/each}
 
       <div class="drawer-settings">
-        <p class="drawer-section-label">Account</p>
+        <p class="eyebrow drawer-section-label">Account</p>
         <button
           type="button"
           class="drawer-item drawer-settings-toggle"
@@ -652,11 +652,7 @@
 
   .drawer-section-label {
     margin: 0.35rem 0.75rem 0.4rem;
-    font-family: var(--font-display);
     font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
     color: color-mix(in srgb, var(--foreground-mid) 70%, transparent);
   }
 
