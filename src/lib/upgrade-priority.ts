@@ -56,9 +56,12 @@ export const LEVEL_UPGRADE: UpgradeImpactLadder = [
   { minPct: 0, tier: "negligible", label: "Largely inconsequential" },
 ];
 
-/** Stronger of mean vs median — used for tier + sort on Builds priority. */
+/**
+ * Stronger mean/median impact by absolute magnitude. Impact samples may be
+ * signed, so preserve the selected value's sign for display.
+ */
 export function primaryUpgradePct(mean: number, median: number): number {
-  return Math.max(mean, median);
+  return Math.abs(mean) >= Math.abs(median) ? mean : median;
 }
 
 /** Classify |pct| with the first matching band in a descending threshold ladder. */

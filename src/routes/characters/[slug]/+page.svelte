@@ -59,18 +59,13 @@
   import { artifactSetByKey, weaponByKey, equipmentVersion, ensureEquipmentData } from "$lib/equipment-data";
   import {
     MAIN_STAT_SLOTS,
+    constellationImpactRows,
     levelImportanceFromBuilds,
     rankSigWeaponsByGain,
     rankWeaponsByRarityAndTeams,
     recommendedSubstatsFromBuilds,
     talentImportanceRows as buildTalentImportanceRows,
   } from "$lib/character-builds";
-  import {
-    CONSTELLATION_UPGRADE,
-    SIGNATURE_UPGRADE,
-    classifyUpgradeImpact,
-    primaryUpgradePct,
-  } from "$lib/upgrade-priority";
   import {
     artifactIconUrl,
     skillIconUrl,
@@ -316,6 +311,10 @@
   });
 
   let recommendedSubstats = $derived(recommendedSubstatsFromBuilds(builds));
+
+  let constellationRows = $derived(
+    constellationImpactRows(builds?.vertical_importance?.constellations),
+  );
 
   let rankedSigWeapons = $derived(
     rankSigWeaponsByGain(builds?.vertical_importance?.sig_weapons),
@@ -936,19 +935,11 @@
                 </div>
 
                 <div class="invest-col">
-                  {#if builds.vertical_importance?.constellations?.length}
+                  {#if constellationRows.length}
                     <section class="board-section">
                       <h2 class="section-title">Constellation Impact</h2>
                       <ul class="talent-priority-list">
-                        {#each builds.vertical_importance.constellations as row}
-                          {@const pct = primaryUpgradePct(
-                            row.mean_pct_gain,
-                            row.median_pct_gain,
-                          )}
-                          {@const impact = classifyUpgradeImpact(
-                            pct,
-                            CONSTELLATION_UPGRADE,
-                          )}
+                        {#each constellationRows as row}
                           {@const constellation = kit.constellations.find(
                             (c) => c.index === row.cons,
                           )}
@@ -958,7 +949,7 @@
                             : null}
                           <li
                             class="talent-priority-row"
-                            data-priority={impact.tier}
+                            data-priority={row.priority}
                           >
                             <span
                               class="talent-priority-rank"
@@ -977,8 +968,8 @@
                                 {constellation?.name ?? `C${row.cons}`}
                               </div>
                               <UpgradeImpactPopover
-                                label={impact.label}
-                                tier={impact.tier}
+                                label={row.priorityLabel}
+                                tier={row.priority}
                                 kind="constellation"
                                 mean={row.mean_pct_gain}
                                 median={row.median_pct_gain}
@@ -998,17 +989,9 @@
                       <h2 class="section-title">Signature weapon impact</h2>
                       <ul class="talent-priority-list">
                         {#each rankedSigWeapons as row}
-                          {@const pct = primaryUpgradePct(
-                            row.mean_pct_gain,
-                            row.median_pct_gain,
-                          )}
-                          {@const impact = classifyUpgradeImpact(
-                            pct,
-                            SIGNATURE_UPGRADE,
-                          )}
                           <li
                             class="talent-priority-row"
-                            data-priority={impact.tier}
+                            data-priority={row.priority}
                           >
                             <span class="kit-icon talent-priority-icon shrink-0">
                               <WeaponIcon
@@ -1022,8 +1005,8 @@
                                 <WeaponName weaponKey={row.key} />
                               </div>
                               <UpgradeImpactPopover
-                                label={impact.label}
-                                tier={impact.tier}
+                                label={row.priorityLabel}
+                                tier={row.priority}
                                 kind="signature"
                                 mean={row.mean_pct_gain}
                                 median={row.median_pct_gain}

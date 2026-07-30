@@ -69,7 +69,12 @@
     let top = rect.bottom + GAP;
     if (top + menuRect.height > vh - EDGE) {
       const above = rect.top - menuRect.height - GAP;
-      if (above >= EDGE) top = above;
+      if (above >= EDGE) {
+        top = above;
+      } else {
+        const maxTop = Math.max(EDGE, vh - EDGE - menuRect.height);
+        top = Math.max(EDGE, Math.min(top, maxTop));
+      }
     }
 
     menu.style.top = `${top}px`;

@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  constellationImpactRows,
   levelImportanceFromBuilds,
   rankSigWeaponsByGain,
   rankWeaponsByRarityAndTeams,
@@ -76,15 +77,49 @@ describe("rankWeaponsByRarityAndTeams", () => {
 });
 
 describe("rankSigWeaponsByGain", () => {
-  it("sorts by the stronger of mean and median gain, then key", () => {
+  it("sorts and classifies by the stronger mean/median gain", () => {
     const ranked = rankSigWeaponsByGain([
       { key: "B", teams: 1, mean_pct_gain: 10, median_pct_gain: 10, min_pct_gain: 10, max_pct_gain: 10 },
       { key: "A", teams: 1, mean_pct_gain: 10, median_pct_gain: 10, min_pct_gain: 10, max_pct_gain: 10 },
       { key: "C", teams: 1, mean_pct_gain: 20, median_pct_gain: 8, min_pct_gain: 8, max_pct_gain: 20 },
     ]);
     assert.deepEqual(
-      ranked.map((w) => w.key),
-      ["C", "A", "B"],
+      ranked.map((w) => [w.key, w.priority]),
+      [
+        ["C", "exceptional"],
+        ["A", "solid"],
+        ["B", "solid"],
+      ],
+    );
+  });
+});
+
+describe("constellationImpactRows", () => {
+  it("preserves source order and classifies each gain", () => {
+    const rows = constellationImpactRows([
+      {
+        cons: 1,
+        teams: 2,
+        mean_pct_gain: 4,
+        median_pct_gain: 6,
+        min_pct_gain: 2,
+        max_pct_gain: 7,
+      },
+      {
+        cons: 2,
+        teams: 2,
+        mean_pct_gain: 21,
+        median_pct_gain: 18,
+        min_pct_gain: 15,
+        max_pct_gain: 25,
+      },
+    ]);
+    assert.deepEqual(
+      rows.map((row) => [row.cons, row.pct, row.priorityLabel]),
+      [
+        [1, 6, "Modest impact"],
+        [2, 21, "Exceptional impact"],
+      ],
     );
   });
 });

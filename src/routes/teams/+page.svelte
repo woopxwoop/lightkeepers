@@ -105,6 +105,12 @@
       const cost = parseCost(url.searchParams.get("cost"));
       if (cost !== selectedCost) selectedCost = cost;
 
+      const hasSettings =
+        url.searchParams.has("cost") ||
+        url.searchParams.has("sort") ||
+        url.searchParams.get("owned") === "0";
+      if (hasSettings !== showSettings) showSettings = hasSettings;
+
       const char = readList(url, "char");
       if (!sameList(tags, char)) tags = char;
     });

@@ -34,6 +34,7 @@
   let open = $state(false);
   let triggerEl: HTMLButtonElement | null = $state(null);
   let menuEl: HTMLDivElement | null = $state(null);
+  let focusOnOpen = false;
 
   let selected = $derived(
     options.find((o) => o.value === value) ?? options[0] ?? null,
@@ -47,27 +48,59 @@
     if (!trigger || !menu) return;
 
     const rect = trigger.getBoundingClientRect();
-    const menuRect = menu.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const alignRight = rect.left + rect.width / 2 >= vw / 2;
+    const availableWidth = Math.max(0, vw - EDGE * 2);
 
-    let top = rect.bottom + GAP;
-    if (top + menuRect.height > vh - EDGE) {
-      const above = rect.top - menuRect.height - GAP;
-      if (above >= EDGE) top = above;
+    menu.style.minWidth = `${Math.min(Math.max(rect.width, 10 * 16), availableWidth)}px`;
+    menu.style.maxWidth = `${availableWidth}px`;
+    menu.style.maxHeight = "";
+
+    const menuRect = menu.getBoundingClientRect();
+    const belowTop = rect.bottom + GAP;
+    const belowSpace = Math.max(0, vh - EDGE - belowTop);
+    const aboveSpace = Math.max(0, rect.top - GAP - EDGE);
+
+    let top = belowTop;
+    if (menuRect.height <= belowSpace) {
+      // Keep the preferred below-trigger placement.
+    } else if (menuRect.height <= aboveSpace) {
+      top = rect.top - menuRect.height - GAP;
+    } else if (aboveSpace > belowSpace) {
+      top = EDGE;
+      menu.style.maxHeight = `${aboveSpace}px`;
+    } else {
+      menu.style.maxHeight = `${belowSpace}px`;
     }
 
-    let left = alignRight ? rect.right - menuRect.width : rect.left;
-    left = Math.max(EDGE, Math.min(left, vw - menuRect.width - EDGE));
+    const constrainedRect = menu.getBoundingClientRect();
+    let left = alignRight ? rect.right - constrainedRect.width : rect.left;
+    const horizontalEdge = vw >= EDGE * 2 ? EDGE : 0;
+    const maxLeft = Math.max(
+      horizontalEdge,
+      vw - constrainedRect.width - horizontalEdge,
+    );
+    left = Math.max(horizontalEdge, Math.min(left, maxLeft));
 
     menu.style.top = `${top}px`;
     menu.style.left = `${left}px`;
-    menu.style.minWidth = `${Math.max(rect.width, 10 * 16)}px`;
   }
 
-  function toggle() {
+  function toggle(event: MouseEvent) {
+    focusOnOpen = !open && event.detail === 0;
     open = !open;
+  }
+
+  function openFromKeyboard(event: KeyboardEvent) {
+    if (
+      !open &&
+      ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)
+    ) {
+      event.preventDefault();
+      focusOnOpen = true;
+      open = true;
+    }
   }
 
   function choose(next: Value) {
@@ -90,11 +123,44 @@
 
     void tick().then(() => {
       placeMenu();
+      if (focusOnOpen) {
+        focusOnOpen = false;
+        const options = menuEl?.querySelectorAll<HTMLButtonElement>(
+          '[role="option"]',
+        );
+        const selectedIndex = options
+          ? [...options].findIndex(
+              (option) => option.getAttribute("aria-selected") === "true",
+            )
+          : -1;
+        options?.[Math.max(0, selectedIndex)]?.focus();
+      }
       requestAnimationFrame(placeMenu);
     });
 
     function onKeydown(e: KeyboardEvent) {
-      if (e.key === "Escape") open = false;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        open = false;
+        void tick().then(() => triggerEl?.focus());
+        return;
+      }
+
+      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+      const options = [
+        ...(menuEl?.querySelectorAll<HTMLButtonElement>('[role="option"]') ??
+          []),
+      ];
+      if (options.length === 0) return;
+
+      e.preventDefault();
+      const current = options.indexOf(document.activeElement as HTMLButtonElement);
+      let next = current;
+      if (e.key === "Home") next = 0;
+      else if (e.key === "End") next = options.length - 1;
+      else if (e.key === "ArrowDown") next = Math.min(current + 1, options.length - 1);
+      else next = current < 0 ? options.length - 1 : Math.max(current - 1, 0);
+      options[next]?.focus();
     }
     function onPointerDown(e: PointerEvent) {
       const target = e.target as Node | null;
@@ -128,6 +194,7 @@
     aria-expanded={open}
     aria-haspopup="listbox"
     aria-controls={listboxId}
+    onkeydown={openFromKeyboard}
     onclick={toggle}
     {...rest}
   >
@@ -200,6 +267,8 @@
     position: fixed;
     z-index: 200;
     min-width: 10rem;
+    box-sizing: border-box;
+    overflow-y: auto;
     padding: 0.25rem;
     border-radius: var(--radius-md);
     border: var(--border-width) solid rgba(255, 255, 255, 0.22);

@@ -23,6 +23,7 @@ describe("upgrade priority", () => {
   it("uses the stronger of mean and median", () => {
     assert.equal(primaryUpgradePct(8.2, 11.4), 11.4);
     assert.equal(primaryUpgradePct(16.1, 9.3), 16.1);
+    assert.equal(primaryUpgradePct(-8.2, -11.4), -11.4);
   });
 
   it("picks the first band at or below the value", () => {

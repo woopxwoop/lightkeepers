@@ -72,6 +72,13 @@
       const owned = readEnum(url, "owned", OWNERSHIP_KEYS, "all");
       if (owned !== ownershipFilter) ownershipFilter = owned;
 
+      const hasFilters =
+        url.searchParams.has("rarity") ||
+        url.searchParams.has("element") ||
+        url.searchParams.has("weapon") ||
+        url.searchParams.has("owned");
+      if (hasFilters !== filtersOpen) filtersOpen = hasFilters;
+
       const q = url.searchParams.get("q") ?? "";
       if (q !== search.trim()) search = q;
 

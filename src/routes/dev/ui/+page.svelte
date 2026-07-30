@@ -998,7 +998,7 @@
         </p>
         <div class="stat-stack">
           <StatRow label="ATK" value="2,184" icon={statIconUrl("atk")} />
-          <StatRow label="CRIT Rate" value="72.4%" icon={statIconUrl("critRate")} />
+          <StatRow label="CRIT Rate" value="72.4%" icon={statIconUrl("critRate_")} />
           <StatRow label="Energy Recharge" value="128.5%" />
         </div>
       </Surface>

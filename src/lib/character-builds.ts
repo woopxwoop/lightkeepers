@@ -6,13 +6,16 @@
 
 import { isArtifactSubstatKey } from "$lib/build-stats";
 import {
+  CONSTELLATION_UPGRADE,
   LEVEL_UPGRADE,
+  SIGNATURE_UPGRADE,
   TALENT_UPGRADE,
   classifyUpgradeImpact,
   primaryUpgradePct,
   type UpgradeTier,
 } from "$lib/upgrade-priority";
 import type {
+  CharacterConsGain,
   CharacterIndex,
   CharacterSigGain,
   CharacterTalentImportance,
@@ -110,17 +113,46 @@ export function rankWeaponsByRarityAndTeams(
   });
 }
 
-/** Signature weapons ranked by the stronger of mean / median gain, then key. */
+export type VerticalImpactRow<T> = T & {
+  pct: number;
+  priority: UpgradeTier;
+  priorityLabel: string;
+};
+
+/** Constellations in source order with their display-ready impact. */
+export function constellationImpactRows(
+  constellations: CharacterConsGain[] | null | undefined,
+): VerticalImpactRow<CharacterConsGain>[] {
+  if (!constellations?.length) return [];
+  return constellations.map((row) => {
+    const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
+    const impact = classifyUpgradeImpact(pct, CONSTELLATION_UPGRADE);
+    return {
+      ...row,
+      pct,
+      priority: impact.tier,
+      priorityLabel: impact.label,
+    };
+  });
+}
+
+/** Signature weapons ranked by primary gain, with display-ready impact. */
 export function rankSigWeaponsByGain(
   sigWeapons: CharacterSigGain[] | null | undefined,
-): CharacterSigGain[] {
+): VerticalImpactRow<CharacterSigGain>[] {
   if (!sigWeapons?.length) return [];
-  return [...sigWeapons].sort(
-    (a, b) =>
-      primaryUpgradePct(b.mean_pct_gain, b.median_pct_gain) -
-        primaryUpgradePct(a.mean_pct_gain, a.median_pct_gain) ||
-      a.key.localeCompare(b.key),
-  );
+  return sigWeapons
+    .map((row) => {
+      const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
+      const impact = classifyUpgradeImpact(pct, SIGNATURE_UPGRADE);
+      return {
+        ...row,
+        pct,
+        priority: impact.tier,
+        priorityLabel: impact.label,
+      };
+    })
+    .sort((a, b) => b.pct - a.pct || a.key.localeCompare(b.key));
 }
 
 export type TalentImportanceRow = {
