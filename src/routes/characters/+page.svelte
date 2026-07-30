@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
@@ -14,7 +15,12 @@
     type CharacterSortKey,
     type OwnershipFilter,
   } from "$lib/character-filter";
-  import { nextSearchPath, readEnum, readList } from "$lib/query-state";
+  import {
+    nextSearchPath,
+    readEnum,
+    readList,
+    sameSet,
+  } from "$lib/query-state";
 
   const RARITIES = ["4", "5"];
   const OWNERSHIP_KEYS = ["all", "owned", "unowned"] as const;
@@ -41,6 +47,41 @@
       page.url.searchParams.has("weapon") ||
       page.url.searchParams.has("owned"),
   );
+
+  /**
+   * A link to this same route (e.g. the nav bar while filters are applied)
+   * reuses this component, so the URL can change under seeded state. Rebuild
+   * from the URL, untracked so typing can't re-trigger this, and declared
+   * before the write effect so stale values are never mirrored back.
+   *
+   * Only real differences are assigned: the write path trims `q` and drops
+   * defaults, and reassigning those would fight the search input.
+   */
+  $effect(() => {
+    const url = page.url;
+    untrack(() => {
+      const rarity = readList(url, "rarity", RARITIES);
+      if (!sameSet(rarityFilter, rarity)) rarityFilter = new Set(rarity);
+
+      const elements = readList(url, "element", CHARACTER_ELEMENTS);
+      if (!sameSet(elementFilter, elements)) elementFilter = new Set(elements);
+
+      const weapons = readList(url, "weapon", CHARACTER_WEAPON_TYPES);
+      if (!sameSet(weaponFilter, weapons)) weaponFilter = new Set(weapons);
+
+      const owned = readEnum(url, "owned", OWNERSHIP_KEYS, "all");
+      if (owned !== ownershipFilter) ownershipFilter = owned;
+
+      const q = url.searchParams.get("q") ?? "";
+      if (q !== search.trim()) search = q;
+
+      const sort = readEnum(url, "sort", SORT_KEYS, "release_date");
+      if (sort !== sortBy) sortBy = sort;
+
+      const asc = url.searchParams.get("dir") === "asc";
+      if (asc !== sortAsc) sortAsc = asc;
+    });
+  });
 
   $effect(() => {
     if (!browser) return;

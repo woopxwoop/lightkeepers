@@ -40,10 +40,22 @@ function canonical(params: URLSearchParams): string {
     .join("&");
 }
 
+/** Same members, ignoring order — for `Set`-backed multi-select filters. */
+export function sameSet(current: Set<string>, values: string[]): boolean {
+  return current.size === values.length && values.every((v) => current.has(v));
+}
+
+/** Same values in the same order — for filters where order is meaningful. */
+export function sameList(current: string[], values: string[]): boolean {
+  return (
+    current.length === values.length && current.every((v, i) => v === values[i])
+  );
+}
+
 /**
  * Path + query with `patch` applied, or `null` when the URL already says the
  * same thing. Empty values drop their key (defaults stay out of the URL);
- * params the page doesn't own are preserved.
+ * params the page doesn't own are preserved, as is any fragment.
  */
 export function nextSearchPath(
   url: URL,
@@ -62,5 +74,6 @@ export function nextSearchPath(
   if (canonical(params) === canonical(url.searchParams)) return null;
 
   const qs = params.toString();
-  return qs ? `${url.pathname}?${qs}` : url.pathname;
+  const path = qs ? `${url.pathname}?${qs}` : url.pathname;
+  return `${path}${url.hash}`;
 }

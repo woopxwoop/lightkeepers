@@ -441,10 +441,9 @@
           type="button"
           class="row-control row-toggle"
           aria-expanded={isOpen}
-          aria-controls={rowId}
           aria-label={isOpen ? "Hide team" : "Reveal team"}
-          disabled={isHiding}
           onclick={() => {
+            if (hidingTeamRows.has(rowId)) return;
             teamCycleDirection[rowId] = 0;
             onToggle();
           }}
@@ -692,7 +691,7 @@
   <section class="panel">
     <header class="panel-head">
       <div class="panel-head-text">
-        <h2 class="panel-title">Most used characters used in Stygian</h2>
+        <h2 class="panel-title">Most used characters in Stygian</h2>
       </div>
     </header>
 
@@ -1059,10 +1058,6 @@
   .row-control:hover {
     color: var(--foreground-color);
     background: var(--surface-quiet);
-  }
-
-  .row-control:disabled {
-    pointer-events: none;
   }
 
   .row-toggle {

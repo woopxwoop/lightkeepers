@@ -5,7 +5,13 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { nextSearchPath, readEnum, readList } from "./query-state.ts";
+import {
+  nextSearchPath,
+  readEnum,
+  readList,
+  sameList,
+  sameSet,
+} from "./query-state.ts";
 
 function url(search: string): URL {
   return new URL(`https://example.test/teams${search}`);
@@ -40,6 +46,20 @@ describe("readEnum", () => {
   });
 });
 
+describe("sameSet / sameList", () => {
+  it("ignores order for sets but not for lists", () => {
+    assert.equal(sameSet(new Set(["5", "4"]), ["4", "5"]), true);
+    assert.equal(sameList(["5", "4"], ["4", "5"]), false);
+  });
+
+  it("catches added, removed and changed values", () => {
+    assert.equal(sameSet(new Set(["4"]), ["4", "5"]), false);
+    assert.equal(sameSet(new Set(["4", "5"]), ["4"]), false);
+    assert.equal(sameList(["Furina"], ["Skirk"]), false);
+    assert.equal(sameList(["Furina"], ["Furina"]), true);
+  });
+});
+
 describe("nextSearchPath", () => {
   it("returns null when the URL already matches", () => {
     const current = url("?char=Furina&sort=dps-asc");
@@ -71,6 +91,17 @@ describe("nextSearchPath", () => {
     assert.equal(
       nextSearchPath(url("?ref=discord"), { char: ["Furina", "Skirk"] }),
       "/teams?ref=discord&char=Furina&char=Skirk",
+    );
+  });
+
+  it("keeps the fragment", () => {
+    assert.equal(
+      nextSearchPath(url("?ref=discord#results"), { char: ["Furina"] }),
+      "/teams?ref=discord&char=Furina#results",
+    );
+    assert.equal(
+      nextSearchPath(url("?char=Furina#results"), { char: [] }),
+      "/teams#results",
     );
   });
 

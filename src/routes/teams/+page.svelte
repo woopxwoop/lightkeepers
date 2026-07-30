@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { slide } from "svelte/transition";
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
@@ -31,7 +31,12 @@
     type TeamDpsSort,
   } from "$lib/investment-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
-  import { nextSearchPath, readEnum, readList } from "$lib/query-state";
+  import {
+    nextSearchPath,
+    readEnum,
+    readList,
+    sameList,
+  } from "$lib/query-state";
   import type { InvestmentFile } from "$lib/types/investment";
 
   const SORT_KEYS = ["dps-desc", "dps-asc"] as const;
@@ -81,6 +86,29 @@
       page.url.searchParams.has("sort") ||
       page.url.searchParams.get("owned") === "0",
   );
+
+  /**
+   * A link to this same route reuses this component, so the URL can change
+   * under seeded state. Rebuild from the URL, untracked so edits here can't
+   * re-trigger this, and declared before the write effect so stale values are
+   * never mirrored back.
+   */
+  $effect(() => {
+    const url = page.url;
+    untrack(() => {
+      const owned = url.searchParams.get("owned") !== "0";
+      if (owned !== sortOwnedFirst) sortOwnedFirst = owned;
+
+      const sort = readEnum(url, "sort", SORT_KEYS, "dps-desc");
+      if (sort !== sortBy) sortBy = sort;
+
+      const cost = parseCost(url.searchParams.get("cost"));
+      if (cost !== selectedCost) selectedCost = cost;
+
+      const char = readList(url, "char");
+      if (!sameList(tags, char)) tags = char;
+    });
+  });
 
   $effect(() => {
     if (!browser) return;
