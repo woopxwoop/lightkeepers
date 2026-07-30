@@ -1010,11 +1010,13 @@
                             class="talent-priority-row"
                             data-priority={impact.tier}
                           >
-                            <WeaponIcon
-                              weaponKey={row.key}
-                              alt=""
-                              class="kit-icon talent-priority-icon shrink-0"
-                            />
+                            <span class="kit-icon talent-priority-icon shrink-0">
+                              <WeaponIcon
+                                weaponKey={row.key}
+                                alt=""
+                                class="h-full w-full object-contain"
+                              />
+                            </span>
                             <div class="talent-priority-copy">
                               <div class="talent-priority-name">
                                 <WeaponName weaponKey={row.key} />
