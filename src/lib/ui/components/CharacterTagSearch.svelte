@@ -63,17 +63,23 @@
     if (!field || !menu) return;
 
     const rect = field.getBoundingClientRect();
-    const menuRect = menu.getBoundingClientRect();
     const vh = window.innerHeight;
 
-    let top = rect.bottom + GAP;
-    if (top + menuRect.height > vh - EDGE) {
-      const above = rect.top - menuRect.height - GAP;
-      if (above >= EDGE) {
-        top = above;
+    menu.style.maxHeight = "";
+    const menuRect = menu.getBoundingClientRect();
+    const belowTop = rect.bottom + GAP;
+    const belowSpace = Math.max(0, vh - EDGE - belowTop);
+    const aboveSpace = Math.max(0, rect.top - GAP - EDGE);
+
+    let top = belowTop;
+    if (menuRect.height > belowSpace) {
+      if (menuRect.height <= aboveSpace) {
+        top = rect.top - menuRect.height - GAP;
+      } else if (aboveSpace > belowSpace) {
+        top = EDGE;
+        menu.style.maxHeight = `${aboveSpace}px`;
       } else {
-        const maxTop = Math.max(EDGE, vh - EDGE - menuRect.height);
-        top = Math.max(EDGE, Math.min(top, maxTop));
+        menu.style.maxHeight = `${belowSpace}px`;
       }
     }
 
@@ -93,6 +99,8 @@
 
   $effect(() => {
     if (!showSuggestions) return;
+    // Reposition as the list grows or shrinks, not just when it opens.
+    suggestions.length;
 
     void tick().then(() => {
       placeMenu();

@@ -12,6 +12,7 @@ import {
   TALENT_UPGRADE,
   classifyUpgradeImpact,
   primaryUpgradePct,
+  type UpgradeImpactLadder,
   type UpgradeTier,
 } from "$lib/upgrade-priority";
 import type {
@@ -19,6 +20,7 @@ import type {
   CharacterIndex,
   CharacterSigGain,
   CharacterTalentImportance,
+  CharacterVerticalGain,
   CharacterWeaponRank,
   TalentSlot,
 } from "$lib/types/investment";
@@ -119,21 +121,27 @@ export type VerticalImpactRow<T> = T & {
   priorityLabel: string;
 };
 
+/** Add the primary pct and its ladder classification to a vertical gain row. */
+function attachImpact<T extends CharacterVerticalGain>(
+  row: T,
+  ladder: UpgradeImpactLadder,
+): VerticalImpactRow<T> {
+  const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
+  const impact = classifyUpgradeImpact(pct, ladder);
+  return {
+    ...row,
+    pct,
+    priority: impact.tier,
+    priorityLabel: impact.label,
+  };
+}
+
 /** Constellations in source order with their display-ready impact. */
 export function constellationImpactRows(
   constellations: CharacterConsGain[] | null | undefined,
 ): VerticalImpactRow<CharacterConsGain>[] {
   if (!constellations?.length) return [];
-  return constellations.map((row) => {
-    const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
-    const impact = classifyUpgradeImpact(pct, CONSTELLATION_UPGRADE);
-    return {
-      ...row,
-      pct,
-      priority: impact.tier,
-      priorityLabel: impact.label,
-    };
-  });
+  return constellations.map((row) => attachImpact(row, CONSTELLATION_UPGRADE));
 }
 
 /** Signature weapons ranked by primary gain, with display-ready impact. */
@@ -142,16 +150,7 @@ export function rankSigWeaponsByGain(
 ): VerticalImpactRow<CharacterSigGain>[] {
   if (!sigWeapons?.length) return [];
   return sigWeapons
-    .map((row) => {
-      const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
-      const impact = classifyUpgradeImpact(pct, SIGNATURE_UPGRADE);
-      return {
-        ...row,
-        pct,
-        priority: impact.tier,
-        priorityLabel: impact.label,
-      };
-    })
+    .map((row) => attachImpact(row, SIGNATURE_UPGRADE))
     .sort((a, b) => b.pct - a.pct || a.key.localeCompare(b.key));
 }
 

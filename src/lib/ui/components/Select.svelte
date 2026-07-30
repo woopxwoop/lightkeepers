@@ -138,7 +138,19 @@
       requestAnimationFrame(placeMenu);
     });
 
+    /**
+     * Keys belong to this Select only while it holds focus. Body focus still
+     * counts: a pointer-opened menu leaves focus unmoved in some browsers.
+     */
+    function ownsFocus() {
+      const active = document.activeElement;
+      if (!active || active === document.body) return true;
+      return !!(triggerEl?.contains(active) || menuEl?.contains(active));
+    }
+
     function onKeydown(e: KeyboardEvent) {
+      if (!ownsFocus()) return;
+
       if (e.key === "Escape") {
         e.preventDefault();
         open = false;
