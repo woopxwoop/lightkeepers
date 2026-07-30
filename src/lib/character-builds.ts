@@ -9,6 +9,7 @@ import {
   LEVEL_UPGRADE,
   TALENT_UPGRADE,
   classifyUpgradeImpact,
+  type UpgradeImpactConfig,
   type UpgradeTier,
 } from "$lib/upgrade-priority";
 import type {
@@ -129,35 +130,65 @@ export type TalentImportanceRow = {
   median: number;
 };
 
+/** Prefer an explicit guide `tier`, else classify from median %. */
+export function resolveUpgradeImpact(
+  pct: number,
+  config: UpgradeImpactConfig,
+  tier?: UpgradeTier | null,
+): { tier: UpgradeTier; label: string } {
+  if (tier === "highly_recommended" || tier === "recommended" || tier === "inconsequential") {
+    return { tier, label: config.labels[tier] };
+  }
+  return classifyUpgradeImpact(pct, config);
+}
+
 /**
  * Talent priority rows: qualitative upgrade labels from median % DPS drop
  * when that talent is at 1. `resolveSkillIcon` maps kit skill type → URL.
+ *
+ * Guide-authored `tier` fields win over classifying median; rows still render
+ * when ``teams === 0`` if any slot carries a tier.
  */
 export function talentImportanceRows(
   talentImportance: CharacterTalentImportance | null | undefined,
   resolveSkillIcon: (kitType: string) => string | null,
 ): TalentImportanceRow[] {
-  if (!talentImportance || talentImportance.teams <= 0) return [];
-  return (["auto", "skill", "burst"] as const)
-    .flatMap((slot) => {
-      const stats = talentImportance[slot];
-      if (!stats) return [];
-      const impact = classifyUpgradeImpact(
-        stats.median_pct_drop,
-        TALENT_UPGRADE,
-      );
-      return [
-        {
-          slot,
-          label: TALENT_SLOT_LABELS[slot],
-          icon: resolveSkillIcon(TALENT_SLOT_TO_KIT[slot]),
-          priority: impact.tier,
-          priorityLabel: impact.label,
-          median: stats.median_pct_drop,
-        },
-      ];
-    })
-    .sort((a, b) => b.median - a.median || a.slot.localeCompare(b.slot));
+  if (!talentImportance) return [];
+  const hasTier = (["auto", "skill", "burst"] as const).some(
+    (slot) => talentImportance[slot]?.tier != null,
+  );
+  if (talentImportance.teams <= 0 && !hasTier) return [];
+
+  const slots: TalentSlot[] = hasTier
+    ? (talentImportance.priority?.length
+        ? talentImportance.priority
+        : (["auto", "skill", "burst"] as const))
+    : (["auto", "skill", "burst"] as const);
+
+  const rows = slots.flatMap((slot) => {
+    const stats = talentImportance[slot];
+    if (!stats) return [];
+    const impact = resolveUpgradeImpact(
+      stats.median_pct_drop,
+      TALENT_UPGRADE,
+      stats.tier,
+    );
+    return [
+      {
+        slot,
+        label: TALENT_SLOT_LABELS[slot],
+        icon: resolveSkillIcon(TALENT_SLOT_TO_KIT[slot]),
+        priority: impact.tier,
+        priorityLabel: impact.label,
+        median: stats.median_pct_drop,
+      },
+    ];
+  });
+
+  if (hasTier) return rows;
+  return [...rows].sort(
+    (a, b) => b.median - a.median || a.slot.localeCompare(b.slot),
+  );
 }
 
 export type LevelImportanceRow = {
@@ -171,8 +202,13 @@ export function levelImportanceFromBuilds(
   builds: CharacterIndex | null | undefined,
 ): LevelImportanceRow | null {
   const li = builds?.level_importance;
-  if (!li || li.teams <= 0) return null;
-  const impact = classifyUpgradeImpact(li.median_pct_drop, LEVEL_UPGRADE);
+  if (!li) return null;
+  if (li.teams <= 0 && li.tier == null) return null;
+  const impact = resolveUpgradeImpact(
+    li.median_pct_drop,
+    LEVEL_UPGRADE,
+    li.tier,
+  );
   return {
     priority: impact.tier,
     priorityLabel: impact.label,

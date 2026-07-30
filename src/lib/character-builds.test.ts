@@ -140,4 +140,128 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
     );
     assert.equal(level?.priority, "highly_recommended");
   });
+
+  it("prefers guide tier over median and shows teams=0 when tiered", () => {
+    const rows = talentImportanceRows(
+      {
+        teams: 0,
+        auto: {
+          mean_pct_drop: 0,
+          median_pct_drop: 0,
+          min_pct_drop: 0,
+          max_pct_drop: 0,
+          tier: "highly_recommended",
+        },
+        skill: {
+          mean_pct_drop: 0,
+          median_pct_drop: 0,
+          min_pct_drop: 0,
+          max_pct_drop: 0,
+          tier: "inconsequential",
+        },
+        burst: {
+          mean_pct_drop: 0,
+          median_pct_drop: 0,
+          min_pct_drop: 0,
+          max_pct_drop: 0,
+          tier: "recommended",
+        },
+        priority: ["burst", "auto", "skill"],
+      },
+      () => null,
+    );
+    assert.deepEqual(
+      rows.map((r) => [r.slot, r.priority]),
+      [
+        ["burst", "recommended"],
+        ["auto", "highly_recommended"],
+        ["skill", "inconsequential"],
+      ],
+    );
+
+    assert.equal(
+      talentImportanceRows(
+        {
+          teams: 0,
+          auto: {
+            mean_pct_drop: 0,
+            median_pct_drop: 0,
+            min_pct_drop: 0,
+            max_pct_drop: 0,
+          },
+          skill: {
+            mean_pct_drop: 0,
+            median_pct_drop: 0,
+            min_pct_drop: 0,
+            max_pct_drop: 0,
+          },
+          burst: {
+            mean_pct_drop: 0,
+            median_pct_drop: 0,
+            min_pct_drop: 0,
+            max_pct_drop: 0,
+          },
+          priority: ["auto", "skill", "burst"],
+        },
+        () => null,
+      ).length,
+      0,
+    );
+
+    const level = levelImportanceFromBuilds(
+      builds({
+        main_stats: { sands: [], goblet: [], circlet: [] },
+        substat_rolls_liquid: { teams: 0, configs: 0, mean: {}, ranked: [] },
+        level_importance: {
+          teams: 0,
+          mean_pct_drop: 0,
+          median_pct_drop: 0,
+          min_pct_drop: 0,
+          max_pct_drop: 0,
+          tier: "recommended",
+        },
+      }),
+    );
+    assert.equal(level?.priority, "recommended");
+    assert.equal(level?.teams, 0);
+  });
+
+  it("prefers guide tier over classifying high median when teams > 0", () => {
+    const rows = talentImportanceRows(
+      {
+        teams: 4,
+        auto: {
+          mean_pct_drop: 40,
+          median_pct_drop: 40,
+          min_pct_drop: 40,
+          max_pct_drop: 40,
+          tier: "inconsequential",
+        },
+        skill: {
+          mean_pct_drop: 1,
+          median_pct_drop: 1,
+          min_pct_drop: 1,
+          max_pct_drop: 1,
+          tier: "highly_recommended",
+        },
+        burst: {
+          mean_pct_drop: 1,
+          median_pct_drop: 1,
+          min_pct_drop: 1,
+          max_pct_drop: 1,
+          tier: "recommended",
+        },
+        priority: ["skill", "burst", "auto"],
+      },
+      () => null,
+    );
+    assert.deepEqual(
+      rows.map((r) => [r.slot, r.priority]),
+      [
+        ["skill", "highly_recommended"],
+        ["burst", "recommended"],
+        ["auto", "inconsequential"],
+      ],
+    );
+  });
 });

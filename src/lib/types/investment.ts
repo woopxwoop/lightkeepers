@@ -134,9 +134,10 @@ export interface CharacterIndex {
    */
   level_importance?: CharacterLevelImportance;
   /**
-   * One-step vertical gains: constellations are stepwise vs the previous
-   * constellation (C2 vs C1); sig weapons are vs baseline. Combined cons+sig
-   * and multi-char verticals are excluded.
+   * One-step gains: constellations are stepwise vs the previous constellation
+   * (C2 vs C1), covering rungs below the team baseline as well as above it;
+   * sig weapons are vs baseline. Combined cons+sig and multi-char results are
+   * excluded.
    */
   vertical_importance?: CharacterVerticalImportance;
   /** Optional editorial blurb from hand-authored guide (merge-time). */
@@ -144,6 +145,12 @@ export interface CharacterIndex {
 }
 
 export type TalentSlot = "auto" | "skill" | "burst";
+
+/** Matches `$lib/upgrade-priority` UpgradeTier — kept local to avoid cycle. */
+type GuideUpgradeTier =
+  | "highly_recommended"
+  | "recommended"
+  | "inconsequential";
 
 export interface CharacterTalentSlotImportance {
   /** Average % DPS drop vs baseline across teams. */
@@ -154,6 +161,8 @@ export interface CharacterTalentSlotImportance {
   min_pct_drop: number;
   /** Largest % DPS drop on any contributing team. */
   max_pct_drop: number;
+  /** When set (guide merge), Builds UI prefers this over classifying median %. */
+  tier?: GuideUpgradeTier;
 }
 
 export interface CharacterTalentImportance {
@@ -169,6 +178,8 @@ export interface CharacterTalentImportance {
 export interface CharacterLevelImportance extends CharacterTalentSlotImportance {
   /** Teams with a level-80 drop sample for this character. */
   teams: number;
+  /** When set (guide merge), Builds UI prefers this over classifying median %. */
+  tier?: GuideUpgradeTier;
 }
 
 export interface CharacterVerticalGain {
@@ -182,6 +193,8 @@ export interface CharacterVerticalGain {
   min_pct_gain: number;
   /** Largest % DPS gain on any contributing team. */
   max_pct_gain: number;
+  /** When set (guide merge), Builds UI prefers this over classifying median %. */
+  tier?: GuideUpgradeTier;
 }
 
 export interface CharacterConsGain extends CharacterVerticalGain {
@@ -195,7 +208,7 @@ export interface CharacterSigGain extends CharacterVerticalGain {
 }
 
 export interface CharacterVerticalImportance {
-  /** Cons-only upgrades, sorted by cons ascending. */
+  /** Cons-only upgrades, sorted by cons ascending. May start at C1. */
   constellations: CharacterConsGain[];
   /** Sig-weapon-only upgrades, sorted by mean gain descending. */
   sig_weapons: CharacterSigGain[];

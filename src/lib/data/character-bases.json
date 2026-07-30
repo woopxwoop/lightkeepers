@@ -38,6 +38,84 @@
     "baseCritRate": 0.05,
     "baseCritDMG": 0.5
   },
+  "TravelerAnemo": {
+    "name_id": "PlayerBoy",
+    "name": "Traveler",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "TravelerDendro": {
+    "name_id": "PlayerBoy",
+    "name": "Traveler",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "TravelerElectro": {
+    "name_id": "PlayerBoy",
+    "name": "Traveler",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "TravelerGeo": {
+    "name_id": "PlayerBoy",
+    "name": "Traveler",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "TravelerHydro": {
+    "name_id": "PlayerBoy",
+    "name": "Traveler",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
+  "TravelerPyro": {
+    "name_id": "PlayerBoy",
+    "name": "Traveler",
+    "level": 90,
+    "hp": 10874.9,
+    "atk": 212.4,
+    "def": 682.5,
+    "ascension": {
+      "atk_": 0.24
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5
+  },
   "Lisa": {
     "name_id": "Lisa",
     "name": "Lisa",

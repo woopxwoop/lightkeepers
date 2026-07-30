@@ -48,7 +48,7 @@
     ownedGoodKeys,
     ownedNameIds,
     statIconUrl,
-    toGoodKey,
+    simCharacterKey,
     translateStatKey,
     weaponTypeIconUrl,
     weaponTypeLabel,
@@ -60,12 +60,12 @@
     rankSigWeaponsByGain,
     rankWeaponsByRarityAndTeams,
     recommendedSubstatsFromBuilds,
+    resolveUpgradeImpact,
     talentImportanceRows as buildTalentImportanceRows,
   } from "$lib/character-builds";
   import {
     CONSTELLATION_UPGRADE,
     SIGNATURE_UPGRADE,
-    classifyUpgradeImpact,
   } from "$lib/upgrade-priority";
   import {
     artifactIconUrl,
@@ -150,7 +150,7 @@
         ),
   );
 
-  let goodKey = $derived(toGoodKey(kit.name));
+  let goodKey = $derived(simCharacterKey(kit));
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
   let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
@@ -927,9 +927,10 @@
                       <h2 class="section-title">Constellation Impact</h2>
                       <ul class="talent-priority-list">
                         {#each builds.vertical_importance.constellations as row}
-                          {@const impact = classifyUpgradeImpact(
+                          {@const impact = resolveUpgradeImpact(
                             row.median_pct_gain,
                             CONSTELLATION_UPGRADE,
+                            row.tier,
                           )}
                           {@const constellation = kit.constellations.find(
                             (c) => c.index === row.cons,
@@ -976,9 +977,10 @@
                       <h2 class="section-title">Signature weapon impact</h2>
                       <ul class="talent-priority-list">
                         {#each rankedSigWeapons as row}
-                          {@const impact = classifyUpgradeImpact(
+                          {@const impact = resolveUpgradeImpact(
                             row.median_pct_gain,
                             SIGNATURE_UPGRADE,
+                            row.tier,
                           )}
                           <li
                             class="talent-priority-row"

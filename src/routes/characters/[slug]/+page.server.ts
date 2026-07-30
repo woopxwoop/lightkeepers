@@ -2,7 +2,7 @@ import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { getCharacterKit } from "$lib/server/character-kit";
 import { getCharacterSummary } from "$lib/server/character-summary";
-import { toGoodKey } from "$lib/utils";
+import { simCharacterKey } from "$lib/utils";
 
 export const load: PageServerLoad = async ({ params }) => {
   const kit = await getCharacterKit(params.slug);
@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ params }) => {
     error(404, `Character "${params.slug}" not found`);
   }
 
-  const builds = await getCharacterSummary(toGoodKey(kit.name));
+  const builds = await getCharacterSummary(simCharacterKey(kit));
 
   return {
     kit,
