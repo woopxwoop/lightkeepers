@@ -1184,13 +1184,13 @@
 <style>
   .back-link {
     font-size: var(--text-xs);
-    color: var(--foreground-mid);
+    color: var(--accent-1);
     text-decoration: none;
     width: fit-content;
   }
 
   .back-link:hover {
-    color: var(--foreground-color);
+    text-decoration: underline;
   }
 
   .hero {

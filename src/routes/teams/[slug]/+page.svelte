@@ -478,11 +478,11 @@
   .back-link {
     width: fit-content;
     font-size: var(--text-xs);
-    color: var(--foreground-mid);
+    color: var(--accent-1);
   }
 
   .back-link:hover {
-    color: var(--accent-1);
+    text-decoration: underline;
   }
 
   .page-title {

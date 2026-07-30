@@ -346,11 +346,11 @@
   .back-link {
     width: fit-content;
     font-size: var(--text-xs);
-    color: var(--foreground-mid);
+    color: var(--accent-1);
   }
 
   .back-link:hover {
-    color: var(--accent-1);
+    text-decoration: underline;
   }
 
   .page-title {
@@ -408,9 +408,9 @@
     gap: var(--space-4);
   }
 
-  @media (min-width: 1536px) {
+  @media (min-width: 1024px) {
     .builds-grid {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -556,10 +556,8 @@
 
   .equip-block {
     position: relative;
-    padding: 0.5rem;
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    padding-bottom: 0.5rem;
+    border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
   .equip-trigger {
@@ -575,7 +573,6 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    flex-wrap: wrap;
   }
 
   .equip-name {
@@ -616,6 +613,7 @@
   }
 
   .r-badge {
+    flex-shrink: 0;
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.04em;
