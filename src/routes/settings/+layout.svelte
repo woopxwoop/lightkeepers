@@ -91,20 +91,6 @@
     gap: 0.2rem;
   }
 
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-hint {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
   :global(.settings-board) {
     --border-subtle: rgba(255, 255, 255, 0.14);
     --border-default: rgba(255, 255, 255, 0.24);

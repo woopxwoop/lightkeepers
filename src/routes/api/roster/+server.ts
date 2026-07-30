@@ -1,76 +1,76 @@
-import { json, error } from "@sveltejs/kit";
+/**
+ * GET/POST/DELETE /api/roster
+ *
+ * Auth-gated roster sync for logged-in users. Every handler is rate limited,
+ * requires a session, and scopes reads/writes to that user's row.
+ */
+
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
+import { enforceApiRateLimit } from "$lib/server/rate-limit";
+import {
+  assertNoDbError,
+  requireJsonObject,
+  requireRosterEntries,
+  requireUser,
+} from "$lib/server/request-validation";
 
-export const GET: RequestHandler = async ({ locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+export const GET: RequestHandler = async ({
+  locals,
+  request,
+  getClientAddress,
+}) => {
+  await enforceApiRateLimit({ request, getClientAddress });
+  const user = requireUser(locals);
 
   const { data, error: err } = await serverDb
     .from("user_rosters")
     .select("roster")
-    .eq("user_id", locals.user.id)
+    .eq("user_id", user.id)
     .maybeSingle();
-
-  if (err) {
-    console.error("GET /api/roster failed:", err);
-    throw error(500, "Internal server error");
-  }
+  assertNoDbError("GET /api/roster", err);
 
   return json({ roster: data?.roster ?? null });
 };
 
-export const POST: RequestHandler = async ({ locals, request }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+export const POST: RequestHandler = async ({
+  locals,
+  request,
+  getClientAddress,
+}) => {
+  await enforceApiRateLimit({ request, getClientAddress });
+  const user = requireUser(locals);
 
-  let roster: unknown;
-  try {
-    const body = await request.json();
-    if (typeof body !== "object" || body === null) throw new Error();
-    roster = (body as Record<string, unknown>).roster;
-  } catch {
-    throw error(400, "Invalid roster payload");
-  }
+  const body = await requireJsonObject(request);
+  const roster = requireRosterEntries(body.roster);
 
-  if (
-    !Array.isArray(roster) ||
-    !roster.every(
-      (item) =>
-        typeof item === "object" &&
-        item !== null &&
-        typeof item.name_id === "string" &&
-        typeof item.isOwned === "boolean",
-    )
-  ) {
-    throw error(400, "Invalid roster payload");
-  }
-
-  const { error: err } = await serverDb
-    .from("user_rosters")
-    .upsert(
-      { user_id: locals.user.id, roster, updated_at: new Date().toISOString() },
-      { onConflict: "user_id" },
-    );
-
-  if (err) {
-    console.error("POST /api/roster failed:", err);
-    throw error(500, "Internal server error");
-  }
+  const { error: err } = await serverDb.from("user_rosters").upsert(
+    {
+      user_id: user.id,
+      roster,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+  assertNoDbError("POST /api/roster", err);
 
   return json({ ok: true });
 };
 
-export const DELETE: RequestHandler = async ({ locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+export const DELETE: RequestHandler = async ({
+  locals,
+  request,
+  getClientAddress,
+}) => {
+  await enforceApiRateLimit({ request, getClientAddress });
+  const user = requireUser(locals);
 
   const { error: err } = await serverDb
     .from("user_rosters")
     .delete()
-    .eq("user_id", locals.user.id);
-
-  if (err) {
-    console.error("DELETE /api/roster failed:", err);
-    throw error(500, "Internal server error");
-  }
+    .eq("user_id", user.id);
+  assertNoDbError("DELETE /api/roster", err);
 
   return json({ ok: true });
 };

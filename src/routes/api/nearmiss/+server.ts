@@ -8,98 +8,73 @@
  * Body: { characters: string[]; stygianVersion: number; minPmi?: number }
  *
  * Cache: rpcCache (L1 + optional Valkey), keyed by roster + version.
- * Rate limit: 60 req/min/IP via apiRateLimiter.
+ * Rate limit: 60 req/min/IP via checkApiRateLimit (Valkey when configured).
  */
 
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
-import {
-  rpcCache,
-  apiRateLimiter,
-  getClientIp,
-  buildRpcKey,
-} from "$lib/server/cache";
+import { cachedRosterRpc } from "$lib/server/cached-rpc";
+import { enforceApiRateLimit } from "$lib/server/rate-limit";
 import { isPlaywrightE2e } from "$lib/server/e2e";
+import {
+  requireCharacterNameIds,
+  requireFiniteInteger,
+  requireJsonObject,
+  requireNumberInRange,
+} from "$lib/server/request-validation";
+import { requireSupportedStygianVersion } from "$lib/server/version-validation";
 
-type NearMissBody = {
-  characters: string[];
-  stygianVersion: number;
-  minPmi?: number;
-};
-
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   // Default empty; Playwright browser routes override with scenario fixtures.
   if (isPlaywrightE2e()) {
     return json({ nearMissTeams: [], nearMissPairs: [] });
   }
 
-  // ── Rate limiting ────────────────────────────────────────────────────────
-  const ip = getClientIp(request);
-  if (!apiRateLimiter.check(ip)) {
-    throw error(429, "Too many requests — please wait a moment.");
-  }
+  await enforceApiRateLimit({ request, getClientAddress });
 
   // ── Parse body ───────────────────────────────────────────────────────────
-  let body: NearMissBody;
-  try {
-    body = await request.json();
-  } catch {
-    throw error(400, "Invalid JSON body.");
-  }
-
-  const { characters, stygianVersion, minPmi = 0.3 } = body;
-
-  if (!Array.isArray(characters)) {
-    throw error(400, "characters must be an array of strings.");
-  }
-
-  // ── Cache lookup ─────────────────────────────────────────────────────────
-  const singleKey = buildRpcKey("near_miss_single", stygianVersion, characters);
-  const pairKey = buildRpcKey(
-    `near_miss_pair_pmi${minPmi}`,
-    stygianVersion,
-    characters,
+  const body = await requireJsonObject(request);
+  const characters = requireCharacterNameIds(body.characters);
+  const stygianVersion = requireFiniteInteger(
+    body.stygianVersion,
+    "stygianVersion must be a number.",
+  );
+  const minPmi = requireNumberInRange(
+    body.minPmi ?? 0.3,
+    0,
+    1,
+    "minPmi must be a number between 0 and 1.",
   );
 
-  let nearMissTeams: unknown, nearMissPairs: unknown;
-  try {
-    [nearMissTeams, nearMissPairs] = await Promise.all([
-      rpcCache.getOrSet(singleKey, async () => {
-        const { data, error: err } = await serverDb.rpc(
-          "get_near_miss_stygian_teams",
-          {
-            p_name_ids: characters,
-            p_version_number: stygianVersion,
-          },
-        );
-        if (err) {
-          console.error("[nearmiss] get_near_miss_stygian_teams error:", err);
-          throw new Error(err.message);
-        }
-        return data ?? [];
-      }),
+  await requireSupportedStygianVersion(stygianVersion);
 
-      rpcCache.getOrSet(pairKey, async () => {
-        const { data, error: err } = await serverDb.rpc(
-          "get_near_miss_stygian_pairs",
-          {
-            p_name_ids: characters,
-            p_version_number: stygianVersion,
-            p_min_pmi: minPmi,
-          },
-        );
-        if (err) {
-          console.error("[nearmiss] get_near_miss_stygian_pairs error:", err);
-          throw new Error(err.message);
-        }
-        return data ?? [];
-      }),
-    ]);
-  } catch (e) {
-    console.error("[nearmiss] RPC failed:", e);
-    throw error(500, "Internal server error");
-  }
+  // ── Cache lookup ─────────────────────────────────────────────────────────
+  // Key on the caller's exact threshold — rounding could widen the filter.
+  const [nearMissTeams, nearMissPairs] = await Promise.all([
+    cachedRosterRpc({
+      cacheName: "near_miss_single",
+      versionNumber: stygianVersion,
+      characters,
+      run: () =>
+        serverDb.rpc("get_near_miss_stygian_teams", {
+          p_name_ids: characters,
+          p_version_number: stygianVersion,
+        }),
+    }),
+
+    cachedRosterRpc({
+      cacheName: `near_miss_pair_pmi${minPmi}`,
+      versionNumber: stygianVersion,
+      characters,
+      run: () =>
+        serverDb.rpc("get_near_miss_stygian_pairs", {
+          p_name_ids: characters,
+          p_version_number: stygianVersion,
+          p_min_pmi: minPmi,
+        }),
+    }),
+  ]);
 
   return json({ nearMissTeams, nearMissPairs });
 };

@@ -1,13 +1,10 @@
 <script lang="ts">
   import type { Character, CharacterOwned } from "$lib/definitions";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
-  import { weaponIconUrl } from "$lib/asset-urls";
-  import {
-    displayWeaponRefinement,
-    formatInvestmentCR,
-    weaponByKey,
-  } from "$lib/equipment-data";
+  import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
+  import InvestmentCR from "$lib/ui/components/InvestmentCR.svelte";
+  import { weaponIconSrc } from "$lib/equipment-data";
+  import { useEquipmentData } from "$lib/equipment-data.svelte";
 
   type BuildBadge = {
     cons: number;
@@ -37,12 +34,23 @@
     class?: string;
   } = $props();
 
+  const equipment = useEquipmentData();
+
   // Equal angular steps around a shared circle center below the hand.
   const HAND_ANGLES = [-24, -8, 8, 24] as const;
 
   function zFor(index: number, total: number): number {
     return stack === "left" ? total - index : index + 1;
   }
+
+  /**
+   * WeaponBadge renders an icon exactly when `weaponIconSrc` resolves, so the
+   * C-only vs C#R# meta below it keys off the same check.
+   */
+  let weaponIconShown = $derived.by(() => {
+    void equipment.version;
+    return (weaponKey: string) => weaponIconSrc(weaponKey) !== null;
+  });
 </script>
 
 <div
@@ -55,13 +63,7 @@
     {@const key = character?.name_id ?? character?.name ?? ""}
     {@const build = builds[i]}
     {@const angle = HAND_ANGLES[i] ?? 0}
-    {@const weapon = build ? weaponByKey.get(build.weaponKey) : null}
-    {@const weaponIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-    {@const refine = build
-      ? displayWeaponRefinement(build.weaponKey, build.weaponRefinement, {
-          weaponShown: Boolean(weaponIcon),
-        })
-      : null}
+    {@const showWeapon = build ? weaponIconShown(build.weaponKey) : false}
     <div
       class="card"
       style:--angle="{angle}deg"
@@ -76,19 +78,11 @@
           : undefined}
       >
         {#snippet badge()}
-          {#if weaponIcon}
-            <div class="weapon group">
-              <img
-                src={weaponIcon}
-                alt={weapon?.name ?? "Weapon"}
-                class="weapon-img"
-                loading="lazy"
-              />
-              {#if refine !== null}
-                <span class="weapon-r">R{refine}</span>
-              {/if}
-              <WeaponTooltip {weapon} refinement={refine} />
-            </div>
+          {#if build}
+            <WeaponBadge
+              weaponKey={build.weaponKey}
+              refinement={build.weaponRefinement}
+            />
           {/if}
           {#if key && starredKeys.has(key)}
             <span class="star" aria-label="Best team for this character">★</span>
@@ -98,14 +92,14 @@
           <div class="meta-name">{character?.name ?? "—"}</div>
           {#if build}
             <div class="meta-build">
-              {#if weaponIcon}
+              {#if showWeapon}
                 C{build.cons}
               {:else}
-                {formatInvestmentCR(
-                  build.cons,
-                  build.weaponRefinement,
-                  build.weaponKey,
-                )}
+                <InvestmentCR
+                  cons={build.cons}
+                  refinement={build.weaponRefinement}
+                  weaponKey={build.weaponKey}
+                />
               {/if}
             </div>
           {/if}
@@ -218,42 +212,6 @@
     transform: translateY(-10px) scale(1.03);
   }
 
-  .weapon {
-    position: absolute;
-    top: 0.35rem;
-    left: 0.35rem;
-    z-index: 20;
-    width: 28%;
-    aspect-ratio: 1;
-    border-radius: 0.2rem;
-    overflow: hidden;
-    pointer-events: auto;
-    cursor: pointer;
-    background: color-mix(in srgb, var(--background-color) 72%, transparent);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-  }
-
-  .weapon-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 0.1rem;
-  }
-
-  .weapon-r {
-    position: absolute;
-    right: 0.1rem;
-    bottom: 0.05rem;
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    line-height: 1;
-    color: var(--accent-1);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
-  }
-
   .star {
     position: absolute;
     top: 0.4rem;
@@ -263,23 +221,6 @@
     line-height: 1;
     color: var(--accent-1);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
-  }
-
-  .meta-name {
-    font-size: 0.7rem;
-    font-weight: 500;
-    line-height: 1.15;
-    color: var(--foreground-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .meta-build {
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    color: var(--accent-2);
   }
 
   @media (max-width: 640px) {

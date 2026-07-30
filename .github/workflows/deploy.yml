@@ -50,6 +50,7 @@ jobs:
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
           VALKEY_URL: ${{ secrets.VALKEY_URL }}
           PROMETHEUS_REMOTE_WRITE_PASSWORD: ${{ secrets.PROMETHEUS_REMOTE_WRITE_PASSWORD }}
+          METRICS_TOKEN: ${{ secrets.METRICS_TOKEN }}
         run: |
           python3 <<'PY'
           import os
@@ -64,6 +65,7 @@ jobs:
               "DISCORD_CLIENT_ID",
               "DISCORD_CLIENT_SECRET",
               "VALKEY_URL",
+              "METRICS_TOKEN",
           ]
           with open("vps.env", "w", encoding="utf-8") as f:
               for key in keys:
@@ -76,6 +78,7 @@ jobs:
                   f.write(f"{key}='{escaped}'\n")
           PY
           printf '%s' "$PROMETHEUS_REMOTE_WRITE_PASSWORD" > remote_write_password
+          printf '%s' "$METRICS_TOKEN" > metrics_token
 
       - name: Copy compose files to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -83,7 +86,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.yml,prometheus.yml,vps.env,remote_write_password"
+          source: "docker-compose.yml,prometheus.yml,vps.env,remote_write_password,metrics_token"
           target: app/
 
       - name: Deploy to VPS
@@ -103,6 +106,9 @@ jobs:
             mkdir -p ~/app/secrets
             mv ~/app/remote_write_password ~/app/secrets/remote_write_password
             chmod 600 ~/app/secrets/remote_write_password
+            mv ~/app/metrics_token ~/app/secrets/metrics_token
+            chmod 600 ~/app/secrets/metrics_token
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
             docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d
+            docker image prune -af

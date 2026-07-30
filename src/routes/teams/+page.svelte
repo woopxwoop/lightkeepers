@@ -5,7 +5,7 @@
   import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import { buildGoodKeyMap, toGoodKey } from "$lib/utils";
+  import { buildGoodKeyMap, ownedGoodKeys } from "$lib/utils";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
@@ -21,16 +21,20 @@
     handBuilds,
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
+  import {
+    allTeamCharacterKeys,
+    availableInvestmentCosts,
+    displayDps,
+    displaySim,
+    sortTeamsForDisplay,
+    teamsMatchingTags,
+    type TeamDpsSort,
+  } from "$lib/investment-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import { nextSearchPath, readEnum, readList } from "$lib/query-state";
-  import type {
-    InvestmentFile,
-    InvestmentTeam,
-    InvestmentSim,
-  } from "$lib/types/investment";
+  import type { InvestmentFile } from "$lib/types/investment";
 
   const SORT_KEYS = ["dps-desc", "dps-asc"] as const;
-  type SortBy = (typeof SORT_KEYS)[number];
 
   function parseCost(raw: string | null): number | null {
     if (raw == null || raw === "") return null;
@@ -62,7 +66,7 @@
 
   // ── Sort & filter state (seeded from the URL, then mirrored back) ─────────
   let sortOwnedFirst = $state(page.url.searchParams.get("owned") !== "0");
-  let sortBy = $state<SortBy>(
+  let sortBy = $state<TeamDpsSort>(
     readEnum(page.url, "sort", SORT_KEYS, "dps-desc"),
   );
   /** Selected cost level — show DPS of the best sim at exactly this cost. */
@@ -96,7 +100,7 @@
 
   onMount(() => fetchData());
 
-  /** Use shared session cache (prefetched from bootstrap when possible). */
+  /** Use shared session cache (loaded on this route, not global bootstrap). */
   async function fetchData() {
     if (data) return;
     error = null;
@@ -107,129 +111,28 @@
     }
   }
 
-  // GOOD key → Character for icon display
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
-
-  // All unique character keys present in the investment data
-  let allCharacterKeys = $derived.by(() => {
-    if (!data) return [] as string[];
-    const set = new Set<string>();
-    for (const t of data.teams) {
-      for (const k of t.characters) {
-        set.add(k);
-      }
-    }
-    return [...set];
-  });
-
-  // Which GOOD keys the user owns
-  let ownedKeys = $derived(
-    new Set(
-      $charactersOwned.filter((c) => c.isOwned).map((c) => toGoodKey(c.name)),
-    ),
+  let allCharacterKeys = $derived(
+    data ? allTeamCharacterKeys(data.teams) : ([] as string[]),
+  );
+  let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
+  let availableCosts = $derived(
+    data ? availableInvestmentCosts(data) : ([] as number[]),
+  );
+  let displayTeams = $derived(
+    data
+      ? sortTeamsForDisplay(teamsMatchingTags(data.teams, tags), {
+          selectedCost,
+          sortBy,
+          sortOwnedFirst,
+          ownedKeys,
+        })
+      : [],
   );
 
-  // Filtering: intersection of all tagged characters
-  let filteredTeams = $derived.by(() => {
-    if (!data) return [];
-    if (tags.length === 0) return data.teams;
-    return data.teams.filter((t) =>
-      tags.every((tag) => t.characters.includes(tag)),
-    );
-  });
-
-  // All unique cost values (prefer merge-time list; fall back to scan)
-  let availableCosts = $derived.by(() => {
-    if (!data) return [] as number[];
-    if (data.available_costs?.length) return data.available_costs;
-    const set = new Set<number>();
-    for (const t of data.teams) {
-      for (const r of t.results) set.add(r.cost);
-    }
-    return [...set].sort((a, b) => a - b);
-  });
-
-  // Final display list: tag → cost → sorted
-  let displayTeams = $derived.by(() => {
-    if (!data) return [];
-    let teams = filteredTeams;
-
-    // When a cost is selected, only show teams that have a sim at exactly that cost
-    if (selectedCost !== null) {
-      teams = teams.filter((t) =>
-        t.results.some((r) => r.cost === selectedCost),
-      );
-    }
-
-    const sorted = [...teams];
-    const comparator = getSortComparator(sortBy);
-
-    if (sortOwnedFirst) {
-      const owned = sorted.filter((t) => ownsTeam(t));
-      const notOwned = sorted.filter((t) => !ownsTeam(t));
-      owned.sort(comparator);
-      notOwned.sort(comparator);
-      return [...owned, ...notOwned];
-    }
-
-    sorted.sort(comparator);
-    return sorted;
-  });
-
-  /** Return the best DPS at exactly `cost`, or 0 when no result matches. */
-  function getDpsAtCost(team: InvestmentTeam, cost: number): number {
-    let bestDps = 0;
-    for (const result of team.results) {
-      if (result.cost === cost) bestDps = Math.max(bestDps, result.dps);
-    }
-    return bestDps;
-  }
-
-  /** Canonical baseline sim for a team (not peak floor / f2p). */
-  function getBaselineSim(team: InvestmentTeam): InvestmentSim | null {
-    return team.results.find((r) => r.kind === "baseline") ?? null;
-  }
-
-  /** DPS shown on cards — baseline when no cost filter; else best at that cost. */
-  function displayDps(team: InvestmentTeam): number {
-    if (selectedCost !== null) return getDpsAtCost(team, selectedCost);
-    return getBaselineSim(team)?.dps ?? 0;
-  }
-
-  /** Find the simulation result at exactly `cost`, or null if none exists. */
-  function getSimAtCost(team: InvestmentTeam, cost: number) {
-    return team.results.find((r) => r.cost === cost) ?? null;
-  }
-
-  /** Sim driving the hand builds + meta for the current cost filter. */
-  function displaySim(team: InvestmentTeam): InvestmentSim | null {
-    if (selectedCost !== null) return getSimAtCost(team, selectedCost);
-    return getBaselineSim(team);
-  }
-
-  /** Build a comparator for the active sort mode (DPS ascending or descending). */
-  function getSortComparator(
-    mode: typeof sortBy,
-  ): (a: InvestmentTeam, b: InvestmentTeam) => number {
-    switch (mode) {
-      case "dps-desc":
-        return (a, b) => displayDps(b) - displayDps(a);
-      case "dps-asc":
-        return (a, b) => displayDps(a) - displayDps(b);
-    }
-  }
-
-  /** Whether the current user owns every character in the given team. */
-  function ownsTeam(team: InvestmentTeam): boolean {
-    return team.characters.every((k) => ownedKeys.has(k));
-  }
-
-  // ── Spotlight pagination ──────────────────────────────────────────────────
   let spotlightTeams = $derived(displayTeams.slice(0, spotlightCount));
   let hasMore = $derived(spotlightCount < displayTeams.length);
   let remaining = $derived(displayTeams.length - spotlightCount);
-
-  // Animation re-trigger key — changes whenever filters, sort, or cost change
   let listKey = $derived(
     `${tags.join(",")}|${selectedCost ?? "any"}|${sortBy}|${sortOwnedFirst}`,
   );
@@ -346,7 +249,7 @@
       {#key listKey}
         <div class="team-list" class:no-anim={!$animationsEnabled}>
           {#each spotlightTeams as team, i (team.team_key)}
-            {@const sim = displaySim(team)}
+            {@const sim = displaySim(team, selectedCost)}
             <article
               class="team-row card-enter"
               style="animation-delay: {i * 50}ms;"
@@ -368,7 +271,7 @@
                 <span class="team-meta">
                   {selectedCost !== null ? selectedCost : team.baseline_cost}
                   <CostPopover />
-                  · {(displayDps(team) / 1000).toFixed(0)}K DPS
+                  · {(displayDps(team, selectedCost) / 1000).toFixed(0)}K DPS
                 </span>
                 <a href="/teams/{team.team_key}" class="team-link">
                   View details →
@@ -391,26 +294,6 @@
 </PageShell>
 
 <style>
-  .page-head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
-  .page-meta {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
   .filter-block {
     display: flex;
     flex-direction: column;

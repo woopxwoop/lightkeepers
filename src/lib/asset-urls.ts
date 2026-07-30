@@ -13,8 +13,9 @@
  * TCG:    scripts/sync/tcg-cards-r2.ts
  * Kits:   scripts/sync/character-data-r2.ts
  *
- * Note: ESM imports from `$lib/data/*.json` (weapons, artifact-sets) are
- * bundled at build time — character kits + enemy index live on the CDN.
+ * Note: weapon/artifact tables are loaded via dynamic import in
+ * `$lib/equipment-data` (not this module). Character kits + enemy index
+ * live on the CDN.
  */
 
 import type {

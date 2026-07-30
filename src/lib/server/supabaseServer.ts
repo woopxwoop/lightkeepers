@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { dev } from "$app/environment";
 import type { Database } from "$lib/types/database.types";
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY } from "$env/static/public";
 import { env } from "$env/dynamic/private";
@@ -6,21 +7,28 @@ import { env } from "$env/dynamic/private";
 /**
  * Server-only Supabase client.
  * Uses the service role key so it bypasses RLS — never expose to the client.
- * Falls back to the anon key if the service key isn't set (e.g. local dev).
+ * Falls back to the anon key only in `vite dev` when the service key isn't set.
+ * Outside vite dev, missing PRIVATE_SUPABASE_KEY throws on first DB access
+ * (lazy init — the process can still boot; the first query fails closed).
  *
  * Lazy-init so private keys stay runtime-only (not baked into the Docker image).
  */
-function createServerDb(): SupabaseClient<Database> {
-  return createClient<Database>(
-    PUBLIC_SUPABASE_URL,
-    env.PRIVATE_SUPABASE_KEY || PUBLIC_SUPABASE_KEY,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    },
+function serviceRoleKey(): string {
+  const key = env.PRIVATE_SUPABASE_KEY;
+  if (key) return key;
+  if (dev) return PUBLIC_SUPABASE_KEY;
+  throw new Error(
+    "Missing PRIVATE_SUPABASE_KEY — required outside vite dev (service role bypasses RLS)",
   );
+}
+
+function createServerDb(): SupabaseClient<Database> {
+  return createClient<Database>(PUBLIC_SUPABASE_URL, serviceRoleKey(), {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 }
 
 let _serverDb: SupabaseClient<Database> | undefined;

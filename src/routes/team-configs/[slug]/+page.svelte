@@ -7,6 +7,7 @@
   import {
     buildGoodKeyMap,
     humanizeTeamName,
+    namesFromGoodKeyMap,
     translateStatKey,
     statIconUrl,
   } from "$lib/utils";
@@ -14,7 +15,10 @@
     artifactSetByKey,
     humanizeInvestmentLabel,
     weaponByKey,
+    equipmentVersion,
+    ensureEquipmentData,
   } from "$lib/equipment-data";
+  import { onMount } from "svelte";
   import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
@@ -39,22 +43,23 @@
   let kitsByKey = $derived(data.kitsByKey);
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
-  let characterNames = $derived(
-    new Map(
-      [...goodKeyMap.entries()].map(([key, c]) => [key, c.name ?? key]),
-    ),
-  );
+  let characterNames = $derived(namesFromGoodKeyMap(goodKeyMap));
   let teamTitle = $derived(
     humanizeTeamName(team.characters, characterNames),
   );
-  let simLabel = $derived(
-    sim.kind === "baseline"
+  let simLabel = $derived.by(() => {
+    $equipmentVersion;
+    return sim.kind === "baseline"
       ? "Baseline"
       : sim.label
         ? humanizeInvestmentLabel(sim.label, characterNames)
-        : "",
-  );
+        : "";
+  });
   let iconStyle = $derived($displayPreferences.iconStyle);
+
+  onMount(() => {
+    void ensureEquipmentData();
+  });
 
   function characterFor(key: string) {
     return goodKeyMap.get(key) ?? null;
@@ -96,6 +101,7 @@
 
   <section class="section">
     <div class="builds-grid">
+      {#key $equipmentVersion}
       {#each sim.characters as build (build.key)}
         {@const character = characterFor(build.key)}
         {@const weapon = weaponByKey.get(build.weapon.key)}
@@ -303,6 +309,7 @@
           </div>
         </Surface>
       {/each}
+      {/key}
     </div>
     <p class="footnote">
       Sheet totals exclude artifact set bonuses and weapon passives.
@@ -338,22 +345,11 @@
     gap: 0.35rem;
   }
 
-  .page-title {
-    font-family: var(--font-display);
-    font-size: var(--h2-size);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
-  }
-
   .page-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem 0.5rem;
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
   }
 
   .meta-link {
@@ -376,15 +372,6 @@
     align-items: baseline;
     justify-content: space-between;
     gap: var(--space-2);
-  }
-
-  .section-title {
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
   }
 
   .builds-grid {

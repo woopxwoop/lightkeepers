@@ -7,18 +7,14 @@
  * Body: { characters: string[]; abyssVersion: number; stygianVersion: number }
  *
  * Cache: memory L1 + optional Valkey L2 (VALKEY_URL), keyed by roster + version.
- * Rate limit: 60 requests / minute / IP.
+ * Rate limit: 60 requests / minute / IP (Valkey-shared when configured).
  */
 
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "$lib/server/supabaseServer";
-import {
-  rpcCache,
-  apiRateLimiter,
-  getClientIp,
-  buildRpcKey,
-} from "$lib/server/cache";
+import { cachedRosterRpc } from "$lib/server/cached-rpc";
+import { enforceApiRateLimit } from "$lib/server/rate-limit";
 import { isPlaywrightE2e } from "$lib/server/e2e";
 import {
   E2E_ABYSS_TEAM_BOTTOM,
@@ -27,14 +23,14 @@ import {
   E2E_STYGIAN_TEAM_MIDDLE,
   E2E_STYGIAN_TEAM_TOP,
 } from "$lib/e2e/fixtures";
+import {
+  requireCharacterNameIds,
+  requireFiniteInteger,
+  requireJsonObject,
+} from "$lib/server/request-validation";
+import { requireSupportedAbyssAndStygianVersions } from "$lib/server/version-validation";
 
-type TeamsBody = {
-  characters: string[];
-  abyssVersion: number;
-  stygianVersion: number;
-};
-
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (isPlaywrightE2e()) {
     return json({
       abyssTeams: [E2E_ABYSS_TEAM_TOP, E2E_ABYSS_TEAM_BOTTOM],
@@ -46,53 +42,42 @@ export const POST: RequestHandler = async ({ request }) => {
     });
   }
 
-  // ── Rate limiting ────────────────────────────────────────────────────────
-  const ip = getClientIp(request);
-  if (!apiRateLimiter.check(ip)) {
-    throw error(429, "Too many requests — please wait a moment.");
-  }
+  await enforceApiRateLimit({ request, getClientAddress });
 
   // ── Parse body ───────────────────────────────────────────────────────────
-  let body: TeamsBody;
-  try {
-    body = await request.json();
-  } catch {
-    throw error(400, "Invalid JSON body.");
-  }
+  const body = await requireJsonObject(request);
+  const characters = requireCharacterNameIds(body.characters);
+  const versionError = "abyssVersion and stygianVersion must be numbers.";
+  const abyssVersion = requireFiniteInteger(body.abyssVersion, versionError);
+  const stygianVersion = requireFiniteInteger(
+    body.stygianVersion,
+    versionError,
+  );
 
-  const { characters, abyssVersion, stygianVersion } = body;
-
-  if (!Array.isArray(characters)) {
-    throw error(400, "characters must be an array of strings.");
-  }
+  await requireSupportedAbyssAndStygianVersions(abyssVersion, stygianVersion);
 
   // ── Cache lookup ─────────────────────────────────────────────────────────
-  const abyssKey = buildRpcKey("owned_abyss", abyssVersion, characters);
-  const stygianKey = buildRpcKey("owned_stygian", stygianVersion, characters);
-
   const [abyssTeams, stygianTeams] = await Promise.all([
-    rpcCache.getOrSet(abyssKey, async () => {
-      const { data, error: err } = await serverDb.rpc(
-        "get_teams_with_characters_subset",
-        {
+    cachedRosterRpc({
+      cacheName: "owned_abyss",
+      versionNumber: abyssVersion,
+      characters,
+      run: () =>
+        serverDb.rpc("get_teams_with_characters_subset", {
           p_name_ids: characters,
           p_version_number: abyssVersion,
-        },
-      );
-      if (err) throw new Error(err.message);
-      return data ?? [];
+        }),
     }),
 
-    rpcCache.getOrSet(stygianKey, async () => {
-      const { data, error: err } = await serverDb.rpc(
-        "get_teams_with_characters_subset_stygian",
-        {
+    cachedRosterRpc({
+      cacheName: "owned_stygian",
+      versionNumber: stygianVersion,
+      characters,
+      run: () =>
+        serverDb.rpc("get_teams_with_characters_subset_stygian", {
           p_name_ids: characters,
           p_version_number: stygianVersion,
-        },
-      );
-      if (err) throw new Error(err.message);
-      return data ?? [];
+        }),
     }),
   ]);
 

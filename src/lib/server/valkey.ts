@@ -100,3 +100,35 @@ export async function valkeySetJson(
     console.error("[valkey] SET failed:", key, err);
   }
 }
+
+/**
+ * Fixed-window INCR rate limit shared across pm2 workers.
+ * Returns the new count, or null if Valkey is unavailable.
+ */
+/** Atomic INCR + PEXPIRE-on-first-hit so a crash cannot leave a key without TTL. */
+const INCR_WITH_TTL_LUA = `
+local n = redis.call('INCR', KEYS[1])
+if n == 1 then
+  redis.call('PEXPIRE', KEYS[1], ARGV[1])
+end
+return n
+`;
+
+export async function valkeyIncrWithTtl(
+  key: string,
+  ttlMs: number,
+): Promise<number | null> {
+  const c = await getValkey();
+  if (!c) return null;
+  try {
+    const count = await c.eval(INCR_WITH_TTL_LUA, {
+      keys: [key],
+      arguments: [String(Math.max(1, ttlMs))],
+    });
+    const n = typeof count === "number" ? count : Number(count);
+    return Number.isFinite(n) ? n : null;
+  } catch (err) {
+    console.error("[valkey] INCR failed:", key, err);
+    return null;
+  }
+}
