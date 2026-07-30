@@ -57,6 +57,7 @@
     SIGNATURE_UPGRADE,
     TALENT_UPGRADE,
     classifyUpgradeImpact,
+    primaryUpgradePct,
   } from "$lib/upgrade-priority";
   import {
     artifactIconUrl,
@@ -391,7 +392,7 @@
 
   /**
    * Talent priority rows for Builds tab: qualitative upgrade labels from
-   * median % DPS drop when that talent is at 1.
+   * max(mean, median) % DPS drop when that talent is at 1.
    */
   let talentImportanceRows = $derived.by(() => {
     const ti = builds?.talent_importance;
@@ -405,10 +406,11 @@
         const icon = skill
           ? (iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon))
           : null;
-        const impact = classifyUpgradeImpact(
+        const pct = primaryUpgradePct(
+          stats.mean_pct_drop,
           stats.median_pct_drop,
-          TALENT_UPGRADE,
         );
+        const impact = classifyUpgradeImpact(pct, TALENT_UPGRADE);
         return [
           {
             slot,
@@ -416,24 +418,36 @@
             icon,
             priority: impact.tier,
             priorityLabel: impact.label,
-            median: stats.median_pct_drop,
+            pct,
           },
         ];
       })
-      .sort((a, b) => b.median - a.median || a.slot.localeCompare(b.slot));
+      .sort((a, b) => b.pct - a.pct || a.slot.localeCompare(b.slot));
   });
 
   /** Character level 90 importance for Builds tab (separate from talents). */
   let levelImportance = $derived.by(() => {
     const li = builds?.level_importance;
     if (!li || li.teams <= 0) return null;
-    const impact = classifyUpgradeImpact(li.median_pct_drop, LEVEL_UPGRADE);
+    const pct = primaryUpgradePct(li.mean_pct_drop, li.median_pct_drop);
+    const impact = classifyUpgradeImpact(pct, LEVEL_UPGRADE);
     return {
       priority: impact.tier,
       priorityLabel: impact.label,
       teams: li.teams,
       icon: getUiAssetUrl("UI_ItemIcon_104003"),
     };
+  });
+
+  let sigWeaponImportanceRows = $derived.by(() => {
+    const rows = builds?.vertical_importance?.sig_weapons;
+    if (!rows?.length) return [];
+    return [...rows].sort(
+      (a, b) =>
+        primaryUpgradePct(b.mean_pct_gain, b.median_pct_gain) -
+          primaryUpgradePct(a.mean_pct_gain, a.median_pct_gain) ||
+        a.key.localeCompare(b.key),
+    );
   });
 </script>
 
@@ -946,7 +960,7 @@
             {#if talentImportanceRows.length > 0 ||
               levelImportance ||
               builds.vertical_importance?.constellations?.length ||
-              builds.vertical_importance?.sig_weapons?.length}
+              sigWeaponImportanceRows.length > 0}
               <div class="invest-grid">
                 <div class="invest-col">
                   {#if talentImportanceRows.length > 0 && builds?.talent_importance}
@@ -1022,8 +1036,12 @@
                       <h2 class="section-title">Constellation Impact</h2>
                       <ul class="talent-priority-list">
                         {#each builds.vertical_importance.constellations as row}
-                          {@const impact = classifyUpgradeImpact(
+                          {@const pct = primaryUpgradePct(
+                            row.mean_pct_gain,
                             row.median_pct_gain,
+                          )}
+                          {@const impact = classifyUpgradeImpact(
+                            pct,
                             CONSTELLATION_UPGRADE,
                           )}
                           {@const constellation = kit.constellations.find(
@@ -1066,17 +1084,21 @@
                     </section>
                   {/if}
 
-                  {#if builds.vertical_importance?.sig_weapons?.length}
+                  {#if sigWeaponImportanceRows.length > 0}
                     <section class="board-section">
                       <h2 class="section-title">Signature weapon impact</h2>
                       <ul class="talent-priority-list">
-                        {#each [...builds.vertical_importance.sig_weapons].sort( (a, b) => b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key), ) as row}
+                        {#each sigWeaponImportanceRows as row}
                           {@const weapon = weaponByKey.get(row.key)}
                           {@const icon = weapon
                             ? weaponIconUrl(weapon.awakenIcon)
                             : null}
-                          {@const impact = classifyUpgradeImpact(
+                          {@const pct = primaryUpgradePct(
+                            row.mean_pct_gain,
                             row.median_pct_gain,
+                          )}
+                          {@const impact = classifyUpgradeImpact(
+                            pct,
                             SIGNATURE_UPGRADE,
                           )}
                           <li

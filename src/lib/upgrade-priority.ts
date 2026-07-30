@@ -1,6 +1,9 @@
 /**
- * Qualitative upgrade tiers from a median % DPS impact
+ * Qualitative upgrade tiers from a % DPS impact
  * (gain for cons/sig, drop for talent/level).
+ *
+ * Call sites pass {@link primaryUpgradePct}(mean, median) so a skewed high
+ * mean still surfaces when the median alone would understate the upgrade.
  *
  * Each Builds section passes its own cutoffs + labels via
  * {@link UpgradeImpactConfig}.
@@ -12,9 +15,9 @@ export type UpgradeTier =
   | "inconsequential";
 
 export interface UpgradeImpactConfig {
-  /** |median %| ≥ this → highly_recommended */
+  /** |pct| ≥ this → highly_recommended */
   highPct: number;
-  /** |median %| ≥ this → recommended (else inconsequential) */
+  /** |pct| ≥ this → recommended (else inconsequential) */
   recommendedPct: number;
   labels: Record<UpgradeTier, string>;
 }
@@ -66,6 +69,11 @@ export const LEVEL_UPGRADE: UpgradeImpactConfig = {
     inconsequential: "Leveling to 90 is inconsequential",
   },
 };
+
+/** Stronger of mean vs median — used for tier + sort on Builds priority. */
+export function primaryUpgradePct(mean: number, median: number): number {
+  return Math.max(mean, median);
+}
 
 /** Classify |pct| into a tier + label using section-specific cutoffs. */
 export function classifyUpgradeImpact(
