@@ -168,7 +168,7 @@
 </script>
 
 <nav
-  class="nav-bar w-full fixed top-0 z-30 flex flex-col transition-all duration-300 {scrolled
+  class="nav-bar w-full fixed top-0 z-[100] flex flex-col transition-all duration-300 {scrolled
     ? 'opaque-bg'
     : 'nav-initial'}"
   class:nav-sub-open={settingsHovered}

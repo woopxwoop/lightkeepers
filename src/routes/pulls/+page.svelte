@@ -29,7 +29,6 @@
   import type { TierListEntry } from "$lib/tierlist";
   import type { StygianTeam } from "$lib/definitions";
   import WishSlot from "$lib/ui/components/WishSlot.svelte";
-  import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
@@ -51,23 +50,26 @@
   /** Active team per revealed row — rows page through their teams separately. */
   let singleTeamIndex = $state<Record<string, number>>({});
   let pairTeamIndex = $state<Record<string, number>>({});
-  /** Auto-reveal gating is per column — one column ready early must not skip the other. */
-  let openedSinglesByDefault = false;
-  let openedPairsByDefault = false;
+  let teamCycleDirection = $state<Record<string, -1 | 0 | 1>>({});
   let expandedStandoutBoards = $state(new Set<string>());
   let collapsingStandoutBoards = $state(new Set<string>());
+  let hidingTeamRows = $state(new Set<string>());
   const standoutCollapseTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
+  const teamHideTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   onDestroy(() => {
     for (const timer of standoutCollapseTimers.values()) clearTimeout(timer);
     standoutCollapseTimers.clear();
+    for (const timer of teamHideTimers.values()) clearTimeout(timer);
+    teamHideTimers.clear();
   });
 
-  const STANDOUT_DEAL_MS = 480;
-  const STANDOUT_STAGGER_MS = 85;
+  const STANDOUT_DEAL_MS = 180;
+  const STANDOUT_STAGGER_MS = 35;
+  const TEAM_HIDE_MS = 140;
 
   let ownedCount = $derived($charactersOwned.filter((c) => c.isOwned).length);
   let ownedIds = $derived(
@@ -108,41 +110,19 @@
     }
   }
 
-  /**
-   * Reveals the leading row of a multi-row column on that column's first
-   * ranking, then only drops ids that no longer exist — a manual hide must
-   * not spring back open.
-   */
+  /** Drops revealed ids that no longer exist and clamps each cycle index. */
   function syncRevealed(
     singles: PullSuggestion[],
     pairs: PairSuggestion[],
   ): void {
     const singleIds = singles.map((s) => s.character);
-    if (!openedSinglesByDefault) {
-      const first = singleIds.length > 1 ? singleIds[0] : undefined;
-      if (first) singleTeamIndex[first] ??= 0;
-    }
-    revealedSingles = nextRevealed(
-      revealedSingles,
-      singleIds,
-      openedSinglesByDefault,
-    );
-    if (singleIds.length > 0) openedSinglesByDefault = true;
+    revealedSingles = nextRevealed(revealedSingles, singleIds);
     for (const suggestion of singles) {
-      safeTeamIndex(
-        singleTeamIndex,
-        suggestion.character,
-        suggestion.topTeams,
-      );
+      safeTeamIndex(singleTeamIndex, suggestion.character, suggestion.topTeams);
     }
 
     const pairIds = pairs.map(pairKey);
-    if (!openedPairsByDefault) {
-      const first = pairIds.length > 1 ? pairIds[0] : undefined;
-      if (first) pairTeamIndex[first] ??= 0;
-    }
-    revealedPairs = nextRevealed(revealedPairs, pairIds, openedPairsByDefault);
-    if (pairIds.length > 0) openedPairsByDefault = true;
+    revealedPairs = nextRevealed(revealedPairs, pairIds);
     for (const suggestion of pairs) {
       safeTeamIndex(pairTeamIndex, pairKey(suggestion), suggestion.topTeams);
     }
@@ -152,14 +132,7 @@
   function nextRevealed(
     revealed: Set<string>,
     ids: string[],
-    openedByDefault: boolean,
   ): Set<string> {
-    if (!openedByDefault) {
-      // A lone suggestion stays hidden — let it be opened deliberately.
-      const first = ids.length > 1 ? ids[0] : undefined;
-      if (!first) return revealed;
-      return new Set([first]);
-    }
     const live = new Set(ids);
     const kept = [...revealed].filter((id) => live.has(id));
     return kept.length === revealed.size ? revealed : new Set(kept);
@@ -212,24 +185,52 @@
       revealedSingles,
       character,
       singleTeamIndex,
+      singleRowId(character),
     );
   }
 
   function togglePair(key: string) {
-    revealedPairs = toggleRevealed(revealedPairs, key, pairTeamIndex);
+    revealedPairs = toggleRevealed(
+      revealedPairs,
+      key,
+      pairTeamIndex,
+      pairRowId(key),
+    );
   }
 
   function toggleRevealed(
     revealed: Set<string>,
     id: string,
     indices: Record<string, number>,
+    rowId: string,
   ): Set<string> {
     const next = new Set(revealed);
-    if (!next.delete(id)) {
+    if (next.delete(id)) {
+      beginTeamHide(rowId);
+    } else {
       next.add(id);
       indices[id] ??= 0;
     }
     return next;
+  }
+
+  function beginTeamHide(rowId: string): void {
+    const hiding = new Set(hidingTeamRows);
+    hiding.add(rowId);
+    hidingTeamRows = hiding;
+
+    const prior = teamHideTimers.get(rowId);
+    if (prior) clearTimeout(prior);
+    const wait = get(animationsEnabled) ? TEAM_HIDE_MS : 1;
+    teamHideTimers.set(
+      rowId,
+      setTimeout(() => {
+        teamHideTimers.delete(rowId);
+        const next = new Set(hidingTeamRows);
+        next.delete(rowId);
+        hidingTeamRows = next;
+      }, wait),
+    );
   }
 
   function toggleStandoutBoard(id: string, count = 1) {
@@ -270,6 +271,14 @@
     return `${suggestion.charA}|${suggestion.charB}`;
   }
 
+  function singleRowId(character: string): string {
+    return `pull-single-${character}`;
+  }
+
+  function pairRowId(key: string): string {
+    return `pull-pair-${key}`;
+  }
+
   /** Teammates beside the pull target(s), which already lead the row. */
   function remainingMembers(
     team: StygianTeam | undefined,
@@ -288,6 +297,19 @@
     const next = teams.length === 0 ? 0 : Math.min(current, teams.length - 1);
     if (indices[id] !== next) indices[id] = next;
     return next;
+  }
+
+  function cycleTeamIndex(
+    indices: Record<string, number>,
+    id: string,
+    rowId: string,
+    count: number,
+    direction: -1 | 1,
+  ): void {
+    if (count < 2) return;
+    const current = Math.min(indices[id] ?? 0, count - 1);
+    teamCycleDirection[rowId] = direction;
+    indices[id] = (current + direction + count) % count;
   }
 
   function usagePct(entry: TierListEntry): string {
@@ -318,13 +340,26 @@
   }
 </script>
 
-{#snippet teammateSlots(members: string[], count: number, revealed: boolean)}
+{#snippet teammateSlots(
+  members: string[],
+  count: number,
+  revealed: boolean,
+  direction: -1 | 0 | 1,
+  hiding: boolean,
+)}
   {#each Array(count) as _, i}
     {@const member = members[i]}
     {@const character = member ? mapping.get(member) : undefined}
     <div
       class="team-slot team-slot-mate"
       class:team-slot-revealed={revealed && Boolean(member)}
+      class:team-slot-cycle-previous={revealed &&
+        Boolean(member) &&
+        direction === -1}
+      class:team-slot-cycle-next={revealed &&
+        Boolean(member) &&
+        direction === 1}
+      class:team-slot-hiding={hiding && Boolean(member)}
       style="--i: {i};"
     >
       {#if member}
@@ -354,6 +389,7 @@
   indices: Record<string, number>,
   indexKey: string,
 )}
+  {@const isHiding = hidingTeamRows.has(rowId)}
   <li class="ledger-row" id={rowId}>
     <div class="row-team">
       {#each targets as target (target.nameId)}
@@ -367,31 +403,69 @@
         </div>
       {/each}
 
-      {#if isOpen}
+      {#if isOpen || isHiding}
         {#key teamIdx}
-          {@render teammateSlots(mates, mateCount, true)}
+          {@render teammateSlots(
+            mates,
+            mateCount,
+            true,
+            teamCycleDirection[rowId] ?? 0,
+            isHiding,
+          )}
         {/key}
       {:else}
-        {@render teammateSlots([], mateCount, false)}
+        {@render teammateSlots([], mateCount, false, 0, false)}
       {/if}
 
-      <button
-        type="button"
-        class="row-toggle"
-        aria-expanded={isOpen}
-        aria-controls={rowId}
-        aria-label={isOpen ? "Hide team" : "Reveal team"}
-        onclick={onToggle}
-      >
-        <span class="row-toggle-icon" class:open={isOpen}>
-          <span class="row-toggle-face row-toggle-face-closed">
-            <IconEyeOff size={18} strokeWidth={2.25} />
+      <div class="row-controls">
+        {#if isOpen && teams.length > 1}
+          <button
+            type="button"
+            class="row-control row-cycle row-cycle-up"
+            aria-controls={rowId}
+            aria-label="Previous unlocked team"
+            onclick={() =>
+              cycleTeamIndex(indices, indexKey, rowId, teams.length, -1)}
+          >
+            <IconChevronDown size={18} strokeWidth={2.25} />
+          </button>
+        {/if}
+
+        <button
+          type="button"
+          class="row-control row-toggle"
+          aria-expanded={isOpen}
+          aria-controls={rowId}
+          aria-label={isOpen ? "Hide team" : "Reveal team"}
+          disabled={isHiding}
+          onclick={() => {
+            teamCycleDirection[rowId] = 0;
+            onToggle();
+          }}
+        >
+          <span class="row-toggle-icon" class:open={isOpen}>
+            <span class="row-toggle-face row-toggle-face-closed">
+              <IconEyeOff size={18} strokeWidth={2.25} />
+            </span>
+            <span class="row-toggle-face row-toggle-face-open">
+              <IconEye size={18} strokeWidth={2.25} />
+            </span>
           </span>
-          <span class="row-toggle-face row-toggle-face-open">
-            <IconEye size={18} strokeWidth={2.25} />
-          </span>
-        </span>
-      </button>
+        </button>
+
+        {#if isOpen && teams.length > 1}
+          <button
+            type="button"
+            class="row-control row-cycle"
+            aria-controls={rowId}
+            aria-label="Next unlocked team"
+            onclick={() =>
+              cycleTeamIndex(indices, indexKey, rowId, teams.length, 1)}
+          >
+            <IconChevronDown size={18} strokeWidth={2.25} />
+          </button>
+        {/if}
+      </div>
     </div>
 
     {#if isOpen}
@@ -404,11 +478,6 @@
             >
           {/if}
         </p>
-        <SolutionDots
-          count={teams.length}
-          bind:index={indices[indexKey]}
-          aria-label-prefix="Unlocked team"
-        />
       </div>
     {/if}
   </li>
@@ -533,7 +602,7 @@
                 suggestion.character,
               ])}
               {@render ledgerRow(
-                `pull-single-${suggestion.character}`,
+                singleRowId(suggestion.character),
                 [
                   {
                     nameId: suggestion.character,
@@ -583,7 +652,7 @@
                 suggestion.charB,
               ])}
               {@render ledgerRow(
-                `pull-pair-${key}`,
+                pairRowId(key),
                 [
                   {
                     nameId: suggestion.charA,
@@ -617,11 +686,7 @@
   <section class="panel">
     <header class="panel-head">
       <div class="panel-head-text">
-        <h2 class="panel-title">Characters used in Stygian</h2>
-        <p class="panel-lede">
-          Most used characters in Stygian over the last
-          {$tierList?.windowCycles ?? 5} cycles
-        </p>
+        <h2 class="panel-title">Most used characters used in Stygian</h2>
       </div>
     </header>
 
@@ -765,6 +830,8 @@
   .standouts-deck {
     --deal-stagger: 85ms;
     --deal-duration: 480ms;
+    /* Keep stacked WishSlot z-index local so it can't climb over the nav. */
+    isolation: isolate;
     min-width: 0;
   }
 
@@ -791,13 +858,13 @@
       calc(min(var(--i), 4) * 3px),
       calc(min(var(--i), 4) * 3px)
     );
-    z-index: calc(40 - var(--i));
+    z-index: calc(5 - var(--i));
     animation: none;
     transition: none;
   }
 
   .standouts-deck:not(.open) .standout:first-child {
-    z-index: 50;
+    z-index: 6;
     opacity: 1;
   }
 
@@ -843,6 +910,11 @@
   }
 
   /* Collapse: keep the grid, pack last → first, then drop to the stack. */
+  .standouts-deck.open.collapsing {
+    --deal-stagger: 35ms;
+    --deal-duration: 180ms;
+  }
+
   .standouts-deck.open.collapsing .standout:not(:first-child) {
     pointer-events: none;
     animation: standout-pack var(--deal-duration) cubic-bezier(0.22, 1, 0.36, 1)
@@ -977,17 +1049,24 @@
     min-width: 0;
   }
 
-  .row-toggle {
+  .row-controls {
     flex: 0 0 auto;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    margin-left: -0.15rem;
+  }
+
+  .row-control {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    align-self: center;
-    margin-left: -0.15rem;
-    min-width: 2rem;
-    min-height: 2rem;
+    width: 2rem;
+    height: 2rem;
     padding: 0.35rem;
-    color: var(--accent-1);
     background: transparent;
     border: none;
     border-radius: var(--radius-md);
@@ -995,9 +1074,25 @@
     transition: var(--control-transition);
   }
 
-  .row-toggle:hover {
+  .row-control:hover {
     color: var(--foreground-color);
     background: var(--surface-quiet);
+  }
+
+  .row-control:disabled {
+    pointer-events: none;
+  }
+
+  .row-toggle {
+    color: var(--accent-1);
+  }
+
+  .row-cycle {
+    color: var(--foreground-mid);
+  }
+
+  .row-cycle-up :global(svg) {
+    transform: rotate(180deg);
   }
 
   /* Stacked eye / eye-off; open state crossfades instead of rotating. */
@@ -1060,6 +1155,21 @@
     animation-delay: calc(var(--i, 0) * 40ms);
   }
 
+  .team-slot-cycle-previous {
+    animation-name: mate-cycle-previous;
+    animation-delay: 0ms;
+  }
+
+  .team-slot-cycle-next {
+    animation-name: mate-cycle-next;
+    animation-delay: 0ms;
+  }
+
+  .team-slot-hiding {
+    animation: mate-hide 140ms var(--control-ease) both;
+    animation-delay: 0ms;
+  }
+
   @keyframes mate-reveal {
     from {
       opacity: 0.35;
@@ -1070,6 +1180,45 @@
       opacity: 1;
       filter: brightness(1);
       transform: scale(1);
+    }
+  }
+
+  @keyframes mate-cycle-previous {
+    from {
+      opacity: 0.35;
+      filter: brightness(0.65);
+      transform: translateY(-0.45rem) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      filter: brightness(1);
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mate-cycle-next {
+    from {
+      opacity: 0.35;
+      filter: brightness(0.65);
+      transform: translateY(0.45rem) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      filter: brightness(1);
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mate-hide {
+    from {
+      opacity: 1;
+      filter: brightness(1);
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      filter: brightness(0.6);
+      transform: scale(0.96);
     }
   }
 
@@ -1111,6 +1260,16 @@
       --standout-w: 4.75rem;
       --team-slot-gap: 0.3rem;
       gap: var(--space-3);
+    }
+
+    .row-controls {
+      flex-basis: 2.75rem;
+      gap: 0.2rem;
+    }
+
+    .row-control {
+      width: 2.75rem;
+      height: 2.75rem;
     }
   }
 
