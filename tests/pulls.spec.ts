@@ -40,7 +40,7 @@ test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
     page.getByRole("heading", { name: "Pull Suggestions" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Characters used in Stygian" }),
+    page.getByRole("heading", { name: "Most used characters in Stygian" }),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
 
   const bestNext = page
@@ -182,7 +182,7 @@ test("pulls shows stygian standouts without a roster", async ({ page }) => {
   await tierlist;
 
   await expect(
-    page.getByRole("heading", { name: "Characters used in Stygian" }),
+    page.getByRole("heading", { name: "Most used characters in Stygian" }),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
   await expect(page.getByText("Most used limited characters")).toBeVisible();
   await expect(page.getByText("Most used non-limited characters")).toBeVisible();
@@ -223,6 +223,6 @@ test("pulls shows empty state when near-miss has nothing useful", async ({
     page.getByText(/no single pull stands out|covers the high-usage/i),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
   await expect(
-    page.getByRole("heading", { name: "Characters used in Stygian" }),
+    page.getByRole("heading", { name: "Most used characters in Stygian" }),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
 });
