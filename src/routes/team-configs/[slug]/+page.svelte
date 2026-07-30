@@ -21,6 +21,7 @@
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
+  import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import {
     computeBuildSheetStats,
     formatSheetStat,
@@ -87,7 +88,7 @@
     <p class="page-meta">
       <span>{(sim.dps / 1000).toFixed(1)}K DPS</span>
       <span aria-hidden="true">·</span>
-      <span>Cost {sim.cost}</span>
+      <span><CostPopover label="Cost" /> {sim.cost}</span>
     </p>
   </header>
 

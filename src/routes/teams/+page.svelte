@@ -11,7 +11,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import Select from "$lib/ui/components/Select.svelte";
-  import InfoPopover from "$lib/ui/components/InfoPopover.svelte";
+  import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import {
     handCharactersFromGoodKeys,
     handBuilds,
@@ -347,12 +347,7 @@
               <div class="team-footer">
                 <span class="team-meta">
                   {selectedCost !== null ? selectedCost : team.baseline_cost}
-                  <InfoPopover label="cost" align="start">
-                    Every limited copy of a five star character or weapon adds 1
-                    cost to the team. Standard characters are assigned 0-cost at
-                    C2, and characters in the constellation selector get their
-                    C1 for free, so they are 1-cost at C1.
-                  </InfoPopover>
+                  <CostPopover />
                   · {(displayDps(team) / 1000).toFixed(0)}K DPS
                 </span>
                 <a href="/teams/{team.team_key}" class="team-link">

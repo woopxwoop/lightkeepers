@@ -16,7 +16,7 @@
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
-  import InfoPopover from "$lib/ui/components/InfoPopover.svelte";
+  import UsageIndexPopover from "$lib/ui/components/UsageIndexPopover.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
@@ -344,9 +344,7 @@
         <h2 class="meta-title">Meta teams</h2>
         <p class="meta-lede">
           Teams with the highest
-          <InfoPopover label="usage index" align="start">
-            usage rate × rate of appearing in this half
-          </InfoPopover> in each side
+          <UsageIndexPopover scope="half" /> in each side
         </p>
       </header>
 

@@ -104,7 +104,7 @@
     z-index: 20;
     display: block;
     width: max-content;
-    max-width: 16rem;
+    max-width: min(16rem, calc(100vw - 2rem));
     padding: 0.5rem 0.65rem;
     border-radius: var(--radius-md);
     /* Fixed px so the panel keeps its own scale inside small meta text. */

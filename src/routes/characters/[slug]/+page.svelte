@@ -22,6 +22,8 @@
   import Button from "$lib/ui/components/Button.svelte";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import Select from "$lib/ui/components/Select.svelte";
+  import CostPopover from "$lib/ui/components/CostPopover.svelte";
+  import UpgradeImpactPopover from "$lib/ui/components/UpgradeImpactPopover.svelte";
   import { elementColor } from "$lib/element-colors";
   import {
     CHARACTER_SIM_COST,
@@ -419,6 +421,11 @@
             priority: impact.tier,
             priorityLabel: impact.label,
             pct,
+            mean: stats.mean_pct_drop,
+            median: stats.median_pct_drop,
+            min: stats.min_pct_drop,
+            max: stats.max_pct_drop,
+            teams: ti.teams,
           },
         ];
       })
@@ -435,6 +442,10 @@
       priority: impact.tier,
       priorityLabel: impact.label,
       teams: li.teams,
+      mean: li.mean_pct_drop,
+      median: li.median_pct_drop,
+      min: li.min_pct_drop,
+      max: li.max_pct_drop,
       icon: getUiAssetUrl("UI_ItemIcon_104003"),
     };
   });
@@ -683,7 +694,9 @@
                 />
               </label>
               {#if teamsMode === "simulated"}
-                <span class="teams-cost">{CHARACTER_SIM_COST} cost</span>
+                <span class="teams-cost"
+                  >{CHARACTER_SIM_COST} <CostPopover /></span
+                >
               {:else}
                 <span class="teams-cost">Usage rate</span>
               {/if}
@@ -986,12 +999,16 @@
                             {/if}
                             <div class="talent-priority-copy">
                               <div class="talent-priority-name">{row.label}</div>
-                              <div
-                                class="talent-priority-label"
-                                data-priority={row.priority}
-                              >
-                                {row.priorityLabel}
-                              </div>
+                              <UpgradeImpactPopover
+                                label={row.priorityLabel}
+                                tier={row.priority}
+                                kind="talent"
+                                mean={row.mean}
+                                median={row.median}
+                                min={row.min}
+                                max={row.max}
+                                teams={row.teams}
+                              />
                             </div>
                           </li>
                         {/each}
@@ -1017,12 +1034,16 @@
                           {/if}
                           <div class="talent-priority-copy">
                             <div class="talent-priority-name">Level 90</div>
-                            <div
-                              class="talent-priority-label"
-                              data-priority={levelImportance.priority}
-                            >
-                              {levelImportance.priorityLabel}
-                            </div>
+                            <UpgradeImpactPopover
+                              label={levelImportance.priorityLabel}
+                              tier={levelImportance.priority}
+                              kind="level"
+                              mean={levelImportance.mean}
+                              median={levelImportance.median}
+                              min={levelImportance.min}
+                              max={levelImportance.max}
+                              teams={levelImportance.teams}
+                            />
                           </div>
                         </li>
                       </ul>
@@ -1071,12 +1092,16 @@
                               <div class="talent-priority-name">
                                 {constellation?.name ?? `C${row.cons}`}
                               </div>
-                              <div
-                                class="talent-priority-label"
-                                data-priority={impact.tier}
-                              >
-                                {impact.label}
-                              </div>
+                              <UpgradeImpactPopover
+                                label={impact.label}
+                                tier={impact.tier}
+                                kind="constellation"
+                                mean={row.mean_pct_gain}
+                                median={row.median_pct_gain}
+                                min={row.min_pct_gain}
+                                max={row.max_pct_gain}
+                                teams={row.teams}
+                              />
                             </div>
                           </li>
                         {/each}
@@ -1117,12 +1142,16 @@
                               <div class="talent-priority-name">
                                 {weapon?.name ?? row.key}
                               </div>
-                              <div
-                                class="talent-priority-label"
-                                data-priority={impact.tier}
-                              >
-                                {impact.label}
-                              </div>
+                              <UpgradeImpactPopover
+                                label={impact.label}
+                                tier={impact.tier}
+                                kind="signature"
+                                mean={row.mean_pct_gain}
+                                median={row.median_pct_gain}
+                                min={row.min_pct_gain}
+                                max={row.max_pct_gain}
+                                teams={row.teams}
+                              />
                             </div>
                           </li>
                         {/each}
@@ -1665,22 +1694,6 @@
     font-size: var(--text-sm);
     font-weight: 600;
     color: var(--foreground-color);
-  }
-
-  .talent-priority-label {
-    font-size: var(--text-xs);
-  }
-
-  .talent-priority-label[data-priority="highly_recommended"] {
-    color: var(--accent-1);
-  }
-
-  .talent-priority-label[data-priority="recommended"] {
-    color: var(--accent-2);
-  }
-
-  .talent-priority-label[data-priority="inconsequential"] {
-    color: var(--accent-3);
   }
 
   .stat-icon {

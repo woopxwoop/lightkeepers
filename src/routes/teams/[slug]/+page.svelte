@@ -17,6 +17,7 @@
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
+  import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type {
@@ -216,9 +217,8 @@
         <h1 class="page-title">{teamTitle}</h1>
         <p class="page-meta">
           {#if baselineSim}
-            Baseline · {team.baseline_cost} cost · {(
-              baselineSim.dps / 1000
-            ).toFixed(0)}K DPS
+            Baseline · {team.baseline_cost}
+            <CostPopover /> · {(baselineSim.dps / 1000).toFixed(0)}K DPS
           {:else}
             gcsim investment path
           {/if}

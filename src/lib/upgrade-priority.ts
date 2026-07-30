@@ -5,21 +5,22 @@
  * Call sites pass {@link primaryUpgradePct}(mean, median) so a skewed high
  * mean still surfaces when the median alone would understate the upgrade.
  *
- * Each Builds section passes its own cutoffs + labels via
- * {@link UpgradeImpactConfig}.
+ * Each Builds section passes its own ordered threshold ladder, so both the
+ * number of bands and their labels remain section-specific.
  */
 
 export type UpgradeTier =
-  | "highly_recommended"
-  | "recommended"
-  | "inconsequential";
+  | "exceptional"
+  | "high"
+  | "solid"
+  | "modest"
+  | "negligible";
 
-export interface UpgradeImpactConfig {
-  /** |pct| ≥ this → highly_recommended */
-  highPct: number;
-  /** |pct| ≥ this → recommended (else inconsequential) */
-  recommendedPct: number;
-  labels: Record<UpgradeTier, string>;
+export interface UpgradeImpactBand {
+  /** Inclusive lower bound for this band. */
+  minPct: number;
+  tier: UpgradeTier;
+  label: string;
 }
 
 export interface UpgradeImpact {
@@ -27,65 +28,48 @@ export interface UpgradeImpact {
   label: string;
 }
 
-/** Default upgrade wording (talents / cons / signature). */
-export const DEFAULT_UPGRADE_LABELS: Record<UpgradeTier, string> = {
-  highly_recommended: "Highly recommended to upgrade",
-  recommended: "Recommended to upgrade",
-  inconsequential: "Largely inconsequential",
-};
+export type UpgradeImpactLadder = readonly UpgradeImpactBand[];
 
-export const TALENT_UPGRADE: UpgradeImpactConfig = {
-  highPct: 10,
-  recommendedPct: 4,
-  labels: DEFAULT_UPGRADE_LABELS,
-};
+export const TALENT_UPGRADE: UpgradeImpactLadder = [
+  { minPct: 10, tier: "exceptional", label: "Essential to upgrade" },
+  { minPct: 7.5, tier: "high", label: "Highly recommended" },
+  { minPct: 5, tier: "solid", label: "Recommended" },
+  { minPct: 2.5, tier: "modest", label: "Minor impact" },
+  { minPct: 0, tier: "negligible", label: "Largely inconsequential" },
+];
 
-export const CONSTELLATION_UPGRADE: UpgradeImpactConfig = {
-  highPct: 20,
-  recommendedPct: 8,
-  labels: {
-    highly_recommended: "High impact constellation",
-    recommended: "Mid impact constellation",
-    inconsequential: "Low impact constellation",
-  },
-};
+export const CONSTELLATION_UPGRADE: UpgradeImpactLadder = [
+  { minPct: 20, tier: "exceptional", label: "Exceptional impact" },
+  { minPct: 15, tier: "high", label: "High impact" },
+  { minPct: 10, tier: "solid", label: "Solid impact" },
+  { minPct: 5, tier: "modest", label: "Modest impact" },
+  { minPct: 0, tier: "negligible", label: "Negligible impact" },
+];
 
-export const SIGNATURE_UPGRADE: UpgradeImpactConfig = {
-  highPct: 20,
-  recommendedPct: 8,
-  labels: {
-    highly_recommended: "High impact weapon",
-    recommended: "Mid impact weapon",
-    inconsequential: "Low impact weapon",
-  },
-};
+export const SIGNATURE_UPGRADE: UpgradeImpactLadder = CONSTELLATION_UPGRADE;
 
-export const LEVEL_UPGRADE: UpgradeImpactConfig = {
-  highPct: 5,
-  recommendedPct: 2,
-  labels: {
-    highly_recommended: "Highly recommended to level to 90",
-    recommended: "Recommended to level to 90",
-    inconsequential: "Leveling to 90 is inconsequential",
-  },
-};
+export const LEVEL_UPGRADE: UpgradeImpactLadder = [
+  { minPct: 8, tier: "exceptional", label: "Essential to level to 90" },
+  { minPct: 6, tier: "high", label: "Highly recommended" },
+  { minPct: 4, tier: "solid", label: "Recommended" },
+  { minPct: 2, tier: "modest", label: "Minor impact" },
+  { minPct: 0, tier: "negligible", label: "Largely inconsequential" },
+];
 
 /** Stronger of mean vs median — used for tier + sort on Builds priority. */
 export function primaryUpgradePct(mean: number, median: number): number {
   return Math.max(mean, median);
 }
 
-/** Classify |pct| into a tier + label using section-specific cutoffs. */
+/** Classify |pct| with the first matching band in a descending threshold ladder. */
 export function classifyUpgradeImpact(
   pct: number,
-  config: UpgradeImpactConfig,
+  ladder: UpgradeImpactLadder,
 ): UpgradeImpact {
   const abs = Math.abs(pct);
-  const tier: UpgradeTier =
-    abs >= config.highPct
-      ? "highly_recommended"
-      : abs >= config.recommendedPct
-        ? "recommended"
-        : "inconsequential";
-  return { tier, label: config.labels[tier] };
+  const band = ladder.find(({ minPct }) => abs >= minPct);
+  if (!band) {
+    throw new Error("Upgrade impact ladder must include a zero-percent band");
+  }
+  return { tier: band.tier, label: band.label };
 }
