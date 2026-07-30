@@ -69,22 +69,32 @@
     spotlightCount += SPOTLIGHT_PAGE;
   }
 
+  /**
+   * Whether any setting differs from the defaults. Normalized values, not raw
+   * params: an explicit `?sort=dps-desc` or empty `?cost=` is still default.
+   */
+  function anySettingActive(
+    cost: number | null,
+    sort: TeamDpsSort,
+    ownedFirst: boolean,
+  ): boolean {
+    return cost !== null || sort !== "dps-desc" || !ownedFirst;
+  }
+
   // ── Sort & filter state (seeded from the URL, then mirrored back) ─────────
-  let sortOwnedFirst = $state(page.url.searchParams.get("owned") !== "0");
-  let sortBy = $state<TeamDpsSort>(
-    readEnum(page.url, "sort", SORT_KEYS, "dps-desc"),
-  );
+  const initialOwnedFirst = page.url.searchParams.get("owned") !== "0";
+  const initialSort = readEnum(page.url, "sort", SORT_KEYS, "dps-desc");
+  const initialCost = parseCost(page.url.searchParams.get("cost"));
+
+  let sortOwnedFirst = $state(initialOwnedFirst);
+  let sortBy = $state<TeamDpsSort>(initialSort);
   /** Selected cost level — show DPS of the best sim at exactly this cost. */
-  let selectedCost = $state<number | null>(
-    parseCost(page.url.searchParams.get("cost")),
-  );
+  let selectedCost = $state<number | null>(initialCost);
 
   // ── Tag search state ─────────────────────────────────────────────────────
   let tags: string[] = $state(readList(page.url, "char"));
   let showSettings = $state(
-    page.url.searchParams.has("cost") ||
-      page.url.searchParams.has("sort") ||
-      page.url.searchParams.get("owned") === "0",
+    anySettingActive(initialCost, initialSort, initialOwnedFirst),
   );
 
   /**
@@ -105,10 +115,7 @@
       const cost = parseCost(url.searchParams.get("cost"));
       if (cost !== selectedCost) selectedCost = cost;
 
-      const hasSettings =
-        url.searchParams.has("cost") ||
-        url.searchParams.has("sort") ||
-        url.searchParams.get("owned") === "0";
+      const hasSettings = anySettingActive(cost, sort, owned);
       if (hasSettings !== showSettings) showSettings = hasSettings;
 
       const char = readList(url, "char");

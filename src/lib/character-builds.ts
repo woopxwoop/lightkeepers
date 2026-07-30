@@ -136,6 +136,17 @@ function attachImpact<T extends CharacterVerticalGain>(
   };
 }
 
+/**
+ * Descending impact, with non-finite pct treated as last place. Subtracting
+ * raw values would yield NaN and leave those rows in arbitrary positions.
+ */
+function compareByImpact(a: { pct: number }, b: { pct: number }): number {
+  const aOk = Number.isFinite(a.pct);
+  const bOk = Number.isFinite(b.pct);
+  if (!aOk || !bOk) return aOk === bOk ? 0 : aOk ? -1 : 1;
+  return b.pct - a.pct;
+}
+
 /** Constellations in source order with their display-ready impact. */
 export function constellationImpactRows(
   constellations: CharacterConsGain[] | null | undefined,
@@ -151,7 +162,7 @@ export function rankSigWeaponsByGain(
   if (!sigWeapons?.length) return [];
   return sigWeapons
     .map((row) => attachImpact(row, SIGNATURE_UPGRADE))
-    .sort((a, b) => b.pct - a.pct || a.key.localeCompare(b.key));
+    .sort((a, b) => compareByImpact(a, b) || a.key.localeCompare(b.key));
 }
 
 export type TalentImportanceRow = {
@@ -202,7 +213,7 @@ export function talentImportanceRows(
         },
       ];
     })
-    .sort((a, b) => b.pct - a.pct || a.slot.localeCompare(b.slot));
+    .sort((a, b) => compareByImpact(a, b) || a.slot.localeCompare(b.slot));
 }
 
 export type LevelImportanceRow = {

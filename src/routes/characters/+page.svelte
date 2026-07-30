@@ -26,26 +26,46 @@
   const OWNERSHIP_KEYS = ["all", "owned", "unowned"] as const;
   const SORT_KEYS = ["release_date", "name", "game_id"] as const;
 
-  let rarityFilter = $state(new Set(readList(page.url, "rarity", RARITIES)));
-  let elementFilter = $state(
-    new Set(readList(page.url, "element", CHARACTER_ELEMENTS)),
-  );
-  let weaponFilter = $state(
-    new Set(readList(page.url, "weapon", CHARACTER_WEAPON_TYPES)),
-  );
-  let ownershipFilter = $state<OwnershipFilter>(
-    readEnum(page.url, "owned", OWNERSHIP_KEYS, "all"),
-  );
+  /**
+   * Whether any filter is actually narrowing the list. Parsed values, not raw
+   * params: `?element=Bogus` or `?owned=all` carry no filter, and the write
+   * effect strips them anyway.
+   */
+  function anyFilterActive(
+    rarity: string[],
+    elements: string[],
+    weapons: string[],
+    owned: OwnershipFilter,
+  ): boolean {
+    return (
+      rarity.length > 0 ||
+      elements.length > 0 ||
+      weapons.length > 0 ||
+      owned !== "all"
+    );
+  }
+
+  const initialRarity = readList(page.url, "rarity", RARITIES);
+  const initialElements = readList(page.url, "element", CHARACTER_ELEMENTS);
+  const initialWeapons = readList(page.url, "weapon", CHARACTER_WEAPON_TYPES);
+  const initialOwned = readEnum(page.url, "owned", OWNERSHIP_KEYS, "all");
+
+  let rarityFilter = $state(new Set(initialRarity));
+  let elementFilter = $state(new Set(initialElements));
+  let weaponFilter = $state(new Set(initialWeapons));
+  let ownershipFilter = $state<OwnershipFilter>(initialOwned);
   let search = $state(page.url.searchParams.get("q") ?? "");
   let sortBy = $state<CharacterSortKey>(
     readEnum(page.url, "sort", SORT_KEYS, "release_date"),
   );
   let sortAsc = $state(page.url.searchParams.get("dir") === "asc");
   let filtersOpen = $state(
-    page.url.searchParams.has("rarity") ||
-      page.url.searchParams.has("element") ||
-      page.url.searchParams.has("weapon") ||
-      page.url.searchParams.has("owned"),
+    anyFilterActive(
+      initialRarity,
+      initialElements,
+      initialWeapons,
+      initialOwned,
+    ),
   );
 
   /**
@@ -72,11 +92,7 @@
       const owned = readEnum(url, "owned", OWNERSHIP_KEYS, "all");
       if (owned !== ownershipFilter) ownershipFilter = owned;
 
-      const hasFilters =
-        url.searchParams.has("rarity") ||
-        url.searchParams.has("element") ||
-        url.searchParams.has("weapon") ||
-        url.searchParams.has("owned");
+      const hasFilters = anyFilterActive(rarity, elements, weapons, owned);
       if (hasFilters !== filtersOpen) filtersOpen = hasFilters;
 
       const q = url.searchParams.get("q") ?? "";

@@ -92,6 +92,47 @@ describe("rankSigWeaponsByGain", () => {
       ],
     );
   });
+
+  it("sorts non-finite gains last", () => {
+    const ranked = rankSigWeaponsByGain([
+      {
+        key: "nan",
+        teams: 1,
+        mean_pct_gain: Number.NaN,
+        median_pct_gain: Number.NaN,
+        min_pct_gain: 0,
+        max_pct_gain: 0,
+      },
+      {
+        key: "small",
+        teams: 1,
+        mean_pct_gain: 1,
+        median_pct_gain: 1,
+        min_pct_gain: 1,
+        max_pct_gain: 1,
+      },
+      {
+        key: "infinite",
+        teams: 1,
+        mean_pct_gain: Number.POSITIVE_INFINITY,
+        median_pct_gain: 0,
+        min_pct_gain: 0,
+        max_pct_gain: 0,
+      },
+      {
+        key: "big",
+        teams: 1,
+        mean_pct_gain: 24,
+        median_pct_gain: 24,
+        min_pct_gain: 24,
+        max_pct_gain: 24,
+      },
+    ]);
+    assert.deepEqual(
+      ranked.map((w) => w.key),
+      ["big", "small", "infinite", "nan"],
+    );
+  });
 });
 
 describe("constellationImpactRows", () => {
