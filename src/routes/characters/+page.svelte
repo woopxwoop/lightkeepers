@@ -1,22 +1,61 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/state";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
   import BrowseFlipCard from "$lib/ui/components/BrowseFlipCard.svelte";
   import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import {
+    CHARACTER_ELEMENTS,
+    CHARACTER_WEAPON_TYPES,
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
   } from "$lib/character-filter";
+  import { nextSearchPath, readEnum, readList } from "$lib/query-state";
 
-  let rarityFilter = $state<Set<string>>(new Set());
-  let elementFilter = $state<Set<string>>(new Set());
-  let weaponFilter = $state<Set<string>>(new Set());
-  let ownershipFilter = $state<OwnershipFilter>("all");
-  let search = $state("");
-  let sortBy = $state<CharacterSortKey>("release_date");
-  let sortAsc = $state(false);
+  const RARITIES = ["4", "5"];
+  const OWNERSHIP_KEYS = ["all", "owned", "unowned"] as const;
+  const SORT_KEYS = ["release_date", "name", "game_id"] as const;
+
+  let rarityFilter = $state(new Set(readList(page.url, "rarity", RARITIES)));
+  let elementFilter = $state(
+    new Set(readList(page.url, "element", CHARACTER_ELEMENTS)),
+  );
+  let weaponFilter = $state(
+    new Set(readList(page.url, "weapon", CHARACTER_WEAPON_TYPES)),
+  );
+  let ownershipFilter = $state<OwnershipFilter>(
+    readEnum(page.url, "owned", OWNERSHIP_KEYS, "all"),
+  );
+  let search = $state(page.url.searchParams.get("q") ?? "");
+  let sortBy = $state<CharacterSortKey>(
+    readEnum(page.url, "sort", SORT_KEYS, "release_date"),
+  );
+  let sortAsc = $state(page.url.searchParams.get("dir") === "asc");
+  let filtersOpen = $state(
+    page.url.searchParams.has("rarity") ||
+      page.url.searchParams.has("element") ||
+      page.url.searchParams.has("weapon") ||
+      page.url.searchParams.has("owned"),
+  );
+
+  $effect(() => {
+    if (!browser) return;
+
+    const next = nextSearchPath(page.url, {
+      q: search.trim(),
+      rarity: [...rarityFilter].sort(),
+      element: [...elementFilter].sort(),
+      weapon: [...weaponFilter].sort(),
+      owned: ownershipFilter === "all" ? null : ownershipFilter,
+      sort: sortBy === "release_date" ? null : sortBy,
+      dir: sortAsc ? "asc" : null,
+    });
+    if (next) replaceState(next, page.state);
+  });
 
   let visible = $derived(
     filterAndSortCharacters($charactersOwned, {
@@ -45,6 +84,7 @@
     bind:ownershipFilter
     bind:sortBy
     bind:sortAsc
+    bind:filtersOpen
   />
 
   <p class="page-meta">{visible.length} shown</p>

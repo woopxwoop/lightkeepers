@@ -22,6 +22,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import Select from "$lib/ui/components/Select.svelte";
+  import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import UpgradeImpactPopover from "$lib/ui/components/UpgradeImpactPopover.svelte";
   import { elementColor } from "$lib/element-colors";
@@ -507,7 +508,7 @@
         <div
           class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
         >
-          <a href="/characters" class="back-link">← All characters</a>
+          <BackLink href="/characters">← All characters</BackLink>
           <p class="hero-eyebrow" style="color: {elColor};">
             {kit.title || "Character"}
           </p>
@@ -1182,17 +1183,6 @@
 </PageShell>
 
 <style>
-  .back-link {
-    font-size: var(--text-xs);
-    color: var(--accent-1);
-    text-decoration: none;
-    width: fit-content;
-  }
-
-  .back-link:hover {
-    text-decoration: underline;
-  }
-
   .hero {
     border-bottom: var(--border-width) solid
       color-mix(

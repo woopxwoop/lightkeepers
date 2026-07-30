@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
+  import { browser } from "$app/environment";
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/state";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
   import { buildGoodKeyMap, toGoodKey } from "$lib/utils";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
@@ -12,21 +15,32 @@
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import Select from "$lib/ui/components/Select.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
+  import TeamNumbersNote from "$lib/ui/components/TeamNumbersNote.svelte";
   import {
     handCharactersFromGoodKeys,
     handBuilds,
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  import { nextSearchPath, readEnum, readList } from "$lib/query-state";
   import type {
     InvestmentFile,
     InvestmentTeam,
     InvestmentSim,
   } from "$lib/types/investment";
 
+  const SORT_KEYS = ["dps-desc", "dps-asc"] as const;
+  type SortBy = (typeof SORT_KEYS)[number];
+
+  function parseCost(raw: string | null): number | null {
+    if (raw == null || raw === "") return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
   let data: InvestmentFile | null = $state(getInvestmentCached());
-  let loading = $derived(data === null);
   let error: string | null = $state(null);
+  let loading = $derived(data === null && error === null);
 
   // ── Spotlight pagination ──────────────────────────────────────────────────
   const SPOTLIGHT_PAGE = 10;
@@ -46,32 +60,50 @@
     spotlightCount += SPOTLIGHT_PAGE;
   }
 
-  // ── Sort & filter state ──────────────────────────────────────────────────
-  let sortOwnedFirst = $state(true);
-  let sortBy = $state<"dps-desc" | "dps-asc">("dps-desc");
+  // ── Sort & filter state (seeded from the URL, then mirrored back) ─────────
+  let sortOwnedFirst = $state(page.url.searchParams.get("owned") !== "0");
+  let sortBy = $state<SortBy>(
+    readEnum(page.url, "sort", SORT_KEYS, "dps-desc"),
+  );
   /** Selected cost level — show DPS of the best sim at (or nearest to) this cost. */
-  let selectedCost = $state<number | null>(null);
+  let selectedCost = $state<number | null>(
+    parseCost(page.url.searchParams.get("cost")),
+  );
 
   // ── Tag search state ─────────────────────────────────────────────────────
-  let tags: string[] = $state([]);
-  let showSettings = $state(false);
+  let tags: string[] = $state(readList(page.url, "char"));
+  let showSettings = $state(
+    page.url.searchParams.has("cost") ||
+      page.url.searchParams.has("sort") ||
+      page.url.searchParams.get("owned") === "0",
+  );
+
+  $effect(() => {
+    if (!browser) return;
+
+    const cost =
+      selectedCost !== null && Number.isFinite(selectedCost)
+        ? String(selectedCost)
+        : null;
+    const next = nextSearchPath(page.url, {
+      char: tags,
+      sort: sortBy === "dps-desc" ? null : sortBy,
+      owned: sortOwnedFirst ? null : "0",
+      cost,
+    });
+    if (next) replaceState(next, page.state);
+  });
 
   onMount(() => fetchData());
 
   /** Use shared session cache (prefetched from bootstrap when possible). */
   async function fetchData() {
-    if (data) {
-      loading = false;
-      return;
-    }
-    loading = true;
+    if (data) return;
     error = null;
     try {
       data = await loadInvestment();
     } catch (e) {
       error = e instanceof Error ? e.message : "Failed to load investment data";
-    } finally {
-      loading = false;
     }
   }
 
@@ -367,23 +399,7 @@
     {/if}
   {/if}
 
-  <details class="methodology">
-    <summary>How team numbers work</summary>
-    <p>
-      Team damage is simulated with
-      <a href="https://gcsim.app/" target="_blank" rel="noopener noreferrer"
-        >gcsim</a
-      >
-      using
-      <a
-        href="https://compendium.keqingmains.com/"
-        target="_blank"
-        rel="noopener noreferrer">KQM artifact standards</a
-      >. Comparing different teams is not recommended — rotation difficulty and
-      team cost vary. Comparing the same team at different investment levels is
-      encouraged.
-    </p>
-  </details>
+  <TeamNumbersNote />
 </PageShell>
 
 <style>
@@ -603,38 +619,6 @@
 
   .team-link:hover {
     text-decoration: underline;
-  }
-
-  .methodology {
-    margin-top: var(--space-2);
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary {
-    width: fit-content;
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary:hover {
-    color: var(--foreground-color);
-  }
-
-  .methodology p {
-    max-width: 60ch;
-    margin-top: var(--space-2);
-    line-height: 1.55;
-  }
-
-  .methodology a {
-    color: var(--accent-2);
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 
   .card-enter {

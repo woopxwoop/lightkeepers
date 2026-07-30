@@ -21,6 +21,7 @@
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
+  import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import {
     computeBuildSheetStats,
@@ -83,7 +84,7 @@
 
 <PageShell class="gap-8 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
-    <a href="/teams/{team.team_key}" class="back-link">← {teamTitle}</a>
+    <BackLink href="/teams/{team.team_key}">← {teamTitle}</BackLink>
     <h1 class="page-title">{simLabel || teamTitle}</h1>
     <p class="page-meta">
       <span>{(sim.dps / 1000).toFixed(1)}K DPS</span>
@@ -341,16 +342,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-  }
-
-  .back-link {
-    width: fit-content;
-    font-size: var(--text-xs);
-    color: var(--accent-1);
-  }
-
-  .back-link:hover {
-    text-decoration: underline;
   }
 
   .page-title {

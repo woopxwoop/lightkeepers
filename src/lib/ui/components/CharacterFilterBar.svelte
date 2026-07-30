@@ -27,6 +27,7 @@
     ownershipFilter = $bindable("all" as OwnershipFilter),
     sortBy = $bindable("name" as CharacterSortKey),
     sortAsc = $bindable(true),
+    filtersOpen = $bindable(false),
     class: className = "",
   }: {
     search?: string;
@@ -36,10 +37,9 @@
     ownershipFilter?: OwnershipFilter;
     sortBy?: CharacterSortKey;
     sortAsc?: boolean;
+    filtersOpen?: boolean;
     class?: string;
   } = $props();
-
-  let filtersOpen = $state(false);
 
   let isFiltered = $derived(
     characterFiltersActive({

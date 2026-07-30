@@ -17,7 +17,9 @@
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
+  import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
+  import TeamNumbersNote from "$lib/ui/components/TeamNumbersNote.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type {
@@ -206,13 +208,13 @@
       {#snippet action()}
         <div class="empty-actions">
           <Button variant="secondary" onclick={fetchData}>Try again</Button>
-          <a href="/teams" class="back-link">← Back to teams</a>
+          <BackLink href="/teams">← Back to teams</BackLink>
         </div>
       {/snippet}
     </EmptyState>
   {:else if team}
     <header class="page-head">
-      <a href="/teams" class="back-link">← Teams</a>
+      <BackLink href="/teams">← Teams</BackLink>
       <div class="page-head-text">
         <h1 class="page-title">{teamTitle}</h1>
         <p class="page-meta">
@@ -286,8 +288,8 @@
       <section class="section">
         <h2 class="section-title">Baseline variants</h2>
         <p class="section-lede">
-          Floor-cost options, ranked by DPS. Highlighted rows are within 2.5% of
-          the best.
+          Baseline-cost options, ranked by DPS. Highlighted rows are within 2.5%
+          DPS of the best baseline-cost variant.
         </p>
         <Surface flush class="board">
           <div class="board-head" aria-hidden="true">
@@ -324,8 +326,9 @@
       <section class="section">
         <h2 class="section-title">Investment by cost</h2>
         <p class="section-lede">
-          Best upgrade at each pull cost. Highlighted configs are within 2.5% of
-          the best at that cost — expand a row for alternatives.
+          Best upgrades at each pull cost. Expand a row for alternatives.
+          Highlighted configs are within 2.5% DPS of the best config at that
+          cost.
         </p>
         <Surface flush class="board ladder">
           <div class="ladder-head" aria-hidden="true">
@@ -367,7 +370,8 @@
                   <span class="col-label" title={simDiffLabel(peakSim)}>
                     {simDiffLabel(peakSim)}
                   </span>
-                  <span class="col-dps">{(peakSim.dps / 1000).toFixed(1)}K</span>
+                  <span class="col-dps">{(peakSim.dps / 1000).toFixed(1)}K</span
+                  >
                 </a>
                 <span class="col-delta">
                   {#if deltaNeg}
@@ -409,7 +413,10 @@
                   transition:slide={{ duration: 180 }}
                 >
                   {#each group.sims.slice(1) as sim (sim.state_key)}
-                    {@const altVsBaseNeg = negPctInfo(baselineSim?.dps, sim.dps)}
+                    {@const altVsBaseNeg = negPctInfo(
+                      baselineSim?.dps,
+                      sim.dps,
+                    )}
                     <div class="ladder-row">
                       <a
                         href="/team-configs/{encodeURIComponent(sim.state_key)}"
@@ -444,22 +451,7 @@
     {/if}
   {/if}
 
-  <details class="methodology">
-    <summary>How team numbers work</summary>
-    <p>
-      Team damage is simulated with
-      <a href="https://gcsim.app/" target="_blank" rel="noopener noreferrer"
-        >gcsim</a
-      >
-      using
-      <a
-        href="https://compendium.keqingmains.com/"
-        target="_blank"
-        rel="noopener noreferrer">KQM artifact standards</a
-      >. Baseline variants compare floor-cost options; the cost ladder shows the
-      best paid upgrade at each pull cost.
-    </p>
-  </details>
+  <TeamNumbersNote />
 </PageShell>
 
 <style>
@@ -473,16 +465,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-  }
-
-  .back-link {
-    width: fit-content;
-    font-size: var(--text-xs);
-    color: var(--accent-1);
-  }
-
-  .back-link:hover {
-    text-decoration: underline;
   }
 
   .page-title {
@@ -833,38 +815,6 @@
 
   .ladder-alts .ladder-link {
     opacity: 0.9;
-  }
-
-  .methodology {
-    margin-top: var(--space-2);
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary {
-    width: fit-content;
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary:hover {
-    color: var(--foreground-color);
-  }
-
-  .methodology p {
-    max-width: 60ch;
-    margin-top: var(--space-2);
-    line-height: 1.55;
-  }
-
-  .methodology a {
-    color: var(--accent-2);
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 
   .card-enter {
