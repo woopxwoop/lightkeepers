@@ -72,7 +72,6 @@
     artifactIconUrl,
     skillIconUrl,
     talentIconUrl,
-    weaponIconUrl,
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
   import type { CharacterIndex, InvestmentFile } from "$lib/types/investment";
@@ -788,25 +787,15 @@
                 <p class="muted-note">No weapon data yet.</p>
               {:else}
                 <div class="equip-grid">
-                  {#each rankedWeapons as w}
-                    {@const weapon = weaponByKey.get(w.key)}
-                    {@const icon = weapon
-                      ? weaponIconUrl(weapon.awakenIcon)
-                      : null}
+                  {#each rankedWeapons as w (w.key)}
                     <div class="equip-tile relative group">
                       <div class="equip-icon-wrap">
-                        {#if icon}
-                          <img
-                            src={icon}
-                            alt={weapon?.name ?? w.key}
-                            class="equip-icon"
-                            loading="lazy"
-                          />
-                        {:else}
-                          <div class="equip-fallback">{w.key}</div>
-                        {/if}
+                        <WeaponIcon
+                          weaponKey={w.key}
+                          class="equip-icon"
+                        />
                       </div>
-                      <WeaponTooltip {weapon} weaponKey={w.key} />
+                      <WeaponTooltip weaponKey={w.key} />
                     </div>
                   {/each}
                 </div>
