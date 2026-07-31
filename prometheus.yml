@@ -12,6 +12,7 @@ scrape_configs:
       type: Bearer
       credentials_file: /etc/prometheus/secrets/metrics_token
 
+remote_write:
   - url: https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push
     basic_auth:
       username: 3104352

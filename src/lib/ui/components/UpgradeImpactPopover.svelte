@@ -13,21 +13,29 @@
     median,
     min,
     max,
-    teams,
+    teams = 0,
     align = "start",
   }: {
     label: string;
     tier: UpgradeTier;
     kind: "talent" | "level" | "constellation" | "signature";
-    mean: number;
-    median: number;
-    min: number;
-    max: number;
-    teams: number;
+    /** Present only for measured rows; omit for guide-authored labels. */
+    mean?: number;
+    median?: number;
+    min?: number;
+    max?: number;
+    /** Team count for measured rows; defaults to 0 for display. */
+    teams?: number;
     align?: "start" | "center" | "end";
   } = $props();
 
-  const primary = $derived(primaryUpgradePct(mean, median));
+  const measured = $derived(
+    mean != null && median != null && min != null && max != null,
+  );
+
+  const primary = $derived(
+    mean != null && median != null ? primaryUpgradePct(mean, median) : 0,
+  );
 
   const summary = $derived(
     kind === "level"
@@ -54,18 +62,22 @@
 </script>
 
 <span class="impact impact-{tier}">
-  <span class="impact-label">{label} ·</span>
-  <InfoPopover label={percent(primary)} {align}>
-    <span class="impact-detail">
-      <span class="impact-summary">{summary}</span>
-      <span class="impact-stats">
-        <span>Mean: <strong>{percent(mean)}</strong></span>
-        <span>Median: <strong>{percent(median)}</strong></span>
-        <span>Range: <strong>{rangePercent(min, max)}</strong></span>
-        <span>Across <strong>{teams}</strong> teams</span>
+  {#if measured && mean != null && median != null && min != null && max != null}
+    <span class="impact-label">{label} ·</span>
+    <InfoPopover label={percent(primary)} {align}>
+      <span class="impact-detail">
+        <span class="impact-summary">{summary}</span>
+        <span class="impact-stats">
+          <span>Mean: <strong>{percent(mean)}</strong></span>
+          <span>Median: <strong>{percent(median)}</strong></span>
+          <span>Range: <strong>{rangePercent(min, max)}</strong></span>
+          <span>Across <strong>{teams}</strong> teams</span>
+        </span>
       </span>
-    </span>
-  </InfoPopover>
+    </InfoPopover>
+  {:else}
+    <span class="impact-label">{label}</span>
+  {/if}
 </span>
 
 <style>

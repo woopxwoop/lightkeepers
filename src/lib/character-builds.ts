@@ -11,12 +11,14 @@ import {
   SIGNATURE_UPGRADE,
   TALENT_UPGRADE,
   classifyUpgradeImpact,
+  impactForTier,
   primaryUpgradePct,
   type UpgradeImpactLadder,
   type UpgradeTier,
 } from "$lib/upgrade-priority";
 import type {
   CharacterConsGain,
+  CharacterGuidePriority,
   CharacterIndex,
   CharacterSigGain,
   CharacterTalentImportance,
@@ -121,7 +123,7 @@ export type VerticalImpactRow<T> = T & {
   priorityLabel: string;
 };
 
-/** Add the primary pct and its ladder classification to a vertical gain row. */
+/** Add the primary pct and its resolved impact to a vertical gain row. */
 function attachImpact<T extends CharacterVerticalGain>(
   row: T,
   ladder: UpgradeImpactLadder,
@@ -180,40 +182,41 @@ export type TalentImportanceRow = {
 };
 
 /**
- * Talent priority rows: qualitative labels from max(mean, median) % DPS drop
- * when that talent is at 1. `resolveSkillIcon` maps kit skill type → URL.
+ * Talent priority rows from measured simulation data. Qualitative labels from
+ * max(mean, median) % DPS drop when that talent is at 1.
  */
 export function talentImportanceRows(
   talentImportance: CharacterTalentImportance | null | undefined,
   resolveSkillIcon: (kitType: string) => string | null,
 ): TalentImportanceRow[] {
   if (!talentImportance || talentImportance.teams <= 0) return [];
-  return (["auto", "skill", "burst"] as const)
-    .flatMap((slot) => {
-      const stats = talentImportance[slot];
-      if (!stats) return [];
-      const pct = primaryUpgradePct(
-        stats.mean_pct_drop,
-        stats.median_pct_drop,
-      );
-      const impact = classifyUpgradeImpact(pct, TALENT_UPGRADE);
-      return [
-        {
-          slot,
-          label: TALENT_SLOT_LABELS[slot],
-          icon: resolveSkillIcon(TALENT_SLOT_TO_KIT[slot]),
-          priority: impact.tier,
-          priorityLabel: impact.label,
-          pct,
-          mean: stats.mean_pct_drop,
-          median: stats.median_pct_drop,
-          min: stats.min_pct_drop,
-          max: stats.max_pct_drop,
-          teams: talentImportance.teams,
-        },
-      ];
-    })
-    .sort((a, b) => compareByImpact(a, b) || a.slot.localeCompare(b.slot));
+
+  const slots = ["auto", "skill", "burst"] as const;
+  const rows = slots.flatMap((slot) => {
+    const stats = talentImportance[slot];
+    if (!stats) return [];
+    const pct = primaryUpgradePct(stats.mean_pct_drop, stats.median_pct_drop);
+    const impact = classifyUpgradeImpact(pct, TALENT_UPGRADE);
+    return [
+      {
+        slot,
+        label: TALENT_SLOT_LABELS[slot],
+        icon: resolveSkillIcon(TALENT_SLOT_TO_KIT[slot]),
+        priority: impact.tier,
+        priorityLabel: impact.label,
+        pct,
+        mean: stats.mean_pct_drop,
+        median: stats.median_pct_drop,
+        min: stats.min_pct_drop,
+        max: stats.max_pct_drop,
+        teams: talentImportance.teams,
+      },
+    ];
+  });
+
+  return rows.sort(
+    (a, b) => compareByImpact(a, b) || a.slot.localeCompare(b.slot),
+  );
 }
 
 export type LevelImportanceRow = {
@@ -226,7 +229,7 @@ export type LevelImportanceRow = {
   max: number;
 };
 
-/** Character level 90 importance (separate from talents). */
+/** Character level 90 importance from measured simulation data. */
 export function levelImportanceFromBuilds(
   builds: CharacterIndex | null | undefined,
 ): LevelImportanceRow | null {
@@ -243,4 +246,182 @@ export function levelImportanceFromBuilds(
     min: li.min_pct_drop,
     max: li.max_pct_drop,
   };
+}
+
+// ── Guide vs sim section selection ──────────────────────────────────────────
+
+export type BuildsSectionSource = "sim" | "guide";
+
+export type GuideTalentRow = {
+  slot: TalentSlot;
+  label: string;
+  icon: string | null;
+};
+
+export type GuideConsRow = {
+  cons: number;
+  priority: UpgradeTier;
+  priorityLabel: string;
+};
+
+export type GuideSigRow = {
+  key: string;
+  priority: UpgradeTier;
+  priorityLabel: string;
+};
+
+/**
+ * A guide only lists a constellation or signature when it is worth pulling for,
+ * so those rows present at the vertical ladder's high band — the recommendation
+ * itself is the claim, and no percentage stands behind it.
+ */
+const GUIDE_VERTICAL_IMPACT = impactForTier(CONSTELLATION_UPGRADE, "high");
+
+/** Guide Level 90 recommendation borrows the level ladder's "Recommended" band. */
+const GUIDE_LEVEL_IMPACT = impactForTier(LEVEL_UPGRADE, "solid");
+
+/**
+ * Whether an authored guide section should present instead of measured data.
+ * Default fills gaps; override replaces only sections the guide authored.
+ */
+export function useGuideSection(
+  guide: CharacterGuidePriority | null | undefined,
+  hasGuide: boolean,
+  hasSim: boolean,
+): boolean {
+  if (!guide || !hasGuide) return false;
+  if (guide.override) return true;
+  return !hasSim;
+}
+
+export type TalentPrioritySection =
+  | { source: "sim"; rows: TalentImportanceRow[] }
+  | { source: "guide"; simMissing: boolean; rows: GuideTalentRow[] };
+
+export function talentPrioritySection(
+  builds: CharacterIndex | null | undefined,
+  resolveSkillIcon: (kitType: string) => string | null,
+): TalentPrioritySection | null {
+  const guide = builds?.guide_priority;
+  const simRows = talentImportanceRows(builds?.talent_importance, resolveSkillIcon);
+  const guideSlots = (guide?.talent_priority ?? []).filter(
+    (slot): slot is TalentSlot =>
+      Object.hasOwn(TALENT_SLOT_LABELS, slot) &&
+      Object.hasOwn(TALENT_SLOT_TO_KIT, slot),
+  );
+  const preferGuide = useGuideSection(
+    guide,
+    guideSlots.length > 0,
+    simRows.length > 0,
+  );
+  if (preferGuide) {
+    return {
+      source: "guide",
+      simMissing: simRows.length === 0,
+      rows: guideSlots.map((slot) => ({
+        slot,
+        label: TALENT_SLOT_LABELS[slot],
+        icon: resolveSkillIcon(TALENT_SLOT_TO_KIT[slot]),
+      })),
+    };
+  }
+  if (simRows.length > 0) return { source: "sim", rows: simRows };
+  return null;
+}
+
+export type LevelPrioritySection =
+  | { source: "sim"; row: LevelImportanceRow }
+  | {
+      source: "guide";
+      simMissing: boolean;
+      priority: UpgradeTier;
+      priorityLabel: string;
+    };
+
+export function levelPrioritySection(
+  builds: CharacterIndex | null | undefined,
+): LevelPrioritySection | null {
+  const guide = builds?.guide_priority;
+  const simRow = levelImportanceFromBuilds(builds);
+  const preferGuide = useGuideSection(
+    guide,
+    guide?.level_90 === true,
+    simRow != null,
+  );
+  if (preferGuide) {
+    return {
+      source: "guide",
+      simMissing: simRow == null,
+      priority: GUIDE_LEVEL_IMPACT.tier,
+      priorityLabel: GUIDE_LEVEL_IMPACT.label,
+    };
+  }
+  if (simRow) return { source: "sim", row: simRow };
+  return null;
+}
+
+export type ConsPrioritySection =
+  | { source: "sim"; rows: VerticalImpactRow<CharacterConsGain>[] }
+  | { source: "guide"; simMissing: boolean; rows: GuideConsRow[] };
+
+export function constellationPrioritySection(
+  builds: CharacterIndex | null | undefined,
+): ConsPrioritySection | null {
+  const guide = builds?.guide_priority;
+  const simRows = constellationImpactRows(
+    builds?.vertical_importance?.constellations,
+  );
+  const guideCons = guide?.constellations ?? [];
+  const preferGuide = useGuideSection(
+    guide,
+    guideCons.length > 0,
+    simRows.length > 0,
+  );
+  if (preferGuide) {
+    return {
+      source: "guide",
+      simMissing: simRows.length === 0,
+      rows: [...guideCons]
+        .sort((a, b) => a - b)
+        .map((cons) => ({
+          cons,
+          priority: GUIDE_VERTICAL_IMPACT.tier,
+          priorityLabel: GUIDE_VERTICAL_IMPACT.label,
+        })),
+    };
+  }
+  if (simRows.length > 0) return { source: "sim", rows: simRows };
+  return null;
+}
+
+export type SigPrioritySection =
+  | { source: "sim"; rows: VerticalImpactRow<CharacterSigGain>[] }
+  | { source: "guide"; simMissing: boolean; rows: GuideSigRow[] };
+
+export function sigWeaponPrioritySection(
+  builds: CharacterIndex | null | undefined,
+): SigPrioritySection | null {
+  const guide = builds?.guide_priority;
+  const simRows = rankSigWeaponsByGain(
+    builds?.vertical_importance?.sig_weapons,
+  );
+  const guideSigs = guide?.sig_weapons ?? [];
+  const preferGuide = useGuideSection(
+    guide,
+    guideSigs.length > 0,
+    simRows.length > 0,
+  );
+  if (preferGuide) {
+    return {
+      source: "guide",
+      simMissing: simRows.length === 0,
+      rows: guideSigs.map((key) => ({
+        key,
+        priority: GUIDE_VERTICAL_IMPACT.tier,
+        priorityLabel: GUIDE_VERTICAL_IMPACT.label,
+      })),
+    };
+  }
+  if (simRows.length > 0) return { source: "sim", rows: simRows };
+  return null;
 }

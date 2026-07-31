@@ -64,6 +64,21 @@ export function primaryUpgradePct(mean: number, median: number): number {
   return Math.abs(mean) >= Math.abs(median) ? mean : median;
 }
 
+/**
+ * The named band for a tier, so unmeasured rows can borrow a ladder's own
+ * wording instead of restating a label the ladder already owns.
+ */
+export function impactForTier(
+  ladder: UpgradeImpactLadder,
+  tier: UpgradeTier,
+): UpgradeImpact {
+  const band = ladder.find((b) => b.tier === tier);
+  if (!band) {
+    throw new Error(`Upgrade impact ladder has no ${tier} band`);
+  }
+  return { tier: band.tier, label: band.label };
+}
+
 /** Classify |pct| with the first matching band in a descending threshold ladder. */
 export function classifyUpgradeImpact(
   pct: number,
