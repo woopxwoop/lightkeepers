@@ -120,9 +120,8 @@ jobs:
             chmod 600 ~/app/.env
             mkdir -p ~/app/secrets
             mv ~/app/remote_write_password ~/app/secrets/remote_write_password
-            chmod 600 ~/app/secrets/remote_write_password
             mv ~/app/metrics_token ~/app/secrets/metrics_token
-            chmod 600 ~/app/secrets/metrics_token
+            chmod 644 ~/app/secrets/remote_write_password ~/app/secrets/metrics_token
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
             docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d
