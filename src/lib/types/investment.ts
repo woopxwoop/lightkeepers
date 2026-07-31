@@ -140,6 +140,13 @@ export interface CharacterIndex {
    * excluded.
    */
   vertical_importance?: CharacterVerticalImportance;
+  /**
+   * Editorial upgrade recommendations from a hand-authored guide.
+   * Published separately from measured `*_importance` statistics; the Builds
+   * UI fills missing sim sections by default, or replaces authored sections
+   * when `override` is true.
+   */
+  guide_priority?: CharacterGuidePriority;
   /** Optional editorial blurb from hand-authored guide (merge-time). */
   notes?: string;
 }
@@ -147,14 +154,21 @@ export interface CharacterIndex {
 export type TalentSlot = "auto" | "skill" | "burst";
 
 /**
- * Editorial tiers a hand-authored guide may set. Declared here rather than
- * imported so this file stays free of `$lib/upgrade-priority`; that module maps
- * these onto each section's impact ladder.
+ * Hand-authored upgrade recommendations. No percentages or impact labels —
+ * order / selection is the editorial signal.
  */
-export type GuideUpgradeTier =
-  | "highly_recommended"
-  | "recommended"
-  | "inconsequential";
+export interface CharacterGuidePriority {
+  /** When true, authored sections replace sim sections (omitted sections never override). */
+  override: boolean;
+  /** Talent slots in recommended priority order. */
+  talent_priority?: TalentSlot[];
+  /** Recommend raising the character to level 90. */
+  level_90?: true;
+  /** Recommended constellation stopping points (ascending). */
+  constellations?: number[];
+  /** Signature weapon GOOD keys in recommendation order. */
+  sig_weapons?: string[];
+}
 
 export interface CharacterTalentSlotImportance {
   /** Average % DPS drop vs baseline across teams. */
@@ -165,8 +179,6 @@ export interface CharacterTalentSlotImportance {
   min_pct_drop: number;
   /** Largest % DPS drop on any contributing team. */
   max_pct_drop: number;
-  /** When set (guide merge), Builds UI prefers this over classifying median %. */
-  tier?: GuideUpgradeTier;
 }
 
 export interface CharacterTalentImportance {
@@ -182,8 +194,6 @@ export interface CharacterTalentImportance {
 export interface CharacterLevelImportance extends CharacterTalentSlotImportance {
   /** Teams with a level-80 drop sample for this character. */
   teams: number;
-  /** When set (guide merge), Builds UI prefers this over classifying median %. */
-  tier?: GuideUpgradeTier;
 }
 
 export interface CharacterVerticalGain {
@@ -197,8 +207,6 @@ export interface CharacterVerticalGain {
   min_pct_gain: number;
   /** Largest % DPS gain on any contributing team. */
   max_pct_gain: number;
-  /** When set (guide merge), Builds UI prefers this over classifying median %. */
-  tier?: GuideUpgradeTier;
 }
 
 export interface CharacterConsGain extends CharacterVerticalGain {
