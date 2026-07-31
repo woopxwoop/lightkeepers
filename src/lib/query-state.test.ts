@@ -37,11 +37,17 @@ describe("readEnum", () => {
   const keys = ["dps-desc", "dps-asc"] as const;
 
   it("accepts a known value", () => {
-    assert.equal(readEnum(url("?sort=dps-asc"), "sort", keys, "dps-desc"), "dps-asc");
+    assert.equal(
+      readEnum(url("?sort=dps-asc"), "sort", keys, "dps-desc"),
+      "dps-asc",
+    );
   });
 
   it("falls back on junk or missing values", () => {
-    assert.equal(readEnum(url("?sort=nope"), "sort", keys, "dps-desc"), "dps-desc");
+    assert.equal(
+      readEnum(url("?sort=nope"), "sort", keys, "dps-desc"),
+      "dps-desc",
+    );
     assert.equal(readEnum(url(""), "sort", keys, "dps-desc"), "dps-desc");
   });
 });

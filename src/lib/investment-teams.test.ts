@@ -188,7 +188,10 @@ describe("filter helpers", () => {
 });
 
 describe("sortTeamsForDisplay", () => {
-  const owned = team(["A", "B"], [sim({ cost: 4, dps: 100, kind: "baseline" })]);
+  const owned = team(
+    ["A", "B"],
+    [sim({ cost: 4, dps: 100, kind: "baseline" })],
+  );
   const mid = team(["A", "C"], [sim({ cost: 4, dps: 200, kind: "baseline" })]);
   const high = team(["X", "Y"], [sim({ cost: 4, dps: 300, kind: "baseline" })]);
   const noCost = team(

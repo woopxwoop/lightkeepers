@@ -790,10 +790,7 @@
                   {#each rankedWeapons as w (w.key)}
                     <div class="equip-tile relative group">
                       <div class="equip-icon-wrap">
-                        <WeaponIcon
-                          weaponKey={w.key}
-                          class="equip-icon"
-                        />
+                        <WeaponIcon weaponKey={w.key} class="equip-icon" />
                       </div>
                       <WeaponTooltip weaponKey={w.key} />
                     </div>

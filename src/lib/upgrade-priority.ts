@@ -10,11 +10,7 @@
  */
 
 export type UpgradeTier =
-  | "exceptional"
-  | "high"
-  | "solid"
-  | "modest"
-  | "negligible";
+  "exceptional" | "high" | "solid" | "modest" | "negligible";
 
 export interface UpgradeImpactBand {
   /** Inclusive lower bound for this band. */

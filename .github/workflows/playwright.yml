@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
 
@@ -31,9 +31,9 @@ jobs:
       - name: Run Playwright tests
         run: pnpm exec playwright test
         env:
-          CI: 'true'
-          PLAYWRIGHT_E2E: '1'
-          PLAYWRIGHT_DEBUG_NET: '1'
+          CI: "true"
+          PLAYWRIGHT_E2E: "1"
+          PLAYWRIGHT_DEBUG_NET: "1"
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_KEY }}
           PRIVATE_SUPABASE_KEY: ${{ secrets.PRIVATE_SUPABASE_KEY }}

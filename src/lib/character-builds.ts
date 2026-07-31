@@ -303,7 +303,10 @@ export function talentPrioritySection(
   resolveSkillIcon: (kitType: string) => string | null,
 ): TalentPrioritySection | null {
   const guide = builds?.guide_priority;
-  const simRows = talentImportanceRows(builds?.talent_importance, resolveSkillIcon);
+  const simRows = talentImportanceRows(
+    builds?.talent_importance,
+    resolveSkillIcon,
+  );
   const guideSlots = (guide?.talent_priority ?? []).filter(
     (slot): slot is TalentSlot =>
       Object.hasOwn(TALENT_SLOT_LABELS, slot) &&

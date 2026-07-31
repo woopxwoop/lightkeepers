@@ -5,7 +5,11 @@
  * DPS, and owned-first sorting.
  */
 
-import type { InvestmentFile, InvestmentSim, InvestmentTeam } from "$lib/types/investment";
+import type {
+  InvestmentFile,
+  InvestmentSim,
+  InvestmentTeam,
+} from "$lib/types/investment";
 
 export type TeamDpsSort = "dps-desc" | "dps-asc";
 

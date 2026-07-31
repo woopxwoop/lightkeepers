@@ -85,7 +85,8 @@
             />
           {/if}
           {#if key && starredKeys.has(key)}
-            <span class="star" aria-label="Best team for this character">★</span>
+            <span class="star" aria-label="Best team for this character">★</span
+            >
           {/if}
         {/snippet}
         {#snippet meta()}

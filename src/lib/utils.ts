@@ -26,9 +26,13 @@ const ASSOCIATION_LABELS: Record<string, string> = {
 };
 
 /** Region / faction label from Dimbreath `association` enum. */
-export function associationLabel(association: string | null | undefined): string {
+export function associationLabel(
+  association: string | null | undefined,
+): string {
   if (!association) return "";
-  return ASSOCIATION_LABELS[association] ?? association.replace(/^ASSOC_TYPE_/, "");
+  return (
+    ASSOCIATION_LABELS[association] ?? association.replace(/^ASSOC_TYPE_/, "")
+  );
 }
 
 /**
@@ -115,10 +119,7 @@ export function formatGameDescriptionHtml(
 }
 
 /** Characters released within this many days are considered "new". */
-export {
-  NEW_CHARACTER_DAYS,
-  isNewCharacter,
-} from "$lib/is-new-character";
+export { NEW_CHARACTER_DAYS, isNewCharacter } from "$lib/is-new-character";
 
 const CDN_BASE = "https://images.lightkeepers.moe";
 const GENSIN_UI_BASE = `${CDN_BASE}/genshin/ui`;
@@ -202,10 +203,11 @@ export const TRAVELER_ELEMENTS = [
 export type TravelerElement = (typeof TRAVELER_ELEMENTS)[number];
 
 /** ``TravelerPyro`` etc. — element-split sim / guide keys. */
-export function travelerElementKey(element: string | null | undefined): string | null {
+export function travelerElementKey(
+  element: string | null | undefined,
+): string | null {
   if (!element) return null;
-  const el =
-    element.charAt(0).toUpperCase() + element.slice(1).toLowerCase();
+  const el = element.charAt(0).toUpperCase() + element.slice(1).toLowerCase();
   if (!(TRAVELER_ELEMENTS as readonly string[]).includes(el)) return null;
   return `Traveler${el}`;
 }
@@ -272,9 +274,7 @@ export function ownedGoodKeys(
 export function ownedNameIds(
   characters: { isOwned: boolean; name_id: string }[],
 ): Set<string> {
-  return new Set(
-    characters.filter((c) => c.isOwned).map((c) => c.name_id),
-  );
+  return new Set(characters.filter((c) => c.isOwned).map((c) => c.name_id));
 }
 
 /** GOOD key → display name map for humanize helpers. */
@@ -292,9 +292,7 @@ export function humanizeTeamName(
   characterByKey: Map<string, string>,
   sep = " · ",
 ): string {
-  return characterKeys
-    .map((k) => characterByKey.get(k) ?? k)
-    .join(sep);
+  return characterKeys.map((k) => characterByKey.get(k) ?? k).join(sep);
 }
 
 // ── Stat key → English ──────────────────────────────────────────────────────
@@ -384,11 +382,15 @@ const ELEMENT_ICON_STEM: Record<string, string> = {
 };
 
 /** CDN URL for an element icon (e.g. `"Anemo"` → `anemo.webp`). */
-export function elementIconUrl(element: string | null | undefined): string | null {
+export function elementIconUrl(
+  element: string | null | undefined,
+): string | null {
   if (!element) return null;
-  const stem = ELEMENT_ICON_STEM[element] ?? ELEMENT_ICON_STEM[
-    element.charAt(0).toUpperCase() + element.slice(1).toLowerCase()
-  ];
+  const stem =
+    ELEMENT_ICON_STEM[element] ??
+    ELEMENT_ICON_STEM[
+      element.charAt(0).toUpperCase() + element.slice(1).toLowerCase()
+    ];
   return stem ? genshinUiUrl(stem) : null;
 }
 

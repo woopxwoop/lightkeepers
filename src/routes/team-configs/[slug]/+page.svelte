@@ -44,9 +44,7 @@
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
   let characterNames = $derived(namesFromGoodKeyMap(goodKeyMap));
-  let teamTitle = $derived(
-    humanizeTeamName(team.characters, characterNames),
-  );
+  let teamTitle = $derived(humanizeTeamName(team.characters, characterNames));
   let simLabel = $derived.by(() => {
     $equipmentVersion;
     return sim.kind === "baseline"
@@ -102,213 +100,217 @@
   <section class="section">
     <div class="builds-grid">
       {#key $equipmentVersion}
-      {#each sim.characters as build (build.key)}
-        {@const character = characterFor(build.key)}
-        {@const weapon = weaponByKey.get(build.weapon.key)}
-        {@const set = artifactSetByKey.get(build.set.key)}
-        {@const set2 = build.set2 ? artifactSetByKey.get(build.set2) : null}
-        {@const sheet = sheetFor(build)}
-        {@const wIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
-        {@const sIcon = set ? artifactIconUrl(set.icon) : null}
-        {@const s2Icon = set2 ? artifactIconUrl(set2.icon) : null}
-        {@const kit = kitsByKey[build.key]}
-        <Surface flush class="build-card">
-          <div class="build-grid">
-            <div
-              class="build-art"
-              class:build-art--enka={iconStyle === "enka"}
-              class:build-art--coop={iconStyle === "coop"}
-              class:build-art--tcg={iconStyle === "tcg"}
-              class:build-art--portrait={iconStyle !== "enka"}
-            >
-              {#if character}
-                <div class="build-avatar">
-                  <CharacterIcon {character} />
-                  <div class="build-art-fade"></div>
+        {#each sim.characters as build (build.key)}
+          {@const character = characterFor(build.key)}
+          {@const weapon = weaponByKey.get(build.weapon.key)}
+          {@const set = artifactSetByKey.get(build.set.key)}
+          {@const set2 = build.set2 ? artifactSetByKey.get(build.set2) : null}
+          {@const sheet = sheetFor(build)}
+          {@const wIcon = weapon ? weaponIconUrl(weapon.awakenIcon) : null}
+          {@const sIcon = set ? artifactIconUrl(set.icon) : null}
+          {@const s2Icon = set2 ? artifactIconUrl(set2.icon) : null}
+          {@const kit = kitsByKey[build.key]}
+          <Surface flush class="build-card">
+            <div class="build-grid">
+              <div
+                class="build-art"
+                class:build-art--enka={iconStyle === "enka"}
+                class:build-art--coop={iconStyle === "coop"}
+                class:build-art--tcg={iconStyle === "tcg"}
+                class:build-art--portrait={iconStyle !== "enka"}
+              >
+                {#if character}
+                  <div class="build-avatar">
+                    <CharacterIcon {character} />
+                    <div class="build-art-fade"></div>
 
-                  {#if kit?.constellations?.length}
-                    <ul
-                      class="cons-rail"
-                      aria-label="Constellations C{build.cons}"
-                    >
-                      {#each kit.constellations as c (c.index)}
-                        {@const unlocked = c.index <= build.cons}
-                        <li
-                          class="cons-node"
-                          class:cons-locked={!unlocked}
-                          title="C{c.index}: {c.name}"
-                        >
-                          {#if c.icon}
-                            <img src={c.icon} alt="" loading="lazy" />
-                          {/if}
-                          {#if !unlocked}
-                            <span class="cons-lock" aria-hidden="true">
-                              <svg
-                                viewBox="0 0 24 24"
-                                width="10"
-                                height="10"
-                                fill="currentColor"
-                              >
-                                <path
-                                  d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zm-7-2a2 2 0 0 1 4 0v2h-4V6zm7 12H7v-8h10v8z"
-                                />
-                              </svg>
+                    {#if kit?.constellations?.length}
+                      <ul
+                        class="cons-rail"
+                        aria-label="Constellations C{build.cons}"
+                      >
+                        {#each kit.constellations as c (c.index)}
+                          {@const unlocked = c.index <= build.cons}
+                          <li
+                            class="cons-node"
+                            class:cons-locked={!unlocked}
+                            title="C{c.index}: {c.name}"
+                          >
+                            {#if c.icon}
+                              <img src={c.icon} alt="" loading="lazy" />
+                            {/if}
+                            {#if !unlocked}
+                              <span class="cons-lock" aria-hidden="true">
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  width="10"
+                                  height="10"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zm-7-2a2 2 0 0 1 4 0v2h-4V6zm7 12H7v-8h10v8z"
+                                  />
+                                </svg>
+                              </span>
+                            {/if}
+                          </li>
+                        {/each}
+                      </ul>
+                    {/if}
+
+                    <div class="build-art-meta">
+                      <h3 class="char-name">{character?.name ?? build.key}</h3>
+                      <p class="char-level">Lv. {build.level}</p>
+                    </div>
+                  </div>
+                {/if}
+              </div>
+
+              <div class="build-panel">
+                <div class="equip-block">
+                  <div class="equip-trigger group">
+                    {#if wIcon}
+                      <img
+                        src={wIcon}
+                        alt=""
+                        class="weapon-icon shrink-0"
+                        loading="lazy"
+                      />
+                    {/if}
+                    <div class="min-w-0 flex-1">
+                      <div class="equip-title-row">
+                        <p class="equip-name">
+                          {weapon?.name ?? build.weapon.key}
+                        </p>
+                        <span class="r-badge">R{build.weapon.refinement}</span>
+                      </div>
+                      {#if weapon}
+                        <div class="star-row" aria-label="{weapon.stars} star">
+                          {#each Array.from({ length: starCount(weapon.stars) }, (_, i) => i) as i (i)}
+                            <span class="star">★</span>
+                          {/each}
+                        </div>
+                        <div class="equip-stats">
+                          <span>ATK {Math.round(weapon.baseAtk)}</span>
+                          {#if weapon.subStat}
+                            <span>
+                              {weapon.subStat.label}
+                              {weapon.subStat.isPercent
+                                ? `${(weapon.subStat.value * 100).toFixed(1)}%`
+                                : Math.round(weapon.subStat.value)}
                             </span>
                           {/if}
-                        </li>
-                      {/each}
-                    </ul>
-                  {/if}
-
-                  <div class="build-art-meta">
-                    <h3 class="char-name">{character?.name ?? build.key}</h3>
-                    <p class="char-level">Lv. {build.level}</p>
-                  </div>
-                </div>
-              {/if}
-            </div>
-
-            <div class="build-panel">
-              <div class="equip-block">
-                <div class="equip-trigger group">
-                  {#if wIcon}
-                    <img
-                      src={wIcon}
-                      alt=""
-                      class="weapon-icon shrink-0"
-                      loading="lazy"
-                    />
-                  {/if}
-                  <div class="min-w-0 flex-1">
-                    <div class="equip-title-row">
-                      <p class="equip-name">
-                        {weapon?.name ?? build.weapon.key}
-                      </p>
-                      <span class="r-badge">R{build.weapon.refinement}</span>
+                        </div>
+                      {/if}
                     </div>
-                    {#if weapon}
-                      <div class="star-row" aria-label="{weapon.stars} star">
-                        {#each Array.from({ length: starCount(weapon.stars) }, (_, i) => i) as i (i)}
-                          <span class="star">★</span>
-                        {/each}
-                      </div>
-                      <div class="equip-stats">
-                        <span>ATK {Math.round(weapon.baseAtk)}</span>
-                        {#if weapon.subStat}
-                          <span>
-                            {weapon.subStat.label}
-                            {weapon.subStat.isPercent
-                              ? `${(weapon.subStat.value * 100).toFixed(1)}%`
-                              : Math.round(weapon.subStat.value)}
-                          </span>
-                        {/if}
-                      </div>
-                    {/if}
-                  </div>
-                  <WeaponTooltip
-                    weaponKey={build.weapon.key}
-                    refinement={build.weapon.refinement}
-                  />
-                </div>
-              </div>
-
-              {#if sheet}
-                {@const coreStats = [
-                  { key: "hp", label: "HP", value: sheet.hp },
-                  { key: "atk", label: "ATK", value: sheet.atk },
-                  { key: "def", label: "DEF", value: sheet.def },
-                  {
-                    key: "eleMas",
-                    label: "Elemental Mastery",
-                    value: sheet.eleMas,
-                  },
-                  { key: "critRate", label: "CRIT Rate", value: sheet.critRate },
-                  { key: "critDMG", label: "CRIT DMG", value: sheet.critDMG },
-                  {
-                    key: "enerRech",
-                    label: "Energy Recharge",
-                    value: sheet.enerRech,
-                  },
-                  ...dmgBonusEntries(sheet).map(([key, value]) => ({
-                    key,
-                    label: translateStatKey(key),
-                    value,
-                  })),
-                ]}
-                <div class="stat-list">
-                  {#each coreStats as row (row.key)}
-                    <StatRow
-                      label={row.label}
-                      value={formatSheetStat(row.key, row.value)}
-                      icon={statIconUrl(iconKeyFor(row.key))}
+                    <WeaponTooltip
+                      weaponKey={build.weapon.key}
+                      refinement={build.weapon.refinement}
                     />
+                  </div>
+                </div>
+
+                {#if sheet}
+                  {@const coreStats = [
+                    { key: "hp", label: "HP", value: sheet.hp },
+                    { key: "atk", label: "ATK", value: sheet.atk },
+                    { key: "def", label: "DEF", value: sheet.def },
+                    {
+                      key: "eleMas",
+                      label: "Elemental Mastery",
+                      value: sheet.eleMas,
+                    },
+                    {
+                      key: "critRate",
+                      label: "CRIT Rate",
+                      value: sheet.critRate,
+                    },
+                    { key: "critDMG", label: "CRIT DMG", value: sheet.critDMG },
+                    {
+                      key: "enerRech",
+                      label: "Energy Recharge",
+                      value: sheet.enerRech,
+                    },
+                    ...dmgBonusEntries(sheet).map(([key, value]) => ({
+                      key,
+                      label: translateStatKey(key),
+                      value,
+                    })),
+                  ]}
+                  <div class="stat-list">
+                    {#each coreStats as row (row.key)}
+                      <StatRow
+                        label={row.label}
+                        value={formatSheetStat(row.key, row.value)}
+                        icon={statIconUrl(iconKeyFor(row.key))}
+                      />
+                    {/each}
+                  </div>
+                {:else}
+                  <p class="muted">Base stats unavailable for {build.key}</p>
+                {/if}
+
+                <div class="talent-row">
+                  {#each [["auto", build.talents.auto, kit?.talents.auto], ["skill", build.talents.skill, kit?.talents.skill], ["burst", build.talents.burst, kit?.talents.burst]] as [slot, level, icon] (slot)}
+                    <span class="talent-chip">
+                      {#if typeof icon === "string" && icon}
+                        <img src={icon} alt="" class="talent-icon" />
+                      {:else}
+                        <span class="talent-fallback">
+                          {slot === "auto"
+                            ? "NA"
+                            : slot === "skill"
+                              ? "E"
+                              : "Q"}
+                        </span>
+                      {/if}
+                      <strong class="talent-level">{level}</strong>
+                    </span>
                   {/each}
                 </div>
-              {:else}
-                <p class="muted">Base stats unavailable for {build.key}</p>
-              {/if}
 
-              <div class="talent-row">
-                {#each [
-                  ["auto", build.talents.auto, kit?.talents.auto],
-                  ["skill", build.talents.skill, kit?.talents.skill],
-                  ["burst", build.talents.burst, kit?.talents.burst],
-                ] as [slot, level, icon] (slot)}
-                  <span class="talent-chip">
-                    {#if typeof icon === "string" && icon}
-                      <img src={icon} alt="" class="talent-icon" />
-                    {:else}
-                      <span class="talent-fallback">
-                        {slot === "auto" ? "NA" : slot === "skill" ? "E" : "Q"}
-                      </span>
-                    {/if}
-                    <strong class="talent-level">{level}</strong>
-                  </span>
-                {/each}
-              </div>
-
-              <div class="set-list">
-                <div class="set-row group">
-                  {#if sIcon}
-                    <img
-                      src={sIcon}
-                      alt=""
-                      class="set-icon shrink-0"
-                      loading="lazy"
-                    />
-                  {/if}
-                  <p class="set-name">{set?.name ?? build.set.key}</p>
-                  <span class="set-badge shrink-0">{build.set.count}</span>
-                  <ArtifactTooltip
-                    setKey={build.set.key}
-                    pieceCount={build.set.count}
-                  />
-                </div>
-                {#if build.set2}
+                <div class="set-list">
                   <div class="set-row group">
-                    {#if s2Icon}
+                    {#if sIcon}
                       <img
-                        src={s2Icon}
+                        src={sIcon}
                         alt=""
                         class="set-icon shrink-0"
                         loading="lazy"
                       />
                     {/if}
-                    <p class="set-name">{set2?.name ?? build.set2}</p>
-                    <span class="set-badge shrink-0"
-                      >{build.set2_count ?? 2}</span
-                    >
+                    <p class="set-name">{set?.name ?? build.set.key}</p>
+                    <span class="set-badge shrink-0">{build.set.count}</span>
                     <ArtifactTooltip
-                      setKey={build.set2}
-                      pieceCount={build.set2_count ?? 2}
+                      setKey={build.set.key}
+                      pieceCount={build.set.count}
                     />
                   </div>
-                {/if}
+                  {#if build.set2}
+                    <div class="set-row group">
+                      {#if s2Icon}
+                        <img
+                          src={s2Icon}
+                          alt=""
+                          class="set-icon shrink-0"
+                          loading="lazy"
+                        />
+                      {/if}
+                      <p class="set-name">{set2?.name ?? build.set2}</p>
+                      <span class="set-badge shrink-0"
+                        >{build.set2_count ?? 2}</span
+                      >
+                      <ArtifactTooltip
+                        setKey={build.set2}
+                        pieceCount={build.set2_count ?? 2}
+                      />
+                    </div>
+                  {/if}
+                </div>
               </div>
             </div>
-          </div>
-        </Surface>
-      {/each}
+          </Surface>
+        {/each}
       {/key}
     </div>
     <p class="footnote">

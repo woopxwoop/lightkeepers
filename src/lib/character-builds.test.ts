@@ -87,9 +87,30 @@ describe("rankWeaponsByRarityAndTeams", () => {
 describe("rankSigWeaponsByGain", () => {
   it("sorts and classifies by the stronger mean/median gain", () => {
     const ranked = rankSigWeaponsByGain([
-      { key: "B", teams: 1, mean_pct_gain: 10, median_pct_gain: 10, min_pct_gain: 10, max_pct_gain: 10 },
-      { key: "A", teams: 1, mean_pct_gain: 10, median_pct_gain: 10, min_pct_gain: 10, max_pct_gain: 10 },
-      { key: "C", teams: 1, mean_pct_gain: 20, median_pct_gain: 8, min_pct_gain: 8, max_pct_gain: 20 },
+      {
+        key: "B",
+        teams: 1,
+        mean_pct_gain: 10,
+        median_pct_gain: 10,
+        min_pct_gain: 10,
+        max_pct_gain: 10,
+      },
+      {
+        key: "A",
+        teams: 1,
+        mean_pct_gain: 10,
+        median_pct_gain: 10,
+        min_pct_gain: 10,
+        max_pct_gain: 10,
+      },
+      {
+        key: "C",
+        teams: 1,
+        mean_pct_gain: 20,
+        median_pct_gain: 8,
+        min_pct_gain: 8,
+        max_pct_gain: 20,
+      },
     ]);
     assert.deepEqual(
       ranked.map((w) => [w.key, w.priority]),
@@ -292,7 +313,11 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
 
 describe("guide vs sim section selection", () => {
   const emptyShell = {
-    main_stats: { sands: [], goblet: [], circlet: [] } as CharacterIndex["main_stats"],
+    main_stats: {
+      sands: [],
+      goblet: [],
+      circlet: [],
+    } as CharacterIndex["main_stats"],
     substat_rolls_liquid: {
       teams: 0,
       configs: 0,
@@ -426,7 +451,10 @@ describe("guide vs sim section selection", () => {
       }),
     );
     assert.equal(section?.source, "guide");
-    assert.equal(section?.source === "guide" ? section.simMissing : null, false);
+    assert.equal(
+      section?.source === "guide" ? section.simMissing : null,
+      false,
+    );
   });
 
   it("keeps measured five-band rows when sim data exists and override is off", () => {

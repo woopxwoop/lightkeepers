@@ -23,5 +23,5 @@
 </script>
 
 {#if src}
-  <img src={src} alt={resolvedAlt} class={className} loading="lazy" />
+  <img {src} alt={resolvedAlt} class={className} loading="lazy" />
 {/if}

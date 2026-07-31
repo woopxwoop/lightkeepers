@@ -38,8 +38,7 @@
   let rosterError = $state("");
   let savedSnapshot = $state("");
   let hasUnsavedChanges = $derived(
-    synced &&
-      rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
+    synced && rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
   );
   let savedVisible = $derived(showSaved && !hasUnsavedChanges);
 
@@ -203,10 +202,17 @@
     {#if hasUnsavedChanges || isSaving || savedVisible || rosterError}
       <div class="save-bar">
         <div class="save-status">
-          <span class="save-dot" class:saving={isSaving} class:saved={savedVisible}
+          <span
+            class="save-dot"
+            class:saving={isSaving}
+            class:saved={savedVisible}
           ></span>
           <span class="save-label">
-            {isSaving ? "Saving..." : savedVisible ? "Saved" : "Unsaved changes"}
+            {isSaving
+              ? "Saving..."
+              : savedVisible
+                ? "Saved"
+                : "Unsaved changes"}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>

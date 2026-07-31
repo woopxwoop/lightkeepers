@@ -71,7 +71,8 @@ export type ThemeColorKey = (typeof THEME_COLOR_KEYS)[number];
  * Handles 3-, 4-, 6-, and 8-digit formats. Drops alpha channels (4th/8th pair).
  * Returns the input unchanged if it doesn't look like hex.
  */
-const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+const HEX_COLOR_RE =
+  /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
 export function normalizeHexColor(hex: string): string {
   const match = HEX_COLOR_RE.exec(hex);
@@ -80,7 +81,10 @@ export function normalizeHexColor(hex: string): string {
   // Expand shorthand: "abc" → "aabbcc", "abcd" → "aabbcc" (drop alpha)
   if (digits.length === 3 || digits.length === 4) {
     const rgb = digits.slice(0, 3);
-    return `#${rgb.split("").map((c) => c + c).join("")}`;
+    return `#${rgb
+      .split("")
+      .map((c) => c + c)
+      .join("")}`;
   }
   // Drop alpha channel from 8-digit hex, pad short 6-digit
   return `#${digits.slice(0, 6).padEnd(6, "0")}`;
@@ -135,12 +139,14 @@ export function initDisplayPreferences(): void {
       themeColors:
         typeof parsed.themeColors === "object" && parsed.themeColors !== null
           ? (Object.fromEntries(
-              Object.entries(parsed.themeColors).filter(
-                ([k, v]) =>
-                  (THEME_COLOR_KEYS as readonly string[]).includes(k) &&
-                  typeof v === "string" &&
-                  HEX_COLOR_RE.test(v),
-              ).map(([k, v]) => [k, normalizeHexColor(v as string)]),
+              Object.entries(parsed.themeColors)
+                .filter(
+                  ([k, v]) =>
+                    (THEME_COLOR_KEYS as readonly string[]).includes(k) &&
+                    typeof v === "string" &&
+                    HEX_COLOR_RE.test(v),
+                )
+                .map(([k, v]) => [k, normalizeHexColor(v as string)]),
             ) as Partial<Record<ThemeColorKey, string>>)
           : defaultDisplayPreferences.themeColors,
     });
@@ -286,7 +292,8 @@ const emptyStygianEnemies: StygianEnemies = {
 };
 
 export const abyssEnemiesBoard = writable<AbyssEnemies>(emptyAbyssEnemies);
-export const stygianEnemiesBoard = writable<StygianEnemies>(emptyStygianEnemies);
+export const stygianEnemiesBoard =
+  writable<StygianEnemies>(emptyStygianEnemies);
 export const stygianScheduleBoard = writable<StygianSchedule>(null);
 
 /** True after a successful /api/static boards fetch (or empty payload). */
@@ -527,9 +534,7 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
  * Load owned teams only when needed (Abyss / Stygian / Pulls).
  * No-ops if already loaded; coalesces concurrent callers.
  */
-export async function ensureTeamsOwned(
-  owned: CharacterOwned[],
-): Promise<void> {
+export async function ensureTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   if (get(teamsOwnedLoaded)) return;
   if (teamsInFlight) return teamsInFlight;
   const pending = writeTeamsOwned(owned);

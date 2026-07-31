@@ -14,10 +14,7 @@
     flush?: boolean;
     class?: string;
     children?: Snippet;
-  } & Omit<
-    HTMLAttributes<HTMLDivElement>,
-    "children" | "class"
-  > = $props();
+  } & Omit<HTMLAttributes<HTMLDivElement>, "children" | "class"> = $props();
 </script>
 
 <div

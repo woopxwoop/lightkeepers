@@ -19,9 +19,7 @@
     /** Keys available for suggestions (e.g. GOOD keys). */
     options?: string[];
     getLabel?: (key: string) => string;
-    getCharacter?: (
-      key: string,
-    ) => CharacterOwned | Character | undefined;
+    getCharacter?: (key: string) => CharacterOwned | Character | undefined;
     placeholder?: string;
     /** Trailing count text, e.g. "12 of 35". */
     countLabel?: string;
@@ -155,11 +153,7 @@
 </script>
 
 <div class="tag-search-root {className}">
-  <div
-    class="tag-search"
-    class:tag-search-focus={focused}
-    bind:this={fieldEl}
-  >
+  <div class="tag-search" class:tag-search-focus={focused} bind:this={fieldEl}>
     {#if leading}
       {@render leading()}
     {/if}

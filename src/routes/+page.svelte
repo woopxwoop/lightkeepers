@@ -88,7 +88,9 @@
       <a
         href={feature.href}
         class="feature-card group"
-        data-sveltekit-preload-data={"preload" in feature ? feature.preload : undefined}
+        data-sveltekit-preload-data={"preload" in feature
+          ? feature.preload
+          : undefined}
       >
         {#if feature.banner}
           <div

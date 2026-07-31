@@ -30,9 +30,9 @@ for (const route of routes) {
     expect(response?.status()).toBeLessThan(500);
 
     if (route.kind === "heading") {
-      await expect(
-        page.getByRole("heading", { name: route.name }),
-      ).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByRole("heading", { name: route.name })).toBeVisible(
+        { timeout: 15_000 },
+      );
     } else {
       await expect(page.getByRole("navigation").first()).toBeVisible();
     }

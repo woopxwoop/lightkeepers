@@ -35,10 +35,7 @@ export async function requireJsonObject(
 }
 
 /** Require a finite integer, using the caller's existing 400 response text. */
-export function requireFiniteInteger(
-  value: unknown,
-  message: string,
-): number {
+export function requireFiniteInteger(value: unknown, message: string): number {
   if (
     typeof value !== "number" ||
     !Number.isFinite(value) ||

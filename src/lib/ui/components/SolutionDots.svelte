@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    handleKeyboardClick,
-    handlePointerAction,
-  } from "$lib/ui/pointer";
+  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
 
   let {
     count,
@@ -22,16 +19,13 @@
     {#each Array.from({ length: count }, (_, i) => i) as i (i)}
       <button
         type="button"
-        onpointerdown={(event) =>
-          handlePointerAction(event, () => (index = i))}
+        onpointerdown={(event) => handlePointerAction(event, () => (index = i))}
         onclick={(event) => handleKeyboardClick(event, () => (index = i))}
         aria-label="{ariaLabelPrefix} {i + 1}"
         aria-current={index === i ? "true" : undefined}
         class="hit w-6 h-6 flex items-center justify-center"
       >
-        <span
-          class="dot rounded-full block"
-          class:dot-active={index === i}
+        <span class="dot rounded-full block" class:dot-active={index === i}
         ></span>
       </button>
     {/each}

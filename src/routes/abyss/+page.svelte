@@ -36,10 +36,7 @@
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
-  import {
-    handleKeyboardClick,
-    handlePointerAction,
-  } from "$lib/ui/pointer";
+  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -85,12 +82,7 @@
       SOLUTIONS_COUNT,
     ].join("\0");
     return memoSolutions(key, () =>
-      solveAbyssWithFallback(
-        owned,
-        all,
-        ownedNameIds(chars),
-        SOLUTIONS_COUNT,
-      ),
+      solveAbyssWithFallback(owned, all, ownedNameIds(chars), SOLUTIONS_COUNT),
     );
   });
 
@@ -125,9 +117,7 @@
         ? { text: abyssEnemies.buffName, title: "Abyssal Moon blessing" }
         : null,
       updatedLabel ? { text: `Updated ${updatedLabel}` } : null,
-    ].filter(
-      (part): part is { text: string; title?: string } => part !== null,
-    ),
+    ].filter((part): part is { text: string; title?: string } => part !== null),
   );
 
   function slotRate(team: AbyssTeam, slot: Slot): number {
@@ -281,7 +271,9 @@
   {:else if $staticBoardsError && $allTeamsAbyss.length === 0}
     <EmptyState message="Could not load Abyss teams right now.">
       {#snippet action()}
-        <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+        <Button variant="secondary" onclick={retryStaticBoards}
+          >Try again</Button
+        >
       {/snippet}
     </EmptyState>
   {:else}
@@ -290,26 +282,27 @@
         <div class="board-head-left">
           <span class="eyebrow board-eyebrow">
             Solution {safeIndex + 1}
-            <span class="board-eyebrow-total">of {displaySolutions.length}</span>
+            <span class="board-eyebrow-total">of {displaySolutions.length}</span
+            >
           </span>
         </div>
 
         <div class="board-actions">
-            <button
-              type="button"
-              class="enemy-toggle"
-              aria-expanded={enemiesExpanded}
-              aria-controls="abyss-enemies-top abyss-enemies-bottom"
-              aria-label={enemiesExpanded ? "Hide enemies" : "Show enemies"}
-              onpointerdown={(event) =>
-                handlePointerAction(event, () => {
-                  enemiesExpanded = !enemiesExpanded;
-                })}
-              onclick={(event) =>
-                handleKeyboardClick(event, () => {
-                  enemiesExpanded = !enemiesExpanded;
-                })}
-            >
+          <button
+            type="button"
+            class="enemy-toggle"
+            aria-expanded={enemiesExpanded}
+            aria-controls="abyss-enemies-top abyss-enemies-bottom"
+            aria-label={enemiesExpanded ? "Hide enemies" : "Show enemies"}
+            onpointerdown={(event) =>
+              handlePointerAction(event, () => {
+                enemiesExpanded = !enemiesExpanded;
+              })}
+            onclick={(event) =>
+              handleKeyboardClick(event, () => {
+                enemiesExpanded = !enemiesExpanded;
+              })}
+          >
             <span>Enemies</span>
             <IconChevronDown size={14} strokeWidth={2.25} />
           </button>

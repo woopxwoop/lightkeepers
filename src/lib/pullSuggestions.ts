@@ -92,8 +92,7 @@ export function computePullSuggestions(
     const unlockedUsage = topNearMiss.avg_usage_rate ?? 0;
     if (unlockedUsage < MIN_PULL_TEAM_USAGE) continue;
 
-    const score =
-      Math.pow(unlockedUsage / 100, 0.3) * Math.log1p(fours.length);
+    const score = Math.pow(unlockedUsage / 100, 0.3) * Math.log1p(fours.length);
 
     const topTeams = ranked.slice(0, TOP_TEAMS_SHOWN).map(nearMissToTeam);
 
@@ -158,8 +157,7 @@ export function computePairSuggestions(
 
     if (avgUsage < MIN_PULL_TEAM_USAGE) continue;
 
-    const score =
-      avgUsage * Math.pow(Math.max(pmi, PMI_SCORE_FLOOR), 0.3);
+    const score = avgUsage * Math.pow(Math.max(pmi, PMI_SCORE_FLOOR), 0.3);
 
     const topTeams = ranked.slice(0, TOP_TEAMS_SHOWN).map(nearMissToTeam);
 
@@ -177,7 +175,5 @@ export function computePairSuggestions(
     });
   }
 
-  return suggestions
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxSuggestions);
+  return suggestions.sort((a, b) => b.score - a.score).slice(0, maxSuggestions);
 }

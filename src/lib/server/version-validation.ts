@@ -11,7 +11,10 @@ import { serverDb } from "$lib/server/supabaseServer";
 
 const TTL_15_MIN = 15 * 60 * 1000;
 
-type VersionRows = { data: { version_number: number }[] | null; error: unknown };
+type VersionRows = {
+  data: { version_number: number }[] | null;
+  error: unknown;
+};
 
 /**
  * One cached version domain (a `*_versions` table).

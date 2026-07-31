@@ -1,8 +1,5 @@
 <script lang="ts" generics="T extends string">
-  import {
-    handleKeyboardClick,
-    handlePointerAction,
-  } from "$lib/ui/pointer";
+  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
 
   type Option = { value: T; label: string };
 
@@ -58,9 +55,9 @@
     }
     event.preventDefault();
     selectIndex(next);
-    const buttons = (event.currentTarget as HTMLElement)
-      .parentElement
-      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    const buttons = (
+      event.currentTarget as HTMLElement
+    ).parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
     buttons?.[next]?.focus();
   }
 </script>

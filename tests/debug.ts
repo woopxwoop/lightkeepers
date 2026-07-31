@@ -3,7 +3,9 @@ import type { Page } from "@playwright/test";
 /** Verbose browser/network logs for CI diagnosis (PLAYWRIGHT_DEBUG_NET=1 or CI). */
 export function attachBrowserDebug(page: Page): void {
   const enabled =
-    process.env.PLAYWRIGHT_DEBUG_NET === "1" || process.env.CI === "true" || process.env.CI === "1";
+    process.env.PLAYWRIGHT_DEBUG_NET === "1" ||
+    process.env.CI === "true" ||
+    process.env.CI === "1";
   if (!enabled) return;
 
   page.on("console", (msg) => {

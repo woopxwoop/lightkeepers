@@ -1,0 +1,20 @@
+# Package managers
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build / tooling
+node_modules
+.svelte-kit
+build
+.output
+.vercel
+.wrangler
+cache
+test-results
+playwright-report
+blob-report
+
+# Generated
+src/lib/types/database.types.ts
+src/lib/types/good/materialKey.ts

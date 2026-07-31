@@ -97,9 +97,7 @@ export function rosterFingerprint(
     .join(",");
 }
 
-export function teamsFingerprint(
-  teams: { team_key: string | null }[],
-): string {
+export function teamsFingerprint(teams: { team_key: string | null }[]): string {
   if (teams.length === 0) return "0";
   const keys = teams.map((t) => t.team_key ?? "").sort();
   return `${keys.length}:${keys[0]}:${keys[keys.length - 1]}:${hashString(keys.join("|"))}`;

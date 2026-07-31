@@ -21,8 +21,26 @@ describe("creamCutoff", () => {
   it("cuts after the largest relative gap in the search window", () => {
     // ranks 1..20 — big cliff after 10 (50 → 20)
     const scores = [
-      90, 88, 85, 82, 80, 78, 75, 72, 70, 50, // 1..10
-      20, 19, 18, 17, 16, 15, 14, 13, 12, 11, // 11..20
+      90,
+      88,
+      85,
+      82,
+      80,
+      78,
+      75,
+      72,
+      70,
+      50, // 1..10
+      20,
+      19,
+      18,
+      17,
+      16,
+      15,
+      14,
+      13,
+      12,
+      11, // 11..20
     ];
     assert.equal(creamCutoff(scores), 10);
   });
@@ -30,9 +48,23 @@ describe("creamCutoff", () => {
   it("prefers the larger relative gap when absolute gaps compete", () => {
     // After 8: 40→30 (rel 0.25). After 12: 20→5 (rel 0.75) — pick 12.
     const scores = [
-      50, 48, 46, 44, 42, 41, 40.5, 40, // 1..8
-      30, 28, 25, 20, // 9..12
-      5, 4, 3, 2, 1, // 13..
+      50,
+      48,
+      46,
+      44,
+      42,
+      41,
+      40.5,
+      40, // 1..8
+      30,
+      28,
+      25,
+      20, // 9..12
+      5,
+      4,
+      3,
+      2,
+      1, // 13..
     ];
     assert.equal(creamCutoff(scores), 12);
   });

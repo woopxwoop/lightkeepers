@@ -18,10 +18,7 @@
  * live on the CDN.
  */
 
-import type {
-  CharacterKit,
-  CharacterKitIndex,
-} from "$lib/types/character-kit";
+import type { CharacterKit, CharacterKitIndex } from "$lib/types/character-kit";
 import type { EnemyIndex } from "$lib/types/enemy";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 

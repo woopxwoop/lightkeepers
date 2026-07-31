@@ -1,15 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  captureRoster,
-  rosterDiffersFromSnapshot,
-} from "./roster-snapshot.ts";
+import { captureRoster, rosterDiffersFromSnapshot } from "./roster-snapshot.ts";
 import type { CharacterOwned } from "./definitions.ts";
 
-function char(
-  name_id: string,
-  isOwned: boolean,
-): CharacterOwned {
+function char(name_id: string, isOwned: boolean): CharacterOwned {
   return {
     name_id,
     name: name_id,
@@ -35,9 +29,6 @@ describe("roster snapshot", () => {
     const roster = [char("a", true)];
     const saved = JSON.stringify(roster);
     assert.equal(rosterDiffersFromSnapshot(roster, saved), false);
-    assert.equal(
-      rosterDiffersFromSnapshot([char("a", false)], saved),
-      true,
-    );
+    assert.equal(rosterDiffersFromSnapshot([char("a", false)], saved), true);
   });
 });
