@@ -351,23 +351,70 @@
   {/if}
 {/snippet}
 
-{#snippet consRow(
-  cons: number,
-  priority: UpgradeTier,
-  priorityLabel: string,
-  mean?: number,
-  median?: number,
-  min?: number,
-  max?: number,
-  teams?: number,
-)}
-  {@const constellation = kit.constellations.find((c) => c.index === cons)}
+{#snippet talentRow(row: {
+  name: string;
+  icon: string | null;
+  rank?: number;
+  priority?: UpgradeTier;
+  kind?: "talent" | "level";
+  priorityLabel?: string;
+  mean?: number;
+  median?: number;
+  min?: number;
+  max?: number;
+  teams?: number;
+})}
+  <li class="talent-priority-row" data-priority={row.priority}>
+    {#if row.rank != null}
+      <span class="talent-priority-rank" style="color: {elColor};"
+        >{row.rank}</span
+      >
+    {/if}
+    {#if row.icon}
+      <img
+        src={row.icon}
+        alt=""
+        class="kit-icon talent-priority-icon shrink-0"
+        loading="lazy"
+      />
+    {/if}
+    <div class="talent-priority-copy">
+      <div class="talent-priority-name">{row.name}</div>
+      {#if row.kind != null && row.priority != null && row.priorityLabel != null}
+        <UpgradeImpactPopover
+          label={row.priorityLabel}
+          tier={row.priority}
+          kind={row.kind}
+          mean={row.mean}
+          median={row.median}
+          min={row.min}
+          max={row.max}
+          teams={row.teams}
+        />
+      {/if}
+    </div>
+  </li>
+{/snippet}
+
+{#snippet consRow(row: {
+  cons: number;
+  priority: UpgradeTier;
+  priorityLabel: string;
+  mean?: number;
+  median?: number;
+  min?: number;
+  max?: number;
+  teams?: number;
+})}
+  {@const constellation = kit.constellations.find((c) => c.index === row.cons)}
   {@const icon = constellation
     ? (iconUrl(constellation.icon, "talent") ??
       getUiAssetUrl(constellation.icon))
     : null}
-  <li class="talent-priority-row" data-priority={priority}>
-    <span class="talent-priority-rank" style="color: {elColor};">C{cons}</span>
+  <li class="talent-priority-row" data-priority={row.priority}>
+    <span class="talent-priority-rank" style="color: {elColor};"
+      >C{row.cons}</span
+    >
     {#if icon}
       <img
         src={icon}
@@ -378,49 +425,53 @@
     {/if}
     <div class="talent-priority-copy">
       <div class="talent-priority-name">
-        {constellation?.name ?? `C${cons}`}
+        {constellation?.name ?? `C${row.cons}`}
       </div>
       <UpgradeImpactPopover
-        label={priorityLabel}
-        tier={priority}
+        label={row.priorityLabel}
+        tier={row.priority}
         kind="constellation"
-        {mean}
-        {median}
-        {min}
-        {max}
-        {teams}
+        mean={row.mean}
+        median={row.median}
+        min={row.min}
+        max={row.max}
+        teams={row.teams}
       />
     </div>
   </li>
 {/snippet}
 
-{#snippet sigRow(
-  weaponKey: string,
-  priority: UpgradeTier,
-  priorityLabel: string,
-  mean?: number,
-  median?: number,
-  min?: number,
-  max?: number,
-  teams?: number,
-)}
-  <li class="talent-priority-row" data-priority={priority}>
+{#snippet sigRow(row: {
+  key: string;
+  priority: UpgradeTier;
+  priorityLabel: string;
+  mean?: number;
+  median?: number;
+  min?: number;
+  max?: number;
+  teams?: number;
+})}
+  <li class="talent-priority-row" data-priority={row.priority}>
     <span class="kit-icon talent-priority-icon shrink-0">
-      <WeaponIcon {weaponKey} alt="" class="h-full w-full object-contain" />
+      <WeaponIcon
+        weaponKey={row.key}
+        alt=""
+        class="h-full w-full object-contain"
+      />
     </span>
     <div class="talent-priority-copy">
       <div class="talent-priority-name">
-        <WeaponName {weaponKey} />
+        <WeaponName weaponKey={row.key} />
       </div>
       <UpgradeImpactPopover
-        label={priorityLabel}
-        tier={priority}
+        label={row.priorityLabel}
+        tier={row.priority}
         kind="signature"
-        {mean}
-        {median}
-        {min}
-        {max}
-        {teams}
+        mean={row.mean}
+        median={row.median}
+        min={row.min}
+        max={row.max}
+        teams={row.teams}
       />
     </div>
   </li>
@@ -917,60 +968,27 @@
                       <ul class="talent-priority-list">
                         {#if talentSection.source === "sim"}
                           {#each talentSection.rows as row, i}
-                            <li
-                              class="talent-priority-row"
-                              data-priority={row.priority}
-                            >
-                              <span
-                                class="talent-priority-rank"
-                                style="color: {elColor};">{i + 1}</span
-                              >
-                              {#if row.icon}
-                                <img
-                                  src={row.icon}
-                                  alt=""
-                                  class="kit-icon talent-priority-icon shrink-0"
-                                  loading="lazy"
-                                />
-                              {/if}
-                              <div class="talent-priority-copy">
-                                <div class="talent-priority-name">
-                                  {row.label}
-                                </div>
-                                <UpgradeImpactPopover
-                                  label={row.priorityLabel}
-                                  tier={row.priority}
-                                  kind="talent"
-                                  mean={row.mean}
-                                  median={row.median}
-                                  min={row.min}
-                                  max={row.max}
-                                  teams={row.teams}
-                                />
-                              </div>
-                            </li>
+                            {@render talentRow({
+                              name: row.label,
+                              icon: row.icon,
+                              rank: i + 1,
+                              priority: row.priority,
+                              kind: "talent",
+                              priorityLabel: row.priorityLabel,
+                              mean: row.mean,
+                              median: row.median,
+                              min: row.min,
+                              max: row.max,
+                              teams: row.teams,
+                            })}
                           {/each}
                         {:else}
                           {#each talentSection.rows as row, i}
-                            <li class="talent-priority-row">
-                              <span
-                                class="talent-priority-rank"
-                                style="color: {elColor};">{i + 1}</span
-                              >
-                              {#if row.icon}
-                                <img
-                                  src={row.icon}
-                                  alt=""
-                                  class="kit-icon talent-priority-icon shrink-0"
-                                  loading="lazy"
-                                />
-                              {/if}
-                              <div class="talent-priority-copy">
-                                <div class="talent-priority-name">
-                                  {row.label}
-                                </div>
-                              </div>
-                            </li>
+                            {@render talentRow({
+                              name: row.label,
+                              icon: row.icon,
+                              rank: i + 1,
+                            })}
                           {/each}
                         {/if}
                       </ul>
@@ -987,54 +1005,26 @@
                       </h2>
                       <ul class="talent-priority-list">
                         {#if levelSection.source === "sim"}
-                          <li
-                            class="talent-priority-row"
-                            data-priority={levelSection.row.priority}
-                          >
-                            {#if levelIcon}
-                              <img
-                                src={levelIcon}
-                                alt=""
-                                class="kit-icon talent-priority-icon shrink-0"
-                                loading="lazy"
-                              />
-                            {/if}
-                            <div class="talent-priority-copy">
-                              <div class="talent-priority-name">Level 90</div>
-                              <UpgradeImpactPopover
-                                label={levelSection.row.priorityLabel}
-                                tier={levelSection.row.priority}
-                                kind="level"
-                                mean={levelSection.row.mean}
-                                median={levelSection.row.median}
-                                min={levelSection.row.min}
-                                max={levelSection.row.max}
-                                teams={levelSection.row.teams}
-                              />
-                            </div>
-                          </li>
+                          {@render talentRow({
+                            name: "Level 90",
+                            icon: levelIcon,
+                            priority: levelSection.row.priority,
+                            kind: "level",
+                            priorityLabel: levelSection.row.priorityLabel,
+                            mean: levelSection.row.mean,
+                            median: levelSection.row.median,
+                            min: levelSection.row.min,
+                            max: levelSection.row.max,
+                            teams: levelSection.row.teams,
+                          })}
                         {:else}
-                          <li
-                            class="talent-priority-row"
-                            data-priority={levelSection.priority}
-                          >
-                            {#if levelIcon}
-                              <img
-                                src={levelIcon}
-                                alt=""
-                                class="kit-icon talent-priority-icon shrink-0"
-                                loading="lazy"
-                              />
-                            {/if}
-                            <div class="talent-priority-copy">
-                              <div class="talent-priority-name">Level 90</div>
-                              <UpgradeImpactPopover
-                                label={levelSection.priorityLabel}
-                                tier={levelSection.priority}
-                                kind="level"
-                              />
-                            </div>
-                          </li>
+                          {@render talentRow({
+                            name: "Level 90",
+                            icon: levelIcon,
+                            priority: levelSection.priority,
+                            kind: "level",
+                            priorityLabel: levelSection.priorityLabel,
+                          })}
                         {/if}
                       </ul>
                     </section>
@@ -1053,24 +1043,20 @@
                       <ul class="talent-priority-list">
                         {#if consSection.source === "sim"}
                           {#each consSection.rows as row}
-                            {@render consRow(
-                              row.cons,
-                              row.priority,
-                              row.priorityLabel,
-                              row.mean_pct_gain,
-                              row.median_pct_gain,
-                              row.min_pct_gain,
-                              row.max_pct_gain,
-                              row.teams,
-                            )}
+                            {@render consRow({
+                              cons: row.cons,
+                              priority: row.priority,
+                              priorityLabel: row.priorityLabel,
+                              mean: row.mean_pct_gain,
+                              median: row.median_pct_gain,
+                              min: row.min_pct_gain,
+                              max: row.max_pct_gain,
+                              teams: row.teams,
+                            })}
                           {/each}
                         {:else}
                           {#each consSection.rows as row}
-                            {@render consRow(
-                              row.cons,
-                              row.priority,
-                              row.priorityLabel,
-                            )}
+                            {@render consRow(row)}
                           {/each}
                         {/if}
                       </ul>
@@ -1088,24 +1074,20 @@
                       <ul class="talent-priority-list">
                         {#if sigSection.source === "sim"}
                           {#each sigSection.rows as row}
-                            {@render sigRow(
-                              row.key,
-                              row.priority,
-                              row.priorityLabel,
-                              row.mean_pct_gain,
-                              row.median_pct_gain,
-                              row.min_pct_gain,
-                              row.max_pct_gain,
-                              row.teams,
-                            )}
+                            {@render sigRow({
+                              key: row.key,
+                              priority: row.priority,
+                              priorityLabel: row.priorityLabel,
+                              mean: row.mean_pct_gain,
+                              median: row.median_pct_gain,
+                              min: row.min_pct_gain,
+                              max: row.max_pct_gain,
+                              teams: row.teams,
+                            })}
                           {/each}
                         {:else}
                           {#each sigSection.rows as row}
-                            {@render sigRow(
-                              row.key,
-                              row.priority,
-                              row.priorityLabel,
-                            )}
+                            {@render sigRow(row)}
                           {/each}
                         {/if}
                       </ul>
