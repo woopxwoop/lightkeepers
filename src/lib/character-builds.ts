@@ -304,7 +304,11 @@ export function talentPrioritySection(
 ): TalentPrioritySection | null {
   const guide = builds?.guide_priority;
   const simRows = talentImportanceRows(builds?.talent_importance, resolveSkillIcon);
-  const guideSlots = guide?.talent_priority ?? [];
+  const guideSlots = (guide?.talent_priority ?? []).filter(
+    (slot): slot is TalentSlot =>
+      Object.hasOwn(TALENT_SLOT_LABELS, slot) &&
+      Object.hasOwn(TALENT_SLOT_TO_KIT, slot),
+  );
   const preferGuide = useGuideSection(
     guide,
     guideSlots.length > 0,

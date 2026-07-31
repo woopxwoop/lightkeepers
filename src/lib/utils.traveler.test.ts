@@ -29,6 +29,21 @@ describe("travelerElementKey / simCharacterKey", () => {
       "TravelerPyro",
     );
     assert.equal(
+      simCharacterKey({
+        name: "Traveler",
+        is_traveler: true,
+      }),
+      "TravelerPyro",
+    );
+    assert.equal(
+      simCharacterKey({
+        name: "Traveler",
+        element: "Cryo",
+        is_traveler: true,
+      }),
+      "TravelerPyro",
+    );
+    assert.equal(
       simCharacterKey({ name: "Hu Tao", is_traveler: false }),
       "HuTao",
     );

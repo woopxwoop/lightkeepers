@@ -13,21 +13,29 @@
     median,
     min,
     max,
-    teams,
+    teams = 0,
     align = "start",
   }: {
     label: string;
     tier: UpgradeTier;
     kind: "talent" | "level" | "constellation" | "signature";
-    mean: number;
-    median: number;
-    min: number;
-    max: number;
-    teams: number;
+    /** Present only for measured rows; omit for guide-authored labels. */
+    mean?: number;
+    median?: number;
+    min?: number;
+    max?: number;
+    /** Team count for measured rows; defaults to 0 for display. */
+    teams?: number;
     align?: "start" | "center" | "end";
   } = $props();
 
-  const primary = $derived(primaryUpgradePct(mean, median));
+  const measured = $derived(
+    mean != null && median != null && min != null && max != null,
+  );
+
+  const primary = $derived(
+    mean != null && median != null ? primaryUpgradePct(mean, median) : 0,
+  );
 
   const summary = $derived(
     kind === "level"
@@ -54,9 +62,7 @@
 </script>
 
 <span class="impact impact-{tier}">
-  <!-- Guide-authored rows can carry a verdict with no simulated teams behind
-  it; showing 0% across 0 teams would read as a measurement. -->
-  {#if teams > 0}
+  {#if measured && mean != null && median != null && min != null && max != null}
     <span class="impact-label">{label} ·</span>
     <InfoPopover label={percent(primary)} {align}>
       <span class="impact-detail">
