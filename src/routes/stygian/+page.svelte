@@ -34,6 +34,7 @@
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
+  import UsageIndexPopover from "$lib/ui/components/UsageIndexPopover.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import {
     handleKeyboardClick,
@@ -202,7 +203,7 @@
   {@const teams = metaByField[slot]}
 
   <section class="meta-column">
-    <h3 class="meta-field-heading">
+    <h3 class="eyebrow meta-field-heading">
       {enemies?.[slot]?.enemy_name ?? stygianSlotLabel[slot]}
     </h3>
 
@@ -260,7 +261,7 @@
     <Surface flush class="solution-board">
       <div class="board-head">
         <div class="board-head-left">
-          <span class="board-eyebrow">
+          <span class="eyebrow board-eyebrow">
             Solution {safeIndex + 1}
             <span class="board-eyebrow-total">of {displaySolutions.length}</span>
           </span>
@@ -321,11 +322,7 @@
         <h2 class="meta-title">Meta teams</h2>
         <p class="meta-lede">
           Teams with the highest
-          <span
-            class="meta-term"
-            title="usage rate × rate of appearing in this field"
-            >usage index</span
-          > in each field
+          <UsageIndexPopover scope="field" /> in each field
         </p>
       </header>
 
@@ -382,11 +379,6 @@
   }
 
   .board-eyebrow {
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
     color: var(--foreground-color);
     white-space: nowrap;
   }
@@ -590,12 +582,6 @@
     line-height: 1.45;
   }
 
-  .meta-term {
-    text-decoration: underline dotted;
-    text-underline-offset: 2px;
-    cursor: help;
-  }
-
   .meta-board {
     display: grid;
     grid-template-columns: 1fr;
@@ -624,12 +610,6 @@
 
   .meta-field-heading {
     margin-bottom: var(--space-3);
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
   }
 
   .meta-list {

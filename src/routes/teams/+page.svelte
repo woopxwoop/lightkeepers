@@ -1,6 +1,9 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { slide } from "svelte/transition";
+  import { browser } from "$app/environment";
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/state";
   import { charactersOwned, animationsEnabled } from "$lib/stores";
   import { buildGoodKeyMap, ownedGoodKeys } from "$lib/utils";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
@@ -11,6 +14,8 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import Select from "$lib/ui/components/Select.svelte";
+  import CostPopover from "$lib/ui/components/CostPopover.svelte";
+  import TeamNumbersNote from "$lib/ui/components/TeamNumbersNote.svelte";
   import {
     handCharactersFromGoodKeys,
     handBuilds,
@@ -26,11 +31,25 @@
     type TeamDpsSort,
   } from "$lib/investment-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  import {
+    nextSearchPath,
+    readEnum,
+    readList,
+    sameList,
+  } from "$lib/query-state";
   import type { InvestmentFile } from "$lib/types/investment";
 
+  const SORT_KEYS = ["dps-desc", "dps-asc"] as const;
+
+  function parseCost(raw: string | null): number | null {
+    if (raw == null || raw === "") return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
   let data: InvestmentFile | null = $state(getInvestmentCached());
-  let loading = $derived(data === null);
   let error: string | null = $state(null);
+  let loading = $derived(data === null && error === null);
 
   // ── Spotlight pagination ──────────────────────────────────────────────────
   const SPOTLIGHT_PAGE = 10;
@@ -50,32 +69,86 @@
     spotlightCount += SPOTLIGHT_PAGE;
   }
 
-  // ── Sort & filter state ──────────────────────────────────────────────────
-  let sortOwnedFirst = $state(true);
-  let sortBy = $state<TeamDpsSort>("dps-desc");
-  /** Selected cost level — show DPS of the best sim at (or nearest to) this cost. */
-  let selectedCost = $state<number | null>(null);
+  /**
+   * Whether any setting differs from the defaults. Normalized values, not raw
+   * params: an explicit `?sort=dps-desc` or empty `?cost=` is still default.
+   */
+  function anySettingActive(
+    cost: number | null,
+    sort: TeamDpsSort,
+    ownedFirst: boolean,
+  ): boolean {
+    return cost !== null || sort !== "dps-desc" || !ownedFirst;
+  }
+
+  // ── Sort & filter state (seeded from the URL, then mirrored back) ─────────
+  const initialOwnedFirst = page.url.searchParams.get("owned") !== "0";
+  const initialSort = readEnum(page.url, "sort", SORT_KEYS, "dps-desc");
+  const initialCost = parseCost(page.url.searchParams.get("cost"));
+
+  let sortOwnedFirst = $state(initialOwnedFirst);
+  let sortBy = $state<TeamDpsSort>(initialSort);
+  /** Selected cost level — show DPS of the best sim at exactly this cost. */
+  let selectedCost = $state<number | null>(initialCost);
 
   // ── Tag search state ─────────────────────────────────────────────────────
-  let tags: string[] = $state([]);
-  let showSettings = $state(false);
+  let tags: string[] = $state(readList(page.url, "char"));
+  let showSettings = $state(
+    anySettingActive(initialCost, initialSort, initialOwnedFirst),
+  );
+
+  /**
+   * A link to this same route reuses this component, so the URL can change
+   * under seeded state. Rebuild from the URL, untracked so edits here can't
+   * re-trigger this, and declared before the write effect so stale values are
+   * never mirrored back.
+   */
+  $effect(() => {
+    const url = page.url;
+    untrack(() => {
+      const owned = url.searchParams.get("owned") !== "0";
+      if (owned !== sortOwnedFirst) sortOwnedFirst = owned;
+
+      const sort = readEnum(url, "sort", SORT_KEYS, "dps-desc");
+      if (sort !== sortBy) sortBy = sort;
+
+      const cost = parseCost(url.searchParams.get("cost"));
+      if (cost !== selectedCost) selectedCost = cost;
+
+      const hasSettings = anySettingActive(cost, sort, owned);
+      if (hasSettings !== showSettings) showSettings = hasSettings;
+
+      const char = readList(url, "char");
+      if (!sameList(tags, char)) tags = char;
+    });
+  });
+
+  $effect(() => {
+    if (!browser) return;
+
+    const cost =
+      selectedCost !== null && Number.isFinite(selectedCost)
+        ? String(selectedCost)
+        : null;
+    const next = nextSearchPath(page.url, {
+      char: tags,
+      sort: sortBy === "dps-desc" ? null : sortBy,
+      owned: sortOwnedFirst ? null : "0",
+      cost,
+    });
+    if (next) replaceState(next, page.state);
+  });
 
   onMount(() => fetchData());
 
   /** Use shared session cache (loaded on this route, not global bootstrap). */
   async function fetchData() {
-    if (data) {
-      loading = false;
-      return;
-    }
-    loading = true;
+    if (data) return;
     error = null;
     try {
       data = await loadInvestment();
     } catch (e) {
       error = e instanceof Error ? e.message : "Failed to load investment data";
-    } finally {
-      loading = false;
     }
   }
 
@@ -184,7 +257,8 @@
             <span class="settings-caption">Cost</span>
             <input
               type="number"
-              bind:value={selectedCost}
+              bind:value={() => selectedCost ?? undefined, (value) =>
+                (selectedCost = value ?? null)}
               placeholder="{availableCosts[0] ?? 0}–{availableCosts[
                 availableCosts.length - 1
               ] ?? 0}"
@@ -237,7 +311,8 @@
               <div class="team-footer">
                 <span class="team-meta">
                   {selectedCost !== null ? selectedCost : team.baseline_cost}
-                  cost · {(displayDps(team, selectedCost) / 1000).toFixed(0)}K DPS
+                  <CostPopover />
+                  · {(displayDps(team, selectedCost) / 1000).toFixed(0)}K DPS
                 </span>
                 <a href="/teams/{team.team_key}" class="team-link">
                   View details →
@@ -256,23 +331,7 @@
     {/if}
   {/if}
 
-  <details class="methodology">
-    <summary>How team numbers work</summary>
-    <p>
-      Team damage is simulated with
-      <a href="https://gcsim.app/" target="_blank" rel="noopener noreferrer"
-        >gcsim</a
-      >
-      using
-      <a
-        href="https://compendium.keqingmains.com/"
-        target="_blank"
-        rel="noopener noreferrer">KQM artifact standards</a
-      >. Comparing different teams is not recommended — rotation difficulty and
-      team cost vary. Comparing the same team at different investment levels is
-      encouraged.
-    </p>
-  </details>
+  <TeamNumbersNote />
 </PageShell>
 
 <style>
@@ -422,13 +481,13 @@
   .team-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-7);
+    gap: var(--space-4);
   }
 
   .team-row {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: 1.75rem;
   }
 
   /* Spotlight hands sit on the page base — no raised card chrome.
@@ -472,38 +531,6 @@
 
   .team-link:hover {
     text-decoration: underline;
-  }
-
-  .methodology {
-    margin-top: var(--space-2);
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary {
-    width: fit-content;
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
-  .methodology summary:hover {
-    color: var(--foreground-color);
-  }
-
-  .methodology p {
-    max-width: 60ch;
-    margin-top: var(--space-2);
-    line-height: 1.55;
-  }
-
-  .methodology a {
-    color: var(--accent-2);
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 
   .card-enter {

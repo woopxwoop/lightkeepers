@@ -146,8 +146,12 @@ export interface CharacterIndex {
 
 export type TalentSlot = "auto" | "skill" | "burst";
 
-/** Matches `$lib/upgrade-priority` UpgradeTier — kept local to avoid cycle. */
-type GuideUpgradeTier =
+/**
+ * Editorial tiers a hand-authored guide may set. Declared here rather than
+ * imported so this file stays free of `$lib/upgrade-priority`; that module maps
+ * these onto each section's impact ladder.
+ */
+export type GuideUpgradeTier =
   | "highly_recommended"
   | "recommended"
   | "inconsequential";

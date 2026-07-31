@@ -3,6 +3,7 @@
    * Root shell: seed stores from SSR, then bootstrapClient on mount
    * (roster + background /api/static warm). Page chrome is NavBar + slot.
    */
+  import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import { onMount } from "svelte";
   import { fly } from "svelte/transition";
@@ -11,6 +12,7 @@
   import { bootstrapClient, seedClientStores } from "$lib/app/bootstrapClient";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
+  import { rememberNavigation } from "$lib/nav-history";
   import {
     displayPreferences,
     initDisplayPreferences,
@@ -23,6 +25,10 @@
   if (typeof window !== "undefined") {
     installChunkLoadRecovery();
   }
+
+  afterNavigate(({ from }) => {
+    rememberNavigation(from?.url);
+  });
 
   let { data, children } = $props();
   let characters: Character[] = $derived(data.characters);

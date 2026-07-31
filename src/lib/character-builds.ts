@@ -6,17 +6,24 @@
 
 import { isArtifactSubstatKey } from "$lib/build-stats";
 import {
+  CONSTELLATION_UPGRADE,
   LEVEL_UPGRADE,
+  SIGNATURE_UPGRADE,
   TALENT_UPGRADE,
   classifyUpgradeImpact,
-  type UpgradeImpactConfig,
+  primaryUpgradePct,
+  type UpgradeImpact,
+  type UpgradeImpactLadder,
   type UpgradeTier,
 } from "$lib/upgrade-priority";
 import type {
+  CharacterConsGain,
   CharacterIndex,
   CharacterSigGain,
   CharacterTalentImportance,
+  CharacterVerticalGain,
   CharacterWeaponRank,
+  GuideUpgradeTier,
   TalentSlot,
 } from "$lib/types/investment";
 
@@ -110,15 +117,76 @@ export function rankWeaponsByRarityAndTeams(
   });
 }
 
-/** Signature weapons ranked by median % gain, then key. */
+export type VerticalImpactRow<T> = T & {
+  pct: number;
+  priority: UpgradeTier;
+  priorityLabel: string;
+};
+
+/**
+ * A guide states a call, not a measurement, so its rows read as a flat
+ * recommendation: the guide's own ordering carries the emphasis that the
+ * measured ladders express through bands.
+ */
+const GUIDE_TIER_IMPACT: Record<GuideUpgradeTier, UpgradeImpact> = {
+  highly_recommended: { tier: "solid", label: "Recommended" },
+  recommended: { tier: "solid", label: "Recommended" },
+  inconsequential: { tier: "negligible", label: "Not recommended" },
+};
+
+/** Prefer a guide-authored `tier`, else classify the measured pct. */
+function resolveUpgradeImpact(
+  pct: number,
+  ladder: UpgradeImpactLadder,
+  guideTier?: GuideUpgradeTier | null,
+): UpgradeImpact {
+  return guideTier
+    ? GUIDE_TIER_IMPACT[guideTier]
+    : classifyUpgradeImpact(pct, ladder);
+}
+
+/** Add the primary pct and its resolved impact to a vertical gain row. */
+function attachImpact<T extends CharacterVerticalGain>(
+  row: T,
+  ladder: UpgradeImpactLadder,
+): VerticalImpactRow<T> {
+  const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
+  const impact = resolveUpgradeImpact(pct, ladder, row.tier);
+  return {
+    ...row,
+    pct,
+    priority: impact.tier,
+    priorityLabel: impact.label,
+  };
+}
+
+/**
+ * Descending impact, with non-finite pct treated as last place. Subtracting
+ * raw values would yield NaN and leave those rows in arbitrary positions.
+ */
+function compareByImpact(a: { pct: number }, b: { pct: number }): number {
+  const aOk = Number.isFinite(a.pct);
+  const bOk = Number.isFinite(b.pct);
+  if (!aOk || !bOk) return aOk === bOk ? 0 : aOk ? -1 : 1;
+  return b.pct - a.pct;
+}
+
+/** Constellations in source order with their display-ready impact. */
+export function constellationImpactRows(
+  constellations: CharacterConsGain[] | null | undefined,
+): VerticalImpactRow<CharacterConsGain>[] {
+  if (!constellations?.length) return [];
+  return constellations.map((row) => attachImpact(row, CONSTELLATION_UPGRADE));
+}
+
+/** Signature weapons ranked by primary gain, with display-ready impact. */
 export function rankSigWeaponsByGain(
   sigWeapons: CharacterSigGain[] | null | undefined,
-): CharacterSigGain[] {
+): VerticalImpactRow<CharacterSigGain>[] {
   if (!sigWeapons?.length) return [];
-  return [...sigWeapons].sort(
-    (a, b) =>
-      b.median_pct_gain - a.median_pct_gain || a.key.localeCompare(b.key),
-  );
+  return sigWeapons
+    .map((row) => attachImpact(row, SIGNATURE_UPGRADE))
+    .sort((a, b) => compareByImpact(a, b) || a.key.localeCompare(b.key));
 }
 
 export type TalentImportanceRow = {
@@ -127,52 +195,41 @@ export type TalentImportanceRow = {
   icon: string | null;
   priority: UpgradeTier;
   priorityLabel: string;
+  pct: number;
+  mean: number;
   median: number;
+  min: number;
+  max: number;
+  teams: number;
 };
 
-/** Prefer an explicit guide `tier`, else classify from median %. */
-export function resolveUpgradeImpact(
-  pct: number,
-  config: UpgradeImpactConfig,
-  tier?: UpgradeTier | null,
-): { tier: UpgradeTier; label: string } {
-  if (tier === "highly_recommended" || tier === "recommended" || tier === "inconsequential") {
-    return { tier, label: config.labels[tier] };
-  }
-  return classifyUpgradeImpact(pct, config);
-}
-
 /**
- * Talent priority rows: qualitative upgrade labels from median % DPS drop
+ * Talent priority rows: qualitative labels from max(mean, median) % DPS drop
  * when that talent is at 1. `resolveSkillIcon` maps kit skill type → URL.
  *
- * Guide-authored `tier` fields win over classifying median; rows still render
- * when ``teams === 0`` if any slot carries a tier.
+ * Guide-authored `tier` fields win over classifying the measured pct, and rows
+ * still render when ``teams === 0`` if any slot carries a tier.
  */
 export function talentImportanceRows(
   talentImportance: CharacterTalentImportance | null | undefined,
   resolveSkillIcon: (kitType: string) => string | null,
 ): TalentImportanceRow[] {
   if (!talentImportance) return [];
-  const hasTier = (["auto", "skill", "burst"] as const).some(
-    (slot) => talentImportance[slot]?.tier != null,
-  );
+  const slots = ["auto", "skill", "burst"] as const;
+  const hasTier = slots.some((slot) => talentImportance[slot]?.tier != null);
   if (talentImportance.teams <= 0 && !hasTier) return [];
 
-  const slots: TalentSlot[] = hasTier
-    ? (talentImportance.priority?.length
-        ? talentImportance.priority
-        : (["auto", "skill", "burst"] as const))
-    : (["auto", "skill", "burst"] as const);
+  // A tiered guide also authors the ranking, so trust its slot order.
+  const ordered: readonly TalentSlot[] =
+    hasTier && talentImportance.priority?.length
+      ? talentImportance.priority
+      : slots;
 
-  const rows = slots.flatMap((slot) => {
+  const rows = ordered.flatMap((slot) => {
     const stats = talentImportance[slot];
     if (!stats) return [];
-    const impact = resolveUpgradeImpact(
-      stats.median_pct_drop,
-      TALENT_UPGRADE,
-      stats.tier,
-    );
+    const pct = primaryUpgradePct(stats.mean_pct_drop, stats.median_pct_drop);
+    const impact = resolveUpgradeImpact(pct, TALENT_UPGRADE, stats.tier);
     return [
       {
         slot,
@@ -180,21 +237,28 @@ export function talentImportanceRows(
         icon: resolveSkillIcon(TALENT_SLOT_TO_KIT[slot]),
         priority: impact.tier,
         priorityLabel: impact.label,
+        pct,
+        mean: stats.mean_pct_drop,
         median: stats.median_pct_drop,
+        min: stats.min_pct_drop,
+        max: stats.max_pct_drop,
+        teams: talentImportance.teams,
       },
     ];
   });
 
   if (hasTier) return rows;
-  return [...rows].sort(
-    (a, b) => b.median - a.median || a.slot.localeCompare(b.slot),
-  );
+  return rows.sort((a, b) => compareByImpact(a, b) || a.slot.localeCompare(b.slot));
 }
 
 export type LevelImportanceRow = {
   priority: UpgradeTier;
   priorityLabel: string;
   teams: number;
+  mean: number;
+  median: number;
+  min: number;
+  max: number;
 };
 
 /** Character level 90 importance (separate from talents). */
@@ -204,14 +268,15 @@ export function levelImportanceFromBuilds(
   const li = builds?.level_importance;
   if (!li) return null;
   if (li.teams <= 0 && li.tier == null) return null;
-  const impact = resolveUpgradeImpact(
-    li.median_pct_drop,
-    LEVEL_UPGRADE,
-    li.tier,
-  );
+  const pct = primaryUpgradePct(li.mean_pct_drop, li.median_pct_drop);
+  const impact = resolveUpgradeImpact(pct, LEVEL_UPGRADE, li.tier);
   return {
     priority: impact.tier,
     priorityLabel: impact.label,
     teams: li.teams,
+    mean: li.mean_pct_drop,
+    median: li.median_pct_drop,
+    min: li.min_pct_drop,
+    max: li.max_pct_drop,
   };
 }

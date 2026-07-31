@@ -12,9 +12,9 @@ import {
   baselineVariants,
   displayDps,
   displaySim,
+  exactCostDps,
   findInvestmentTeam,
   groupVerticalSimsByCost,
-  nearestCostDps,
   ownsInvestmentTeam,
   simAtExactCost,
   sortTeamsForDisplay,
@@ -105,24 +105,23 @@ describe("baselineVariants / groupVerticalSimsByCost", () => {
   });
 });
 
-describe("nearestCostDps", () => {
+describe("exactCostDps", () => {
   it("returns 0 for an empty results list", () => {
-    assert.equal(nearestCostDps(team(["A"], []), 4), 0);
+    assert.equal(exactCostDps(team(["A"], []), 4), 0);
   });
 
-  it("prefers the closer cost, then the lower cost on a tie", () => {
+  it("returns the best exact-cost result and never falls back", () => {
     const t = team(
       ["A"],
       [
         sim({ cost: 2, dps: 100 }),
         sim({ cost: 6, dps: 300 }),
+        sim({ cost: 6, dps: 350 }),
         sim({ cost: 8, dps: 400 }),
       ],
     );
-    // Target 5: dist(6)=1, dist(2)=3, dist(8)=3 → 6
-    assert.equal(nearestCostDps(t, 5), 300);
-    // Target 4: dist(2)=2, dist(6)=2 → prefer lower cost 2
-    assert.equal(nearestCostDps(t, 4), 100);
+    assert.equal(exactCostDps(t, 6), 350);
+    assert.equal(exactCostDps(t, 5), 0);
   });
 });
 
@@ -139,7 +138,7 @@ describe("displayDps / displaySim", () => {
     assert.equal(displaySim(t, null)?.kind, "baseline");
   });
 
-  it("uses exact / nearest cost when a cost is selected", () => {
+  it("uses exact cost when a cost is selected", () => {
     const t = team(
       ["A"],
       [
@@ -148,6 +147,7 @@ describe("displayDps / displaySim", () => {
       ],
     );
     assert.equal(displayDps(t, 4), 200);
+    assert.equal(displayDps(t, 3), 0);
     assert.equal(displaySim(t, 4)?.dps, 200);
     assert.equal(displaySim(t, 3), null);
   });

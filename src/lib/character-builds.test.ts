@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  constellationImpactRows,
   levelImportanceFromBuilds,
   rankSigWeaponsByGain,
   rankWeaponsByRarityAndTeams,
@@ -76,21 +77,114 @@ describe("rankWeaponsByRarityAndTeams", () => {
 });
 
 describe("rankSigWeaponsByGain", () => {
-  it("sorts by median gain then key", () => {
+  it("sorts and classifies by the stronger mean/median gain", () => {
     const ranked = rankSigWeaponsByGain([
       { key: "B", teams: 1, mean_pct_gain: 10, median_pct_gain: 10, min_pct_gain: 10, max_pct_gain: 10 },
       { key: "A", teams: 1, mean_pct_gain: 10, median_pct_gain: 10, min_pct_gain: 10, max_pct_gain: 10 },
-      { key: "C", teams: 1, mean_pct_gain: 20, median_pct_gain: 20, min_pct_gain: 20, max_pct_gain: 20 },
+      { key: "C", teams: 1, mean_pct_gain: 20, median_pct_gain: 8, min_pct_gain: 8, max_pct_gain: 20 },
+    ]);
+    assert.deepEqual(
+      ranked.map((w) => [w.key, w.priority]),
+      [
+        ["C", "exceptional"],
+        ["A", "solid"],
+        ["B", "solid"],
+      ],
+    );
+  });
+
+  it("sorts non-finite gains last", () => {
+    const ranked = rankSigWeaponsByGain([
+      {
+        key: "nan",
+        teams: 1,
+        mean_pct_gain: Number.NaN,
+        median_pct_gain: Number.NaN,
+        min_pct_gain: 0,
+        max_pct_gain: 0,
+      },
+      {
+        key: "small",
+        teams: 1,
+        mean_pct_gain: 1,
+        median_pct_gain: 1,
+        min_pct_gain: 1,
+        max_pct_gain: 1,
+      },
+      {
+        key: "infinite",
+        teams: 1,
+        mean_pct_gain: Number.POSITIVE_INFINITY,
+        median_pct_gain: 0,
+        min_pct_gain: 0,
+        max_pct_gain: 0,
+      },
+      {
+        key: "big",
+        teams: 1,
+        mean_pct_gain: 24,
+        median_pct_gain: 24,
+        min_pct_gain: 24,
+        max_pct_gain: 24,
+      },
     ]);
     assert.deepEqual(
       ranked.map((w) => w.key),
-      ["C", "A", "B"],
+      ["big", "small", "infinite", "nan"],
+    );
+  });
+});
+
+describe("constellationImpactRows", () => {
+  it("preserves source order and classifies each gain", () => {
+    const rows = constellationImpactRows([
+      {
+        cons: 1,
+        teams: 2,
+        mean_pct_gain: 4,
+        median_pct_gain: 6,
+        min_pct_gain: 2,
+        max_pct_gain: 7,
+      },
+      {
+        cons: 2,
+        teams: 2,
+        mean_pct_gain: 21,
+        median_pct_gain: 18,
+        min_pct_gain: 15,
+        max_pct_gain: 25,
+      },
+    ]);
+    assert.deepEqual(
+      rows.map((row) => [row.cons, row.pct, row.priorityLabel]),
+      [
+        [1, 6, "Modest impact"],
+        [2, 21, "Exceptional impact"],
+      ],
+    );
+  });
+
+  it("reads a guide tier as a flat recommendation, not a measured band", () => {
+    const rows = constellationImpactRows([
+      {
+        cons: 1,
+        teams: 2,
+        mean_pct_gain: 30,
+        median_pct_gain: 30,
+        min_pct_gain: 30,
+        max_pct_gain: 30,
+        tier: "inconsequential",
+      },
+    ]);
+    assert.deepEqual(
+      rows.map((row) => [row.priority, row.priorityLabel]),
+      [["negligible", "Not recommended"]],
     );
   });
 });
 
 describe("talentImportanceRows / levelImportanceFromBuilds", () => {
-  it("orders talent rows by median drop and classifies level impact", () => {
+  it("orders talent rows by max mean/median and classifies level impact", () => {
     const rows = talentImportanceRows(
       {
         teams: 2,
@@ -119,9 +213,9 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
     assert.deepEqual(
       rows.map((r) => [r.slot, r.icon, r.priority]),
       [
-        ["skill", "icon:skill", "highly_recommended"],
-        ["burst", "icon:burst", "recommended"],
-        ["auto", "icon:normal", "inconsequential"],
+        ["skill", "icon:skill", "exceptional"],
+        ["burst", "icon:burst", "solid"],
+        ["auto", "icon:normal", "modest"],
       ],
     );
 
@@ -138,10 +232,10 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
         },
       }),
     );
-    assert.equal(level?.priority, "highly_recommended");
+    assert.equal(level?.priority, "high");
   });
 
-  it("prefers guide tier over median and shows teams=0 when tiered", () => {
+  it("prefers guide tier over measured pct and shows teams=0 when tiered", () => {
     const rows = talentImportanceRows(
       {
         teams: 0,
@@ -171,11 +265,11 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
       () => null,
     );
     assert.deepEqual(
-      rows.map((r) => [r.slot, r.priority]),
+      rows.map((r) => [r.slot, r.priority, r.priorityLabel]),
       [
-        ["burst", "recommended"],
-        ["auto", "highly_recommended"],
-        ["skill", "inconsequential"],
+        ["burst", "solid", "Recommended"],
+        ["auto", "solid", "Recommended"],
+        ["skill", "negligible", "Not recommended"],
       ],
     );
 
@@ -222,11 +316,11 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
         },
       }),
     );
-    assert.equal(level?.priority, "recommended");
+    assert.equal(level?.priorityLabel, "Recommended");
     assert.equal(level?.teams, 0);
   });
 
-  it("prefers guide tier over classifying high median when teams > 0", () => {
+  it("prefers guide tier over classifying a high pct when teams > 0", () => {
     const rows = talentImportanceRows(
       {
         teams: 4,
@@ -256,11 +350,11 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
       () => null,
     );
     assert.deepEqual(
-      rows.map((r) => [r.slot, r.priority]),
+      rows.map((r) => [r.slot, r.priorityLabel]),
       [
-        ["skill", "highly_recommended"],
-        ["burst", "recommended"],
-        ["auto", "inconsequential"],
+        ["skill", "Recommended"],
+        ["burst", "Recommended"],
+        ["auto", "Not recommended"],
       ],
     );
   });
