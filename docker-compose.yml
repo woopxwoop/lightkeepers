@@ -58,8 +58,7 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
-      # 7d keeps RAM/disk lighter on a 4GB box; bump if you need longer local history
-      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.time=1d
       - --web.listen-address=0.0.0.0:9090
     ports:
       - "127.0.0.1:9090:9090"
