@@ -270,6 +270,8 @@
   }
 
   .select-trigger.bare {
+    /* Padding-free by design, so hold the hit area open with a min-height. */
+    min-height: 1.75rem;
     padding: 0;
     border: 0;
     border-radius: 0;

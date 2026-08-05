@@ -1,6 +1,6 @@
 <script lang="ts" generics="T extends string">
-  import { onMount } from "svelte";
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
+  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
 
   type Option = { value: T; label: string };
 
@@ -27,7 +27,7 @@
 
   let isMobile = $state(false);
 
-  onMount(() => {
+  $effect(() => {
     if (mobileMaxVisible === undefined) return;
     const media = window.matchMedia("(max-width: 639px)");
     const update = () => (isMobile = media.matches);
@@ -99,11 +99,11 @@
     }
     event.preventDefault();
     selectIndex(next);
-    const controls = (
-      event.currentTarget as HTMLElement
-    ).parentElement?.querySelectorAll<HTMLElement>(
-      'button[role="tab"], select',
-    );
+    // The overflow select sits inside a label, so walk up to the shared
+    // tablist rather than assuming the control's parent holds every sibling.
+    const controls = (event.currentTarget as HTMLElement)
+      .closest('[role="tablist"]')
+      ?.querySelectorAll<HTMLElement>('button[role="tab"], select');
     const nextOption = options[next];
     const focusIndex =
       nextOption &&
@@ -111,6 +111,15 @@
         ? directOptions.length
         : next;
     controls?.[focusIndex]?.focus();
+  }
+
+  /** Horizontal tab travel from the overflow select; Up/Down stay native. */
+  function onOverflowKeydown(event: KeyboardEvent) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    const index = overflowActive
+      ? options.findIndex((option) => option.value === value)
+      : directCount;
+    onTabKeydown(event, Math.max(0, index));
   }
 </script>
 
@@ -149,15 +158,16 @@
   {/each}
   {#if shouldCollapse}
     <label
+      role="presentation"
       class="more-tab tab relative z-1 flex-1 pointer-events-auto"
       class:tab-active={overflowActive}
     >
-      <span class="sr-only">More tabs</span>
       <select
         id={overflowActive ? `tab-${value}` : "tab-more"}
         aria-label="More tabs"
         aria-controls={overflowActive ? `tabpanel-${value}` : undefined}
         value={overflowActive ? value : ""}
+        onkeydown={onOverflowKeydown}
         onchange={(event) => {
           const next = event.currentTarget.value as T;
           if (next) value = next;
@@ -168,7 +178,9 @@
           <option value={option.value}>{option.label}</option>
         {/each}
       </select>
-      <span class="more-chevron" aria-hidden="true">⌄</span>
+      <span class="more-chevron" aria-hidden="true">
+        <IconChevronDown size={10} strokeWidth={2.5} />
+      </span>
     </label>
   {/if}
 </div>
@@ -205,7 +217,6 @@
     height: 100%;
     padding: 0.625rem 1.25rem 0.625rem 0.5rem;
     border: 0;
-    outline: 0;
     appearance: none;
     background: transparent;
     color: inherit;
@@ -214,11 +225,21 @@
     cursor: pointer;
   }
 
+  .more-tab select:focus {
+    outline: 0;
+  }
+
+  .more-tab select:focus-visible {
+    outline: 2px solid var(--tab-accent, var(--accent-1));
+    outline-offset: -2px;
+  }
+
   .more-chevron {
     position: absolute;
     top: 50%;
     right: 0.55rem;
-    translate: 0 -55%;
+    display: inline-flex;
+    translate: 0 -50%;
     color: currentColor;
     pointer-events: none;
   }

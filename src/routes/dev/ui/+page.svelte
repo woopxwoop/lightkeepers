@@ -419,7 +419,7 @@
       </div>
       <div
         class="concept-picker"
-        role="radiogroup"
+        role="group"
         aria-label="Character detail concept"
       >
         {#each DETAIL_CONCEPTS as concept}
@@ -593,6 +593,7 @@
             {#each CHARACTER_SECTION_DEMOS as section (section.value)}
               <button
                 type="button"
+                aria-pressed={railDemoSection === section.value}
                 class:active={railDemoSection === section.value}
                 onclick={() => {
                   railDemoSection = section.value;

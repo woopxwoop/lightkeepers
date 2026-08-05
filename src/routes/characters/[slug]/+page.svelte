@@ -49,6 +49,7 @@
     CRIMSON_WITCH_FAVICON_URL,
     simCharacterKey,
     translateStatKey,
+    type CrimsonWitchLink,
   } from "$lib/utils";
   import {
     availableTravelerElements,
@@ -130,7 +131,8 @@
     if (nextIndex === null) return;
     event.preventDefault();
     const nextTab = TAB_OPTIONS[nextIndex].value;
-    selectTab(nextTab);
+    // Leave the mobile rail open while arrowing so focus stays visible.
+    activeTab = nextTab;
     requestAnimationFrame(() => {
       document.getElementById(`tab-${nextTab}`)?.focus();
     });
@@ -418,6 +420,34 @@
   {/if}
 {/snippet}
 
+{#snippet guideLinkList(links: CrimsonWitchLink[])}
+  <ul class="useful-links">
+    {#each links as link (link.url)}
+      <li>
+        <a
+          class="useful-link"
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            class="useful-link-icon"
+            src={CRIMSON_WITCH_FAVICON_URL}
+            alt=""
+            width="40"
+            height="40"
+            loading="lazy"
+          />
+          <span class="useful-link-copy">
+            <span class="useful-link-label">Crimson Witch</span>
+            <span class="useful-link-desc">{link.label} build guide</span>
+          </span>
+        </a>
+      </li>
+    {/each}
+  </ul>
+{/snippet}
+
 {#snippet talentRow(row: {
   name: string;
   icon: string | null;
@@ -629,21 +659,23 @@
             {#if kit.is_traveler && travelerSkillOptions.length > 0}
               <section class="board-section">
                 <div class="skills-head">
-                  <label class="skills-label">
-                    <span class="skills-label-text">Element:</span>
+                  <div class="skills-label">
+                    <span class="skills-label-text" id="skills-element-label"
+                      >Element:</span
+                    >
                     <Select
                       options={travelerSkillOptions}
                       bind:value={skillsElement}
-                      aria-label="Traveler element"
+                      aria-labelledby="skills-element-label"
                     />
-                  </label>
+                  </div>
                 </div>
               </section>
             {/if}
             <section class="board-section">
               <h2 class="section-title">Talents</h2>
               <div class="kit-list">
-                {#each skillsKit.skills as skill}
+                {#each skillsKit.skills as skill (skill.id)}
                   {@const icon =
                     iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
                   {@const skillEnhance = enhanceExtra(
@@ -683,7 +715,7 @@
             <section class="board-section">
               <h2 class="section-title">Passives</h2>
               <div class="kit-list">
-                {#each skillsKit.passives as passive}
+                {#each skillsKit.passives as passive (passive.id)}
                   {@const icon =
                     iconUrl(passive.icon, "talent") ??
                     getUiAssetUrl(passive.icon)}
@@ -724,7 +756,7 @@
             <section class="board-section">
               <h2 class="section-title">Constellations</h2>
               <div class="kit-list">
-                {#each skillsKit.constellations as c}
+                {#each skillsKit.constellations as c (c.id)}
                   {@const icon =
                     iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
                   {@const constEnhance = enhanceExtra(
@@ -881,33 +913,7 @@
               {#if crimsonWitchLinks.length === 0}
                 <p class="muted-note">No external guides yet.</p>
               {:else}
-                <ul class="useful-links">
-                  {#each crimsonWitchLinks as link (link.url)}
-                    <li>
-                      <a
-                        class="useful-link"
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <img
-                          class="useful-link-icon"
-                          src={CRIMSON_WITCH_FAVICON_URL}
-                          alt=""
-                          width="40"
-                          height="40"
-                          loading="lazy"
-                        />
-                        <span class="useful-link-copy">
-                          <span class="useful-link-label">Crimson Witch</span>
-                          <span class="useful-link-desc"
-                            >{link.label} build guide</span
-                          >
-                        </span>
-                      </a>
-                    </li>
-                  {/each}
-                </ul>
+                {@render guideLinkList(crimsonWitchLinks)}
               {/if}
             </section>
           </div>
@@ -1259,33 +1265,7 @@
                     Crimson Witch build guide
                   </a>
                 {:else if crimsonWitchLinks.length > 1}
-                  <ul class="useful-links">
-                    {#each crimsonWitchLinks as link (link.url)}
-                      <li>
-                        <a
-                          class="useful-link"
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <img
-                            class="useful-link-icon"
-                            src={CRIMSON_WITCH_FAVICON_URL}
-                            alt=""
-                            width="40"
-                            height="40"
-                            loading="lazy"
-                          />
-                          <span class="useful-link-copy">
-                            <span class="useful-link-label">Crimson Witch</span>
-                            <span class="useful-link-desc"
-                              >{link.label} build guide</span
-                            >
-                          </span>
-                        </a>
-                      </li>
-                    {/each}
-                  </ul>
+                  {@render guideLinkList(crimsonWitchLinks)}
                 {/if}
               </section>
             {/if}
@@ -1427,7 +1407,6 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    cursor: pointer;
   }
 
   .skills-label-text {
@@ -2101,14 +2080,20 @@
     }
   }
 
-  :global(.char-detail.no-page-anim) .ledger-rail,
+  /* Both overrides must out-specify `.character-content-shell.mobile-open
+     .ledger-rail`, which sets its own transition shorthand. */
+  :global(.char-detail.no-page-anim) .character-content-shell .ledger-rail,
+  :global(.char-detail.no-page-anim)
+    .character-content-shell.mobile-open
+    .ledger-rail,
   :global(.char-detail.no-page-anim) .ledger-trigger-mark::before,
   :global(.char-detail.no-page-anim) .ledger-trigger-mark::after {
     transition: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ledger-rail,
+    .character-content-shell .ledger-rail,
+    .character-content-shell.mobile-open .ledger-rail,
     .ledger-trigger-mark::before,
     .ledger-trigger-mark::after {
       transition: none;

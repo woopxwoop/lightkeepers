@@ -14,23 +14,27 @@ const kitCache = new LRUCache<CharacterKit | null>(200, 15 * 60 * 1000);
 export async function getCharacterKit(
   nameId: string,
 ): Promise<CharacterKit | null> {
-  try {
-    const cached = kitCache.get(nameId);
-    if (cached !== undefined) return cached;
+  const cached = kitCache.get(nameId);
+  if (cached !== undefined) return cached;
 
+  try {
     const res = await fetchWithTimeout(
       `${CDN_PREFIX}/${encodeURIComponent(nameId)}.json`,
     );
-    if (!res.ok) {
+
+    // Only a definitive "this file does not exist" answer earns a null cache
+    // entry. Caching 5xx / transport / parse failures would pin a bogus 404
+    // for the whole TTL, so those stay uncached and retry on the next request.
+    if (res.status === 404 || res.status === 410) {
       kitCache.set(nameId, null);
       return null;
     }
+    if (!res.ok) return null;
 
     const kit = (await res.json()) as CharacterKit;
     kitCache.set(nameId, kit);
     return kit;
   } catch {
-    kitCache.set(nameId, null);
     return null;
   }
 }
