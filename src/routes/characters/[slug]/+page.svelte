@@ -18,7 +18,6 @@
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
-  import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
@@ -40,9 +39,7 @@
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import {
     artifactSlotIconUrl,
-    associationLabel,
     buildGoodKeyMap,
-    elementIconUrl,
     getNamecardUrl,
     getUiAssetUrl,
     ownedGoodKeys,
@@ -52,8 +49,6 @@
     CRIMSON_WITCH_FAVICON_URL,
     simCharacterKey,
     translateStatKey,
-    weaponTypeIconUrl,
-    weaponTypeLabel,
   } from "$lib/utils";
   import {
     availableTravelerElements,
@@ -98,7 +93,7 @@
   const TAB_OPTIONS = [
     { value: "builds" as const, label: "Builds" },
     { value: "teams" as const, label: "Teams" },
-    { value: "skills" as const, label: "Skills" },
+    { value: "skills" as const, label: "Kit" },
     { value: "links" as const, label: "Useful Links" },
   ];
   const TEAMS_MODE_OPTIONS = [
@@ -108,8 +103,38 @@
   ];
 
   let activeTab = $state<PageTab>("builds");
+  let mobileNavOpen = $state(false);
   let teamsMode = $state<TeamsMode>("stygian");
   let skillsElement = $state("");
+  let activeTabLabel = $derived(
+    TAB_OPTIONS.find((option) => option.value === activeTab)?.label ?? "Builds",
+  );
+
+  function selectTab(tab: PageTab) {
+    activeTab = tab;
+    mobileNavOpen = false;
+  }
+
+  function handleTabKeydown(event: KeyboardEvent, index: number) {
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (index + 1) % TAB_OPTIONS.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (index - 1 + TAB_OPTIONS.length) % TAB_OPTIONS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = TAB_OPTIONS.length - 1;
+    }
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = TAB_OPTIONS[nextIndex].value;
+    selectTab(nextTab);
+    requestAnimationFrame(() => {
+      document.getElementById(`tab-${nextTab}`)?.focus();
+    });
+  }
 
   let travelerSkillElements = $derived(availableTravelerElements(travelerKits));
   let travelerSkillOptions = $derived(
@@ -255,10 +280,6 @@
 
   let elColor = $derived(elementColor(kit.element, "var(--foreground-color)"));
   let namecard = $derived(getNamecardUrl(kit.name_id));
-  let region = $derived(associationLabel(kit.association));
-  let elementIcon = $derived(elementIconUrl(kit.element));
-  let weaponIcon = $derived(weaponTypeIconUrl(kit.weapon_type));
-  let weaponLabel = $derived(weaponTypeLabel(kit.weapon_type));
 
   /** Kit card currently flashing after an in-page talent link click. */
   let flashId = $state<string | null>(null);
@@ -546,719 +567,731 @@
         <div
           class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
         >
-          <BackLink href="/characters">← All characters</BackLink>
+          <div class="hero-name-block">
+            <BackLink href="/characters" class="hero-back-link"
+              >Characters</BackLink
+            >
+            <h1 class="hero-title">{kit.name}</h1>
+          </div>
           <p class="hero-eyebrow" style="color: {elColor};">
             {kit.title || "Character"}
           </p>
-          <h1 class="hero-title">{kit.name}</h1>
-          <div class="hero-meta">
-            {#if kit.element}
-              {#if elementIcon}
-                <img
-                  src={elementIcon}
-                  alt={kit.element}
-                  title={kit.element}
-                  class="stat-icon hero-meta-icon"
-                  loading="lazy"
-                />
-              {:else}
-                <span style="color: {elColor};">{kit.element}</span>
-              {/if}
-              <span aria-hidden="true">·</span>
-            {:else if kit.is_traveler}
-              <span>Multi-element</span>
-              <span aria-hidden="true">·</span>
-            {/if}
-            {#if weaponIcon}
-              <img
-                src={weaponIcon}
-                alt={weaponLabel}
-                title={weaponLabel}
-                class="stat-icon hero-meta-icon"
-                loading="lazy"
-              />
-            {:else}
-              <span>{weaponLabel}</span>
-            {/if}
-            <span aria-hidden="true">·</span>
-            <span>{kit.rarity}★</span>
-            {#if region}
-              <span aria-hidden="true">·</span>
-              <span>{region}</span>
-            {/if}
-            {#if kit.birthday}
-              <span aria-hidden="true">·</span>
-              <span>{kit.birthday.month}/{kit.birthday.day}</span>
-            {/if}
-          </div>
         </div>
       </div>
     </section>
 
-    <SlidingTabs
-      options={TAB_OPTIONS}
-      bind:value={activeTab}
-      accent={elColor}
-      maxVisible={4}
-      mobileMaxVisible={3}
-      aria-label="Character sections"
-      class="board-tabs"
-    />
+    <div class="character-content-shell" class:mobile-open={mobileNavOpen}>
+      <button
+        type="button"
+        class="ledger-mobile-trigger"
+        aria-expanded={mobileNavOpen}
+        aria-controls="character-section-index"
+        onclick={() => (mobileNavOpen = !mobileNavOpen)}
+      >
+        <span>
+          <small>Section</small>
+          <strong>{activeTabLabel}</strong>
+        </span>
+        <span class="ledger-trigger-mark" aria-hidden="true"></span>
+      </button>
 
-    <div class="board-body">
-      {#if activeTab === "skills"}
-        <div role="tabpanel" id="tabpanel-skills" aria-labelledby="tab-skills">
-          {#if kit.is_traveler && travelerSkillOptions.length > 0}
+      <div
+        class="ledger-rail"
+        id="character-section-index"
+        role="tablist"
+        aria-label="Character sections"
+        style:--section-count={TAB_OPTIONS.length}
+      >
+        {#each TAB_OPTIONS as option, index (option.value)}
+          <button
+            type="button"
+            role="tab"
+            id="tab-{option.value}"
+            aria-selected={activeTab === option.value}
+            aria-controls="tabpanel-{option.value}"
+            tabindex={activeTab === option.value ? 0 : -1}
+            class:active={activeTab === option.value}
+            onclick={() => selectTab(option.value)}
+            onkeydown={(event) => handleTabKeydown(event, index)}
+          >
+            {option.label}
+          </button>
+        {/each}
+      </div>
+
+      <div class="board-body">
+        {#if activeTab === "skills"}
+          <div
+            role="tabpanel"
+            id="tabpanel-skills"
+            aria-labelledby="tab-skills"
+          >
+            {#if kit.is_traveler && travelerSkillOptions.length > 0}
+              <section class="board-section">
+                <div class="skills-head">
+                  <label class="skills-label">
+                    <span class="skills-label-text">Element:</span>
+                    <Select
+                      options={travelerSkillOptions}
+                      bind:value={skillsElement}
+                      aria-label="Traveler element"
+                    />
+                  </label>
+                </div>
+              </section>
+            {/if}
             <section class="board-section">
-              <div class="skills-head">
-                <label class="skills-label">
-                  <span class="skills-label-text">Element:</span>
-                  <Select
-                    options={travelerSkillOptions}
-                    bind:value={skillsElement}
-                    aria-label="Traveler element"
-                  />
-                </label>
+              <h2 class="section-title">Talents</h2>
+              <div class="kit-list">
+                {#each skillsKit.skills as skill}
+                  {@const icon =
+                    iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
+                  {@const skillEnhance = enhanceExtra(
+                    skill.description,
+                    skill.enhanceDescription,
+                  )}
+                  <article
+                    id="kit-S{skill.id}"
+                    class="kit-row"
+                    class:kit-row-flash={flashId === `kit-S${skill.id}`}
+                  >
+                    {#if icon}
+                      <img
+                        src={icon}
+                        alt=""
+                        class="kit-icon shrink-0"
+                        loading="lazy"
+                      />
+                    {/if}
+                    <div class="kit-copy">
+                      <div class="kit-heading">
+                        <h3 class="card-title">{skill.name}</h3>
+                        <span class="card-kicker">
+                          {SKILL_LABELS[skill.type] ?? skill.type}
+                        </span>
+                      </div>
+                      {@render descriptionBlock(
+                        skill.description,
+                        skillEnhance,
+                      )}
+                    </div>
+                  </article>
+                {/each}
               </div>
             </section>
-          {/if}
-          <section class="board-section">
-            <h2 class="section-title">Talents</h2>
-            <div class="kit-list">
-              {#each skillsKit.skills as skill}
-                {@const icon =
-                  iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
-                {@const skillEnhance = enhanceExtra(
-                  skill.description,
-                  skill.enhanceDescription,
-                )}
-                <article
-                  id="kit-S{skill.id}"
-                  class="kit-row"
-                  class:kit-row-flash={flashId === `kit-S${skill.id}`}
-                >
-                  {#if icon}
-                    <img
-                      src={icon}
-                      alt=""
-                      class="kit-icon shrink-0"
-                      loading="lazy"
-                    />
-                  {/if}
-                  <div class="kit-copy">
-                    <div class="kit-heading">
-                      <h3 class="card-title">{skill.name}</h3>
-                      <span class="card-kicker">
-                        {SKILL_LABELS[skill.type] ?? skill.type}
-                      </span>
-                    </div>
-                    {@render descriptionBlock(skill.description, skillEnhance)}
-                  </div>
-                </article>
-              {/each}
-            </div>
-          </section>
 
-          <section class="board-section">
-            <h2 class="section-title">Passives</h2>
-            <div class="kit-list">
-              {#each skillsKit.passives as passive}
-                {@const icon =
-                  iconUrl(passive.icon, "talent") ??
-                  getUiAssetUrl(passive.icon)}
-                {@const passiveEnhance = enhanceExtra(
-                  passive.description,
-                  passive.enhanceDescription,
-                )}
-                <article
-                  id="kit-P{passive.id}"
-                  class="kit-row"
-                  class:kit-row-flash={flashId === `kit-P${passive.id}`}
-                >
-                  {#if icon}
-                    <img
-                      src={icon}
-                      alt=""
-                      class="kit-icon shrink-0"
-                      loading="lazy"
-                    />
-                  {/if}
-                  <div class="kit-copy">
-                    <div class="kit-heading">
-                      <h3 class="card-title">{passive.name}</h3>
-                      <span class="card-kicker"
-                        >{passiveKindLabel(passive)}</span
-                      >
+            <section class="board-section">
+              <h2 class="section-title">Passives</h2>
+              <div class="kit-list">
+                {#each skillsKit.passives as passive}
+                  {@const icon =
+                    iconUrl(passive.icon, "talent") ??
+                    getUiAssetUrl(passive.icon)}
+                  {@const passiveEnhance = enhanceExtra(
+                    passive.description,
+                    passive.enhanceDescription,
+                  )}
+                  <article
+                    id="kit-P{passive.id}"
+                    class="kit-row"
+                    class:kit-row-flash={flashId === `kit-P${passive.id}`}
+                  >
+                    {#if icon}
+                      <img
+                        src={icon}
+                        alt=""
+                        class="kit-icon shrink-0"
+                        loading="lazy"
+                      />
+                    {/if}
+                    <div class="kit-copy">
+                      <div class="kit-heading">
+                        <h3 class="card-title">{passive.name}</h3>
+                        <span class="card-kicker"
+                          >{passiveKindLabel(passive)}</span
+                        >
+                      </div>
+                      {@render descriptionBlock(
+                        passive.description,
+                        passiveEnhance,
+                      )}
                     </div>
-                    {@render descriptionBlock(
-                      passive.description,
-                      passiveEnhance,
-                    )}
-                  </div>
-                </article>
-              {/each}
-            </div>
-          </section>
+                  </article>
+                {/each}
+              </div>
+            </section>
 
-          <section class="board-section">
-            <h2 class="section-title">Constellations</h2>
-            <div class="kit-list">
-              {#each skillsKit.constellations as c}
-                {@const icon =
-                  iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
-                {@const constEnhance = enhanceExtra(
-                  c.description,
-                  c.enhanceDescription,
-                )}
-                <article
-                  id="kit-T{c.id}"
-                  class="kit-row"
-                  class:kit-row-flash={flashId === `kit-T${c.id}`}
-                >
-                  {#if icon}
-                    <img
-                      src={icon}
-                      alt=""
-                      class="kit-icon shrink-0"
-                      loading="lazy"
-                    />
-                  {/if}
-                  <div class="kit-copy">
-                    <div class="kit-heading">
-                      <span class="const-index" style="color: {skillsElColor};">
-                        C{c.index}
-                      </span>
-                      <h3 class="card-title">{c.name}</h3>
+            <section class="board-section">
+              <h2 class="section-title">Constellations</h2>
+              <div class="kit-list">
+                {#each skillsKit.constellations as c}
+                  {@const icon =
+                    iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
+                  {@const constEnhance = enhanceExtra(
+                    c.description,
+                    c.enhanceDescription,
+                  )}
+                  <article
+                    id="kit-T{c.id}"
+                    class="kit-row"
+                    class:kit-row-flash={flashId === `kit-T${c.id}`}
+                  >
+                    {#if icon}
+                      <img
+                        src={icon}
+                        alt=""
+                        class="kit-icon shrink-0"
+                        loading="lazy"
+                      />
+                    {/if}
+                    <div class="kit-copy">
+                      <div class="kit-heading">
+                        <span
+                          class="const-index"
+                          style="color: {skillsElColor};"
+                        >
+                          C{c.index}
+                        </span>
+                        <h3 class="card-title">{c.name}</h3>
+                      </div>
+                      {@render descriptionBlock(c.description, constEnhance)}
                     </div>
-                    {@render descriptionBlock(c.description, constEnhance)}
-                  </div>
-                </article>
-              {/each}
-            </div>
-          </section>
-        </div>
-      {:else if activeTab === "teams"}
-        <div role="tabpanel" id="tabpanel-teams" aria-labelledby="tab-teams">
-          <section class="board-section">
-            <div class="teams-head">
-              <label class="teams-label">
-                <span class="teams-label-text">Teams:</span>
-                <Select
-                  options={TEAMS_MODE_OPTIONS}
-                  bind:value={teamsMode}
-                  aria-label="Team source"
-                />
-              </label>
+                  </article>
+                {/each}
+              </div>
+            </section>
+          </div>
+        {:else if activeTab === "teams"}
+          <div role="tabpanel" id="tabpanel-teams" aria-labelledby="tab-teams">
+            <section class="board-section">
+              <div class="teams-head">
+                <label class="teams-label">
+                  <span class="teams-label-text">Teams:</span>
+                  <Select
+                    options={TEAMS_MODE_OPTIONS}
+                    bind:value={teamsMode}
+                    bare
+                    aria-label="Team source"
+                  />
+                </label>
+                {#if teamsMode === "simulated"}
+                  <span class="teams-cost"
+                    >{CHARACTER_SIM_COST} <CostPopover /></span
+                  >
+                {/if}
+              </div>
+
               {#if teamsMode === "simulated"}
-                <span class="teams-cost"
-                  >{CHARACTER_SIM_COST} <CostPopover /></span
-                >
-              {/if}
-            </div>
-
-            {#if teamsMode === "simulated"}
-              {#if teamsLoading}
-                <LoadingState
-                  variant="pulse"
-                  message="Loading simulated teams…"
-                />
-              {:else if investmentError && simulatedTeams.length === 0}
-                <EmptyState message="Could not load simulated teams right now.">
+                {#if teamsLoading}
+                  <LoadingState
+                    variant="pulse"
+                    message="Loading simulated teams…"
+                  />
+                {:else if investmentError && simulatedTeams.length === 0}
+                  <EmptyState
+                    message="Could not load simulated teams right now."
+                  >
+                    {#snippet action()}
+                      <Button variant="secondary" onclick={retryTeams}
+                        >Try again</Button
+                      >
+                    {/snippet}
+                  </EmptyState>
+                {:else if simulatedTeams.length === 0}
+                  <EmptyState
+                    message="No {CHARACTER_SIM_COST}-cost sims featuring {kit.name} yet."
+                  />
+                {:else}
+                  <ol class="team-hands">
+                    {#each simulatedTeams as row, i (row.team.team_key)}
+                      <li class="team-hand-row">
+                        <TeamCardHand
+                          characters={handCharactersFromGoodKeys(
+                            row.team.characters,
+                            goodKeyMap,
+                          )}
+                          builds={handBuilds(row.team, row.sim)}
+                          dimmedKeys={dimmedKeysFromGoodKeys(
+                            row.team.characters,
+                            ownedKeys,
+                            goodKeyMap,
+                          )}
+                          spread="flat"
+                        />
+                        <div class="team-hand-footer">
+                          <span class="team-hand-meta">
+                            <span class="team-hand-rank">#{i + 1}</span>
+                            <span
+                              >{CHARACTER_SIM_COST} cost · {formatDps(row.dps)} DPS</span
+                            >
+                          </span>
+                          <a
+                            href="/teams/{row.team.team_key}"
+                            class="team-hand-link"
+                          >
+                            View team details →
+                          </a>
+                        </div>
+                      </li>
+                    {/each}
+                  </ol>
+                {/if}
+              {:else if teamsLoading}
+                <LoadingState variant="pulse" message="Loading meta teams…" />
+              {:else if $staticBoardsError && popularTeams.length === 0}
+                <EmptyState message="Could not load teams right now.">
                   {#snippet action()}
                     <Button variant="secondary" onclick={retryTeams}
                       >Try again</Button
                     >
                   {/snippet}
                 </EmptyState>
-              {:else if simulatedTeams.length === 0}
+              {:else if popularTeams.length === 0}
                 <EmptyState
-                  message="No {CHARACTER_SIM_COST}-cost sims featuring {kit.name} yet."
+                  message="No {teamsMode === 'stygian'
+                    ? 'Stygian'
+                    : 'Abyss'} teams featuring {kit.name} yet."
                 />
               {:else}
                 <ol class="team-hands">
-                  {#each simulatedTeams as row, i (row.team.team_key)}
+                  {#each popularTeams as team, i (team.team_key ?? i)}
                     <li class="team-hand-row">
                       <TeamCardHand
-                        characters={handCharactersFromGoodKeys(
-                          row.team.characters,
-                          goodKeyMap,
-                        )}
-                        builds={handBuilds(row.team, row.sim)}
-                        dimmedKeys={dimmedKeysFromGoodKeys(
-                          row.team.characters,
-                          ownedKeys,
-                          goodKeyMap,
-                        )}
+                        characters={handCharactersFromMembers(team.members)}
+                        dimmedKeys={dimmedKeysFromMembers(team.members)}
                         spread="flat"
                       />
                       <div class="team-hand-footer">
                         <span class="team-hand-meta">
                           <span class="team-hand-rank">#{i + 1}</span>
-                          <span
-                            >{CHARACTER_SIM_COST} cost · {formatDps(row.dps)} DPS</span
+                          <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span
                           >
                         </span>
-                        <a
-                          href="/teams/{row.team.team_key}"
-                          class="team-hand-link"
-                        >
-                          View team details →
-                        </a>
                       </div>
                     </li>
                   {/each}
                 </ol>
               {/if}
-            {:else if teamsLoading}
-              <LoadingState variant="pulse" message="Loading meta teams…" />
-            {:else if $staticBoardsError && popularTeams.length === 0}
-              <EmptyState message="Could not load teams right now.">
-                {#snippet action()}
-                  <Button variant="secondary" onclick={retryTeams}
-                    >Try again</Button
-                  >
-                {/snippet}
-              </EmptyState>
-            {:else if popularTeams.length === 0}
-              <EmptyState
-                message="No {teamsMode === 'stygian'
-                  ? 'Stygian'
-                  : 'Abyss'} teams featuring {kit.name} yet."
-              />
-            {:else}
-              <ol class="team-hands">
-                {#each popularTeams as team, i (team.team_key ?? i)}
-                  <li class="team-hand-row">
-                    <TeamCardHand
-                      characters={handCharactersFromMembers(team.members)}
-                      dimmedKeys={dimmedKeysFromMembers(team.members)}
-                      spread="flat"
-                    />
-                    <div class="team-hand-footer">
-                      <span class="team-hand-meta">
-                        <span class="team-hand-rank">#{i + 1}</span>
-                        <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span>
-                      </span>
-                    </div>
-                  </li>
-                {/each}
-              </ol>
-            {/if}
-          </section>
-        </div>
-      {:else if activeTab === "links"}
-        <div role="tabpanel" id="tabpanel-links" aria-labelledby="tab-links">
-          <section class="board-section">
-            <h2 class="section-title">Useful links</h2>
-            {#if crimsonWitchLinks.length === 0}
-              <p class="muted-note">No external guides yet.</p>
-            {:else}
-              <ul class="useful-links">
-                {#each crimsonWitchLinks as link (link.url)}
-                  <li>
-                    <a
-                      class="useful-link"
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        class="useful-link-icon"
-                        src={CRIMSON_WITCH_FAVICON_URL}
-                        alt=""
-                        width="40"
-                        height="40"
-                        loading="lazy"
-                      />
-                      <span class="useful-link-copy">
-                        <span class="useful-link-label">Crimson Witch</span>
-                        <span class="useful-link-desc"
-                          >{link.label} build guide</span
-                        >
-                      </span>
-                      <span class="useful-link-arrow" aria-hidden="true">→</span
-                      >
-                    </a>
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-          </section>
-        </div>
-      {:else}
-        <div role="tabpanel" id="tabpanel-builds" aria-labelledby="tab-builds">
-          {#if builds}
+            </section>
+          </div>
+        {:else if activeTab === "links"}
+          <div role="tabpanel" id="tabpanel-links" aria-labelledby="tab-links">
             <section class="board-section">
-              <h2 class="section-title">Weapons</h2>
-              {#if rankedWeapons.length === 0}
-                <p class="muted-note">No weapon data yet.</p>
+              <h2 class="section-title">Useful links</h2>
+              {#if crimsonWitchLinks.length === 0}
+                <p class="muted-note">No external guides yet.</p>
               {:else}
-                <div class="equip-grid">
-                  {#each rankedWeapons as w (w.key)}
-                    <div class="equip-tile relative group">
-                      <div class="equip-icon-wrap">
-                        <WeaponIcon weaponKey={w.key} class="equip-icon" />
-                      </div>
-                      <WeaponTooltip weaponKey={w.key} />
-                    </div>
+                <ul class="useful-links">
+                  {#each crimsonWitchLinks as link (link.url)}
+                    <li>
+                      <a
+                        class="useful-link"
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          class="useful-link-icon"
+                          src={CRIMSON_WITCH_FAVICON_URL}
+                          alt=""
+                          width="40"
+                          height="40"
+                          loading="lazy"
+                        />
+                        <span class="useful-link-copy">
+                          <span class="useful-link-label">Crimson Witch</span>
+                          <span class="useful-link-desc"
+                            >{link.label} build guide</span
+                          >
+                        </span>
+                      </a>
+                    </li>
                   {/each}
-                </div>
+                </ul>
               {/if}
             </section>
-
-            <section class="board-section">
-              <h2 class="section-title">Artifact sets</h2>
-              {#if !builds.sets?.length}
-                <p class="muted-note">No set data yet.</p>
-              {:else}
-                {#key $equipmentVersion}
+          </div>
+        {:else}
+          <div
+            role="tabpanel"
+            id="tabpanel-builds"
+            aria-labelledby="tab-builds"
+          >
+            {#if builds}
+              <section class="board-section">
+                <h2 class="section-title">Weapons</h2>
+                {#if rankedWeapons.length === 0}
+                  <p class="muted-note">No weapon data yet.</p>
+                {:else}
                   <div class="equip-grid">
-                    {#each builds.sets as s}
-                      {@const set = artifactSetByKey.get(s.key)}
-                      {@const icon = set ? artifactIconUrl(set.icon) : null}
+                    {#each rankedWeapons as w (w.key)}
                       <div class="equip-tile relative group">
                         <div class="equip-icon-wrap">
-                          {#if icon}
-                            <img
-                              src={icon}
-                              alt={set?.name ?? s.key}
-                              class="equip-icon"
-                              loading="lazy"
-                            />
-                          {:else}
-                            <div class="equip-fallback">{s.key}</div>
-                          {/if}
-                          {#if s.count}
-                            <div class="piece-badge">
-                              <span style="color: {elColor};">{s.count}pc</span>
-                            </div>
-                          {/if}
+                          <WeaponIcon weaponKey={w.key} class="equip-icon" />
                         </div>
-                        <ArtifactTooltip
-                          {set}
-                          setKey={s.key}
-                          pieceCount={s.count ?? null}
-                        />
+                        <WeaponTooltip weaponKey={w.key} />
                       </div>
                     {/each}
                   </div>
-                {/key}
-              {/if}
-            </section>
+                {/if}
+              </section>
 
-            <section class="board-section">
-              <h2 class="section-title">Main stats</h2>
-              <div class="main-stats">
-                {#each MAIN_STAT_SLOTS as slot}
-                  <div class="main-stat-col">
-                    <h3 class="slot-label">
-                      <img
-                        src={artifactSlotIconUrl(slot.key)}
-                        alt=""
-                        class="stat-icon main-stat-icon shrink-0"
-                        loading="lazy"
-                      />
-                      {slot.label}
-                    </h3>
-                    {#if builds.main_stats[slot.key].length === 0}
-                      <p class="muted-note">—</p>
-                    {:else}
-                      <ul class="stat-list">
-                        {#each builds.main_stats[slot.key] as stat}
-                          {@const icon = statIconUrl(stat.key)}
-                          <li class="main-stat-item">
-                            <span class="flex items-center gap-1.5 min-w-0">
-                              {#if icon}
-                                <img
-                                  src={icon}
-                                  alt=""
-                                  class="stat-icon main-stat-icon shrink-0"
-                                  loading="lazy"
-                                />
-                              {/if}
-                              <span class="stat-name"
-                                >{translateStatKey(stat.key)}</span
-                              >
-                            </span>
-                          </li>
-                        {/each}
-                      </ul>
-                    {/if}
-                  </div>
-                {/each}
-              </div>
-            </section>
+              <section class="board-section">
+                <h2 class="section-title">Artifact sets</h2>
+                {#if !builds.sets?.length}
+                  <p class="muted-note">No set data yet.</p>
+                {:else}
+                  {#key $equipmentVersion}
+                    <div class="equip-grid">
+                      {#each builds.sets as s}
+                        {@const set = artifactSetByKey.get(s.key)}
+                        {@const icon = set ? artifactIconUrl(set.icon) : null}
+                        <div class="equip-tile relative group">
+                          <div class="equip-icon-wrap">
+                            {#if icon}
+                              <img
+                                src={icon}
+                                alt={set?.name ?? s.key}
+                                class="equip-icon"
+                                loading="lazy"
+                              />
+                            {:else}
+                              <div class="equip-fallback">{s.key}</div>
+                            {/if}
+                            {#if s.count}
+                              <div class="piece-badge">
+                                <span style="color: {elColor};"
+                                  >{s.count}pc</span
+                                >
+                              </div>
+                            {/if}
+                          </div>
+                          <ArtifactTooltip
+                            {set}
+                            setKey={s.key}
+                            pieceCount={s.count ?? null}
+                          />
+                        </div>
+                      {/each}
+                    </div>
+                  {/key}
+                {/if}
+              </section>
 
-            <section class="board-section">
-              <h2 class="section-title">Recommended substats</h2>
-              {#if recommendedSubstats.length === 0}
-                <p class="muted-note">No substat data yet.</p>
-              {:else}
-                <div class="substat-row">
-                  {#each recommendedSubstats as roll}
-                    {@const icon = statIconUrl(roll.key)}
-                    <button
-                      type="button"
-                      class="stat-chip group relative flex items-center justify-center"
-                      class:is-main={roll.matchesMain}
-                      aria-label={translateStatKey(roll.key)}
-                    >
-                      {#if icon}
+              <section class="board-section">
+                <h2 class="section-title">Main stats</h2>
+                <div class="main-stats">
+                  {#each MAIN_STAT_SLOTS as slot}
+                    <div class="main-stat-col">
+                      <h3 class="slot-label">
                         <img
-                          src={icon}
+                          src={artifactSlotIconUrl(slot.key)}
                           alt=""
-                          class="stat-icon"
+                          class="stat-icon main-stat-icon shrink-0"
                           loading="lazy"
                         />
+                        {slot.label}
+                      </h3>
+                      {#if builds.main_stats[slot.key].length === 0}
+                        <p class="muted-note">—</p>
                       {:else}
-                        <span class="stat-chip-fallback">
-                          {translateStatKey(roll.key)}
-                        </span>
+                        <ul class="stat-list">
+                          {#each builds.main_stats[slot.key] as stat}
+                            {@const icon = statIconUrl(stat.key)}
+                            <li class="main-stat-item">
+                              <span class="flex items-center gap-1.5 min-w-0">
+                                {#if icon}
+                                  <img
+                                    src={icon}
+                                    alt=""
+                                    class="stat-icon main-stat-icon shrink-0"
+                                    loading="lazy"
+                                  />
+                                {/if}
+                                <span class="stat-name"
+                                  >{translateStatKey(stat.key)}</span
+                                >
+                              </span>
+                            </li>
+                          {/each}
+                        </ul>
                       {/if}
-                      <HoverTooltip
-                        class="max-w-56"
-                        label={translateStatKey(roll.key)}
-                      >
-                        <div class="tip-detail-text font-medium">
-                          {translateStatKey(roll.key)}
-                        </div>
-                        {#if roll.matchesMain}
-                          <div
-                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
-                          >
-                            Also a main on {roll.mainSlots.join(" / ")}
-                          </div>
-                        {/if}
-                        {#if roll.mean > 0}
-                          <div
-                            class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
-                          >
-                            {roll.mean.toFixed(1)} avg liquid rolls · {builds
-                              .substat_rolls_liquid.teams} team{builds
-                              .substat_rolls_liquid.teams === 1
-                              ? ""
-                              : "s"}
-                          </div>
-                        {/if}
-                      </HoverTooltip>
-                    </button>
+                    </div>
                   {/each}
                 </div>
+              </section>
+
+              <section class="board-section">
+                <h2 class="section-title">Recommended substats</h2>
+                {#if recommendedSubstats.length === 0}
+                  <p class="muted-note">No substat data yet.</p>
+                {:else}
+                  <div class="substat-row">
+                    {#each recommendedSubstats as roll}
+                      {@const icon = statIconUrl(roll.key)}
+                      <button
+                        type="button"
+                        class="stat-chip group relative flex items-center justify-center"
+                        class:is-main={roll.matchesMain}
+                        aria-label={translateStatKey(roll.key)}
+                      >
+                        {#if icon}
+                          <img
+                            src={icon}
+                            alt=""
+                            class="stat-icon"
+                            loading="lazy"
+                          />
+                        {:else}
+                          <span class="stat-chip-fallback">
+                            {translateStatKey(roll.key)}
+                          </span>
+                        {/if}
+                        <HoverTooltip
+                          class="max-w-56"
+                          label={translateStatKey(roll.key)}
+                        >
+                          <div class="tip-detail-text font-medium">
+                            {translateStatKey(roll.key)}
+                          </div>
+                          {#if roll.matchesMain}
+                            <div
+                              class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
+                            >
+                              Also a main on {roll.mainSlots.join(" / ")}
+                            </div>
+                          {/if}
+                          {#if roll.mean > 0}
+                            <div
+                              class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
+                            >
+                              {roll.mean.toFixed(1)} avg liquid rolls · {builds
+                                .substat_rolls_liquid.teams} team{builds
+                                .substat_rolls_liquid.teams === 1
+                                ? ""
+                                : "s"}
+                            </div>
+                          {/if}
+                        </HoverTooltip>
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
+              </section>
+
+              {#if talentSection || levelSection || consSection || sigSection}
+                <div class="invest-grid">
+                  <div class="invest-col">
+                    {#if talentSection}
+                      <section class="board-section">
+                        <h2 class="section-title">
+                          Talent priority
+                          {#if talentSection.source === "guide" && talentSection.simMissing}
+                            <span class="meta-sub"
+                              >(no simulation data yet)</span
+                            >
+                          {/if}
+                        </h2>
+                        <ul class="talent-priority-list">
+                          {#if talentSection.source === "sim"}
+                            {#each talentSection.rows as row, i}
+                              {@render talentRow({
+                                name: row.label,
+                                icon: row.icon,
+                                rank: i + 1,
+                                priority: row.priority,
+                                kind: "talent",
+                                priorityLabel: row.priorityLabel,
+                                mean: row.mean,
+                                median: row.median,
+                                min: row.min,
+                                max: row.max,
+                                teams: row.teams,
+                              })}
+                            {/each}
+                          {:else}
+                            {#each talentSection.rows as row, i}
+                              {@render talentRow({
+                                name: row.label,
+                                icon: row.icon,
+                                rank: i + 1,
+                              })}
+                            {/each}
+                          {/if}
+                        </ul>
+                      </section>
+                    {/if}
+
+                    {#if levelSection}
+                      <section class="board-section">
+                        <h2 class="section-title">
+                          Character level
+                          {#if levelSection.source === "guide" && levelSection.simMissing}
+                            <span class="meta-sub"
+                              >(no simulation data yet)</span
+                            >
+                          {/if}
+                        </h2>
+                        <ul class="talent-priority-list">
+                          {#if levelSection.source === "sim"}
+                            {@render talentRow({
+                              name: "Level 90",
+                              icon: levelIcon,
+                              priority: levelSection.row.priority,
+                              kind: "level",
+                              priorityLabel: levelSection.row.priorityLabel,
+                              mean: levelSection.row.mean,
+                              median: levelSection.row.median,
+                              min: levelSection.row.min,
+                              max: levelSection.row.max,
+                              teams: levelSection.row.teams,
+                            })}
+                          {:else}
+                            {@render talentRow({
+                              name: "Level 90",
+                              icon: levelIcon,
+                              priority: levelSection.priority,
+                              kind: "level",
+                              priorityLabel: levelSection.priorityLabel,
+                            })}
+                          {/if}
+                        </ul>
+                      </section>
+                    {/if}
+                  </div>
+
+                  <div class="invest-col">
+                    {#if consSection}
+                      <section class="board-section">
+                        <h2 class="section-title">
+                          Constellation Impact
+                          {#if consSection.source === "guide" && consSection.simMissing}
+                            <span class="meta-sub"
+                              >(no simulation data yet)</span
+                            >
+                          {/if}
+                        </h2>
+                        <ul class="talent-priority-list">
+                          {#if consSection.source === "sim"}
+                            {#each consSection.rows as row}
+                              {@render consRow({
+                                cons: row.cons,
+                                priority: row.priority,
+                                priorityLabel: row.priorityLabel,
+                                mean: row.mean_pct_gain,
+                                median: row.median_pct_gain,
+                                min: row.min_pct_gain,
+                                max: row.max_pct_gain,
+                                teams: row.teams,
+                              })}
+                            {/each}
+                          {:else}
+                            {#each consSection.rows as row}
+                              {@render consRow(row)}
+                            {/each}
+                          {/if}
+                        </ul>
+                      </section>
+                    {/if}
+
+                    {#if sigSection}
+                      <section class="board-section">
+                        <h2 class="section-title">
+                          Signature weapon impact
+                          {#if sigSection.source === "guide" && sigSection.simMissing}
+                            <span class="meta-sub"
+                              >(no simulation data yet)</span
+                            >
+                          {/if}
+                        </h2>
+                        <ul class="talent-priority-list">
+                          {#if sigSection.source === "sim"}
+                            {#each sigSection.rows as row}
+                              {@render sigRow({
+                                key: row.key,
+                                priority: row.priority,
+                                priorityLabel: row.priorityLabel,
+                                mean: row.mean_pct_gain,
+                                median: row.median_pct_gain,
+                                min: row.min_pct_gain,
+                                max: row.max_pct_gain,
+                                teams: row.teams,
+                              })}
+                            {/each}
+                          {:else}
+                            {#each sigSection.rows as row}
+                              {@render sigRow(row)}
+                            {/each}
+                          {/if}
+                        </ul>
+                      </section>
+                    {/if}
+                  </div>
+                </div>
               {/if}
-            </section>
 
-            {#if talentSection || levelSection || consSection || sigSection}
-              <div class="invest-grid">
-                <div class="invest-col">
-                  {#if talentSection}
-                    <section class="board-section">
-                      <h2 class="section-title">
-                        Talent priority
-                        {#if talentSection.source === "guide" && talentSection.simMissing}
-                          <span class="meta-sub">(no simulation data yet)</span>
-                        {/if}
-                      </h2>
-                      <ul class="talent-priority-list">
-                        {#if talentSection.source === "sim"}
-                          {#each talentSection.rows as row, i}
-                            {@render talentRow({
-                              name: row.label,
-                              icon: row.icon,
-                              rank: i + 1,
-                              priority: row.priority,
-                              kind: "talent",
-                              priorityLabel: row.priorityLabel,
-                              mean: row.mean,
-                              median: row.median,
-                              min: row.min,
-                              max: row.max,
-                              teams: row.teams,
-                            })}
-                          {/each}
-                        {:else}
-                          {#each talentSection.rows as row, i}
-                            {@render talentRow({
-                              name: row.label,
-                              icon: row.icon,
-                              rank: i + 1,
-                            })}
-                          {/each}
-                        {/if}
-                      </ul>
-                    </section>
-                  {/if}
-
-                  {#if levelSection}
-                    <section class="board-section">
-                      <h2 class="section-title">
-                        Character level
-                        {#if levelSection.source === "guide" && levelSection.simMissing}
-                          <span class="meta-sub">(no simulation data yet)</span>
-                        {/if}
-                      </h2>
-                      <ul class="talent-priority-list">
-                        {#if levelSection.source === "sim"}
-                          {@render talentRow({
-                            name: "Level 90",
-                            icon: levelIcon,
-                            priority: levelSection.row.priority,
-                            kind: "level",
-                            priorityLabel: levelSection.row.priorityLabel,
-                            mean: levelSection.row.mean,
-                            median: levelSection.row.median,
-                            min: levelSection.row.min,
-                            max: levelSection.row.max,
-                            teams: levelSection.row.teams,
-                          })}
-                        {:else}
-                          {@render talentRow({
-                            name: "Level 90",
-                            icon: levelIcon,
-                            priority: levelSection.priority,
-                            kind: "level",
-                            priorityLabel: levelSection.priorityLabel,
-                          })}
-                        {/if}
-                      </ul>
-                    </section>
-                  {/if}
-                </div>
-
-                <div class="invest-col">
-                  {#if consSection}
-                    <section class="board-section">
-                      <h2 class="section-title">
-                        Constellation Impact
-                        {#if consSection.source === "guide" && consSection.simMissing}
-                          <span class="meta-sub">(no simulation data yet)</span>
-                        {/if}
-                      </h2>
-                      <ul class="talent-priority-list">
-                        {#if consSection.source === "sim"}
-                          {#each consSection.rows as row}
-                            {@render consRow({
-                              cons: row.cons,
-                              priority: row.priority,
-                              priorityLabel: row.priorityLabel,
-                              mean: row.mean_pct_gain,
-                              median: row.median_pct_gain,
-                              min: row.min_pct_gain,
-                              max: row.max_pct_gain,
-                              teams: row.teams,
-                            })}
-                          {/each}
-                        {:else}
-                          {#each consSection.rows as row}
-                            {@render consRow(row)}
-                          {/each}
-                        {/if}
-                      </ul>
-                    </section>
-                  {/if}
-
-                  {#if sigSection}
-                    <section class="board-section">
-                      <h2 class="section-title">
-                        Signature weapon impact
-                        {#if sigSection.source === "guide" && sigSection.simMissing}
-                          <span class="meta-sub">(no simulation data yet)</span>
-                        {/if}
-                      </h2>
-                      <ul class="talent-priority-list">
-                        {#if sigSection.source === "sim"}
-                          {#each sigSection.rows as row}
-                            {@render sigRow({
-                              key: row.key,
-                              priority: row.priority,
-                              priorityLabel: row.priorityLabel,
-                              mean: row.mean_pct_gain,
-                              median: row.median_pct_gain,
-                              min: row.min_pct_gain,
-                              max: row.max_pct_gain,
-                              teams: row.teams,
-                            })}
-                          {/each}
-                        {:else}
-                          {#each sigSection.rows as row}
-                            {@render sigRow(row)}
-                          {/each}
-                        {/if}
-                      </ul>
-                    </section>
-                  {/if}
-                </div>
-              </div>
-            {/if}
-
-            {#if builds.notes}
-              <section class="board-section notes-section">
-                <h2 class="section-title">Notes</h2>
-                <p class="build-notes">{builds.notes}</p>
+              {#if builds.notes}
+                <section class="board-section notes-section">
+                  <h2 class="section-title">Notes</h2>
+                  <p class="build-notes">{builds.notes}</p>
+                </section>
+              {/if}
+            {:else}
+              <section class="board-section">
+                <p class="muted-note builds-empty-msg">
+                  No Lightkeepers build summary for {kit.name} yet.
+                </p>
+                {#if crimsonWitchLinks.length === 1 && crimsonWitchLinks[0]}
+                  <a
+                    class="useful-link-cta"
+                    href={crimsonWitchLinks[0].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      class="useful-link-icon"
+                      src={CRIMSON_WITCH_FAVICON_URL}
+                      alt=""
+                      width="32"
+                      height="32"
+                      loading="lazy"
+                    />
+                    Crimson Witch build guide
+                  </a>
+                {:else if crimsonWitchLinks.length > 1}
+                  <ul class="useful-links">
+                    {#each crimsonWitchLinks as link (link.url)}
+                      <li>
+                        <a
+                          class="useful-link"
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            class="useful-link-icon"
+                            src={CRIMSON_WITCH_FAVICON_URL}
+                            alt=""
+                            width="40"
+                            height="40"
+                            loading="lazy"
+                          />
+                          <span class="useful-link-copy">
+                            <span class="useful-link-label">Crimson Witch</span>
+                            <span class="useful-link-desc"
+                              >{link.label} build guide</span
+                            >
+                          </span>
+                        </a>
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
               </section>
             {/if}
-          {:else}
-            <div class="board-section">
-              <EmptyState
-                message={`No gcsim build summary for ${kit.name} yet.`}
-              >
-                {#snippet action()}
-                  {#if crimsonWitchLinks.length === 1 && crimsonWitchLinks[0]}
-                    <a
-                      class="useful-link-cta"
-                      href={crimsonWitchLinks[0].url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        class="useful-link-icon"
-                        src={CRIMSON_WITCH_FAVICON_URL}
-                        alt=""
-                        width="32"
-                        height="32"
-                        loading="lazy"
-                      />
-                      Crimson Witch build guide →
-                    </a>
-                  {:else if crimsonWitchLinks.length > 1}
-                    <ul class="useful-links useful-links-compact">
-                      {#each crimsonWitchLinks as link (link.url)}
-                        <li>
-                          <a
-                            class="useful-link"
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <img
-                              class="useful-link-icon"
-                              src={CRIMSON_WITCH_FAVICON_URL}
-                              alt=""
-                              width="40"
-                              height="40"
-                              loading="lazy"
-                            />
-                            <span class="useful-link-copy">
-                              <span class="useful-link-label"
-                                >Crimson Witch</span
-                              >
-                              <span class="useful-link-desc"
-                                >{link.label} build guide</span
-                              >
-                            </span>
-                            <span class="useful-link-arrow" aria-hidden="true"
-                              >→</span
-                            >
-                          </a>
-                        </li>
-                      {/each}
-                    </ul>
-                  {/if}
-                {/snippet}
-              </EmptyState>
-            </div>
-          {/if}
-        </div>
-      {/if}
+          </div>
+        {/if}
+      </div>
     </div>
   </Surface>
 </PageShell>
@@ -1317,6 +1350,23 @@
     z-index: 1;
   }
 
+  .hero-name-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+  }
+
+  .hero-copy :global(.back-link.hero-back-link) {
+    color: var(--foreground-color);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color var(--control-duration) var(--control-ease);
+  }
+
+  .hero-copy :global(.back-link.hero-back-link:hover) {
+    color: var(--accent-1);
+  }
+
   .hero-eyebrow {
     font-size: var(--text-xs);
     letter-spacing: var(--tracking-title);
@@ -1326,19 +1376,10 @@
   /* Mixed-case hero title — deliberately not the uppercase `.page-title`. */
   .hero-title {
     font-family: var(--font-display);
-    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-size: clamp(2rem, 5vw, 3.25rem);
     font-weight: 600;
-    line-height: 1.15;
+    line-height: 1.05;
     color: var(--foreground-color);
-  }
-
-  .hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: var(--text-sm);
-    color: var(--foreground-mid);
   }
 
   .section-title {
@@ -1404,9 +1445,9 @@
     gap: var(--space-2);
   }
 
-  .useful-links-compact {
-    width: min(100%, 28rem);
-    text-align: left;
+  .builds-empty-msg {
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
   }
 
   .useful-link {
@@ -1458,11 +1499,6 @@
   .useful-link-desc {
     font-size: var(--text-xs);
     color: var(--foreground-mid);
-  }
-
-  .useful-link-arrow {
-    color: var(--foreground-mid);
-    flex-shrink: 0;
   }
 
   .useful-link-cta {
@@ -1637,17 +1673,62 @@
     overflow: hidden;
   }
 
-  :global(.char-board .board-tabs.sliding-tabs),
-  :global(.char-board .sliding-tabs.board-tabs) {
-    border: none;
-    border-radius: 0;
-    border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  .character-content-shell {
+    display: grid;
+    grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+  }
+
+  .ledger-mobile-trigger {
+    display: none;
+  }
+
+  .ledger-rail {
+    display: flex;
+    flex-direction: column;
+    border-right: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .ledger-rail button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 2.8rem;
+    padding: 0.65rem var(--space-3);
+    border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.1);
+    color: var(--foreground-mid);
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    text-align: left;
+    transition: var(--control-transition);
+  }
+
+  .ledger-rail button::before {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 2px;
     background: transparent;
+    content: "";
+  }
+
+  .ledger-rail button:hover {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
+  }
+
+  .ledger-rail button.active {
+    color: var(--foreground-color);
+    background: var(--surface-selected);
+  }
+
+  .ledger-rail button.active::before {
+    background: var(--hero-accent, var(--accent-1));
   }
 
   .board-body {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
 
   .board-section {
@@ -1881,11 +1962,6 @@
     height: 0.95rem;
   }
 
-  .hero-meta-icon {
-    width: 1.4rem;
-    height: 1.4rem;
-  }
-
   :global(.char-detail) {
     --border-subtle: rgba(255, 255, 255, 0.14);
     --border-default: rgba(255, 255, 255, 0.24);
@@ -1918,6 +1994,124 @@
     100% {
       box-shadow: inset 2px 0 0
         color-mix(in srgb, var(--kit-flash) 65%, transparent);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .character-content-shell {
+      display: block;
+    }
+
+    .ledger-mobile-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 3.6rem;
+      padding: 0.65rem var(--space-4);
+      border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
+      color: var(--foreground-color);
+      text-align: left;
+      background: var(--surface-selected);
+    }
+
+    .ledger-mobile-trigger > span:first-child {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .ledger-mobile-trigger small {
+      color: var(--foreground-mid);
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .ledger-mobile-trigger strong {
+      font-family: var(--font-display);
+      font-size: var(--text-base);
+      font-weight: 600;
+    }
+
+    .ledger-trigger-mark {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      border: var(--border-width) solid rgba(255, 255, 255, 0.22);
+      border-radius: var(--radius-pill);
+      color: var(--hero-accent, var(--accent-1));
+    }
+
+    .ledger-trigger-mark::before,
+    .ledger-trigger-mark::after {
+      position: absolute;
+      width: 0.65rem;
+      height: 1px;
+      background: currentColor;
+      content: "";
+      transition: transform var(--control-duration) var(--control-ease);
+    }
+
+    .ledger-trigger-mark::after {
+      transform: rotate(90deg);
+    }
+
+    .character-content-shell.mobile-open .ledger-trigger-mark::after {
+      transform: rotate(90deg) scaleX(0);
+    }
+
+    .ledger-rail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-height: 0;
+      overflow: hidden;
+      border-right: 0;
+      border-bottom: var(--border-width) solid transparent;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-0.35rem);
+      transition:
+        max-height 260ms var(--control-ease),
+        opacity 180ms var(--control-ease),
+        transform 260ms var(--control-ease),
+        border-color 180ms var(--control-ease),
+        visibility 0s linear 260ms;
+    }
+
+    .character-content-shell.mobile-open .ledger-rail {
+      max-height: calc(var(--section-count) * 2.8rem);
+      border-bottom-color: rgba(255, 255, 255, 0.14);
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition:
+        max-height 260ms var(--control-ease),
+        opacity 180ms var(--control-ease),
+        transform 260ms var(--control-ease),
+        border-color 180ms var(--control-ease),
+        visibility 0s;
+    }
+
+    .ledger-rail button:nth-child(even) {
+      border-left: var(--border-width) solid rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  :global(.char-detail.no-page-anim) .ledger-rail,
+  :global(.char-detail.no-page-anim) .ledger-trigger-mark::before,
+  :global(.char-detail.no-page-anim) .ledger-trigger-mark::after {
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ledger-rail,
+    .ledger-trigger-mark::before,
+    .ledger-trigger-mark::after {
+      transition: none;
     }
   }
 

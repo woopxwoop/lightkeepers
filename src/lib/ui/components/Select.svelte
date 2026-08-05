@@ -15,12 +15,15 @@
     options = [],
     /** Fixed trigger text (e.g. "Sort"). Defaults to the selected option label. */
     trigger,
+    /** Text-only trigger; the portaled menu keeps its normal border. */
+    bare = false,
     class: className = "",
     ...rest
   }: {
     value?: Value;
     options?: SelectOption<Value>[];
     trigger?: string;
+    bare?: boolean;
     class?: string;
   } & Omit<
     HTMLAttributes<HTMLButtonElement>,
@@ -201,6 +204,7 @@
     type="button"
     class="select-trigger"
     class:open
+    class:bare
     bind:this={triggerEl}
     aria-expanded={open}
     aria-haspopup="listbox"
@@ -263,6 +267,19 @@
     color: var(--foreground-color);
     border-color: rgba(255, 255, 255, 0.32);
     background: var(--surface-quiet);
+  }
+
+  .select-trigger.bare {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .select-trigger.bare:hover,
+  .select-trigger.bare.open {
+    border-color: transparent;
+    background: transparent;
   }
 
   .chevron {
