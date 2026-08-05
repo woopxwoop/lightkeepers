@@ -1,8 +1,10 @@
 /**
  * Character kit JSON served from R2 / CDN.
  *
- *   genshin/data/characters/index.json         — CharacterKitIndex
- *   genshin/data/characters/{name_id}.json     — CharacterKit
+ *   genshin/data/characters/index.json                  — CharacterKitIndex
+ *   genshin/data/characters/{name_id}.json              — CharacterKit
+ *   genshin/data/characters/{name_id}-{Element}.json    — Traveler resonance
+ *                                                       (e.g. PlayerBoy-Anemo)
  *
  * Produced by `scripts/data/extract-characters-json.ts` (via genshin-data
  * `listRichCharacters`) and uploaded by `scripts/sync/character-data-r2.ts`.
@@ -77,7 +79,7 @@ export interface CharacterKit {
   game_id: number;
   name_id: string;
   name: string;
-  element: string;
+  element: string | null;
   weapon_type: string;
   rarity: number;
   released_at: string | null;
@@ -98,7 +100,7 @@ export interface CharacterKitIndexEntry {
   game_id: number;
   name_id: string;
   name: string;
-  element: string;
+  element: string | null;
   weapon_type: string;
   rarity: number;
   released_at: string | null;

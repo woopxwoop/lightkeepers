@@ -7,6 +7,7 @@
  *   characters/{name_id}/card.webp         — TCG cards (see getCharacterCard in utils.ts)
  *   genshin/data/characters/index.json     — kit roster summary
  *   genshin/data/characters/{name_id}.json — full kit per character
+ *   genshin/data/characters/{name_id}-{Element}.json — Traveler kits (PlayerBoy-Anemo, …)
  *   genshin/data/enemies/index.json        — enemy id → icon stem map
  *
  * Images: scripts/sync/{equipment,namecards,character,character-kit}-images-r2.ts
