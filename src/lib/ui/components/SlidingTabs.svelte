@@ -183,6 +183,7 @@
     >
       <select
         id={overflowActive ? `tab-${value}` : undefined}
+        aria-controls={overflowActive ? `tabpanel-${value}` : undefined}
         aria-label={overflowLabel}
         value={overflowActive ? value : ""}
         onkeydown={onOverflowKeydown}
@@ -241,6 +242,13 @@
     font: inherit;
     text-align: center;
     cursor: pointer;
+  }
+
+  /* The native popup is OS-drawn: inheriting the tab's light text over its
+     default light background leaves the options unreadable on Windows. */
+  .more-tab select option {
+    color: var(--foreground-color);
+    background-color: var(--background-mid);
   }
 
   .more-tab select:focus {

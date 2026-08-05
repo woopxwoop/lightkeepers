@@ -145,21 +145,16 @@
     })),
   );
 
-  $effect(() => {
-    if (!kit.is_traveler) {
-      skillsElement = "";
-      return;
-    }
-    if (skillsElement && travelerKits[skillsElement]) return;
-    skillsElement = defaultTravelerElement(travelerKits, kit.element);
+  /** Explicit pick when it still resolves, else the kit's own default. */
+  let effectiveElement = $derived.by(() => {
+    if (!kit.is_traveler) return "";
+    if (skillsElement && travelerKits[skillsElement]) return skillsElement;
+    return defaultTravelerElement(travelerKits, kit.element);
   });
 
   let skillsKit = $derived.by(() => {
     if (!kit.is_traveler) return kit;
-    if (skillsElement && travelerKits[skillsElement]) {
-      return travelerKits[skillsElement];
-    }
-    return kit;
+    return travelerKits[effectiveElement] ?? kit;
   });
   let skillsElColor = $derived(
     elementColor(skillsKit.element, "var(--foreground-color)"),
@@ -633,6 +628,7 @@
         role="tablist"
         aria-label="Character sections"
         style:--section-count={TAB_OPTIONS.length}
+        style:--section-rows={Math.ceil(TAB_OPTIONS.length / 2)}
       >
         {#each TAB_OPTIONS as option, index (option.value)}
           <button
@@ -659,6 +655,7 @@
             role="tabpanel"
             id="tabpanel-skills"
             aria-labelledby="tab-skills"
+            tabindex="0"
           >
             {#if kit.is_traveler && travelerSkillOptions.length > 0}
               <section class="board-section">
@@ -670,7 +667,9 @@
                     <Select
                       id="skills-element-trigger"
                       options={travelerSkillOptions}
-                      bind:value={skillsElement}
+                      bind:value={
+                        () => effectiveElement, (next) => (skillsElement = next)
+                      }
                       bare
                       aria-labelledby="skills-element-label skills-element-trigger"
                     />
@@ -800,7 +799,12 @@
             </section>
           </div>
         {:else if activeTab === "teams"}
-          <div role="tabpanel" id="tabpanel-teams" aria-labelledby="tab-teams">
+          <div
+            role="tabpanel"
+            id="tabpanel-teams"
+            aria-labelledby="tab-teams"
+            tabindex="0"
+          >
             <section class="board-section">
               <div class="teams-head">
                 <div class="teams-label">
@@ -916,7 +920,12 @@
             </section>
           </div>
         {:else if activeTab === "links"}
-          <div role="tabpanel" id="tabpanel-links" aria-labelledby="tab-links">
+          <div
+            role="tabpanel"
+            id="tabpanel-links"
+            aria-labelledby="tab-links"
+            tabindex="0"
+          >
             <section class="board-section">
               <h2 class="section-title">Useful links</h2>
               {#if crimsonWitchLinks.length === 0}
@@ -931,6 +940,7 @@
             role="tabpanel"
             id="tabpanel-builds"
             aria-labelledby="tab-builds"
+            tabindex="0"
           >
             {#if builds}
               <section class="board-section">
@@ -1719,6 +1729,13 @@
     min-width: 0;
   }
 
+  /* Panels are focus targets (tabindex="0"), and the global ring only covers
+     buttons and links. */
+  .board-body [role="tabpanel"]:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
   .board-section {
     padding: var(--space-4);
   }
@@ -2071,7 +2088,8 @@
     }
 
     .character-content-shell.mobile-open .ledger-rail {
-      max-height: calc(var(--section-count) * 2.8rem);
+      /* Two-column grid on mobile, so height follows rows, not section count. */
+      max-height: calc(var(--section-rows) * 2.8rem);
       border-bottom-color: rgba(255, 255, 255, 0.14);
       opacity: 1;
       visibility: visible;

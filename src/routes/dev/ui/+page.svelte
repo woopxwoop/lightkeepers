@@ -193,35 +193,42 @@
   type CharacterDemoSection =
     "builds" | "teams" | "kit" | "links" | "notes" | "media";
 
-  const CHARACTER_SECTION_DEMOS = [
+  type CharacterSectionDemo = {
+    value: CharacterDemoSection;
+    label: string;
+    summary: string;
+    future?: boolean;
+  };
+
+  const CHARACTER_SECTION_DEMOS: CharacterSectionDemo[] = [
     {
-      value: "builds" as const,
+      value: "builds",
       label: "Builds",
       summary: "Equipment, stats, and investment priorities",
     },
     {
-      value: "teams" as const,
+      value: "teams",
       label: "Teams",
       summary: "Popular lineups and simulated teams",
     },
     {
-      value: "kit" as const,
+      value: "kit",
       label: "Kit",
       summary: "Talents, passives, and constellations",
     },
     {
-      value: "links" as const,
+      value: "links",
       label: "Useful Links",
       summary: "External guides and references",
     },
     {
-      value: "notes" as const,
+      value: "notes",
       label: "Notes",
       summary: "Future section used to test navigation scale",
       future: true,
     },
     {
-      value: "media" as const,
+      value: "media",
       label: "Media",
       summary: "Future section used to test navigation scale",
       future: true,
@@ -873,8 +880,10 @@
         <p class="surface-label">SlidingTabs</p>
         <p class="token-meta mb-2">
           Indicator tablist (Abyss / Stygian / character detail). Accent can be
-          slot gold or element color. Below 640px the third tab folds into a
-          "More" control (<code>mobileMaxVisible</code>).
+          slot gold or element color. Below 640px only the first tab stays
+          direct and the other two move into the "More" control (<code
+            >mobileMaxVisible</code
+          >).
         </p>
         <SlidingTabs
           options={SLIDING_TAB_OPTIONS}
@@ -2063,7 +2072,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    /* The open state sets its own transition at higher specificity, so it has
+       to be named here too. */
     .ledger-rail,
+    .ledger-shell.mobile-open .ledger-rail,
     .ledger-trigger-mark::before,
     .ledger-trigger-mark::after {
       transition: none;

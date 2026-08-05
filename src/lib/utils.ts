@@ -256,7 +256,7 @@ export function toCrimsonWitchSlug(
 ): string {
   if (opts?.isTraveler) {
     const element = (opts.element ?? "").trim();
-    return element ? `${element}_Traveler` : "Traveler";
+    return element ? `${encodeURIComponent(element)}_Traveler` : "Traveler";
   }
   // encodeURIComponent leaves `_` alone, so reserved characters in a name can
   // never break out of the path segment.

@@ -111,4 +111,13 @@ describe("defaultTravelerElement", () => {
   it("returns an empty string when no kit is available", () => {
     assert.equal(defaultTravelerElement({}, "Pyro"), "");
   });
+
+  it("ignores a base element that is not a guide element", () => {
+    const kits = {
+      Fontemer: stubKit({ name_id: "PlayerBoy-Fontemer", element: "Fontemer" }),
+      Anemo: stubKit({ name_id: "PlayerBoy-Anemo", element: "Anemo" }),
+    };
+    assert.deepEqual(availableTravelerElements(kits), ["Anemo"]);
+    assert.equal(defaultTravelerElement(kits, "Fontemer"), "Anemo");
+  });
 });

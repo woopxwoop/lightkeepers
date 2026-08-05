@@ -19,6 +19,11 @@ describe("toCrimsonWitchSlug", () => {
     assert.equal(toCrimsonWitchSlug("Odette"), "Odette");
   });
 
+  it("percent-encodes reserved characters but keeps underscores", () => {
+    assert.equal(toCrimsonWitchSlug("Foo & Bar"), "Foo_%26_Bar");
+    assert.equal(toCrimsonWitchSlug("A/B"), "A%2FB");
+  });
+
   it("uses Element_Traveler for traveler variants", () => {
     assert.equal(
       toCrimsonWitchSlug("Traveler", { isTraveler: true, element: "Cryo" }),
