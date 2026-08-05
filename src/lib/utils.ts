@@ -190,6 +190,11 @@ export function toGoodKey(name: string | null): string {
     .join("");
 }
 
+const CRIMSON_WITCH_BASE = "https://www.crimsonwitch.com";
+
+/** Site favicon (`rel="icon"` on crimsonwitch.com). */
+export const CRIMSON_WITCH_FAVICON_URL = `${CRIMSON_WITCH_BASE}/icon.png`;
+
 /** Elements gcsim models as distinct Traveler characters. */
 export const TRAVELER_ELEMENTS = [
   "Anemo",
@@ -201,6 +206,14 @@ export const TRAVELER_ELEMENTS = [
 ] as const;
 
 export type TravelerElement = (typeof TRAVELER_ELEMENTS)[number];
+
+/**
+ * Every Traveler resonance we surface kits / guides for. Superset of the
+ * gcsim list — Cryo has guides and CDN kits before sims exist for it.
+ */
+export const TRAVELER_GUIDE_ELEMENTS = [...TRAVELER_ELEMENTS, "Cryo"] as const;
+
+export type TravelerGuideElement = (typeof TRAVELER_GUIDE_ELEMENTS)[number];
 
 /** ``TravelerPyro`` etc. — element-split sim / guide keys. */
 export function travelerElementKey(
@@ -225,6 +238,55 @@ export function simCharacterKey(kit: {
     return travelerElementKey(kit.element) ?? "TravelerPyro";
   }
   return toGoodKey(kit.name);
+}
+
+export type CrimsonWitchLink = {
+  label: string;
+  url: string;
+  element?: TravelerGuideElement;
+};
+
+/**
+ * Crimson Witch path segment: display name with spaces as underscores.
+ * Traveler uses `{Element}_Traveler` (e.g. Cryo_Traveler).
+ */
+export function toCrimsonWitchSlug(
+  name: string,
+  opts?: { isTraveler?: boolean; element?: string | null },
+): string {
+  if (opts?.isTraveler) {
+    const element = (opts.element ?? "").trim();
+    return element ? `${element}_Traveler` : "Traveler";
+  }
+  return name.trim().replace(/\s+/g, "_");
+}
+
+/** Full Crimson Witch character guide URL. */
+export function getCrimsonWitchUrl(
+  name: string,
+  opts?: { isTraveler?: boolean; element?: string | null },
+): string {
+  const slug = toCrimsonWitchSlug(name, opts);
+  return slug ? `${CRIMSON_WITCH_BASE}/${slug}` : CRIMSON_WITCH_BASE;
+}
+
+/**
+ * External guide links for a character. Traveler expands to one URL per
+ * resonance element; everyone else gets a single guide link.
+ */
+export function getCrimsonWitchLinks(
+  name: string,
+  opts?: { isTraveler?: boolean; element?: string | null },
+): CrimsonWitchLink[] {
+  if (opts?.isTraveler) {
+    return TRAVELER_GUIDE_ELEMENTS.map((element) => ({
+      label: `${element} Traveler`,
+      url: getCrimsonWitchUrl("Traveler", { isTraveler: true, element }),
+      element,
+    }));
+  }
+  const url = getCrimsonWitchUrl(name, opts);
+  return url === CRIMSON_WITCH_BASE ? [] : [{ label: name, url }];
 }
 
 /**
