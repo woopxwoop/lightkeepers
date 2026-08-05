@@ -39,7 +39,12 @@
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
   import type { AbyssTeam, CharacterOwned } from "$lib/definitions";
-  import { statIconUrl, toGoodKey, weaponTypeLabel } from "$lib/utils";
+  import {
+    getNamecardUrl,
+    statIconUrl,
+    toGoodKey,
+    weaponTypeLabel,
+  } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
@@ -123,6 +128,28 @@
   ] as const;
 
   let sampleChars = $derived($charactersOwned.slice(0, 8));
+  let detailDemoChar = $derived(
+    $charactersOwned.find((character) => character.name === "Raiden Shogun") ??
+      sampleChars[0],
+  );
+  let detailAccent = $derived(
+    elementColor(detailDemoChar?.element, "var(--accent-1)"),
+  );
+  // Full background-image value: an empty url("") would resolve against the
+  // current document and fetch the page itself as an image.
+  let detailNamecard = $derived(
+    detailDemoChar?.name_id
+      ? `url('${getNamecardUrl(detailDemoChar.name_id)}')`
+      : "none",
+  );
+  let detailTitle = $derived(
+    detailDemoChar?.name === "Raiden Shogun"
+      ? "Plane of Euthymia"
+      : "Character dossier",
+  );
+  let detailRegion = $derived(
+    detailDemoChar?.name === "Raiden Shogun" ? "Inazuma" : "Teyvat",
+  );
   let sampleMap = $derived(
     new Map(sampleChars.map((c) => [c.name_id ?? c.name, c])),
   );
@@ -143,6 +170,106 @@
   let slidingTab = $state<"top" | "bottom" | "skills">("top");
   let solutionIndex = $state(0);
   let iconStyleNote = $derived($displayPreferences.iconStyle);
+  let detailConcept = $state<"dossier" | "nameplate" | "compact">("dossier");
+
+  const DETAIL_CONCEPTS = [
+    {
+      value: "dossier" as const,
+      label: "Dossier",
+      note: "Portrait anchors the identity; facts become a readable ledger.",
+    },
+    {
+      value: "nameplate" as const,
+      label: "Nameplate",
+      note: "Art stays atmospheric while identity gets a quiet solid strip.",
+    },
+    {
+      value: "compact" as const,
+      label: "Compact",
+      note: "A dense utility header that brings the build content forward.",
+    },
+  ];
+
+  type CharacterDemoSection =
+    "builds" | "teams" | "kit" | "links" | "notes" | "media";
+
+  type CharacterSectionDemo = {
+    value: CharacterDemoSection;
+    label: string;
+    summary: string;
+    future?: boolean;
+  };
+
+  const CHARACTER_SECTION_DEMOS: CharacterSectionDemo[] = [
+    {
+      value: "builds",
+      label: "Builds",
+      summary: "Equipment, stats, and investment priorities",
+    },
+    {
+      value: "teams",
+      label: "Teams",
+      summary: "Popular lineups and simulated teams",
+    },
+    {
+      value: "kit",
+      label: "Kit",
+      summary: "Talents, passives, and constellations",
+    },
+    {
+      value: "links",
+      label: "Useful Links",
+      summary: "External guides and references",
+    },
+    {
+      value: "notes",
+      label: "Notes",
+      summary: "Future section used to test navigation scale",
+      future: true,
+    },
+    {
+      value: "media",
+      label: "Media",
+      summary: "Future section used to test navigation scale",
+      future: true,
+    },
+  ];
+
+  let railDemoSection = $state<CharacterDemoSection>("builds");
+  let ledgerMobileOpen = $state(false);
+
+  function sectionDemo(value: CharacterDemoSection) {
+    return (
+      CHARACTER_SECTION_DEMOS.find((section) => section.value === value) ??
+      CHARACTER_SECTION_DEMOS[0]
+    );
+  }
+
+  let railDemoActive = $derived(sectionDemo(railDemoSection));
+
+  type TeamSourceDemo = "stygian" | "abyss" | "simulated";
+  const TEAM_SOURCE_DEMOS = [
+    {
+      value: "stygian" as const,
+      label: "Stygian",
+      summary: "Current Stygian Onslaught meta teams",
+    },
+    {
+      value: "abyss" as const,
+      label: "Abyss",
+      summary: "Current Spiral Abyss meta teams",
+    },
+    {
+      value: "simulated" as const,
+      label: "Simulated",
+      summary: "Teams ranked from character investment simulations",
+    },
+  ];
+  let teamSourceDemo = $state<TeamSourceDemo>("stygian");
+  let activeTeamSourceDemo = $derived(
+    TEAM_SOURCE_DEMOS.find((source) => source.value === teamSourceDemo) ??
+      TEAM_SOURCE_DEMOS[0],
+  );
 
   const SEGMENT_OPTIONS = [
     { value: "roster" as const, label: "roster" },
@@ -289,6 +416,255 @@
     title="UI gallery"
     lede="Living surface for tokens and shared primitives. Icon style follows Display settings ({iconStyleNote})."
   />
+
+  <!-- ── Character detail concepts ─────────────────────────────────────── -->
+  <section class="gallery-section detail-concepts" id="character-detail">
+    <div class="section-head detail-concept-head">
+      <div>
+        <p class="concept-kicker">Route study · /characters/[slug]</p>
+        <h2>Character detail concepts</h2>
+        <p>
+          Three ways to separate the portrait from the identity copy while
+          leaving the existing tab content and information density intact.
+        </p>
+      </div>
+      <div
+        class="concept-picker"
+        role="group"
+        aria-label="Character detail concept"
+      >
+        {#each DETAIL_CONCEPTS as concept}
+          <Chip
+            active={detailConcept === concept.value}
+            onclick={() => (detailConcept = concept.value)}
+          >
+            {concept.label}
+          </Chip>
+        {/each}
+      </div>
+    </div>
+
+    <p class="concept-note">
+      {DETAIL_CONCEPTS.find((concept) => concept.value === detailConcept)?.note}
+    </p>
+
+    {#if detailDemoChar}
+      <div class="detail-prototype" style="--detail-accent: {detailAccent};">
+        {#if detailConcept === "dossier"}
+          <header class="detail-hero detail-hero-dossier">
+            <div
+              class="detail-atmosphere"
+              style="background-image: {detailNamecard};"
+            ></div>
+            <div class="detail-hero-scrim"></div>
+            <a class="detail-back" href="#character-detail">← All characters</a>
+
+            <div class="dossier-layout">
+              <div class="dossier-portrait">
+                <CharacterIcon
+                  character={detailDemoChar}
+                  iconStyle="tcg"
+                  loading="eager"
+                />
+              </div>
+
+              <div class="dossier-identity">
+                <p class="detail-eyebrow">{detailTitle}</p>
+                <h3>{detailDemoChar.name}</h3>
+                <div class="detail-meta-line">
+                  <span>{detailDemoChar.element}</span>
+                  <span aria-hidden="true">·</span>
+                  <span
+                    >{weaponTypeLabel(detailDemoChar.weapon_type ?? "")}</span
+                  >
+                  <span aria-hidden="true">·</span>
+                  <span>{detailDemoChar.rarity}★</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{detailRegion}</span>
+                </div>
+              </div>
+            </div>
+          </header>
+        {:else if detailConcept === "nameplate"}
+          <header class="detail-hero detail-hero-nameplate">
+            <div
+              class="detail-atmosphere"
+              style="background-image: {detailNamecard};"
+            ></div>
+            <div class="detail-hero-scrim"></div>
+            <a class="detail-back" href="#character-detail">← All characters</a>
+            <div class="nameplate-portrait">
+              <CharacterIcon
+                character={detailDemoChar}
+                iconStyle="tcg"
+                loading="eager"
+              />
+            </div>
+            <div class="nameplate-bar">
+              <div>
+                <p class="detail-eyebrow">{detailTitle}</p>
+                <h3>{detailDemoChar.name}</h3>
+              </div>
+              <div class="nameplate-meta">
+                <span>{detailDemoChar.element}</span>
+                <span>{weaponTypeLabel(detailDemoChar.weapon_type ?? "")}</span>
+                <span>{detailDemoChar.rarity}★</span>
+                <span>{detailRegion}</span>
+              </div>
+            </div>
+          </header>
+        {:else}
+          <header class="detail-hero detail-hero-compact">
+            <div class="compact-portrait">
+              <CharacterIcon
+                character={detailDemoChar}
+                iconStyle="enka"
+                loading="eager"
+              />
+            </div>
+            <div class="compact-identity">
+              <a class="detail-back" href="#character-detail"
+                >← All characters</a
+              >
+              <p class="detail-eyebrow">{detailTitle}</p>
+              <h3>{detailDemoChar.name}</h3>
+            </div>
+            <dl class="compact-facts">
+              <div>
+                <dt>Element</dt>
+                <dd>{detailDemoChar.element}</dd>
+              </div>
+              <div>
+                <dt>Weapon</dt>
+                <dd>{weaponTypeLabel(detailDemoChar.weapon_type ?? "")}</dd>
+              </div>
+              <div>
+                <dt>Region</dt>
+                <dd>{detailRegion}</dd>
+              </div>
+            </dl>
+          </header>
+        {/if}
+      </div>
+    {:else}
+      <Surface variant="empty">
+        <p class="token-meta">
+          Character data has not loaded yet. The concept will appear once the
+          roster store is ready.
+        </p>
+      </Surface>
+    {/if}
+  </section>
+
+  <!-- ── Scalable character navigation ─────────────────────────────────── -->
+  <section class="gallery-section" id="character-navigation">
+    <div class="section-head">
+      <p class="concept-kicker">Navigation study · six-section stress test</p>
+      <h2>Responsive ledger index</h2>
+      <p>
+        A persistent rail when space allows, collapsing into a full-width
+        section disclosure on mobile. Notes and Media are marked future so the
+        pattern can be tested under growth.
+      </p>
+    </div>
+
+    <div class="nav-study-stack">
+      <article class="nav-study">
+        <header class="nav-study-head">
+          <div>
+            <p class="nav-study-name">Ledger rail</p>
+            <p class="nav-study-note">
+              Same visual language at both sizes—only its orientation changes.
+            </p>
+          </div>
+          <span class="nav-study-fit">Responsive</span>
+        </header>
+
+        <div class="ledger-shell" class:mobile-open={ledgerMobileOpen}>
+          <button
+            type="button"
+            class="ledger-mobile-trigger"
+            aria-expanded={ledgerMobileOpen}
+            aria-controls="ledger-mobile-index"
+            onclick={() => (ledgerMobileOpen = !ledgerMobileOpen)}
+          >
+            <span>
+              <small>Section</small>
+              <strong>{railDemoActive.label}</strong>
+            </span>
+            <span class="ledger-trigger-mark" aria-hidden="true"></span>
+          </button>
+
+          <nav
+            class="ledger-rail"
+            id="ledger-mobile-index"
+            aria-label="Character section index"
+            style:--section-count={CHARACTER_SECTION_DEMOS.length}
+          >
+            {#each CHARACTER_SECTION_DEMOS as section (section.value)}
+              <button
+                type="button"
+                aria-pressed={railDemoSection === section.value}
+                class:active={railDemoSection === section.value}
+                onclick={() => {
+                  railDemoSection = section.value;
+                  ledgerMobileOpen = false;
+                }}
+              >
+                <span>{section.label}</span>
+                {#if section.future}<small>Future</small>{/if}
+              </button>
+            {/each}
+          </nav>
+          <div class="nav-content-sample">
+            <p class="nav-content-kicker">Character record</p>
+            <h3>{railDemoActive.label}</h3>
+            <p>{railDemoActive.summary}</p>
+            {#if railDemoActive.future}
+              <span class="future-notice">Scale test only</span>
+            {/if}
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ── Character team source control ─────────────────────────────────── -->
+  <section class="gallery-section" id="team-source-control">
+    <div class="section-head">
+      <p class="concept-kicker">Character teams · source control</p>
+      <h2>Borderless source menu</h2>
+      <p>
+        Keep the familiar dropdown, but reduce its trigger to selected text and
+        a chevron. The menu itself retains the bordered surface.
+      </p>
+    </div>
+
+    <div class="team-source-demo">
+      <header class="team-source-demo-head">
+        <div>
+          <p class="nav-content-kicker">Teams</p>
+          <h3>Popular lineups</h3>
+        </div>
+        <p>Choose where the rankings come from.</p>
+      </header>
+
+      <div class="source-menu-row">
+        <span>Teams:</span>
+        <Select
+          options={TEAM_SOURCE_DEMOS}
+          bind:value={teamSourceDemo}
+          bare
+          aria-label="Team source demo"
+        />
+      </div>
+
+      <div class="team-source-result" aria-live="polite">
+        <span>Showing</span>
+        <p>{activeTeamSourceDemo.summary}</p>
+      </div>
+    </div>
+  </section>
 
   <!-- ── Tokens ─────────────────────────────────────────────────────────── -->
   <section class="gallery-section" id="tokens">
@@ -504,12 +880,17 @@
         <p class="surface-label">SlidingTabs</p>
         <p class="token-meta mb-2">
           Indicator tablist (Abyss / Stygian / character detail). Accent can be
-          slot gold or element color.
+          slot gold or element color. Below 640px only the first tab stays
+          direct and the other two move into the "More" control (<code
+            >mobileMaxVisible</code
+          >).
         </p>
         <SlidingTabs
           options={SLIDING_TAB_OPTIONS}
           bind:value={slidingTab}
           accent={slidingAccent}
+          maxVisible={3}
+          mobileMaxVisible={2}
           aria-label="Demo sliding tabs"
         />
         <div
@@ -1028,6 +1409,760 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  /* ── Character detail route study ────────────────────────────────── */
+  .detail-concepts {
+    gap: var(--space-3);
+  }
+
+  .detail-concept-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-5);
+  }
+
+  .concept-kicker,
+  .detail-eyebrow {
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+  }
+
+  .concept-kicker {
+    margin-bottom: 0.25rem;
+    color: var(--accent-1) !important;
+  }
+
+  .concept-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+
+  .concept-note {
+    font-size: var(--text-sm);
+    color: var(--foreground-mid);
+  }
+
+  .detail-prototype {
+    overflow: hidden;
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 22%, transparent);
+    border-radius: var(--radius-lg);
+    background: var(--background-mid);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+  }
+
+  .detail-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 18rem;
+    border-bottom: var(--border-width) solid
+      color-mix(in srgb, var(--detail-accent) 42%, transparent);
+  }
+
+  .detail-atmosphere,
+  .detail-hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+
+  .detail-atmosphere {
+    background-position: center;
+    background-size: cover;
+    opacity: 0.55;
+    filter: saturate(0.85);
+    transform: scale(1.02);
+  }
+
+  .detail-hero-scrim {
+    z-index: -1;
+    background:
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--background-color) 94%, transparent) 0%,
+        color-mix(in srgb, var(--background-color) 62%, transparent) 54%,
+        color-mix(in srgb, var(--background-color) 80%, transparent) 100%
+      ),
+      linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--background-mid) 92%, transparent),
+        transparent 65%
+      );
+  }
+
+  .detail-back {
+    width: fit-content;
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .detail-back:hover {
+    color: var(--foreground-color);
+  }
+
+  .detail-hero-dossier {
+    min-height: 26rem;
+    padding: var(--space-5);
+  }
+
+  .detail-hero-dossier > .detail-back {
+    position: relative;
+    z-index: 2;
+  }
+
+  .dossier-layout {
+    display: grid;
+    grid-template-columns: minmax(11rem, 15rem) minmax(12rem, 32rem);
+    gap: clamp(1.25rem, 4vw, 3.5rem);
+    align-items: end;
+    min-height: 20.5rem;
+    padding-top: var(--space-4);
+  }
+
+  .dossier-portrait {
+    overflow: hidden;
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 34%, transparent);
+    border-radius: var(--radius-lg);
+    background: var(--background-color);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.42);
+  }
+
+  .dossier-portrait :global(.icon-root) {
+    min-height: 20rem;
+  }
+
+  .dossier-identity {
+    align-self: center;
+    padding-bottom: 0.5rem;
+  }
+
+  .detail-eyebrow {
+    margin-bottom: 0.45rem;
+    color: var(--detail-accent);
+  }
+
+  .dossier-identity h3,
+  .nameplate-bar h3,
+  .compact-identity h3 {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 4vw, 2.8rem);
+    font-weight: 600;
+    line-height: 1.02;
+    color: var(--foreground-color);
+  }
+
+  .dossier-identity h3 {
+    max-width: 10ch;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+  }
+
+  .detail-meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.65rem;
+    margin-top: var(--space-3);
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+  }
+
+  .detail-meta-line span:nth-child(even) {
+    color: color-mix(in srgb, var(--detail-accent) 65%, transparent);
+  }
+
+  .compact-facts div {
+    padding: 0.75rem;
+    border-right: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 22%, transparent);
+    border-bottom: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 22%, transparent);
+  }
+
+  .compact-facts dt {
+    margin-bottom: 0.3rem;
+    color: var(--foreground-mid);
+    font-family: var(--font-display);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .compact-facts dd {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--foreground-color);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  .detail-hero-nameplate {
+    min-height: 25rem;
+    padding: var(--space-5);
+  }
+
+  .detail-hero-nameplate .detail-hero-scrim {
+    background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--background-color) 94%, transparent) 0%,
+      color-mix(in srgb, var(--background-color) 28%, transparent) 70%
+    );
+  }
+
+  .nameplate-portrait {
+    position: absolute;
+    right: clamp(1rem, 7vw, 5rem);
+    bottom: 0;
+    width: clamp(10rem, 27vw, 16rem);
+    opacity: 0.92;
+  }
+
+  .nameplate-bar {
+    position: absolute;
+    right: var(--space-5);
+    bottom: var(--space-5);
+    left: var(--space-5);
+    z-index: 2;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-4);
+    border-left: 2px solid var(--detail-accent);
+    background: color-mix(in srgb, var(--background-mid) 88%, transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  .nameplate-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem 1rem;
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+  }
+
+  .detail-hero-compact {
+    display: grid;
+    grid-template-columns: 7rem minmax(10rem, 1fr) minmax(20rem, auto);
+    align-items: center;
+    gap: var(--space-4);
+    min-height: auto;
+    padding: var(--space-4);
+    background:
+      linear-gradient(
+        100deg,
+        color-mix(in srgb, var(--detail-accent) 7%, transparent),
+        transparent 42%
+      ),
+      var(--background-mid);
+  }
+
+  .compact-portrait {
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--background-color);
+  }
+
+  .compact-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .compact-identity .detail-back {
+    margin-bottom: 0.55rem;
+  }
+
+  .compact-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(7rem, 1fr));
+    border-top: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 18%, transparent);
+    border-left: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 18%, transparent);
+  }
+
+  @media (max-width: 900px) {
+    .dossier-layout {
+      grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+    }
+
+    .dossier-portrait :global(.icon-root) {
+      min-height: 17rem;
+    }
+
+    .detail-hero-compact {
+      grid-template-columns: 6rem minmax(0, 1fr);
+    }
+
+    .compact-facts {
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .detail-concept-head {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .concept-picker {
+      justify-content: flex-start;
+    }
+
+    .detail-hero-dossier {
+      min-height: auto;
+      padding: var(--space-4);
+    }
+
+    .dossier-layout {
+      grid-template-columns: 6.5rem minmax(0, 1fr);
+      align-items: center;
+      min-height: auto;
+      padding-top: var(--space-5);
+    }
+
+    .dossier-portrait :global(.icon-root) {
+      min-height: 9rem;
+    }
+
+    .detail-meta-line {
+      gap: 0.3rem 0.45rem;
+      margin-top: var(--space-2);
+    }
+
+    .dossier-identity h3,
+    .nameplate-bar h3,
+    .compact-identity h3 {
+      font-size: clamp(1.35rem, 7vw, 1.8rem);
+    }
+
+    .detail-hero-nameplate {
+      min-height: 21rem;
+      padding: var(--space-4);
+    }
+
+    .nameplate-portrait {
+      right: 0;
+      width: 12rem;
+    }
+
+    .nameplate-bar {
+      right: var(--space-4);
+      bottom: var(--space-4);
+      left: var(--space-4);
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .nameplate-meta {
+      justify-content: flex-start;
+    }
+
+    .detail-hero-compact {
+      grid-template-columns: 4.75rem minmax(0, 1fr);
+      padding: var(--space-3);
+    }
+
+    .compact-facts {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .compact-facts div {
+      padding: 0.55rem;
+    }
+  }
+
+  /* ── Character section navigation studies ───────────────────────── */
+  .nav-study-stack {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .nav-study {
+    overflow: hidden;
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 22%, transparent);
+    border-radius: var(--radius-lg);
+    background: var(--background-mid);
+  }
+
+  .nav-study-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border-bottom: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 14%, transparent);
+  }
+
+  .nav-study-name {
+    color: var(--foreground-color);
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: 600;
+  }
+
+  .nav-study-note {
+    max-width: 60ch;
+    margin-top: 0.2rem;
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+    line-height: 1.45;
+  }
+
+  .nav-study-fit,
+  .future-notice {
+    flex-shrink: 0;
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 20%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 0.2rem 0.5rem;
+    color: var(--foreground-mid);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .ledger-shell {
+    display: grid;
+    grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+  }
+
+  .ledger-mobile-trigger {
+    display: none;
+  }
+
+  .ledger-rail {
+    display: flex;
+    flex-direction: column;
+    border-right: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 14%, transparent);
+  }
+
+  .ledger-rail button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-height: 2.8rem;
+    padding: 0.65rem var(--space-3);
+    border-bottom: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 10%, transparent);
+    color: var(--foreground-mid);
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    text-align: left;
+    transition: var(--control-transition);
+  }
+
+  .ledger-rail button::before {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 2px;
+    background: transparent;
+    content: "";
+  }
+
+  .ledger-rail button:hover {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
+  }
+
+  .ledger-rail button.active {
+    color: var(--foreground-color);
+    background: var(--surface-selected);
+  }
+
+  .ledger-rail button.active::before {
+    background: var(--accent-1);
+  }
+
+  .ledger-rail small {
+    color: var(--foreground-mid);
+    font-size: 0.52rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .nav-content-sample {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 12rem;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    background:
+      linear-gradient(
+        115deg,
+        color-mix(in srgb, var(--foreground-color) 3%, transparent),
+        transparent 60%
+      ),
+      var(--background-mid);
+  }
+
+  .nav-content-kicker {
+    color: var(--accent-1);
+    font-family: var(--font-display);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+  }
+
+  .nav-content-sample h3 {
+    margin-top: 0.3rem;
+    color: var(--foreground-color);
+    font-family: var(--font-display);
+    font-size: clamp(1.45rem, 3vw, 2rem);
+    font-weight: 600;
+  }
+
+  .nav-content-sample > p:last-of-type {
+    max-width: 48ch;
+    margin-top: 0.35rem;
+    color: var(--foreground-mid);
+    font-size: var(--text-sm);
+  }
+
+  .future-notice {
+    width: fit-content;
+    margin-top: var(--space-3);
+  }
+
+  @media (max-width: 640px) {
+    .nav-study-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .ledger-shell {
+      display: block;
+    }
+
+    .ledger-mobile-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 3.6rem;
+      padding: 0.65rem var(--space-4);
+      border-bottom: var(--border-width) solid
+        color-mix(in srgb, var(--foreground-color) 14%, transparent);
+      color: var(--foreground-color);
+      text-align: left;
+      background: var(--surface-selected);
+    }
+
+    .ledger-mobile-trigger > span:first-child {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .ledger-mobile-trigger small {
+      color: var(--foreground-mid);
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .ledger-mobile-trigger strong {
+      font-family: var(--font-display);
+      font-size: var(--text-base);
+      font-weight: 600;
+    }
+
+    .ledger-trigger-mark {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--foreground-color) 22%, transparent);
+      border-radius: var(--radius-pill);
+      color: var(--accent-1);
+    }
+
+    .ledger-trigger-mark::before,
+    .ledger-trigger-mark::after {
+      position: absolute;
+      width: 0.65rem;
+      height: 1px;
+      background: currentColor;
+      content: "";
+      transition: transform var(--control-duration) var(--control-ease);
+    }
+
+    .ledger-trigger-mark::after {
+      transform: rotate(90deg);
+    }
+
+    .ledger-shell.mobile-open .ledger-trigger-mark::after {
+      transform: rotate(90deg) scaleX(0);
+    }
+
+    .ledger-rail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-height: 0;
+      overflow: hidden;
+      border-right: 0;
+      border-bottom: var(--border-width) solid transparent;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-0.35rem);
+      transition:
+        max-height 260ms var(--control-ease),
+        opacity 180ms var(--control-ease),
+        transform 260ms var(--control-ease),
+        border-color 180ms var(--control-ease),
+        visibility 0s linear 260ms;
+    }
+
+    .ledger-shell.mobile-open .ledger-rail {
+      max-height: calc(var(--section-count) * 2.8rem);
+      border-bottom-color: color-mix(
+        in srgb,
+        var(--foreground-color) 14%,
+        transparent
+      );
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition:
+        max-height 260ms var(--control-ease),
+        opacity 180ms var(--control-ease),
+        transform 260ms var(--control-ease),
+        border-color 180ms var(--control-ease),
+        visibility 0s;
+    }
+
+    .ledger-rail button:nth-child(even) {
+      border-left: var(--border-width) solid
+        color-mix(in srgb, var(--foreground-color) 10%, transparent);
+    }
+
+    .nav-content-sample {
+      min-height: 9rem;
+      padding: var(--space-4);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* The open state sets its own transition at higher specificity, so it has
+       to be named here too. */
+    .ledger-rail,
+    .ledger-shell.mobile-open .ledger-rail,
+    .ledger-trigger-mark::before,
+    .ledger-trigger-mark::after {
+      transition: none;
+    }
+  }
+
+  /* ── Character team source study ─────────────────────────────────── */
+  .team-source-demo {
+    overflow: hidden;
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 22%, transparent);
+    border-radius: var(--radius-lg);
+    background: var(--background-mid);
+  }
+
+  .team-source-demo-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4);
+  }
+
+  .team-source-demo-head h3 {
+    margin-top: 0.25rem;
+    color: var(--foreground-color);
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 3vw, 1.65rem);
+    font-weight: 600;
+  }
+
+  .team-source-demo-head > p {
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+  }
+
+  .source-menu-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    padding: 0.8rem var(--space-4);
+    border-block: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 14%, transparent);
+  }
+
+  .source-menu-row > span {
+    color: var(--foreground-color);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+  }
+
+  .team-source-result {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .team-source-result span {
+    color: var(--accent-1);
+    font-family: var(--font-display);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+  }
+
+  .team-source-result p {
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+  }
+
+  @media (max-width: 560px) {
+    .team-source-demo-head {
+      align-items: start;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .team-source-result {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
   }
 
   .section-head h2 {

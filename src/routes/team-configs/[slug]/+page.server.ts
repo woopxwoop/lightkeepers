@@ -42,7 +42,12 @@ export const load: PageServerLoad = async ({ params }) => {
     sim.characters.map(async (build) => {
       const base = characterBaseByKey.get(build.key);
       if (!base) return;
-      const kit = await getCharacterKit(base.name_id);
+      // Kit icons are decorative here, so a CDN hiccup drops the icons rather
+      // than the page.
+      const kit = await getCharacterKit(base.name_id).catch((err) => {
+        console.warn(`[team-configs] kit ${base.name_id} unavailable:`, err);
+        return null;
+      });
       if (!kit) return;
 
       const byType = Object.fromEntries(

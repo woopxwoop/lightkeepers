@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends string">
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
+  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
 
   type Option = { value: T; label: string };
 
@@ -8,6 +9,8 @@
     value = $bindable(),
     accent = "var(--accent-1)",
     class: className = "",
+    maxVisible,
+    mobileMaxVisible,
     "aria-label": ariaLabel = "Tabs",
   }: {
     options: readonly Option[];
@@ -15,16 +18,66 @@
     /** Indicator / wash color (slot accent, element color, etc.). */
     accent?: string;
     class?: string;
+    /** Collapse excess options into a "More" select. */
+    maxVisible?: number;
+    /** Mobile override for the total number of direct tabs + "More". */
+    mobileMaxVisible?: number;
     "aria-label"?: string;
   } = $props();
 
-  let activeIndex = $derived(
-    Math.max(
-      0,
-      options.findIndex((o) => o.value === value),
-    ),
+  let isMobile = $state(false);
+
+  $effect(() => {
+    if (mobileMaxVisible === undefined) return;
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => (isMobile = media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  });
+
+  let effectiveMaxVisible = $derived(
+    isMobile && mobileMaxVisible !== undefined ? mobileMaxVisible : maxVisible,
   );
-  let count = $derived(Math.max(options.length, 1));
+  let shouldCollapse = $derived(
+    effectiveMaxVisible !== undefined &&
+      effectiveMaxVisible >= 2 &&
+      options.length > effectiveMaxVisible,
+  );
+  let directCount = $derived(
+    shouldCollapse && effectiveMaxVisible !== undefined
+      ? effectiveMaxVisible - 1
+      : options.length,
+  );
+  let directOptions = $derived(
+    shouldCollapse ? options.slice(0, directCount) : options,
+  );
+  let overflowOptions = $derived(
+    shouldCollapse ? options.slice(directCount) : [],
+  );
+  let overflowActive = $derived(
+    overflowOptions.some((option) => option.value === value),
+  );
+  // Doubles as the panel name while an overflow option is active, since the
+  // control then carries `tab-{value}` — so lead with the option, not the menu.
+  let overflowLabel = $derived(
+    overflowActive
+      ? `${
+          overflowOptions.find((option) => option.value === value)?.label ?? ""
+        }, more tabs`
+      : "More tabs",
+  );
+  let activeIndex = $derived(
+    overflowActive
+      ? directOptions.length
+      : Math.max(
+          0,
+          directOptions.findIndex((o) => o.value === value),
+        ),
+  );
+  let count = $derived(
+    Math.max(directOptions.length + (shouldCollapse ? 1 : 0), 1),
+  );
   let left = $derived(`calc((100% / ${count}) * ${activeIndex})`);
   let width = $derived(`calc(100% / ${count})`);
 
@@ -55,16 +108,36 @@
     }
     event.preventDefault();
     selectIndex(next);
-    const buttons = (
-      event.currentTarget as HTMLElement
-    ).parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    buttons?.[next]?.focus();
+    // The overflow select sits outside the tablist, so walk up to the shared
+    // root rather than assuming the control's parent holds every sibling.
+    const controls = (event.currentTarget as HTMLElement)
+      .closest(".sliding-tabs")
+      ?.querySelectorAll<HTMLElement>('button[role="tab"], .more-tab select');
+    const nextOption = options[next];
+    const focusIndex =
+      nextOption &&
+      overflowOptions.some((option) => option.value === nextOption.value)
+        ? directOptions.length
+        : next;
+    controls?.[focusIndex]?.focus();
+  }
+
+  /** Horizontal tab travel from the overflow select; Up/Down stay native. */
+  function onOverflowKeydown(event: KeyboardEvent) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    // With nothing selected the control sits between the last direct tab and the
+    // first overflow option, so each arrow starts from the neighbour it steps off
+    // — otherwise ArrowRight would skip the first overflow option entirely.
+    const index = overflowActive
+      ? options.findIndex((option) => option.value === value)
+      : event.key === "ArrowRight"
+        ? directCount - 1
+        : directCount;
+    onTabKeydown(event, Math.max(0, index));
   }
 </script>
 
 <div
-  role="tablist"
-  aria-label={ariaLabel}
   class="sliding-tabs relative flex overflow-hidden {className}"
   style="--tab-accent: {accent};"
 >
@@ -76,25 +149,59 @@
     class="indicator-bar absolute bottom-0 h-[1.5px] pointer-events-none"
     style="left: {left}; width: {width}; background: var(--tab-accent);"
   ></span>
-  {#each options as option, index (option.value)}
-    <button
-      type="button"
-      role="tab"
-      id="tab-{option.value}"
-      aria-controls="tabpanel-{option.value}"
-      aria-selected={value === option.value}
-      tabindex={value === option.value ? 0 : -1}
-      onpointerdown={(event) =>
-        handlePointerAction(event, () => (value = option.value))}
-      onclick={(event) =>
-        handleKeyboardClick(event, () => (value = option.value))}
-      onkeydown={(event) => onTabKeydown(event, index)}
-      class="tab relative z-1 flex-1 py-2.5 text-xs font-medium pointer-events-auto touch-manipulation"
-      class:tab-active={value === option.value}
+  <!-- Only real tabs live in the tablist; the overflow combobox stays outside. -->
+  <div
+    role="tablist"
+    aria-label={ariaLabel}
+    class="tablist flex min-w-0"
+    style="flex: {directOptions.length};"
+  >
+    {#each directOptions as option, index (option.value)}
+      <button
+        type="button"
+        role="tab"
+        id="tab-{option.value}"
+        aria-controls="tabpanel-{option.value}"
+        aria-selected={value === option.value}
+        tabindex={value === option.value ? 0 : -1}
+        onpointerdown={(event) =>
+          handlePointerAction(event, () => (value = option.value))}
+        onclick={(event) =>
+          handleKeyboardClick(event, () => (value = option.value))}
+        onkeydown={(event) => onTabKeydown(event, index)}
+        class="tab relative z-1 flex-1 py-2.5 text-xs font-medium pointer-events-auto touch-manipulation"
+        class:tab-active={value === option.value}
+      >
+        {option.label}
+      </button>
+    {/each}
+  </div>
+  {#if shouldCollapse}
+    <label
+      class="more-tab tab relative z-1 flex-1 pointer-events-auto"
+      class:tab-active={overflowActive}
     >
-      {option.label}
-    </button>
-  {/each}
+      <select
+        id={overflowActive ? `tab-${value}` : undefined}
+        aria-controls={overflowActive ? `tabpanel-${value}` : undefined}
+        aria-label={overflowLabel}
+        value={overflowActive ? value : ""}
+        onkeydown={onOverflowKeydown}
+        onchange={(event) => {
+          const next = event.currentTarget.value as T;
+          if (next) value = next;
+        }}
+      >
+        <option value="" disabled>More</option>
+        {#each overflowOptions as option (option.value)}
+          <option value={option.value}>{option.label}</option>
+        {/each}
+      </select>
+      <span class="more-chevron" aria-hidden="true">
+        <IconChevronDown size={10} strokeWidth={2.5} />
+      </span>
+    </label>
+  {/if}
 </div>
 
 <style>
@@ -118,5 +225,48 @@
 
   .tab-active {
     color: var(--tab-accent, var(--foreground-color));
+  }
+
+  .more-tab {
+    min-width: 0;
+  }
+
+  .more-tab select {
+    width: 100%;
+    height: 100%;
+    padding: 0.625rem 1.25rem 0.625rem 0.5rem;
+    border: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  /* The native popup is OS-drawn: inheriting the tab's light text over its
+     default light background leaves the options unreadable on Windows. */
+  .more-tab select option {
+    color: var(--foreground-color);
+    background-color: var(--background-mid);
+  }
+
+  .more-tab select:focus {
+    outline: 0;
+  }
+
+  .more-tab select:focus-visible {
+    outline: 2px solid var(--tab-accent, var(--accent-1));
+    outline-offset: -2px;
+  }
+
+  .more-chevron {
+    position: absolute;
+    top: 50%;
+    right: 0.55rem;
+    display: inline-flex;
+    translate: 0 -50%;
+    color: currentColor;
+    pointer-events: none;
   }
 </style>
