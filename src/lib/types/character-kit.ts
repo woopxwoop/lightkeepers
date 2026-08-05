@@ -3,6 +3,7 @@
  *
  *   genshin/data/characters/index.json         — CharacterKitIndex
  *   genshin/data/characters/{name_id}.json     — CharacterKit
+ *     Traveler: one file per element (`PlayerBoy-Anemo.json`, …)
  *
  * Produced by `scripts/data/extract-characters-json.ts` (via genshin-data
  * `listRichCharacters`) and uploaded by `scripts/sync/character-data-r2.ts`.

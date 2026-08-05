@@ -39,7 +39,7 @@
     "baseCritDMG": 0.5
   },
   "TravelerAnemo": {
-    "name_id": "PlayerBoy",
+    "name_id": "PlayerBoy-Anemo",
     "name": "Traveler",
     "level": 90,
     "hp": 10874.9,
@@ -52,7 +52,7 @@
     "baseCritDMG": 0.5
   },
   "TravelerDendro": {
-    "name_id": "PlayerBoy",
+    "name_id": "PlayerBoy-Dendro",
     "name": "Traveler",
     "level": 90,
     "hp": 10874.9,
@@ -65,7 +65,7 @@
     "baseCritDMG": 0.5
   },
   "TravelerElectro": {
-    "name_id": "PlayerBoy",
+    "name_id": "PlayerBoy-Electro",
     "name": "Traveler",
     "level": 90,
     "hp": 10874.9,
@@ -78,7 +78,7 @@
     "baseCritDMG": 0.5
   },
   "TravelerGeo": {
-    "name_id": "PlayerBoy",
+    "name_id": "PlayerBoy-Geo",
     "name": "Traveler",
     "level": 90,
     "hp": 10874.9,
@@ -91,7 +91,7 @@
     "baseCritDMG": 0.5
   },
   "TravelerHydro": {
-    "name_id": "PlayerBoy",
+    "name_id": "PlayerBoy-Hydro",
     "name": "Traveler",
     "level": 90,
     "hp": 10874.9,
@@ -104,7 +104,7 @@
     "baseCritDMG": 0.5
   },
   "TravelerPyro": {
-    "name_id": "PlayerBoy",
+    "name_id": "PlayerBoy-Pyro",
     "name": "Traveler",
     "level": 90,
     "hp": 10874.9,

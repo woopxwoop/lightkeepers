@@ -43,7 +43,6 @@
     associationLabel,
     buildGoodKeyMap,
     elementIconUrl,
-    getNamecardUrl,
     getUiAssetUrl,
     ownedGoodKeys,
     ownedNameIds,
@@ -209,7 +208,9 @@
   );
 
   let elColor = $derived(elementColor(kit.element, "var(--foreground-color)"));
-  let namecard = $derived(getNamecardUrl(kit.name_id));
+  // Prefer kit asset stem so Traveler elemental kits (`PlayerBoy-Anemo`) still
+  // resolve `UI_NameCardPic_PlayerBoy_P` rather than a non-existent suffix key.
+  let namecard = $derived(getUiAssetUrl(kit.assets.namecard));
   let region = $derived(associationLabel(kit.association));
   let elementIcon = $derived(elementIconUrl(kit.element));
   let weaponIcon = $derived(weaponTypeIconUrl(kit.weapon_type));
