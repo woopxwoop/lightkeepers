@@ -1,9 +1,6 @@
 <script lang="ts" generics="T extends string">
   import { onMount } from "svelte";
-  import {
-    handleKeyboardClick,
-    handlePointerAction,
-  } from "$lib/ui/pointer";
+  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
 
   type Option = { value: T; label: string };
 
@@ -40,9 +37,7 @@
   });
 
   let effectiveMaxVisible = $derived(
-    isMobile && mobileMaxVisible !== undefined
-      ? mobileMaxVisible
-      : maxVisible,
+    isMobile && mobileMaxVisible !== undefined ? mobileMaxVisible : maxVisible,
   );
   let shouldCollapse = $derived(
     effectiveMaxVisible !== undefined &&
@@ -104,9 +99,11 @@
     }
     event.preventDefault();
     selectIndex(next);
-    const controls = (event.currentTarget as HTMLElement)
-      .parentElement
-      ?.querySelectorAll<HTMLElement>('button[role="tab"], select');
+    const controls = (
+      event.currentTarget as HTMLElement
+    ).parentElement?.querySelectorAll<HTMLElement>(
+      'button[role="tab"], select',
+    );
     const nextOption = options[next];
     const focusIndex =
       nextOption &&

@@ -36,10 +36,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import UsageIndexPopover from "$lib/ui/components/UsageIndexPopover.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import {
-    handleKeyboardClick,
-    handlePointerAction,
-  } from "$lib/ui/pointer";
+  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
   import type { StygianTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
 
@@ -67,9 +64,8 @@
 
   let selectedIndex = $state(0);
 
-  const memoSolutions = createMemo<
-    ReturnType<typeof solveStygianWithFallback>
-  >();
+  const memoSolutions =
+    createMemo<ReturnType<typeof solveStygianWithFallback>>();
 
   let solutions = $derived.by(() => {
     const owned = $teamsOwnedStygian;
@@ -254,7 +250,9 @@
   {:else if $staticBoardsError && $allTeamsStygian.length === 0}
     <EmptyState message="Could not load Stygian teams right now.">
       {#snippet action()}
-        <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+        <Button variant="secondary" onclick={retryStaticBoards}
+          >Try again</Button
+        >
       {/snippet}
     </EmptyState>
   {:else}
@@ -263,7 +261,8 @@
         <div class="board-head-left">
           <span class="eyebrow board-eyebrow">
             Solution {safeIndex + 1}
-            <span class="board-eyebrow-total">of {displaySolutions.length}</span>
+            <span class="board-eyebrow-total">of {displaySolutions.length}</span
+            >
           </span>
         </div>
 

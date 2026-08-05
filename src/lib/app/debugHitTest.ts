@@ -9,7 +9,10 @@ type DebugWindow = Window & {
 function attachHitTestLogging(): () => void {
   const logEvent = (event: MouseEvent | PointerEvent) => {
     const target = event.target as Element | null;
-    const elementAtPoint = document.elementFromPoint(event.clientX, event.clientY);
+    const elementAtPoint = document.elementFromPoint(
+      event.clientX,
+      event.clientY,
+    );
 
     console.log("[LK HITTEST]", {
       type: event.type,

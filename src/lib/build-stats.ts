@@ -117,11 +117,7 @@ export interface SheetStatBag {
   def: number;
 }
 
-function add(
-  bag: Record<string, number>,
-  key: string,
-  amount: number,
-): void {
+function add(bag: Record<string, number>, key: string, amount: number): void {
   if (!amount) return;
   bag[key] = (bag[key] ?? 0) + amount;
 }
@@ -237,7 +233,15 @@ export function computeBuildSheetStats(
 }
 
 export function formatSheetStat(
-  key: "hp" | "atk" | "def" | "eleMas" | "enerRech" | "critRate" | "critDMG" | string,
+  key:
+    | "hp"
+    | "atk"
+    | "def"
+    | "eleMas"
+    | "enerRech"
+    | "critRate"
+    | "critDMG"
+    | string,
   value: number,
 ): string {
   if (key === "hp" || key === "atk" || key === "def" || key === "eleMas") {

@@ -7,14 +7,24 @@
  * keeps working.
  */
 import type { CharacterKit } from "$lib/types/character-kit";
-import { TRAVELER_ELEMENTS, type TravelerElement } from "$lib/utils";
+import { TRAVELER_GUIDE_ELEMENTS, type TravelerGuideElement } from "$lib/utils";
+
+/** Bare roster name_id (`PlayerBoy-Anemo` → `PlayerBoy`). */
+export function travelerBaseNameId(nameId: string): string {
+  for (const element of TRAVELER_GUIDE_ELEMENTS) {
+    if (nameId.endsWith(`-${element}`)) {
+      return nameId.slice(0, -(element.length + 1));
+    }
+  }
+  return nameId;
+}
 
 /** CDN name_id for one Traveler resonance kit. */
 export function travelerElementKitId(
   nameId: string,
-  element: TravelerElement | string,
+  element: TravelerGuideElement | string,
 ): string {
-  return `${nameId}-${element}`;
+  return `${travelerBaseNameId(nameId)}-${element}`;
 }
 
 /**
@@ -24,10 +34,10 @@ export function travelerElementKitId(
 export function mergeTravelerKits(
   base: CharacterKit,
   byElement: Partial<Record<string, CharacterKit | null | undefined>>,
-): Record<TravelerElement, CharacterKit> | Record<string, CharacterKit> {
+): Record<string, CharacterKit> {
   const out: Record<string, CharacterKit> = {};
 
-  for (const element of TRAVELER_ELEMENTS) {
+  for (const element of TRAVELER_GUIDE_ELEMENTS) {
     const kit = byElement[element];
     if (kit) out[element] = kit;
   }
@@ -42,17 +52,17 @@ export function mergeTravelerKits(
 /** Elements that have a kit, in release order. */
 export function availableTravelerElements(
   kits: Record<string, CharacterKit>,
-): TravelerElement[] {
-  return TRAVELER_ELEMENTS.filter((element) => Boolean(kits[element]));
+): TravelerGuideElement[] {
+  return TRAVELER_GUIDE_ELEMENTS.filter((element) => Boolean(kits[element]));
 }
 
 /** Default Skills-tab element: base kit element when present, else first available. */
 export function defaultTravelerElement(
   kits: Record<string, CharacterKit>,
   baseElement: string | null | undefined,
-): TravelerElement | "" {
+): TravelerGuideElement | "" {
   if (baseElement && kits[baseElement]) {
-    return baseElement as TravelerElement;
+    return baseElement as TravelerGuideElement;
   }
   return availableTravelerElements(kits)[0] ?? "";
 }

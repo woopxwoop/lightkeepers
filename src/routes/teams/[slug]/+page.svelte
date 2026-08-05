@@ -46,9 +46,7 @@
   let team = $derived(findInvestmentTeam(investment, layoutData.slug));
   let pageError = $derived(
     error ??
-      (investment && !team
-        ? `Team "${layoutData.slug}" not found`
-        : null),
+      (investment && !team ? `Team "${layoutData.slug}" not found` : null),
   );
 
   onMount(() => {
@@ -83,9 +81,7 @@
   let baselineVariantsList = $derived(
     team ? baselineVariants(team) : ([] as InvestmentSim[]),
   );
-  let costGroups = $derived(
-    team ? groupVerticalSimsByCost(team) : [],
-  );
+  let costGroups = $derived(team ? groupVerticalSimsByCost(team) : []);
   let openCosts = $state<Set<number>>(new Set());
 
   function toggleCost(cost: number) {
@@ -100,10 +96,7 @@
     const names = characterNames;
     return (sim: InvestmentSim): string => {
       if (sim.kind === "baseline") return "Baseline";
-      return humanizeInvestmentLabel(
-        sim.label?.trim() || "variant",
-        names,
-      );
+      return humanizeInvestmentLabel(sim.label?.trim() || "variant", names);
     };
   });
 

@@ -104,8 +104,7 @@
             style={elementFilter.has(el)
               ? `border-color: ${ELEMENT_COLORS[el]}; color: ${ELEMENT_COLORS[el]};`
               : ""}
-            onclick={() =>
-              (elementFilter = toggleFilterSet(elementFilter, el))}
+            onclick={() => (elementFilter = toggleFilterSet(elementFilter, el))}
             >{el}</button
           >
         {/each}

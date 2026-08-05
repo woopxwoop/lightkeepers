@@ -64,7 +64,8 @@ export function ensureEquipmentData(): Promise<void> {
       import("$lib/data/weapons.json"),
       import("$lib/data/artifact-sets.json"),
     ]);
-    const weaponsRaw = (weaponsMod as { default?: WeaponData[] }).default ??
+    const weaponsRaw =
+      (weaponsMod as { default?: WeaponData[] }).default ??
       (weaponsMod as unknown as WeaponData[]);
     const artifactSetsRaw =
       (artifactsMod as { default?: ArtifactSetData[] }).default ??

@@ -89,31 +89,36 @@ async function fetchStaticData(): Promise<StaticPayload> {
   };
 
   // Fetch all teams + version enemies in parallel
-  const [abyssTeamsRes, stygianTeamsRes, versionEnemiesRes, abyssScheduleRes, stygianScheduleRes] =
-    await Promise.all([
-      serverDb.rpc("get_teams_with_characters_subset", {
-        p_name_ids: [],
-        p_version_number: latestAbyssVersion.version_number,
-      }),
-      serverDb.rpc("get_teams_with_characters_subset_stygian", {
-        p_name_ids: [],
-        p_version_number: latestStygianVersion.version_number,
-      }),
-      serverDb
-        .from("stygian_version_enemies")
-        .select("slot_index, enemy_id")
-        .eq("version_number", latestStygianVersion.version_number),
-      serverDb
-        .from("lunaris_abyss_versions")
-        .select("floors, buff_name, open_time")
-        .eq("ys_abyss_version", latestAbyssVersion.version_number)
-        .maybeSingle(),
-      serverDb
-        .from("lunaris_stygian_versions")
-        .select("schedule_id, open_time, close_time, challenge_name")
-        .eq("ys_stygian_version", latestStygianVersion.version_number)
-        .maybeSingle(),
-    ]);
+  const [
+    abyssTeamsRes,
+    stygianTeamsRes,
+    versionEnemiesRes,
+    abyssScheduleRes,
+    stygianScheduleRes,
+  ] = await Promise.all([
+    serverDb.rpc("get_teams_with_characters_subset", {
+      p_name_ids: [],
+      p_version_number: latestAbyssVersion.version_number,
+    }),
+    serverDb.rpc("get_teams_with_characters_subset_stygian", {
+      p_name_ids: [],
+      p_version_number: latestStygianVersion.version_number,
+    }),
+    serverDb
+      .from("stygian_version_enemies")
+      .select("slot_index, enemy_id")
+      .eq("version_number", latestStygianVersion.version_number),
+    serverDb
+      .from("lunaris_abyss_versions")
+      .select("floors, buff_name, open_time")
+      .eq("ys_abyss_version", latestAbyssVersion.version_number)
+      .maybeSingle(),
+    serverDb
+      .from("lunaris_stygian_versions")
+      .select("schedule_id, open_time, close_time, challenge_name")
+      .eq("ys_stygian_version", latestStygianVersion.version_number)
+      .maybeSingle(),
+  ]);
 
   if (abyssTeamsRes.error) {
     console.error("fetchStaticData: abyss RPC error", abyssTeamsRes.error);
@@ -124,15 +129,24 @@ async function fetchStaticData(): Promise<StaticPayload> {
     throw error(500, "Failed to fetch Stygian team data");
   }
   if (versionEnemiesRes.error) {
-    console.error("fetchStaticData: stygian_version_enemies error", versionEnemiesRes.error);
+    console.error(
+      "fetchStaticData: stygian_version_enemies error",
+      versionEnemiesRes.error,
+    );
     throw error(500, "Failed to fetch Stygian version enemies");
   }
   if (abyssScheduleRes.error) {
-    console.error("fetchStaticData: lunaris_abyss_versions error", abyssScheduleRes.error);
+    console.error(
+      "fetchStaticData: lunaris_abyss_versions error",
+      abyssScheduleRes.error,
+    );
     throw error(500, "Failed to fetch Abyss schedule data");
   }
   if (stygianScheduleRes.error) {
-    console.error("fetchStaticData: lunaris_stygian_versions error", stygianScheduleRes.error);
+    console.error(
+      "fetchStaticData: lunaris_stygian_versions error",
+      stygianScheduleRes.error,
+    );
     throw error(500, "Failed to fetch Stygian schedule data");
   }
 
@@ -151,9 +165,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
     throw error(500, "Failed to fetch enemy data");
   }
 
-  const enemyMap = new Map(
-    enemiesRes.data.map((e: Enemy) => [e.id, e]),
-  );
+  const enemyMap = new Map(enemiesRes.data.map((e: Enemy) => [e.id, e]));
 
   // slot_index: 0=top, 1=middle, 2=bottom
   const slotRow = (idx: number) =>
@@ -186,7 +198,12 @@ async function fetchStaticData(): Promise<StaticPayload> {
   const buffName: string | null = scheduleRow?.buff_name ?? null;
   const openTime: string | null = scheduleRow?.open_time ?? null;
 
-  const emptyAbyssEnemies: AbyssEnemies = { top: [], bottom: [], buffName, openTime };
+  const emptyAbyssEnemies: AbyssEnemies = {
+    top: [],
+    bottom: [],
+    buffName,
+    openTime,
+  };
   let abyssEnemies: AbyssEnemies = emptyAbyssEnemies;
 
   if (abyssScheduleRes.data?.floors) {

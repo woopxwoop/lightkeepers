@@ -36,7 +36,9 @@ async function fetchInvestment(): Promise<InvestmentFile> {
 
   const buf = Buffer.from(await res.arrayBuffer());
 
-  const raw = isGzipped(buf) ? (await gunzipAsync(buf)).toString("utf-8") : buf.toString("utf-8");
+  const raw = isGzipped(buf)
+    ? (await gunzipAsync(buf)).toString("utf-8")
+    : buf.toString("utf-8");
   return JSON.parse(raw);
 }
 

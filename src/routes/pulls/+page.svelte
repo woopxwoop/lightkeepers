@@ -137,10 +137,7 @@
   }
 
   /** Returns the same set when nothing changed, so re-ranking is a no-op. */
-  function nextRevealed(
-    revealed: Set<string>,
-    ids: string[],
-  ): Set<string> {
+  function nextRevealed(revealed: Set<string>, ids: string[]): Set<string> {
     const live = new Set(ids);
     const kept = [...revealed].filter((id) => live.has(id));
     return kept.length === revealed.size ? revealed : new Set(kept);

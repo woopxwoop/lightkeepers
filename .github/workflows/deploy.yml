@@ -17,6 +17,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # Prometheus refuses to start on a malformed config, and the compose
+      # restart loop is silent — catch it here instead of on the VPS.
+      - name: Validate Prometheus config
+        run: |
+          # promtool stats the credentials files, so stub the real secrets.
+          mkdir -p /tmp/prometheus-secrets
+          printf 'stub' > /tmp/prometheus-secrets/metrics_token
+          printf 'stub' > /tmp/prometheus-secrets/remote_write_password
+          docker run --rm \
+            -v "$PWD/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
+            -v /tmp/prometheus-secrets:/etc/prometheus/secrets:ro \
+            --entrypoint promtool \
+            prom/prometheus:v3.2.1 \
+            check config /etc/prometheus/prometheus.yml
+
       - name: Log in to GHCR
         uses: docker/login-action@v4
         with:
@@ -105,9 +120,8 @@ jobs:
             chmod 600 ~/app/.env
             mkdir -p ~/app/secrets
             mv ~/app/remote_write_password ~/app/secrets/remote_write_password
-            chmod 600 ~/app/secrets/remote_write_password
             mv ~/app/metrics_token ~/app/secrets/metrics_token
-            chmod 600 ~/app/secrets/metrics_token
+            chmod 644 ~/app/secrets/remote_write_password ~/app/secrets/metrics_token
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
             docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d

@@ -37,10 +37,7 @@
     handBuilds,
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
-  import {
-    loadInvestment,
-    getInvestmentCached,
-  } from "$lib/app/investment";
+  import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import {
     artifactSlotIconUrl,
     associationLabel,
@@ -53,7 +50,7 @@
     statIconUrl,
     getCrimsonWitchLinks,
     CRIMSON_WITCH_FAVICON_URL,
-    toGoodKey,
+    simCharacterKey,
     translateStatKey,
     weaponTypeIconUrl,
     weaponTypeLabel,
@@ -62,15 +59,20 @@
     availableTravelerElements,
     defaultTravelerElement,
   } from "$lib/traveler-kits";
-  import { artifactSetByKey, weaponByKey, weaponIconSrc, equipmentVersion, ensureEquipmentData } from "$lib/equipment-data";
+  import {
+    artifactSetByKey,
+    weaponByKey,
+    equipmentVersion,
+    ensureEquipmentData,
+  } from "$lib/equipment-data";
   import {
     MAIN_STAT_SLOTS,
-    constellationImpactRows,
-    levelImportanceFromBuilds,
-    rankSigWeaponsByGain,
+    constellationPrioritySection,
+    levelPrioritySection,
     rankWeaponsByRarityAndTeams,
     recommendedSubstatsFromBuilds,
-    talentImportanceRows as buildTalentImportanceRows,
+    sigWeaponPrioritySection,
+    talentPrioritySection,
   } from "$lib/character-builds";
   import {
     artifactIconUrl,
@@ -78,11 +80,9 @@
     talentIconUrl,
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
-  import type {
-    CharacterIndex,
-    InvestmentFile,
-  } from "$lib/types/investment";
+  import type { CharacterIndex, InvestmentFile } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
+  import type { UpgradeTier } from "$lib/upgrade-priority";
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
@@ -187,7 +187,7 @@
         ),
   );
 
-  let goodKey = $derived(toGoodKey(kit.name));
+  let goodKey = $derived(simCharacterKey(kit));
   let crimsonWitchLinks = $derived(
     getCrimsonWitchLinks(kit.name, {
       isTraveler: kit.is_traveler,
@@ -213,7 +213,9 @@
   let teamsLoading = $derived(
     teamsMode === "simulated"
       ? investmentLoading && !investment
-      : !$staticBoardsError && !$staticBoardsLoaded && popularTeams.length === 0,
+      : !$staticBoardsError &&
+          !$staticBoardsLoaded &&
+          popularTeams.length === 0,
   );
 
   async function retryTeams() {
@@ -347,54 +349,30 @@
     return kitLinkIds.has(ref) ? `#kit-${ref}` : null;
   }
 
-  /**
-   * Weapons: higher rarity first, then team usage (stable within ties).
-   * Icons resolve here so tiles that keep their slot still pick up the
-   * lazily loaded tables (re-sorting alone reuses the same row objects).
-   */
+  /** Weapons: higher rarity first, then team usage (stable within ties). */
   let rankedWeapons = $derived.by(() => {
     $equipmentVersion;
     return rankWeaponsByRarityAndTeams(
       builds?.weapons,
       (key) => weaponByKey.get(key)?.stars ?? 0,
-    ).map((row) => ({
-      ...row,
-      weapon: weaponByKey.get(row.key) ?? null,
-      icon: weaponIconSrc(row.key),
-    }));
+    );
   });
 
   let recommendedSubstats = $derived(recommendedSubstatsFromBuilds(builds));
 
-  let constellationRows = $derived(
-    constellationImpactRows(builds?.vertical_importance?.constellations),
-  );
-
-  let rankedSigWeapons = $derived(
-    rankSigWeaponsByGain(builds?.vertical_importance?.sig_weapons),
-  );
-
-  /**
-   * Talent priority rows for Builds tab: qualitative upgrade labels from
-   * max(mean, median) % DPS drop when that talent is at 1.
-   */
-  let talentImportanceRows = $derived(
-    buildTalentImportanceRows(builds?.talent_importance, (kitType) => {
+  let talentSection = $derived(
+    talentPrioritySection(builds, (kitType) => {
       const skill = kit.skills.find((s) => s.type === kitType);
       if (!skill) return null;
       return iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon);
     }),
   );
 
-  /** Character level 90 importance for Builds tab (separate from talents). */
-  let levelImportance = $derived.by(() => {
-    const row = levelImportanceFromBuilds(builds);
-    if (!row) return null;
-    return {
-      ...row,
-      icon: getUiAssetUrl("UI_ItemIcon_104003"),
-    };
-  });
+  let levelSection = $derived(levelPrioritySection(builds));
+  let levelIcon = $derived(getUiAssetUrl("UI_ItemIcon_104003"));
+
+  let consSection = $derived(constellationPrioritySection(builds));
+  let sigSection = $derived(sigWeaponPrioritySection(builds));
 </script>
 
 {#snippet descriptionBlock(
@@ -417,6 +395,132 @@
       />
     {/if}
   {/if}
+{/snippet}
+
+{#snippet talentRow(row: {
+  name: string;
+  icon: string | null;
+  rank?: number;
+  priority?: UpgradeTier;
+  kind?: "talent" | "level";
+  priorityLabel?: string;
+  mean?: number;
+  median?: number;
+  min?: number;
+  max?: number;
+  teams?: number;
+})}
+  <li class="talent-priority-row" data-priority={row.priority}>
+    {#if row.rank != null}
+      <span class="talent-priority-rank" style="color: {elColor};"
+        >{row.rank}</span
+      >
+    {/if}
+    {#if row.icon}
+      <img
+        src={row.icon}
+        alt=""
+        class="kit-icon talent-priority-icon shrink-0"
+        loading="lazy"
+      />
+    {/if}
+    <div class="talent-priority-copy">
+      <div class="talent-priority-name">{row.name}</div>
+      {#if row.kind != null && row.priority != null && row.priorityLabel != null}
+        <UpgradeImpactPopover
+          label={row.priorityLabel}
+          tier={row.priority}
+          kind={row.kind}
+          mean={row.mean}
+          median={row.median}
+          min={row.min}
+          max={row.max}
+          teams={row.teams}
+        />
+      {/if}
+    </div>
+  </li>
+{/snippet}
+
+{#snippet consRow(row: {
+  cons: number;
+  priority: UpgradeTier;
+  priorityLabel: string;
+  mean?: number;
+  median?: number;
+  min?: number;
+  max?: number;
+  teams?: number;
+})}
+  {@const constellation = kit.constellations.find((c) => c.index === row.cons)}
+  {@const icon = constellation
+    ? (iconUrl(constellation.icon, "talent") ??
+      getUiAssetUrl(constellation.icon))
+    : null}
+  <li class="talent-priority-row" data-priority={row.priority}>
+    <span class="talent-priority-rank" style="color: {elColor};"
+      >C{row.cons}</span
+    >
+    {#if icon}
+      <img
+        src={icon}
+        alt=""
+        class="kit-icon talent-priority-icon shrink-0"
+        loading="lazy"
+      />
+    {/if}
+    <div class="talent-priority-copy">
+      <div class="talent-priority-name">
+        {constellation?.name ?? `C${row.cons}`}
+      </div>
+      <UpgradeImpactPopover
+        label={row.priorityLabel}
+        tier={row.priority}
+        kind="constellation"
+        mean={row.mean}
+        median={row.median}
+        min={row.min}
+        max={row.max}
+        teams={row.teams}
+      />
+    </div>
+  </li>
+{/snippet}
+
+{#snippet sigRow(row: {
+  key: string;
+  priority: UpgradeTier;
+  priorityLabel: string;
+  mean?: number;
+  median?: number;
+  min?: number;
+  max?: number;
+  teams?: number;
+})}
+  <li class="talent-priority-row" data-priority={row.priority}>
+    <span class="kit-icon talent-priority-icon shrink-0">
+      <WeaponIcon
+        weaponKey={row.key}
+        alt=""
+        class="h-full w-full object-contain"
+      />
+    </span>
+    <div class="talent-priority-copy">
+      <div class="talent-priority-name">
+        <WeaponName weaponKey={row.key} />
+      </div>
+      <UpgradeImpactPopover
+        label={row.priorityLabel}
+        tier={row.priority}
+        kind="signature"
+        mean={row.mean}
+        median={row.median}
+        min={row.min}
+        max={row.max}
+        teams={row.teams}
+      />
+    </div>
+  </li>
 {/snippet}
 
 <PageShell class="char-detail {$animationsEnabled ? '' : 'no-page-anim'}">
@@ -634,11 +738,7 @@
           </section>
         </div>
       {:else if activeTab === "teams"}
-        <div
-          role="tabpanel"
-          id="tabpanel-teams"
-          aria-labelledby="tab-teams"
-        >
+        <div role="tabpanel" id="tabpanel-teams" aria-labelledby="tab-teams">
           <section class="board-section">
             <div class="teams-head">
               <label class="teams-label">
@@ -653,8 +753,6 @@
                 <span class="teams-cost"
                   >{CHARACTER_SIM_COST} <CostPopover /></span
                 >
-              {:else}
-                <span class="teams-cost">Usage rate</span>
               {/if}
             </div>
 
@@ -712,10 +810,7 @@
                 </ol>
               {/if}
             {:else if teamsLoading}
-              <LoadingState
-                variant="pulse"
-                message="Loading meta teams…"
-              />
+              <LoadingState variant="pulse" message="Loading meta teams…" />
             {:else if $staticBoardsError && popularTeams.length === 0}
               <EmptyState message="Could not load teams right now.">
                 {#snippet action()}
@@ -742,9 +837,7 @@
                     <div class="team-hand-footer">
                       <span class="team-hand-meta">
                         <span class="team-hand-rank">#{i + 1}</span>
-                        <span
-                          >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
-                        >
+                        <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span>
                       </span>
                     </div>
                   </li>
@@ -783,8 +876,7 @@
                           >{link.label} build guide</span
                         >
                       </span>
-                      <span class="useful-link-arrow" aria-hidden="true"
-                        >→</span
+                      <span class="useful-link-arrow" aria-hidden="true">→</span
                       >
                     </a>
                   </li>
@@ -805,18 +897,9 @@
                   {#each rankedWeapons as w (w.key)}
                     <div class="equip-tile relative group">
                       <div class="equip-icon-wrap">
-                        {#if w.icon}
-                          <img
-                            src={w.icon}
-                            alt={w.weapon?.name ?? w.key}
-                            class="equip-icon"
-                            loading="lazy"
-                          />
-                        {:else}
-                          <div class="equip-fallback">{w.key}</div>
-                        {/if}
+                        <WeaponIcon weaponKey={w.key} class="equip-icon" />
                       </div>
-                      <WeaponTooltip weapon={w.weapon} weaponKey={w.key} />
+                      <WeaponTooltip weaponKey={w.key} />
                     </div>
                   {/each}
                 </div>
@@ -829,36 +912,36 @@
                 <p class="muted-note">No set data yet.</p>
               {:else}
                 {#key $equipmentVersion}
-                <div class="equip-grid">
-                  {#each builds.sets as s}
-                    {@const set = artifactSetByKey.get(s.key)}
-                    {@const icon = set ? artifactIconUrl(set.icon) : null}
-                    <div class="equip-tile relative group">
-                      <div class="equip-icon-wrap">
-                        {#if icon}
-                          <img
-                            src={icon}
-                            alt={set?.name ?? s.key}
-                            class="equip-icon"
-                            loading="lazy"
-                          />
-                        {:else}
-                          <div class="equip-fallback">{s.key}</div>
-                        {/if}
-                        {#if s.count}
-                          <div class="piece-badge">
-                            <span style="color: {elColor};">{s.count}pc</span>
-                          </div>
-                        {/if}
+                  <div class="equip-grid">
+                    {#each builds.sets as s}
+                      {@const set = artifactSetByKey.get(s.key)}
+                      {@const icon = set ? artifactIconUrl(set.icon) : null}
+                      <div class="equip-tile relative group">
+                        <div class="equip-icon-wrap">
+                          {#if icon}
+                            <img
+                              src={icon}
+                              alt={set?.name ?? s.key}
+                              class="equip-icon"
+                              loading="lazy"
+                            />
+                          {:else}
+                            <div class="equip-fallback">{s.key}</div>
+                          {/if}
+                          {#if s.count}
+                            <div class="piece-badge">
+                              <span style="color: {elColor};">{s.count}pc</span>
+                            </div>
+                          {/if}
+                        </div>
+                        <ArtifactTooltip
+                          {set}
+                          setKey={s.key}
+                          pieceCount={s.count ?? null}
+                        />
                       </div>
-                      <ArtifactTooltip
-                        {set}
-                        setKey={s.key}
-                        pieceCount={s.count ?? null}
-                      />
-                    </div>
-                  {/each}
-                </div>
+                    {/each}
+                  </div>
                 {/key}
               {/if}
             </section>
@@ -964,170 +1047,142 @@
               {/if}
             </section>
 
-            {#if talentImportanceRows.length > 0 ||
-              levelImportance ||
-              builds.vertical_importance?.constellations?.length ||
-              rankedSigWeapons.length}
+            {#if talentSection || levelSection || consSection || sigSection}
               <div class="invest-grid">
                 <div class="invest-col">
-                  {#if talentImportanceRows.length > 0 && builds?.talent_importance}
+                  {#if talentSection}
                     <section class="board-section">
-                      <h2 class="section-title">Talent priority</h2>
+                      <h2 class="section-title">
+                        Talent priority
+                        {#if talentSection.source === "guide" && talentSection.simMissing}
+                          <span class="meta-sub">(no simulation data yet)</span>
+                        {/if}
+                      </h2>
                       <ul class="talent-priority-list">
-                        {#each talentImportanceRows as row, i}
-                          <li
-                            class="talent-priority-row"
-                            data-priority={row.priority}
-                          >
-                            <span
-                              class="talent-priority-rank"
-                              style="color: {elColor};">{i + 1}</span
-                            >
-                            {#if row.icon}
-                              <img
-                                src={row.icon}
-                                alt=""
-                                class="kit-icon talent-priority-icon shrink-0"
-                                loading="lazy"
-                              />
-                            {/if}
-                            <div class="talent-priority-copy">
-                              <div class="talent-priority-name">{row.label}</div>
-                              <UpgradeImpactPopover
-                                label={row.priorityLabel}
-                                tier={row.priority}
-                                kind="talent"
-                                mean={row.mean}
-                                median={row.median}
-                                min={row.min}
-                                max={row.max}
-                                teams={row.teams}
-                              />
-                            </div>
-                          </li>
-                        {/each}
+                        {#if talentSection.source === "sim"}
+                          {#each talentSection.rows as row, i}
+                            {@render talentRow({
+                              name: row.label,
+                              icon: row.icon,
+                              rank: i + 1,
+                              priority: row.priority,
+                              kind: "talent",
+                              priorityLabel: row.priorityLabel,
+                              mean: row.mean,
+                              median: row.median,
+                              min: row.min,
+                              max: row.max,
+                              teams: row.teams,
+                            })}
+                          {/each}
+                        {:else}
+                          {#each talentSection.rows as row, i}
+                            {@render talentRow({
+                              name: row.label,
+                              icon: row.icon,
+                              rank: i + 1,
+                            })}
+                          {/each}
+                        {/if}
                       </ul>
                     </section>
                   {/if}
 
-                  {#if levelImportance}
+                  {#if levelSection}
                     <section class="board-section">
-                      <h2 class="section-title">Character level</h2>
+                      <h2 class="section-title">
+                        Character level
+                        {#if levelSection.source === "guide" && levelSection.simMissing}
+                          <span class="meta-sub">(no simulation data yet)</span>
+                        {/if}
+                      </h2>
                       <ul class="talent-priority-list">
-                        <li
-                          class="talent-priority-row"
-                          data-priority={levelImportance.priority}
-                        >
-                          {#if levelImportance.icon}
-                            <img
-                              src={levelImportance.icon}
-                              alt=""
-                              class="kit-icon talent-priority-icon shrink-0"
-                              loading="lazy"
-                            />
-                          {/if}
-                          <div class="talent-priority-copy">
-                            <div class="talent-priority-name">Level 90</div>
-                            <UpgradeImpactPopover
-                              label={levelImportance.priorityLabel}
-                              tier={levelImportance.priority}
-                              kind="level"
-                              mean={levelImportance.mean}
-                              median={levelImportance.median}
-                              min={levelImportance.min}
-                              max={levelImportance.max}
-                              teams={levelImportance.teams}
-                            />
-                          </div>
-                        </li>
+                        {#if levelSection.source === "sim"}
+                          {@render talentRow({
+                            name: "Level 90",
+                            icon: levelIcon,
+                            priority: levelSection.row.priority,
+                            kind: "level",
+                            priorityLabel: levelSection.row.priorityLabel,
+                            mean: levelSection.row.mean,
+                            median: levelSection.row.median,
+                            min: levelSection.row.min,
+                            max: levelSection.row.max,
+                            teams: levelSection.row.teams,
+                          })}
+                        {:else}
+                          {@render talentRow({
+                            name: "Level 90",
+                            icon: levelIcon,
+                            priority: levelSection.priority,
+                            kind: "level",
+                            priorityLabel: levelSection.priorityLabel,
+                          })}
+                        {/if}
                       </ul>
                     </section>
                   {/if}
                 </div>
 
                 <div class="invest-col">
-                  {#if constellationRows.length}
+                  {#if consSection}
                     <section class="board-section">
-                      <h2 class="section-title">Constellation Impact</h2>
+                      <h2 class="section-title">
+                        Constellation Impact
+                        {#if consSection.source === "guide" && consSection.simMissing}
+                          <span class="meta-sub">(no simulation data yet)</span>
+                        {/if}
+                      </h2>
                       <ul class="talent-priority-list">
-                        {#each constellationRows as row}
-                          {@const constellation = kit.constellations.find(
-                            (c) => c.index === row.cons,
-                          )}
-                          {@const icon = constellation
-                            ? (iconUrl(constellation.icon, "talent") ??
-                              getUiAssetUrl(constellation.icon))
-                            : null}
-                          <li
-                            class="talent-priority-row"
-                            data-priority={row.priority}
-                          >
-                            <span
-                              class="talent-priority-rank"
-                              style="color: {elColor};">C{row.cons}</span
-                            >
-                            {#if icon}
-                              <img
-                                src={icon}
-                                alt=""
-                                class="kit-icon talent-priority-icon shrink-0"
-                                loading="lazy"
-                              />
-                            {/if}
-                            <div class="talent-priority-copy">
-                              <div class="talent-priority-name">
-                                {constellation?.name ?? `C${row.cons}`}
-                              </div>
-                              <UpgradeImpactPopover
-                                label={row.priorityLabel}
-                                tier={row.priority}
-                                kind="constellation"
-                                mean={row.mean_pct_gain}
-                                median={row.median_pct_gain}
-                                min={row.min_pct_gain}
-                                max={row.max_pct_gain}
-                                teams={row.teams}
-                              />
-                            </div>
-                          </li>
-                        {/each}
+                        {#if consSection.source === "sim"}
+                          {#each consSection.rows as row}
+                            {@render consRow({
+                              cons: row.cons,
+                              priority: row.priority,
+                              priorityLabel: row.priorityLabel,
+                              mean: row.mean_pct_gain,
+                              median: row.median_pct_gain,
+                              min: row.min_pct_gain,
+                              max: row.max_pct_gain,
+                              teams: row.teams,
+                            })}
+                          {/each}
+                        {:else}
+                          {#each consSection.rows as row}
+                            {@render consRow(row)}
+                          {/each}
+                        {/if}
                       </ul>
                     </section>
                   {/if}
 
-                  {#if rankedSigWeapons.length}
+                  {#if sigSection}
                     <section class="board-section">
-                      <h2 class="section-title">Signature weapon impact</h2>
+                      <h2 class="section-title">
+                        Signature weapon impact
+                        {#if sigSection.source === "guide" && sigSection.simMissing}
+                          <span class="meta-sub">(no simulation data yet)</span>
+                        {/if}
+                      </h2>
                       <ul class="talent-priority-list">
-                        {#each rankedSigWeapons as row}
-                          <li
-                            class="talent-priority-row"
-                            data-priority={row.priority}
-                          >
-                            <span class="kit-icon talent-priority-icon shrink-0">
-                              <WeaponIcon
-                                weaponKey={row.key}
-                                alt=""
-                                class="h-full w-full object-contain"
-                              />
-                            </span>
-                            <div class="talent-priority-copy">
-                              <div class="talent-priority-name">
-                                <WeaponName weaponKey={row.key} />
-                              </div>
-                              <UpgradeImpactPopover
-                                label={row.priorityLabel}
-                                tier={row.priority}
-                                kind="signature"
-                                mean={row.mean_pct_gain}
-                                median={row.median_pct_gain}
-                                min={row.min_pct_gain}
-                                max={row.max_pct_gain}
-                                teams={row.teams}
-                              />
-                            </div>
-                          </li>
-                        {/each}
+                        {#if sigSection.source === "sim"}
+                          {#each sigSection.rows as row}
+                            {@render sigRow({
+                              key: row.key,
+                              priority: row.priority,
+                              priorityLabel: row.priorityLabel,
+                              mean: row.mean_pct_gain,
+                              median: row.median_pct_gain,
+                              min: row.min_pct_gain,
+                              max: row.max_pct_gain,
+                              teams: row.teams,
+                            })}
+                          {/each}
+                        {:else}
+                          {#each sigSection.rows as row}
+                            {@render sigRow(row)}
+                          {/each}
+                        {/if}
                       </ul>
                     </section>
                   {/if}

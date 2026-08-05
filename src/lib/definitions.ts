@@ -59,8 +59,4 @@ export type StygianSchedule = {
   challengeName: string | null;
 } | null;
 
-export type {
-  TierBoard,
-  TierListEntry,
-  TierListPayload,
-} from "$lib/tierlist";
+export type { TierBoard, TierListEntry, TierListPayload } from "$lib/tierlist";

@@ -52,7 +52,9 @@ export default defineConfig({
     env: {
       ...process.env,
       PLAYWRIGHT_E2E: "1",
-      PLAYWRIGHT_DEBUG_NET: onCI ? "1" : process.env.PLAYWRIGHT_DEBUG_NET ?? "",
+      PLAYWRIGHT_DEBUG_NET: onCI
+        ? "1"
+        : (process.env.PLAYWRIGHT_DEBUG_NET ?? ""),
     },
   },
 });

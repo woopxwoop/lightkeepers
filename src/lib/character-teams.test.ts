@@ -50,10 +50,7 @@ describe("bestSimAtCost", () => {
   });
 
   it("picks the highest DPS among sims at the exact cost", () => {
-    const t = team(
-      ["A"],
-      [sim(4, 100), sim(4, 250), sim(4, 180), sim(2, 999)],
-    );
+    const t = team(["A"], [sim(4, 100), sim(4, 250), sim(4, 180), sim(2, 999)]);
     const best = bestSimAtCost(t, 4);
     assert.ok(best);
     assert.equal(best.dps, 250);
@@ -76,12 +73,7 @@ describe("topSimTeamsForCharacter", () => {
     const high = team(["A", "Z"], [sim(4, 300)]);
     const other = team(["B", "C"], [sim(4, 999)]);
 
-    const ranked = topSimTeamsForCharacter(
-      [low, other, high, mid],
-      "A",
-      4,
-      2,
-    );
+    const ranked = topSimTeamsForCharacter([low, other, high, mid], "A", 4, 2);
     assert.equal(ranked.length, 2);
     assert.equal(ranked[0]!.dps, 300);
     assert.equal(ranked[0]!.team.team_key, "A-Z");

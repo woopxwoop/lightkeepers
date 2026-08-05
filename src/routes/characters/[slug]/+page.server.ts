@@ -5,7 +5,7 @@ import {
   getTravelerElementKits,
 } from "$lib/server/character-kit";
 import { getCharacterSummary } from "$lib/server/character-summary";
-import { toGoodKey } from "$lib/utils";
+import { simCharacterKey } from "$lib/utils";
 
 export const load: PageServerLoad = async ({ params }) => {
   const kit = await getCharacterKit(params.slug);
@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ params }) => {
   }
 
   const [builds, travelerKits] = await Promise.all([
-    getCharacterSummary(toGoodKey(kit.name)),
+    getCharacterSummary(simCharacterKey(kit)),
     kit.is_traveler ? getTravelerElementKits(kit) : Promise.resolve({}),
   ]);
 

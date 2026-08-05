@@ -174,9 +174,7 @@
   class:nav-sub-open={settingsHovered}
 >
   <!-- Main row -->
-  <div
-    class="nav-row flex items-center justify-between h-16"
-  >
+  <div class="nav-row flex items-center justify-between h-16">
     <a
       href={homePath}
       class="nav-logo shrink-0 flex items-center gap-2.5"
@@ -202,8 +200,7 @@
           data-sveltekit-preload-data={"preload" in link
             ? link.preload
             : undefined}
-          aria-current={isMainActive(link) ? "page" : undefined}
-          >{link.label}</a
+          aria-current={isMainActive(link) ? "page" : undefined}>{link.label}</a
         >
       {/each}
       <div class="settings-item">
@@ -264,7 +261,6 @@
       <span class="bar" class:open={mobileOpen}></span>
     </button>
   </div>
-
 </nav>
 
 <!-- Backdrop -->
@@ -303,7 +299,9 @@
           class="drawer-item"
           class:is-active={isMainActive(link)}
           style="--i: {i}"
-          data-sveltekit-preload-data={"preload" in link ? link.preload : undefined}
+          data-sveltekit-preload-data={"preload" in link
+            ? link.preload
+            : undefined}
           aria-current={isMainActive(link) ? "page" : undefined}
         >
           <span class="drawer-item-label">{link.label}</span>
@@ -851,4 +849,3 @@
     }
   }
 </style>
-

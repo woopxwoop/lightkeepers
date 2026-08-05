@@ -134,16 +134,41 @@ export interface CharacterIndex {
    */
   level_importance?: CharacterLevelImportance;
   /**
-   * One-step vertical gains: constellations are stepwise vs the previous
-   * constellation (C2 vs C1); sig weapons are vs baseline. Combined cons+sig
-   * and multi-char verticals are excluded.
+   * One-step gains: constellations are stepwise vs the previous constellation
+   * (C2 vs C1), covering rungs below the team baseline as well as above it;
+   * sig weapons are vs baseline. Combined cons+sig and multi-char results are
+   * excluded.
    */
   vertical_importance?: CharacterVerticalImportance;
+  /**
+   * Editorial upgrade recommendations from a hand-authored guide.
+   * Published separately from measured `*_importance` statistics; the Builds
+   * UI fills missing sim sections by default, or replaces authored sections
+   * when `override` is true.
+   */
+  guide_priority?: CharacterGuidePriority;
   /** Optional editorial blurb from hand-authored guide (merge-time). */
   notes?: string;
 }
 
 export type TalentSlot = "auto" | "skill" | "burst";
+
+/**
+ * Hand-authored upgrade recommendations. No percentages or impact labels —
+ * order / selection is the editorial signal.
+ */
+export interface CharacterGuidePriority {
+  /** When true, authored sections replace sim sections (omitted sections never override). */
+  override: boolean;
+  /** Talent slots in recommended priority order. */
+  talent_priority?: TalentSlot[];
+  /** Recommend raising the character to level 90. */
+  level_90?: true;
+  /** Recommended constellation stopping points (ascending). */
+  constellations?: number[];
+  /** Signature weapon GOOD keys in recommendation order. */
+  sig_weapons?: string[];
+}
 
 export interface CharacterTalentSlotImportance {
   /** Average % DPS drop vs baseline across teams. */
@@ -195,7 +220,7 @@ export interface CharacterSigGain extends CharacterVerticalGain {
 }
 
 export interface CharacterVerticalImportance {
-  /** Cons-only upgrades, sorted by cons ascending. */
+  /** Cons-only upgrades, sorted by cons ascending. May start at C1. */
   constellations: CharacterConsGain[];
   /** Sig-weapon-only upgrades, sorted by mean gain descending. */
   sig_weapons: CharacterSigGain[];

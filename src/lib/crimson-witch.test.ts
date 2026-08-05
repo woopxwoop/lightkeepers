@@ -9,7 +9,7 @@ import {
   getCrimsonWitchLinks,
   getCrimsonWitchUrl,
   toCrimsonWitchSlug,
-  TRAVELER_ELEMENTS,
+  TRAVELER_GUIDE_ELEMENTS,
 } from "./utils.ts";
 
 describe("toCrimsonWitchSlug", () => {
@@ -66,10 +66,10 @@ describe("getCrimsonWitchLinks", () => {
       isTraveler: true,
       element: null,
     });
-    assert.equal(links.length, TRAVELER_ELEMENTS.length);
+    assert.equal(links.length, TRAVELER_GUIDE_ELEMENTS.length);
     assert.deepEqual(
       links.map((l) => l.element),
-      [...TRAVELER_ELEMENTS],
+      [...TRAVELER_GUIDE_ELEMENTS],
     );
     assert.equal(links[0]?.url, "https://www.crimsonwitch.com/Anemo_Traveler");
     assert.equal(

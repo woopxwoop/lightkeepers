@@ -4,11 +4,8 @@
 import type { CharacterKit } from "$lib/types/character-kit";
 import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
-import {
-  mergeTravelerKits,
-  travelerElementKitId,
-} from "$lib/traveler-kits";
-import { TRAVELER_ELEMENTS } from "$lib/utils";
+import { mergeTravelerKits, travelerElementKitId } from "$lib/traveler-kits";
+import { TRAVELER_GUIDE_ELEMENTS } from "$lib/utils";
 
 const CDN_PREFIX = "https://images.lightkeepers.moe/genshin/data/characters";
 
@@ -48,7 +45,7 @@ export async function getTravelerElementKits(
   if (!base.is_traveler) return {};
 
   const entries = await Promise.all(
-    TRAVELER_ELEMENTS.map(async (element) => {
+    TRAVELER_GUIDE_ELEMENTS.map(async (element) => {
       const kit = await getCharacterKit(
         travelerElementKitId(base.name_id, element),
       );

@@ -26,8 +26,7 @@ type LayoutHydration = {
 };
 
 type CachedOwnedEntry =
-  | { name_id: unknown; isOwned?: unknown }
-  | { id: unknown; isOwned?: unknown };
+  { name_id: unknown; isOwned?: unknown } | { id: unknown; isOwned?: unknown };
 
 /**
  * Reads and validates the cached roster from localStorage.
@@ -81,7 +80,8 @@ function mergeOwnedFlags(
   }
 
   const normalized = cachedOwned.map((v) => ({
-    name_id: "name_id" in v ? v.name_id : (v as { id: unknown; isOwned?: unknown }).id,
+    name_id:
+      "name_id" in v ? v.name_id : (v as { id: unknown; isOwned?: unknown }).id,
     isOwned: v.isOwned,
   }));
 

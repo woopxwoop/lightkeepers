@@ -26,9 +26,13 @@ const ASSOCIATION_LABELS: Record<string, string> = {
 };
 
 /** Region / faction label from Dimbreath `association` enum. */
-export function associationLabel(association: string | null | undefined): string {
+export function associationLabel(
+  association: string | null | undefined,
+): string {
   if (!association) return "";
-  return ASSOCIATION_LABELS[association] ?? association.replace(/^ASSOC_TYPE_/, "");
+  return (
+    ASSOCIATION_LABELS[association] ?? association.replace(/^ASSOC_TYPE_/, "")
+  );
 }
 
 /**
@@ -115,10 +119,7 @@ export function formatGameDescriptionHtml(
 }
 
 /** Characters released within this many days are considered "new". */
-export {
-  NEW_CHARACTER_DAYS,
-  isNewCharacter,
-} from "$lib/is-new-character";
+export { NEW_CHARACTER_DAYS, isNewCharacter } from "$lib/is-new-character";
 
 const CDN_BASE = "https://images.lightkeepers.moe";
 const GENSIN_UI_BASE = `${CDN_BASE}/genshin/ui`;
@@ -194,7 +195,7 @@ const CRIMSON_WITCH_BASE = "https://www.crimsonwitch.com";
 /** Site favicon (`rel="icon"` on crimsonwitch.com). */
 export const CRIMSON_WITCH_FAVICON_URL = `${CRIMSON_WITCH_BASE}/icon.png`;
 
-/** Traveler resonances with Crimson Witch guides (release order). */
+/** Elements gcsim models as distinct Traveler characters. */
 export const TRAVELER_ELEMENTS = [
   "Anemo",
   "Geo",
@@ -202,15 +203,47 @@ export const TRAVELER_ELEMENTS = [
   "Dendro",
   "Hydro",
   "Pyro",
-  "Cryo",
 ] as const;
 
 export type TravelerElement = (typeof TRAVELER_ELEMENTS)[number];
 
+/**
+ * Every Traveler resonance we surface kits / guides for. Superset of the
+ * gcsim list — Cryo has guides and CDN kits before sims exist for it.
+ */
+export const TRAVELER_GUIDE_ELEMENTS = [...TRAVELER_ELEMENTS, "Cryo"] as const;
+
+export type TravelerGuideElement = (typeof TRAVELER_GUIDE_ELEMENTS)[number];
+
+/** ``TravelerPyro`` etc. — element-split sim / guide keys. */
+export function travelerElementKey(
+  element: string | null | undefined,
+): string | null {
+  if (!element) return null;
+  const el = element.charAt(0).toUpperCase() + element.slice(1).toLowerCase();
+  if (!(TRAVELER_ELEMENTS as readonly string[]).includes(el)) return null;
+  return `Traveler${el}`;
+}
+
+/**
+ * GOOD / CDN key for a character kit's build summary.
+ * Travelers resolve to ``Traveler{Element}``; everyone else uses ``toGoodKey(name)``.
+ */
+export function simCharacterKey(kit: {
+  name: string | null;
+  element?: string | null;
+  is_traveler?: boolean;
+}): string {
+  if (kit.is_traveler) {
+    return travelerElementKey(kit.element) ?? "TravelerPyro";
+  }
+  return toGoodKey(kit.name);
+}
+
 export type CrimsonWitchLink = {
   label: string;
   url: string;
-  element?: TravelerElement;
+  element?: TravelerGuideElement;
 };
 
 /**
@@ -239,14 +272,14 @@ export function getCrimsonWitchUrl(
 
 /**
  * External guide links for a character. Traveler expands to one URL per
- * resonance element (Anemo…Cryo); everyone else gets a single guide link.
+ * resonance element; everyone else gets a single guide link.
  */
 export function getCrimsonWitchLinks(
   name: string,
   opts?: { isTraveler?: boolean; element?: string | null },
 ): CrimsonWitchLink[] {
   if (opts?.isTraveler) {
-    return TRAVELER_ELEMENTS.map((element) => ({
+    return TRAVELER_GUIDE_ELEMENTS.map((element) => ({
       label: `${element} Traveler`,
       url: getCrimsonWitchUrl("Traveler", { isTraveler: true, element }),
       element,
@@ -259,6 +292,9 @@ export function getCrimsonWitchLinks(
 /**
  * Build a Map from GOOD key → object with a `name` field.
  * Generic so it works for Characters, weapons, and artifact sets alike.
+ *
+ * The single roster Traveler row is also registered under every
+ * ``Traveler{Element}`` key so investment team members resolve portraits.
  */
 export function buildGoodKeyMap<T extends { name: string | null }>(
   items: T[],
@@ -266,7 +302,13 @@ export function buildGoodKeyMap<T extends { name: string | null }>(
   const map = new Map<string, T>();
   for (const item of items) {
     const key = toGoodKey(item.name);
-    if (key) map.set(key, item);
+    if (!key) continue;
+    map.set(key, item);
+    if (key === "Traveler") {
+      for (const el of TRAVELER_ELEMENTS) {
+        map.set(`Traveler${el}`, item);
+      }
+    }
   }
   return map;
 }
@@ -279,7 +321,13 @@ export function ownedGoodKeys(
   for (const character of characters) {
     if (!character.isOwned) continue;
     const key = toGoodKey(character.name);
-    if (key) keys.add(key);
+    if (!key) continue;
+    keys.add(key);
+    if (key === "Traveler") {
+      for (const el of TRAVELER_ELEMENTS) {
+        keys.add(`Traveler${el}`);
+      }
+    }
   }
   return keys;
 }
@@ -288,9 +336,7 @@ export function ownedGoodKeys(
 export function ownedNameIds(
   characters: { isOwned: boolean; name_id: string }[],
 ): Set<string> {
-  return new Set(
-    characters.filter((c) => c.isOwned).map((c) => c.name_id),
-  );
+  return new Set(characters.filter((c) => c.isOwned).map((c) => c.name_id));
 }
 
 /** GOOD key → display name map for humanize helpers. */
@@ -308,9 +354,7 @@ export function humanizeTeamName(
   characterByKey: Map<string, string>,
   sep = " · ",
 ): string {
-  return characterKeys
-    .map((k) => characterByKey.get(k) ?? k)
-    .join(sep);
+  return characterKeys.map((k) => characterByKey.get(k) ?? k).join(sep);
 }
 
 // ── Stat key → English ──────────────────────────────────────────────────────
@@ -400,11 +444,15 @@ const ELEMENT_ICON_STEM: Record<string, string> = {
 };
 
 /** CDN URL for an element icon (e.g. `"Anemo"` → `anemo.webp`). */
-export function elementIconUrl(element: string | null | undefined): string | null {
+export function elementIconUrl(
+  element: string | null | undefined,
+): string | null {
   if (!element) return null;
-  const stem = ELEMENT_ICON_STEM[element] ?? ELEMENT_ICON_STEM[
-    element.charAt(0).toUpperCase() + element.slice(1).toLowerCase()
-  ];
+  const stem =
+    ELEMENT_ICON_STEM[element] ??
+    ELEMENT_ICON_STEM[
+      element.charAt(0).toUpperCase() + element.slice(1).toLowerCase()
+    ];
   return stem ? genshinUiUrl(stem) : null;
 }
 

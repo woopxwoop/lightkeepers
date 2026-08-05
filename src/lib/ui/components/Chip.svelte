@@ -16,12 +16,7 @@
   } & Omit<HTMLButtonAttributes, "children" | "class" | "type"> = $props();
 </script>
 
-<button
-  class="chip {className}"
-  class:chip-active={active}
-  {type}
-  {...rest}
->
+<button class="chip {className}" class:chip-active={active} {type} {...rest}>
   {@render children?.()}
 </button>
 

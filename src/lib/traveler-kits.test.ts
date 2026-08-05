@@ -10,6 +10,7 @@ import {
   availableTravelerElements,
   defaultTravelerElement,
   mergeTravelerKits,
+  travelerBaseNameId,
   travelerElementKitId,
 } from "./traveler-kits.ts";
 
@@ -44,6 +45,15 @@ function stubKit(
 describe("travelerElementKitId", () => {
   it("joins name_id and element", () => {
     assert.equal(travelerElementKitId("PlayerBoy", "Cryo"), "PlayerBoy-Cryo");
+  });
+
+  it("re-bases an already elemental name_id", () => {
+    assert.equal(
+      travelerElementKitId("PlayerBoy-Anemo", "Cryo"),
+      "PlayerBoy-Cryo",
+    );
+    assert.equal(travelerBaseNameId("PlayerBoy-Hydro"), "PlayerBoy");
+    assert.equal(travelerBaseNameId("HuTao"), "HuTao");
   });
 });
 

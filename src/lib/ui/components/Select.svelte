@@ -93,10 +93,7 @@
   }
 
   function openFromKeyboard(event: KeyboardEvent) {
-    if (
-      !open &&
-      ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)
-    ) {
+    if (!open && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
       event.preventDefault();
       focusOnOpen = true;
       open = true;
@@ -125,9 +122,8 @@
       placeMenu();
       if (focusOnOpen) {
         focusOnOpen = false;
-        const options = menuEl?.querySelectorAll<HTMLButtonElement>(
-          '[role="option"]',
-        );
+        const options =
+          menuEl?.querySelectorAll<HTMLButtonElement>('[role="option"]');
         const selectedIndex = options
           ? [...options].findIndex(
               (option) => option.getAttribute("aria-selected") === "true",
@@ -166,11 +162,14 @@
       if (options.length === 0) return;
 
       e.preventDefault();
-      const current = options.indexOf(document.activeElement as HTMLButtonElement);
+      const current = options.indexOf(
+        document.activeElement as HTMLButtonElement,
+      );
       let next = current;
       if (e.key === "Home") next = 0;
       else if (e.key === "End") next = options.length - 1;
-      else if (e.key === "ArrowDown") next = Math.min(current + 1, options.length - 1);
+      else if (e.key === "ArrowDown")
+        next = Math.min(current + 1, options.length - 1);
       else next = current < 0 ? options.length - 1 : Math.max(current - 1, 0);
       options[next]?.focus();
     }

@@ -99,11 +99,7 @@
     var(--foreground-color) 10%,
     var(--background-mid)
   );
-  --surface-quiet: color-mix(
-    in srgb,
-    var(--foreground-color) 6%,
-    transparent
-  );
+  --surface-quiet: color-mix(in srgb, var(--foreground-color) 6%, transparent);
 
   /* ── Borders (accent as hairline only) ──────────────────────────────── */
   --border-subtle: color-mix(in srgb, var(--accent-1) 14%, transparent);
@@ -133,7 +129,8 @@
   /* ── Controls / motion ──────────────────────────────────────────────── */
   --control-duration: 160ms;
   --control-ease: ease;
-  --control-transition: color var(--control-duration) var(--control-ease),
+  --control-transition:
+    color var(--control-duration) var(--control-ease),
     background-color var(--control-duration) var(--control-ease),
     border-color var(--control-duration) var(--control-ease);
   --focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-1) 55%, transparent);

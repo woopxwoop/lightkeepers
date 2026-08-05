@@ -34,7 +34,9 @@ async function fetchTierList(): Promise<TierListPayload> {
       .from("character_usage_avg_stygian")
       .select("character_id, avg_usage_rate, cycles"),
     charactersCache.getOrSet("characters", async () => {
-      const { data, error: err } = await serverDb.from("characters").select("*");
+      const { data, error: err } = await serverDb
+        .from("characters")
+        .select("*");
       if (err) {
         console.error("[tierlist] characters error:", err);
         throw new Error(err.message);

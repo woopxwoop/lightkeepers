@@ -185,8 +185,8 @@
       <h1 class="page-title">Team Simulations</h1>
       <p class="page-meta">
         {#if data}
-          Database of the {data.teams.length} teams used for character build and
-          investment recommendations
+          Database of the {data.teams.length} teams used for character build and investment
+          recommendations
         {:else}
           Database of teams used for character build and investment
           recommendations
@@ -257,8 +257,10 @@
             <span class="settings-caption">Cost</span>
             <input
               type="number"
-              bind:value={() => selectedCost ?? undefined, (value) =>
-                (selectedCost = value ?? null)}
+              bind:value={
+                () => selectedCost ?? undefined,
+                (value) => (selectedCost = value ?? null)
+              }
               placeholder="{availableCosts[0] ?? 0}–{availableCosts[
                 availableCosts.length - 1
               ] ?? 0}"

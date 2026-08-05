@@ -99,9 +99,10 @@ describe("request validation", () => {
   });
 
   it("validates roster entries and rejects extra or wrong-typed keys", () => {
-    assert.deepEqual(requireRosterEntries([{ name_id: "furina", isOwned: true }]), [
-      { name_id: "furina", isOwned: true },
-    ]);
+    assert.deepEqual(
+      requireRosterEntries([{ name_id: "furina", isOwned: true }]),
+      [{ name_id: "furina", isOwned: true }],
+    );
     assert.throws(() => requireRosterEntries(null), isBadRequest);
     assert.throws(
       () => requireRosterEntries([{ name_id: "furina" }]),
@@ -113,9 +114,7 @@ describe("request validation", () => {
     );
     assert.throws(
       () =>
-        requireRosterEntries([
-          { name_id: "furina", isOwned: true, extra: 1 },
-        ]),
+        requireRosterEntries([{ name_id: "furina", isOwned: true, extra: 1 }]),
       isBadRequest,
     );
   });
@@ -123,11 +122,17 @@ describe("request validation", () => {
   it("requireUser returns the session user or 401", () => {
     const user = { id: "u1" } as App.Locals["user"];
     assert.equal(requireUser({ user, session: null }), user);
-    assert.throws(() => requireUser({ user: null, session: null }), hasStatus(401));
+    assert.throws(
+      () => requireUser({ user: null, session: null }),
+      hasStatus(401),
+    );
   });
 
   it("assertNoDbError ignores null and maps real errors to 500", () => {
     assert.doesNotThrow(() => assertNoDbError("test", null));
-    assert.throws(() => assertNoDbError("test", new Error("db")), hasStatus(500));
+    assert.throws(
+      () => assertNoDbError("test", new Error("db")),
+      hasStatus(500),
+    );
   });
 });

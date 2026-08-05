@@ -21,16 +21,12 @@ export function slotFieldRateKey(
   slot: string,
 ): (typeof SLOT_FIELD_RATE_KEYS)[SlotWithFieldRate] {
   return (
-    SLOT_FIELD_RATE_KEYS[slot as SlotWithFieldRate] ??
-    SLOT_FIELD_RATE_KEYS.top
+    SLOT_FIELD_RATE_KEYS[slot as SlotWithFieldRate] ?? SLOT_FIELD_RATE_KEYS.top
   );
 }
 
 /** Raw field_*_rate for a slot (0 when missing). */
-export function teamSlotFieldRate(
-  team: FieldRateTeam,
-  slot: string,
-): number {
+export function teamSlotFieldRate(team: FieldRateTeam, slot: string): number {
   const key = slotFieldRateKey(slot);
   return team[key] ?? 0;
 }

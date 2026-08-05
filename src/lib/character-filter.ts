@@ -61,8 +61,7 @@ export function filterAndSortCharacters(
       (rarity.has("5") && c.rarity === 5) ||
       (rarity.has("4") && c.rarity === 4);
     const matchesElement =
-      elements.size === 0 ||
-      (c.element != null && elements.has(c.element));
+      elements.size === 0 || (c.element != null && elements.has(c.element));
     const matchesWeapon =
       weapons.size === 0 ||
       (c.weapon_type != null && weapons.has(weaponTypeLabel(c.weapon_type)));

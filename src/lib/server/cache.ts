@@ -285,9 +285,7 @@ export const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
  * Valkey is imported dynamically so cache unit tests do not need `$env`.
  * Missing/unknown IP fails open so production clients are not bucketed together.
  */
-export async function checkApiRateLimit(
-  ip: string | null,
-): Promise<boolean> {
+export async function checkApiRateLimit(ip: string | null): Promise<boolean> {
   if (ip == null || ip === "") return true;
   try {
     const { valkeyIncrWithTtl } = await import("$lib/server/valkey");

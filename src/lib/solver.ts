@@ -294,8 +294,7 @@ export function slotAffinityRate(
 ): number {
   const t = team.field_1_rate ?? 0;
   const b = team.field_2_rate ?? 0;
-  const m =
-    typeof team.field_3_rate === "number" ? team.field_3_rate : 0;
+  const m = typeof team.field_3_rate === "number" ? team.field_3_rate : 0;
   const total = t + b + m;
   if (total === 0) return 1;
   if (slot === "top") return t / total;
