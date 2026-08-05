@@ -2,12 +2,11 @@
  * Server-side character kit fetch from CDN (cached).
  */
 import type { CharacterKit } from "$lib/types/character-kit";
+import { characterKitUrl } from "$lib/asset-urls";
 import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 import { mergeTravelerKits, travelerElementKitId } from "$lib/traveler-kits";
 import { TRAVELER_GUIDE_ELEMENTS } from "$lib/utils";
-
-const CDN_PREFIX = "https://images.lightkeepers.moe/genshin/data/characters";
 
 const kitCache = new LRUCache<CharacterKit | null>(200, 15 * 60 * 1000);
 
@@ -28,18 +27,16 @@ export async function getCharacterKit(
   const inflight = kitInflight.get(nameId);
   if (inflight) return inflight;
 
-  const pending = fetchCharacterKit(nameId).finally(() => {
+  const pending = loadKitFromCdn(nameId).finally(() => {
     kitInflight.delete(nameId);
   });
   kitInflight.set(nameId, pending);
   return pending;
 }
 
-async function fetchCharacterKit(nameId: string): Promise<CharacterKit | null> {
+async function loadKitFromCdn(nameId: string): Promise<CharacterKit | null> {
   try {
-    const res = await fetchWithTimeout(
-      `${CDN_PREFIX}/${encodeURIComponent(nameId)}.json`,
-    );
+    const res = await fetchWithTimeout(characterKitUrl(nameId));
 
     // Only a definitive "this file does not exist" answer earns a null cache
     // entry. Caching 5xx / transport / parse failures would pin a bogus 404

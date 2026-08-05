@@ -61,8 +61,9 @@ export function defaultTravelerElement(
   kits: Record<string, CharacterKit>,
   baseElement: string | null | undefined,
 ): TravelerGuideElement | "" {
-  if (baseElement && kits[baseElement]) {
-    return baseElement as TravelerGuideElement;
-  }
-  return availableTravelerElements(kits)[0] ?? "";
+  // `kits` can hold any element string the base kit reports, but the picker only
+  // offers guide elements — so the default has to come from that filtered list.
+  const available = availableTravelerElements(kits);
+  const base = available.find((element) => element === baseElement);
+  return base ?? available[0] ?? "";
 }

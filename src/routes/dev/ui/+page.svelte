@@ -135,8 +135,12 @@
   let detailAccent = $derived(
     elementColor(detailDemoChar?.element, "var(--accent-1)"),
   );
+  // Full background-image value: an empty url("") would resolve against the
+  // current document and fetch the page itself as an image.
   let detailNamecard = $derived(
-    detailDemoChar?.name_id ? getNamecardUrl(detailDemoChar.name_id) : "",
+    detailDemoChar?.name_id
+      ? `url('${getNamecardUrl(detailDemoChar.name_id)}')`
+      : "none",
   );
   let detailTitle = $derived(
     detailDemoChar?.name === "Raiden Shogun"
@@ -443,7 +447,7 @@
           <header class="detail-hero detail-hero-dossier">
             <div
               class="detail-atmosphere"
-              style="background-image: url('{detailNamecard}');"
+              style="background-image: {detailNamecard};"
             ></div>
             <div class="detail-hero-scrim"></div>
             <a class="detail-back" href="#character-detail">← All characters</a>
@@ -478,7 +482,7 @@
           <header class="detail-hero detail-hero-nameplate">
             <div
               class="detail-atmosphere"
-              style="background-image: url('{detailNamecard}');"
+              style="background-image: {detailNamecard};"
             ></div>
             <div class="detail-hero-scrim"></div>
             <a class="detail-back" href="#character-detail">← All characters</a>

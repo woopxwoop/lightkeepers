@@ -52,7 +52,15 @@ describe("travelerElementKitId", () => {
       travelerElementKitId("PlayerBoy-Anemo", "Cryo"),
       "PlayerBoy-Cryo",
     );
+  });
+});
+
+describe("travelerBaseNameId", () => {
+  it("strips a trailing element suffix", () => {
     assert.equal(travelerBaseNameId("PlayerBoy-Hydro"), "PlayerBoy");
+  });
+
+  it("leaves non-elemental name_ids alone", () => {
     assert.equal(travelerBaseNameId("HuTao"), "HuTao");
   });
 });
@@ -72,6 +80,13 @@ describe("mergeTravelerKits", () => {
     const pyro = stubKit({ name_id: "PlayerBoy-Pyro", element: "Pyro" });
     const merged = mergeTravelerKits(base, { Pyro: pyro });
     assert.equal(merged.Pyro, pyro);
+  });
+
+  it("contributes nothing extra for a null-element base kit", () => {
+    const base = stubKit({ name_id: "PlayerBoy", element: null });
+    const anemo = stubKit({ name_id: "PlayerBoy-Anemo", element: "Anemo" });
+    const merged = mergeTravelerKits(base, { Anemo: anemo });
+    assert.deepEqual(Object.keys(merged), ["Anemo"]);
   });
 });
 

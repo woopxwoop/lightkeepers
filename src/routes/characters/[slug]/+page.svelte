@@ -437,6 +437,7 @@
             width="40"
             height="40"
             loading="lazy"
+            referrerpolicy="no-referrer"
           />
           <span class="useful-link-copy">
             <span class="useful-link-label">Crimson Witch</span>
@@ -1266,6 +1267,7 @@
                       width="32"
                       height="32"
                       loading="lazy"
+                      referrerpolicy="no-referrer"
                     />
                     Crimson Witch build guide
                   </a>

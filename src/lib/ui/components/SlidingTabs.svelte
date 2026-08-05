@@ -123,9 +123,14 @@
   /** Horizontal tab travel from the overflow select; Up/Down stay native. */
   function onOverflowKeydown(event: KeyboardEvent) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    // With nothing selected the control sits between the last direct tab and the
+    // first overflow option, so each arrow starts from the neighbour it steps off
+    // — otherwise ArrowRight would skip the first overflow option entirely.
     const index = overflowActive
       ? options.findIndex((option) => option.value === value)
-      : directCount;
+      : event.key === "ArrowRight"
+        ? directCount - 1
+        : directCount;
     onTabKeydown(event, Math.max(0, index));
   }
 </script>
@@ -175,6 +180,7 @@
       class:tab-active={overflowActive}
     >
       <select
+        id={overflowActive ? `tab-${value}` : undefined}
         aria-label={overflowLabel}
         value={overflowActive ? value : ""}
         onkeydown={onOverflowKeydown}
