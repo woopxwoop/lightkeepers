@@ -1,4 +1,5 @@
 <script lang="ts" generics="T extends string">
+  import { onMount } from "svelte";
   import {
     handleKeyboardClick,
     handlePointerAction,
@@ -11,6 +12,8 @@
     value = $bindable(),
     accent = "var(--accent-1)",
     class: className = "",
+    maxVisible,
+    mobileMaxVisible,
     "aria-label": ariaLabel = "Tabs",
   }: {
     options: readonly Option[];
@@ -18,16 +21,59 @@
     /** Indicator / wash color (slot accent, element color, etc.). */
     accent?: string;
     class?: string;
+    /** Collapse excess options into a "More" select. */
+    maxVisible?: number;
+    /** Mobile override for the total number of direct tabs + "More". */
+    mobileMaxVisible?: number;
     "aria-label"?: string;
   } = $props();
 
-  let activeIndex = $derived(
-    Math.max(
-      0,
-      options.findIndex((o) => o.value === value),
-    ),
+  let isMobile = $state(false);
+
+  onMount(() => {
+    if (mobileMaxVisible === undefined) return;
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => (isMobile = media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  });
+
+  let effectiveMaxVisible = $derived(
+    isMobile && mobileMaxVisible !== undefined
+      ? mobileMaxVisible
+      : maxVisible,
   );
-  let count = $derived(Math.max(options.length, 1));
+  let shouldCollapse = $derived(
+    effectiveMaxVisible !== undefined &&
+      effectiveMaxVisible >= 2 &&
+      options.length > effectiveMaxVisible,
+  );
+  let directCount = $derived(
+    shouldCollapse && effectiveMaxVisible !== undefined
+      ? effectiveMaxVisible - 1
+      : options.length,
+  );
+  let directOptions = $derived(
+    shouldCollapse ? options.slice(0, directCount) : options,
+  );
+  let overflowOptions = $derived(
+    shouldCollapse ? options.slice(directCount) : [],
+  );
+  let overflowActive = $derived(
+    overflowOptions.some((option) => option.value === value),
+  );
+  let activeIndex = $derived(
+    overflowActive
+      ? directOptions.length
+      : Math.max(
+          0,
+          directOptions.findIndex((o) => o.value === value),
+        ),
+  );
+  let count = $derived(
+    Math.max(directOptions.length + (shouldCollapse ? 1 : 0), 1),
+  );
   let left = $derived(`calc((100% / ${count}) * ${activeIndex})`);
   let width = $derived(`calc(100% / ${count})`);
 
@@ -58,10 +104,16 @@
     }
     event.preventDefault();
     selectIndex(next);
-    const buttons = (event.currentTarget as HTMLElement)
+    const controls = (event.currentTarget as HTMLElement)
       .parentElement
-      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    buttons?.[next]?.focus();
+      ?.querySelectorAll<HTMLElement>('button[role="tab"], select');
+    const nextOption = options[next];
+    const focusIndex =
+      nextOption &&
+      overflowOptions.some((option) => option.value === nextOption.value)
+        ? directOptions.length
+        : next;
+    controls?.[focusIndex]?.focus();
   }
 </script>
 
@@ -79,7 +131,7 @@
     class="indicator-bar absolute bottom-0 h-[1.5px] pointer-events-none"
     style="left: {left}; width: {width}; background: var(--tab-accent);"
   ></span>
-  {#each options as option, index (option.value)}
+  {#each directOptions as option, index (option.value)}
     <button
       type="button"
       role="tab"
@@ -98,6 +150,30 @@
       {option.label}
     </button>
   {/each}
+  {#if shouldCollapse}
+    <label
+      class="more-tab tab relative z-1 flex-1 pointer-events-auto"
+      class:tab-active={overflowActive}
+    >
+      <span class="sr-only">More tabs</span>
+      <select
+        id={overflowActive ? `tab-${value}` : "tab-more"}
+        aria-label="More tabs"
+        aria-controls={overflowActive ? `tabpanel-${value}` : undefined}
+        value={overflowActive ? value : ""}
+        onchange={(event) => {
+          const next = event.currentTarget.value as T;
+          if (next) value = next;
+        }}
+      >
+        <option value="" disabled>More</option>
+        {#each overflowOptions as option (option.value)}
+          <option value={option.value}>{option.label}</option>
+        {/each}
+      </select>
+      <span class="more-chevron" aria-hidden="true">⌄</span>
+    </label>
+  {/if}
 </div>
 
 <style>
@@ -121,5 +197,32 @@
 
   .tab-active {
     color: var(--tab-accent, var(--foreground-color));
+  }
+
+  .more-tab {
+    min-width: 0;
+  }
+
+  .more-tab select {
+    width: 100%;
+    height: 100%;
+    padding: 0.625rem 1.25rem 0.625rem 0.5rem;
+    border: 0;
+    outline: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .more-chevron {
+    position: absolute;
+    top: 50%;
+    right: 0.55rem;
+    translate: 0 -55%;
+    color: currentColor;
+    pointer-events: none;
   }
 </style>

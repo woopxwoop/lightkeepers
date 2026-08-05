@@ -4,6 +4,11 @@
 import type { CharacterKit } from "$lib/types/character-kit";
 import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
+import {
+  mergeTravelerKits,
+  travelerElementKitId,
+} from "$lib/traveler-kits";
+import { TRAVELER_ELEMENTS } from "$lib/utils";
 
 const CDN_PREFIX = "https://images.lightkeepers.moe/genshin/data/characters";
 
@@ -31,4 +36,30 @@ export async function getCharacterKit(
     kitCache.set(nameId, null);
     return null;
   }
+}
+
+/**
+ * Load every available Traveler resonance kit for a base character page.
+ * Missing CDN files are skipped; see `mergeTravelerKits` for base fallback.
+ */
+export async function getTravelerElementKits(
+  base: CharacterKit,
+): Promise<Record<string, CharacterKit>> {
+  if (!base.is_traveler) return {};
+
+  const entries = await Promise.all(
+    TRAVELER_ELEMENTS.map(async (element) => {
+      const kit = await getCharacterKit(
+        travelerElementKitId(base.name_id, element),
+      );
+      return [element, kit] as const;
+    }),
+  );
+
+  const byElement: Partial<Record<string, CharacterKit | null>> = {};
+  for (const [element, kit] of entries) {
+    byElement[element] = kit;
+  }
+
+  return mergeTravelerKits(base, byElement);
 }

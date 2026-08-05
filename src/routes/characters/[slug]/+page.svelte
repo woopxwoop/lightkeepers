@@ -51,12 +51,18 @@
     ownedGoodKeys,
     ownedNameIds,
     statIconUrl,
+    getCrimsonWitchLinks,
+    CRIMSON_WITCH_FAVICON_URL,
     toGoodKey,
     translateStatKey,
     weaponTypeIconUrl,
     weaponTypeLabel,
   } from "$lib/utils";
-  import { artifactSetByKey, weaponByKey, equipmentVersion, ensureEquipmentData } from "$lib/equipment-data";
+  import {
+    availableTravelerElements,
+    defaultTravelerElement,
+  } from "$lib/traveler-kits";
+  import { artifactSetByKey, weaponByKey, weaponIconSrc, equipmentVersion, ensureEquipmentData } from "$lib/equipment-data";
   import {
     MAIN_STAT_SLOTS,
     constellationImpactRows,
@@ -70,7 +76,6 @@
     artifactIconUrl,
     skillIconUrl,
     talentIconUrl,
-    weaponIconUrl,
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
   import type {
@@ -82,15 +87,19 @@
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
   let builds = $derived((data.builds ?? null) as CharacterIndex | null);
+  let travelerKits = $derived(
+    (data.travelerKits ?? {}) as Record<string, CharacterKit>,
+  );
   let mapping = $derived(data.mapping as Map<string, Character>);
 
-  type PageTab = "skills" | "builds" | "teams";
+  type PageTab = "skills" | "builds" | "teams" | "links";
   type TeamsMode = "stygian" | "abyss" | "simulated";
 
   const TAB_OPTIONS = [
     { value: "builds" as const, label: "Builds" },
     { value: "teams" as const, label: "Teams" },
     { value: "skills" as const, label: "Skills" },
+    { value: "links" as const, label: "Useful Links" },
   ];
   const TEAMS_MODE_OPTIONS = [
     { value: "stygian" as const, label: "Stygian" },
@@ -100,6 +109,35 @@
 
   let activeTab = $state<PageTab>("builds");
   let teamsMode = $state<TeamsMode>("stygian");
+  let skillsElement = $state("");
+
+  let travelerSkillElements = $derived(availableTravelerElements(travelerKits));
+  let travelerSkillOptions = $derived(
+    travelerSkillElements.map((element) => ({
+      value: element,
+      label: element,
+    })),
+  );
+
+  $effect(() => {
+    if (!kit.is_traveler) {
+      skillsElement = "";
+      return;
+    }
+    if (skillsElement && travelerKits[skillsElement]) return;
+    skillsElement = defaultTravelerElement(travelerKits, kit.element);
+  });
+
+  let skillsKit = $derived.by(() => {
+    if (!kit.is_traveler) return kit;
+    if (skillsElement && travelerKits[skillsElement]) {
+      return travelerKits[skillsElement];
+    }
+    return kit;
+  });
+  let skillsElColor = $derived(
+    elementColor(skillsKit.element, "var(--foreground-color)"),
+  );
 
   let investment = $state<InvestmentFile | null>(getInvestmentCached());
   let investmentError = $state<string | null>(null);
@@ -150,6 +188,12 @@
   );
 
   let goodKey = $derived(toGoodKey(kit.name));
+  let crimsonWitchLinks = $derived(
+    getCrimsonWitchLinks(kit.name, {
+      isTraveler: kit.is_traveler,
+      element: kit.element,
+    }),
+  );
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
 
   let ownedKeys = $derived(ownedGoodKeys($charactersOwned));
@@ -262,7 +306,9 @@
     return `Ascension ${unlock}`;
   }
 
-  function passiveKindLabel(passive: (typeof kit.passives)[number]): string {
+  function passiveKindLabel(
+    passive: (typeof skillsKit.passives)[number],
+  ): string {
     if (passive.kind === "hexerei") return "Hexerei";
     if (passive.kind === "polestar") return "Polestar Field";
     return passiveUnlockLabel(passive.unlock);
@@ -291,9 +337,9 @@
   /** In-page targets for `{LINK#S…}` / `P…` / `T…` (skills / passives / consts). */
   let kitLinkIds = $derived.by(() => {
     const ids = new Set<string>();
-    for (const s of kit.skills) ids.add(`S${s.id}`);
-    for (const p of kit.passives) ids.add(`P${p.id}`);
-    for (const c of kit.constellations) ids.add(`T${c.id}`);
+    for (const s of skillsKit.skills) ids.add(`S${s.id}`);
+    for (const p of skillsKit.passives) ids.add(`P${p.id}`);
+    for (const c of skillsKit.constellations) ids.add(`T${c.id}`);
     return ids;
   });
 
@@ -301,13 +347,21 @@
     return kitLinkIds.has(ref) ? `#kit-${ref}` : null;
   }
 
-  /** Weapons: higher rarity first, then team usage (stable within ties). */
+  /**
+   * Weapons: higher rarity first, then team usage (stable within ties).
+   * Icons resolve here so tiles that keep their slot still pick up the
+   * lazily loaded tables (re-sorting alone reuses the same row objects).
+   */
   let rankedWeapons = $derived.by(() => {
     $equipmentVersion;
     return rankWeaponsByRarityAndTeams(
       builds?.weapons,
       (key) => weaponByKey.get(key)?.stars ?? 0,
-    );
+    ).map((row) => ({
+      ...row,
+      weapon: weaponByKey.get(row.key) ?? null,
+      icon: weaponIconSrc(row.key),
+    }));
   });
 
   let recommendedSubstats = $derived(recommendedSubstatsFromBuilds(builds));
@@ -394,18 +448,23 @@
           </p>
           <h1 class="hero-title">{kit.name}</h1>
           <div class="hero-meta">
-            {#if elementIcon}
-              <img
-                src={elementIcon}
-                alt={kit.element}
-                title={kit.element}
-                class="stat-icon hero-meta-icon"
-                loading="lazy"
-              />
-            {:else}
-              <span style="color: {elColor};">{kit.element}</span>
+            {#if kit.element}
+              {#if elementIcon}
+                <img
+                  src={elementIcon}
+                  alt={kit.element}
+                  title={kit.element}
+                  class="stat-icon hero-meta-icon"
+                  loading="lazy"
+                />
+              {:else}
+                <span style="color: {elColor};">{kit.element}</span>
+              {/if}
+              <span aria-hidden="true">·</span>
+            {:else if kit.is_traveler}
+              <span>Multi-element</span>
+              <span aria-hidden="true">·</span>
             {/if}
-            <span aria-hidden="true">·</span>
             {#if weaponIcon}
               <img
                 src={weaponIcon}
@@ -436,6 +495,8 @@
       options={TAB_OPTIONS}
       bind:value={activeTab}
       accent={elColor}
+      maxVisible={4}
+      mobileMaxVisible={3}
       aria-label="Character sections"
       class="board-tabs"
     />
@@ -443,10 +504,24 @@
     <div class="board-body">
       {#if activeTab === "skills"}
         <div role="tabpanel" id="tabpanel-skills" aria-labelledby="tab-skills">
+          {#if kit.is_traveler && travelerSkillOptions.length > 0}
+            <section class="board-section">
+              <div class="skills-head">
+                <label class="skills-label">
+                  <span class="skills-label-text">Element:</span>
+                  <Select
+                    options={travelerSkillOptions}
+                    bind:value={skillsElement}
+                    aria-label="Traveler element"
+                  />
+                </label>
+              </div>
+            </section>
+          {/if}
           <section class="board-section">
             <h2 class="section-title">Talents</h2>
             <div class="kit-list">
-              {#each kit.skills as skill}
+              {#each skillsKit.skills as skill}
                 {@const icon =
                   iconUrl(skill.icon, "skill") ?? getUiAssetUrl(skill.icon)}
                 {@const skillEnhance = enhanceExtra(
@@ -483,7 +558,7 @@
           <section class="board-section">
             <h2 class="section-title">Passives</h2>
             <div class="kit-list">
-              {#each kit.passives as passive}
+              {#each skillsKit.passives as passive}
                 {@const icon =
                   iconUrl(passive.icon, "talent") ??
                   getUiAssetUrl(passive.icon)}
@@ -524,7 +599,7 @@
           <section class="board-section">
             <h2 class="section-title">Constellations</h2>
             <div class="kit-list">
-              {#each kit.constellations as c}
+              {#each skillsKit.constellations as c}
                 {@const icon =
                   iconUrl(c.icon, "talent") ?? getUiAssetUrl(c.icon)}
                 {@const constEnhance = enhanceExtra(
@@ -546,7 +621,7 @@
                   {/if}
                   <div class="kit-copy">
                     <div class="kit-heading">
-                      <span class="const-index" style="color: {elColor};">
+                      <span class="const-index" style="color: {skillsElColor};">
                         C{c.index}
                       </span>
                       <h3 class="card-title">{c.name}</h3>
@@ -678,6 +753,46 @@
             {/if}
           </section>
         </div>
+      {:else if activeTab === "links"}
+        <div role="tabpanel" id="tabpanel-links" aria-labelledby="tab-links">
+          <section class="board-section">
+            <h2 class="section-title">Useful links</h2>
+            {#if crimsonWitchLinks.length === 0}
+              <p class="muted-note">No external guides yet.</p>
+            {:else}
+              <ul class="useful-links">
+                {#each crimsonWitchLinks as link (link.url)}
+                  <li>
+                    <a
+                      class="useful-link"
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img
+                        class="useful-link-icon"
+                        src={CRIMSON_WITCH_FAVICON_URL}
+                        alt=""
+                        width="40"
+                        height="40"
+                        loading="lazy"
+                      />
+                      <span class="useful-link-copy">
+                        <span class="useful-link-label">Crimson Witch</span>
+                        <span class="useful-link-desc"
+                          >{link.label} build guide</span
+                        >
+                      </span>
+                      <span class="useful-link-arrow" aria-hidden="true"
+                        >→</span
+                      >
+                    </a>
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+          </section>
+        </div>
       {:else}
         <div role="tabpanel" id="tabpanel-builds" aria-labelledby="tab-builds">
           {#if builds}
@@ -687,17 +802,13 @@
                 <p class="muted-note">No weapon data yet.</p>
               {:else}
                 <div class="equip-grid">
-                  {#each rankedWeapons as w}
-                    {@const weapon = weaponByKey.get(w.key)}
-                    {@const icon = weapon
-                      ? weaponIconUrl(weapon.awakenIcon)
-                      : null}
+                  {#each rankedWeapons as w (w.key)}
                     <div class="equip-tile relative group">
                       <div class="equip-icon-wrap">
-                        {#if icon}
+                        {#if w.icon}
                           <img
-                            src={icon}
-                            alt={weapon?.name ?? w.key}
+                            src={w.icon}
+                            alt={w.weapon?.name ?? w.key}
                             class="equip-icon"
                             loading="lazy"
                           />
@@ -705,7 +816,7 @@
                           <div class="equip-fallback">{w.key}</div>
                         {/if}
                       </div>
-                      <WeaponTooltip {weapon} weaponKey={w.key} />
+                      <WeaponTooltip weapon={w.weapon} weaponKey={w.key} />
                     </div>
                   {/each}
                 </div>
@@ -1034,7 +1145,61 @@
             <div class="board-section">
               <EmptyState
                 message={`No gcsim build summary for ${kit.name} yet.`}
-              />
+              >
+                {#snippet action()}
+                  {#if crimsonWitchLinks.length === 1 && crimsonWitchLinks[0]}
+                    <a
+                      class="useful-link-cta"
+                      href={crimsonWitchLinks[0].url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img
+                        class="useful-link-icon"
+                        src={CRIMSON_WITCH_FAVICON_URL}
+                        alt=""
+                        width="32"
+                        height="32"
+                        loading="lazy"
+                      />
+                      Crimson Witch build guide →
+                    </a>
+                  {:else if crimsonWitchLinks.length > 1}
+                    <ul class="useful-links useful-links-compact">
+                      {#each crimsonWitchLinks as link (link.url)}
+                        <li>
+                          <a
+                            class="useful-link"
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              class="useful-link-icon"
+                              src={CRIMSON_WITCH_FAVICON_URL}
+                              alt=""
+                              width="40"
+                              height="40"
+                              loading="lazy"
+                            />
+                            <span class="useful-link-copy">
+                              <span class="useful-link-label"
+                                >Crimson Witch</span
+                              >
+                              <span class="useful-link-desc"
+                                >{link.label} build guide</span
+                              >
+                            </span>
+                            <span class="useful-link-arrow" aria-hidden="true"
+                              >→</span
+                            >
+                          </a>
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
+                {/snippet}
+              </EmptyState>
             </div>
           {/if}
         </div>
@@ -1154,6 +1319,115 @@
   .muted-note {
     font-size: var(--text-xs);
     color: var(--foreground-mid);
+  }
+
+  .skills-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .skills-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+  }
+
+  .skills-label-text {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--foreground-mid);
+  }
+
+  .useful-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .useful-links-compact {
+    width: min(100%, 28rem);
+    text-align: left;
+  }
+
+  .useful-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 0.85rem 0;
+    border-top: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 18%, transparent);
+    border-bottom: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 18%, transparent);
+    color: var(--foreground-color);
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .useful-link-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    object-fit: contain;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+  }
+
+  .useful-link:hover {
+    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
+  }
+
+  .useful-link:hover .useful-link-label {
+    color: var(--accent-1);
+  }
+
+  .useful-link-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .useful-link-label {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    transition: color 0.15s ease;
+  }
+
+  .useful-link-desc {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .useful-link-arrow {
+    color: var(--foreground-mid);
+    flex-shrink: 0;
+  }
+
+  .useful-link-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--accent-1);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .useful-link-cta .useful-link-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .useful-link-cta:hover {
+    color: color-mix(in srgb, var(--accent-1) 85%, white);
   }
 
   .teams-head {
