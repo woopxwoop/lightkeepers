@@ -58,6 +58,13 @@
   let overflowActive = $derived(
     overflowOptions.some((option) => option.value === value),
   );
+  let overflowLabel = $derived(
+    overflowActive
+      ? `More tabs, ${
+          overflowOptions.find((option) => option.value === value)?.label ?? ""
+        } selected`
+      : "More tabs",
+  );
   let activeIndex = $derived(
     overflowActive
       ? directOptions.length
@@ -99,10 +106,10 @@
     }
     event.preventDefault();
     selectIndex(next);
-    // The overflow select sits inside a label, so walk up to the shared
-    // tablist rather than assuming the control's parent holds every sibling.
+    // The overflow select sits outside the tablist, so walk up to the shared
+    // root rather than assuming the control's parent holds every sibling.
     const controls = (event.currentTarget as HTMLElement)
-      .closest('[role="tablist"]')
+      .closest(".sliding-tabs")
       ?.querySelectorAll<HTMLElement>('button[role="tab"], select');
     const nextOption = options[next];
     const focusIndex =
@@ -124,8 +131,6 @@
 </script>
 
 <div
-  role="tablist"
-  aria-label={ariaLabel}
   class="sliding-tabs relative flex overflow-hidden {className}"
   style="--tab-accent: {accent};"
 >
@@ -137,35 +142,40 @@
     class="indicator-bar absolute bottom-0 h-[1.5px] pointer-events-none"
     style="left: {left}; width: {width}; background: var(--tab-accent);"
   ></span>
-  {#each directOptions as option, index (option.value)}
-    <button
-      type="button"
-      role="tab"
-      id="tab-{option.value}"
-      aria-controls="tabpanel-{option.value}"
-      aria-selected={value === option.value}
-      tabindex={value === option.value ? 0 : -1}
-      onpointerdown={(event) =>
-        handlePointerAction(event, () => (value = option.value))}
-      onclick={(event) =>
-        handleKeyboardClick(event, () => (value = option.value))}
-      onkeydown={(event) => onTabKeydown(event, index)}
-      class="tab relative z-1 flex-1 py-2.5 text-xs font-medium pointer-events-auto touch-manipulation"
-      class:tab-active={value === option.value}
-    >
-      {option.label}
-    </button>
-  {/each}
+  <!-- Only real tabs live in the tablist; the overflow combobox stays outside. -->
+  <div
+    role="tablist"
+    aria-label={ariaLabel}
+    class="tablist flex min-w-0"
+    style="flex: {directOptions.length};"
+  >
+    {#each directOptions as option, index (option.value)}
+      <button
+        type="button"
+        role="tab"
+        id="tab-{option.value}"
+        aria-controls="tabpanel-{option.value}"
+        aria-selected={value === option.value}
+        tabindex={value === option.value ? 0 : -1}
+        onpointerdown={(event) =>
+          handlePointerAction(event, () => (value = option.value))}
+        onclick={(event) =>
+          handleKeyboardClick(event, () => (value = option.value))}
+        onkeydown={(event) => onTabKeydown(event, index)}
+        class="tab relative z-1 flex-1 py-2.5 text-xs font-medium pointer-events-auto touch-manipulation"
+        class:tab-active={value === option.value}
+      >
+        {option.label}
+      </button>
+    {/each}
+  </div>
   {#if shouldCollapse}
     <label
-      role="presentation"
       class="more-tab tab relative z-1 flex-1 pointer-events-auto"
       class:tab-active={overflowActive}
     >
       <select
-        id={overflowActive ? `tab-${value}` : "tab-more"}
-        aria-label="More tabs"
-        aria-controls={overflowActive ? `tabpanel-${value}` : undefined}
+        aria-label={overflowLabel}
         value={overflowActive ? value : ""}
         onkeydown={onOverflowKeydown}
         onchange={(event) => {

@@ -638,7 +638,9 @@
             role="tab"
             id="tab-{option.value}"
             aria-selected={activeTab === option.value}
-            aria-controls="tabpanel-{option.value}"
+            aria-controls={activeTab === option.value
+              ? `tabpanel-${option.value}`
+              : undefined}
             tabindex={activeTab === option.value ? 0 : -1}
             class:active={activeTab === option.value}
             onclick={() => selectTab(option.value)}
@@ -666,6 +668,7 @@
                     <Select
                       options={travelerSkillOptions}
                       bind:value={skillsElement}
+                      bare
                       aria-labelledby="skills-element-label"
                     />
                   </div>
@@ -797,15 +800,17 @@
           <div role="tabpanel" id="tabpanel-teams" aria-labelledby="tab-teams">
             <section class="board-section">
               <div class="teams-head">
-                <label class="teams-label">
-                  <span class="teams-label-text">Teams:</span>
+                <div class="teams-label">
+                  <span class="teams-label-text" id="teams-source-label"
+                    >Teams:</span
+                  >
                   <Select
                     options={TEAMS_MODE_OPTIONS}
                     bind:value={teamsMode}
                     bare
-                    aria-label="Team source"
+                    aria-labelledby="teams-source-label"
                   />
-                </label>
+                </div>
                 {#if teamsMode === "simulated"}
                   <span class="teams-cost"
                     >{CHARACTER_SIM_COST} <CostPopover /></span
@@ -1512,7 +1517,6 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    cursor: pointer;
   }
 
   .teams-label-text {

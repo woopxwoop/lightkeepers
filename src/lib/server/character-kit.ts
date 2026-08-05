@@ -11,12 +11,31 @@ const CDN_PREFIX = "https://images.lightkeepers.moe/genshin/data/characters";
 
 const kitCache = new LRUCache<CharacterKit | null>(200, 15 * 60 * 1000);
 
+/**
+ * Concurrent misses for one name_id share a single request. Entries are dropped
+ * once settled, so a failed fetch (which is deliberately not cached) retries.
+ * `LRUCache.getOrSet` is unusable here because it caches every resolved value,
+ * including the transient failures this module must leave uncached.
+ */
+const kitInflight = new Map<string, Promise<CharacterKit | null>>();
+
 export async function getCharacterKit(
   nameId: string,
 ): Promise<CharacterKit | null> {
   const cached = kitCache.get(nameId);
   if (cached !== undefined) return cached;
 
+  const inflight = kitInflight.get(nameId);
+  if (inflight) return inflight;
+
+  const pending = fetchCharacterKit(nameId).finally(() => {
+    kitInflight.delete(nameId);
+  });
+  kitInflight.set(nameId, pending);
+  return pending;
+}
+
+async function fetchCharacterKit(nameId: string): Promise<CharacterKit | null> {
   try {
     const res = await fetchWithTimeout(
       `${CDN_PREFIX}/${encodeURIComponent(nameId)}.json`,

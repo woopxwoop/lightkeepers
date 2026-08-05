@@ -77,4 +77,9 @@ describe("getCrimsonWitchLinks", () => {
       "https://www.crimsonwitch.com/Cryo_Traveler",
     );
   });
+
+  // The character route hides its Useful links list on an empty array.
+  it("returns no links for a blank name", () => {
+    assert.deepEqual(getCrimsonWitchLinks("   "), []);
+  });
 });
