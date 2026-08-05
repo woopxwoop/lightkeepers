@@ -258,7 +258,9 @@ export function toCrimsonWitchSlug(
     const element = (opts.element ?? "").trim();
     return element ? `${element}_Traveler` : "Traveler";
   }
-  return name.trim().replace(/\s+/g, "_");
+  // encodeURIComponent leaves `_` alone, so reserved characters in a name can
+  // never break out of the path segment.
+  return encodeURIComponent(name.trim().replace(/\s+/g, "_"));
 }
 
 /** Full Crimson Witch character guide URL. */

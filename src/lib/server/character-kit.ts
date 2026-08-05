@@ -45,12 +45,16 @@ async function loadKitFromCdn(nameId: string): Promise<CharacterKit | null> {
       kitCache.set(nameId, null);
       return null;
     }
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`[character-kit] ${nameId} unavailable: HTTP ${res.status}`);
+      return null;
+    }
 
     const kit = (await res.json()) as CharacterKit;
     kitCache.set(nameId, kit);
     return kit;
-  } catch {
+  } catch (err) {
+    console.warn(`[character-kit] ${nameId} request failed:`, err);
     return null;
   }
 }

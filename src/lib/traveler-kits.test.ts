@@ -107,4 +107,8 @@ describe("defaultTravelerElement", () => {
     assert.equal(defaultTravelerElement(kits, null), "Anemo");
     assert.deepEqual(availableTravelerElements(kits), ["Anemo", "Cryo"]);
   });
+
+  it("returns an empty string when no kit is available", () => {
+    assert.equal(defaultTravelerElement({}, "Pyro"), "");
+  });
 });

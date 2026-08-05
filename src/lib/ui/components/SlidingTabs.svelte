@@ -58,11 +58,13 @@
   let overflowActive = $derived(
     overflowOptions.some((option) => option.value === value),
   );
+  // Doubles as the panel name while an overflow option is active, since the
+  // control then carries `tab-{value}` — so lead with the option, not the menu.
   let overflowLabel = $derived(
     overflowActive
-      ? `More tabs, ${
+      ? `${
           overflowOptions.find((option) => option.value === value)?.label ?? ""
-        } selected`
+        }, more tabs`
       : "More tabs",
   );
   let activeIndex = $derived(
@@ -110,7 +112,7 @@
     // root rather than assuming the control's parent holds every sibling.
     const controls = (event.currentTarget as HTMLElement)
       .closest(".sliding-tabs")
-      ?.querySelectorAll<HTMLElement>('button[role="tab"], select');
+      ?.querySelectorAll<HTMLElement>('button[role="tab"], .more-tab select');
     const nextOption = options[next];
     const focusIndex =
       nextOption &&

@@ -668,10 +668,11 @@
                       >Element:</span
                     >
                     <Select
+                      id="skills-element-trigger"
                       options={travelerSkillOptions}
                       bind:value={skillsElement}
                       bare
-                      aria-labelledby="skills-element-label"
+                      aria-labelledby="skills-element-label skills-element-trigger"
                     />
                   </div>
                 </div>
@@ -807,10 +808,11 @@
                     >Teams:</span
                   >
                   <Select
+                    id="teams-source-trigger"
                     options={TEAMS_MODE_OPTIONS}
                     bind:value={teamsMode}
                     bare
-                    aria-labelledby="teams-source-label"
+                    aria-labelledby="teams-source-label teams-source-trigger"
                   />
                 </div>
                 {#if teamsMode === "simulated"}

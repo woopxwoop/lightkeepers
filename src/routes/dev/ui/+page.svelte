@@ -873,12 +873,15 @@
         <p class="surface-label">SlidingTabs</p>
         <p class="token-meta mb-2">
           Indicator tablist (Abyss / Stygian / character detail). Accent can be
-          slot gold or element color.
+          slot gold or element color. Below 640px the third tab folds into a
+          "More" control (<code>mobileMaxVisible</code>).
         </p>
         <SlidingTabs
           options={SLIDING_TAB_OPTIONS}
           bind:value={slidingTab}
           accent={slidingAccent}
+          maxVisible={3}
+          mobileMaxVisible={2}
           aria-label="Demo sliding tabs"
         />
         <div
