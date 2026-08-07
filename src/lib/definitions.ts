@@ -17,9 +17,13 @@ export type AbyssVersion = Tables<"abyss_versions">;
 export type StygianVersion = Tables<"stygian_versions">;
 export type Enemy = Tables<"enemies">;
 
-/** Per-version ownership/usage point for character Analytics. */
+/** Per-version ownership/usage point (Stygian analytics series). */
 export type CharacterUsageSeriesPoint =
   Database["public"]["Functions"]["get_character_usage_series_stygian"]["Returns"][number];
+
+/** Per-version ownership/usage point (Abyss analytics series). */
+export type CharacterUsageSeriesPointAbyss =
+  Database["public"]["Functions"]["get_character_usage_series_abyss"]["Returns"][number];
 
 export type CharacterTopTeamByVersionAbyss =
   Database["public"]["Functions"]["get_character_top_teams_by_version_abyss"]["Returns"][number];
@@ -32,7 +36,7 @@ export type CharacterAnalyticsPayload =
   | {
       nameId: string;
       mode: "abyss";
-      usage: CharacterUsageSeriesPoint[];
+      usage: CharacterUsageSeriesPointAbyss[];
       teams: CharacterTopTeamByVersionAbyss[];
     }
   | {

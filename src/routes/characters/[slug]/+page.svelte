@@ -225,18 +225,27 @@
 
     return fetchCharacterAnalytics(nameId, mode, controller.signal)
       .then((payload) => {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          analyticsLoading = false;
+          return;
+        }
         analyticsPayload = payload;
         analyticsKey = key;
         analyticsLoading = false;
       })
       .catch((err) => {
-        if (controller.signal.aborted || isAbortError(err)) return;
+        if (controller.signal.aborted) {
+          analyticsLoading = false;
+          return;
+        }
         analyticsPayload = null;
         analyticsKey = null;
         analyticsLoading = false;
-        analyticsError =
-          err instanceof Error ? err.message : "Failed to load analytics";
+        analyticsError = isAbortError(err)
+          ? "Request timed out"
+          : err instanceof Error
+            ? err.message
+            : "Failed to load analytics";
       });
   }
 
@@ -273,6 +282,30 @@
           TOP_TEAMS_LIMIT,
         ),
   );
+
+  let analyticsTeamsByVersion = $derived.by(() => {
+    const payload = analyticsPayload;
+    if (!payload) return [];
+    const nameByVersion = new Map(
+      payload.usage.map((p) => [p.version_number, p.version_name]),
+    );
+    const groups = new Map<number, typeof payload.teams>();
+    for (const team of payload.teams) {
+      const list = groups.get(team.version_number) ?? [];
+      list.push(team);
+      groups.set(team.version_number, list);
+    }
+    return [...groups.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([version_number, teams]) => ({
+        version_number,
+        version_name:
+          nameByVersion.get(version_number) ?? String(version_number),
+        teams: teams
+          .slice()
+          .sort((a, b) => (b.usage_rate ?? 0) - (a.usage_rate ?? 0)),
+      }));
+  });
 
   let goodKey = $derived(simCharacterKey(kit));
   let crimsonWitchLinks = $derived(
@@ -1031,6 +1064,39 @@
                 <div class="analytics-chart">
                   <UsageSeriesChart points={analyticsPayload.usage} />
                 </div>
+                {#if analyticsTeamsByVersion.length > 0}
+                  <div class="analytics-teams">
+                    <h2 class="section-title">Top teams by version</h2>
+                    {#each analyticsTeamsByVersion as group (group.version_number)}
+                      <section class="analytics-version">
+                        <h3 class="meta-name">{group.version_name}</h3>
+                        <ol class="team-hands">
+                          {#each group.teams as team, i (team.team_key ?? `${group.version_number}-${i}`)}
+                            <li class="team-hand-row">
+                              <TeamCardHand
+                                characters={handCharactersFromMembers(
+                                  team.members ?? [],
+                                )}
+                                dimmedKeys={dimmedKeysFromMembers(
+                                  team.members ?? [],
+                                )}
+                                spread="flat"
+                              />
+                              <div class="team-hand-footer">
+                                <span class="team-hand-meta">
+                                  <span class="team-hand-rank">#{i + 1}</span>
+                                  <span
+                                    >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                                  >
+                                </span>
+                              </div>
+                            </li>
+                          {/each}
+                        </ol>
+                      </section>
+                    {/each}
+                  </div>
+                {/if}
               {:else}
                 <EmptyState message="No usage history for {kit.name} yet." />
               {/if}
@@ -1676,6 +1742,19 @@
 
   .analytics-chart {
     margin-top: var(--space-2);
+  }
+
+  .analytics-teams {
+    margin-top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .analytics-version {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
   }
 
   .team-hands {

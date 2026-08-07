@@ -53,8 +53,7 @@
   let showSuggestions = $derived(editing && suggestions.length > 0);
 
   $effect(() => {
-    suggestions;
-    suggestionIndex = 0;
+    suggestionIndex = suggestions.length >= 0 ? 0 : 0;
   });
 
   function placeMenu() {
@@ -126,11 +125,16 @@
   }
 
   function onBlur() {
-    // Allow suggestion click before closing.
-    setTimeout(() => {
-      editing = false;
-      query = "";
-    }, 150);
+    editing = false;
+    query = "";
+  }
+
+  function scrollActiveOptionIntoView() {
+    void tick().then(() => {
+      const id = inputEl?.getAttribute("aria-activedescendant");
+      if (!id) return;
+      document.getElementById(id)?.scrollIntoView({ block: "nearest" });
+    });
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -140,6 +144,7 @@
       e.preventDefault();
       if (suggestions.length === 0) return;
       suggestionIndex = (suggestionIndex + 1) % suggestions.length;
+      scrollActiveOptionIntoView();
       return;
     }
     if (e.key === "ArrowUp") {
@@ -147,6 +152,7 @@
       if (suggestions.length === 0) return;
       suggestionIndex =
         (suggestionIndex - 1 + suggestions.length) % suggestions.length;
+      scrollActiveOptionIntoView();
       return;
     }
     if (e.key === "Enter") {
@@ -196,18 +202,21 @@
   </div>
 
   {#if showSuggestions}
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
       id={listboxId}
       class="char-search-menu"
       role="listbox"
       use:portal
       bind:this={menuEl}
+      onpointerdown={(e) => e.preventDefault()}
     >
       {#each suggestions as opt, i (opt.value)}
         {@const char = getCharacter?.(opt.value)}
         <button
           type="button"
           id="{listboxId}-{opt.value}"
+          tabindex="-1"
           role="option"
           aria-selected={value === opt.value}
           class="char-search-option"
@@ -247,6 +256,10 @@
   .char-search-field:focus-within {
     border-color: rgba(255, 255, 255, 0.32);
     background: var(--surface-quiet);
+  }
+
+  .char-search-field:focus-within {
+    box-shadow: var(--focus-ring);
   }
 
   .char-search-input {

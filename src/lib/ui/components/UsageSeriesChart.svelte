@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { CharacterUsageSeriesPoint } from "$lib/definitions";
+  import type { CharacterUsageSeriesPointAbyss } from "$lib/definitions";
 
   let {
     points = [],
     class: className = "",
   }: {
-    points?: CharacterUsageSeriesPoint[];
+    points?: CharacterUsageSeriesPoint[] | CharacterUsageSeriesPointAbyss[];
     class?: string;
   } = $props();
 
@@ -196,7 +197,7 @@
     </div>
 
     {#if hover}
-      <div class="tooltip" aria-live="polite">
+      <div class="tooltip">
         <span class="tooltip-ver">{labelFor(hover.point)}</span>
         <span class="tooltip-val">{formatRate(hover.v)}</span>
       </div>
@@ -267,7 +268,8 @@
     align-items: center;
     gap: 0.55rem;
     margin-top: 0.45rem;
-    padding-left: 2.15rem;
+    /* Match SVG PAD.left (36/640 viewBox units). */
+    padding-left: 5.625%;
     color: color-mix(in srgb, var(--foreground-mid) 90%, transparent);
     font-size: 0.65rem;
     letter-spacing: 0.01em;
