@@ -47,7 +47,7 @@
     {
       label: "Stygian",
       path: stygianPath,
-      match: "exact" as const,
+      match: "prefix" as const,
       preload: "hover" as const,
     },
     { label: "Pulls", path: pullsPath, match: "exact" as const },

@@ -16,10 +16,7 @@ import {
   requireEnemyId,
 } from "$lib/server/request-validation";
 import { TOP_TEAMS_LIMIT } from "$lib/character-teams";
-import type {
-  StygianEnemyTeamsPayload,
-  StygianEnemyTopTeam,
-} from "$lib/definitions";
+import type { StygianEnemyTeamsPayload } from "$lib/definitions";
 import { e2eStygianEnemyTeamsPayload } from "$lib/e2e/fixtures";
 
 const enemyTeamsCache = new LRUCache<StygianEnemyTeamsPayload>(
@@ -34,14 +31,7 @@ const enemyTeamsCache = new LRUCache<StygianEnemyTeamsPayload>(
 async function fetchEnemyTeams(
   enemyId: number,
 ): Promise<StygianEnemyTeamsPayload> {
-  // Call by name until sql/get_top_teams_for_stygian_enemy.sql is applied and
-  // database.types.ts is regenerated — then switch to a normal serverDb.rpc.
-  const teamsRes = await (
-    serverDb.rpc as unknown as (
-      fn: "get_top_teams_for_stygian_enemy",
-      args: { p_enemy_id: number; p_limit: number },
-    ) => PromiseLike<{ data: StygianEnemyTopTeam[] | null; error: unknown }>
-  )("get_top_teams_for_stygian_enemy", {
+  const teamsRes = await serverDb.rpc("get_top_teams_for_stygian_enemy", {
     p_enemy_id: enemyId,
     p_limit: TOP_TEAMS_LIMIT,
   });

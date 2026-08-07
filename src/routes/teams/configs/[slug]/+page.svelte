@@ -24,8 +24,8 @@
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
+  import PageTrail from "$lib/ui/components/PageTrail.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
-  import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import StatRow from "$lib/ui/components/StatRow.svelte";
   import {
@@ -88,7 +88,13 @@
 
 <PageShell class="gap-8 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
-    <BackLink href="/teams/{team.team_key}">← {teamTitle}</BackLink>
+    <PageTrail
+      items={[
+        { label: "Teams", href: "/teams" },
+        { label: teamTitle, href: `/teams/${team.team_key}` },
+        { label: simLabel || "Config" },
+      ]}
+    />
     <h1 class="page-title">{simLabel || teamTitle}</h1>
     <p class="page-meta">
       <span>{(sim.dps / 1000).toFixed(1)}K DPS</span>

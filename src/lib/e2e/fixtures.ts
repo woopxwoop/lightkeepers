@@ -345,7 +345,15 @@ export function e2eStygianEnemyList(): StygianEnemyListItem[] {
       appearance_count: 2,
       latest_version_number: 2,
       latest_version_name: "test-v2",
+      version_numbers: [2, 1],
     },
+  ];
+}
+
+export function e2eStygianEnemyCycles() {
+  return [
+    { version_number: 2, version_name: "test-v2" },
+    { version_number: 1, version_name: "test-v1" },
   ];
 }
 

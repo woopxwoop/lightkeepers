@@ -36,6 +36,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import UsageIndexPopover from "$lib/ui/components/UsageIndexPopover.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  import IconDatabase from "$lib/ui/icons/IconDatabase.svelte";
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
   import type { StygianTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
@@ -167,7 +168,7 @@
 
     <h2 class="field-heading">
       {#if enemy}
-        <a class="field-heading-link" href={resolve(`/enemies/${enemy.id}`)}
+        <a class="field-heading-link" href={resolve(`/stygian/enemies/${enemy.id}`)}
           >{enemy.enemy_name ?? stygianSlotLabel[slot]}</a
         >
       {:else}
@@ -210,7 +211,7 @@
       {#if enemies?.[slot]}
         <a
           class="meta-field-link"
-          href={resolve(`/enemies/${enemies[slot]!.id}`)}
+          href={resolve(`/stygian/enemies/${enemies[slot]!.id}`)}
           >{enemies[slot]!.enemy_name ?? stygianSlotLabel[slot]}</a
         >
       {:else}
@@ -258,6 +259,10 @@
         </p>
       {/if}
     </div>
+    <a class="enemies-index-link" href={resolve("/stygian/enemies")}>
+      <IconDatabase size={14} />
+      Enemy Database
+    </a>
   </header>
 
   {#if loading}
@@ -363,6 +368,21 @@
     align-items: baseline;
     gap: 0.4rem;
     flex-wrap: wrap;
+  }
+
+  .enemies-index-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: fit-content;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--accent-1);
+    text-decoration: none;
+  }
+
+  .enemies-index-link:hover {
+    text-decoration: underline;
   }
 
   /* ── Solution board ─────────────────────────────────────────────── */

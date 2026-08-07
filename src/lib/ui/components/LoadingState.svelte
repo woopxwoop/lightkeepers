@@ -33,9 +33,6 @@
   .loading-pulse {
     min-height: unset;
     padding: var(--space-8) var(--space-4);
-    border-radius: var(--radius-lg);
-    background: var(--surface-raised);
-    border: var(--border-width) solid var(--border-default);
   }
 
   .msg {

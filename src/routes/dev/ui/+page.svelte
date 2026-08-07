@@ -1630,7 +1630,7 @@
       <Surface>
         <p class="surface-label">StatRow</p>
         <p class="token-meta mb-2">
-          Label/value row for build sheets (<code>/team-configs/[slug]</code>).
+          Label/value row for build sheets (<code>/teams/configs/[slug]</code>).
           Icon optional.
         </p>
         <div class="stat-stack">

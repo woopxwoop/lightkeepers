@@ -47,28 +47,15 @@ export type CharacterAnalyticsPayload =
     };
 
 /** Per-appearance top team vs a Stygian boss (slot-ranked). */
-export type StygianEnemyTopTeam = {
-  version_number: number;
-  version_name: string;
-  slot_index: number;
-  team_key: string;
-  members: string[];
-  members_names: string[];
-  field_rate: number;
-  usage_rate: number;
-  usage_total: number;
-  field_1_rate: number;
-  field_2_rate: number;
-  field_3_rate: number;
-  has_total: number;
-};
+export type StygianEnemyTopTeam =
+  Database["public"]["Functions"]["get_top_teams_for_stygian_enemy"]["Returns"][number];
 
 export type StygianEnemyTeamsPayload = {
   enemyId: number;
   teams: StygianEnemyTopTeam[];
 };
 
-/** Index card for `/enemies` (Stygian appearances only). */
+/** Index card for `/stygian/enemies` (Stygian appearances only). */
 export type StygianEnemyListItem = {
   id: number;
   enemy_name: string | null;
@@ -76,6 +63,13 @@ export type StygianEnemyListItem = {
   appearance_count: number;
   latest_version_number: number;
   latest_version_name: string | null;
+  /** Every Stygian version_number this enemy appeared in. */
+  version_numbers: number[];
+};
+
+export type StygianEnemyCycleOption = {
+  version_number: number;
+  version_name: string | null;
 };
 
 // Re-export CDN kit / enemy contracts for discoverability.

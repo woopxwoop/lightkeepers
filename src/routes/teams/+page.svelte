@@ -9,6 +9,7 @@
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
+  import PageTrail from "$lib/ui/components/PageTrail.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
@@ -181,6 +182,7 @@
 
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   <header class="page-head">
+    <PageTrail items={[{ label: "Teams" }]} />
     <div class="page-head-text">
       <h1 class="page-title">Team Simulations</h1>
       <p class="page-meta">

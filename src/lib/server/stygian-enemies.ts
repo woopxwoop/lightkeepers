@@ -1,15 +1,20 @@
 /**
- * SSR helpers for `/enemies` — Stygian boss appearances only.
+ * SSR helpers for `/stygian/enemies` — Stygian boss appearances only.
  */
 
 import { error } from "@sveltejs/kit";
 import { serverDb } from "$lib/server/supabaseServer";
 import { assertNoDbError } from "$lib/server/request-validation";
-import type { Enemy, StygianEnemyListItem } from "$lib/definitions";
+import type {
+  Enemy,
+  StygianEnemyCycleOption,
+  StygianEnemyListItem,
+} from "$lib/definitions";
 
-export async function listStygianEnemyAppearances(): Promise<
-  StygianEnemyListItem[]
-> {
+export async function listStygianEnemyAppearances(): Promise<{
+  enemies: StygianEnemyListItem[];
+  cycles: StygianEnemyCycleOption[];
+}> {
   const [appearancesRes, versionsRes] = await Promise.all([
     serverDb
       .from("stygian_version_enemies")
@@ -20,28 +25,34 @@ export async function listStygianEnemyAppearances(): Promise<
   assertNoDbError("enemies index versions", versionsRes.error);
 
   const appearances = appearancesRes.data ?? [];
-  if (appearances.length === 0) return [];
-
+  const versionRows = versionsRes.data ?? [];
   const versionName = new Map(
-    (versionsRes.data ?? []).map((v) => [
-      v.version_number,
-      v.version_name ?? null,
-    ]),
+    versionRows.map((v) => [v.version_number, v.version_name ?? null]),
   );
+
+  const appearedVersions = new Set(appearances.map((r) => r.version_number));
+  const cycles: StygianEnemyCycleOption[] = [...appearedVersions]
+    .sort((a, b) => b - a)
+    .map((version_number) => ({
+      version_number,
+      version_name: versionName.get(version_number) ?? null,
+    }));
+
+  if (appearances.length === 0) return { enemies: [], cycles: [] };
 
   const byEnemy = new Map<
     number,
-    { count: number; latest: number }
+    { versions: Set<number>; latest: number }
   >();
   for (const row of appearances) {
     const prev = byEnemy.get(row.enemy_id);
     if (!prev) {
       byEnemy.set(row.enemy_id, {
-        count: 1,
+        versions: new Set([row.version_number]),
         latest: row.version_number,
       });
     } else {
-      prev.count += 1;
+      prev.versions.add(row.version_number);
       if (row.version_number > prev.latest) prev.latest = row.version_number;
     }
   }
@@ -57,27 +68,29 @@ export async function listStygianEnemyAppearances(): Promise<
     (enemiesRes.data ?? []).map((e) => [e.id, e] as const),
   );
 
-  const items: StygianEnemyListItem[] = [];
+  const enemies: StygianEnemyListItem[] = [];
   for (const [id, stats] of byEnemy) {
     const enemy = enemyMap.get(id);
     if (!enemy) continue;
-    items.push({
+    const version_numbers = [...stats.versions].sort((a, b) => b - a);
+    enemies.push({
       id,
       enemy_name: enemy.enemy_name,
       asset: enemy.asset,
-      appearance_count: stats.count,
+      appearance_count: version_numbers.length,
       latest_version_number: stats.latest,
       latest_version_name: versionName.get(stats.latest) ?? null,
+      version_numbers,
     });
   }
 
-  items.sort((a, b) => {
+  enemies.sort((a, b) => {
     if (b.latest_version_number !== a.latest_version_number) {
       return b.latest_version_number - a.latest_version_number;
     }
     return (a.enemy_name ?? "").localeCompare(b.enemy_name ?? "");
   });
-  return items;
+  return { enemies, cycles };
 }
 
 export async function loadStygianEnemy(enemyId: number): Promise<Enemy> {

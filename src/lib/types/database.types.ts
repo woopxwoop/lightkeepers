@@ -857,6 +857,24 @@ export type Database = {
           version_number: number
         }[]
       }
+      get_top_teams_for_stygian_enemy: {
+        Args: { p_enemy_id: number; p_limit: number }
+        Returns: {
+          field_1_rate: number
+          field_2_rate: number
+          field_3_rate: number
+          field_rate: number
+          has_total: number
+          members: string[]
+          members_names: string[]
+          slot_index: number
+          team_key: string
+          usage_rate: number
+          usage_total: number
+          version_name: string
+          version_number: number
+        }[]
+      }
       refresh_stygian_views: { Args: never; Returns: undefined }
       upsert_abyss_team_batch: {
         Args: { p_members: Json; p_stats: Json; p_teams: Json }

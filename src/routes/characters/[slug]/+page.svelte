@@ -17,12 +17,12 @@
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
+  import PageTrail from "$lib/ui/components/PageTrail.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import Select from "$lib/ui/components/Select.svelte";
-  import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import UpgradeImpactPopover from "$lib/ui/components/UpgradeImpactPopover.svelte";
   import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
@@ -700,9 +700,13 @@
         class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
       >
         <div class="hero-name-block">
-          <BackLink href="/characters" class="hero-back-link"
-            >Characters</BackLink
-          >
+          <PageTrail
+            class="hero-trail"
+            items={[
+              { label: "Characters", href: "/characters" },
+              { label: kit.name },
+            ]}
+          />
           <h1 class="hero-title">{kit.name}</h1>
         </div>
         <p class="hero-eyebrow" style="color: {elColor};">
@@ -1547,15 +1551,16 @@
     gap: 0.05rem;
   }
 
-  .hero-copy :global(.back-link.hero-back-link) {
-    color: var(--foreground-color);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    transition: color var(--control-duration) var(--control-ease);
+  .hero-copy :global(.hero-trail .back-link) {
+    color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
   }
 
-  .hero-copy :global(.back-link.hero-back-link:hover) {
+  .hero-copy :global(.hero-trail .back-link:hover) {
     color: var(--accent-1);
+  }
+
+  .hero-copy :global(.hero-trail .trail-current) {
+    color: var(--foreground-color);
   }
 
   .hero-eyebrow {
