@@ -30,8 +30,9 @@
           {#if !isLast && item.href}
             <BackLink href={item.href}>{item.label}</BackLink>
           {:else}
-            <span class="trail-current" aria-current={isLast ? "page" : undefined}
-              >{item.label}</span
+            <span
+              class="trail-current"
+              aria-current={isLast ? "page" : undefined}>{item.label}</span
             >
           {/if}
         </li>

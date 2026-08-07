@@ -16,9 +16,7 @@ export async function listStygianEnemyAppearances(): Promise<{
   cycles: StygianEnemyCycleOption[];
 }> {
   const [appearancesRes, versionsRes] = await Promise.all([
-    serverDb
-      .from("stygian_version_enemies")
-      .select("enemy_id, version_number"),
+    serverDb.from("stygian_version_enemies").select("enemy_id, version_number"),
     serverDb.from("stygian_versions").select("version_number, version_name"),
   ]);
   assertNoDbError("enemies index appearances", appearancesRes.error);
@@ -40,10 +38,7 @@ export async function listStygianEnemyAppearances(): Promise<{
 
   if (appearances.length === 0) return { enemies: [], cycles: [] };
 
-  const byEnemy = new Map<
-    number,
-    { versions: Set<number>; latest: number }
-  >();
+  const byEnemy = new Map<number, { versions: Set<number>; latest: number }>();
   for (const row of appearances) {
     const prev = byEnemy.get(row.enemy_id);
     if (!prev) {

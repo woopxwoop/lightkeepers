@@ -11,10 +11,7 @@
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
   import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
-  import {
-    backgroundVisible,
-    toggleBackgroundVisible,
-  } from "$lib/stores";
+  import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
 
   const homePath = resolve("/");
   const abyssPath = resolve("/abyss");

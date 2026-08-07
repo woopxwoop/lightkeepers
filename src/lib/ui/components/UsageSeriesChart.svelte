@@ -133,13 +133,7 @@
 
       {#each yTicks as tick}
         {@const y = PAD.top + innerH - (tick / yMax) * innerH}
-        <line
-          class="grid"
-          x1={PAD.left}
-          x2={W - PAD.right}
-          y1={y}
-          y2={y}
-        />
+        <line class="grid" x1={PAD.left} x2={W - PAD.right} y1={y} y2={y} />
         <text class="tick" x={PAD.left - 6} y={y + 3} text-anchor="end"
           >{tick}</text
         >

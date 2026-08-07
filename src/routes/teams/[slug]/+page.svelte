@@ -381,7 +381,9 @@
                     )}
                     <div class="ladder-row">
                       <a
-                        href="/teams/configs/{encodeURIComponent(sim.state_key)}"
+                        href="/teams/configs/{encodeURIComponent(
+                          sim.state_key,
+                        )}"
                         class="ladder-link"
                         class:is-near-best={isNearBest(sim.dps, peakSim.dps)}
                       >

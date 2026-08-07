@@ -3,10 +3,7 @@
  */
 
 import type { StygianEnemyTeamsPayload } from "$lib/definitions";
-import {
-  isAbortError,
-  isTimeoutError,
-} from "$lib/app/character-analytics";
+import { isAbortError, isTimeoutError } from "$lib/app/character-analytics";
 
 export { isAbortError, isTimeoutError };
 

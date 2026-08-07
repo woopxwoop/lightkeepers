@@ -181,7 +181,7 @@
       class="char-search-input"
       bind:this={inputEl}
       value={displayValue}
-      placeholder={placeholder}
+      {placeholder}
       role="combobox"
       aria-label={ariaLabel}
       aria-expanded={showSuggestions}

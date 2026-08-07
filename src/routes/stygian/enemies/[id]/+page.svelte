@@ -91,9 +91,7 @@
 
   $effect(() => {
     const enemyId = enemy.id;
-    const cached = untrack(
-      () => teamsKey === enemyId && teamsPayload !== null,
-    );
+    const cached = untrack(() => teamsKey === enemyId && teamsPayload !== null);
     if (cached) return;
 
     void loadTeams(enemyId);
@@ -152,7 +150,9 @@
   }
 </script>
 
-<PageShell class="enemy-detail gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
+<PageShell
+  class="enemy-detail gap-6 {$animationsEnabled ? '' : 'no-page-anim'}"
+>
   <div class="page-bg">
     <header class="hero-float">
       <PageTrail
@@ -177,7 +177,8 @@
       {#if activeGroup && versionOptions.length > 0}
         <div class="teams-head">
           <div class="teams-label">
-            <span class="teams-label-text" id="enemy-version-label">Cycle:</span>
+            <span class="teams-label-text" id="enemy-version-label">Cycle:</span
+            >
             <Select
               id="enemy-version-trigger"
               options={versionOptions}
@@ -216,8 +217,7 @@
               <div class="team-hand-footer">
                 <span class="team-hand-meta">
                   <span class="team-hand-rank">#{i + 1}</span>
-                  <span
-                    >{(team.field_rate ?? 0).toFixed(0)}% in this field</span
+                  <span>{(team.field_rate ?? 0).toFixed(0)}% in this field</span
                   >
                   <span class="team-hand-sep" aria-hidden="true">·</span>
                   <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span>

@@ -685,41 +685,41 @@
     class="char-page"
     style="--kit-flash: {elColor}; --hero-accent: {elColor};"
   >
-  <section class="hero relative overflow-hidden">
-    <div
-      class="hero-bg absolute inset-0"
-      style="background-image: url('{namecard}');"
-    ></div>
-    <div class="hero-shade absolute inset-0"></div>
-    <div
-      class="hero-body relative z-10 flex flex-row items-center gap-3 sm:gap-4 md:gap-5"
-    >
-      {#if character}
-        <div class="hero-portrait">
-          <CharacterIcon {character} />
-        </div>
-      {/if}
+    <section class="hero relative overflow-hidden">
       <div
-        class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
+        class="hero-bg absolute inset-0"
+        style="background-image: url('{namecard}');"
+      ></div>
+      <div class="hero-shade absolute inset-0"></div>
+      <div
+        class="hero-body relative z-10 flex flex-row items-center gap-3 sm:gap-4 md:gap-5"
       >
-        <div class="hero-name-block">
-          <PageTrail
-            class="hero-trail"
-            items={[
-              { label: "Characters", href: "/characters" },
-              { label: kit.name },
-            ]}
-          />
-          <h1 class="hero-title">{kit.name}</h1>
+        {#if character}
+          <div class="hero-portrait">
+            <CharacterIcon {character} />
+          </div>
+        {/if}
+        <div
+          class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
+        >
+          <div class="hero-name-block">
+            <PageTrail
+              class="hero-trail"
+              items={[
+                { label: "Characters", href: "/characters" },
+                { label: kit.name },
+              ]}
+            />
+            <h1 class="hero-title">{kit.name}</h1>
+          </div>
+          <p class="hero-eyebrow" style="color: {elColor};">
+            {kit.title || "Character"}
+          </p>
         </div>
-        <p class="hero-eyebrow" style="color: {elColor};">
-          {kit.title || "Character"}
-        </p>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <div class="character-content-shell" class:mobile-open={mobileNavOpen}>
+    <div class="character-content-shell" class:mobile-open={mobileNavOpen}>
       <button
         type="button"
         class="ledger-mobile-trigger"

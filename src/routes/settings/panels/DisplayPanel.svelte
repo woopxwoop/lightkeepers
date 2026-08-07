@@ -168,9 +168,7 @@
       <div class="bg-home-row">
         <div>
           <span class="row-label">Apply to home page</span>
-          <p class="row-desc">
-            When off, home always shows the lighthouse.
-          </p>
+          <p class="row-desc">When off, home always shows the lighthouse.</p>
         </div>
         <Toggle
           pressed={$displayPreferences.backgroundApplyToHome}

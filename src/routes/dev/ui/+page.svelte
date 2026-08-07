@@ -490,8 +490,8 @@
       <p class="concept-kicker">Analytics · usage over versions</p>
       <h2>Usage series chart</h2>
       <p>
-        Live <code>/api/character-analytics</code> → SVG line. Prototype for the
-        character Analytics tab.
+        Live <code>/api/character-analytics</code> → SVG line. Prototype for the character
+        Analytics tab.
       </p>
     </div>
 
@@ -545,9 +545,9 @@
       <p class="concept-kicker">Route study · drop the outer board</p>
       <h2>Unboxed character &amp; settings</h2>
       <p>
-        Left = current flush <code>Surface</code> wrapping everything. Right =
-        hero / page head on the page, rail + body without an outer card —
-        Surfaces only on content chunks.
+        Left = current flush <code>Surface</code> wrapping everything. Right = hero
+        / page head on the page, rail + body without an outer card — Surfaces only
+        on content chunks.
       </p>
     </div>
 

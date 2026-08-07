@@ -23,8 +23,7 @@
 
   let filtered = $derived.by(() => {
     const q = query.trim().toLowerCase();
-    const cycle =
-      cycleFilter === "" ? null : Number.parseInt(cycleFilter, 10);
+    const cycle = cycleFilter === "" ? null : Number.parseInt(cycleFilter, 10);
     return enemies.filter((enemy) => {
       if (cycle !== null && !enemy.version_numbers.includes(cycle)) {
         return false;
@@ -36,7 +35,9 @@
   });
 </script>
 
-<PageShell class="enemies-index gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
+<PageShell
+  class="enemies-index gap-6 {$animationsEnabled ? '' : 'no-page-anim'}"
+>
   <header class="page-head">
     <PageTrail
       items={[
