@@ -17,7 +17,6 @@
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
@@ -646,42 +645,41 @@
 {/snippet}
 
 <PageShell class="char-detail {$animationsEnabled ? '' : 'no-page-anim'}">
-  <Surface
-    flush
-    class="char-board"
+  <div
+    class="char-page"
     style="--kit-flash: {elColor}; --hero-accent: {elColor};"
   >
-    <section class="hero relative overflow-hidden">
-      <div
-        class="hero-bg absolute inset-0"
-        style="background-image: url('{namecard}');"
-      ></div>
-      <div class="hero-shade absolute inset-0"></div>
-      <div
-        class="hero-body relative z-10 flex flex-row items-center gap-3 sm:gap-4 md:gap-5"
-      >
-        {#if character}
-          <div class="hero-portrait">
-            <CharacterIcon {character} />
-          </div>
-        {/if}
-        <div
-          class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
-        >
-          <div class="hero-name-block">
-            <BackLink href="/characters" class="hero-back-link"
-              >Characters</BackLink
-            >
-            <h1 class="hero-title">{kit.name}</h1>
-          </div>
-          <p class="hero-eyebrow" style="color: {elColor};">
-            {kit.title || "Character"}
-          </p>
+  <section class="hero relative overflow-hidden">
+    <div
+      class="hero-bg absolute inset-0"
+      style="background-image: url('{namecard}');"
+    ></div>
+    <div class="hero-shade absolute inset-0"></div>
+    <div
+      class="hero-body relative z-10 flex flex-row items-center gap-3 sm:gap-4 md:gap-5"
+    >
+      {#if character}
+        <div class="hero-portrait">
+          <CharacterIcon {character} />
         </div>
+      {/if}
+      <div
+        class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
+      >
+        <div class="hero-name-block">
+          <BackLink href="/characters" class="hero-back-link"
+            >Characters</BackLink
+          >
+          <h1 class="hero-title">{kit.name}</h1>
+        </div>
+        <p class="hero-eyebrow" style="color: {elColor};">
+          {kit.title || "Character"}
+        </p>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <div class="character-content-shell" class:mobile-open={mobileNavOpen}>
+  <div class="character-content-shell" class:mobile-open={mobileNavOpen}>
       <button
         type="button"
         class="ledger-mobile-trigger"
@@ -1412,12 +1410,20 @@
         {/if}
       </div>
     </div>
-  </Surface>
+  </div>
 </PageShell>
 
 <style>
+  .char-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
   .hero {
-    border-bottom: var(--border-width) solid
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: var(--border-width) solid
       color-mix(
         in srgb,
         var(--hero-accent, var(--foreground-mid)) 35%,
@@ -1786,17 +1792,13 @@
     gap: 0.4rem;
   }
 
-  /* One board: white hairlines, no nested Surfaces */
-  :global(.char-board) {
-    --border-subtle: rgba(255, 255, 255, 0.14);
-    --border-default: rgba(255, 255, 255, 0.24);
-    --border-strong: rgba(255, 255, 255, 0.45);
-    overflow: hidden;
-  }
-
+  /* Outlined open frame — hairlines imply a board; complete it without a fill. */
   .character-content-shell {
     display: grid;
     grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+    overflow: hidden;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-lg);
   }
 
   .ledger-mobile-trigger {
