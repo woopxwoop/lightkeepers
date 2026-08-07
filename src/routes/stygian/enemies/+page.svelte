@@ -88,9 +88,7 @@
                   <img src={getEnemyAsset(enemy.asset)} alt="" />
                 {/if}
               </span>
-              {#if query.trim()}
-                <span class="enemy-name">{name}</span>
-              {/if}
+              <span class="enemy-name">{name}</span>
               <span class="enemy-meta" aria-hidden="true">
                 {enemy.latest_version_name ?? `v${enemy.latest_version_number}`}
                 · {enemy.appearance_count}

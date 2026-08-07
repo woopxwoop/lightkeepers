@@ -163,13 +163,13 @@
                         {/each}
                       </ul>
                     {/if}
-
-                    <div class="build-art-meta">
-                      <h3 class="char-name">{character?.name ?? build.key}</h3>
-                      <p class="char-level">Lv. {build.level}</p>
-                    </div>
                   </div>
                 {/if}
+
+                <div class="build-art-meta">
+                  <h3 class="char-name">{character?.name ?? build.key}</h3>
+                  <p class="char-level">Lv. {build.level}</p>
+                </div>
               </div>
 
               <div class="build-panel">

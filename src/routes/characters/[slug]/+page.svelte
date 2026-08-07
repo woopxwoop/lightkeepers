@@ -40,6 +40,7 @@
   import {
     fetchCharacterAnalytics,
     isAbortError,
+    isTimeoutError,
   } from "$lib/app/character-analytics";
   import {
     artifactSlotIconUrl,
@@ -225,6 +226,7 @@
 
     return fetchCharacterAnalytics(nameId, mode, controller.signal)
       .then((payload) => {
+        if (analyticsAbort !== controller) return;
         if (controller.signal.aborted) {
           analyticsLoading = false;
           return;
@@ -234,14 +236,15 @@
         analyticsLoading = false;
       })
       .catch((err) => {
-        if (controller.signal.aborted) {
+        if (analyticsAbort !== controller) return;
+        if (controller.signal.aborted || isAbortError(err)) {
           analyticsLoading = false;
           return;
         }
         analyticsPayload = null;
         analyticsKey = null;
         analyticsLoading = false;
-        analyticsError = isAbortError(err)
+        analyticsError = isTimeoutError(err)
           ? "Request timed out"
           : err instanceof Error
             ? err.message

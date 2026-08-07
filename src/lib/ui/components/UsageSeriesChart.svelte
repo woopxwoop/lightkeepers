@@ -80,7 +80,9 @@
     hoverIndex === null || !coords[hoverIndex] ? null : coords[hoverIndex],
   );
 
-  function labelFor(point: CharacterUsageSeriesPoint): string {
+  function labelFor(
+    point: CharacterUsageSeriesPoint | CharacterUsageSeriesPointAbyss,
+  ): string {
     return point.version_name?.trim() || `v${point.version_number}`;
   }
 

@@ -9,12 +9,17 @@ import type {
 
 const FETCH_TIMEOUT_MS = 15_000;
 
+/** Caller-initiated abort (`AbortController.abort`), not timeout. */
 export function isAbortError(err: unknown): boolean {
+  return err instanceof Error && err.name === "AbortError";
+}
+
+/** `AbortSignal.timeout` reason — keep distinct from caller aborts. */
+export function isTimeoutError(err: unknown): boolean {
   return (
-    (typeof DOMException !== "undefined" &&
-      err instanceof DOMException &&
-      err.name === "AbortError") ||
-    (err instanceof Error && err.name === "AbortError")
+    typeof DOMException !== "undefined" &&
+    err instanceof DOMException &&
+    err.name === "TimeoutError"
   );
 }
 

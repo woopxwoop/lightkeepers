@@ -151,6 +151,17 @@
   }
 </script>
 
+{#snippet enemyLabel(slot: Slot, linkClass: string)}
+  {@const enemy = enemies?.[slot]}
+  {#if enemy}
+    <a class={linkClass} href={resolve(`/stygian/enemies/${enemy.id}`)}
+      >{enemy.enemy_name ?? stygianSlotLabel[slot]}</a
+    >
+  {:else}
+    {stygianSlotLabel[slot]}
+  {/if}
+{/snippet}
+
 {#snippet fieldColumn(slot: Slot)}
   {@const enemy = enemies?.[slot]}
   {@const assignment = solution?.assignments.find((a) => a.slot === slot)}
@@ -167,13 +178,7 @@
     <div class="hero-scrim" aria-hidden="true"></div>
 
     <h2 class="field-heading">
-      {#if enemy}
-        <a class="field-heading-link" href={resolve(`/stygian/enemies/${enemy.id}`)}
-          >{enemy.enemy_name ?? stygianSlotLabel[slot]}</a
-        >
-      {:else}
-        {stygianSlotLabel[slot]}
-      {/if}
+      {@render enemyLabel(slot, "field-heading-link")}
     </h2>
 
     <div class="hero-body">
@@ -208,15 +213,7 @@
 
   <section class="meta-column">
     <h3 class="eyebrow meta-field-heading">
-      {#if enemies?.[slot]}
-        <a
-          class="meta-field-link"
-          href={resolve(`/stygian/enemies/${enemies[slot]!.id}`)}
-          >{enemies[slot]!.enemy_name ?? stygianSlotLabel[slot]}</a
-        >
-      {:else}
-        {stygianSlotLabel[slot]}
-      {/if}
+      {@render enemyLabel(slot, "meta-field-link")}
     </h3>
 
     {#if teams.length === 0}

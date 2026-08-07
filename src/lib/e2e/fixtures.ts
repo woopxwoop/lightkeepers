@@ -15,6 +15,7 @@ import type {
   NearMissStygianTeam,
   StygianEnemies,
   StygianEnemyListItem,
+  StygianEnemyCycleOption,
   StygianEnemyTeamsPayload,
   StygianSchedule,
   StygianTeam,
@@ -350,7 +351,7 @@ export function e2eStygianEnemyList(): StygianEnemyListItem[] {
   ];
 }
 
-export function e2eStygianEnemyCycles() {
+export function e2eStygianEnemyCycles(): StygianEnemyCycleOption[] {
   return [
     { version_number: 2, version_name: "test-v2" },
     { version_number: 1, version_name: "test-v1" },

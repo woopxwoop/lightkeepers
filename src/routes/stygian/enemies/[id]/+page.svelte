@@ -12,6 +12,7 @@
   import {
     fetchStygianEnemyTeams,
     isAbortError,
+    isTimeoutError,
   } from "$lib/app/stygian-enemy-teams";
   import { stygianSlotIndexLabel } from "$lib/slotLabels";
   import { getEnemyAsset, ownedNameIds } from "$lib/utils";
@@ -59,18 +60,9 @@
       }
       group.teams.push(team);
     }
-    return [...groups.values()]
-      .map((g) => ({
-        ...g,
-        teams: g.teams
-          .slice()
-          .sort(
-            (a, b) =>
-              (b.field_rate ?? 0) * (b.usage_rate ?? 0) -
-              (a.field_rate ?? 0) * (a.usage_rate ?? 0),
-          ),
-      }))
-      .sort((a, b) => b.version_number - a.version_number);
+    return [...groups.values()].sort(
+      (a, b) => b.version_number - a.version_number,
+    );
   });
 
   let versionOptions = $derived(
@@ -121,6 +113,7 @@
 
     return fetchStygianEnemyTeams(enemyId, controller.signal)
       .then((payload) => {
+        if (teamsAbort !== controller) return;
         if (controller.signal.aborted) {
           teamsLoading = false;
           return;
@@ -130,14 +123,15 @@
         teamsLoading = false;
       })
       .catch((err) => {
-        if (controller.signal.aborted) {
+        if (teamsAbort !== controller) return;
+        if (controller.signal.aborted || isAbortError(err)) {
           teamsLoading = false;
           return;
         }
         teamsPayload = null;
         teamsKey = null;
         teamsLoading = false;
-        teamsError = isAbortError(err)
+        teamsError = isTimeoutError(err)
           ? "Request timed out"
           : err instanceof Error
             ? err.message
