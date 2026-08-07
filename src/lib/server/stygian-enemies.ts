@@ -1,0 +1,103 @@
+/**
+ * SSR helpers for `/enemies` — Stygian boss appearances only.
+ */
+
+import { error } from "@sveltejs/kit";
+import { serverDb } from "$lib/server/supabaseServer";
+import { assertNoDbError } from "$lib/server/request-validation";
+import type { Enemy, StygianEnemyListItem } from "$lib/definitions";
+
+export async function listStygianEnemyAppearances(): Promise<
+  StygianEnemyListItem[]
+> {
+  const [appearancesRes, versionsRes] = await Promise.all([
+    serverDb
+      .from("stygian_version_enemies")
+      .select("enemy_id, version_number"),
+    serverDb.from("stygian_versions").select("version_number, version_name"),
+  ]);
+  assertNoDbError("enemies index appearances", appearancesRes.error);
+  assertNoDbError("enemies index versions", versionsRes.error);
+
+  const appearances = appearancesRes.data ?? [];
+  if (appearances.length === 0) return [];
+
+  const versionName = new Map(
+    (versionsRes.data ?? []).map((v) => [
+      v.version_number,
+      v.version_name ?? null,
+    ]),
+  );
+
+  const byEnemy = new Map<
+    number,
+    { count: number; latest: number }
+  >();
+  for (const row of appearances) {
+    const prev = byEnemy.get(row.enemy_id);
+    if (!prev) {
+      byEnemy.set(row.enemy_id, {
+        count: 1,
+        latest: row.version_number,
+      });
+    } else {
+      prev.count += 1;
+      if (row.version_number > prev.latest) prev.latest = row.version_number;
+    }
+  }
+
+  const ids = [...byEnemy.keys()];
+  const enemiesRes = await serverDb
+    .from("enemies")
+    .select("id, enemy_name, asset")
+    .in("id", ids);
+  assertNoDbError("enemies index enemies", enemiesRes.error);
+
+  const enemyMap = new Map(
+    (enemiesRes.data ?? []).map((e) => [e.id, e] as const),
+  );
+
+  const items: StygianEnemyListItem[] = [];
+  for (const [id, stats] of byEnemy) {
+    const enemy = enemyMap.get(id);
+    if (!enemy) continue;
+    items.push({
+      id,
+      enemy_name: enemy.enemy_name,
+      asset: enemy.asset,
+      appearance_count: stats.count,
+      latest_version_number: stats.latest,
+      latest_version_name: versionName.get(stats.latest) ?? null,
+    });
+  }
+
+  items.sort((a, b) => {
+    if (b.latest_version_number !== a.latest_version_number) {
+      return b.latest_version_number - a.latest_version_number;
+    }
+    return (a.enemy_name ?? "").localeCompare(b.enemy_name ?? "");
+  });
+  return items;
+}
+
+export async function loadStygianEnemy(enemyId: number): Promise<Enemy> {
+  const enemyRes = await serverDb
+    .from("enemies")
+    .select("*")
+    .eq("id", enemyId)
+    .maybeSingle();
+  assertNoDbError("enemy detail", enemyRes.error);
+  if (!enemyRes.data) throw error(404, "Enemy not found");
+
+  const appearanceRes = await serverDb
+    .from("stygian_version_enemies")
+    .select("enemy_id")
+    .eq("enemy_id", enemyId)
+    .limit(1);
+  assertNoDbError("enemy detail appearances", appearanceRes.error);
+  if (!appearanceRes.data?.length) {
+    throw error(404, "Enemy has no Stygian appearances");
+  }
+
+  return enemyRes.data;
+}

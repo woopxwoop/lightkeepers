@@ -125,6 +125,24 @@ export function requireAnalyticsMode(value: unknown): "abyss" | "stygian" {
   return value;
 }
 
+/** Positive integer enemy id from a query/path param. */
+export function requireEnemyId(value: unknown): number {
+  const raw =
+    typeof value === "string"
+      ? value.trim()
+      : typeof value === "number"
+        ? String(value)
+        : "";
+  if (!/^\d+$/.test(raw)) {
+    throw error(400, "enemyId must be a positive integer.");
+  }
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw error(400, "enemyId must be a positive integer.");
+  }
+  return id;
+}
+
 /** Validate a roster / owned-character name_id list for RPC routes. */
 export function requireCharacterNameIds(value: unknown): string[] {
   if (!Array.isArray(value)) {

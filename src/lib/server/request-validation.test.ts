@@ -7,6 +7,7 @@ import {
   requireAnalyticsMode,
   requireCharacterNameId,
   requireCharacterNameIds,
+  requireEnemyId,
   requireFiniteInteger,
   requireJsonObject,
   requireNumberInRange,
@@ -151,5 +152,15 @@ describe("request validation", () => {
       () => assertNoDbError("test", new Error("db")),
       hasStatus(500),
     );
+  });
+
+  it("requireEnemyId accepts positive integers and rejects junk", () => {
+    assert.equal(requireEnemyId("42"), 42);
+    assert.equal(requireEnemyId(7), 7);
+    assert.throws(() => requireEnemyId("0"), isBadRequest);
+    assert.throws(() => requireEnemyId("-1"), isBadRequest);
+    assert.throws(() => requireEnemyId("1.5"), isBadRequest);
+    assert.throws(() => requireEnemyId("abc"), isBadRequest);
+    assert.throws(() => requireEnemyId(null), isBadRequest);
   });
 });

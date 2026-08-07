@@ -39,6 +39,7 @@
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
   import type { StygianTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
+  import { resolve } from "$app/paths";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -165,7 +166,13 @@
     <div class="hero-scrim" aria-hidden="true"></div>
 
     <h2 class="field-heading">
-      {enemy?.enemy_name ?? stygianSlotLabel[slot]}
+      {#if enemy}
+        <a class="field-heading-link" href={resolve(`/enemies/${enemy.id}`)}
+          >{enemy.enemy_name ?? stygianSlotLabel[slot]}</a
+        >
+      {:else}
+        {stygianSlotLabel[slot]}
+      {/if}
     </h2>
 
     <div class="hero-body">
@@ -200,7 +207,15 @@
 
   <section class="meta-column">
     <h3 class="eyebrow meta-field-heading">
-      {enemies?.[slot]?.enemy_name ?? stygianSlotLabel[slot]}
+      {#if enemies?.[slot]}
+        <a
+          class="meta-field-link"
+          href={resolve(`/enemies/${enemies[slot]!.id}`)}
+          >{enemies[slot]!.enemy_name ?? stygianSlotLabel[slot]}</a
+        >
+      {:else}
+        {stygianSlotLabel[slot]}
+      {/if}
     </h3>
 
     {#if teams.length === 0}
@@ -511,6 +526,18 @@
     text-transform: uppercase;
     color: var(--foreground-color);
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+  }
+
+  .field-heading-link,
+  .meta-field-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .field-heading-link:hover,
+  .meta-field-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
   }
 
   .hero-body {

@@ -10,9 +10,12 @@ import type {
   Character,
   CharacterAnalyticsMode,
   CharacterAnalyticsPayload,
+  Enemy,
   NearMissStygianPair,
   NearMissStygianTeam,
   StygianEnemies,
+  StygianEnemyListItem,
+  StygianEnemyTeamsPayload,
   StygianSchedule,
   StygianTeam,
   StygianVersion,
@@ -318,6 +321,69 @@ export function e2eCharacterAnalyticsPayload(
         usage_total: 180,
         field_1_rate: 60,
         field_2_rate: 40,
+        has_total: 1000,
+      },
+    ],
+  };
+}
+
+export const E2E_STYGIAN_ENEMY: Enemy = {
+  id: 1,
+  enemy_name: "Test Boss",
+  asset: "UI_MonsterIcon_Test",
+  icon_path: null,
+  description: null,
+  created_at: "2024-01-01T00:00:00Z",
+};
+
+export function e2eStygianEnemyList(): StygianEnemyListItem[] {
+  return [
+    {
+      id: E2E_STYGIAN_ENEMY.id,
+      enemy_name: E2E_STYGIAN_ENEMY.enemy_name,
+      asset: E2E_STYGIAN_ENEMY.asset,
+      appearance_count: 2,
+      latest_version_number: 2,
+      latest_version_name: "test-v2",
+    },
+  ];
+}
+
+/** Deterministic /api/stygian-enemy-teams body for Playwright. */
+export function e2eStygianEnemyTeamsPayload(
+  enemyId: number,
+): StygianEnemyTeamsPayload {
+  return {
+    enemyId,
+    teams: [
+      {
+        version_number: 2,
+        version_name: "test-v2",
+        slot_index: 0,
+        team_key: "e2e-enemy-v2",
+        members: ["Hutao", "Yelan", "Zhongli", "Albedo"],
+        members_names: ["Hu Tao", "Yelan", "Zhongli", "Albedo"],
+        field_rate: 70,
+        usage_rate: 40,
+        usage_total: 400,
+        field_1_rate: 70,
+        field_2_rate: 20,
+        field_3_rate: 10,
+        has_total: 1000,
+      },
+      {
+        version_number: 1,
+        version_name: "test-v1",
+        slot_index: 1,
+        team_key: "e2e-enemy-v1",
+        members: ["RaidenShogun", "Kazuha", "Bennett", "Xiangling"],
+        members_names: ["Raiden Shogun", "Kazuha", "Bennett", "Xiangling"],
+        field_rate: 65,
+        usage_rate: 35,
+        usage_total: 350,
+        field_1_rate: 15,
+        field_2_rate: 20,
+        field_3_rate: 65,
         has_total: 1000,
       },
     ],
