@@ -12,6 +12,7 @@
   import Toggle from "$lib/ui/components/Toggle.svelte";
   import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
   import Select from "$lib/ui/components/Select.svelte";
+  import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
   import Chip from "$lib/ui/components/Chip.svelte";
   import Badge from "$lib/ui/components/Badge.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
@@ -30,6 +31,7 @@
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
+  import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
   import IconInfo from "$lib/ui/icons/IconInfo.svelte";
   import IconFilter from "$lib/ui/icons/IconFilter.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
@@ -38,7 +40,12 @@
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
-  import type { AbyssTeam, CharacterOwned } from "$lib/definitions";
+  import type {
+    AbyssTeam,
+    CharacterAnalyticsMode,
+    CharacterAnalyticsPayload,
+    CharacterOwned,
+  } from "$lib/definitions";
   import {
     getNamecardUrl,
     statIconUrl,
@@ -51,6 +58,7 @@
     type CharacterSortKey,
     type OwnershipFilter,
   } from "$lib/character-filter";
+  import { fetchCharacterAnalytics } from "$lib/app/character-analytics";
 
   let demoTags: string[] = $state([]);
   let demoTagOptions = $derived(
@@ -59,6 +67,62 @@
   let demoCharByKey = $derived(
     new Map($charactersOwned.map((c) => [toGoodKey(c.name), c])),
   );
+
+  // ── Usage series chart (analytics study) ──────────────────────────────
+  let analyticsNameId = $state("");
+  let analyticsMode = $state<CharacterAnalyticsMode>("stygian");
+  let analyticsPayload = $state<CharacterAnalyticsPayload | null>(null);
+  let analyticsLoading = $state(false);
+  let analyticsError = $state<string | null>(null);
+
+  let analyticsCharOptions = $derived(
+    $charactersOwned
+      .slice()
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+      .map((c) => ({ value: c.name_id, label: c.name ?? c.name_id })),
+  );
+
+  let analyticsCharById = $derived(
+    new Map($charactersOwned.map((c) => [c.name_id, c])),
+  );
+
+  $effect(() => {
+    if (!analyticsNameId && analyticsCharOptions.length > 0) {
+      const preferred =
+        analyticsCharOptions.find((o) => o.value === "Mualani") ??
+        analyticsCharOptions.find((o) => o.value === "Hutao") ??
+        analyticsCharOptions[0];
+      if (preferred) analyticsNameId = preferred.value;
+    }
+  });
+
+  $effect(() => {
+    const nameId = analyticsNameId;
+    const mode = analyticsMode;
+    if (!nameId) return;
+
+    let cancelled = false;
+    analyticsLoading = true;
+    analyticsError = null;
+
+    fetchCharacterAnalytics(nameId, mode)
+      .then((payload) => {
+        if (cancelled) return;
+        analyticsPayload = payload;
+        analyticsLoading = false;
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        analyticsPayload = null;
+        analyticsLoading = false;
+        analyticsError =
+          err instanceof Error ? err.message : "Failed to load analytics";
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  });
 
   // Character grid demo (browse + roster modes)
   let gridMode = $state<"browse" | "roster">("browse");
@@ -416,6 +480,61 @@
     title="UI gallery"
     lede="Living surface for tokens and shared primitives. Icon style follows Display settings ({iconStyleNote})."
   />
+
+  <!-- ── Usage series chart ─────────────────────────────────────────────── -->
+  <section class="gallery-section" id="usage-series">
+    <div class="section-head">
+      <p class="concept-kicker">Analytics · usage over versions</p>
+      <h2>Usage series chart</h2>
+      <p>
+        Live <code>/api/character-analytics</code> → SVG line. Prototype for the
+        character Analytics tab.
+      </p>
+    </div>
+
+    <Surface class="analytics-demo">
+      <div class="analytics-controls">
+        <div class="analytics-field">
+          <span class="token-meta">Character</span>
+          {#if analyticsCharOptions.length}
+            <CharacterSearchSelect
+              options={analyticsCharOptions}
+              bind:value={analyticsNameId}
+              getCharacter={(id) => analyticsCharById.get(id)}
+              aria-label="Analytics character"
+            />
+          {:else}
+            <p class="token-meta">Roster not loaded yet.</p>
+          {/if}
+        </div>
+        <div class="analytics-field">
+          <span class="token-meta">Mode</span>
+          <SegmentedControl
+            options={[
+              { value: "stygian", label: "Stygian" },
+              { value: "abyss", label: "Abyss" },
+            ]}
+            bind:value={analyticsMode}
+            aria-label="Analytics mode"
+          />
+        </div>
+      </div>
+
+      {#if analyticsLoading}
+        <LoadingState message="Loading analytics…" class="analytics-loading" />
+      {:else if analyticsError}
+        <EmptyState message={analyticsError} />
+      {:else if analyticsPayload}
+        <UsageSeriesChart points={analyticsPayload.usage} />
+        <p class="token-meta analytics-meta">
+          {analyticsPayload.usage.length} versions · {analyticsPayload.teams
+            .length} team rows
+        </p>
+      {:else}
+        <EmptyState message="Pick a character to load usage history." />
+      {/if}
+    </Surface>
+  </section>
 
   <!-- ── Character detail concepts ─────────────────────────────────────── -->
   <section class="gallery-section detail-concepts" id="character-detail">
@@ -1409,6 +1528,35 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  :global(.analytics-demo) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .analytics-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: end;
+  }
+
+  .analytics-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 10rem;
+  }
+
+  :global(.analytics-loading) {
+    min-height: 12rem;
+  }
+
+  .analytics-meta {
+    margin: 0;
   }
 
   /* ── Character detail route study ────────────────────────────────── */

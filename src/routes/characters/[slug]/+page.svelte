@@ -26,6 +26,7 @@
   import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import UpgradeImpactPopover from "$lib/ui/components/UpgradeImpactPopover.svelte";
+  import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
   import { elementColor } from "$lib/element-colors";
   import {
     CHARACTER_SIM_COST,
@@ -37,6 +38,7 @@
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  import { fetchCharacterAnalytics } from "$lib/app/character-analytics";
   import {
     artifactSlotIconUrl,
     buildGoodKeyMap,
@@ -76,7 +78,11 @@
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
   import type { CharacterIndex, InvestmentFile } from "$lib/types/investment";
-  import type { Character } from "$lib/definitions";
+  import type {
+    Character,
+    CharacterAnalyticsMode,
+    CharacterAnalyticsPayload,
+  } from "$lib/definitions";
   import type { UpgradeTier } from "$lib/upgrade-priority";
 
   let { data } = $props();
@@ -87,12 +93,13 @@
   );
   let mapping = $derived(data.mapping as Map<string, Character>);
 
-  type PageTab = "skills" | "builds" | "teams" | "links";
+  type PageTab = "skills" | "builds" | "teams" | "analytics" | "links";
   type TeamsMode = "stygian" | "abyss" | "simulated";
 
   const TAB_OPTIONS = [
     { value: "builds" as const, label: "Builds" },
     { value: "teams" as const, label: "Teams" },
+    { value: "analytics" as const, label: "Analytics" },
     { value: "skills" as const, label: "Kit" },
     { value: "links" as const, label: "Useful Links" },
   ];
@@ -101,10 +108,15 @@
     { value: "abyss" as const, label: "Abyss" },
     { value: "simulated" as const, label: "Simulated" },
   ];
+  const ANALYTICS_MODE_OPTIONS = [
+    { value: "stygian" as const, label: "Stygian" },
+    { value: "abyss" as const, label: "Abyss" },
+  ];
 
   let activeTab = $state<PageTab>("builds");
   let mobileNavOpen = $state(false);
   let teamsMode = $state<TeamsMode>("stygian");
+  let analyticsMode = $state<CharacterAnalyticsMode>("stygian");
   let skillsElement = $state("");
   let activeTabLabel = $derived(
     TAB_OPTIONS.find((option) => option.value === activeTab)?.label ?? "Builds",
@@ -165,6 +177,11 @@
   let investmentLoading = $state(false);
   let investmentInFlight: Promise<void> | null = null;
 
+  let analyticsPayload = $state<CharacterAnalyticsPayload | null>(null);
+  let analyticsError = $state<string | null>(null);
+  let analyticsLoading = $state(false);
+  let analyticsKey = $state<string | null>(null);
+
   $effect(() => {
     if (activeTab !== "teams") return;
     if (teamsMode === "simulated") {
@@ -172,6 +189,39 @@
     } else {
       ensureStaticBoards().catch(() => {});
     }
+  });
+
+  $effect(() => {
+    if (activeTab !== "analytics") return;
+    const nameId = kit.name_id;
+    const mode = analyticsMode;
+    const key = `${mode}:${nameId}`;
+    if (analyticsKey === key && analyticsPayload) return;
+
+    let cancelled = false;
+    analyticsLoading = true;
+    analyticsError = null;
+    analyticsPayload = null;
+
+    fetchCharacterAnalytics(nameId, mode)
+      .then((payload) => {
+        if (cancelled) return;
+        analyticsPayload = payload;
+        analyticsKey = key;
+        analyticsLoading = false;
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        analyticsPayload = null;
+        analyticsKey = null;
+        analyticsLoading = false;
+        analyticsError =
+          err instanceof Error ? err.message : "Failed to load analytics";
+      });
+
+    return () => {
+      cancelled = true;
+    };
   });
 
   async function ensureInvestment() {
@@ -249,6 +299,26 @@
       await ensureStaticBoards();
     } catch {
       /* staticBoardsError store already set */
+    }
+  }
+
+  async function retryAnalytics() {
+    analyticsPayload = null;
+    analyticsKey = null;
+    analyticsLoading = true;
+    analyticsError = null;
+    try {
+      const payload = await fetchCharacterAnalytics(
+        kit.name_id,
+        analyticsMode,
+      );
+      analyticsPayload = payload;
+      analyticsKey = `${analyticsMode}:${kit.name_id}`;
+    } catch (err) {
+      analyticsError =
+        err instanceof Error ? err.message : "Failed to load analytics";
+    } finally {
+      analyticsLoading = false;
     }
   }
 
@@ -919,6 +989,51 @@
               {/if}
             </section>
           </div>
+        {:else if activeTab === "analytics"}
+          <div
+            role="tabpanel"
+            id="tabpanel-analytics"
+            aria-labelledby="tab-analytics"
+            tabindex="0"
+          >
+            <section class="board-section">
+              <div class="teams-head">
+                <div class="teams-label">
+                  <span class="teams-label-text" id="analytics-mode-label"
+                    >Usage:</span
+                  >
+                  <Select
+                    id="analytics-mode-trigger"
+                    options={ANALYTICS_MODE_OPTIONS}
+                    bind:value={analyticsMode}
+                    bare
+                    aria-labelledby="analytics-mode-label analytics-mode-trigger"
+                  />
+                </div>
+              </div>
+
+              {#if analyticsLoading && !analyticsPayload}
+                <LoadingState
+                  variant="pulse"
+                  message="Loading usage history…"
+                />
+              {:else if analyticsError && !analyticsPayload}
+                <EmptyState message="Could not load usage history right now.">
+                  {#snippet action()}
+                    <Button variant="secondary" onclick={retryAnalytics}
+                      >Try again</Button
+                    >
+                  {/snippet}
+                </EmptyState>
+              {:else if analyticsPayload}
+                <div class="analytics-chart">
+                  <UsageSeriesChart points={analyticsPayload.usage} />
+                </div>
+              {:else}
+                <EmptyState message="No usage history for {kit.name} yet." />
+              {/if}
+            </section>
+          </div>
         {:else if activeTab === "links"}
           <div
             role="tabpanel"
@@ -1547,6 +1662,10 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
     color: var(--foreground-mid);
+  }
+
+  .analytics-chart {
+    margin-top: var(--space-2);
   }
 
   .team-hands {
