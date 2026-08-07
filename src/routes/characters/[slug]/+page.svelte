@@ -300,14 +300,17 @@
     }
     return [...groups.entries()]
       .sort((a, b) => b[0] - a[0])
-      .map(([version_number, teams]) => ({
-        version_number,
-        version_name:
-          nameByVersion.get(version_number) ?? String(version_number),
-        teams: teams
-          .slice()
-          .sort((a, b) => (b.usage_rate ?? 0) - (a.usage_rate ?? 0)),
-      }));
+      .map(([version_number, teams]) => {
+        const version_name =
+          nameByVersion.get(version_number)?.trim() || `v${version_number}`;
+        return {
+          version_number,
+          version_name,
+          teams: teams
+            .slice()
+            .sort((a, b) => (b.usage_rate ?? 0) - (a.usage_rate ?? 0)),
+        };
+      });
   });
 
   let goodKey = $derived(simCharacterKey(kit));
@@ -1054,12 +1057,7 @@
                 </div>
               </div>
 
-              {#if analyticsLoading && !analyticsPayload}
-                <LoadingState
-                  variant="pulse"
-                  message="Loading usage history…"
-                />
-              {:else if analyticsError && !analyticsPayload}
+              {#if analyticsError && !analyticsPayload}
                 <EmptyState message="Could not load usage history right now.">
                   {#snippet action()}
                     <Button variant="secondary" onclick={retryAnalytics}
@@ -1067,45 +1065,52 @@
                     >
                   {/snippet}
                 </EmptyState>
-              {:else if analyticsPayload}
-                <div class="analytics-chart">
-                  <UsageSeriesChart points={analyticsPayload.usage} />
-                </div>
-                {#if analyticsTeamsByVersion.length > 0}
-                  <div class="analytics-teams">
-                    <h2 class="section-title">Top teams by version</h2>
-                    {#each analyticsTeamsByVersion as group (group.version_number)}
-                      <section class="analytics-version">
-                        <h3 class="meta-name">{group.version_name}</h3>
-                        <ol class="team-hands">
-                          {#each group.teams as team, i (team.team_key ?? `${group.version_number}-${i}`)}
-                            <li class="team-hand-row">
-                              <TeamCardHand
-                                characters={handCharactersFromMembers(
-                                  team.members ?? [],
-                                )}
-                                dimmedKeys={dimmedKeysFromMembers(
-                                  team.members ?? [],
-                                )}
-                                spread="flat"
-                              />
-                              <div class="team-hand-footer">
-                                <span class="team-hand-meta">
-                                  <span class="team-hand-rank">#{i + 1}</span>
-                                  <span
-                                    >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
-                                  >
-                                </span>
-                              </div>
-                            </li>
-                          {/each}
-                        </ol>
-                      </section>
-                    {/each}
+              {:else if analyticsPayload && analyticsKey === `${analyticsMode}:${kit.name_id}`}
+                {#if analyticsPayload.usage.length === 0}
+                  <EmptyState message="No usage history for {kit.name} yet." />
+                {:else}
+                  <div class="analytics-chart">
+                    <UsageSeriesChart points={analyticsPayload.usage} />
                   </div>
+                  {#if analyticsTeamsByVersion.length > 0}
+                    <div class="analytics-teams">
+                      <h2 class="section-title">Top teams by version</h2>
+                      {#each analyticsTeamsByVersion as group (group.version_number)}
+                        <section class="analytics-version">
+                          <h3 class="meta-name">{group.version_name}</h3>
+                          <ol class="team-hands">
+                            {#each group.teams as team, i (team.team_key ?? `${group.version_number}-${i}`)}
+                              <li class="team-hand-row">
+                                <TeamCardHand
+                                  characters={handCharactersFromMembers(
+                                    team.members ?? [],
+                                  )}
+                                  dimmedKeys={dimmedKeysFromMembers(
+                                    team.members ?? [],
+                                  )}
+                                  spread="flat"
+                                />
+                                <div class="team-hand-footer">
+                                  <span class="team-hand-meta">
+                                    <span class="team-hand-rank">#{i + 1}</span>
+                                    <span
+                                      >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                                    >
+                                  </span>
+                                </div>
+                              </li>
+                            {/each}
+                          </ol>
+                        </section>
+                      {/each}
+                    </div>
+                  {/if}
                 {/if}
               {:else}
-                <EmptyState message="No usage history for {kit.name} yet." />
+                <LoadingState
+                  variant="pulse"
+                  message="Loading usage history…"
+                />
               {/if}
             </section>
           </div>
