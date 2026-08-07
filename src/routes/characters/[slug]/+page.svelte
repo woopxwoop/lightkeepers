@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import {
     animationsEnabled,
     charactersOwned,
@@ -38,7 +38,10 @@
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
-  import { fetchCharacterAnalytics } from "$lib/app/character-analytics";
+  import {
+    fetchCharacterAnalytics,
+    isAbortError,
+  } from "$lib/app/character-analytics";
   import {
     artifactSlotIconUrl,
     buildGoodKeyMap,
@@ -181,6 +184,7 @@
   let analyticsError = $state<string | null>(null);
   let analyticsLoading = $state(false);
   let analyticsKey = $state<string | null>(null);
+  let analyticsAbort: AbortController | null = null;
 
   $effect(() => {
     if (activeTab !== "teams") return;
@@ -196,33 +200,46 @@
     const nameId = kit.name_id;
     const mode = analyticsMode;
     const key = `${mode}:${nameId}`;
-    if (analyticsKey === key && analyticsPayload) return;
+    const cached = untrack(
+      () => analyticsKey === key && analyticsPayload !== null,
+    );
+    if (cached) return;
 
-    let cancelled = false;
+    void loadAnalytics(nameId, mode, key);
+    return () => {
+      analyticsAbort?.abort();
+    };
+  });
+
+  function loadAnalytics(
+    nameId: string,
+    mode: CharacterAnalyticsMode,
+    key: string,
+  ) {
+    analyticsAbort?.abort();
+    const controller = new AbortController();
+    analyticsAbort = controller;
+
     analyticsLoading = true;
     analyticsError = null;
     analyticsPayload = null;
 
-    fetchCharacterAnalytics(nameId, mode)
+    return fetchCharacterAnalytics(nameId, mode, controller.signal)
       .then((payload) => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         analyticsPayload = payload;
         analyticsKey = key;
         analyticsLoading = false;
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (controller.signal.aborted || isAbortError(err)) return;
         analyticsPayload = null;
         analyticsKey = null;
         analyticsLoading = false;
         analyticsError =
           err instanceof Error ? err.message : "Failed to load analytics";
       });
-
-    return () => {
-      cancelled = true;
-    };
-  });
+  }
 
   async function ensureInvestment() {
     if (investment) return;
@@ -303,23 +320,10 @@
   }
 
   async function retryAnalytics() {
-    analyticsPayload = null;
-    analyticsKey = null;
-    analyticsLoading = true;
-    analyticsError = null;
-    try {
-      const payload = await fetchCharacterAnalytics(
-        kit.name_id,
-        analyticsMode,
-      );
-      analyticsPayload = payload;
-      analyticsKey = `${analyticsMode}:${kit.name_id}`;
-    } catch (err) {
-      analyticsError =
-        err instanceof Error ? err.message : "Failed to load analytics";
-    } finally {
-      analyticsLoading = false;
-    }
+    const nameId = kit.name_id;
+    const mode = analyticsMode;
+    const key = `${mode}:${nameId}`;
+    await loadAnalytics(nameId, mode, key);
   }
 
   function formatDps(dps: number): string {

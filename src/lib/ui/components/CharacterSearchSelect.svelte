@@ -209,7 +209,7 @@
           type="button"
           id="{listboxId}-{opt.value}"
           role="option"
-          aria-selected={value === opt.value || i === suggestionIndex}
+          aria-selected={value === opt.value}
           class="char-search-option"
           class:active={i === suggestionIndex}
           class:selected={value === opt.value}

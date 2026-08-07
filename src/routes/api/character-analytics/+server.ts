@@ -47,7 +47,7 @@ async function fetchCharacterAnalytics(
     assertNoDbError("character-analytics teams stygian", teamsRes.error);
     return {
       nameId,
-      mode,
+      mode: "stygian" as const,
       usage: usageRes.data ?? [],
       teams: teamsRes.data ?? [],
     };
@@ -64,7 +64,7 @@ async function fetchCharacterAnalytics(
   assertNoDbError("character-analytics teams abyss", teamsRes.error);
   return {
     nameId,
-    mode,
+    mode: "abyss" as const,
     usage: usageRes.data ?? [],
     teams: teamsRes.data ?? [],
   };

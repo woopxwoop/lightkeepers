@@ -116,10 +116,8 @@
     <svg
       class="chart"
       viewBox="0 0 {W} {H}"
-      role="img"
-      aria-label="Usage rate over versions from {firstLabel}{lastLabel
-        ? ` to ${lastLabel}`
-        : ''}"
+      aria-hidden="true"
+      focusable="false"
       onpointermove={onMove}
       onpointerleave={onLeave}
     >
@@ -170,6 +168,24 @@
         <circle class="dot" cx={c.x} cy={c.y} r="3.5" />
       {/if}
     </svg>
+
+    <table class="visually-hidden">
+      <caption>Usage rate by version</caption>
+      <thead>
+        <tr>
+          <th scope="col">Version</th>
+          <th scope="col">Usage rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each points as point, i (point.version_number)}
+          <tr>
+            <th scope="row">{labelFor(point)}</th>
+            <td>{formatRate(values[i] ?? 0)}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
 
     <div class="range" title="{firstLabel} → {lastLabel || firstLabel}">
       <span class="range-start">{firstLabel}</span>
@@ -322,5 +338,17 @@
     margin: 0;
     color: var(--foreground-mid);
     font-size: var(--text-sm);
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 </style>

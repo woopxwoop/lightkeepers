@@ -58,7 +58,10 @@
     type CharacterSortKey,
     type OwnershipFilter,
   } from "$lib/character-filter";
-  import { fetchCharacterAnalytics } from "$lib/app/character-analytics";
+  import {
+    fetchCharacterAnalytics,
+    isAbortError,
+  } from "$lib/app/character-analytics";
 
   let demoTags: string[] = $state([]);
   let demoTagOptions = $derived(
@@ -101,18 +104,18 @@
     const mode = analyticsMode;
     if (!nameId) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
     analyticsLoading = true;
     analyticsError = null;
 
-    fetchCharacterAnalytics(nameId, mode)
+    fetchCharacterAnalytics(nameId, mode, controller.signal)
       .then((payload) => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         analyticsPayload = payload;
         analyticsLoading = false;
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (controller.signal.aborted || isAbortError(err)) return;
         analyticsPayload = null;
         analyticsLoading = false;
         analyticsError =
@@ -120,7 +123,7 @@
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   });
 

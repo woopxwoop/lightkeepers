@@ -28,14 +28,19 @@ export type CharacterTopTeamByVersionStygian =
 
 export type CharacterAnalyticsMode = "abyss" | "stygian";
 
-export type CharacterAnalyticsPayload = {
-  nameId: string;
-  mode: CharacterAnalyticsMode;
-  usage: CharacterUsageSeriesPoint[];
-  teams:
-    | CharacterTopTeamByVersionAbyss[]
-    | CharacterTopTeamByVersionStygian[];
-};
+export type CharacterAnalyticsPayload =
+  | {
+      nameId: string;
+      mode: "abyss";
+      usage: CharacterUsageSeriesPoint[];
+      teams: CharacterTopTeamByVersionAbyss[];
+    }
+  | {
+      nameId: string;
+      mode: "stygian";
+      usage: CharacterUsageSeriesPoint[];
+      teams: CharacterTopTeamByVersionStygian[];
+    };
 
 // Re-export CDN kit / enemy contracts for discoverability.
 export type {
