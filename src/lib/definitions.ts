@@ -17,6 +17,26 @@ export type AbyssVersion = Tables<"abyss_versions">;
 export type StygianVersion = Tables<"stygian_versions">;
 export type Enemy = Tables<"enemies">;
 
+/** Per-version ownership/usage point for character Analytics. */
+export type CharacterUsageSeriesPoint =
+  Database["public"]["Functions"]["get_character_usage_series_stygian"]["Returns"][number];
+
+export type CharacterTopTeamByVersionAbyss =
+  Database["public"]["Functions"]["get_character_top_teams_by_version_abyss"]["Returns"][number];
+export type CharacterTopTeamByVersionStygian =
+  Database["public"]["Functions"]["get_character_top_teams_by_version_stygian"]["Returns"][number];
+
+export type CharacterAnalyticsMode = "abyss" | "stygian";
+
+export type CharacterAnalyticsPayload = {
+  nameId: string;
+  mode: CharacterAnalyticsMode;
+  usage: CharacterUsageSeriesPoint[];
+  teams:
+    | CharacterTopTeamByVersionAbyss[]
+    | CharacterTopTeamByVersionStygian[];
+};
+
 // Re-export CDN kit / enemy contracts for discoverability.
 export type {
   CharacterKit,

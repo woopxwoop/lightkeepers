@@ -8,6 +8,8 @@ import type {
   AbyssTeam,
   AbyssVersion,
   Character,
+  CharacterAnalyticsMode,
+  CharacterAnalyticsPayload,
   NearMissStygianPair,
   NearMissStygianTeam,
   StygianEnemies,
@@ -253,5 +255,63 @@ export function e2eTierListPayload(): TierListPayload {
         rank: 2,
       },
     ],
+  };
+}
+
+/** Deterministic /api/character-analytics body for Playwright. */
+export function e2eCharacterAnalyticsPayload(
+  nameId: string,
+  mode: CharacterAnalyticsMode,
+): CharacterAnalyticsPayload {
+  return {
+    nameId,
+    mode,
+    usage: [
+      {
+        version_number: 1,
+        version_name: "test-v1",
+        usage_rate: 40,
+        ownership_rate: 70,
+        usage: 400,
+        ownership: 700,
+      },
+      {
+        version_number: 2,
+        version_name: "test-v2",
+        usage_rate: 55,
+        ownership_rate: 72,
+        usage: 550,
+        ownership: 720,
+      },
+    ],
+    teams:
+      mode === "stygian"
+        ? [
+            {
+              version_number: 2,
+              team_key: "e2e-analytics-stygian",
+              members: [nameId, "Furina", "Xilonen", "Kazuha"],
+              members_names: [nameId, "Furina", "Xilonen", "Kazuha"],
+              usage_rate: 12,
+              usage_total: 120,
+              field_1_rate: 40,
+              field_2_rate: 35,
+              field_3_rate: 25,
+              has_total: 1000,
+            },
+          ]
+        : [
+            {
+              version_number: 2,
+              team_key: "e2e-analytics-abyss",
+              members: [nameId, "Yelan", "Zhongli", "Albedo"],
+              members_names: [nameId, "Yelan", "Zhongli", "Albedo"],
+              usage_rate: 18,
+              usage_total: 180,
+              field_1_rate: 60,
+              field_2_rate: 40,
+              has_total: 1000,
+            },
+          ],
   };
 }

@@ -4,6 +4,8 @@ import {
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,
   assertNoDbError,
+  requireAnalyticsMode,
+  requireCharacterNameId,
   requireCharacterNameIds,
   requireFiniteInteger,
   requireJsonObject,
@@ -96,6 +98,21 @@ describe("request validation", () => {
       () => requireCharacterNameIds(["x".repeat(MAX_NAME_ID_LENGTH + 1)]),
       isBadRequest,
     );
+  });
+
+  it("validates a single nameId and analytics mode", () => {
+    assert.equal(requireCharacterNameId("Mualani"), "Mualani");
+    assert.throws(() => requireCharacterNameId(null), isBadRequest);
+    assert.throws(() => requireCharacterNameId(""), isBadRequest);
+    assert.throws(
+      () => requireCharacterNameId("x".repeat(MAX_NAME_ID_LENGTH + 1)),
+      isBadRequest,
+    );
+
+    assert.equal(requireAnalyticsMode("abyss"), "abyss");
+    assert.equal(requireAnalyticsMode("stygian"), "stygian");
+    assert.throws(() => requireAnalyticsMode(null), isBadRequest);
+    assert.throws(() => requireAnalyticsMode("simulated"), isBadRequest);
   });
 
   it("validates roster entries and rejects extra or wrong-typed keys", () => {

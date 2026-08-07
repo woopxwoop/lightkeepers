@@ -103,6 +103,28 @@ export function requireRosterEntries(value: unknown): RosterEntry[] {
   });
 }
 
+/** Validate a single character `name_id` (query param or body field). */
+export function requireCharacterNameId(value: unknown): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw error(400, "nameId must be a non-empty string.");
+  }
+  if (value.length > MAX_NAME_ID_LENGTH) {
+    throw error(
+      400,
+      `nameId must be at most ${MAX_NAME_ID_LENGTH} characters.`,
+    );
+  }
+  return value;
+}
+
+/** Abyss vs Stygian mode for public meta analytics. */
+export function requireAnalyticsMode(value: unknown): "abyss" | "stygian" {
+  if (value !== "abyss" && value !== "stygian") {
+    throw error(400, "mode must be abyss or stygian.");
+  }
+  return value;
+}
+
 /** Validate a roster / owned-character name_id list for RPC routes. */
 export function requireCharacterNameIds(value: unknown): string[] {
   if (!Array.isArray(value)) {
