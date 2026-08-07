@@ -165,25 +165,23 @@
           <span>Solid</span>
         </button>
       </div>
-    </div>
-
-    <div class="preference-row">
-      <div>
-        <span class="row-label">Apply to home page</span>
-        <p class="row-desc">
-          When off, home always shows the lighthouse. When on, home uses the
-          background choice above.
-        </p>
+      <div class="bg-home-row">
+        <div>
+          <span class="row-label">Apply to home page</span>
+          <p class="row-desc">
+            When off, home always shows the lighthouse.
+          </p>
+        </div>
+        <Toggle
+          pressed={$displayPreferences.backgroundApplyToHome}
+          aria-label="Apply background choice to home page"
+          onclick={() =>
+            setBackgroundApplyToHome(
+              !$displayPreferences.backgroundApplyToHome,
+              page.url.pathname,
+            )}
+        />
       </div>
-      <Toggle
-        pressed={$displayPreferences.backgroundApplyToHome}
-        aria-label="Apply background choice to home page"
-        onclick={() =>
-          setBackgroundApplyToHome(
-            !$displayPreferences.backgroundApplyToHome,
-            page.url.pathname,
-          )}
-      />
     </div>
 
     <div class="preference-row">
@@ -355,6 +353,16 @@
     display: flex;
     gap: 0.75rem;
     margin-top: 0.65rem;
+  }
+
+  .bg-home-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.08);
   }
 
   .portrait-picker {
