@@ -17,6 +17,7 @@
   import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
+  import PageTrail from "$lib/ui/components/PageTrail.svelte";
   import Surface from "$lib/ui/components/Surface.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
@@ -185,7 +186,12 @@
     </EmptyState>
   {:else if team}
     <header class="page-head">
-      <BackLink href="/teams">← Teams</BackLink>
+      <PageTrail
+        items={[
+          { label: "Teams", href: "/teams" },
+          { label: teamTitle || layoutData.slug },
+        ]}
+      />
       <div class="page-head-text">
         <h1 class="page-title">{teamTitle}</h1>
         <p class="page-meta">
@@ -199,7 +205,7 @@
       </div>
       {#if baselineSim}
         <a
-          href="/team-configs/{encodeURIComponent(baselineSim.state_key)}"
+          href="/teams/configs/{encodeURIComponent(baselineSim.state_key)}"
           class="config-link"
         >
           View build config →
@@ -256,7 +262,7 @@
           {#each baselineVariantsList as sim, vi (sim.state_key)}
             {@const peakDps = baselineVariantsList[0].dps}
             <a
-              href="/team-configs/{encodeURIComponent(sim.state_key)}"
+              href="/teams/configs/{encodeURIComponent(sim.state_key)}"
               class="board-row"
               class:board-divider={vi > 0}
               class:is-baseline={sim.kind === "baseline"}
@@ -319,7 +325,7 @@
             >
               <div class="ladder-row">
                 <a
-                  href="/team-configs/{encodeURIComponent(peakSim.state_key)}"
+                  href="/teams/configs/{encodeURIComponent(peakSim.state_key)}"
                   class="ladder-link is-near-best"
                 >
                   <span class="col-cost">{group.cost}</span>
@@ -375,7 +381,9 @@
                     )}
                     <div class="ladder-row">
                       <a
-                        href="/team-configs/{encodeURIComponent(sim.state_key)}"
+                        href="/teams/configs/{encodeURIComponent(
+                          sim.state_key,
+                        )}"
                         class="ladder-link"
                         class:is-near-best={isNearBest(sim.dps, peakSim.dps)}
                       >

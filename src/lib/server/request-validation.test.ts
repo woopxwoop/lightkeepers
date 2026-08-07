@@ -4,7 +4,10 @@ import {
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,
   assertNoDbError,
+  requireAnalyticsMode,
+  requireCharacterNameId,
   requireCharacterNameIds,
+  requireEnemyId,
   requireFiniteInteger,
   requireJsonObject,
   requireNumberInRange,
@@ -98,6 +101,21 @@ describe("request validation", () => {
     );
   });
 
+  it("validates a single nameId and analytics mode", () => {
+    assert.equal(requireCharacterNameId("Mualani"), "Mualani");
+    assert.throws(() => requireCharacterNameId(null), isBadRequest);
+    assert.throws(() => requireCharacterNameId(""), isBadRequest);
+    assert.throws(
+      () => requireCharacterNameId("x".repeat(MAX_NAME_ID_LENGTH + 1)),
+      isBadRequest,
+    );
+
+    assert.equal(requireAnalyticsMode("abyss"), "abyss");
+    assert.equal(requireAnalyticsMode("stygian"), "stygian");
+    assert.throws(() => requireAnalyticsMode(null), isBadRequest);
+    assert.throws(() => requireAnalyticsMode("simulated"), isBadRequest);
+  });
+
   it("validates roster entries and rejects extra or wrong-typed keys", () => {
     assert.deepEqual(
       requireRosterEntries([{ name_id: "furina", isOwned: true }]),
@@ -134,5 +152,15 @@ describe("request validation", () => {
       () => assertNoDbError("test", new Error("db")),
       hasStatus(500),
     );
+  });
+
+  it("requireEnemyId accepts positive integers and rejects junk", () => {
+    assert.equal(requireEnemyId("42"), 42);
+    assert.equal(requireEnemyId(7), 7);
+    assert.throws(() => requireEnemyId("0"), isBadRequest);
+    assert.throws(() => requireEnemyId("-1"), isBadRequest);
+    assert.throws(() => requireEnemyId("1.5"), isBadRequest);
+    assert.throws(() => requireEnemyId("abc"), isBadRequest);
+    assert.throws(() => requireEnemyId(null), isBadRequest);
   });
 });

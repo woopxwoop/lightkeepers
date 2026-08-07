@@ -17,6 +17,61 @@ export type AbyssVersion = Tables<"abyss_versions">;
 export type StygianVersion = Tables<"stygian_versions">;
 export type Enemy = Tables<"enemies">;
 
+/** Per-version ownership/usage point (Stygian analytics series). */
+export type CharacterUsageSeriesPoint =
+  Database["public"]["Functions"]["get_character_usage_series_stygian"]["Returns"][number];
+
+/** Per-version ownership/usage point (Abyss analytics series). */
+export type CharacterUsageSeriesPointAbyss =
+  Database["public"]["Functions"]["get_character_usage_series_abyss"]["Returns"][number];
+
+export type CharacterTopTeamByVersionAbyss =
+  Database["public"]["Functions"]["get_character_top_teams_by_version_abyss"]["Returns"][number];
+export type CharacterTopTeamByVersionStygian =
+  Database["public"]["Functions"]["get_character_top_teams_by_version_stygian"]["Returns"][number];
+
+export type CharacterAnalyticsMode = "abyss" | "stygian";
+
+export type CharacterAnalyticsPayload =
+  | {
+      nameId: string;
+      mode: "abyss";
+      usage: CharacterUsageSeriesPointAbyss[];
+      teams: CharacterTopTeamByVersionAbyss[];
+    }
+  | {
+      nameId: string;
+      mode: "stygian";
+      usage: CharacterUsageSeriesPoint[];
+      teams: CharacterTopTeamByVersionStygian[];
+    };
+
+/** Per-appearance top team vs a Stygian boss (slot-ranked). */
+export type StygianEnemyTopTeam =
+  Database["public"]["Functions"]["get_top_teams_for_stygian_enemy"]["Returns"][number];
+
+export type StygianEnemyTeamsPayload = {
+  enemyId: number;
+  teams: StygianEnemyTopTeam[];
+};
+
+/** Index card for `/stygian/enemies` (Stygian appearances only). */
+export type StygianEnemyListItem = {
+  id: number;
+  enemy_name: string | null;
+  asset: string | null;
+  appearance_count: number;
+  latest_version_number: number;
+  latest_version_name: string | null;
+  /** Every Stygian version_number this enemy appeared in. */
+  version_numbers: number[];
+};
+
+export type StygianEnemyCycleOption = {
+  version_number: number;
+  version_name: string | null;
+};
+
 // Re-export CDN kit / enemy contracts for discoverability.
 export type {
   CharacterKit,

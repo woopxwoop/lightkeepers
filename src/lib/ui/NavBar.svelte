@@ -11,6 +11,7 @@
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
   import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
+  import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
 
   const homePath = resolve("/");
   const abyssPath = resolve("/abyss");
@@ -43,7 +44,7 @@
     {
       label: "Stygian",
       path: stygianPath,
-      match: "exact" as const,
+      match: "prefix" as const,
       preload: "hover" as const,
     },
     { label: "Pulls", path: pullsPath, match: "exact" as const },
@@ -175,21 +176,34 @@
 >
   <!-- Main row -->
   <div class="nav-row flex items-center justify-between h-16">
-    <a
-      href={homePath}
-      class="nav-logo shrink-0 flex items-center gap-2.5"
-      aria-current={page.url.pathname === homePath ? "page" : undefined}
-    >
-      <img
-        class="nav-mark"
-        src="/lightkeepers-mark.png"
-        alt=""
-        width="28"
-        height="28"
-        decoding="async"
-      />
-      <span>Lightkeepers</span>
-    </a>
+    <div class="nav-brand shrink-0 flex items-center gap-2.5">
+      <button
+        type="button"
+        class="nav-mark-btn"
+        class:bg-on={$backgroundVisible}
+        aria-pressed={$backgroundVisible}
+        aria-label={$backgroundVisible
+          ? "Hide lighthouse background"
+          : "Show lighthouse background"}
+        onclick={() => toggleBackgroundVisible(page.url.pathname)}
+      >
+        <img
+          class="nav-mark"
+          src="/lightkeepers-mark.png"
+          alt=""
+          width="28"
+          height="28"
+          decoding="async"
+        />
+      </button>
+      <a
+        href={homePath}
+        class="nav-wordmark"
+        aria-current={page.url.pathname === homePath ? "page" : undefined}
+      >
+        Lightkeepers
+      </a>
+    </div>
 
     <!-- Desktop links -->
     <div class="hidden md:flex items-center gap-6 relative">
@@ -421,15 +435,32 @@
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
 
-  .nav-logo {
+  .nav-brand {
+    pointer-events: auto;
+  }
+
+  .nav-mark-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .nav-wordmark {
     font-family: var(--font-brand);
     font-size: var(--text-lg);
     font-weight: 600;
     letter-spacing: var(--tracking-brand);
     color: var(--foreground-color);
-    pointer-events: auto;
-    transition: color var(--control-duration) var(--control-ease);
     text-decoration: none;
+    transition: color var(--control-duration) var(--control-ease);
+  }
+
+  .nav-wordmark:hover {
+    color: var(--accent-1);
   }
 
   /* Designed mark is dark-on-black — invert so it reads on the nav. */
@@ -441,8 +472,16 @@
     transition: opacity 0.2s ease;
   }
 
-  .nav-logo:hover .nav-mark {
+  .nav-mark-btn:not(.bg-on) .nav-mark {
+    opacity: 0.55;
+  }
+
+  .nav-mark-btn:hover .nav-mark {
     opacity: 0.85;
+  }
+
+  .nav-mark-btn:not(.bg-on):hover .nav-mark {
+    opacity: 0.75;
   }
 
   .nav-link {

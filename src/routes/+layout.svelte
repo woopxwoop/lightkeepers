@@ -17,6 +17,8 @@
     displayPreferences,
     initDisplayPreferences,
     faviconDataUri,
+    backgroundVisible,
+    syncBackgroundToPath,
   } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
@@ -33,6 +35,12 @@
   let { data, children } = $props();
   let characters: Character[] = $derived(data.characters);
 
+  // Route defaults while following route; after a manual toggle, persisted choice wins.
+  syncBackgroundToPath(page.url.pathname);
+  $effect(() => {
+    syncBackgroundToPath(page.url.pathname);
+  });
+
   $effect(() => {
     seedClientStores({
       characters,
@@ -44,6 +52,7 @@
   onMount(() => {
     const detachDebug = installDebugHitTest();
     initDisplayPreferences();
+    syncBackgroundToPath(page.url.pathname);
 
     bootstrapClient({
       characters,
@@ -73,7 +82,7 @@
         .join(";")
     : ""}
 >
-  {#if $displayPreferences.backgroundEnabled}
+  {#if $backgroundVisible}
     <div
       class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
       style="background-image: url('https://images.lightkeepers.moe/site/lightkeepers_dark.webp')"

@@ -36,9 +36,11 @@
   import Button from "$lib/ui/components/Button.svelte";
   import UsageIndexPopover from "$lib/ui/components/UsageIndexPopover.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  import IconDatabase from "$lib/ui/icons/IconDatabase.svelte";
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
   import type { StygianTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
+  import { resolve } from "$app/paths";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -149,6 +151,17 @@
   }
 </script>
 
+{#snippet enemyLabel(slot: Slot, linkClass: string)}
+  {@const enemy = enemies?.[slot]}
+  {#if enemy}
+    <a class={linkClass} href={resolve(`/stygian/enemies/${enemy.id}`)}
+      >{enemy.enemy_name ?? stygianSlotLabel[slot]}</a
+    >
+  {:else}
+    {stygianSlotLabel[slot]}
+  {/if}
+{/snippet}
+
 {#snippet fieldColumn(slot: Slot)}
   {@const enemy = enemies?.[slot]}
   {@const assignment = solution?.assignments.find((a) => a.slot === slot)}
@@ -165,7 +178,7 @@
     <div class="hero-scrim" aria-hidden="true"></div>
 
     <h2 class="field-heading">
-      {enemy?.enemy_name ?? stygianSlotLabel[slot]}
+      {@render enemyLabel(slot, "field-heading-link")}
     </h2>
 
     <div class="hero-body">
@@ -200,7 +213,7 @@
 
   <section class="meta-column">
     <h3 class="eyebrow meta-field-heading">
-      {enemies?.[slot]?.enemy_name ?? stygianSlotLabel[slot]}
+      {@render enemyLabel(slot, "meta-field-link")}
     </h3>
 
     {#if teams.length === 0}
@@ -243,6 +256,10 @@
         </p>
       {/if}
     </div>
+    <a class="enemies-index-link" href={resolve("/stygian/enemies")}>
+      <IconDatabase size={14} />
+      Enemy Database
+    </a>
   </header>
 
   {#if loading}
@@ -348,6 +365,21 @@
     align-items: baseline;
     gap: 0.4rem;
     flex-wrap: wrap;
+  }
+
+  .enemies-index-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: fit-content;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--accent-1);
+    text-decoration: none;
+  }
+
+  .enemies-index-link:hover {
+    text-decoration: underline;
   }
 
   /* ── Solution board ─────────────────────────────────────────────── */
@@ -511,6 +543,18 @@
     text-transform: uppercase;
     color: var(--foreground-color);
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+  }
+
+  .field-heading-link,
+  .meta-field-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .field-heading-link:hover,
+  .meta-field-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
   }
 
   .hero-body {
