@@ -188,7 +188,7 @@
         aria-label={$backgroundVisible
           ? "Hide lighthouse background"
           : "Show lighthouse background"}
-        onclick={() => toggleBackgroundVisible()}
+        onclick={() => toggleBackgroundVisible(page.url.pathname)}
       >
         <img
           class="nav-mark"

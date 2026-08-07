@@ -35,8 +35,7 @@
   let { data, children } = $props();
   let characters: Character[] = $derived(data.characters);
 
-  // Home → background on; every other route → off. Logo toggle overrides until
-  // the next navigation (this effect only depends on pathname).
+  // Route defaults while following route; after a manual toggle, persisted choice wins.
   syncBackgroundToPath(page.url.pathname);
   $effect(() => {
     syncBackgroundToPath(page.url.pathname);
@@ -53,6 +52,7 @@
   onMount(() => {
     const detachDebug = installDebugHitTest();
     initDisplayPreferences();
+    syncBackgroundToPath(page.url.pathname);
 
     bootstrapClient({
       characters,

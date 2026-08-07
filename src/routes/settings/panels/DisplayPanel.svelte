@@ -3,7 +3,8 @@
   import {
     displayPreferences,
     setDisplayPreferences,
-    backgroundVisible,
+    setBackgroundVisible,
+    setBackgroundApplyToHome,
     THEME_COLOR_KEYS,
     DEFAULT_DARK_COLORS,
     normalizeHexColor,
@@ -18,6 +19,7 @@
     getCharacterPortrait,
     getCharacterCard,
   } from "$lib/utils";
+  import { page } from "$app/state";
 
   let colorPickerOpen = $state(false);
 
@@ -130,19 +132,16 @@
       <div>
         <span class="row-label">Background</span>
         <p class="row-desc">
-          Lighthouse image or solid color. The nav logo toggles this too.
+          Lighthouse image or solid color. The nav mark toggles this too.
         </p>
       </div>
       <div class="picker">
         <button
           type="button"
           class="choice-card"
-          class:is-selected={$backgroundVisible}
-          aria-pressed={$backgroundVisible}
-          onclick={() => {
-            backgroundVisible.set(true);
-            setDisplayPreferences({ backgroundEnabled: true });
-          }}
+          class:is-selected={$displayPreferences.backgroundEnabled}
+          aria-pressed={$displayPreferences.backgroundEnabled}
+          onclick={() => setBackgroundVisible(true, page.url.pathname)}
         >
           <div
             class="bg-preview bg-preview--image"
@@ -155,12 +154,9 @@
         <button
           type="button"
           class="choice-card"
-          class:is-selected={!$backgroundVisible}
-          aria-pressed={!$backgroundVisible}
-          onclick={() => {
-            backgroundVisible.set(false);
-            setDisplayPreferences({ backgroundEnabled: false });
-          }}
+          class:is-selected={!$displayPreferences.backgroundEnabled}
+          aria-pressed={!$displayPreferences.backgroundEnabled}
+          onclick={() => setBackgroundVisible(false, page.url.pathname)}
         >
           <div
             class="bg-preview bg-preview--solid"
@@ -169,6 +165,25 @@
           <span>Solid</span>
         </button>
       </div>
+    </div>
+
+    <div class="preference-row">
+      <div>
+        <span class="row-label">Apply to home page</span>
+        <p class="row-desc">
+          When off, home always shows the lighthouse. When on, home uses the
+          background choice above.
+        </p>
+      </div>
+      <Toggle
+        pressed={$displayPreferences.backgroundApplyToHome}
+        aria-label="Apply background choice to home page"
+        onclick={() =>
+          setBackgroundApplyToHome(
+            !$displayPreferences.backgroundApplyToHome,
+            page.url.pathname,
+          )}
+      />
     </div>
 
     <div class="preference-row">
