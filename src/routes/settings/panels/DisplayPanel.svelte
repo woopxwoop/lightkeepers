@@ -3,6 +3,7 @@
   import {
     displayPreferences,
     setDisplayPreferences,
+    backgroundVisible,
     THEME_COLOR_KEYS,
     DEFAULT_DARK_COLORS,
     normalizeHexColor,
@@ -129,16 +130,19 @@
       <div>
         <span class="row-label">Background</span>
         <p class="row-desc">
-          Choose between the lighthouse image or a solid background.
+          Lighthouse image or solid color. The nav logo toggles this too.
         </p>
       </div>
       <div class="picker">
         <button
           type="button"
           class="choice-card"
-          class:is-selected={$displayPreferences.backgroundEnabled}
-          aria-pressed={$displayPreferences.backgroundEnabled}
-          onclick={() => setDisplayPreferences({ backgroundEnabled: true })}
+          class:is-selected={$backgroundVisible}
+          aria-pressed={$backgroundVisible}
+          onclick={() => {
+            backgroundVisible.set(true);
+            setDisplayPreferences({ backgroundEnabled: true });
+          }}
         >
           <div
             class="bg-preview bg-preview--image"
@@ -151,9 +155,12 @@
         <button
           type="button"
           class="choice-card"
-          class:is-selected={!$displayPreferences.backgroundEnabled}
-          aria-pressed={!$displayPreferences.backgroundEnabled}
-          onclick={() => setDisplayPreferences({ backgroundEnabled: false })}
+          class:is-selected={!$backgroundVisible}
+          aria-pressed={!$backgroundVisible}
+          onclick={() => {
+            backgroundVisible.set(false);
+            setDisplayPreferences({ backgroundEnabled: false });
+          }}
         >
           <div
             class="bg-preview bg-preview--solid"

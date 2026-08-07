@@ -167,6 +167,24 @@ export function setDisplayPreferences(next: Partial<DisplayPreferences>): void {
   });
 }
 
+/**
+ * Session page-background visibility. Defaults by route (home on, elsewhere
+ * off); the nav logo toggles it without persisting.
+ */
+export const backgroundVisible = writable(true);
+
+export function backgroundDefaultForPath(pathname: string): boolean {
+  return pathname === "/";
+}
+
+export function syncBackgroundToPath(pathname: string): void {
+  backgroundVisible.set(backgroundDefaultForPath(pathname));
+}
+
+export function toggleBackgroundVisible(): void {
+  backgroundVisible.update((on) => !on);
+}
+
 export const isIconCompact = derived(
   displayPreferences,
   ($preferences) => $preferences.iconStyle === "enka",
