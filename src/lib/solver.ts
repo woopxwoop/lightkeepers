@@ -64,7 +64,7 @@ function preferredStygianSlot(team: StygianTeam): StygianSlot {
 
 // ---- Slot viability -------------------------------------------------------
 // Minimum field/half rate for a team to be seated there — enforced on every
-// placement path (strict fill, relaxed fill, and forced-first).
+// placement path (slot-aware fill and forced-first).
 const MIN_SLOT_RATE = 10; // 10%
 
 type FieldRateTeamLike = {

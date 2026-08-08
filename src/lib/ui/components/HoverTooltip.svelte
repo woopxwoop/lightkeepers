@@ -16,6 +16,7 @@
 
   const EDGE = 8;
   const GAP = 8;
+  const LEAVE_DELAY_MS = 120;
   const tooltipId = $props.id();
 
   let tipEl: HTMLDivElement | undefined = $state();
@@ -25,6 +26,25 @@
   let activeTriggerEl: HTMLElement | null = null;
   let open = $state(false);
   let detailOpen = $state(false);
+  let tipScrollable = $state(false);
+
+  let triggerHovered = false;
+  let tipHovered = false;
+  let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function clearLeaveTimer() {
+    if (leaveTimer == null) return;
+    clearTimeout(leaveTimer);
+    leaveTimer = null;
+  }
+
+  function scheduleHide() {
+    clearLeaveTimer();
+    leaveTimer = setTimeout(() => {
+      leaveTimer = null;
+      if (!triggerHovered && !tipHovered) hideTip();
+    }, LEAVE_DELAY_MS);
+  }
 
   function updateTriggerDescription(trigger: HTMLElement | null, add: boolean) {
     if (!trigger) return;
@@ -105,6 +125,7 @@
 
     tip.style.maxHeight = "";
     tip.style.overflow = "";
+    tipScrollable = false;
 
     const t = trigger.getBoundingClientRect();
     const vw = window.innerWidth;
@@ -115,6 +136,7 @@
     if (r.height > maxH) {
       tip.style.maxHeight = `${maxH}px`;
       tip.style.overflow = "auto";
+      tipScrollable = true;
       r = tip.getBoundingClientRect();
     }
 
@@ -147,6 +169,10 @@
   }
 
   function hideTip() {
+    clearLeaveTimer();
+    triggerHovered = false;
+    tipHovered = false;
+    tipScrollable = false;
     open = false;
     if (!detailOpen) updateTriggerDescription(tipTriggerEl, false);
     tipTriggerEl = null;
@@ -173,9 +199,13 @@
     // affordance everywhere.
     event.preventDefault();
     event.stopPropagation();
+    clearLeaveTimer();
     tipTriggerEl = null;
     activeTriggerEl = trigger;
+    triggerHovered = false;
+    tipHovered = false;
     open = false;
+    tipScrollable = false;
     updateTriggerDescription(trigger, false);
     detailOpen = true;
     await tick();
@@ -206,8 +236,23 @@
     // block and viewport coords from getBoundingClientRect land in the wrong place.
     document.body.appendChild(tip);
 
-    const onEnter = () => showTip(trigger);
-    const onLeave = () => hideTip();
+    const onTriggerEnter = () => {
+      triggerHovered = true;
+      clearLeaveTimer();
+      showTip(trigger);
+    };
+    const onTriggerLeave = () => {
+      triggerHovered = false;
+      scheduleHide();
+    };
+    const onTipEnter = () => {
+      tipHovered = true;
+      clearLeaveTimer();
+    };
+    const onTipLeave = () => {
+      tipHovered = false;
+      scheduleHide();
+    };
     const onClick = (event: Event) => {
       void openDetail(event);
     };
@@ -237,10 +282,12 @@
       }
     };
 
-    trigger.addEventListener("pointerenter", onEnter);
-    trigger.addEventListener("pointerleave", onLeave);
-    trigger.addEventListener("focusin", onEnter);
-    trigger.addEventListener("focusout", onLeave);
+    trigger.addEventListener("pointerenter", onTriggerEnter);
+    trigger.addEventListener("pointerleave", onTriggerLeave);
+    tip.addEventListener("pointerenter", onTipEnter);
+    tip.addEventListener("pointerleave", onTipLeave);
+    trigger.addEventListener("focusin", onTriggerEnter);
+    trigger.addEventListener("focusout", onTriggerLeave);
     trigger.addEventListener("click", onClick);
     window.addEventListener("scroll", reposition, true);
     window.addEventListener("resize", reposition);
@@ -248,13 +295,16 @@
     window.addEventListener("keydown", onKey);
 
     return () => {
+      clearLeaveTimer();
       updateTriggerDescription(tipTriggerEl, false);
       updateTriggerDescription(activeTriggerEl, false);
       tipTriggerEl = null;
-      trigger.removeEventListener("pointerenter", onEnter);
-      trigger.removeEventListener("pointerleave", onLeave);
-      trigger.removeEventListener("focusin", onEnter);
-      trigger.removeEventListener("focusout", onLeave);
+      trigger.removeEventListener("pointerenter", onTriggerEnter);
+      trigger.removeEventListener("pointerleave", onTriggerLeave);
+      tip.removeEventListener("pointerenter", onTipEnter);
+      tip.removeEventListener("pointerleave", onTipLeave);
+      trigger.removeEventListener("focusin", onTriggerEnter);
+      trigger.removeEventListener("focusout", onTriggerLeave);
       trigger.removeEventListener("click", onClick);
       window.removeEventListener("scroll", reposition, true);
       window.removeEventListener("resize", reposition);
@@ -278,15 +328,18 @@
 <!--
   Parent must have Tailwind `group`. Tip portals to document.body so fixed
   positioning survives transformed / overflow:hidden ancestors. Click / tap
-  opens a detail sheet.
+  opens a detail sheet. When the tip scrolls, pointer-events stay on so the
+  cursor can move onto it during the leave-delay window.
 -->
 <div
   bind:this={tipEl}
   id={tooltipId}
-  class="hover-tooltip pointer-events-none fixed z-50 w-max max-w-56 rounded-lg px-2.5 py-1.5 text-left {className}"
+  class="hover-tooltip fixed z-50 w-max max-w-56 rounded-lg px-2.5 py-1.5 text-left {className}"
   class:hover-tooltip-open={open && !detailOpen}
+  class:hover-tooltip-interactive={open && !detailOpen && tipScrollable}
   style="top: 0; left: 0; background: var(--foreground-mid); color: var(--background-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);"
   role="tooltip"
+  tabindex={tipScrollable && open && !detailOpen ? 0 : undefined}
 >
   {#if !detailOpen}
     <div class="hover-tooltip-body">
@@ -337,6 +390,7 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition:
       opacity 0.15s ease,
       visibility 0.15s ease;
@@ -345,6 +399,10 @@
   .hover-tooltip-open {
     opacity: 1;
     visibility: visible;
+  }
+
+  .hover-tooltip-interactive {
+    pointer-events: auto;
   }
 
   .hover-tooltip-body {

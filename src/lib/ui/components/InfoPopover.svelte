@@ -143,6 +143,7 @@
       id={panelId}
       class="info-panel"
       role="tooltip"
+      tabindex="0"
       data-open="true"
       bind:this={panelEl}
       use:portal

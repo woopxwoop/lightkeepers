@@ -32,6 +32,11 @@
   } = $props();
 
   let artFailed = $state(false);
+  // Reused slots must retry gacha art when the character changes.
+  $effect(() => {
+    void nameId;
+    artFailed = false;
+  });
   let tone = $derived(rarity != null && rarity >= 5 ? "gold" : "purple");
   // Traveler is never on a banner — no UI_Gacha_AvatarIcon_*; use coop portrait.
   let usePortrait = $derived(
