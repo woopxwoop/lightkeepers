@@ -218,8 +218,11 @@ test("pulls shows empty state when near-miss has nothing useful", async ({
   await Promise.all([teamsReq, nearMissReq]);
 
   await expect(
+    page.getByRole("heading", { name: "Best next pulls" }),
+  ).toHaveCount(0);
+  await expect(
     page.getByText(/no single pull stands out|covers the high-usage/i),
-  ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });
+  ).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "Most used characters in Stygian" }),
   ).toBeVisible({ timeout: CLIENT_API_TIMEOUT });

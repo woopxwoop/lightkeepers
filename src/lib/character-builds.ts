@@ -57,6 +57,9 @@ export type RecommendedSubstat = {
  * Recommended substats from OptimFull liquid ranks, plus any recommended
  * main that can also roll as a substat (e.g. EM sands → also recommend EM
  * subs). Main-only keys (elemental DMG, heal, etc.) stay excluded.
+ *
+ * Guide merges may fill `ranked` with mean 0 when there are no measured
+ * teams — keep those editorial ranks (the 0.5 floor is for noisy sim data).
  */
 export function recommendedSubstatsFromBuilds(
   builds: CharacterIndex | null | undefined,
@@ -73,10 +76,17 @@ export function recommendedSubstatsFromBuilds(
   }
 
   const byKey = new Map<string, RecommendedSubstat>();
+  const guideAuthoredSubs = builds.substat_rolls_liquid.teams <= 0;
 
   for (const r of builds.substat_rolls_liquid.ranked) {
     if (!isArtifactSubstatKey(r.key)) continue;
-    if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
+    if (
+      !guideAuthoredSubs &&
+      r.mean <= 0.5 &&
+      !mainSlots.has(r.key)
+    ) {
+      continue;
+    }
     const slots = mainSlots.get(r.key) ?? [];
     byKey.set(r.key, {
       key: r.key,

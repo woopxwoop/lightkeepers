@@ -279,7 +279,7 @@ describe("solveStygian", () => {
       "fixture must start away from the preferred seating score",
     );
 
-    const rotated = optimizeStygianSlotAssignments(cyclic, true);
+    const rotated = optimizeStygianSlotAssignments(cyclic);
     const bySlot = Object.fromEntries(
       rotated.map((a) => [a.slot, a.team.team_key]),
     );
@@ -302,9 +302,54 @@ describe("solveStygian", () => {
     );
   });
 
-  it("fills all fields via relaxed MIN_SLOT_RATE fallback", () => {
-    // Every seat rate is below MIN_SLOT_RATE (10), so the strict pass cannot
-    // place anyone; relaxed fill + floor-free optimize must still complete.
+  it("never seats a team below MIN_SLOT_RATE (10%)", () => {
+    // All teams clear top/bottom but sit under 10% on middle — leave middle empty.
+    const teams = [
+      stygianTeam({
+        team_key: "a",
+        members: ["a1", "a2", "a3", "a4"],
+        usage_rate: 90,
+        field_1_rate: 50,
+        field_2_rate: 50,
+        field_3_rate: 9,
+      }),
+      stygianTeam({
+        team_key: "b",
+        members: ["b1", "b2", "b3", "b4"],
+        usage_rate: 80,
+        field_1_rate: 50,
+        field_2_rate: 50,
+        field_3_rate: 5,
+      }),
+      stygianTeam({
+        team_key: "c",
+        members: ["c1", "c2", "c3", "c4"],
+        usage_rate: 70,
+        field_1_rate: 50,
+        field_2_rate: 50,
+        field_3_rate: 0,
+      }),
+    ];
+
+    const [sol] = solveStygian(teams, 1);
+    assert.ok(sol);
+    assert.ok(sol.unfilled.includes("middle"));
+    assert.ok(!sol.assignments.some((a) => a.slot === "middle"));
+    for (const a of sol.assignments) {
+      const rate =
+        a.slot === "top"
+          ? a.team.field_1_rate
+          : a.slot === "bottom"
+            ? a.team.field_2_rate
+            : a.team.field_3_rate;
+      assert.ok(
+        (rate ?? 0) >= 10,
+        `${a.team.team_key} seated below 10% on ${a.slot}`,
+      );
+    }
+  });
+
+  it("leaves the board incomplete when every seat is below MIN_SLOT_RATE", () => {
     const teams = [
       stygianTeam({
         team_key: "soft-a",
@@ -334,31 +379,11 @@ describe("solveStygian", () => {
 
     const [sol] = solveStygian(teams, 1);
     assert.ok(sol);
-    assert.equal(sol.unfilled.length, 0);
-    assert.equal(sol.assignments.length, 3);
-    assert.equal(
-      sol.score,
-      scoreAssignments(sol.assignments),
-      "stored score must match post-swap affinity score",
-    );
-
-    // Same teams seated sub-threshold: optimizer with floor off can rearrange.
-    const seated = sol.assignments.map((a) => ({ team: a.team, slot: a.slot }));
-    const before = scoreAssignments(seated);
-    const rotated = optimizeStygianSlotAssignments(seated, false);
-    assert.equal(rotated.length, 3);
-    assert.equal(
-      new Set(rotated.map((a) => a.slot)).size,
-      3,
-      "relaxed optimize keeps unique slots",
-    );
-    assert.ok(
-      scoreAssignments(rotated) >= before,
-      "relaxed optimize must not lower affinity score",
-    );
+    assert.equal(sol.assignments.length, 0);
+    assert.equal(sol.unfilled.length, 3);
   });
 
-  it("relaxes optimization when only forced-first is sub-threshold", () => {
+  it("skips a forced-first team that is below MIN_SLOT_RATE on every field", () => {
     const forcedSoft = stygianTeam({
       team_key: "forced-soft",
       members: ["a", "b", "c", "d"],
@@ -380,19 +405,117 @@ describe("solveStygian", () => {
       members: ["i", "j", "k", "l"],
       usage_rate: 80,
       field_1_rate: 10,
-      field_2_rate: 80,
+      field_2_rate: 10,
       field_3_rate: 90,
     });
+    const bottomPref = stygianTeam({
+      team_key: "bottom-pref",
+      members: ["m", "n", "o", "p"],
+      usage_rate: 70,
+      field_1_rate: 10,
+      field_2_rate: 90,
+      field_3_rate: 10,
+    });
 
-    const [sol] = solveStygian([forcedSoft, topPref, middlePref], 1);
+    const [sol] = solveStygian(
+      [forcedSoft, topPref, middlePref, bottomPref],
+      1,
+    );
     assert.ok(sol);
     const bySlot = Object.fromEntries(
       sol.assignments.map((a) => [a.slot, a.team.team_key]),
     );
     assert.equal(bySlot.top, "top-pref");
     assert.equal(bySlot.middle, "middle-pref");
-    assert.equal(bySlot.bottom, "forced-soft");
+    assert.equal(bySlot.bottom, "bottom-pref");
+    assert.ok(!sol.assignments.some((a) => a.team.team_key === "forced-soft"));
     assert.equal(sol.unfilled.length, 0);
+  });
+
+  it("excludes teams below the 0.1% usage floor", () => {
+    const dust = stygianTeam({
+      team_key: "dust",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 0.09,
+      field_1_rate: 100,
+      field_2_rate: 100,
+      field_3_rate: 100,
+    });
+    const real = stygianTeam({
+      team_key: "real",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 0.1,
+      field_1_rate: 100,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const real2 = stygianTeam({
+      team_key: "real2",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 12,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 100,
+    });
+    const real3 = stygianTeam({
+      team_key: "real3",
+      members: ["m", "n", "o", "p"],
+      usage_rate: 11,
+      field_1_rate: 10,
+      field_2_rate: 100,
+      field_3_rate: 10,
+    });
+
+    const [sol] = solveStygian([dust, real, real2, real3], 1);
+    assert.ok(sol);
+    assert.ok(!sol.assignments.some((a) => a.team.team_key === "dust"));
+    assert.ok(sol.assignments.some((a) => a.team.team_key === "real"));
+  });
+
+  it("explores high-usage candidates even when they are not first in array order", () => {
+    // Owned RPC order is not usage-sorted. Without an explicit sort, CANDIDATE_DEPTH
+    // would only force the first 20 (here: dust) and miss the meta peak.
+    const dust = Array.from({ length: 20 }, (_, i) =>
+      stygianTeam({
+        team_key: `dust-${i}`,
+        members: [`d${i}a`, `d${i}b`, `d${i}c`, `d${i}d`],
+        usage_rate: 0.2,
+        field_1_rate: 40,
+        field_2_rate: 30,
+        field_3_rate: 30,
+      }),
+    );
+    const top = stygianTeam({
+      team_key: "peak-top",
+      members: ["t1", "t2", "t3", "t4"],
+      usage_rate: 80,
+      field_1_rate: 90,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const middle = stygianTeam({
+      team_key: "peak-middle",
+      members: ["m1", "m2", "m3", "m4"],
+      usage_rate: 70,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 90,
+    });
+    const bottom = stygianTeam({
+      team_key: "peak-bottom",
+      members: ["b1", "b2", "b3", "b4"],
+      usage_rate: 60,
+      field_1_rate: 10,
+      field_2_rate: 90,
+      field_3_rate: 10,
+    });
+
+    const [sol] = solveStygian([...dust, top, middle, bottom], 1);
+    assert.ok(sol);
+    const keys = new Set(sol.assignments.map((a) => a.team.team_key));
+    assert.ok(keys.has("peak-top"));
+    assert.ok(keys.has("peak-middle"));
+    assert.ok(keys.has("peak-bottom"));
   });
 });
 

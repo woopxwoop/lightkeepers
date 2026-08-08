@@ -166,7 +166,7 @@
     padding: 0;
     list-style: none;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
     gap: var(--space-5) var(--space-4);
     justify-items: center;
   }
@@ -177,7 +177,8 @@
     flex-direction: column;
     align-items: center;
     gap: 0.45rem;
-    max-width: 10rem;
+    width: 100%;
+    max-width: 13.5rem;
     color: inherit;
     text-decoration: none;
     transition: opacity var(--control-transition, 0.15s ease);
@@ -201,6 +202,7 @@
   }
 
   .enemy-name {
+    width: 100%;
     font-size: var(--text-xs);
     font-weight: 600;
     color: var(--foreground-color);

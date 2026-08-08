@@ -25,7 +25,6 @@
   let activeTriggerEl: HTMLElement | null = null;
   let open = $state(false);
   let detailOpen = $state(false);
-  let truncated = $state(false);
 
   function updateTriggerDescription(trigger: HTMLElement | null, add: boolean) {
     if (!trigger) return;
@@ -99,35 +98,42 @@
     ].focus();
   }
 
-  /** Prefer above the trigger; flip below / clamp horizontally if needed. */
+  /** Prefer above the trigger; flip below / clamp to viewport if needed. */
   function place(trigger: HTMLElement) {
     const tip = tipEl;
     if (!tip) return;
 
+    tip.style.maxHeight = "";
+    tip.style.overflow = "";
+
     const t = trigger.getBoundingClientRect();
-    const r = tip.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const maxH = Math.max(0, vh - EDGE * 2);
 
-    let top = t.top - r.height - GAP;
-    if (top < EDGE) {
-      top = t.bottom + GAP;
-      if (top + r.height > vh - EDGE) {
-        top = Math.max(EDGE, Math.min(top, vh - r.height - EDGE));
-      }
+    let r = tip.getBoundingClientRect();
+    if (r.height > maxH) {
+      tip.style.maxHeight = `${maxH}px`;
+      tip.style.overflow = "auto";
+      r = tip.getBoundingClientRect();
     }
+
+    const aboveTop = t.top - r.height - GAP;
+    const belowTop = t.bottom + GAP;
+    const aboveFits = aboveTop >= EDGE;
+    const belowFits = belowTop + r.height <= vh - EDGE;
+
+    let top = aboveFits
+      ? aboveTop
+      : belowFits
+        ? belowTop
+        : Math.max(EDGE, Math.min(belowTop, vh - r.height - EDGE));
 
     let left = t.left + t.width / 2 - r.width / 2;
     left = Math.max(EDGE, Math.min(left, vw - r.width - EDGE));
 
     tip.style.top = `${top}px`;
     tip.style.left = `${left}px`;
-  }
-
-  function measureTruncation() {
-    const tip = tipEl;
-    if (!tip) return;
-    truncated = tip.scrollHeight > tip.clientHeight + 2;
   }
 
   function showTip(trigger: HTMLElement) {
@@ -137,9 +143,6 @@
     updateTriggerDescription(trigger, true);
     requestAnimationFrame(() => {
       place(trigger);
-      measureTruncation();
-      // Truncation adds a footer; re-place once layout settles.
-      if (truncated) requestAnimationFrame(() => place(trigger));
     });
   }
 
@@ -166,8 +169,8 @@
     const trigger = event.currentTarget as HTMLElement;
     if (isInteractiveDescendant(event.target, trigger)) return;
 
-    // Every tip opens its sheet on tap / click, truncated or not, so touch
-    // users get the same affordance everywhere.
+    // Every tip opens its sheet on tap / click so touch users get the same
+    // affordance everywhere.
     event.preventDefault();
     event.stopPropagation();
     tipTriggerEl = null;
@@ -274,14 +277,14 @@
 
 <!--
   Parent must have Tailwind `group`. Tip portals to document.body so fixed
-  positioning survives transformed ancestors. Click / tap opens a detail sheet.
+  positioning survives transformed / overflow:hidden ancestors. Click / tap
+  opens a detail sheet.
 -->
 <div
   bind:this={tipEl}
   id={tooltipId}
   class="hover-tooltip pointer-events-none fixed z-50 w-max max-w-56 rounded-lg px-2.5 py-1.5 text-left {className}"
   class:hover-tooltip-open={open && !detailOpen}
-  class:hover-tooltip-truncated={truncated}
   style="top: 0; left: 0; background: var(--foreground-mid); color: var(--background-color); border: 0.5px solid color-mix(in srgb, var(--accent-1) 30%, transparent);"
   role="tooltip"
 >
@@ -289,10 +292,6 @@
     <div class="hover-tooltip-body">
       {@render children()}
     </div>
-    {#if truncated}
-      <div class="hover-tooltip-fade" aria-hidden="true"></div>
-      <div class="hover-tooltip-more">Tap for full text</div>
-    {/if}
   {/if}
 </div>
 
@@ -338,8 +337,6 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     opacity: 0;
     visibility: hidden;
-    max-height: min(11rem, 40dvh);
-    overflow: hidden;
     transition:
       opacity 0.15s ease,
       visibility 0.15s ease;
@@ -352,33 +349,6 @@
 
   .hover-tooltip-body {
     display: block;
-  }
-
-  .hover-tooltip-truncated {
-    padding-bottom: 1.35rem;
-  }
-
-  .hover-tooltip-fade {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 2.75rem;
-    pointer-events: none;
-    background: linear-gradient(to top, var(--foreground-mid) 35%, transparent);
-  }
-
-  .hover-tooltip-more {
-    position: absolute;
-    left: 0.65rem;
-    right: 0.65rem;
-    bottom: 0.35rem;
-    z-index: 1;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--background-color) 72%, transparent);
   }
 
   /* Callers may still pass rem utilities; keep hover tip from scaling up. */

@@ -571,11 +571,11 @@
       {/snippet}
     </EmptyState>
   {:else if pageState === "empty"}
-    <EmptyState
-      message={ownedCount === 0
-        ? "Set up your roster in Settings to get pull suggestions."
-        : "Your roster already covers the high-usage Stygian teams — no single pull stands out right now."}
-    />
+    {#if ownedCount === 0}
+      <EmptyState
+        message="Set up your roster in Settings to get pull suggestions."
+      />
+    {/if}
   {:else}
     <div class="suggest-columns">
       <!-- ── Best next pulls ───────────────────────────────────────── -->

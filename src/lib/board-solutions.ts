@@ -1,12 +1,11 @@
 /**
- * Shared Abyss / Stygian board helpers (solution pager, meta ranking, slot rates).
+ * Shared Abyss / Stygian board helpers (solution pager, slot rates).
  * Mode-specific markup stays in the route pages.
  */
 
 import { teamSlotFieldRate } from "$lib/slot-fields";
 
 export const SOLUTIONS_COUNT = 6;
-export const META_LEADERBOARD_COUNT = 5;
 
 export type BoardSlot = "top" | "middle" | "bottom";
 
@@ -29,17 +28,11 @@ export function boardSlotRate(team: SlotRateTeam, slot: string): number {
   return teamSlotFieldRate(team, slot);
 }
 
-/** Popularity × slot preference — ranks teams for a specific half/field. */
-export function boardSlotScore(team: SlotRateTeam, slot: string): number {
-  return (team.usage_rate ?? 0) * (boardSlotRate(team, slot) / 100);
-}
-
-/** Prefer fully-filled solutions; otherwise show up to 3 incomplete ones. */
+/** Prefer fully-filled solutions; incomplete boards are not shown. */
 export function filterDisplaySolutions<T extends { unfilled: string[] }>(
   solutions: T[],
 ): T[] {
-  const complete = solutions.filter((s) => s.unfilled.length === 0);
-  return complete.length > 0 ? complete : solutions.slice(0, 3);
+  return solutions.filter((s) => s.unfilled.length === 0);
 }
 
 export function clampSolutionIndex(
@@ -67,23 +60,6 @@ export function assignmentKeyFor(
     (assignment) => assignment.slot === slot,
   )?.team.team_key;
   return `${slot}:${String(teamKey ?? "empty")}`;
-}
-
-/** Top-N teams per slot by usage index (4-member teams only). */
-export function metaLeaderboardBySlot<T extends SlotRateTeam>(
-  teams: T[],
-  slots: readonly string[],
-  count = META_LEADERBOARD_COUNT,
-): Record<string, T[]> {
-  const valid = teams.filter((team) => (team.members ?? []).length === 4);
-  return Object.fromEntries(
-    slots.map((slot) => [
-      slot,
-      [...valid]
-        .sort((a, b) => boardSlotScore(b, slot) - boardSlotScore(a, slot))
-        .slice(0, count),
-    ]),
-  );
 }
 
 /** Stable fingerprint for memoizing solver runs. */

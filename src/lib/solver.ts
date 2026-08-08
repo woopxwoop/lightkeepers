@@ -63,9 +63,9 @@ function preferredStygianSlot(team: StygianTeam): StygianSlot {
 }
 
 // ---- Slot viability -------------------------------------------------------
-// Minimum usage rate on a given slot for a team to be considered for it.
-// Teams below this threshold on a slot are treated as if that slot doesn't exist.
-const MIN_SLOT_RATE = 10; // 10% — teams below this on a slot won't be assigned there
+// Minimum field/half rate for a team to be seated there — enforced on every
+// placement path (strict fill, relaxed fill, and forced-first).
+const MIN_SLOT_RATE = 10; // 10%
 
 type FieldRateTeamLike = {
   field_1_rate?: number | null;
@@ -80,6 +80,10 @@ function slotRate<TTeam extends FieldRateTeamLike>(
   return teamSlotFieldRate(team, slot);
 }
 
+function isSlotViable(team: FieldRateTeamLike, slot: string): boolean {
+  return slotRate(team, slot) >= MIN_SLOT_RATE;
+}
+
 // ---- Core greedy pass -----------------------------------------------------
 
 /** Per-assignment weight used both for fill decisions and final scoring. */
@@ -91,9 +95,8 @@ function placementScore(
     [key: string]: unknown;
   },
   slot: string,
-  enforceMinSlotRate = true,
 ): number {
-  if (enforceMinSlotRate && slotRate(team, slot) < MIN_SLOT_RATE) {
+  if (!isSlotViable(team, slot)) {
     return Number.NEGATIVE_INFINITY;
   }
   return (team.usage_rate ?? 0) * slotAffinityRate(team, slot);
@@ -104,9 +107,7 @@ type PlacementTeamLike = {
 };
 
 /**
- * Mutable state for one greedy board build. Recording which teams were placed
- * under relaxed rules inside commit keeps optimizer policy in sync with every
- * placement path — only those teams may later sit below MIN_SLOT_RATE.
+ * Mutable state for one greedy board build.
  */
 function createPlacementContext<
   TTeam extends PlacementTeamLike,
@@ -115,7 +116,6 @@ function createPlacementContext<
   const usedCharacters = new Set<string>();
   const filledSlots = new Set<TSlot>();
   const usedTeams = new Set<TTeam>();
-  const relaxedTeams = new Set<TTeam>();
   const assignments: { team: TTeam; slot: TSlot }[] = [];
 
   return {
@@ -129,25 +129,17 @@ function createPlacementContext<
     isSlotFilled(slot: TSlot): boolean {
       return filledSlots.has(slot);
     },
-    commit(
-      team: TTeam,
-      slot: TSlot,
-      options: { relaxed?: boolean } = {},
-    ): void {
+    commit(team: TTeam, slot: TSlot): void {
       assignments.push({ team, slot });
       filledSlots.add(slot);
       usedTeams.add(team);
       team.members?.forEach((member) => usedCharacters.add(member));
-      if (options.relaxed) relaxedTeams.add(team);
     },
     get isComplete(): boolean {
       return filledSlots.size >= allSlots.length;
     },
     get unfilled(): TSlot[] {
       return allSlots.filter((slot) => !filledSlots.has(slot));
-    },
-    get relaxedTeams(): Set<TTeam> {
-      return relaxedTeams;
     },
   };
 }
@@ -156,8 +148,7 @@ function createPlacementContext<
  * Slot-aware greedy: after an optional forced first pick, repeatedly assign the
  * unused team × open slot pair with the highest placement score (no character
  * overlap). Beats “walk list by usage, park in preferred-or-first-open.”
- * When MIN_SLOT_RATE leaves open slots with unused non-overlapping teams,
- * a second pass fills without the floor so the board can still complete.
+ * Slots below MIN_SLOT_RATE are never filled — leave them empty instead.
  */
 function greedyPass<
   TTeam extends Record<string, unknown> & {
@@ -174,10 +165,10 @@ function greedyPass<
   allSlots: TSlot[],
   getPreferredSlot: (team: TTeam) => TSlot,
   forcedFirst?: TTeam,
-): Solution<{ team: TTeam; slot: TSlot }> & { relaxedTeams: Set<TTeam> } {
+): Solution<{ team: TTeam; slot: TSlot }> {
   const placement = createPlacementContext<TTeam, TSlot>(allSlots);
 
-  const pickBest = (enforceMinSlotRate: boolean): boolean => {
+  const pickBest = (): boolean => {
     let bestTeam: TTeam | null = null;
     let bestSlot: TSlot | null = null;
     let bestScore = Number.NEGATIVE_INFINITY;
@@ -187,7 +178,7 @@ function greedyPass<
 
       for (const slot of allSlots) {
         if (placement.isSlotFilled(slot)) continue;
-        const score = placementScore(team, slot, enforceMinSlotRate);
+        const score = placementScore(team, slot);
         if (score > bestScore) {
           bestScore = score;
           bestTeam = team;
@@ -197,41 +188,27 @@ function greedyPass<
     }
 
     if (bestTeam == null || bestSlot == null) return false;
-    placement.commit(bestTeam, bestSlot, {
-      relaxed: !enforceMinSlotRate,
-    });
+    placement.commit(bestTeam, bestSlot);
     return true;
   };
 
   if (forcedFirst) {
-    const open = allSlots.filter(
-      (s) => placementScore(forcedFirst, s) !== Number.NEGATIVE_INFINITY,
-    );
-    const pickSlot = (slots: TSlot[]): TSlot => {
-      const preferred = getPreferredSlot(forcedFirst);
-      if (slots.includes(preferred)) return preferred;
-      return slots.reduce((best, s) =>
-        placementScore(forcedFirst, s, false) >
-        placementScore(forcedFirst, best, false)
-          ? s
-          : best,
-      );
-    };
+    const open = allSlots.filter((s) => isSlotViable(forcedFirst, s));
     if (open.length > 0) {
-      placement.commit(forcedFirst, pickSlot(open));
-    } else if (allSlots.length > 0) {
-      // No seat clears MIN_SLOT_RATE — still place so this candidate is distinct.
-      placement.commit(forcedFirst, pickSlot(allSlots), { relaxed: true });
+      const preferred = getPreferredSlot(forcedFirst);
+      const slot = open.includes(preferred)
+        ? preferred
+        : open.reduce((best, s) =>
+            placementScore(forcedFirst, s) > placementScore(forcedFirst, best)
+              ? s
+              : best,
+          );
+      placement.commit(forcedFirst, slot);
     }
   }
 
   while (!placement.isComplete) {
-    if (!pickBest(true)) break;
-  }
-
-  // Last resort: allow sub-threshold slot rates so remaining fields can fill.
-  while (!placement.isComplete) {
-    if (!pickBest(false)) break;
+    if (!pickBest()) break;
   }
 
   return {
@@ -240,7 +217,6 @@ function greedyPass<
     unfilled: placement.unfilled,
     isFallback: false,
     neededCharacters: [],
-    relaxedTeams: placement.relaxedTeams,
   };
 }
 
@@ -319,9 +295,7 @@ function permutations<T>(items: T[]): T[][] {
 /**
  * Reassign the same teams across their filled slots, picking the seating with
  * the best scoreAssignments. Evaluates all 2-/3-slot permutations (covers
- * pairwise swaps and three-cycles). Teams in `relaxedTeams` may sit below
- * MIN_SLOT_RATE; every other team still respects the floor so a single
- * relaxed placement cannot drag compliant teammates under threshold.
+ * pairwise swaps and three-cycles). Every seating must clear MIN_SLOT_RATE.
  */
 function optimizeSlots<
   TTeam extends Record<string, unknown> & {
@@ -333,7 +307,6 @@ function optimizeSlots<
   TSlot extends string,
 >(
   assignments: { team: TTeam; slot: TSlot }[],
-  relaxedTeams: ReadonlySet<TTeam> = new Set(),
 ): { team: TTeam; slot: TSlot }[] {
   if (assignments.length <= 1) {
     return assignments.map((a) => ({ ...a }));
@@ -346,13 +319,7 @@ function optimizeSlots<
 
   for (const perm of permutations(slots)) {
     const candidate = teams.map((team, i) => ({ team, slot: perm[i]! }));
-    if (
-      candidate.some(
-        (a) =>
-          !relaxedTeams.has(a.team) &&
-          slotRate(a.team, a.slot as string) < MIN_SLOT_RATE,
-      )
-    ) {
+    if (candidate.some((a) => !isSlotViable(a.team, a.slot as string))) {
       continue;
     }
     const score = scoreAssignments(candidate);
@@ -367,12 +334,8 @@ function optimizeSlots<
 /** @internal Exported for unit tests — Stygian seat permutation search. */
 export function optimizeStygianSlotAssignments(
   assignments: { team: StygianTeam; slot: StygianSlot }[],
-  enforceMinSlotRate = true,
 ): { team: StygianTeam; slot: StygianSlot }[] {
-  const relaxedTeams = enforceMinSlotRate
-    ? new Set<StygianTeam>()
-    : new Set(assignments.map((a) => a.team));
-  return optimizeSlots(assignments, relaxedTeams);
+  return optimizeSlots(assignments);
 }
 
 /** How many teams to try as forced first pick when exploring solutions */
@@ -381,6 +344,29 @@ const CANDIDATE_DEPTH = 20;
 const ABYSS_SLOT_ORDER: AbyssSlot[] = ["top", "bottom"];
 const STYGIAN_SLOT_ORDER: StygianSlot[] = ["top", "middle", "bottom"];
 const MIN_ABYSS_USAGE_TOTAL = 0.001;
+/** Drop near-zero meta teams — shown as "0.0% usage" and not worth recommending. */
+export const MIN_USAGE_RATE = 0.1;
+/** Bump when solver policy changes so page memos cannot reuse stale boards. */
+export const SOLVER_REVISION = 4;
+
+function teamUsageRate(team: { usage_rate?: number | null }): number {
+  const value = Number(team.usage_rate);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function isRecommendableTeam(team: {
+  members: string[] | null;
+  usage_rate?: number | null;
+}): boolean {
+  return (
+    (team.members ?? []).length === 4 && teamUsageRate(team) >= MIN_USAGE_RATE
+  );
+}
+
+/** Highest usage first — CANDIDATE_DEPTH must explore the meta peak, not array order. */
+function byUsageDesc<T extends { usage_rate?: number | null }>(teams: T[]): T[] {
+  return [...teams].sort((a, b) => teamUsageRate(b) - teamUsageRate(a));
+}
 
 function sortAssignments<T extends { slot: TSlot }, TSlot extends string>(
   assignments: T[],
@@ -396,22 +382,24 @@ export function solveAbyss(
   count = 3,
 ): Solution<AbyssAssignment>[] {
   // Ignore sub-4-member teams — those are high-constellation flex plays, not general suggestions
-  const validTeams = teams.filter(
-    (t) =>
-      (t.members ?? []).length === 4 &&
-      (t.usage_total ?? 0) >= MIN_ABYSS_USAGE_TOTAL,
+  const validTeams = byUsageDesc(
+    teams.filter(
+      (t) =>
+        isRecommendableTeam(t) &&
+        (t.usage_total ?? 0) >= MIN_ABYSS_USAGE_TOTAL,
+    ),
   );
   const allSlots = ABYSS_SLOT_ORDER;
   const candidates = validTeams.slice(0, CANDIDATE_DEPTH);
 
   const solutions = candidates.map((forcedFirst) => {
-    const { relaxedTeams, ...sol } = greedyPass(
+    const sol = greedyPass(
       validTeams,
       allSlots,
       preferredAbyssSlot,
       forcedFirst,
     );
-    const optimized = optimizeSlots(sol.assignments, relaxedTeams);
+    const optimized = optimizeSlots(sol.assignments);
     const assignments = sortAssignments(optimized, allSlots).map((a) => ({
       ...a,
       missingCharacters: [] as string[],
@@ -434,18 +422,18 @@ export function solveStygian(
   teams: StygianTeam[],
   count = 3,
 ): Solution<StygianAssignment>[] {
-  const validTeams = teams.filter((t) => (t.members ?? []).length === 4);
+  const validTeams = byUsageDesc(teams.filter(isRecommendableTeam));
   const allSlots = STYGIAN_SLOT_ORDER;
   const candidates = validTeams.slice(0, CANDIDATE_DEPTH);
 
   const solutions = candidates.map((forcedFirst) => {
-    const { relaxedTeams, ...sol } = greedyPass(
+    const sol = greedyPass(
       validTeams,
       allSlots,
       preferredStygianSlot,
       forcedFirst,
     );
-    const optimized = optimizeSlots(sol.assignments, relaxedTeams);
+    const optimized = optimizeSlots(sol.assignments);
     const assignments = sortAssignments(optimized, allSlots).map((a) => ({
       ...a,
       missingCharacters: [] as string[],
@@ -626,7 +614,7 @@ function buildMinMissingAbyssSolutions(
       .sort(
         (a, b) =>
           a.missing.length - b.missing.length ||
-          (b.team.usage_rate ?? 0) - (a.team.usage_rate ?? 0),
+          teamUsageRate(b.team) - teamUsageRate(a.team),
       )
       .map((entry) => entry.team);
 
@@ -666,7 +654,7 @@ function buildMinMissingStygianSolutions(
       .sort(
         (a, b) =>
           a.missing.length - b.missing.length ||
-          (b.team.usage_rate ?? 0) - (a.team.usage_rate ?? 0),
+          teamUsageRate(b.team) - teamUsageRate(a.team),
       )
       .map((entry) => entry.team);
 

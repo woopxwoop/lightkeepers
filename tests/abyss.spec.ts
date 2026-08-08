@@ -18,15 +18,6 @@ test("abyss solver fills both slots", async ({ page }) => {
   ).not.toBeVisible();
 });
 
-test("abyss shows meta teams section", async ({ page }) => {
-  await page.goto("/abyss");
-
-  await expect(page.getByRole("heading", { name: "Meta teams" })).toBeVisible({
-    timeout: 15_000,
-  });
-  expect(await page.title()).toBeTruthy();
-});
-
 test("abyss enemies toggle works", async ({ page }) => {
   const teamsRes = page.waitForResponse(
     (res) => new URL(res.url()).pathname.endsWith("/api/teams"),

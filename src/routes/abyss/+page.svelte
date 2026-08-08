@@ -6,24 +6,18 @@
     staticBoardsLoaded,
     staticBoardsError,
     charactersOwned,
+    teamsOwnedLoaded,
     ensureTeamsOwned,
     ensureStaticBoards,
-    abyssVersionNumber,
   } from "$lib/stores";
-  import { solveAbyssWithFallback } from "$lib/solver";
+  import { solveAbyssWithFallback, SOLVER_REVISION } from "$lib/solver";
   import {
     SOLUTIONS_COUNT,
-    META_LEADERBOARD_COUNT,
     boardSlotRate,
-    boardSlotScore,
     filterDisplaySolutions,
     clampSolutionIndex,
     stepSolutionIndex,
     assignmentKeyFor,
-    metaLeaderboardBySlot,
-    rosterFingerprint,
-    teamsFingerprint,
-    createMemo,
   } from "$lib/board-solutions";
   import { ownedNameIds } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
@@ -32,11 +26,11 @@
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
-  import UsageIndexPopover from "$lib/ui/components/UsageIndexPopover.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import type { AbyssTeam } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
+  import { resolve } from "$app/paths";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -68,21 +62,18 @@
 
   let enemiesExpanded = $state(true);
 
-  const memoSolutions = createMemo<ReturnType<typeof solveAbyssWithFallback>>();
+  let hasOwnedCharacters = $derived(
+    $charactersOwned.some((character) => character.isOwned),
+  );
 
   let solutions = $derived.by(() => {
-    const owned = $teamsOwned;
-    const all = $allTeamsAbyss;
-    const chars = $charactersOwned;
-    const key = [
-      abyssVersionNumber,
-      rosterFingerprint(chars),
-      teamsFingerprint(owned),
-      teamsFingerprint(all),
+    if (hasOwnedCharacters && !$teamsOwnedLoaded) return [];
+    void SOLVER_REVISION;
+    return solveAbyssWithFallback(
+      $teamsOwned,
+      $allTeamsAbyss,
+      ownedNameIds($charactersOwned),
       SOLUTIONS_COUNT,
-    ].join("\0");
-    return memoSolutions(key, () =>
-      solveAbyssWithFallback(owned, all, ownedNameIds(chars), SOLUTIONS_COUNT),
     );
   });
 
@@ -101,6 +92,8 @@
   let loading = $derived(
     !$staticBoardsError && !$staticBoardsLoaded && $allTeamsAbyss.length === 0,
   );
+
+  let waitingForOwned = $derived(hasOwnedCharacters && !$teamsOwnedLoaded);
 
   let updatedLabel = $derived.by(() => {
     if (!abyssEnemies?.openTime) return "";
@@ -123,18 +116,6 @@
   function slotRate(team: AbyssTeam, slot: Slot): number {
     return boardSlotRate(team, slot);
   }
-
-  function halfScore(team: AbyssTeam, slot: Slot): number {
-    return boardSlotScore(team, slot);
-  }
-
-  let metaByHalf = $derived(
-    metaLeaderboardBySlot(
-      $allTeamsAbyss,
-      SLOTS,
-      META_LEADERBOARD_COUNT,
-    ) as Record<Slot, AbyssTeam[]>,
-  );
 
   function assignmentKey(slot: Slot): string {
     return assignmentKeyFor(solution, slot);
@@ -218,37 +199,6 @@
   </section>
 {/snippet}
 
-{#snippet metaColumn(slot: Slot)}
-  {@const teams = metaByHalf[slot]}
-
-  <section class="meta-column">
-    <h3 class="eyebrow meta-half-heading">{halfLabel[slot]}</h3>
-
-    {#if teams.length === 0}
-      <p class="meta-empty">No meta data yet</p>
-    {:else}
-      <ol class="meta-list">
-        {#each teams as team, i (team.team_key ?? i)}
-          <li class="meta-row">
-            <div class="meta-place">
-              <span class="meta-rank">{i + 1}</span>
-              <span
-                class="meta-score"
-                title={`${(team.usage_rate ?? 0).toFixed(1)}% usage × ${slotRate(team, slot).toFixed(0)}% ${halfLabel[slot].toLowerCase()} rate = ${halfScore(team, slot).toFixed(1)}%`}
-                aria-label={`${halfScore(team, slot).toFixed(1)} percent usage index: ${(team.usage_rate ?? 0).toFixed(1)} percent usage times ${slotRate(team, slot).toFixed(0)} percent ${halfLabel[slot].toLowerCase()} rate`}
-                >{halfScore(team, slot).toFixed(1)}%</span
-              >
-            </div>
-            <div class="meta-team">
-              <Team {team} {mapping} />
-            </div>
-          </li>
-        {/each}
-      </ol>
-    {/if}
-  </section>
-{/snippet}
-
 <PageShell class="gap-6">
   <header class="page-head">
     <div class="page-head-text">
@@ -274,6 +224,16 @@
         <Button variant="secondary" onclick={retryStaticBoards}
           >Try again</Button
         >
+      {/snippet}
+    </EmptyState>
+  {:else if waitingForOwned}
+    <LoadingState variant="pulse" message="Matching your roster…" />
+  {:else if displaySolutions.length === 0}
+    <EmptyState
+      message="No viable clears for your roster. Pull for characters that unlock better teams."
+    >
+      {#snippet action()}
+        <a class="pulls-cta" href={resolve("/pulls")}>See pull suggestions</a>
       {/snippet}
     </EmptyState>
   {:else}
@@ -355,22 +315,6 @@
         those suggested, or check Pull suggestions.
       </p>
     {/if}
-
-    <section class="meta-section">
-      <header class="meta-head">
-        <h2 class="meta-title">Meta teams</h2>
-        <p class="meta-lede">
-          Teams with the highest
-          <UsageIndexPopover scope="half" /> in each side
-        </p>
-      </header>
-
-      <div class="meta-board">
-        {#each SLOTS as slot (slot)}
-          {@render metaColumn(slot)}
-        {/each}
-      </div>
-    </section>
   {/if}
 </PageShell>
 
@@ -644,112 +588,22 @@
     line-height: 1.45;
   }
 
-  /* ── Meta leaderboard ───────────────────────────────────────────── */
-  .meta-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    margin-top: var(--space-2);
-  }
-
-  .meta-head {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .meta-title {
-    font-family: var(--font-display);
+  .pulls-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid var(--accent-1);
+    background: var(--accent-1);
+    color: var(--control-knob-on);
     font-size: var(--text-sm);
     font-weight: 600;
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-color);
+    text-decoration: none;
   }
 
-  .meta-lede {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-    line-height: 1.45;
-  }
-
-  .meta-board {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-5);
-  }
-
-  @media (min-width: 1024px) {
-    .meta-board {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0;
-    }
-
-    .meta-column + .meta-column {
-      padding-left: var(--space-5);
-      border-left: var(--border-width) solid
-        color-mix(in srgb, var(--foreground-color) 14%, transparent);
-    }
-
-    .meta-column:first-child {
-      padding-right: var(--space-5);
-    }
-  }
-
-  .meta-half-heading {
-    margin-bottom: var(--space-3);
-  }
-
-  .meta-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .meta-row {
-    display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .meta-place {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 0;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .meta-rank {
-    width: 100%;
-    padding-bottom: 0.2rem;
-    border-bottom: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 24%, transparent);
-    text-align: center;
-    font-family: var(--font-display);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--foreground-mid);
-  }
-
-  .meta-team {
-    min-width: 0;
-  }
-
-  .meta-score {
-    margin-top: 0.2rem;
-    font-size: var(--text-xs);
-    color: var(--foreground-color);
-    font-weight: 500;
-    cursor: help;
-  }
-
-  .meta-empty {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
+  .pulls-cta:hover {
+    background: color-mix(in srgb, var(--accent-1) 88%, white);
+    border-color: color-mix(in srgb, var(--accent-1) 88%, white);
   }
 </style>

@@ -9,7 +9,7 @@
  * Pull suggestions:  ensureNearMissTeams() → POST /api/nearmiss
  * Stygian tier list: ensureTierList() → GET /api/tierlist
  *
- * Abyss/Stygian solution pager + meta ranking helpers: `$lib/board-solutions`
+ * Abyss/Stygian solution pager helpers: `$lib/board-solutions`
  * (not this file). Solver: `$lib/solver`.
  */
 
@@ -576,7 +576,12 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     teamsOwnedLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
-    // Leave loaded=false so ensureTeamsOwned can retry; rethrow for callers.
+    if (id !== teamsRequestId) return;
+    // Don't leave Abyss/Stygian on an infinite Loading gate — empty owned
+    // lists let the solver fall through to allTeams / pull CTA.
+    teamsOwned.set([]);
+    teamsOwnedStygian.set([]);
+    teamsOwnedLoaded.set(true);
     throw err;
   }
 }

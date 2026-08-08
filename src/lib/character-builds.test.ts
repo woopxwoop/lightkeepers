@@ -65,6 +65,34 @@ describe("recommendedSubstatsFromBuilds", () => {
       ],
     );
   });
+
+  it("keeps guide-authored ranks when there are no measured teams", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "def_", teams: 0 }],
+          goblet: [{ key: "def_", teams: 0 }],
+          circlet: [
+            { key: "critRate_", teams: 0 },
+            { key: "critDMG_", teams: 0 },
+          ],
+        },
+        substat_rolls_liquid: {
+          teams: 0,
+          configs: 0,
+          mean: { enerRech_: 0, eleMas: 0 },
+          ranked: [
+            { key: "enerRech_", mean: 0 },
+            { key: "eleMas", mean: 0 },
+          ],
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => r.key),
+      ["critDMG_", "critRate_", "def_", "eleMas", "enerRech_"],
+    );
+  });
 });
 
 describe("rankWeaponsByRarityAndTeams", () => {

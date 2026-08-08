@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getCharacterGachaIcon, getCharacterPortrait } from "$lib/utils";
+  import { getCharacterGachaIcon, getCharacterCoop } from "$lib/utils";
 
   let {
     nameId = "",
@@ -33,8 +33,12 @@
 
   let artFailed = $state(false);
   let tone = $derived(rarity != null && rarity >= 5 ? "gold" : "purple");
+  // Traveler is never on a banner — no UI_Gacha_AvatarIcon_*; use coop portrait.
+  let usePortrait = $derived(
+    artFailed || nameId === "PlayerBoy" || nameId === "PlayerGirl",
+  );
   let artSrc = $derived(
-    artFailed ? getCharacterPortrait(nameId) : getCharacterGachaIcon(nameId),
+    usePortrait ? getCharacterCoop(nameId) : getCharacterGachaIcon(nameId),
   );
   let href = $derived(`/characters/${encodeURIComponent(nameId)}`);
   let cueText = $derived(cue ?? (onclick ? "Expand" : "View details"));
