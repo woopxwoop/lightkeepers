@@ -101,7 +101,7 @@ export type DisplayPreferences = {
 
 const defaultDisplayPreferences: DisplayPreferences = {
   animationsEnabled: true,
-  iconStyle: "coop",
+  iconStyle: "tcg",
   backgroundEnabled: true,
   colorTheme: "dark",
   themeColors: null,
