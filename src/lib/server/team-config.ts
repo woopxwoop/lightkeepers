@@ -1,5 +1,5 @@
 /**
- * Server helpers for /team-configs/[slug] (slug = InvestmentSim.state_key).
+ * Server helpers for /teams/configs/[slug] (slug = InvestmentSim.state_key).
  */
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";

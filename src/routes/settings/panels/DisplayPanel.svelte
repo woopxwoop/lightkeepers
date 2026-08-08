@@ -3,6 +3,8 @@
   import {
     displayPreferences,
     setDisplayPreferences,
+    setBackgroundVisible,
+    setBackgroundApplyToHome,
     THEME_COLOR_KEYS,
     DEFAULT_DARK_COLORS,
     normalizeHexColor,
@@ -17,6 +19,7 @@
     getCharacterPortrait,
     getCharacterCard,
   } from "$lib/utils";
+  import { page } from "$app/state";
 
   let colorPickerOpen = $state(false);
 
@@ -129,7 +132,7 @@
       <div>
         <span class="row-label">Background</span>
         <p class="row-desc">
-          Choose between the lighthouse image or a solid background.
+          Lighthouse image or solid color. The nav mark toggles this too.
         </p>
       </div>
       <div class="picker">
@@ -138,7 +141,7 @@
           class="choice-card"
           class:is-selected={$displayPreferences.backgroundEnabled}
           aria-pressed={$displayPreferences.backgroundEnabled}
-          onclick={() => setDisplayPreferences({ backgroundEnabled: true })}
+          onclick={() => setBackgroundVisible(true, page.url.pathname)}
         >
           <div
             class="bg-preview bg-preview--image"
@@ -153,7 +156,7 @@
           class="choice-card"
           class:is-selected={!$displayPreferences.backgroundEnabled}
           aria-pressed={!$displayPreferences.backgroundEnabled}
-          onclick={() => setDisplayPreferences({ backgroundEnabled: false })}
+          onclick={() => setBackgroundVisible(false, page.url.pathname)}
         >
           <div
             class="bg-preview bg-preview--solid"
@@ -161,6 +164,21 @@
           ></div>
           <span>Solid</span>
         </button>
+      </div>
+      <div class="bg-home-row">
+        <div>
+          <span class="row-label">Apply to home page</span>
+          <p class="row-desc">When off, home always shows the lighthouse.</p>
+        </div>
+        <Toggle
+          pressed={$displayPreferences.backgroundApplyToHome}
+          aria-label="Apply background choice to home page"
+          onclick={() =>
+            setBackgroundApplyToHome(
+              !$displayPreferences.backgroundApplyToHome,
+              page.url.pathname,
+            )}
+        />
       </div>
     </div>
 
@@ -333,6 +351,16 @@
     display: flex;
     gap: 0.75rem;
     margin-top: 0.65rem;
+  }
+
+  .bg-home-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.08);
   }
 
   .portrait-picker {

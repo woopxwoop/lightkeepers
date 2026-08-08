@@ -93,7 +93,13 @@ export function normalizeHexColor(hex: string): string {
 export type DisplayPreferences = {
   animationsEnabled: boolean;
   iconStyle: IconStyle;
+  /** Lighthouse background on non-home pages (and home when apply-to-home is on). */
   backgroundEnabled: boolean;
+  /**
+   * When false (default), home always shows the lighthouse. When true, home
+   * uses `backgroundEnabled` like every other page.
+   */
+  backgroundApplyToHome: boolean;
   colorTheme: ColorTheme;
   /** Overrides for individual CSS custom properties. Keyed without the `--` prefix. */
   themeColors: Partial<Record<ThemeColorKey, string>> | null;
@@ -102,7 +108,8 @@ export type DisplayPreferences = {
 const defaultDisplayPreferences: DisplayPreferences = {
   animationsEnabled: true,
   iconStyle: "tcg",
-  backgroundEnabled: true,
+  backgroundEnabled: false,
+  backgroundApplyToHome: false,
   colorTheme: "dark",
   themeColors: null,
 };
@@ -132,6 +139,10 @@ export function initDisplayPreferences(): void {
         typeof parsed.backgroundEnabled === "boolean"
           ? parsed.backgroundEnabled
           : defaultDisplayPreferences.backgroundEnabled,
+      backgroundApplyToHome:
+        typeof parsed.backgroundApplyToHome === "boolean"
+          ? parsed.backgroundApplyToHome
+          : defaultDisplayPreferences.backgroundApplyToHome,
       colorTheme:
         parsed.colorTheme === "dark" || parsed.colorTheme === "light"
           ? parsed.colorTheme
@@ -165,6 +176,46 @@ export function setDisplayPreferences(next: Partial<DisplayPreferences>): void {
     }
     return updated;
   });
+}
+
+/** Live background visibility for the current route. */
+export const backgroundVisible = writable(true);
+
+export function resolveBackgroundVisible(
+  pathname: string,
+  prefs: DisplayPreferences,
+): boolean {
+  if (pathname === "/" && !prefs.backgroundApplyToHome) return true;
+  return prefs.backgroundEnabled;
+}
+
+export function syncBackgroundToPath(pathname: string): void {
+  backgroundVisible.set(
+    resolveBackgroundVisible(pathname, get(displayPreferences)),
+  );
+}
+
+export function toggleBackgroundVisible(pathname: string): void {
+  const prefs = get(displayPreferences);
+  const next = !resolveBackgroundVisible(pathname, prefs);
+  setDisplayPreferences({
+    backgroundEnabled: next,
+    ...(pathname === "/" ? { backgroundApplyToHome: true } : {}),
+  });
+  syncBackgroundToPath(pathname);
+}
+
+export function setBackgroundVisible(on: boolean, pathname: string): void {
+  setDisplayPreferences({ backgroundEnabled: on });
+  syncBackgroundToPath(pathname);
+}
+
+export function setBackgroundApplyToHome(
+  apply: boolean,
+  pathname: string,
+): void {
+  setDisplayPreferences({ backgroundApplyToHome: apply });
+  syncBackgroundToPath(pathname);
 }
 
 export const isIconCompact = derived(

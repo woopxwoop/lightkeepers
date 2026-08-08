@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import {
     animationsEnabled,
     charactersOwned,
@@ -17,15 +17,15 @@
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
+  import PageTrail from "$lib/ui/components/PageTrail.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
   import Select from "$lib/ui/components/Select.svelte";
-  import BackLink from "$lib/ui/components/BackLink.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import UpgradeImpactPopover from "$lib/ui/components/UpgradeImpactPopover.svelte";
+  import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
   import { elementColor } from "$lib/element-colors";
   import {
     CHARACTER_SIM_COST,
@@ -37,6 +37,11 @@
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  import {
+    fetchCharacterAnalytics,
+    isAbortError,
+    isTimeoutError,
+  } from "$lib/app/character-analytics";
   import {
     artifactSlotIconUrl,
     buildGoodKeyMap,
@@ -76,7 +81,11 @@
   } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
   import type { CharacterIndex, InvestmentFile } from "$lib/types/investment";
-  import type { Character } from "$lib/definitions";
+  import type {
+    Character,
+    CharacterAnalyticsMode,
+    CharacterAnalyticsPayload,
+  } from "$lib/definitions";
   import type { UpgradeTier } from "$lib/upgrade-priority";
 
   let { data } = $props();
@@ -87,12 +96,13 @@
   );
   let mapping = $derived(data.mapping as Map<string, Character>);
 
-  type PageTab = "skills" | "builds" | "teams" | "links";
+  type PageTab = "skills" | "builds" | "teams" | "analytics" | "links";
   type TeamsMode = "stygian" | "abyss" | "simulated";
 
   const TAB_OPTIONS = [
     { value: "builds" as const, label: "Builds" },
     { value: "teams" as const, label: "Teams" },
+    { value: "analytics" as const, label: "Analytics" },
     { value: "skills" as const, label: "Kit" },
     { value: "links" as const, label: "Useful Links" },
   ];
@@ -101,10 +111,15 @@
     { value: "abyss" as const, label: "Abyss" },
     { value: "simulated" as const, label: "Simulated" },
   ];
+  const ANALYTICS_MODE_OPTIONS = [
+    { value: "stygian" as const, label: "Stygian" },
+    { value: "abyss" as const, label: "Abyss" },
+  ];
 
   let activeTab = $state<PageTab>("builds");
   let mobileNavOpen = $state(false);
   let teamsMode = $state<TeamsMode>("stygian");
+  let analyticsMode = $state<CharacterAnalyticsMode>("stygian");
   let skillsElement = $state("");
   let activeTabLabel = $derived(
     TAB_OPTIONS.find((option) => option.value === activeTab)?.label ?? "Builds",
@@ -165,6 +180,12 @@
   let investmentLoading = $state(false);
   let investmentInFlight: Promise<void> | null = null;
 
+  let analyticsPayload = $state<CharacterAnalyticsPayload | null>(null);
+  let analyticsError = $state<string | null>(null);
+  let analyticsLoading = $state(false);
+  let analyticsKey = $state<string | null>(null);
+  let analyticsAbort: AbortController | null = null;
+
   $effect(() => {
     if (activeTab !== "teams") return;
     if (teamsMode === "simulated") {
@@ -173,6 +194,63 @@
       ensureStaticBoards().catch(() => {});
     }
   });
+
+  $effect(() => {
+    if (activeTab !== "analytics") return;
+    const nameId = kit.name_id;
+    const mode = analyticsMode;
+    const key = `${mode}:${nameId}`;
+    const cached = untrack(
+      () => analyticsKey === key && analyticsPayload !== null,
+    );
+    if (cached) return;
+
+    void loadAnalytics(nameId, mode, key);
+    return () => {
+      analyticsAbort?.abort();
+    };
+  });
+
+  function loadAnalytics(
+    nameId: string,
+    mode: CharacterAnalyticsMode,
+    key: string,
+  ) {
+    analyticsAbort?.abort();
+    const controller = new AbortController();
+    analyticsAbort = controller;
+
+    analyticsLoading = true;
+    analyticsError = null;
+    analyticsPayload = null;
+
+    return fetchCharacterAnalytics(nameId, mode, controller.signal)
+      .then((payload) => {
+        if (analyticsAbort !== controller) return;
+        if (controller.signal.aborted) {
+          analyticsLoading = false;
+          return;
+        }
+        analyticsPayload = payload;
+        analyticsKey = key;
+        analyticsLoading = false;
+      })
+      .catch((err) => {
+        if (analyticsAbort !== controller) return;
+        if (controller.signal.aborted || isAbortError(err)) {
+          analyticsLoading = false;
+          return;
+        }
+        analyticsPayload = null;
+        analyticsKey = null;
+        analyticsLoading = false;
+        analyticsError = isTimeoutError(err)
+          ? "Request timed out"
+          : err instanceof Error
+            ? err.message
+            : "Failed to load analytics";
+      });
+  }
 
   async function ensureInvestment() {
     if (investment) return;
@@ -207,6 +285,33 @@
           TOP_TEAMS_LIMIT,
         ),
   );
+
+  let analyticsTeamsByVersion = $derived.by(() => {
+    const payload = analyticsPayload;
+    if (!payload) return [];
+    const nameByVersion = new Map(
+      payload.usage.map((p) => [p.version_number, p.version_name]),
+    );
+    const groups = new Map<number, typeof payload.teams>();
+    for (const team of payload.teams) {
+      const list = groups.get(team.version_number) ?? [];
+      list.push(team);
+      groups.set(team.version_number, list);
+    }
+    return [...groups.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([version_number, teams]) => {
+        const version_name =
+          nameByVersion.get(version_number)?.trim() || `v${version_number}`;
+        return {
+          version_number,
+          version_name,
+          teams: teams
+            .slice()
+            .sort((a, b) => (b.usage_rate ?? 0) - (a.usage_rate ?? 0)),
+        };
+      });
+  });
 
   let goodKey = $derived(simCharacterKey(kit));
   let crimsonWitchLinks = $derived(
@@ -250,6 +355,13 @@
     } catch {
       /* staticBoardsError store already set */
     }
+  }
+
+  async function retryAnalytics() {
+    const nameId = kit.name_id;
+    const mode = analyticsMode;
+    const key = `${mode}:${nameId}`;
+    await loadAnalytics(nameId, mode, key);
   }
 
   function formatDps(dps: number): string {
@@ -572,9 +684,8 @@
 {/snippet}
 
 <PageShell class="char-detail {$animationsEnabled ? '' : 'no-page-anim'}">
-  <Surface
-    flush
-    class="char-board"
+  <div
+    class="char-page"
     style="--kit-flash: {elColor}; --hero-accent: {elColor};"
   >
     <section class="hero relative overflow-hidden">
@@ -595,9 +706,13 @@
           class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
         >
           <div class="hero-name-block">
-            <BackLink href="/characters" class="hero-back-link"
-              >Characters</BackLink
-            >
+            <PageTrail
+              class="hero-trail"
+              items={[
+                { label: "Characters", href: "/characters" },
+                { label: kit.name },
+              ]}
+            />
             <h1 class="hero-title">{kit.name}</h1>
           </div>
           <p class="hero-eyebrow" style="color: {elColor};">
@@ -916,6 +1031,86 @@
                     </li>
                   {/each}
                 </ol>
+              {/if}
+            </section>
+          </div>
+        {:else if activeTab === "analytics"}
+          <div
+            role="tabpanel"
+            id="tabpanel-analytics"
+            aria-labelledby="tab-analytics"
+            tabindex="0"
+          >
+            <section class="board-section">
+              <div class="teams-head">
+                <div class="teams-label">
+                  <span class="teams-label-text" id="analytics-mode-label"
+                    >Usage:</span
+                  >
+                  <Select
+                    id="analytics-mode-trigger"
+                    options={ANALYTICS_MODE_OPTIONS}
+                    bind:value={analyticsMode}
+                    bare
+                    aria-labelledby="analytics-mode-label analytics-mode-trigger"
+                  />
+                </div>
+              </div>
+
+              {#if analyticsError && !analyticsPayload}
+                <EmptyState message="Could not load usage history right now.">
+                  {#snippet action()}
+                    <Button variant="secondary" onclick={retryAnalytics}
+                      >Try again</Button
+                    >
+                  {/snippet}
+                </EmptyState>
+              {:else if analyticsPayload && analyticsKey === `${analyticsMode}:${kit.name_id}`}
+                {#if analyticsPayload.usage.length === 0}
+                  <EmptyState message="No usage history for {kit.name} yet." />
+                {:else}
+                  <div class="analytics-chart">
+                    <UsageSeriesChart points={analyticsPayload.usage} />
+                  </div>
+                  {#if analyticsTeamsByVersion.length > 0}
+                    <div class="analytics-teams">
+                      <h2 class="section-title">Top teams by version</h2>
+                      {#each analyticsTeamsByVersion as group (group.version_number)}
+                        <section class="analytics-version">
+                          <h3 class="meta-name">{group.version_name}</h3>
+                          <ol class="team-hands">
+                            {#each group.teams as team, i (team.team_key ?? `${group.version_number}-${i}`)}
+                              <li class="team-hand-row">
+                                <TeamCardHand
+                                  characters={handCharactersFromMembers(
+                                    team.members ?? [],
+                                  )}
+                                  dimmedKeys={dimmedKeysFromMembers(
+                                    team.members ?? [],
+                                  )}
+                                  spread="flat"
+                                />
+                                <div class="team-hand-footer">
+                                  <span class="team-hand-meta">
+                                    <span class="team-hand-rank">#{i + 1}</span>
+                                    <span
+                                      >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                                    >
+                                  </span>
+                                </div>
+                              </li>
+                            {/each}
+                          </ol>
+                        </section>
+                      {/each}
+                    </div>
+                  {/if}
+                {/if}
+              {:else}
+                <LoadingState
+                  variant="pulse"
+                  message="Loading usage history…"
+                />
               {/if}
             </section>
           </div>
@@ -1293,12 +1488,20 @@
         {/if}
       </div>
     </div>
-  </Surface>
+  </div>
 </PageShell>
 
 <style>
+  .char-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
   .hero {
-    border-bottom: var(--border-width) solid
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: var(--border-width) solid
       color-mix(
         in srgb,
         var(--hero-accent, var(--foreground-mid)) 35%,
@@ -1356,15 +1559,16 @@
     gap: 0.05rem;
   }
 
-  .hero-copy :global(.back-link.hero-back-link) {
-    color: var(--foreground-color);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    transition: color var(--control-duration) var(--control-ease);
+  .hero-copy :global(.hero-trail .back-link) {
+    color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
   }
 
-  .hero-copy :global(.back-link.hero-back-link:hover) {
+  .hero-copy :global(.hero-trail .back-link:hover) {
     color: var(--accent-1);
+  }
+
+  .hero-copy :global(.hero-trail .trail-current) {
+    color: var(--foreground-color);
   }
 
   .hero-eyebrow {
@@ -1549,6 +1753,23 @@
     color: var(--foreground-mid);
   }
 
+  .analytics-chart {
+    margin-top: var(--space-2);
+  }
+
+  .analytics-teams {
+    margin-top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .analytics-version {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
   .team-hands {
     margin: 0;
     padding: 0;
@@ -1663,17 +1884,13 @@
     gap: 0.4rem;
   }
 
-  /* One board: white hairlines, no nested Surfaces */
-  :global(.char-board) {
-    --border-subtle: rgba(255, 255, 255, 0.14);
-    --border-default: rgba(255, 255, 255, 0.24);
-    --border-strong: rgba(255, 255, 255, 0.45);
-    overflow: hidden;
-  }
-
+  /* Outlined open frame — hairlines imply a board; complete it without a fill. */
   .character-content-shell {
     display: grid;
     grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+    overflow: hidden;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-lg);
   }
 
   .ledger-mobile-trigger {

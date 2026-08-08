@@ -12,6 +12,7 @@
   import Toggle from "$lib/ui/components/Toggle.svelte";
   import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
   import Select from "$lib/ui/components/Select.svelte";
+  import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
   import Chip from "$lib/ui/components/Chip.svelte";
   import Badge from "$lib/ui/components/Badge.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
@@ -30,6 +31,7 @@
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
+  import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
   import IconInfo from "$lib/ui/icons/IconInfo.svelte";
   import IconFilter from "$lib/ui/icons/IconFilter.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
@@ -38,7 +40,12 @@
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
-  import type { AbyssTeam, CharacterOwned } from "$lib/definitions";
+  import type {
+    AbyssTeam,
+    CharacterAnalyticsMode,
+    CharacterAnalyticsPayload,
+    CharacterOwned,
+  } from "$lib/definitions";
   import {
     getNamecardUrl,
     statIconUrl,
@@ -51,6 +58,10 @@
     type CharacterSortKey,
     type OwnershipFilter,
   } from "$lib/character-filter";
+  import {
+    fetchCharacterAnalytics,
+    isAbortError,
+  } from "$lib/app/character-analytics";
 
   let demoTags: string[] = $state([]);
   let demoTagOptions = $derived(
@@ -59,6 +70,62 @@
   let demoCharByKey = $derived(
     new Map($charactersOwned.map((c) => [toGoodKey(c.name), c])),
   );
+
+  // ── Usage series chart (analytics study) ──────────────────────────────
+  let analyticsNameId = $state("");
+  let analyticsMode = $state<CharacterAnalyticsMode>("stygian");
+  let analyticsPayload = $state<CharacterAnalyticsPayload | null>(null);
+  let analyticsLoading = $state(false);
+  let analyticsError = $state<string | null>(null);
+
+  let analyticsCharOptions = $derived(
+    $charactersOwned
+      .slice()
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+      .map((c) => ({ value: c.name_id, label: c.name ?? c.name_id })),
+  );
+
+  let analyticsCharById = $derived(
+    new Map($charactersOwned.map((c) => [c.name_id, c])),
+  );
+
+  $effect(() => {
+    if (!analyticsNameId && analyticsCharOptions.length > 0) {
+      const preferred =
+        analyticsCharOptions.find((o) => o.value === "Mualani") ??
+        analyticsCharOptions.find((o) => o.value === "Hutao") ??
+        analyticsCharOptions[0];
+      if (preferred) analyticsNameId = preferred.value;
+    }
+  });
+
+  $effect(() => {
+    const nameId = analyticsNameId;
+    const mode = analyticsMode;
+    if (!nameId) return;
+
+    const controller = new AbortController();
+    analyticsLoading = true;
+    analyticsError = null;
+
+    fetchCharacterAnalytics(nameId, mode, controller.signal)
+      .then((payload) => {
+        if (controller.signal.aborted) return;
+        analyticsPayload = payload;
+        analyticsLoading = false;
+      })
+      .catch((err) => {
+        if (controller.signal.aborted || isAbortError(err)) return;
+        analyticsPayload = null;
+        analyticsLoading = false;
+        analyticsError =
+          err instanceof Error ? err.message : "Failed to load analytics";
+      });
+
+    return () => {
+      controller.abort();
+    };
+  });
 
   // Character grid demo (browse + roster modes)
   let gridMode = $state<"browse" | "roster">("browse");
@@ -416,6 +483,194 @@
     title="UI gallery"
     lede="Living surface for tokens and shared primitives. Icon style follows Display settings ({iconStyleNote})."
   />
+
+  <!-- ── Usage series chart ─────────────────────────────────────────────── -->
+  <section class="gallery-section" id="usage-series">
+    <div class="section-head">
+      <p class="concept-kicker">Analytics · usage over versions</p>
+      <h2>Usage series chart</h2>
+      <p>
+        Live <code>/api/character-analytics</code> → SVG line. Prototype for the character
+        Analytics tab.
+      </p>
+    </div>
+
+    <Surface class="analytics-demo">
+      <div class="analytics-controls">
+        <div class="analytics-field">
+          <span class="token-meta">Character</span>
+          {#if analyticsCharOptions.length}
+            <CharacterSearchSelect
+              options={analyticsCharOptions}
+              bind:value={analyticsNameId}
+              getCharacter={(id) => analyticsCharById.get(id)}
+              aria-label="Analytics character"
+            />
+          {:else}
+            <p class="token-meta">Roster not loaded yet.</p>
+          {/if}
+        </div>
+        <div class="analytics-field">
+          <span class="token-meta">Mode</span>
+          <SegmentedControl
+            options={[
+              { value: "stygian", label: "Stygian" },
+              { value: "abyss", label: "Abyss" },
+            ]}
+            bind:value={analyticsMode}
+            aria-label="Analytics mode"
+          />
+        </div>
+      </div>
+
+      {#if analyticsLoading}
+        <LoadingState message="Loading analytics…" class="analytics-loading" />
+      {:else if analyticsError}
+        <EmptyState message={analyticsError} />
+      {:else if analyticsPayload}
+        <UsageSeriesChart points={analyticsPayload.usage} />
+        <p class="token-meta analytics-meta">
+          {analyticsPayload.usage.length} versions · {analyticsPayload.teams
+            .length} team rows
+        </p>
+      {:else}
+        <EmptyState message="Pick a character to load usage history." />
+      {/if}
+    </Surface>
+  </section>
+
+  <!-- ── Unboxed route chrome ───────────────────────────────────────────── -->
+  <section class="gallery-section" id="unboxed-chrome">
+    <div class="section-head">
+      <p class="concept-kicker">Route study · drop the outer board</p>
+      <h2>Unboxed character &amp; settings</h2>
+      <p>
+        Left = current flush <code>Surface</code> wrapping everything. Right = hero
+        / page head on the page, rail + body without an outer card — Surfaces only
+        on content chunks.
+      </p>
+    </div>
+
+    <div class="unbox-compare">
+      <article class="unbox-col">
+        <header class="unbox-col-head">
+          <span class="unbox-badge">Current</span>
+          <p class="nav-study-name">Boxed board</p>
+        </header>
+        <Surface flush class="unbox-board">
+          <div
+            class="unbox-hero"
+            style="--detail-accent: {detailAccent}; background-image: {detailNamecard};"
+          >
+            <div class="unbox-hero-scrim"></div>
+            <div class="unbox-hero-copy">
+              <p class="detail-eyebrow">
+                {detailDemoChar?.name ?? "Character"}
+              </p>
+              <p class="unbox-hero-title">Builds · Teams · Kit</p>
+            </div>
+          </div>
+          <div class="unbox-split">
+            <nav class="unbox-rail" aria-hidden="true">
+              <span class="active">Builds</span>
+              <span>Teams</span>
+              <span>Analytics</span>
+              <span>Kit</span>
+            </nav>
+            <div class="unbox-body">
+              <p class="token-meta">Tab content lives inside the same card.</p>
+              <div class="unbox-fake-rows">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </Surface>
+      </article>
+
+      <article class="unbox-col">
+        <header class="unbox-col-head">
+          <span class="unbox-badge unbox-badge-next">Proposed</span>
+          <p class="nav-study-name">Unboxed</p>
+        </header>
+        <div class="unbox-open">
+          <div
+            class="unbox-hero unbox-hero-open"
+            style="--detail-accent: {detailAccent}; background-image: {detailNamecard};"
+          >
+            <div class="unbox-hero-scrim"></div>
+            <div class="unbox-hero-copy">
+              <p class="detail-eyebrow">
+                {detailDemoChar?.name ?? "Character"}
+              </p>
+              <p class="unbox-hero-title">Builds · Teams · Kit</p>
+            </div>
+          </div>
+          <div class="unbox-split unbox-split-open">
+            <nav class="unbox-rail" aria-hidden="true">
+              <span class="active">Builds</span>
+              <span>Teams</span>
+              <span>Analytics</span>
+              <span>Kit</span>
+            </nav>
+            <div class="unbox-body">
+              <p class="token-meta">Page background shows through.</p>
+              <Surface class="unbox-chunk">
+                <p class="surface-label">Local surface</p>
+                <p class="token-meta">Only content blocks get a card.</p>
+              </Surface>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="unbox-compare">
+      <article class="unbox-col">
+        <header class="unbox-col-head">
+          <span class="unbox-badge">Current</span>
+          <p class="nav-study-name">Settings board</p>
+        </header>
+        <Surface flush class="unbox-board">
+          <div class="unbox-split">
+            <nav class="unbox-rail" aria-hidden="true">
+              <span class="active">Roster</span>
+              <span>Account</span>
+              <span>Display</span>
+            </nav>
+            <div class="unbox-body">
+              <p class="surface-label">Display</p>
+              <div class="unbox-fake-rows">
+                <span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </Surface>
+      </article>
+
+      <article class="unbox-col">
+        <header class="unbox-col-head">
+          <span class="unbox-badge unbox-badge-next">Proposed</span>
+          <p class="nav-study-name">Settings open</p>
+        </header>
+        <div class="unbox-open">
+          <p class="unbox-page-title">Settings</p>
+          <div class="unbox-split unbox-split-open">
+            <nav class="unbox-rail" aria-hidden="true">
+              <span class="active">Roster</span>
+              <span>Account</span>
+              <span>Display</span>
+            </nav>
+            <div class="unbox-body">
+              <Surface class="unbox-chunk">
+                <p class="surface-label">Display</p>
+                <p class="token-meta">Panel content in a local surface.</p>
+              </Surface>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
 
   <!-- ── Character detail concepts ─────────────────────────────────────── -->
   <section class="gallery-section detail-concepts" id="character-detail">
@@ -1375,7 +1630,7 @@
       <Surface>
         <p class="surface-label">StatRow</p>
         <p class="token-meta mb-2">
-          Label/value row for build sheets (<code>/team-configs/[slug]</code>).
+          Label/value row for build sheets (<code>/teams/configs/[slug]</code>).
           Icon optional.
         </p>
         <div class="stat-stack">
@@ -1409,6 +1664,208 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  :global(.analytics-demo) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .analytics-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: end;
+  }
+
+  .analytics-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 10rem;
+  }
+
+  :global(.analytics-loading) {
+    min-height: 12rem;
+  }
+
+  .analytics-meta {
+    margin: 0;
+  }
+
+  /* ── Unboxed route chrome ─────────────────────────────────────────── */
+  .unbox-compare {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .unbox-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .unbox-col-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .unbox-badge {
+    flex-shrink: 0;
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 20%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 0.15rem 0.45rem;
+    color: var(--foreground-mid);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .unbox-badge-next {
+    border-color: color-mix(in srgb, var(--accent-1) 45%, transparent);
+    color: var(--accent-1);
+  }
+
+  :global(.unbox-board) {
+    overflow: hidden;
+  }
+
+  .unbox-open {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .unbox-page-title {
+    margin: 0;
+    color: var(--foreground-color);
+    font-family: var(--font-display);
+    font-size: var(--h2-size);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+  }
+
+  .unbox-hero {
+    position: relative;
+    isolation: isolate;
+    min-height: 7.5rem;
+    background-position: center;
+    background-size: cover;
+  }
+
+  .unbox-hero-open {
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .unbox-hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--background-color) 88%, transparent),
+      color-mix(in srgb, var(--background-color) 35%, transparent)
+    );
+  }
+
+  .unbox-hero-copy {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: var(--space-4);
+  }
+
+  .unbox-hero-title {
+    margin: 0;
+    color: var(--foreground-color);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .unbox-split {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    min-height: 8rem;
+  }
+
+  .unbox-split-open {
+    border-top: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 12%, transparent);
+  }
+
+  .unbox-rail {
+    display: flex;
+    flex-direction: column;
+    border-right: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 12%, transparent);
+  }
+
+  .unbox-rail span {
+    padding: 0.55rem 0.65rem;
+    color: var(--foreground-mid);
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    border-bottom: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 8%, transparent);
+  }
+
+  .unbox-rail span.active {
+    color: var(--foreground-color);
+    background: var(--surface-selected);
+    box-shadow: inset 2px 0 0 var(--accent-1);
+  }
+
+  .unbox-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .unbox-fake-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .unbox-fake-rows span {
+    display: block;
+    height: 0.55rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+  }
+
+  .unbox-fake-rows span:nth-child(1) {
+    width: 88%;
+  }
+  .unbox-fake-rows span:nth-child(2) {
+    width: 72%;
+  }
+  .unbox-fake-rows span:nth-child(3) {
+    width: 64%;
+  }
+
+  :global(.unbox-chunk) {
+    padding: var(--space-3);
+  }
+
+  @media (max-width: 720px) {
+    .unbox-compare {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* ── Character detail route study ────────────────────────────────── */

@@ -2,7 +2,6 @@
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
   import PageShell from "$lib/ui/components/PageShell.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
@@ -50,38 +49,36 @@
     <h1 class="page-title">Settings</h1>
   </header>
 
-  <Surface flush class="settings-board">
-    <div class="settings-shell">
-      <aside class="settings-sidebar">
-        <nav class="settings-nav" aria-label="Settings sections">
-          {#each sections as section}
-            <a
-              href={hrefFor(section.id)}
-              class="settings-nav-item"
-              class:is-active={activeId === section.id}
-            >
-              <span class="settings-nav-icon" aria-hidden="true">
-                {#if section.icon === "users"}
-                  <IconUser size={18} />
-                {:else if section.icon === "cloud"}
-                  <IconCloudUp size={18} />
-                {:else}
-                  <IconMonitor size={18} />
-                {/if}
-              </span>
-              <span class="min-w-0">
-                <span class="block">{section.label}</span>
-              </span>
-            </a>
-          {/each}
-        </nav>
-      </aside>
+  <div class="settings-shell">
+    <aside class="settings-sidebar">
+      <nav class="settings-nav" aria-label="Settings sections">
+        {#each sections as section}
+          <a
+            href={hrefFor(section.id)}
+            class="settings-nav-item"
+            class:is-active={activeId === section.id}
+          >
+            <span class="settings-nav-icon" aria-hidden="true">
+              {#if section.icon === "users"}
+                <IconUser size={18} />
+              {:else if section.icon === "cloud"}
+                <IconCloudUp size={18} />
+              {:else}
+                <IconMonitor size={18} />
+              {/if}
+            </span>
+            <span class="min-w-0">
+              <span class="block">{section.label}</span>
+            </span>
+          </a>
+        {/each}
+      </nav>
+    </aside>
 
-      <section class="settings-body min-w-0">
-        {@render children()}
-      </section>
-    </div>
-  </Surface>
+    <section class="settings-body min-w-0">
+      {@render children()}
+    </section>
+  </div>
 </PageShell>
 
 <style>
@@ -91,16 +88,12 @@
     gap: 0.2rem;
   }
 
-  :global(.settings-board) {
-    --border-subtle: rgba(255, 255, 255, 0.14);
-    --border-default: rgba(255, 255, 255, 0.24);
-    --border-strong: rgba(255, 255, 255, 0.45);
-    overflow: hidden;
-  }
-
   .settings-shell {
     display: grid;
     align-items: stretch;
+    overflow: hidden;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-lg);
   }
 
   .settings-sidebar {
@@ -150,7 +143,7 @@
   .settings-nav-item.is-active {
     color: var(--foreground-color);
     background: var(--surface-selected);
-    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.55);
+    box-shadow: inset 2px 0 0 var(--accent-1);
   }
 
   .settings-nav-icon {
