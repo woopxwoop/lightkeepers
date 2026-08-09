@@ -285,7 +285,7 @@
     {/if}
   </div>
 {:else}
-  <LoadingState message="Loading…" />
+  <LoadingState message="Loading characters…" />
 {/if}
 
 <style>
