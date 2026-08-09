@@ -7,6 +7,7 @@ import {
   TALENT_UPGRADE,
   classifyUpgradeImpact,
   primaryUpgradePct,
+  resolveUpgradeImpact,
   type UpgradeImpactLadder,
 } from "./upgrade-priority.ts";
 
@@ -61,6 +62,31 @@ describe("upgrade priority", () => {
     assert.throws(() =>
       classifyUpgradeImpact(1, [{ minPct: 5, tier: "high", label: "High" }]),
     );
+  });
+
+  it("prefers stamped CDN tiers over the ladder", () => {
+    assert.deepEqual(
+      resolveUpgradeImpact("solid", 30, ladder, {
+        floors: {
+          exceptional: 20,
+          high: 10,
+          solid: 5,
+          negligible: 0,
+        },
+        labels: {
+          exceptional: "Exceptional impact",
+          high: "High impact",
+          solid: "Solid impact",
+          modest: "Modest impact",
+          negligible: "Negligible impact",
+        },
+      }),
+      { tier: "solid", label: "Solid impact" },
+    );
+    assert.deepEqual(resolveUpgradeImpact(null, 31, ladder), {
+      tier: "exceptional",
+      label: "Exceptional",
+    });
   });
 
   it("ships ladders that descend and cover zero", () => {

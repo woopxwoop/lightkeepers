@@ -13,6 +13,7 @@ import {
   classifyUpgradeImpact,
   impactForTier,
   primaryUpgradePct,
+  resolveUpgradeImpact,
   type UpgradeImpactLadder,
   type UpgradeTier,
 } from "$lib/upgrade-priority";
@@ -24,6 +25,7 @@ import type {
   CharacterTalentImportance,
   CharacterVerticalGain,
   CharacterWeaponRank,
+  ImpactTierScale,
   TalentSlot,
 } from "$lib/types/investment";
 
@@ -137,9 +139,10 @@ export type VerticalImpactRow<T> = T & {
 function attachImpact<T extends CharacterVerticalGain>(
   row: T,
   ladder: UpgradeImpactLadder,
+  scale?: ImpactTierScale | null,
 ): VerticalImpactRow<T> {
   const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
-  const impact = classifyUpgradeImpact(pct, ladder);
+  const impact = resolveUpgradeImpact(row.tier, pct, ladder, scale);
   return {
     ...row,
     pct,
@@ -159,21 +162,32 @@ function compareByImpact(a: { pct: number }, b: { pct: number }): number {
   return b.pct - a.pct;
 }
 
+function impactScale(
+  builds: CharacterIndex | null | undefined,
+  key: "talents" | "constellations" | "sig_weapons",
+): ImpactTierScale | null | undefined {
+  return builds?.impact_tiers?.[key];
+}
+
 /** Constellations in source order with their display-ready impact. */
 export function constellationImpactRows(
   constellations: CharacterConsGain[] | null | undefined,
+  scale?: ImpactTierScale | null,
 ): VerticalImpactRow<CharacterConsGain>[] {
   if (!constellations?.length) return [];
-  return constellations.map((row) => attachImpact(row, CONSTELLATION_UPGRADE));
+  return constellations.map((row) =>
+    attachImpact(row, CONSTELLATION_UPGRADE, scale),
+  );
 }
 
 /** Signature weapons ranked by primary gain, with display-ready impact. */
 export function rankSigWeaponsByGain(
   sigWeapons: CharacterSigGain[] | null | undefined,
+  scale?: ImpactTierScale | null,
 ): VerticalImpactRow<CharacterSigGain>[] {
   if (!sigWeapons?.length) return [];
   return sigWeapons
-    .map((row) => attachImpact(row, SIGNATURE_UPGRADE))
+    .map((row) => attachImpact(row, SIGNATURE_UPGRADE, scale))
     .sort((a, b) => compareByImpact(a, b) || a.key.localeCompare(b.key));
 }
 
@@ -192,12 +206,13 @@ export type TalentImportanceRow = {
 };
 
 /**
- * Talent priority rows from measured simulation data. Qualitative labels from
- * max(mean, median) % DPS drop when that talent is at 1.
+ * Talent priority rows from measured simulation data. Prefer merge-stamped
+ * impact tiers; fall back to the talent ladder when `tier` is absent.
  */
 export function talentImportanceRows(
   talentImportance: CharacterTalentImportance | null | undefined,
   resolveSkillIcon: (kitType: string) => string | null,
+  scale?: ImpactTierScale | null,
 ): TalentImportanceRow[] {
   if (!talentImportance || talentImportance.teams <= 0) return [];
 
@@ -206,7 +221,7 @@ export function talentImportanceRows(
     const stats = talentImportance[slot];
     if (!stats) return [];
     const pct = primaryUpgradePct(stats.mean_pct_drop, stats.median_pct_drop);
-    const impact = classifyUpgradeImpact(pct, TALENT_UPGRADE);
+    const impact = resolveUpgradeImpact(stats.tier, pct, TALENT_UPGRADE, scale);
     return [
       {
         slot,
@@ -316,6 +331,7 @@ export function talentPrioritySection(
   const simRows = talentImportanceRows(
     builds?.talent_importance,
     resolveSkillIcon,
+    impactScale(builds, "talents"),
   );
   const guideSlots = (guide?.talent_priority ?? []).filter(
     (slot): slot is TalentSlot =>
@@ -383,6 +399,7 @@ export function constellationPrioritySection(
   const guide = builds?.guide_priority;
   const simRows = constellationImpactRows(
     builds?.vertical_importance?.constellations,
+    impactScale(builds, "constellations"),
   );
   const guideCons = guide?.constellations ?? [];
   const preferGuide = useGuideSection(
@@ -417,6 +434,7 @@ export function sigWeaponPrioritySection(
   const guide = builds?.guide_priority;
   const simRows = rankSigWeaponsByGain(
     builds?.vertical_importance?.sig_weapons,
+    impactScale(builds, "sig_weapons"),
   );
   const guideSigs = guide?.sig_weapons ?? [];
   const preferGuide = useGuideSection(

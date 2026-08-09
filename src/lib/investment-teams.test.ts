@@ -68,12 +68,13 @@ describe("baselineSim / simAtExactCost", () => {
 });
 
 describe("baselineVariants / groupVerticalSimsByCost", () => {
-  it("lists floor variants by DPS and groups verticals by cost", () => {
+  it("lists floor + owned variants by DPS and groups verticals by cost", () => {
     const t = team(
       ["A"],
       [
         sim({ cost: 2, dps: 100, kind: "f2p" }),
         sim({ cost: 2, dps: 150, kind: "baseline" }),
+        sim({ cost: 3, dps: 180, kind: "owned" }),
         sim({ cost: 4, dps: 200, kind: "vertical" }),
         sim({ cost: 4, dps: 250, kind: "vertical" }),
         sim({ cost: 6, dps: 300, kind: "vertical" }),
@@ -81,7 +82,7 @@ describe("baselineVariants / groupVerticalSimsByCost", () => {
     );
     assert.deepEqual(
       baselineVariants(t).map((r) => r.dps),
-      [150, 100],
+      [180, 150, 100],
     );
     const groups = groupVerticalSimsByCost(t);
     assert.deepEqual(
@@ -108,6 +109,20 @@ describe("baselineVariants / groupVerticalSimsByCost", () => {
 describe("exactCostDps", () => {
   it("returns 0 for an empty results list", () => {
     assert.equal(exactCostDps(team(["A"], []), 4), 0);
+  });
+
+  it("skips owned sims so they do not win cost-filter peaks", () => {
+    const t = team(
+      ["A"],
+      [
+        sim({ cost: 2, dps: 100, kind: "baseline" }),
+        sim({ cost: 3, dps: 400, kind: "owned" }),
+        sim({ cost: 3, dps: 250, kind: "vertical" }),
+      ],
+    );
+    assert.equal(exactCostDps(t, 3), 250);
+    assert.equal(simAtExactCost(t, 3)?.kind, "vertical");
+    assert.equal(simAtExactCost(t, 3)?.dps, 250);
   });
 
   it("returns the best exact-cost result and never falls back", () => {

@@ -250,8 +250,8 @@
       <section class="section">
         <h2 class="section-title">Baseline variants</h2>
         <p class="section-lede">
-          Baseline-cost options, ranked by DPS. Highlighted rows are within 2.5%
-          DPS of the best baseline-cost variant.
+          Floor-cost options and owned +1 weapons, ranked by DPS vs baseline.
+          Highlighted rows are within 2.5% DPS of the best variant in this list.
         </p>
         <Surface flush class="board">
           <div class="board-head" aria-hidden="true">
@@ -272,6 +272,10 @@
                 {simDiffLabel(sim)}
                 {#if sim.kind === "baseline"}
                   <span class="row-tag">base</span>
+                {:else if sim.kind === "owned"}
+                  <span class="row-tag" title="Already-owned weapon (+1 cost)"
+                    >+1</span
+                  >
                 {/if}
               </span>
               <span class="row-dps">{(sim.dps / 1000).toFixed(1)}K</span>

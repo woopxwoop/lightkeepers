@@ -190,6 +190,52 @@ describe("rankSigWeaponsByGain", () => {
       ["big", "small", "infinite", "nan"],
     );
   });
+
+  it("prefers merge-stamped tiers over the fixed ladder", () => {
+    const ranked = rankSigWeaponsByGain(
+      [
+        {
+          key: "small_but_stamped",
+          teams: 1,
+          mean_pct_gain: 1,
+          median_pct_gain: 1,
+          min_pct_gain: 1,
+          max_pct_gain: 1,
+          tier: "exceptional",
+        },
+        {
+          key: "big_unstamped",
+          teams: 1,
+          mean_pct_gain: 24,
+          median_pct_gain: 24,
+          min_pct_gain: 24,
+          max_pct_gain: 24,
+        },
+      ],
+      {
+        floors: {
+          exceptional: 7.83,
+          high: 4.11,
+          solid: 0.79,
+          negligible: 0,
+        },
+        labels: {
+          exceptional: "Exceptional impact",
+          high: "High impact",
+          solid: "Solid impact",
+          modest: "Modest impact",
+          negligible: "Negligible impact",
+        },
+      },
+    );
+    assert.deepEqual(
+      ranked.map((w) => [w.key, w.priority, w.priorityLabel]),
+      [
+        ["big_unstamped", "exceptional", "Exceptional impact"],
+        ["small_but_stamped", "exceptional", "Exceptional impact"],
+      ],
+    );
+  });
 });
 
 describe("constellationImpactRows", () => {
