@@ -49,10 +49,23 @@ function parseFrontmatter(raw: string): {
   if (!title || !date || !summary) {
     throw new Error("patch note frontmatter requires title, date, summary");
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw new Error(`patch note date must be YYYY-MM-DD (got ${date})`);
+  if (!isValidCalendarDate(date)) {
+    throw new Error(`patch note date must be a valid YYYY-MM-DD (got ${date})`);
   }
   return { title, date, summary, body };
+}
+
+/** YYYY-MM-DD that actually exists on the calendar (rejects 2026-02-31, etc.). */
+function isValidCalendarDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const [y, m, d] = date.split("-").map(Number);
+  if (y == null || m == null || d == null) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
 }
 
 /** Filename `2026-08-10-roster-hotfix.md` → slug `2026-08-10-roster-hotfix`. */

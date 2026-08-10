@@ -50,24 +50,30 @@
   }
 
   function onPatchNotesRoute(): boolean {
-    return page.url.pathname.startsWith(patchNotesBase);
+    const path = page.url.pathname;
+    return path === patchNotesBase || path.startsWith(`${patchNotesBase}/`);
   }
 
   onMount(() => {
     if (!browser || !note) return;
+    const latestSlug = note.slug;
 
     // Already reading notes — mark current latest as seen, never interrupt.
     if (onPatchNotesRoute()) {
-      writeSeenPatchNoteSlug(note.slug);
+      writeSeenPatchNoteSlug(latestSlug);
       return;
     }
 
-    if (!shouldShowPatchNotesPopup(note.slug, readSeenPatchNoteSlug())) {
+    if (!shouldShowPatchNotesPopup(latestSlug, readSeenPatchNoteSlug())) {
       return;
     }
 
     const delay = prefersReducedMotion.current ? 0 : 450;
     const timer = window.setTimeout(() => {
+      if (onPatchNotesRoute()) return;
+      if (!shouldShowPatchNotesPopup(latestSlug, readSeenPatchNoteSlug())) {
+        return;
+      }
       open = true;
     }, delay);
 
@@ -84,10 +90,41 @@
   $effect(() => {
     if (!open) return;
 
+    const previouslyFocused =
+      browser && document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    const focusableSelector =
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         acknowledge();
+        return;
+      }
+      if (e.key !== "Tab" || !dialogEl) return;
+
+      const focusable = Array.from(
+        dialogEl.querySelectorAll<HTMLElement>(focusableSelector),
+      );
+      if (focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (!dialogEl.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -98,11 +135,17 @@
       document.body.style.overflow = "hidden";
     }
 
-    void tick().then(() => dialogEl?.querySelector<HTMLElement>("button")?.focus());
+    void tick().then(() => {
+      const first = dialogEl?.querySelector<HTMLElement>(focusableSelector);
+      first?.focus();
+    });
 
     return () => {
       window.removeEventListener("keydown", onKey);
       if (browser) document.body.style.overflow = prevOverflow;
+      if (previouslyFocused?.isConnected) {
+        previouslyFocused.focus();
+      }
     };
   });
 </script>

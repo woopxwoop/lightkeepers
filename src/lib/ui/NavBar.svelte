@@ -383,7 +383,8 @@
       <a
         class="drawer-item"
         href={patchNotesPath}
-        class:is-active={page.url.pathname.startsWith(patchNotesPath)}
+        class:is-active={page.url.pathname === patchNotesPath ||
+          page.url.pathname.startsWith(`${patchNotesPath}/`)}
       >
         <span class="drawer-item-label">Patch notes</span>
       </a>

@@ -49,6 +49,27 @@ describe("patch notes", () => {
     assert.match(note.body, /Roster sync hotfix/);
   });
 
+  it("parsePatchNoteMarkdown accepts valid calendar dates", () => {
+    const leap = parsePatchNoteMarkdown(
+      "2024-02-29-leap.md",
+      SAMPLE.replace("date: 2026-08-10", "date: 2024-02-29"),
+    );
+    assert.equal(leap.date, "2024-02-29");
+  });
+
+  it("parsePatchNoteMarkdown rejects calendar-invalid dates", () => {
+    for (const bad of ["2026-02-31", "2026-99-99", "2026-00-10", "2026-13-01"]) {
+      assert.throws(
+        () =>
+          parsePatchNoteMarkdown(
+            "bad.md",
+            SAMPLE.replace("date: 2026-08-10", `date: ${bad}`),
+          ),
+        /valid YYYY-MM-DD/,
+      );
+    }
+  });
+
   it("renderPatchNoteBody emits trusted HTML", () => {
     const html = renderPatchNoteBody(
       parsePatchNoteMarkdown("x.md", SAMPLE).body,
