@@ -52,9 +52,7 @@ export function writeRosterLocal(json: string): boolean {
 /** POST a captured roster to `/api/roster`. */
 export async function postRoster(
   roster: CharacterOwned[],
-): Promise<
-  { ok: true } | { ok: false; status: number; message?: string }
-> {
+): Promise<{ ok: true } | { ok: false; status: number; message?: string }> {
   const entries = roster.map((c) => ({
     name_id: c.name_id,
     isOwned: c.isOwned,

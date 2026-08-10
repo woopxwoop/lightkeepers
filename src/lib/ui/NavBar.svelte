@@ -9,7 +9,6 @@
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
-  import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
 
@@ -20,6 +19,7 @@
   const teamsPath = resolve("/teams");
   const charactersPath = resolve("/characters");
   const settingsPath = resolve("/settings");
+  const patchNotesPath = resolve("/patch-notes");
   const settingsLinks = [
     { label: "Roster", path: resolve("/settings"), icon: "users" as const },
     {
@@ -381,26 +381,28 @@
 
     <div class="drawer-foot">
       <a
-        class="drawer-discord"
+        class="drawer-item"
+        href={patchNotesPath}
+        class:is-active={page.url.pathname === patchNotesPath ||
+          page.url.pathname.startsWith(`${patchNotesPath}/`)}
+      >
+        <span class="drawer-item-label">Patch notes</span>
+      </a>
+      <a
+        class="drawer-item"
         href={DISCORD_INVITE_URL}
         target="_blank"
         rel="noopener noreferrer"
       >
         <span class="drawer-item-icon" aria-hidden="true">
-          <IconDiscord size={18} />
+          <img
+            src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
+            alt=""
+            class="drawer-guoba"
+          />
         </span>
-        <span class="drawer-discord-copy">
-          <span class="drawer-item-label">Join Discord</span>
-          <span class="drawer-discord-hint">feedback & updates</span>
-        </span>
+        <span class="drawer-item-label">Discord</span>
       </a>
-      <div class="drawer-mascot-wrap" aria-hidden="true">
-        <img
-          src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
-          alt=""
-          class="drawer-mascot"
-        />
-      </div>
     </div>
   </div>
 {/if}
@@ -801,70 +803,17 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--space-3);
-    padding: 0.85rem 0.75rem 0.25rem;
+    gap: 0.15rem;
+    padding: 0.85rem 0.75rem 0.85rem;
     border-top: var(--border-width) solid
       color-mix(in srgb, var(--accent-3) 16%, transparent);
   }
 
-  .drawer-discord {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.7rem 0.85rem;
-    border-radius: var(--radius-md);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--accent-3) 22%, transparent);
-    background: color-mix(in srgb, var(--foreground-color) 5%, transparent);
-    font-family: var(--font-display);
-    font-size: var(--text-md);
-    font-weight: 500;
-    color: var(--foreground-color);
-    text-decoration: none;
-    transition:
-      background-color var(--control-duration) var(--control-ease),
-      border-color var(--control-duration) var(--control-ease);
-  }
-
-  .drawer-discord:hover {
-    background: color-mix(in srgb, var(--foreground-color) 9%, transparent);
-    border-color: color-mix(in srgb, var(--accent-3) 40%, transparent);
-  }
-
-  .drawer-discord-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0;
-  }
-
-  .drawer-discord-hint {
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    color: color-mix(in srgb, var(--foreground-mid) 75%, transparent);
-  }
-
-  .drawer-mascot-wrap {
-    display: flex;
-    justify-content: center;
-    padding: 0.15rem 0 0.35rem;
-    mask-image: linear-gradient(
-      180deg,
-      transparent 0%,
-      #000 28%,
-      #000 72%,
-      transparent 100%
-    );
-  }
-
-  .drawer-mascot {
-    width: 58%;
-    max-width: 8rem;
-    height: auto;
-    opacity: 0.55;
-    pointer-events: none;
-    filter: saturate(0.9);
+  .drawer-guoba {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    display: block;
   }
 
   @keyframes drawer-item-in {
