@@ -133,9 +133,10 @@ export interface CharacterIndex {
    */
   impact_tiers?: ImpactTiersMeta;
   /**
-   * Weapons ranked by distinct team count. Baseline weapons always count;
-   * F2P / owned weapon alts only count teams where that config beats baseline DPS;
-   * vertical/sig weapons still count every appearance.
+   * Weapons ranked by Bradley–Terry strength (same-team weapon one-steps),
+   * then team count. Baseline weapons always count; F2P / owned alts only
+   * count teams where that config beats baseline DPS; vertical/sig weapons
+   * still count every appearance.
    */
   weapons: CharacterWeaponRank[];
   /**
@@ -181,6 +182,12 @@ export interface CharacterIndex {
    */
   artifact_importance?: CharacterArtifactImportance;
   /**
+   * Diversified concrete build snapshots (merge-time), one per reaction
+   * fingerprint when possible. High rolls when artifact impact tier is in the
+   * top half of roster buckets. Shown on the character Builds tab.
+   */
+  build_examples?: CharacterBuildExample[];
+  /**
    * Editorial upgrade recommendations from a hand-authored guide.
    * Published separately from measured `*_importance` statistics; the Builds
    * UI fills missing sim sections by default, or replaces authored sections
@@ -189,6 +196,57 @@ export interface CharacterIndex {
   guide_priority?: CharacterGuidePriority;
   /** Optional editorial blurb from hand-authored guide (merge-time). */
   notes?: string;
+}
+
+/** Compact team reaction profile from baseline gcsim ``-out`` extract. */
+export interface TeamReactionProfile {
+  rps: number | null;
+  /** Which signal ranked the list. */
+  metric: "damage" | "count";
+  list: TeamReactionEntry[];
+  primary: string | null;
+  /** Diversity key, e.g. ``melt`` or ``melt+vaporize``. */
+  fingerprint: string | null;
+}
+
+export interface TeamReactionEntry {
+  name: string;
+  damage: number;
+  count: number;
+  share: number;
+}
+
+/** One concrete team build example for a character (CDN character index). */
+export interface CharacterBuildExample {
+  team_key: string;
+  team_name: string;
+  /** GOOD keys for the full party (order matches the sim). */
+  characters: string[];
+  state_key: string;
+  reactions: TeamReactionProfile;
+  /**
+   * ``high`` when the character's artifact impact tier is in the top half of
+   * roster artifact buckets and high OptimFull rolls exist for that team —
+   * UI should show baseline + high sheets. ``mid`` → baseline only.
+   */
+  invest: "mid" | "high";
+  artifact_pct_gain: number;
+  /** Featured character GOOD key (same shape as ``CharacterBuild``). */
+  key: string;
+  cons: number;
+  level: number;
+  talents: CharacterBuild["talents"];
+  weapon: CharacterBuild["weapon"];
+  set: CharacterBuild["set"];
+  set2?: string;
+  set2_count?: number;
+  main_stats: CharacterBuild["main_stats"];
+  /** Baseline (mid-invest) OptimFull total rolls. */
+  substat_rolls: Record<string, number>;
+  substat_rolls_liquid: Record<string, number>;
+  /** High-invest OptimFull totals when ``invest === "high"``. */
+  high_substat_rolls?: Record<string, number>;
+  high_substat_rolls_liquid?: Record<string, number>;
 }
 
 export type TalentSlot = "auto" | "skill" | "burst";
@@ -296,6 +354,11 @@ export type ArtifactImportanceTier = ImportanceImpactTier;
 export interface CharacterWeaponRank {
   key: string;
   teams: number;
+  /**
+   * Bradley–Terry strength from same-team pairwise DPS among baseline +
+   * one-weapon-step configs. Higher = stronger. Omitted on older payloads.
+   */
+  strength?: number;
 }
 
 export interface CharacterSetRank {

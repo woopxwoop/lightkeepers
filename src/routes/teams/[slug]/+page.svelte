@@ -30,6 +30,7 @@
   import {
     baselineSim as findBaselineSim,
     baselineVariants,
+    ownedVariants,
     findInvestmentTeam,
     groupVerticalSimsByCost,
   } from "$lib/investment-teams";
@@ -81,6 +82,9 @@
   let baselineSim = $derived(team ? findBaselineSim(team) : null);
   let baselineVariantsList = $derived(
     team ? baselineVariants(team) : ([] as InvestmentSim[]),
+  );
+  let ownedVariantsList = $derived(
+    team ? ownedVariants(team) : ([] as InvestmentSim[]),
   );
   let costGroups = $derived(team ? groupVerticalSimsByCost(team) : []);
   let openCosts = $state<Set<number>>(new Set());
@@ -250,8 +254,8 @@
       <section class="section">
         <h2 class="section-title">Baseline variants</h2>
         <p class="section-lede">
-          Floor-cost options and owned +1 weapons, ranked by DPS vs baseline.
-          Highlighted rows are within 2.5% DPS of the best variant in this list.
+          Floor-cost options, ranked by DPS vs baseline. Highlighted rows are
+          within 2.5% DPS of the best variant in this list.
         </p>
         <Surface flush class="board">
           <div class="board-head" aria-hidden="true">
@@ -272,16 +276,47 @@
                 {simDiffLabel(sim)}
                 {#if sim.kind === "baseline"}
                   <span class="row-tag">base</span>
-                {:else if sim.kind === "owned"}
-                  <span class="row-tag" title="Already-owned weapon (+1 cost)"
-                    >+1</span
-                  >
                 {/if}
               </span>
               <span class="row-dps">{(sim.dps / 1000).toFixed(1)}K</span>
               <span class="row-pct">
                 {sim.kind === "baseline" ? "—" : pctVsBaseline(sim.dps)}
               </span>
+            </a>
+          {/each}
+        </Surface>
+      </section>
+    {/if}
+
+    {#if ownedVariantsList.length > 0}
+      <section class="section">
+        <h2 class="section-title">Owned weapon options</h2>
+        <p class="section-lede">
+          If you have certain 5 star weapons lying around. Highlighted rows are
+          within 2.5% DPS of the best option in this list.
+        </p>
+        <Surface flush class="board">
+          <div class="board-head" aria-hidden="true">
+            <span>Build</span>
+            <span>DPS</span>
+            <span>vs base</span>
+          </div>
+          {#each ownedVariantsList as sim, vi (sim.state_key)}
+            {@const peakDps = ownedVariantsList[0].dps}
+            <a
+              href="/teams/configs/{encodeURIComponent(sim.state_key)}"
+              class="board-row"
+              class:board-divider={vi > 0}
+              class:is-near-best={isNearBest(sim.dps, peakDps)}
+            >
+              <span class="row-label" title={simDiffLabel(sim)}>
+                {simDiffLabel(sim)}
+                <span class="row-tag" title="Already-owned weapon (+1 cost)"
+                  >+1</span
+                >
+              </span>
+              <span class="row-dps">{(sim.dps / 1000).toFixed(1)}K</span>
+              <span class="row-pct">{pctVsBaseline(sim.dps)}</span>
             </a>
           {/each}
         </Surface>

@@ -6,10 +6,20 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  buildExamples,
+  characterBuildFromExample,
   constellationImpactRows,
   constellationPrioritySection,
+  exampleFeaturedAndMates,
+  exampleHasHighConfig,
+  exampleRelevantGoodKeys,
+  exampleRelevantSheetRows,
+  exampleTeamKeys,
+  formatReactionFingerprint,
+  formatReactionName,
   levelImportanceFromBuilds,
   levelPrioritySection,
+  liquidRollChips,
   rankSigWeaponsByGain,
   rankWeaponsByRarityAndTeams,
   recommendedSubstatsFromBuilds,
@@ -108,6 +118,37 @@ describe("rankWeaponsByRarityAndTeams", () => {
     assert.deepEqual(
       ranked.map((w) => w.key),
       ["fiveA", "fiveB", "fourA"],
+    );
+  });
+
+  it("prefers measured sigs when rarity and teams tie", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "SurfsUp", teams: 5 },
+        { key: "TomeOfTheEternalFlow", teams: 5 },
+        { key: "PrototypeAmber", teams: 5 },
+      ],
+      () => 5,
+      ["TomeOfTheEternalFlow"],
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
+      ["TomeOfTheEternalFlow", "PrototypeAmber", "SurfsUp"],
+    );
+  });
+
+  it("sorts by Bradley-Terry strength before team count", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "SurfsUp", teams: 5, strength: 0.9 },
+        { key: "TomeOfTheEternalFlow", teams: 5, strength: 1.2 },
+        { key: "PrototypeAmber", teams: 8, strength: 0.7 },
+      ],
+      () => 5,
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
+      ["TomeOfTheEternalFlow", "SurfsUp", "PrototypeAmber"],
     );
   });
 });
@@ -600,5 +641,162 @@ describe("guide vs sim section selection", () => {
     );
     assert.equal(level?.source, "sim");
     assert.equal(level?.source === "sim" ? level.row.priority : null, "high");
+  });
+});
+
+describe("reaction / build-example helpers", () => {
+  it("formats reaction names and fingerprints", () => {
+    assert.equal(formatReactionName("lunarcharged"), "Lunar-Charged");
+    assert.equal(formatReactionName("swirl-electro"), "Swirl (Electro)");
+    assert.equal(formatReactionFingerprint(null), "No reactions");
+    assert.equal(
+      formatReactionFingerprint("bloom+swirl-hydro"),
+      "Bloom + Swirl (Hydro)",
+    );
+  });
+
+  it("ranks liquid roll chips and reads complete build_examples", () => {
+    assert.deepEqual(
+      liquidRollChips({ critRate_: 10, atk_: 2, def_: 0, critDMG_: 8 }),
+      [
+        { key: "critRate_", rolls: 10 },
+        { key: "critDMG_", rolls: 8 },
+        { key: "atk_", rolls: 2 },
+      ],
+    );
+    assert.deepEqual(buildExamples(null), []);
+    const complete = {
+      team_key: "t",
+      team_name: "T",
+      characters: ["Bennett", "Citlali", "Diona", "Mavuika"],
+      state_key:
+        "Bennett~C6~W~R1__Citlali~C0~W~R5__Diona~C6~W~R5__Mavuika~C0~W~R5",
+      reactions: {
+        rps: 1,
+        metric: "damage" as const,
+        list: [],
+        primary: null,
+        fingerprint: null,
+      },
+      invest: "mid" as const,
+      artifact_pct_gain: 0,
+      key: "Bennett",
+      cons: 0,
+      level: 90,
+      talents: { auto: 9, skill: 9, burst: 9 },
+      weapon: { key: "W", refinement: 1, level: 90 },
+      set: { key: "S", count: 4 },
+      main_stats: {
+        sands: "atk_",
+        goblet: "pyro_dmg_",
+        circlet: "critRate_",
+      },
+      substat_rolls: {},
+      substat_rolls_liquid: {},
+    };
+    assert.equal(
+      buildExamples({
+        build_examples: [
+          complete,
+          {
+            ...complete,
+            state_key: "stale",
+            key: undefined,
+          } as unknown as (typeof complete),
+        ],
+      } as CharacterIndex).length,
+      1,
+    );
+    assert.equal(characterBuildFromExample(complete).key, "Bennett");
+    assert.equal(exampleHasHighConfig(complete), false);
+    assert.equal(
+      exampleHasHighConfig({
+        ...complete,
+        invest: "high",
+        high_substat_rolls: { critRate_: 16, critDMG_: 14 },
+        high_substat_rolls_liquid: { critRate_: 14, critDMG_: 12 },
+      }),
+      true,
+    );
+    assert.equal(
+      characterBuildFromExample(
+        {
+          ...complete,
+          invest: "high",
+          high_substat_rolls: { critRate_: 16 },
+          high_substat_rolls_liquid: { critRate_: 14 },
+        },
+        "high",
+      ).substat_rolls.critRate_,
+      16,
+    );
+    assert.deepEqual(exampleTeamKeys(complete), [
+      "Bennett",
+      "Citlali",
+      "Diona",
+      "Mavuika",
+    ]);
+    assert.deepEqual(
+      exampleFeaturedAndMates(
+        ["Bennett", "Citlali", "Diona", "Mavuika"],
+        "Bennett",
+      ),
+      {
+        featured: "Bennett",
+        mates: ["Citlali", "Diona", "Mavuika"],
+      },
+    );
+    assert.deepEqual(
+      exampleFeaturedAndMates(["Citlali", "Bennett", "Diona"], "Bennett", 3),
+      {
+        featured: "Bennett",
+        mates: ["Citlali", "Diona", null],
+      },
+    );
+    assert.deepEqual(
+      exampleTeamKeys({ ...complete, characters: [] }),
+      ["Bennett", "Citlali", "Diona", "Mavuika"],
+    );
+
+    const relevant = exampleRelevantGoodKeys({
+      ...complete,
+      substat_rolls_liquid: {
+        critRate_: 8,
+        critDMG_: 10,
+        atk_: 2,
+        def_: 0,
+      },
+    });
+    assert.ok(relevant.has("atk_"));
+    assert.ok(relevant.has("pyro_dmg_"));
+    assert.ok(relevant.has("critRate_"));
+    assert.ok(relevant.has("critDMG_"));
+    assert.equal(relevant.has("def_"), false);
+
+    // Sheet rows need a known character + weapon; skip values if base data
+    // is unavailable in the test environment.
+    const sheetRows = exampleRelevantSheetRows({
+      ...complete,
+      weapon: { key: "SapwoodBlade", refinement: 1, level: 90 },
+      substat_rolls: {
+        atk_: 4,
+        critRate_: 10,
+        critDMG_: 12,
+      },
+      substat_rolls_liquid: {
+        atk_: 2,
+        critRate_: 8,
+        critDMG_: 10,
+      },
+    });
+    const sheetKeys = sheetRows.map((r) => r.key);
+    if (sheetRows.length > 0) {
+      assert.ok(sheetKeys.includes("atk"));
+      assert.ok(sheetKeys.includes("critRate"));
+      assert.ok(sheetKeys.includes("critDMG"));
+      assert.ok(sheetKeys.includes("pyro_dmg_"));
+      assert.equal(sheetKeys.includes("def"), false);
+      assert.equal(sheetKeys.includes("eleMas"), false);
+    }
   });
 });

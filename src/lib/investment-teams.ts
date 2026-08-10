@@ -26,12 +26,18 @@ export function baselineSim(team: InvestmentTeam): InvestmentSim | null {
   return team.results.find((r) => r.kind === "baseline") ?? null;
 }
 
-/** Floor + owned alternatives (baseline / f2p / owned), highest DPS first. */
+/** Floor alternatives (baseline / f2p), highest DPS first. */
 export function baselineVariants(team: InvestmentTeam): InvestmentSim[] {
   return team.results
-    .filter(
-      (r) => r.kind === "baseline" || r.kind === "f2p" || r.kind === "owned",
-    )
+    .filter((r) => r.kind === "baseline" || r.kind === "f2p")
+    .slice()
+    .sort((a, b) => b.dps - a.dps);
+}
+
+/** Already-owned weapon alts (+1 cost), highest DPS first. */
+export function ownedVariants(team: InvestmentTeam): InvestmentSim[] {
+  return team.results
+    .filter((r) => r.kind === "owned")
     .slice()
     .sort((a, b) => b.dps - a.dps);
 }
