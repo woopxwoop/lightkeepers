@@ -112,7 +112,9 @@
         const result = await postRoster(pending.roster);
         if (!result.ok) {
           restoreSavedSnapshot();
-          rosterError = `Sync failed (${result.status}) — roster not saved to cloud`;
+          rosterError = result.message
+            ? `Sync failed (${result.status}): ${result.message}`
+            : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
         commitSaved(pending);
