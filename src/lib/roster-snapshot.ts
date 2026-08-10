@@ -52,12 +52,45 @@ export function writeRosterLocal(json: string): boolean {
 /** POST a captured roster to `/api/roster`. */
 export async function postRoster(
   roster: CharacterOwned[],
-): Promise<{ ok: true } | { ok: false; status: number }> {
+): Promise<{ ok: true } | { ok: false; status: number; message?: string }> {
+  const entries = roster.map((c) => ({
+    name_id: c.name_id,
+    isOwned: c.isOwned,
+  }));
   const res = await fetch("/api/roster", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roster }),
+    body: JSON.stringify({ roster: entries }),
   });
-  if (!res.ok) return { ok: false, status: res.status };
-  return { ok: true };
+  if (res.ok) return { ok: true };
+
+  let message: string | undefined;
+  try {
+    const text = await res.text();
+    if (text) {
+      try {
+        const parsed = JSON.parse(text) as { message?: unknown };
+        message =
+          typeof parsed.message === "string" && parsed.message
+            ? parsed.message
+            : text;
+      } catch {
+        message = text;
+      }
+    }
+  } catch {
+    /* ignore body read failures */
+  }
+
+  if (res.status === 400) {
+    const sample = entries[0];
+    console.error("[roster sync] 400 Bad Request", {
+      message: message ?? "(no body)",
+      count: entries.length,
+      sampleKeys: sample ? Object.keys(sample) : [],
+      sample,
+    });
+  }
+
+  return { ok: false, status: res.status, message };
 }
