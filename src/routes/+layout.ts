@@ -25,5 +25,6 @@ export const load: LayoutLoad = ({ data }) => {
     characters: data.characters as Character[],
     abyssVersionNumber: data.abyssVersionNumber as number,
     stygianVersionNumber: data.stygianVersionNumber as number,
+    latestPatchNote: data.latestPatchNote,
   };
 };

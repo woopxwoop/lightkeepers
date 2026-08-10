@@ -2,6 +2,7 @@ node_modules
 .svelte-kit
 .env*
 *.md
+!patch-notes/**
 .git
 .gitignore
 build
