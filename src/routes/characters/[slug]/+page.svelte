@@ -68,6 +68,7 @@
   import {
     MAIN_STAT_SLOTS,
     constellationPrioritySection,
+    ascensionPrioritySection,
     levelPrioritySection,
     rankWeaponsByRarityAndTeams,
     recommendedSubstatsFromBuilds,
@@ -505,7 +506,9 @@
   );
 
   let levelSection = $derived(levelPrioritySection(builds));
+  let ascensionSection = $derived(ascensionPrioritySection(builds));
   let levelIcon = $derived(getUiAssetUrl("UI_ItemIcon_104003"));
+  let ascensionIcon = $derived(getUiAssetUrl("UI_ItemIcon_104003"));
 
   let consSection = $derived(constellationPrioritySection(builds));
   let sigSection = $derived(sigWeaponPrioritySection(builds));
@@ -1355,37 +1358,53 @@
                       </section>
                     {/if}
 
-                    {#if levelSection}
+                    {#if levelSection || ascensionSection}
                       <section class="board-section">
                         <h2 class="section-title">
                           Character level
-                          {#if levelSection.source === "guide" && levelSection.simMissing}
+                          {#if levelSection?.source === "guide" && levelSection.simMissing && !ascensionSection}
                             <span class="meta-sub"
                               >(no simulation data yet)</span
                             >
                           {/if}
                         </h2>
                         <ul class="talent-priority-list">
-                          {#if levelSection.source === "sim"}
+                          {#if levelSection}
+                            {#if levelSection.source === "sim"}
+                              {@render talentRow({
+                                name: "Level 90",
+                                icon: levelIcon,
+                                priority: levelSection.row.priority,
+                                kind: "level",
+                                priorityLabel: levelSection.row.priorityLabel,
+                                mean: levelSection.row.mean,
+                                median: levelSection.row.median,
+                                min: levelSection.row.min,
+                                max: levelSection.row.max,
+                                teams: levelSection.row.teams,
+                              })}
+                            {:else}
+                              {@render talentRow({
+                                name: "Level 90",
+                                icon: levelIcon,
+                                priority: levelSection.priority,
+                                kind: "level",
+                                priorityLabel: levelSection.priorityLabel,
+                              })}
+                            {/if}
+                          {/if}
+                          {#if ascensionSection?.source === "sim"}
                             {@render talentRow({
-                              name: "Level 90",
-                              icon: levelIcon,
-                              priority: levelSection.row.priority,
+                              name: "Ascension 6",
+                              icon: ascensionIcon,
+                              priority: ascensionSection.row.priority,
                               kind: "level",
-                              priorityLabel: levelSection.row.priorityLabel,
-                              mean: levelSection.row.mean,
-                              median: levelSection.row.median,
-                              min: levelSection.row.min,
-                              max: levelSection.row.max,
-                              teams: levelSection.row.teams,
-                            })}
-                          {:else}
-                            {@render talentRow({
-                              name: "Level 90",
-                              icon: levelIcon,
-                              priority: levelSection.priority,
-                              kind: "level",
-                              priorityLabel: levelSection.priorityLabel,
+                              priorityLabel: ascensionSection.row.priorityLabel,
+                              mean: ascensionSection.row.mean,
+                              median: ascensionSection.row.median,
+                              min: ascensionSection.row.min,
+                              max: ascensionSection.row.max,
+                              teams: ascensionSection.row.teams,
                             })}
                           {/if}
                         </ul>

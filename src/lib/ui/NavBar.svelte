@@ -17,7 +17,7 @@
   const abyssPath = resolve("/tools/abyss");
   const stygianPath = resolve("/tools/stygian");
   const pullsPath = resolve("/tools/pulls");
-  const calculatorPath = resolve("/tools/calculator");
+  const plannerPath = resolve("/tools/planner");
   const teamsPath = resolve("/teams");
   const charactersPath = resolve("/characters");
   const settingsPath = resolve("/settings");
@@ -38,8 +38,8 @@
     },
     { label: "Pulls", path: pullsPath, match: "exact" as const },
     {
-      label: "Calculator",
-      path: calculatorPath,
+      label: "Planner",
+      path: plannerPath,
       match: "prefix" as const,
     },
   ] as const;

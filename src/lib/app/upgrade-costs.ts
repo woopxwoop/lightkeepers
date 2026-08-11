@@ -1,5 +1,5 @@
 /**
- * Lazy client loader for upgrade-cost JSON (calculator route only).
+ * Lazy client loader for upgrade-cost JSON (planner route only).
  * Goes through `/api/upgrade-costs` (same-origin) — CDN has no browser CORS.
  */
 import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";

@@ -8,16 +8,26 @@
     value = $bindable(""),
     options = [] as SelectOption[],
     getCharacter,
+    getIconSrc,
     placeholder = "Search character…",
     "aria-label": ariaLabel = "Search character",
     class: className = "",
+    autofocus = false,
+    onChoose,
+    onDismiss,
   }: {
     value?: string;
     options?: SelectOption[];
     getCharacter?: (nameId: string) => CharacterOwned | Character | undefined;
+    /** Optional leading icon URL (weapons, materials, …). */
+    getIconSrc?: (value: string) => string | null | undefined;
     placeholder?: string;
     "aria-label"?: string;
     class?: string;
+    /** Focus and open the suggestion menu on mount. */
+    autofocus?: boolean;
+    onChoose?: (next: string) => void;
+    onDismiss?: () => void;
   } = $props();
 
   const GAP = 4;
@@ -116,6 +126,7 @@
     value = next;
     query = "";
     editing = false;
+    onChoose?.(next);
     inputEl?.blur();
   }
 
@@ -127,7 +138,17 @@
   function onBlur() {
     editing = false;
     query = "";
+    // After choose(), blur follows — defer so onChoose can commit first.
+    queueMicrotask(() => onDismiss?.());
   }
+
+  $effect(() => {
+    if (!autofocus) return;
+    void tick().then(() => {
+      inputEl?.focus();
+      startEditing();
+    });
+  });
 
   function scrollActiveOptionIntoView() {
     void tick().then(() => {
@@ -213,6 +234,7 @@
     >
       {#each suggestions as opt, i (opt.value)}
         {@const char = getCharacter?.(opt.value)}
+        {@const iconSrc = getIconSrc?.(opt.value)}
         <button
           type="button"
           id="{listboxId}-{opt.value}"
@@ -230,8 +252,12 @@
                 <CharacterIcon character={char} />
               {/if}
             </span>
+          {:else if iconSrc}
+            <span class="char-search-icon">
+              <img src={iconSrc} alt="" />
+            </span>
           {/if}
-          <span>{opt.label}</span>
+          <span class="char-search-label">{opt.label}</span>
         </button>
       {/each}
     </div>
@@ -250,20 +276,19 @@
     padding: 0.4rem 0.7rem;
     border-radius: var(--radius-md);
     border: var(--border-width) solid
-      color-mix(in srgb, var(--accent-3) 22%, transparent);
-    background: transparent;
+      color-mix(in srgb, var(--foreground-color) 14%, transparent);
+    background: var(--background-mid);
     transition: var(--control-transition);
   }
 
   .char-search-field.open,
   .char-search-field:focus-within {
-    border-color: color-mix(in srgb, var(--accent-3) 38%, transparent);
-    background: var(--surface-quiet);
+    border-color: var(--accent-1);
+    background: var(--background-mid);
   }
 
   .char-search-field:focus-within {
-    box-shadow: 0 0 0 2px
-      color-mix(in srgb, var(--accent-3) 55%, transparent);
+    box-shadow: 0 0 0 1px var(--accent-1);
   }
 
   .char-search-input {
@@ -273,7 +298,7 @@
     outline: none;
     background: none;
     color: var(--foreground-color);
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
 
   .char-search-input::placeholder {
@@ -283,27 +308,27 @@
   .char-search-menu {
     position: fixed;
     z-index: 200;
-    max-height: 240px;
+    max-height: 280px;
     overflow-y: auto;
-    padding: 0.25rem;
+    padding: 0.3rem;
     border-radius: var(--radius-md);
     border: var(--border-width) solid
-      color-mix(in srgb, var(--accent-3) 22%, transparent);
-    background: var(--background-mid);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      color-mix(in srgb, var(--foreground-color) 14%, transparent);
+    background: var(--background-color);
+    box-shadow: 0 12px 32px color-mix(in oklab, black 42%, transparent);
   }
 
   .char-search-option {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.55rem;
     width: 100%;
-    padding: 0.45rem 0.65rem;
+    padding: 0.4rem 0.55rem;
     border: none;
     border-radius: var(--radius-sm);
     background: transparent;
     color: var(--foreground-mid);
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     text-align: left;
     cursor: pointer;
     transition: var(--control-transition);
@@ -312,25 +337,36 @@
   .char-search-option:hover,
   .char-search-option.active {
     color: var(--foreground-color);
-    background: var(--surface-quiet);
+    background: var(--background-mid);
   }
 
   .char-search-option.selected {
     color: var(--foreground-color);
   }
 
+  .char-search-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .char-search-icon {
-    display: block;
-    width: 1.5rem;
-    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
     overflow: hidden;
     border-radius: var(--radius-sm);
     flex-shrink: 0;
-    background: var(--surface-inset);
+    background: var(--background-mid);
   }
 
-  .char-search-icon :global(.icon-root) {
+  .char-search-icon :global(.icon-root),
+  .char-search-icon img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
+    display: block;
   }
 </style>

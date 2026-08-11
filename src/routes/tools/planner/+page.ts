@@ -1,7 +1,7 @@
 export function load() {
   return {
     seo: {
-      title: "Calculator — Lightkeepers",
+      title: "Planner — Lightkeepers",
       description:
         "Plan Mora, EXP, and materials across character and weapon upgrade goals.",
     },

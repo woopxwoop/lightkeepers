@@ -8,14 +8,15 @@
  *   genshin/data/characters/index.json     — kit roster summary (live)
  *   genshin/data/characters/{name_id}.json — full kit per character (live)
  *   genshin/data/beta/characters/…         — CB / unreleased kits (YuanShen)
- *   genshin/data/upgrade-costs/…           — level / ascension / talent costs
+ *   genshin/data/upgrade-costs/…           — level / ascension / talent costs (live)
+ *   genshin/data/beta/upgrade-costs/…      — CB costs (merged in /api/upgrade-costs)
  *   genshin/data/characters/{name_id}-{Element}.json — Traveler kits (PlayerBoy-Anemo, …)
  *   genshin/data/enemies/index.json        — enemy id → icon stem map
  *
  * Images: scripts/sync/{equipment,namecards,character,character-kit}-images-r2.ts
  * TCG:    scripts/sync/tcg-cards-r2.ts
  * Kits:   scripts/sync/character-data-r2.ts (+ DATA_CHANNEL=beta for CB)
- * Costs:  scripts/sync/upgrade-costs-r2.ts
+ * Costs:  scripts/sync/upgrade-costs-r2.ts (+ DATA_CHANNEL=beta for CB)
  *
  * Note: weapon/artifact tables are loaded via dynamic import in
  * `$lib/equipment-data` (not this module). Character kits + enemy index
@@ -38,9 +39,11 @@ const UI_PREFIX = `${CDN_BASE}/genshin/ui`;
 const CHARACTERS_DATA_PREFIX = `${CDN_BASE}/genshin/data/characters`;
 const BETA_CHARACTERS_DATA_PREFIX = `${CDN_BASE}/genshin/data/beta/characters`;
 const UPGRADE_COSTS_DATA_PREFIX = `${CDN_BASE}/genshin/data/upgrade-costs`;
+const BETA_UPGRADE_COSTS_DATA_PREFIX = `${CDN_BASE}/genshin/data/beta/upgrade-costs`;
 const ENEMIES_DATA_PREFIX = `${CDN_BASE}/genshin/data/enemies`;
 
 export type CharacterKitChannel = "live" | "beta";
+export type UpgradeCostsChannel = "live" | "beta";
 
 function charactersDataPrefix(channel: CharacterKitChannel): string {
   return channel === "beta"
@@ -217,7 +220,7 @@ export async function fetchEnemyIndex(): Promise<EnemyIndex> {
   return (await resp.json()) as EnemyIndex;
 }
 
-// ── Upgrade costs (CDN; calculator page only) ──
+// ── Upgrade costs (CDN; planner page only) ──
 
 export function upgradeCostsFileUrl(
   file:
@@ -226,11 +229,16 @@ export function upgradeCostsFileUrl(
     | "materials.json"
     | "characters.json"
     | "weapons.json",
+  channel: UpgradeCostsChannel = "live",
 ): string {
-  return `${UPGRADE_COSTS_DATA_PREFIX}/${file}`;
+  const prefix =
+    channel === "beta"
+      ? BETA_UPGRADE_COSTS_DATA_PREFIX
+      : UPGRADE_COSTS_DATA_PREFIX;
+  return `${prefix}/${file}`;
 }
 
-/** Fetch the full upgrade-cost catalog (4 JSON files in parallel). */
+/** Fetch the full live upgrade-cost catalog (4 JSON files in parallel). */
 export async function fetchUpgradeCostsCatalog(): Promise<UpgradeCostsCatalog> {
   const [curves, materials, characters, weapons] = await Promise.all([
     fetchWithTimeout(upgradeCostsFileUrl("curves.json")).then(async (r) => {

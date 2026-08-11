@@ -36,7 +36,8 @@ function emptyResult(): UpgradeCostResult {
   return { mora: 0, exp: 0, materials: {} };
 }
 
-function maxLevelForAscension(
+/** Max character/weapon level unlocked at this ascension (from promote table). */
+export function maxLevelForAscension(
   promotes: UpgradePromoteStep[],
   ascension: number,
 ): number {
@@ -44,33 +45,154 @@ function maxLevelForAscension(
   return row?.unlockMaxLevel ?? MAX_LEVEL;
 }
 
+/**
+ * Minimum level for this ascension (previous phase's unlock max).
+ * Asc 0 → 1; asc 6 → 80 for standard 90 caps.
+ */
+export function minLevelForAscension(
+  promotes: UpgradePromoteStep[],
+  ascension: number,
+): number {
+  const a = clamp(ascension, 0, MAX_ASCENSION);
+  if (a <= 0) return 1;
+  const prev = promotes.find((p) => p.promoteLevel === a - 1);
+  return prev?.unlockMaxLevel ?? 1;
+}
+
+/**
+ * Lowest ascension that unlocks `level` (or 6 if above all caps).
+ */
+export function minAscensionForLevel(
+  promotes: UpgradePromoteStep[],
+  level: number,
+): number {
+  const sorted = [...promotes].sort(
+    (a, b) => a.promoteLevel - b.promoteLevel,
+  );
+  for (const step of sorted) {
+    if (step.unlockMaxLevel >= level) return step.promoteLevel;
+  }
+  return MAX_ASCENSION;
+}
+
+/**
+ * Combat talent cap by character ascension phase.
+ * Asc 0–1 → 1; 2 → 2; 3 → 4; 4 → 6; 5 → 8; 6 → 10.
+ */
+export function maxTalentForAscension(ascension: number): number {
+  const a = clamp(ascension, 0, MAX_ASCENSION);
+  if (a < 2) return 1;
+  if (a === 2) return 2;
+  if (a === 3) return 4;
+  if (a === 4) return 6;
+  if (a === 5) return 8;
+  return MAX_TALENT;
+}
+
+/** Lowest ascension that allows a given combat talent level. */
+export function minAscensionForTalent(talentLevel: number): number {
+  const t = clamp(talentLevel, 1, MAX_TALENT);
+  if (t <= 1) return 0;
+  if (t <= 2) return 2;
+  if (t <= 4) return 3;
+  if (t <= 6) return 4;
+  if (t <= 8) return 5;
+  return 6;
+}
+
+/** Clamp level/talents to ascension; raise ascension if level/talents require it. */
+export function gateCharacterConfig(
+  cfg: CharacterUpgradeConfig,
+  promotes: UpgradePromoteStep[],
+  opts?: { /** When true, keep ascension and clamp level/talents down. */ preferAscension?: boolean },
+): CharacterUpgradeConfig {
+  if (opts?.preferAscension) {
+    const ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
+    const minLevel = minLevelForAscension(promotes, ascension);
+    const maxLevel = maxLevelForAscension(promotes, ascension);
+    const maxTalent = maxTalentForAscension(ascension);
+    return {
+      level: clamp(cfg.level, minLevel, maxLevel),
+      ascension,
+      talents: {
+        normal: clamp(cfg.talents.normal, 1, maxTalent),
+        skill: clamp(cfg.talents.skill, 1, maxTalent),
+        burst: clamp(cfg.talents.burst, 1, maxTalent),
+      },
+    };
+  }
+
+  let ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
+  let level = clamp(cfg.level, 1, MAX_LEVEL);
+  let normal = clamp(cfg.talents.normal, 1, MAX_TALENT);
+  let skill = clamp(cfg.talents.skill, 1, MAX_TALENT);
+  let burst = clamp(cfg.talents.burst, 1, MAX_TALENT);
+
+  ascension = Math.max(
+    ascension,
+    minAscensionForLevel(promotes, level),
+    minAscensionForTalent(normal),
+    minAscensionForTalent(skill),
+    minAscensionForTalent(burst),
+  );
+  ascension = clamp(ascension, 0, MAX_ASCENSION);
+
+  const minLevel = minLevelForAscension(promotes, ascension);
+  const maxLevel = maxLevelForAscension(promotes, ascension);
+  const maxTalent = maxTalentForAscension(ascension);
+  level = clamp(level, minLevel, maxLevel);
+  normal = clamp(normal, 1, maxTalent);
+  skill = clamp(skill, 1, maxTalent);
+  burst = clamp(burst, 1, maxTalent);
+
+  return {
+    level,
+    ascension,
+    talents: { normal, skill, burst },
+  };
+}
+
+/** Clamp weapon level to ascension; raise ascension if level requires it. */
+export function gateWeaponConfig(
+  cfg: WeaponUpgradeConfig,
+  promotes: UpgradePromoteStep[],
+  opts?: { preferAscension?: boolean },
+): WeaponUpgradeConfig {
+  if (opts?.preferAscension) {
+    const ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
+    const minLevel = minLevelForAscension(promotes, ascension);
+    const maxLevel = maxLevelForAscension(promotes, ascension);
+    return {
+      level: clamp(cfg.level, minLevel, maxLevel),
+      ascension,
+    };
+  }
+
+  let ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
+  let level = clamp(cfg.level, 1, MAX_LEVEL);
+
+  ascension = Math.max(ascension, minAscensionForLevel(promotes, level));
+  ascension = clamp(ascension, 0, MAX_ASCENSION);
+
+  const minLevel = minLevelForAscension(promotes, ascension);
+  const maxLevel = maxLevelForAscension(promotes, ascension);
+  level = clamp(level, minLevel, maxLevel);
+
+  return { level, ascension };
+}
+
 function normalizeCharacterConfig(
   cfg: CharacterUpgradeConfig,
   costs: CharacterUpgradeCosts,
 ): CharacterUpgradeConfig {
-  const ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
-  const maxLevel = maxLevelForAscension(costs.promotes, ascension);
-  return {
-    level: clamp(cfg.level, 1, maxLevel),
-    ascension,
-    talents: {
-      normal: clamp(cfg.talents.normal, 1, MAX_TALENT),
-      skill: clamp(cfg.talents.skill, 1, MAX_TALENT),
-      burst: clamp(cfg.talents.burst, 1, MAX_TALENT),
-    },
-  };
+  return gateCharacterConfig(cfg, costs.promotes);
 }
 
 function normalizeWeaponConfig(
   cfg: WeaponUpgradeConfig,
   costs: WeaponUpgradeCosts,
 ): WeaponUpgradeConfig {
-  const ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
-  const maxLevel = maxLevelForAscension(costs.promotes, ascension);
-  return {
-    level: clamp(cfg.level, 1, maxLevel),
-    ascension,
-  };
+  return gateWeaponConfig(cfg, costs.promotes);
 }
 
 /** EXP to go from `fromLevel` up to (but not including) `toLevel`. */
@@ -212,9 +334,9 @@ export const UPGRADE_DEFAULTS = {
     talents: { normal: 1, skill: 1, burst: 1 },
   } satisfies CharacterUpgradeConfig,
   characterTarget: {
-    level: 90,
-    ascension: 6,
-    talents: { normal: 9, skill: 9, burst: 9 },
+    level: 70,
+    ascension: 4,
+    talents: { normal: 1, skill: 1, burst: 1 },
   } satisfies CharacterUpgradeConfig,
   weaponStart: { level: 1, ascension: 0 } satisfies WeaponUpgradeConfig,
   weaponTarget: { level: 90, ascension: 6 } satisfies WeaponUpgradeConfig,

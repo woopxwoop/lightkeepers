@@ -7,10 +7,15 @@ import type {
   UpgradeCurves,
   WeaponUpgradeCosts,
 } from "./types/upgrade-costs.ts";
-import {
+  import {
   diffCharacterUpgrade,
   diffWeaponUpgrade,
   expItemsNeeded,
+  gateCharacterConfig,
+  gateWeaponConfig,
+  maxTalentForAscension,
+  minAscensionForTalent,
+  minLevelForAscension,
   sumLevelExp,
   UPGRADE_DEFAULTS,
 } from "./upgrade-costs.ts";
@@ -46,7 +51,11 @@ describe("upgrade-costs math", () => {
       hutao,
       curves,
       UPGRADE_DEFAULTS.characterStart,
-      UPGRADE_DEFAULTS.characterTarget,
+      {
+        level: 90,
+        ascension: 6,
+        talents: { normal: 9, skill: 9, burst: 9 },
+      },
     );
 
     assert.ok(result.exp === 8_362_650);
@@ -100,5 +109,112 @@ describe("upgrade-costs math", () => {
       return sum + book.exp * n.count;
     }, 0);
     assert.ok(covered >= 53_000);
+  });
+
+  it("gates talent caps by ascension", () => {
+    assert.equal(maxTalentForAscension(0), 1);
+    assert.equal(maxTalentForAscension(2), 2);
+    assert.equal(maxTalentForAscension(4), 6);
+    assert.equal(maxTalentForAscension(6), 10);
+    assert.equal(minAscensionForTalent(9), 6);
+    assert.equal(minAscensionForTalent(2), 2);
+  });
+
+  it("gates level floors by ascension", () => {
+    const { characters } = loadCatalog();
+    const hutao = characters.find((c) => c.name_id === "Hutao")!;
+    assert.equal(minLevelForAscension(hutao.promotes, 0), 1);
+    assert.equal(minLevelForAscension(hutao.promotes, 1), 20);
+    assert.equal(minLevelForAscension(hutao.promotes, 2), 40);
+    assert.equal(minLevelForAscension(hutao.promotes, 6), 80);
+  });
+
+  it("gateCharacterConfig clamps level/talents and raises ascension", () => {
+    const { characters } = loadCatalog();
+    const hutao = characters.find((c) => c.name_id === "Hutao")!;
+    const clamped = gateCharacterConfig(
+      {
+        level: 90,
+        ascension: 0,
+        talents: { normal: 9, skill: 1, burst: 1 },
+      },
+      hutao.promotes,
+    );
+    assert.equal(clamped.ascension, 6);
+    assert.equal(clamped.level, 90);
+    assert.equal(clamped.talents.normal, 9);
+
+    const lowered = gateCharacterConfig(
+      {
+        level: 90,
+        ascension: 2,
+        talents: { normal: 10, skill: 10, burst: 10 },
+      },
+      hutao.promotes,
+    );
+    // Ascension rises to satisfy talent 10 (and level 90).
+    assert.equal(lowered.ascension, 6);
+    assert.equal(lowered.talents.normal, 10);
+
+    const ascOnly = gateCharacterConfig(
+      {
+        level: 50,
+        ascension: 2,
+        talents: { normal: 10, skill: 1, burst: 1 },
+      },
+      hutao.promotes,
+    );
+    assert.equal(ascOnly.ascension, 6);
+    // Asc 6 requires at least Lv 80.
+    assert.equal(ascOnly.level, 80);
+    assert.equal(ascOnly.talents.normal, 10);
+
+    const downAsc = gateCharacterConfig(
+      {
+        level: 80,
+        ascension: 2,
+        talents: { normal: 6, skill: 1, burst: 1 },
+      },
+      hutao.promotes,
+      { preferAscension: true },
+    );
+    assert.equal(downAsc.ascension, 2);
+    assert.equal(downAsc.level, 50);
+    assert.equal(downAsc.talents.normal, 2);
+
+    const upAscFloor = gateCharacterConfig(
+      {
+        level: 1,
+        ascension: 6,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      hutao.promotes,
+      { preferAscension: true },
+    );
+    assert.equal(upAscFloor.ascension, 6);
+    assert.equal(upAscFloor.level, 80);
+  });
+
+  it("gateWeaponConfig clamps level to ascension", () => {
+    const { weapons } = loadCatalog();
+    const weapon = weapons.find((w) => w.rankLevel === 5)!;
+    const gated = gateWeaponConfig(
+      { level: 90, ascension: 1 },
+      weapon.promotes,
+    );
+    assert.equal(gated.ascension, 6);
+    assert.equal(gated.level, 90);
+
+    const low = gateWeaponConfig({ level: 45, ascension: 1 }, weapon.promotes);
+    assert.equal(low.ascension, 2);
+    assert.equal(low.level, 45);
+
+    const forceDown = gateWeaponConfig(
+      { level: 90, ascension: 1 },
+      weapon.promotes,
+      { preferAscension: true },
+    );
+    assert.equal(forceDown.ascension, 1);
+    assert.equal(forceDown.level, 40);
   });
 });

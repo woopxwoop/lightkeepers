@@ -13,6 +13,7 @@
   import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
   import Select from "$lib/ui/components/Select.svelte";
   import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
+  import PickModal from "$lib/ui/components/PickModal.svelte";
   import Chip from "$lib/ui/components/Chip.svelte";
   import Badge from "$lib/ui/components/Badge.svelte";
   import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
@@ -62,6 +63,14 @@
     fetchCharacterAnalytics,
     isAbortError,
   } from "$lib/app/character-analytics";
+  import {
+    ensureEquipmentData,
+    equipmentVersion,
+    weaponByKey,
+    weaponIconSrc,
+  } from "$lib/equipment-data";
+
+  void ensureEquipmentData().catch(() => {});
 
   let demoTags: string[] = $state([]);
   let demoTagOptions = $derived(
@@ -239,6 +248,53 @@
   let solutionIndex = $state(0);
   let iconStyleNote = $derived($displayPreferences.iconStyle);
   let detailConcept = $state<"dossier" | "nameplate" | "compact">("dossier");
+
+  // ── PickModal demo (Planner character / weapon picker) ────────────────
+  let pickDemoKind = $state<"character" | "weapon" | null>(null);
+  let pickDemoQuery = $state("");
+  let pickDemoChoice = $state("");
+  let pickDemoCharValue = $state("");
+  let pickDemoWeaponValue = $state("");
+
+  let pickDemoCharOptions = $derived(
+    $charactersOwned
+      .slice()
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+      .map((c) => ({
+        value: c.name_id,
+        label: c.name ?? c.name_id,
+      })),
+  );
+
+  let pickDemoCharById = $derived(
+    new Map($charactersOwned.map((c) => [c.name_id, c])),
+  );
+
+  let pickDemoWeaponOptions = $derived.by(() => {
+    void $equipmentVersion;
+    return [...weaponByKey.entries()]
+      .map(([key, w]) => ({
+        value: key,
+        label: `${w.name} (${w.stars}★)`,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .slice(0, 120);
+  });
+
+  function openPickDemo(kind: "character" | "weapon") {
+    pickDemoKind = kind;
+    pickDemoQuery = "";
+  }
+
+  function closePickDemo() {
+    pickDemoKind = null;
+    pickDemoQuery = "";
+  }
+
+  function choosePickDemo(value: string) {
+    pickDemoChoice = value;
+    closePickDemo();
+  }
 
   const DETAIL_CONCEPTS = [
     {
@@ -1037,13 +1093,62 @@
     <div class="section-head">
       <h2>Controls</h2>
       <p>
-        Shared <code>SegmentedControl</code>, <code>Select</code>,
-        <code>Chip</code>,
+        Shared <code>PickModal</code>, <code>CharacterSearchSelect</code>,
+        <code>SegmentedControl</code>, <code>Select</code>, <code>Chip</code>,
         <code>Toggle</code>, <code>Button</code>, <code>Badge</code>.
       </p>
     </div>
 
     <div class="control-stack">
+      <Surface>
+        <p class="surface-label">PickModal</p>
+        <p class="token-meta mb-2">
+          Full-viewport character / weapon picker (Planner + Character / +
+          Weapon). Portrait grid for characters, square icon grid for weapons.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" onclick={() => openPickDemo("character")}
+            >Open character pick</Button
+          >
+          <Button variant="secondary" onclick={() => openPickDemo("weapon")}
+            >Open weapon pick</Button
+          >
+          {#if pickDemoChoice}
+            <span class="token-meta">Last pick: {pickDemoChoice}</span>
+          {/if}
+        </div>
+      </Surface>
+
+      <Surface>
+        <p class="surface-label">CharacterSearchSelect</p>
+        <p class="token-meta mb-2">
+          Combobox used in Planner configure — character portraits or weapon
+          icons in the suggestion menu.
+        </p>
+        <div class="flex flex-wrap items-end gap-4">
+          <label class="demo-field">
+            <span class="token-meta">Character</span>
+            <CharacterSearchSelect
+              bind:value={pickDemoCharValue}
+              options={pickDemoCharOptions}
+              getCharacter={(id) => pickDemoCharById.get(id)}
+              placeholder="Search character…"
+              aria-label="Demo character search"
+            />
+          </label>
+          <label class="demo-field">
+            <span class="token-meta">Weapon</span>
+            <CharacterSearchSelect
+              bind:value={pickDemoWeaponValue}
+              options={pickDemoWeaponOptions}
+              getIconSrc={(key) => weaponIconSrc(key)}
+              placeholder="Search weapon…"
+              aria-label="Demo weapon search"
+            />
+          </label>
+        </div>
+      </Surface>
+
       <Surface>
         <p class="surface-label">SegmentedControl</p>
         <SegmentedControl
@@ -1660,6 +1765,39 @@
       </Surface>
     </div>
   </section>
+
+  {#if pickDemoKind}
+    <PickModal
+      open
+      title={pickDemoKind === "character" ? "Add character" : "Add weapon"}
+      searchPlaceholder={pickDemoKind === "character"
+        ? "Search character…"
+        : "Search weapon…"}
+      options={pickDemoKind === "character"
+        ? pickDemoCharOptions
+        : pickDemoWeaponOptions}
+      art={pickDemoKind === "weapon" ? "square" : "portrait"}
+      bind:query={pickDemoQuery}
+      onClose={closePickDemo}
+      onChoose={choosePickDemo}
+    >
+      {#snippet tile(opt)}
+        {#if pickDemoKind === "character"}
+          <CharacterPortraitCard
+            character={pickDemoCharById.get(opt.value)}
+            tintBackground
+          />
+        {:else}
+          {@const src = weaponIconSrc(opt.value)}
+          <div class="weapon-tile">
+            {#if src}
+              <img src={src} alt="" loading="lazy" />
+            {/if}
+          </div>
+        {/if}
+      {/snippet}
+    </PickModal>
+  {/if}
 </PageShell>
 
 <style>
@@ -1667,6 +1805,21 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  .demo-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 14rem;
+  }
+
+  .weapon-tile {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: var(--background-mid);
   }
 
 

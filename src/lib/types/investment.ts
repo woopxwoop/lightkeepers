@@ -164,10 +164,15 @@ export interface CharacterIndex {
    */
   talent_importance?: CharacterTalentImportance;
   /**
-   * How much DPS drops when the character runs at level 80 (talents stay
+   * How much DPS drops when the character runs at level 80/90 (talents stay
    * baseline), aggregated across teams.
    */
   level_importance?: CharacterLevelImportance;
+  /**
+   * How much DPS drops from final ascension at level 80 (80/90 vs 80/80 as a
+   * % of the 80/90 rung), aggregated across teams that have both samples.
+   */
+  ascension_importance?: CharacterLevelImportance;
   /**
    * One-step gains: constellations are stepwise vs the previous constellation
    * (C2 vs C1), covering rungs below the team baseline as well as above it;
@@ -257,7 +262,7 @@ export interface CharacterTalentImportance {
 }
 
 export interface CharacterLevelImportance extends CharacterTalentSlotImportance {
-  /** Teams with a level-80 drop sample for this character. */
+  /** Teams with a level-80 (or ascension) drop sample for this character. */
   teams: number;
 }
 
