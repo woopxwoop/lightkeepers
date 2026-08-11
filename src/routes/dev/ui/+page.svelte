@@ -230,6 +230,7 @@
     } as AbyssTeam;
   });
 
+  // ── Build-example team picker (row + gear expand) ─────────────────────
   let segment = $state<"roster" | "meta">("roster");
   let selectDemo = $state("stygian");
   let chipOn = $state(true);
@@ -883,6 +884,8 @@
       </article>
     </div>
   </section>
+
+  <!-- ── Build-example team picker ─────────────────────────────────────── -->
 
   <!-- ── Character team source control ─────────────────────────────────── -->
   <section class="gallery-section" id="team-source-control">
@@ -1665,6 +1668,16 @@
     flex-direction: column;
     gap: var(--space-4);
   }
+
+
+
+
+
+
+
+
+
+
 
   :global(.analytics-demo) {
     display: flex;

@@ -7,6 +7,7 @@
     staticBoardsLoaded,
     staticBoardsError,
     charactersOwned,
+    charactersHydrated,
     teamsOwnedLoaded,
     ensureTeamsOwned,
     ensureStaticBoards,
@@ -91,9 +92,10 @@
   let solution = $derived(displaySolutions[safeIndex]);
 
   let loading = $derived(
-    !$staticBoardsError &&
-      !$staticBoardsLoaded &&
-      $allTeamsStygian.length === 0,
+    !$charactersHydrated ||
+      (!$staticBoardsError &&
+        !$staticBoardsLoaded &&
+        $allTeamsStygian.length === 0),
   );
 
   let waitingForOwned = $derived(hasOwnedCharacters && !$teamsOwnedLoaded);

@@ -26,10 +26,18 @@ export function baselineSim(team: InvestmentTeam): InvestmentSim | null {
   return team.results.find((r) => r.kind === "baseline") ?? null;
 }
 
-/** Floor-cost alternatives (baseline + f2p), highest DPS first. */
+/** Floor alternatives (baseline / f2p), highest DPS first. */
 export function baselineVariants(team: InvestmentTeam): InvestmentSim[] {
   return team.results
     .filter((r) => r.kind === "baseline" || r.kind === "f2p")
+    .slice()
+    .sort((a, b) => b.dps - a.dps);
+}
+
+/** Already-owned weapon alts (+1 cost), highest DPS first. */
+export function ownedVariants(team: InvestmentTeam): InvestmentSim[] {
+  return team.results
+    .filter((r) => r.kind === "owned")
     .slice()
     .sort((a, b) => b.dps - a.dps);
 }
@@ -58,18 +66,21 @@ export function groupVerticalSimsByCost(
     .map(([cost, sims]) => ({ cost, sims }));
 }
 
-/** First sim at exactly `cost`, or null. */
+/** First non-owned sim at exactly `cost`, or null. */
 export function simAtExactCost(
   team: InvestmentTeam,
   cost: number,
 ): InvestmentSim | null {
-  return team.results.find((r) => r.cost === cost) ?? null;
+  return (
+    team.results.find((r) => r.cost === cost && r.kind !== "owned") ?? null
+  );
 }
 
-/** Best DPS at exactly `cost`, or 0 when no result matches. */
+/** Best DPS at exactly `cost` (skips owned), or 0 when no result matches. */
 export function exactCostDps(team: InvestmentTeam, cost: number): number {
   let bestDps = 0;
   for (const result of team.results) {
+    if (result.kind === "owned") continue;
     if (result.cost === cost) {
       bestDps = Math.max(bestDps, result.dps);
     }
@@ -112,12 +123,14 @@ export function teamsMatchingTags(
   return teams.filter((t) => tags.every((tag) => t.characters.includes(tag)));
 }
 
-/** Teams that have at least one sim at exactly `cost`. */
+/** Teams that have at least one non-owned sim at exactly `cost`. */
 export function teamsWithExactCost(
   teams: InvestmentTeam[],
   cost: number,
 ): InvestmentTeam[] {
-  return teams.filter((t) => t.results.some((r) => r.cost === cost));
+  return teams.filter((t) =>
+    t.results.some((r) => r.cost === cost && r.kind !== "owned"),
+  );
 }
 
 /** Unique costs across teams (prefer merge-time list; else scan). */
@@ -127,7 +140,10 @@ export function availableInvestmentCosts(
   if (data.available_costs?.length) return data.available_costs;
   const set = new Set<number>();
   for (const t of data.teams) {
-    for (const r of t.results) set.add(r.cost);
+    for (const r of t.results) {
+      if (r.kind === "owned") continue;
+      set.add(r.cost);
+    }
   }
   return [...set].sort((a, b) => a - b);
 }

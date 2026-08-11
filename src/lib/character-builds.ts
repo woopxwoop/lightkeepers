@@ -5,6 +5,7 @@
  */
 
 import { isArtifactSubstatKey } from "$lib/build-stats";
+import { translateStatKey } from "$lib/utils";
 import {
   CONSTELLATION_UPGRADE,
   LEVEL_UPGRADE,
@@ -13,6 +14,7 @@ import {
   classifyUpgradeImpact,
   impactForTier,
   primaryUpgradePct,
+  resolveUpgradeImpact,
   type UpgradeImpactLadder,
   type UpgradeTier,
 } from "$lib/upgrade-priority";
@@ -24,6 +26,7 @@ import type {
   CharacterTalentImportance,
   CharacterVerticalGain,
   CharacterWeaponRank,
+  ImpactTierScale,
   TalentSlot,
 } from "$lib/types/investment";
 
@@ -113,17 +116,29 @@ export function recommendedSubstatsFromBuilds(
   });
 }
 
-/** Weapons: higher rarity first, then team usage (stable within ties). */
+/** Weapons: rarity → BT strength → teams → measured sigs → name. */
 export function rankWeaponsByRarityAndTeams(
   weapons: CharacterWeaponRank[] | null | undefined,
   getStars: (key: string) => number,
+  preferredKeys?: ReadonlySet<string> | readonly string[] | null,
 ): CharacterWeaponRank[] {
   if (!weapons?.length) return [];
+  const preferred =
+    preferredKeys instanceof Set
+      ? preferredKeys
+      : new Set(preferredKeys ?? []);
   return [...weapons].sort((a, b) => {
     const ra = getStars(a.key);
     const rb = getStars(b.key);
     if (ra !== rb) return rb - ra;
-    return b.teams - a.teams;
+    const sa = a.strength ?? 0;
+    const sb = b.strength ?? 0;
+    if (sa !== sb) return sb - sa;
+    if (a.teams !== b.teams) return b.teams - a.teams;
+    const pa = preferred.has(a.key) ? 0 : 1;
+    const pb = preferred.has(b.key) ? 0 : 1;
+    if (pa !== pb) return pa - pb;
+    return a.key.localeCompare(b.key);
   });
 }
 
@@ -137,9 +152,10 @@ export type VerticalImpactRow<T> = T & {
 function attachImpact<T extends CharacterVerticalGain>(
   row: T,
   ladder: UpgradeImpactLadder,
+  scale?: ImpactTierScale | null,
 ): VerticalImpactRow<T> {
   const pct = primaryUpgradePct(row.mean_pct_gain, row.median_pct_gain);
-  const impact = classifyUpgradeImpact(pct, ladder);
+  const impact = resolveUpgradeImpact(row.tier, pct, ladder, scale);
   return {
     ...row,
     pct,
@@ -159,21 +175,32 @@ function compareByImpact(a: { pct: number }, b: { pct: number }): number {
   return b.pct - a.pct;
 }
 
+function impactScale(
+  builds: CharacterIndex | null | undefined,
+  key: "talents" | "constellations" | "sig_weapons",
+): ImpactTierScale | null | undefined {
+  return builds?.impact_tiers?.[key];
+}
+
 /** Constellations in source order with their display-ready impact. */
 export function constellationImpactRows(
   constellations: CharacterConsGain[] | null | undefined,
+  scale?: ImpactTierScale | null,
 ): VerticalImpactRow<CharacterConsGain>[] {
   if (!constellations?.length) return [];
-  return constellations.map((row) => attachImpact(row, CONSTELLATION_UPGRADE));
+  return constellations.map((row) =>
+    attachImpact(row, CONSTELLATION_UPGRADE, scale),
+  );
 }
 
 /** Signature weapons ranked by primary gain, with display-ready impact. */
 export function rankSigWeaponsByGain(
   sigWeapons: CharacterSigGain[] | null | undefined,
+  scale?: ImpactTierScale | null,
 ): VerticalImpactRow<CharacterSigGain>[] {
   if (!sigWeapons?.length) return [];
   return sigWeapons
-    .map((row) => attachImpact(row, SIGNATURE_UPGRADE))
+    .map((row) => attachImpact(row, SIGNATURE_UPGRADE, scale))
     .sort((a, b) => compareByImpact(a, b) || a.key.localeCompare(b.key));
 }
 
@@ -192,12 +219,13 @@ export type TalentImportanceRow = {
 };
 
 /**
- * Talent priority rows from measured simulation data. Qualitative labels from
- * max(mean, median) % DPS drop when that talent is at 1.
+ * Talent priority rows from measured simulation data. Prefer merge-stamped
+ * impact tiers; fall back to the talent ladder when `tier` is absent.
  */
 export function talentImportanceRows(
   talentImportance: CharacterTalentImportance | null | undefined,
   resolveSkillIcon: (kitType: string) => string | null,
+  scale?: ImpactTierScale | null,
 ): TalentImportanceRow[] {
   if (!talentImportance || talentImportance.teams <= 0) return [];
 
@@ -206,7 +234,7 @@ export function talentImportanceRows(
     const stats = talentImportance[slot];
     if (!stats) return [];
     const pct = primaryUpgradePct(stats.mean_pct_drop, stats.median_pct_drop);
-    const impact = classifyUpgradeImpact(pct, TALENT_UPGRADE);
+    const impact = resolveUpgradeImpact(stats.tier, pct, TALENT_UPGRADE, scale);
     return [
       {
         slot,
@@ -316,6 +344,7 @@ export function talentPrioritySection(
   const simRows = talentImportanceRows(
     builds?.talent_importance,
     resolveSkillIcon,
+    impactScale(builds, "talents"),
   );
   const guideSlots = (guide?.talent_priority ?? []).filter(
     (slot): slot is TalentSlot =>
@@ -383,6 +412,7 @@ export function constellationPrioritySection(
   const guide = builds?.guide_priority;
   const simRows = constellationImpactRows(
     builds?.vertical_importance?.constellations,
+    impactScale(builds, "constellations"),
   );
   const guideCons = guide?.constellations ?? [];
   const preferGuide = useGuideSection(
@@ -417,6 +447,7 @@ export function sigWeaponPrioritySection(
   const guide = builds?.guide_priority;
   const simRows = rankSigWeaponsByGain(
     builds?.vertical_importance?.sig_weapons,
+    impactScale(builds, "sig_weapons"),
   );
   const guideSigs = guide?.sig_weapons ?? [];
   const preferGuide = useGuideSection(
@@ -437,4 +468,53 @@ export function sigWeaponPrioritySection(
   }
   if (simRows.length > 0) return { source: "sim", rows: simRows };
   return null;
+}
+
+const REACTION_LABELS: Record<string, string> = {
+  melt: "Melt",
+  vaporize: "Vaporize",
+  overload: "Overload",
+  electrocharged: "Electro-Charged",
+  superconduct: "Superconduct",
+  freeze: "Freeze",
+  shatter: "Shatter",
+  bloom: "Bloom",
+  hyperbloom: "Hyperbloom",
+  burgeon: "Burgeon",
+  burning: "Burning",
+  spread: "Spread",
+  aggravate: "Aggravate",
+  quicken: "Quicken",
+  lunarcharged: "Lunar-Charged",
+  swirl: "Swirl",
+  "swirl-pyro": "Swirl (Pyro)",
+  "swirl-hydro": "Swirl (Hydro)",
+  "swirl-electro": "Swirl (Electro)",
+  "swirl-cryo": "Swirl (Cryo)",
+  "swirl-anemo": "Swirl (Anemo)",
+  "swirl-dendro": "Swirl (Dendro)",
+  "swirl-geo": "Swirl (Geo)",
+};
+
+/** Display label for a single reaction bucket name. */
+export function formatReactionName(name: string): string {
+  if (!name) return name;
+  const known = REACTION_LABELS[name.toLowerCase()];
+  if (known) return known;
+  return name
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+/** Fingerprint like ``melt+vaporize`` → ``Melt + Vaporize``. */
+export function formatReactionFingerprint(
+  fingerprint: string | null | undefined,
+): string {
+  if (!fingerprint) return "No reactions";
+  return fingerprint
+    .split("+")
+    .map((part) => formatReactionName(part.trim()))
+    .join(" + ");
 }

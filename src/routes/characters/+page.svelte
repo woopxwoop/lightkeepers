@@ -3,12 +3,17 @@
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
-  import { charactersOwned, animationsEnabled } from "$lib/stores";
+  import {
+    charactersOwned,
+    charactersHydrated,
+    animationsEnabled,
+  } from "$lib/stores";
   import BrowseFlipCard from "$lib/ui/components/BrowseFlipCard.svelte";
   import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import PageTrail from "$lib/ui/components/PageTrail.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import {
     CHARACTER_ELEMENTS,
     CHARACTER_WEAPON_TYPES,
@@ -142,31 +147,35 @@
     <p class="page-meta">View character build guides</p>
   </header>
 
-  <CharacterFilterBar
-    bind:search
-    bind:rarityFilter
-    bind:elementFilter
-    bind:weaponFilter
-    bind:ownershipFilter
-    bind:sortBy
-    bind:sortAsc
-    bind:filtersOpen
-  />
-
-  <p class="page-meta">{visible.length} shown</p>
-
-  {#if visible.length === 0}
-    <EmptyState message="No characters match." />
+  {#if !$charactersHydrated}
+    <LoadingState message="Loading characters…" />
   {:else}
-    <div class="character-grid">
-      {#each visible as char (char.name_id)}
-        <BrowseFlipCard
-          character={char}
-          href="/characters/{char.name_id}"
-          dimmed={!char.isOwned}
-        />
-      {/each}
-    </div>
+    <CharacterFilterBar
+      bind:search
+      bind:rarityFilter
+      bind:elementFilter
+      bind:weaponFilter
+      bind:ownershipFilter
+      bind:sortBy
+      bind:sortAsc
+      bind:filtersOpen
+    />
+
+    <p class="page-meta">{visible.length} shown</p>
+
+    {#if visible.length === 0}
+      <EmptyState message="No characters match." />
+    {:else}
+      <div class="character-grid">
+        {#each visible as char (char.name_id)}
+          <BrowseFlipCard
+            character={char}
+            href="/characters/{char.name_id}"
+            dimmed={!char.isOwned}
+          />
+        {/each}
+      </div>
+    {/if}
   {/if}
 </PageShell>
 

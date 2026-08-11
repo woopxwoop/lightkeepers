@@ -74,6 +74,7 @@
     sigWeaponPrioritySection,
     talentPrioritySection,
   } from "$lib/character-builds";
+  import IconCog from "$lib/ui/icons/IconCog.svelte";
   import {
     artifactIconUrl,
     skillIconUrl,
@@ -480,12 +481,13 @@
     return kitLinkIds.has(ref) ? `#kit-${ref}` : null;
   }
 
-  /** Weapons: higher rarity first, then team usage (stable within ties). */
+  /** Weapons: rarity → BT strength → teams → measured sigs → name. */
   let rankedWeapons = $derived.by(() => {
     $equipmentVersion;
     return rankWeaponsByRarityAndTeams(
       builds?.weapons,
       (key) => weaponByKey.get(key)?.stars ?? 0,
+      builds?.vertical_importance?.sig_weapons?.map((s) => s.key),
     );
   });
 
@@ -1253,6 +1255,9 @@
                         type="button"
                         class="stat-chip group relative flex items-center justify-center"
                         class:is-main={roll.matchesMain}
+                        style={roll.matchesMain
+                          ? `border-color: ${elColor}`
+                          : undefined}
                         aria-label={translateStatKey(roll.key)}
                       >
                         {#if icon}
@@ -1978,6 +1983,13 @@
     }
   }
 
+
+
+
+
+
+
+
   .kit-list {
     display: flex;
     flex-direction: column;
@@ -2112,11 +2124,6 @@
     background: transparent;
     border: var(--border-width) solid rgba(255, 255, 255, 0.24);
     cursor: pointer;
-  }
-
-  .stat-chip.is-main {
-    border-color: rgba(255, 255, 255, 0.45);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
   .stat-chip-fallback {
