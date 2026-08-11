@@ -1,4 +1,4 @@
-import { talentIconUrl } from "$lib/asset-urls";
+import { skillIconUrl, talentIconUrl } from "$lib/asset-urls";
 import type { CharacterKit } from "$lib/types/character-kit";
 
 /** Kit icon strip passed into InvestmentBuildCard. */
@@ -15,8 +15,9 @@ export type InvestmentBuildKitIcons = {
 export function kitIconsFromCharacterKit(
   kit: Pick<CharacterKit, "skills" | "constellations">,
 ): InvestmentBuildKitIcons {
+  // Skills use UI_SkillIcon_*; constellations / passives use UI_Talent_*.
   const byType = Object.fromEntries(
-    kit.skills.map((s) => [s.type, talentIconUrl(s.icon)]),
+    kit.skills.map((s) => [s.type, skillIconUrl(s.icon)]),
   );
   return {
     constellations: [...kit.constellations]

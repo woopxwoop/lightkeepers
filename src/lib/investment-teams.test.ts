@@ -131,6 +131,21 @@ describe("exactCostDps", () => {
     assert.equal(simAtExactCost(t, 3)?.dps, 250);
   });
 
+  it("excludes costs that only exist on owned sims from cost filters", () => {
+    const t = team(
+      ["A"],
+      [
+        sim({ cost: 2, dps: 100, kind: "baseline" }),
+        sim({ cost: 3, dps: 400, kind: "owned" }),
+      ],
+    );
+    assert.deepEqual(
+      availableInvestmentCosts({ teams: [t], available_costs: [] }),
+      [2],
+    );
+    assert.deepEqual(teamsWithExactCost([t], 3), []);
+  });
+
   it("returns the best exact-cost result and never falls back", () => {
     const t = team(
       ["A"],

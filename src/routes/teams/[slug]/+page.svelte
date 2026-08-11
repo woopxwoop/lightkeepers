@@ -176,6 +176,48 @@
   </button>
 {/snippet}
 
+{#snippet variantBoard(
+  variants: InvestmentSim[],
+  title: string,
+  lede: string,
+  rowTag: string | null = null,
+)}
+  <section class="section">
+    <h2 class="section-title">{title}</h2>
+    <p class="section-lede">{lede}</p>
+    <Surface flush class="board">
+      <div class="board-head" aria-hidden="true">
+        <span>Build</span>
+        <span>DPS</span>
+        <span>vs base</span>
+      </div>
+      {#each variants as sim, vi (sim.state_key)}
+        {@const peakDps = variants[0].dps}
+        <a
+          href="/teams/configs/{encodeURIComponent(sim.state_key)}"
+          class="board-row"
+          class:board-divider={vi > 0}
+          class:is-baseline={sim.kind === "baseline"}
+          class:is-near-best={isNearBest(sim.dps, peakDps)}
+        >
+          <span class="row-label" title={simDiffLabel(sim)}>
+            {simDiffLabel(sim)}
+            {#if sim.kind === "baseline"}
+              <span class="row-tag">base</span>
+            {:else if rowTag}
+              <span class="row-tag">{rowTag}</span>
+            {/if}
+          </span>
+          <span class="row-dps">{(sim.dps / 1000).toFixed(1)}K</span>
+          <span class="row-pct">
+            {sim.kind === "baseline" ? "—" : pctVsBaseline(sim.dps)}
+          </span>
+        </a>
+      {/each}
+    </Surface>
+  </section>
+{/snippet}
+
 <PageShell class="gap-6 {$animationsEnabled ? '' : 'no-page-anim'}">
   {#if loading}
     <LoadingState variant="pulse" message="Loading team…" />
@@ -251,76 +293,20 @@
     </div>
 
     {#if baselineVariantsList.length > 0}
-      <section class="section">
-        <h2 class="section-title">Baseline variants</h2>
-        <p class="section-lede">
-          Floor-cost options, ranked by DPS vs baseline. Highlighted rows are
-          within 2.5% DPS of the best variant in this list.
-        </p>
-        <Surface flush class="board">
-          <div class="board-head" aria-hidden="true">
-            <span>Build</span>
-            <span>DPS</span>
-            <span>vs base</span>
-          </div>
-          {#each baselineVariantsList as sim, vi (sim.state_key)}
-            {@const peakDps = baselineVariantsList[0].dps}
-            <a
-              href="/teams/configs/{encodeURIComponent(sim.state_key)}"
-              class="board-row"
-              class:board-divider={vi > 0}
-              class:is-baseline={sim.kind === "baseline"}
-              class:is-near-best={isNearBest(sim.dps, peakDps)}
-            >
-              <span class="row-label" title={simDiffLabel(sim)}>
-                {simDiffLabel(sim)}
-                {#if sim.kind === "baseline"}
-                  <span class="row-tag">base</span>
-                {/if}
-              </span>
-              <span class="row-dps">{(sim.dps / 1000).toFixed(1)}K</span>
-              <span class="row-pct">
-                {sim.kind === "baseline" ? "—" : pctVsBaseline(sim.dps)}
-              </span>
-            </a>
-          {/each}
-        </Surface>
-      </section>
+      {@render variantBoard(
+        baselineVariantsList,
+        "Baseline variants",
+        "Floor-cost options, ranked by DPS vs baseline. Highlighted rows are within 2.5% DPS of the best variant in this list.",
+      )}
     {/if}
 
     {#if ownedVariantsList.length > 0}
-      <section class="section">
-        <h2 class="section-title">Owned weapon options</h2>
-        <p class="section-lede">
-          If you have certain 5 star weapons lying around. Highlighted rows are
-          within 2.5% DPS of the best option in this list.
-        </p>
-        <Surface flush class="board">
-          <div class="board-head" aria-hidden="true">
-            <span>Build</span>
-            <span>DPS</span>
-            <span>vs base</span>
-          </div>
-          {#each ownedVariantsList as sim, vi (sim.state_key)}
-            {@const peakDps = ownedVariantsList[0].dps}
-            <a
-              href="/teams/configs/{encodeURIComponent(sim.state_key)}"
-              class="board-row"
-              class:board-divider={vi > 0}
-              class:is-near-best={isNearBest(sim.dps, peakDps)}
-            >
-              <span class="row-label" title={simDiffLabel(sim)}>
-                {simDiffLabel(sim)}
-                <span class="row-tag" title="Already-owned weapon (+1 cost)"
-                  >+1</span
-                >
-              </span>
-              <span class="row-dps">{(sim.dps / 1000).toFixed(1)}K</span>
-              <span class="row-pct">{pctVsBaseline(sim.dps)}</span>
-            </a>
-          {/each}
-        </Surface>
-      </section>
+      {@render variantBoard(
+        ownedVariantsList,
+        "Owned weapon options",
+        "Already-owned 5★ weapon alternatives compared to this team baseline. The +1 tag is the extra cost for that swap — not a pull recommendation. Highlighted rows are within 2.5% DPS of the best option in this list.",
+        "+1",
+      )}
     {/if}
 
     {#if costGroups.length > 0}

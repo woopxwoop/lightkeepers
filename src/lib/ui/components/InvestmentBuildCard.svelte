@@ -90,6 +90,34 @@
       })),
     ];
   });
+
+  type TalentRow = {
+    slot: "auto" | "skill" | "burst";
+    fallback: string;
+    level: number;
+    icon: string | null | undefined;
+  };
+
+  let talentRows = $derived<TalentRow[]>([
+    {
+      slot: "auto",
+      fallback: "NA",
+      level: build.talents.auto,
+      icon: kit?.talents.auto,
+    },
+    {
+      slot: "skill",
+      fallback: "E",
+      level: build.talents.skill,
+      icon: kit?.talents.skill,
+    },
+    {
+      slot: "burst",
+      fallback: "Q",
+      level: build.talents.burst,
+      icon: kit?.talents.burst,
+    },
+  ]);
 </script>
 
 <Surface flush class="build-card {className}">
@@ -114,6 +142,9 @@
                   class="cons-node"
                   class:cons-locked={!unlocked}
                   title="C{c.index}: {c.name}"
+                  aria-label="C{c.index}: {c.name}, {unlocked
+                    ? 'unlocked'
+                    : 'locked'}"
                 >
                   {#if c.icon}
                     <img src={c.icon} alt="" loading="lazy" />
@@ -164,8 +195,12 @@
               <span class="r-badge">R{build.weapon.refinement}</span>
             </div>
             {#if weapon}
-              <div class="star-row" aria-label="{weapon.stars} star">
-                {#each Array.from({ length: starCount(weapon.stars) }, (_, i) => i) as i (i)}
+              {@const stars = starCount(weapon.stars)}
+              <div
+                class="star-row"
+                aria-label="{stars} {stars === 1 ? 'star' : 'stars'}"
+              >
+                {#each Array.from({ length: stars }, (_, i) => i) as i (i)}
                   <span class="star">★</span>
                 {/each}
               </div>
@@ -204,16 +239,14 @@
       {/if}
 
       <div class="talent-row">
-        {#each [["auto", build.talents.auto, kit?.talents.auto], ["skill", build.talents.skill, kit?.talents.skill], ["burst", build.talents.burst, kit?.talents.burst]] as [slot, level, icon] (slot)}
+        {#each talentRows as row (row.slot)}
           <span class="talent-chip">
-            {#if typeof icon === "string" && icon}
-              <img src={icon} alt="" class="talent-icon" />
+            {#if row.icon}
+              <img src={row.icon} alt="" class="talent-icon" />
             {:else}
-              <span class="talent-fallback">
-                {slot === "auto" ? "NA" : slot === "skill" ? "E" : "Q"}
-              </span>
+              <span class="talent-fallback">{row.fallback}</span>
             {/if}
-            <strong class="talent-level">{level}</strong>
+            <strong class="talent-level">{row.level}</strong>
           </span>
         {/each}
       </div>
