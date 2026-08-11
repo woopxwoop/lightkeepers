@@ -2,6 +2,12 @@
 
 Markdown in this folder is the **source of truth** for Lightkeepers updates.
 
+## UI
+
+Popup + pages sit on **true black** (`--background-color` / page base), not `--background-mid`.
+
+**Do not use yellow/gold (`--accent-1`) text on black** — it reads murky. Use cream (`--foreground-color` / `--foreground-mid`) for labels on black. Gold is fine as a solid fill (e.g. primary button with dark label text), not as yellow-on-black type.
+
 ## Authoring
 
 1. Add `YYYY-MM-DD-short-slug.md` (see existing files).
@@ -10,7 +16,7 @@ Markdown in this folder is the **source of truth** for Lightkeepers updates.
 ```yaml
 ---
 title: Short title
-date: 2026-08-10
+date: 2026-08-11
 summary: One-line blurb for the index, Discord embed, and GitHub Release.
 ---
 ```

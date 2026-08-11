@@ -91,6 +91,9 @@
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
+  let kitChannel = $derived(
+    (data.kitChannel ?? "live") as "live" | "beta",
+  );
   let builds = $derived((data.builds ?? null) as CharacterIndex | null);
   let travelerKits = $derived(
     (data.travelerKits ?? {}) as Record<string, CharacterKit>,
@@ -715,7 +718,12 @@
                 { label: kit.name },
               ]}
             />
-            <h1 class="hero-title">{kit.name}</h1>
+            <div class="hero-title-row">
+              <h1 class="hero-title">{kit.name}</h1>
+              {#if kitChannel === "beta"}
+                <span class="hero-beta-badge">BETA</span>
+              {/if}
+            </div>
           </div>
           <p class="hero-eyebrow" style="color: {elColor};">
             {kit.title || "Character"}
@@ -1589,6 +1597,25 @@
     font-weight: 600;
     line-height: 1.05;
     color: var(--foreground-color);
+  }
+
+  .hero-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .hero-beta-badge {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--foreground-color) 14%, transparent);
+    color: var(--foreground-color);
+    border: 1px solid color-mix(in srgb, var(--foreground-color) 32%, transparent);
   }
 
   .section-title {

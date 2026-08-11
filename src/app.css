@@ -56,6 +56,8 @@
   Accent rule: use --accent-1 at full opacity for text / borders / solid fills
   (e.g. toggle on). Never use translucent gold washes over blue mid surfaces —
   that mixes to olive. Selected backgrounds use --surface-selected (neutral).
+  Never put yellow/gold (--accent-1) text on black (--background-color) — murky;
+  use cream foreground on black. Patch-notes popup uses black page base for this.
 */
 :root {
   /* ── Paint (Display theme templates override these) ─────────────────── */

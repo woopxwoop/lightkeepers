@@ -16,11 +16,12 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:unit": "tsx --test src/lib/tierlist.test.ts src/lib/server/cache.test.ts src/lib/server/request-validation.test.ts src/lib/character-teams.test.ts src/lib/character-builds.test.ts src/lib/investment-teams.test.ts src/lib/solver.test.ts src/lib/roster-snapshot.test.ts src/lib/upgrade-priority.test.ts src/lib/query-state.test.ts src/lib/nav-history.test.ts src/lib/utils.traveler.test.ts src/lib/traveler-kits.test.ts src/lib/crimson-witch.test.ts src/lib/patch-notes.test.ts src/lib/patch-notes-seen.test.ts",
+    "test:unit": "tsx --test src/lib/tierlist.test.ts src/lib/server/cache.test.ts src/lib/server/request-validation.test.ts src/lib/character-teams.test.ts src/lib/character-builds.test.ts src/lib/investment-teams.test.ts src/lib/solver.test.ts src/lib/roster-snapshot.test.ts src/lib/upgrade-priority.test.ts src/lib/query-state.test.ts src/lib/nav-history.test.ts src/lib/utils.traveler.test.ts src/lib/traveler-kits.test.ts src/lib/crimson-witch.test.ts src/lib/patch-notes.test.ts src/lib/patch-notes-seen.test.ts src/lib/is-beta-character.test.ts src/lib/character-filter.test.ts",
     "test": "pnpm test:unit && pnpm exec playwright test",
     "sync:schedules": "tsx scripts/workflows/sync-schedules.ts",
     "sync:character-assets": "tsx scripts/workflows/sync-character-assets.ts",
-    "sync:equipment": "tsx scripts/workflows/sync-equipment.ts"
+    "sync:equipment": "tsx scripts/workflows/sync-equipment.ts",
+    "sync:beta-assets": "tsx scripts/workflows/sync-beta-assets.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

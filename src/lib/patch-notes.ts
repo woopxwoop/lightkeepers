@@ -68,7 +68,7 @@ function isValidCalendarDate(date: string): boolean {
   );
 }
 
-/** Filename `2026-08-10-roster-hotfix.md` → slug `2026-08-10-roster-hotfix`. */
+/** Filename `2026-08-11-roster-hotfix.md` → slug `2026-08-11-roster-hotfix`. */
 export function slugFromFilename(filename: string): string {
   const base = filename.replace(/\\/g, "/").split("/").pop() ?? filename;
   return base.replace(/\.md$/i, "");

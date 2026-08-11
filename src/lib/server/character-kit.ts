@@ -1,14 +1,23 @@
 /**
  * Server-side character kit fetch from CDN (cached).
+ * Live kits under `genshin/data/characters/`; CB kits under `genshin/data/beta/characters/`.
  */
 import type { CharacterKit } from "$lib/types/character-kit";
-import { characterKitUrl } from "$lib/asset-urls";
+import {
+  characterKitUrl,
+  type CharacterKitChannel,
+} from "$lib/asset-urls";
 import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 import { mergeTravelerKits, travelerElementKitId } from "$lib/traveler-kits";
 import { TRAVELER_GUIDE_ELEMENTS } from "$lib/utils";
 
-const kitCache = new LRUCache<CharacterKit | null>(200, 15 * 60 * 1000);
+export type CharacterKitResult = {
+  kit: CharacterKit;
+  channel: CharacterKitChannel;
+};
+
+const kitCache = new LRUCache<CharacterKitResult | null>(200, 15 * 60 * 1000);
 
 /**
  * Concurrent misses for one name_id share a single request. Entries are dropped
@@ -16,11 +25,11 @@ const kitCache = new LRUCache<CharacterKit | null>(200, 15 * 60 * 1000);
  * `LRUCache.getOrSet` is unusable here because it caches every resolved value,
  * including the transient failures this module must leave uncached.
  */
-const kitInflight = new Map<string, Promise<CharacterKit | null>>();
+const kitInflight = new Map<string, Promise<CharacterKitResult | null>>();
 
-export async function getCharacterKit(
+export async function getCharacterKitResult(
   nameId: string,
-): Promise<CharacterKit | null> {
+): Promise<CharacterKitResult | null> {
   const cached = kitCache.get(nameId);
   if (cached !== undefined) return cached;
 
@@ -34,24 +43,39 @@ export async function getCharacterKit(
   return pending;
 }
 
-async function loadKitFromCdn(nameId: string): Promise<CharacterKit | null> {
-  const res = await fetchWithTimeout(characterKitUrl(nameId));
+export async function getCharacterKit(
+  nameId: string,
+): Promise<CharacterKit | null> {
+  const result = await getCharacterKitResult(nameId);
+  return result?.kit ?? null;
+}
 
-  // A definitive "this file does not exist" is the only cacheable negative, and
-  // the only one reported as null. 5xx / transport / parse failures throw so
-  // callers can tell an absent character from a CDN outage, and stay uncached
-  // so the next request retries instead of serving a bogus 404 for the TTL.
-  if (res.status === 404 || res.status === 410) {
-    kitCache.set(nameId, null);
-    return null;
-  }
-  if (!res.ok) {
-    throw new Error(`character kit ${nameId} unavailable: HTTP ${res.status}`);
+async function loadKitFromCdn(
+  nameId: string,
+): Promise<CharacterKitResult | null> {
+  // Try live first so release kits stay on the Dimbreath path; fall back to
+  // beta for CB-only characters (Alyosha / Odette, …).
+  for (const channel of ["live", "beta"] as const) {
+    const res = await fetchWithTimeout(characterKitUrl(nameId, channel));
+
+    // A definitive "this file does not exist" is the only cacheable negative.
+    // 5xx / transport / parse failures throw so callers can tell an absent
+    // character from a CDN outage, and stay uncached so the next request retries.
+    if (res.status === 404 || res.status === 410) continue;
+    if (!res.ok) {
+      throw new Error(
+        `character kit ${nameId} unavailable (${channel}): HTTP ${res.status}`,
+      );
+    }
+
+    const kit = (await res.json()) as CharacterKit;
+    const result: CharacterKitResult = { kit, channel };
+    kitCache.set(nameId, result);
+    return result;
   }
 
-  const kit = (await res.json()) as CharacterKit;
-  kitCache.set(nameId, kit);
-  return kit;
+  kitCache.set(nameId, null);
+  return null;
 }
 
 /**

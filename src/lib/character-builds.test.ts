@@ -640,11 +640,11 @@ describe("reaction helpers", () => {
   it("formats reaction names and fingerprints", () => {
     assert.equal(formatReactionName("lunarcharged"), "Lunar-Charged");
     assert.equal(formatReactionName("swirl-electro"), "Swirl (Electro)");
+    assert.equal(formatReactionName("mystery-reaction"), "Mystery Reaction");
     assert.equal(formatReactionFingerprint(null), "No reactions");
     assert.equal(
       formatReactionFingerprint("bloom+swirl-hydro"),
       "Bloom + Swirl (Hydro)",
     );
   });
-
 });

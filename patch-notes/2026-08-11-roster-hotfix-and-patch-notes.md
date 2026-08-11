@@ -1,7 +1,7 @@
 ---
 title: Roster sync hotfix & patch notes
-date: 2026-08-10
-summary: Fixed cloud roster sync for logged-in accounts — resave your roster if it didn’t stick. Also: this Patch notes feed.
+date: 2026-08-11
+summary: Fixed cloud roster sync — resave your roster if it didn’t stick. Also: starting this Patch notes feed.
 ---
 
 ## Roster sync hotfix

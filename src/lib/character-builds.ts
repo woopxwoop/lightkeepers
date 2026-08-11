@@ -131,9 +131,9 @@ export function rankWeaponsByRarityAndTeams(
     const ra = getStars(a.key);
     const rb = getStars(b.key);
     if (ra !== rb) return rb - ra;
-    const sa = a.strength ?? 0;
-    const sb = b.strength ?? 0;
-    if (sa !== sb) return sb - sa;
+    const sa = a.strength;
+    const sb = b.strength;
+    if (sa != null && sb != null && sa !== sb) return sb - sa;
     if (a.teams !== b.teams) return b.teams - a.teams;
     const pa = preferred.has(a.key) ? 0 : 1;
     const pb = preferred.has(b.key) ? 0 : 1;

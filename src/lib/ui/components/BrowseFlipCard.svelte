@@ -4,6 +4,7 @@
   import { elementBg } from "$lib/element-colors";
   import { weaponTypeLabel } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
+  import { isBetaCharacter } from "$lib/is-beta-character";
 
   let {
     character,
@@ -16,6 +17,12 @@
   } = $props();
 
   let bg = $derived(elementBg(character?.element));
+  let showBeta = $derived(
+    isBetaCharacter(character.name_id, character.released_at),
+  );
+  let showNew = $derived(
+    !showBeta && isNewCharacter(character.released_at),
+  );
 </script>
 
 <a
@@ -26,7 +33,9 @@
 >
   <span class="flip-inner">
     <span class="face face-front">
-      {#if isNewCharacter(character.released_at)}
+      {#if showBeta}
+        <span class="beta-badge absolute top-1.5 right-1.5 z-20">BETA</span>
+      {:else if showNew}
         <span class="new-badge absolute top-1.5 right-1.5 z-20">NEW</span>
       {/if}
       <span class="portrait">
@@ -191,6 +200,17 @@
     border-radius: var(--radius-sm);
     background: var(--accent-1);
     color: var(--background-color);
+  }
+
+  .beta-badge {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.35rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--text-color) 18%, transparent);
+    color: var(--text-color);
+    border: 1px solid color-mix(in srgb, var(--text-color) 35%, transparent);
   }
 
   .view-label {
