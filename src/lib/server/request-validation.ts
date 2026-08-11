@@ -1,5 +1,7 @@
 import { error } from "@sveltejs/kit";
 import type { User } from "better-auth";
+import { MAX_CALCULATOR_GOALS } from "$lib/calculator-goals";
+import type { CalculatorGoal } from "$lib/types/calculator-goals";
 
 /** Soft cap — Genshin roster is ~100; leave headroom for future growth. */
 export const MAX_ROSTER_CHARACTERS = 256;
@@ -100,6 +102,171 @@ export function requireRosterEntries(value: unknown): RosterEntry[] {
       throw error(400, "Invalid roster payload");
     }
     return { name_id, isOwned };
+  });
+}
+
+function requireTalentLevels(value: unknown): {
+  normal: number;
+  skill: number;
+  burst: number;
+} {
+  if (typeof value !== "object" || value === null) {
+    throw error(400, "Invalid calculator goals payload");
+  }
+  const keys = Object.keys(value);
+  if (
+    keys.length !== 3 ||
+    !keys.includes("normal") ||
+    !keys.includes("skill") ||
+    !keys.includes("burst")
+  ) {
+    throw error(400, "Invalid calculator goals payload");
+  }
+  const { normal, skill, burst } = value as Record<string, unknown>;
+  return {
+    normal: requireNumberInRange(normal, 1, 10, "Invalid calculator goals payload"),
+    skill: requireNumberInRange(skill, 1, 10, "Invalid calculator goals payload"),
+    burst: requireNumberInRange(burst, 1, 10, "Invalid calculator goals payload"),
+  };
+}
+
+function requireCharacterUpgradeConfig(value: unknown): {
+  level: number;
+  ascension: number;
+  talents: { normal: number; skill: number; burst: number };
+} {
+  if (typeof value !== "object" || value === null) {
+    throw error(400, "Invalid calculator goals payload");
+  }
+  const keys = Object.keys(value);
+  if (
+    keys.length !== 3 ||
+    !keys.includes("level") ||
+    !keys.includes("ascension") ||
+    !keys.includes("talents")
+  ) {
+    throw error(400, "Invalid calculator goals payload");
+  }
+  const { level, ascension, talents } = value as Record<string, unknown>;
+  return {
+    level: requireNumberInRange(level, 1, 90, "Invalid calculator goals payload"),
+    ascension: requireNumberInRange(
+      ascension,
+      0,
+      6,
+      "Invalid calculator goals payload",
+    ),
+    talents: requireTalentLevels(talents),
+  };
+}
+
+function requireWeaponUpgradeConfig(value: unknown): {
+  level: number;
+  ascension: number;
+} {
+  if (typeof value !== "object" || value === null) {
+    throw error(400, "Invalid calculator goals payload");
+  }
+  const keys = Object.keys(value);
+  if (
+    keys.length !== 2 ||
+    !keys.includes("level") ||
+    !keys.includes("ascension")
+  ) {
+    throw error(400, "Invalid calculator goals payload");
+  }
+  const { level, ascension } = value as Record<string, unknown>;
+  return {
+    level: requireNumberInRange(level, 1, 90, "Invalid calculator goals payload"),
+    ascension: requireNumberInRange(
+      ascension,
+      0,
+      6,
+      "Invalid calculator goals payload",
+    ),
+  };
+}
+
+/** Validate `{ goals: CalculatorGoal[] }` for `/api/calculator-goals`. */
+export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
+  if (!Array.isArray(value)) {
+    throw error(400, "Invalid calculator goals payload");
+  }
+  if (value.length > MAX_CALCULATOR_GOALS) {
+    throw error(
+      400,
+      `goals must have at most ${MAX_CALCULATOR_GOALS} entries`,
+    );
+  }
+
+  const seen = new Set<string>();
+  return value.map((item) => {
+    if (typeof item !== "object" || item === null) {
+      throw error(400, "Invalid calculator goals payload");
+    }
+    const row = item as Record<string, unknown>;
+    const { id, kind } = row;
+    if (
+      typeof id !== "string" ||
+      id.length === 0 ||
+      id.length > 64 ||
+      seen.has(id)
+    ) {
+      throw error(400, "Invalid calculator goals payload");
+    }
+    seen.add(id);
+
+    if (kind === "character") {
+      const keys = Object.keys(row);
+      if (
+        keys.length !== 5 ||
+        !keys.includes("id") ||
+        !keys.includes("kind") ||
+        !keys.includes("name_id") ||
+        !keys.includes("start") ||
+        !keys.includes("target")
+      ) {
+        throw error(400, "Invalid calculator goals payload");
+      }
+      const name_id = requireCharacterNameId(row.name_id);
+      return {
+        id,
+        kind: "character",
+        name_id,
+        start: requireCharacterUpgradeConfig(row.start),
+        target: requireCharacterUpgradeConfig(row.target),
+      };
+    }
+
+    if (kind === "weapon") {
+      const keys = Object.keys(row);
+      if (
+        keys.length !== 5 ||
+        !keys.includes("id") ||
+        !keys.includes("kind") ||
+        !keys.includes("weapon_id") ||
+        !keys.includes("start") ||
+        !keys.includes("target")
+      ) {
+        throw error(400, "Invalid calculator goals payload");
+      }
+      const weapon_id = requireFiniteInteger(
+        row.weapon_id,
+        "Invalid calculator goals payload",
+      );
+      if (weapon_id <= 0) {
+        throw error(400, "Invalid calculator goals payload");
+      }
+      return {
+        id,
+        kind: "weapon",
+        weapon_id,
+        start: requireWeaponUpgradeConfig(row.start),
+        target: requireWeaponUpgradeConfig(row.target),
+      };
+    }
+
+    throw error(400, "Invalid calculator goals payload");
   });
 }
 

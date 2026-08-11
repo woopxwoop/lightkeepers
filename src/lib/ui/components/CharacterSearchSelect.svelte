@@ -224,11 +224,13 @@
           class:selected={value === opt.value}
           onclick={() => choose(opt.value)}
         >
-          <span class="char-search-icon">
-            {#if char}
-              <CharacterIcon character={char} />
-            {/if}
-          </span>
+          {#if getCharacter}
+            <span class="char-search-icon">
+              {#if char}
+                <CharacterIcon character={char} />
+              {/if}
+            </span>
+          {/if}
           <span>{opt.label}</span>
         </button>
       {/each}
@@ -247,19 +249,21 @@
     align-items: center;
     padding: 0.4rem 0.7rem;
     border-radius: var(--radius-md);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.22);
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 22%, transparent);
     background: transparent;
     transition: var(--control-transition);
   }
 
   .char-search-field.open,
   .char-search-field:focus-within {
-    border-color: rgba(255, 255, 255, 0.32);
+    border-color: color-mix(in srgb, var(--accent-3) 38%, transparent);
     background: var(--surface-quiet);
   }
 
   .char-search-field:focus-within {
-    box-shadow: var(--focus-ring);
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--accent-3) 55%, transparent);
   }
 
   .char-search-input {
@@ -283,7 +287,8 @@
     overflow-y: auto;
     padding: 0.25rem;
     border-radius: var(--radius-md);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.22);
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--accent-3) 22%, transparent);
     background: var(--background-mid);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }

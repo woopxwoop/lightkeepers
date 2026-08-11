@@ -1,15 +1,7 @@
+import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
-/**
- * SEO only — boards + enemies load client-side via ensureStaticBoards()
- * so this route is not blocked on the heavy /api/static cold path.
- */
+/** Legacy URL — pages live under `/tools`. */
 export const load: PageServerLoad = async () => {
-  return {
-    seo: {
-      title: "Stygian Teams — Lightkeepers",
-      description:
-        "Recommended Stygian Onslaught team compositions for Genshin Impact.",
-    },
-  };
+  redirect(308, "/tools/stygian");
 };

@@ -18,6 +18,7 @@ import {
   ensureStaticBoards,
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/is-new-character";
+import { isBetaCharacter } from "$lib/is-beta-character";
 
 type LayoutHydration = {
   characters: Character[];
@@ -68,10 +69,11 @@ function mergeOwnedFlags(
   cachedOwned: CachedOwnedEntry[] | undefined,
 ): CharacterOwned[] {
   const defaultOwned = (c: Character): boolean => {
-    // New characters (recently released) default to not owned — the user likely
-    // doesn't have them yet. This prevents the roster from auto-assigning owned
-    // for every new character that gets added to the DB.
+    // Recent releases and CB/unreleased rows default to not owned — the user
+    // likely doesn't have them yet. Prevents auto-assigning owned for every
+    // new/beta character that lands in the DB.
     if (isNewCharacter(c.released_at)) return false;
+    if (isBetaCharacter(c.name_id, c.released_at)) return false;
     return true;
   };
 
@@ -128,7 +130,7 @@ export function seedClientStores(data: LayoutHydration): void {
 /**
  * Seeds layout stores, syncs DB roster if logged in.
  * Owned teams + near-miss load lazily on Abyss / Stygian / Pulls.
- * Meta team boards warm in the background so home → abyss/stygian nav is snappy.
+ * Meta team boards warm in the background so home → /tools/abyss|stygian nav is snappy.
  */
 export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);

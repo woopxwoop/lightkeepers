@@ -145,7 +145,7 @@
         >
           <div
             class="bg-preview bg-preview--image"
-            style="background-image: url('https://images.lightkeepers.moe/site/lightkeepers_dark.webp');"
+            style="background-image: url('https://api.lightkeepers.moe/site/lightkeepers_dark.webp');"
           >
             <div class="bg-preview-overlay"></div>
           </div>

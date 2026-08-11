@@ -5,6 +5,7 @@ import {
   MAX_ROSTER_CHARACTERS,
   assertNoDbError,
   requireAnalyticsMode,
+  requireCalculatorGoals,
   requireCharacterNameId,
   requireCharacterNameIds,
   requireEnemyId,
@@ -14,6 +15,8 @@ import {
   requireRosterEntries,
   requireUser,
 } from "./request-validation.ts";
+import { MAX_CALCULATOR_GOALS } from "../calculator-goals.ts";
+import { createCharacterGoal, createWeaponGoal } from "../calculator-goals.ts";
 
 const isBadRequest = (value: unknown): boolean =>
   typeof value === "object" &&
@@ -133,6 +136,35 @@ describe("request validation", () => {
     assert.throws(
       () =>
         requireRosterEntries([{ name_id: "furina", isOwned: true, extra: 1 }]),
+      isBadRequest,
+    );
+  });
+
+  it("validates calculator goals and rejects extras / duplicates", () => {
+    const char = createCharacterGoal("Hutao", { id: "a" });
+    const weapon = createWeaponGoal(14501, { id: "b" });
+    assert.deepEqual(requireCalculatorGoals([char, weapon]), [char, weapon]);
+
+    assert.throws(() => requireCalculatorGoals(null), isBadRequest);
+    assert.throws(
+      () => requireCalculatorGoals([{ ...char, extra: true }]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireCalculatorGoals([
+          char,
+          createCharacterGoal("Xingqiu", { id: "a" }),
+        ]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireCalculatorGoals(
+          Array.from({ length: MAX_CALCULATOR_GOALS + 1 }, (_, i) =>
+            createCharacterGoal("Hutao", { id: `g${i}` }),
+          ),
+        ),
       isBadRequest,
     );
   });

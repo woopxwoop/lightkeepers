@@ -121,7 +121,7 @@ export function formatGameDescriptionHtml(
 /** Characters released within this many days are considered "new". */
 export { NEW_CHARACTER_DAYS, isNewCharacter } from "$lib/is-new-character";
 
-const CDN_BASE = "https://images.lightkeepers.moe";
+const CDN_BASE = "https://api.lightkeepers.moe";
 const GENSIN_UI_BASE = `${CDN_BASE}/genshin/ui`;
 
 function genshinUiUrl(uiName: string): string {
@@ -505,8 +505,8 @@ export function getNamecardUrl(nameId: string): string {
 
 // ── gcsim CDN URLs ──────────────────────────────────────────────────────────
 
-const SIM_BASE = "https://images.lightkeepers.moe/sim";
-const SIM_CONFIGS_BASE = "https://images.lightkeepers.moe/sim-configs";
+const SIM_BASE = "https://api.lightkeepers.moe/sim";
+const SIM_CONFIGS_BASE = "https://api.lightkeepers.moe/sim-configs";
 
 /**
  * Build a URL to the gcsim config.txt for a given simulation state key.

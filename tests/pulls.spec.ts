@@ -33,7 +33,7 @@ test("pulls ranks a mocked near-miss suggestion", async ({ page }) => {
     { timeout: CLIENT_API_TIMEOUT },
   );
 
-  await page.goto("/pulls");
+  await page.goto("/tools/pulls");
   await Promise.all([nearmiss, tierlist]);
 
   await expect(
@@ -111,7 +111,7 @@ test("pulls reveals suggestion rows independently", async ({ page }) => {
     { timeout: CLIENT_API_TIMEOUT },
   );
 
-  await page.goto("/pulls");
+  await page.goto("/tools/pulls");
   await nearmiss;
 
   const bestNext = page
@@ -176,7 +176,7 @@ test("pulls shows stygian standouts without a roster", async ({ page }) => {
     { timeout: CLIENT_API_TIMEOUT },
   );
 
-  await page.goto("/pulls");
+  await page.goto("/tools/pulls");
   await tierlist;
 
   await expect(
@@ -214,7 +214,7 @@ test("pulls shows empty state when near-miss has nothing useful", async ({
     { timeout: CLIENT_API_TIMEOUT },
   );
 
-  await page.goto("/pulls");
+  await page.goto("/tools/pulls");
   await Promise.all([teamsReq, nearMissReq]);
 
   await expect(

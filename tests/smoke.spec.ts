@@ -17,9 +17,9 @@ const routes: Array<
   | { path: string; kind: "heading"; name: string }
 > = [
   { path: "/", kind: "nav" },
-  { path: "/abyss", kind: "heading", name: "Spiral Abyss" },
-  { path: "/stygian", kind: "heading", name: "Stygian Onslaught" },
-  { path: "/pulls", kind: "heading", name: "Pull Suggestions" },
+  { path: "/tools/abyss", kind: "heading", name: "Spiral Abyss" },
+  { path: "/tools/stygian", kind: "heading", name: "Stygian Onslaught" },
+  { path: "/tools/pulls", kind: "heading", name: "Pull Suggestions" },
   // Settings has a second <nav> for sections — assert the page title instead.
   { path: "/settings", kind: "heading", name: "Settings" },
 ];

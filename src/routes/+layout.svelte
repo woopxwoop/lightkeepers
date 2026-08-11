@@ -90,7 +90,7 @@
   {#if $backgroundVisible}
     <div
       class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-      style="background-image: url('https://images.lightkeepers.moe/site/lightkeepers_dark.webp')"
+      style="background-image: url('https://api.lightkeepers.moe/site/lightkeepers_dark.webp')"
     ></div>
     <div
       class="fixed inset-0 -z-10 backdrop-blur-xs bg-overlay"

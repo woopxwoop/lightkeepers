@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("stygian page shows board", async ({ page }) => {
-  await page.goto("/stygian");
+  await page.goto("/tools/stygian");
 
   await expect(
     page.getByRole("heading", { name: "Stygian Onslaught" }),

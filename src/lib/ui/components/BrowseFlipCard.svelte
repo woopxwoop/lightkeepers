@@ -59,7 +59,7 @@
     <span class="face face-back" aria-hidden="true">
       <img
         class="back-art"
-        src="https://images.lightkeepers.moe/genshin/ui/UI_Gcg_CardBack_01.webp"
+        src="https://api.lightkeepers.moe/genshin/ui/UI_Gcg_CardBack_01.webp"
         alt=""
         draggable="false"
       />
