@@ -1,6 +1,12 @@
-/** Focusable controls inside a dialog panel (excludes tabindex="-1"). */
-const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+/** Focusable controls inside a dialog panel (excludes any negative tabindex). */
+const FOCUSABLE_SELECTOR = [
+  'button:not([disabled]):not([tabindex^="-"])',
+  '[href]:not([tabindex^="-"])',
+  'input:not([disabled]):not([tabindex^="-"])',
+  'select:not([disabled]):not([tabindex^="-"])',
+  'textarea:not([disabled]):not([tabindex^="-"])',
+  '[tabindex]:not([tabindex^="-"])',
+].join(", ");
 
 export function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(

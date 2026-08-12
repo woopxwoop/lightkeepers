@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   MAX_CALCULATOR_GOALS,
+  MAX_GOAL_ID_LENGTH,
   addCharacterResult,
   addWeaponResult,
   appendGoal,
@@ -73,7 +74,7 @@ describe("calculator goals", () => {
           target: { level: 90, ascension: 6 },
         },
         {
-          id: "a".repeat(65),
+          id: "a".repeat(MAX_GOAL_ID_LENGTH + 1),
           kind: "character",
           name_id: "Xingqiu",
           start: {

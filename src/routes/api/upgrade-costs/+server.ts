@@ -58,7 +58,8 @@ async function tryFetchBetaJson<T>(
       return null;
     }
     return (await res.json()) as T;
-  } catch {
+  } catch (err) {
+    console.warn(`/api/upgrade-costs: beta ${file} failed — skipping`, err);
     return null;
   }
 }

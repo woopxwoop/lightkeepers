@@ -61,7 +61,11 @@
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-    void tick().then(() => searchEl?.focus());
+    let active = true;
+    void tick().then(() => {
+      if (!active || !open) return;
+      searchEl?.focus();
+    });
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -72,6 +76,7 @@
     }
     window.addEventListener("keydown", onKey);
     return () => {
+      active = false;
       window.removeEventListener("keydown", onKey);
       if (previous?.isConnected) previous.focus();
     };

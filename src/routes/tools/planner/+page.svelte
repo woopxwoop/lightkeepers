@@ -21,6 +21,9 @@
     expItemsNeeded,
     gateCharacterConfig,
     gateWeaponConfig,
+    MAX_ASCENSION,
+    MAX_LEVEL,
+    MAX_TALENT,
     maxLevelForAscension,
     maxTalentForAscension,
     minLevelForAscension,
@@ -340,6 +343,7 @@
   );
 
   function beginPick(kind: "character" | "weapon") {
+    addError = "";
     configuring = false;
     picking = kind;
     pickQuery = "";
@@ -422,7 +426,8 @@
   }
 
   function deleteGoal(id: string) {
-    if (goalsState.selectedId === id) configuring = false;
+    if (goalsState.selectedId === id) closeConfigure();
+    addError = "";
     commitGoals(removeGoal(goalsState, id));
   }
 
@@ -1043,7 +1048,7 @@
               label="Ascension"
               value={selectedGoal.target.ascension}
               min={0}
-              max={6}
+              max={MAX_ASCENSION}
               onchange={(ascension) =>
                 patchCharacterSide("target", { ascension })}
             />
@@ -1051,7 +1056,7 @@
               label="Level"
               value={selectedGoal.target.level}
               min={1}
-              max={90}
+              max={MAX_LEVEL}
               floor={targetMinLevel}
               cap={targetMaxLevel}
               onchange={(level) => patchCharacterSide("target", { level })}
@@ -1060,7 +1065,7 @@
               label="Normal attack"
               value={selectedGoal.target.talents.normal}
               min={1}
-              max={10}
+              max={MAX_TALENT}
               cap={targetMaxTalent}
               onchange={(normal) =>
                 patchCharacterSide("target", { talents: { normal } })}
@@ -1069,7 +1074,7 @@
               label="Skill"
               value={selectedGoal.target.talents.skill}
               min={1}
-              max={10}
+              max={MAX_TALENT}
               cap={targetMaxTalent}
               onchange={(skill) =>
                 patchCharacterSide("target", { talents: { skill } })}
@@ -1078,7 +1083,7 @@
               label="Burst"
               value={selectedGoal.target.talents.burst}
               min={1}
-              max={10}
+              max={MAX_TALENT}
               cap={targetMaxTalent}
               onchange={(burst) =>
                 patchCharacterSide("target", { talents: { burst } })}
@@ -1088,14 +1093,14 @@
               label="Ascension"
               value={selectedGoal.target.ascension}
               min={0}
-              max={6}
+              max={MAX_ASCENSION}
               onchange={(ascension) => patchWeaponSide("target", { ascension })}
             />
             <NumberSliderField
               label="Level"
               value={selectedGoal.target.level}
               min={1}
-              max={90}
+              max={MAX_LEVEL}
               floor={targetMinLevel}
               cap={targetMaxLevel}
               onchange={(level) => patchWeaponSide("target", { level })}
@@ -1111,7 +1116,7 @@
                 label="Ascension"
                 value={selectedGoal.start.ascension}
                 min={0}
-                max={6}
+                max={MAX_ASCENSION}
                 onchange={(ascension) =>
                   patchCharacterSide("start", { ascension })}
               />
@@ -1119,7 +1124,7 @@
                 label="Level"
                 value={selectedGoal.start.level}
                 min={1}
-                max={90}
+                max={MAX_LEVEL}
                 floor={startMinLevel}
                 cap={startMaxLevel}
                 onchange={(level) => patchCharacterSide("start", { level })}
@@ -1128,7 +1133,7 @@
                 label="Normal attack"
                 value={selectedGoal.start.talents.normal}
                 min={1}
-                max={10}
+                max={MAX_TALENT}
                 cap={startMaxTalent}
                 onchange={(normal) =>
                   patchCharacterSide("start", { talents: { normal } })}
@@ -1137,7 +1142,7 @@
                 label="Skill"
                 value={selectedGoal.start.talents.skill}
                 min={1}
-                max={10}
+                max={MAX_TALENT}
                 cap={startMaxTalent}
                 onchange={(skill) =>
                   patchCharacterSide("start", { talents: { skill } })}
@@ -1146,7 +1151,7 @@
                 label="Burst"
                 value={selectedGoal.start.talents.burst}
                 min={1}
-                max={10}
+                max={MAX_TALENT}
                 cap={startMaxTalent}
                 onchange={(burst) =>
                   patchCharacterSide("start", { talents: { burst } })}
@@ -1156,7 +1161,7 @@
                 label="Ascension"
                 value={selectedGoal.start.ascension}
                 min={0}
-                max={6}
+                max={MAX_ASCENSION}
                 onchange={(ascension) =>
                   patchWeaponSide("start", { ascension })}
               />
@@ -1164,7 +1169,7 @@
                 label="Level"
                 value={selectedGoal.start.level}
                 min={1}
-                max={90}
+                max={MAX_LEVEL}
                 floor={startMinLevel}
                 cap={startMaxLevel}
                 onchange={(level) => patchWeaponSide("start", { level })}

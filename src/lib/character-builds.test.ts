@@ -144,6 +144,20 @@ describe("rankWeaponsByRarityAndTeams", () => {
       ["TomeOfTheEternalFlow", "SurfsUp", "PrototypeAmber"],
     );
   });
+
+  it("ranks defined strength ahead of missing strength", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "noStrength", teams: 20 },
+        { key: "hasStrength", teams: 2, strength: 0.5 },
+      ],
+      () => 5,
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
+      ["hasStrength", "noStrength"],
+    );
+  });
 });
 
 describe("rankSigWeaponsByGain", () => {

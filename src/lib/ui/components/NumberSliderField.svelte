@@ -32,7 +32,7 @@
 
   function snapToStep(n: number): number {
     if (!(step > 0)) return n;
-    return Math.round(n / step) * step;
+    return min + Math.round((n - min) / step) * step;
   }
 
   function snapAndClamp(n: number): number {
