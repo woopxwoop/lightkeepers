@@ -21,6 +21,7 @@
     formatSheetStat,
     type SheetStatBag,
   } from "$lib/build-stats";
+  import { normalizeSetPieceCount } from "$lib/character-builds";
   import type { CharacterBuild } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
   import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
@@ -29,11 +30,17 @@
     build,
     character = null,
     kit = null,
+    /**
+     * When set, only these GOOD sheet keys are listed (flat/percent pairs
+     * collapse: `atk_` → ATK row). Omit for the full team-config sheet.
+     */
+    relevantKeys = null,
     class: className = "",
   }: {
     build: CharacterBuild;
     character?: Character | null;
     kit?: InvestmentBuildKitIcons | null;
+    relevantKeys?: Iterable<string> | null;
     class?: string;
   } = $props();
 
@@ -51,10 +58,20 @@
     $equipmentVersion;
     return build.set2 ? (artifactSetByKey.get(build.set2) ?? null) : null;
   });
+  let setCount = $derived(normalizeSetPieceCount(build.set.count) ?? 4);
+  let set2Count = $derived(
+    build.set2 ? normalizeSetPieceCount(build.set2_count ?? 2) : null,
+  );
   let sheet = $derived(computeBuildSheetStats(build));
   let wIcon = $derived(weapon ? weaponIconUrl(weapon.awakenIcon) : null);
   let sIcon = $derived(set ? artifactIconUrl(set.icon) : null);
   let s2Icon = $derived(set2 ? artifactIconUrl(set2.icon) : null);
+  let relevantKeySet = $derived.by(() => {
+    if (relevantKeys == null) return null;
+    return relevantKeys instanceof Set
+      ? relevantKeys
+      : new Set(relevantKeys);
+  });
 
   function dmgBonusEntries(bag: SheetStatBag) {
     return Object.entries(bag.dmgBonus)
@@ -70,12 +87,27 @@
     if (stat === "critRate") return "critRate_";
     if (stat === "critDMG") return "critDMG_";
     if (stat === "enerRech") return "enerRech_";
+    if (stat === "heal") return "heal_";
     return stat;
+  }
+
+  /** Sheet row key matches a GOOD key from ``relevantKeys``. */
+  function sheetRowIsRelevant(rowKey: string, rel: Set<string>): boolean {
+    if (rel.has(rowKey)) return true;
+    if (rowKey === "hp") return rel.has("hp") || rel.has("hp_");
+    if (rowKey === "atk") return rel.has("atk") || rel.has("atk_");
+    if (rowKey === "def") return rel.has("def") || rel.has("def_");
+    if (rowKey === "critRate") return rel.has("critRate_");
+    if (rowKey === "critDMG") return rel.has("critDMG_");
+    if (rowKey === "enerRech") return rel.has("enerRech_");
+    if (rowKey === "heal") return rel.has("heal_");
+    if (rowKey === "eleMas") return rel.has("eleMas");
+    return false;
   }
 
   let coreStats = $derived.by(() => {
     if (!sheet) return [];
-    return [
+    const rows = [
       { key: "hp", label: "HP", value: sheet.hp },
       { key: "atk", label: "ATK", value: sheet.atk },
       { key: "def", label: "DEF", value: sheet.def },
@@ -83,12 +115,19 @@
       { key: "critRate", label: "CRIT Rate", value: sheet.critRate },
       { key: "critDMG", label: "CRIT DMG", value: sheet.critDMG },
       { key: "enerRech", label: "Energy Recharge", value: sheet.enerRech },
+      { key: "heal", label: translateStatKey("heal_"), value: sheet.heal },
       ...dmgBonusEntries(sheet).map(([key, value]) => ({
         key,
         label: translateStatKey(key),
         value,
       })),
     ];
+    const rel = relevantKeySet;
+    if (!rel) {
+      // Team-config default: full sheet without heal (usually 0 / unused).
+      return rows.filter((row) => row.key !== "heal");
+    }
+    return rows.filter((row) => sheetRowIsRelevant(row.key, rel));
   });
 
   type TalentRow = {
@@ -257,13 +296,13 @@
             <img src={sIcon} alt="" class="set-icon shrink-0" loading="lazy" />
           {/if}
           <p class="set-name">{set?.name ?? build.set.key}</p>
-          <span class="set-badge shrink-0">{build.set.count}</span>
+          <span class="set-badge shrink-0">{setCount}</span>
           <ArtifactTooltip
             setKey={build.set.key}
-            pieceCount={build.set.count}
+            pieceCount={setCount}
           />
         </div>
-        {#if build.set2}
+        {#if build.set2 && set2Count != null}
           <div class="set-row group">
             {#if s2Icon}
               <img
@@ -274,10 +313,10 @@
               />
             {/if}
             <p class="set-name">{set2?.name ?? build.set2}</p>
-            <span class="set-badge shrink-0">{build.set2_count ?? 2}</span>
+            <span class="set-badge shrink-0">{set2Count}</span>
             <ArtifactTooltip
               setKey={build.set2}
-              pieceCount={build.set2_count ?? 2}
+              pieceCount={set2Count}
             />
           </div>
         {/if}
