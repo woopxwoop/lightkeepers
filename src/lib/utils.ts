@@ -510,8 +510,8 @@ export function getNamecardUrl(nameId: string): string {
 
 // ── gcsim CDN URLs ──────────────────────────────────────────────────────────
 
-const SIM_BASE = "https://api.lightkeepers.moe/sim";
-const SIM_CONFIGS_BASE = "https://api.lightkeepers.moe/sim-configs";
+const SIM_BASE = `${CDN_BASE}/sim`;
+const SIM_CONFIGS_BASE = `${CDN_BASE}/sim-configs`;
 
 /**
  * Build a URL to the gcsim config.txt for a given simulation state key.

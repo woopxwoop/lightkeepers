@@ -70,9 +70,15 @@ export function readGoalsLocal(): CalculatorGoalsState {
   }
 }
 
+const POST_TIMEOUT_MS = 10_000;
+
 export async function fetchGoalsCloud(): Promise<CalculatorGoal[] | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), POST_TIMEOUT_MS);
   try {
-    const res = await fetch("/api/calculator-goals");
+    const res = await fetch("/api/calculator-goals", {
+      signal: controller.signal,
+    });
     if (res.status === 401) return null;
     if (!res.ok) return null;
     const body = (await res.json()) as { goals?: unknown };
@@ -85,10 +91,11 @@ export async function fetchGoalsCloud(): Promise<CalculatorGoal[] | null> {
     }).goals;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-const POST_TIMEOUT_MS = 10_000;
 const MAX_ERROR_MESSAGE_LEN = 200;
 const GENERIC_SYNC_ERROR = "Could not save goals";
 

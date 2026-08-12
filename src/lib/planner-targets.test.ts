@@ -13,9 +13,11 @@ import {
 } from "./planner-targets.ts";
 import type {
   CharacterIndex,
+  CharacterTalentImportance,
   ImportanceImpactTier,
 } from "./types/investment.ts";
 import type { UpgradePromoteStep } from "./types/upgrade-costs.ts";
+import { UPGRADE_DEFAULTS } from "./upgrade-costs.ts";
 
 const PROMOTES: UpgradePromoteStep[] = [
   { promoteLevel: 0, mora: 0, unlockMaxLevel: 20, items: [] },
@@ -200,6 +202,27 @@ describe("plannerTargetFromBuilds", () => {
     );
     assert.equal(target.level, 80);
     assert.equal(target.ascension, 5);
+  });
+
+  it("falls back omitted talent slots on a scored summary", () => {
+    const target = plannerTargetFromBuilds(
+      {
+        ...builds({}),
+        talent_importance: {
+          teams: 3,
+          auto: slot("high"),
+          skill: slot("solid"),
+          priority: ["auto", "skill"],
+        } as CharacterTalentImportance,
+      },
+      PROMOTES,
+    );
+    assert.equal(target.talents.normal, 10);
+    assert.equal(target.talents.skill, 9);
+    assert.equal(
+      target.talents.burst,
+      UPGRADE_DEFAULTS.characterTarget.talents.burst,
+    );
   });
 
   it("falls back to 70/70 with 1/1/1 when Builds importance is missing", () => {

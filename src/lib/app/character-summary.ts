@@ -5,6 +5,7 @@
  * `null` = genuinely missing (HTTP 404). Transient fetch/parse failures throw
  * so callers can leave existing targets unchanged.
  */
+import { CDN_FETCH_TIMEOUT_MS } from "$lib/cdn-fetch";
 import type { CharacterIndex } from "$lib/types/investment";
 
 const cache = new Map<string, CharacterIndex | null>();
@@ -30,6 +31,7 @@ export function loadCharacterSummary(
     try {
       const res = await fetch(
         `/api/character-summary/${encodeURIComponent(key)}`,
+        { signal: AbortSignal.timeout(CDN_FETCH_TIMEOUT_MS) },
       );
       if (res.status === 404) {
         cache.set(key, null);

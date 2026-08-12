@@ -35,6 +35,7 @@
     emptyAggregate,
     emptyGoalsState,
     findGoal,
+    MAX_CALCULATOR_GOALS,
     parseGoalsState,
     removeGoal,
     replaceGoal,
@@ -65,6 +66,7 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
+  import { trapTabKey } from "$lib/ui/focus-trap";
 
   type CostScope = "all" | "selected";
 
@@ -78,12 +80,14 @@
   let showSaved = $state(false);
   let isSaving = $state(false);
   let saveError = $state("");
+  let addError = $state("");
   let costScope = $state<CostScope>("selected");
   /** Configure dialog open (gear on a goal row). */
   let configuring = $state(false);
   /** Start sliders are collapsed until the user expands them. */
   let showStartConfig = $state(false);
   let configCloseEl: HTMLButtonElement | null = $state(null);
+  let configPanelEl: HTMLDivElement | null = $state(null);
   let configFocusReturn: HTMLElement | null = $state(null);
 
   const session = authClient.useSession();
@@ -357,7 +361,13 @@
     if (!row) return;
     cancelPick();
     const goal = createCharacterGoal(nameId);
-    commitGoals(appendGoal(goalsState, goal));
+    const next = appendGoal(goalsState, goal);
+    if (next.goals.length === goalsState.goals.length) {
+      addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
+      return;
+    }
+    addError = "";
+    commitGoals(next);
     beginConfigure();
     void (async () => {
       const target = await targetFromBuilds(nameId, row.promotes);
@@ -372,7 +382,13 @@
     if (!catalog?.weapons.some((w) => w.id === weaponId)) return;
     cancelPick();
     const goal = createWeaponGoal(weaponId);
-    commitGoals(appendGoal(goalsState, goal));
+    const next = appendGoal(goalsState, goal);
+    if (next.goals.length === goalsState.goals.length) {
+      addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
+      return;
+    }
+    addError = "";
+    commitGoals(next);
     beginConfigure();
   }
 
@@ -417,7 +433,9 @@
       if (e.key === "Escape") {
         e.preventDefault();
         closeConfigure();
+        return;
       }
+      if (configPanelEl) trapTabKey(e, configPanelEl);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -720,6 +738,10 @@
           </div>
         </div>
 
+        {#if addError}
+          <p class="save-error">{addError}</p>
+        {/if}
+
         {#if goalsState.goals.length === 0}
           <p class="section-lede">
             Add a character or weapon goal to start planning costs.
@@ -910,13 +932,14 @@
         onclick={closeConfigure}
         transition:fade={{ duration: configMotion ?? 160 }}
       ></button>
-      <div
-        class="config-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Configure goal"
-        transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
-      >
+        <div
+          class="config-panel"
+          bind:this={configPanelEl}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Configure goal"
+          transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
+        >
         <header class="config-head">
           <h2 class="section-title">Configure</h2>
           <button

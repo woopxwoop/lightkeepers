@@ -75,8 +75,9 @@ export function ascensionFromImportanceTier(
 function resolveTalentTier(
   importance: CharacterTalentImportance,
   slot: TalentSlot,
-): ImportanceImpactTier {
+): ImportanceImpactTier | null {
   const row = importance[slot];
+  if (!row) return null;
   if (row.tier) return row.tier;
   return classifyUpgradeImpact(
     primaryUpgradePct(row.mean_pct_drop, row.median_pct_drop),
@@ -97,13 +98,23 @@ function resolveImportanceTier(
   ).tier;
 }
 
+function talentLevelFromImportance(
+  importance: CharacterTalentImportance,
+  slot: TalentSlot,
+  key: keyof CharacterUpgradeConfig["talents"],
+): number {
+  const tier = resolveTalentTier(importance, slot);
+  if (!tier) return UPGRADE_DEFAULTS.characterTarget.talents[key];
+  return talentLevelFromTier(tier);
+}
+
 function talentsFromImportance(
   importance: CharacterTalentImportance,
 ): CharacterUpgradeConfig["talents"] {
   return {
-    normal: talentLevelFromTier(resolveTalentTier(importance, "auto")),
-    skill: talentLevelFromTier(resolveTalentTier(importance, "skill")),
-    burst: talentLevelFromTier(resolveTalentTier(importance, "burst")),
+    normal: talentLevelFromImportance(importance, "auto", "normal"),
+    skill: talentLevelFromImportance(importance, "skill", "skill"),
+    burst: talentLevelFromImportance(importance, "burst", "burst"),
   };
 }
 

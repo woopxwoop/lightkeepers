@@ -15,6 +15,7 @@
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import IconX from "$lib/ui/icons/IconX.svelte";
+  import { trapTabKey } from "$lib/ui/focus-trap";
 
   let {
     open = false,
@@ -43,6 +44,7 @@
   } = $props();
 
   let searchEl: HTMLInputElement | null = $state(null);
+  let panelEl: HTMLDivElement | null = $state(null);
 
   let filtered = $derived.by(() => {
     const q = query.trim().toLowerCase();
@@ -64,7 +66,9 @@
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
+        return;
       }
+      if (panelEl) trapTabKey(e, panelEl);
     }
     window.addEventListener("keydown", onKey);
     return () => {
@@ -88,6 +92,7 @@
     ></button>
     <div
       class="pick-panel"
+      bind:this={panelEl}
       role="dialog"
       aria-modal="true"
       aria-label={title}

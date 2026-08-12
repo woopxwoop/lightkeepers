@@ -21,6 +21,7 @@ import {
   MAX_GOAL_ID_LENGTH,
 } from "../calculator-goals.ts";
 import { createCharacterGoal, createWeaponGoal } from "../calculator-goals.ts";
+import { MAX_TALENT } from "../upgrade-costs.ts";
 
 const isBadRequest = (value: unknown): boolean =>
   typeof value === "object" &&
@@ -204,6 +205,45 @@ describe("request validation", () => {
           {
             ...char,
             start: { ...char.start, ascension: 1.5 },
+          },
+        ]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireCalculatorGoals([
+          {
+            ...char,
+            start: {
+              ...char.start,
+              talents: { ...char.start.talents, normal: MAX_TALENT + 1 },
+            },
+          },
+        ]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireCalculatorGoals([
+          {
+            ...char,
+            start: {
+              level: char.start.level,
+              ascension: char.start.ascension,
+            },
+          },
+        ]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireCalculatorGoals([
+          {
+            ...char,
+            start: {
+              ...char.start,
+              talents: { ...char.start.talents, skill: "9" },
+            },
           },
         ]),
       isBadRequest,

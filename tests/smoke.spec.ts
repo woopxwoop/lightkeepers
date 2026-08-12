@@ -24,6 +24,24 @@ const routes: Array<
   { path: "/settings", kind: "heading", name: "Settings" },
 ];
 
+const legacyRedirects = [
+  { from: "/abyss", to: "/tools/abyss" },
+  { from: "/stygian", to: "/tools/stygian" },
+  { from: "/stygian/enemies", to: "/tools/stygian/enemies" },
+  { from: "/stygian/enemies/42", to: "/tools/stygian/enemies/42" },
+  { from: "/calculator", to: "/tools/planner" },
+  { from: "/pulls", to: "/tools/pulls" },
+] as const;
+
+for (const { from, to } of legacyRedirects) {
+  test(`${from} redirects to ${to}`, async ({ request }) => {
+    const res = await request.get(from, { maxRedirects: 0 });
+    expect(res.status()).toBe(308);
+    const location = res.headers()["location"] ?? "";
+    expect(new URL(location, "http://127.0.0.1:5173").pathname).toBe(to);
+  });
+}
+
 for (const route of routes) {
   test(`${route.path} loads`, async ({ page }) => {
     const response = await page.goto(route.path);

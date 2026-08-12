@@ -63,6 +63,7 @@ export function minAscensionForLevel(
   promotes: UpgradePromoteStep[],
   level: number,
 ): number {
+  if (promotes.length === 0 || level <= 1) return 0;
   const sorted = [...promotes].sort((a, b) => a.promoteLevel - b.promoteLevel);
   for (const step of sorted) {
     if (step.unlockMaxLevel >= level) return step.promoteLevel;
