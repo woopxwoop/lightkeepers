@@ -24,10 +24,10 @@
   import PatchNotesPopup from "$lib/ui/components/PatchNotesPopup.svelte";
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
+  import { getSiteBackgroundUrl } from "$lib/utils";
   import "../app.css";
 
   const patchNotesPath = resolve("/patch-notes");
-
 
   if (typeof window !== "undefined") {
     installChunkLoadRecovery();
@@ -90,7 +90,7 @@
   {#if $backgroundVisible}
     <div
       class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-      style="background-image: url('https://images.lightkeepers.moe/site/lightkeepers_dark.webp')"
+      style="background-image: url('{getSiteBackgroundUrl()}')"
     ></div>
     <div
       class="fixed inset-0 -z-10 backdrop-blur-xs bg-overlay"

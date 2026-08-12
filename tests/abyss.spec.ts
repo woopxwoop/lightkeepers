@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("abyss solver fills both slots", async ({ page }) => {
-  await page.goto("/abyss");
+  await page.goto("/tools/abyss");
 
   await expect(page.getByText("Solution 1")).toBeVisible({ timeout: 15_000 });
   await expect(
@@ -24,7 +24,7 @@ test("abyss enemies toggle works", async ({ page }) => {
     { timeout: CLIENT_API_TIMEOUT },
   );
 
-  await page.goto("/abyss");
+  await page.goto("/tools/abyss");
   await expect(page.getByText("Solution 1")).toBeVisible({ timeout: 15_000 });
   await teamsRes;
 

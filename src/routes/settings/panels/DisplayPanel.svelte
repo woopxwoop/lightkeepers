@@ -18,6 +18,7 @@
     getCharacterCoop,
     getCharacterPortrait,
     getCharacterCard,
+    getSiteBackgroundUrl,
   } from "$lib/utils";
   import { page } from "$app/state";
 
@@ -145,7 +146,7 @@
         >
           <div
             class="bg-preview bg-preview--image"
-            style="background-image: url('https://images.lightkeepers.moe/site/lightkeepers_dark.webp');"
+            style="background-image: url('{getSiteBackgroundUrl()}');"
           >
             <div class="bg-preview-overlay"></div>
           </div>

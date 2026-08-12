@@ -55,7 +55,7 @@ export type StygianEnemyTeamsPayload = {
   teams: StygianEnemyTopTeam[];
 };
 
-/** Index card for `/stygian/enemies` (Stygian appearances only). */
+/** Index card for `/tools/stygian/enemies` (Stygian appearances only). */
 export type StygianEnemyListItem = {
   id: number;
   enemy_name: string | null;

@@ -13,13 +13,36 @@
   import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
 
   const homePath = resolve("/");
-  const abyssPath = resolve("/abyss");
-  const stygianPath = resolve("/stygian");
-  const pullsPath = resolve("/pulls");
+  const abyssPath = resolve("/tools/abyss");
+  const stygianPath = resolve("/tools/stygian");
+  const pullsPath = resolve("/tools/pulls");
+  const plannerPath = resolve("/tools/planner");
   const teamsPath = resolve("/teams");
   const charactersPath = resolve("/characters");
   const settingsPath = resolve("/settings");
   const patchNotesPath = resolve("/patch-notes");
+
+  const toolsLinks = [
+    {
+      label: "Abyss",
+      path: abyssPath,
+      match: "exact" as const,
+      preload: "hover" as const,
+    },
+    {
+      label: "Stygian",
+      path: stygianPath,
+      match: "prefix" as const,
+      preload: "hover" as const,
+    },
+    { label: "Pulls", path: pullsPath, match: "exact" as const },
+    {
+      label: "Planner",
+      path: plannerPath,
+      match: "prefix" as const,
+    },
+  ] as const;
+
   const settingsLinks = [
     { label: "Roster", path: resolve("/settings"), icon: "users" as const },
     {
@@ -35,28 +58,25 @@
   ] as const;
 
   const mainLinks = [
-    {
-      label: "Abyss",
-      path: abyssPath,
-      match: "exact" as const,
-      preload: "hover" as const,
-    },
-    {
-      label: "Stygian",
-      path: stygianPath,
-      match: "prefix" as const,
-      preload: "hover" as const,
-    },
-    { label: "Pulls", path: pullsPath, match: "exact" as const },
     { label: "Teams", path: teamsPath, match: "prefix" as const },
     { label: "Characters", path: charactersPath, match: "prefix" as const },
   ] as const;
 
-  function isMainActive(link: (typeof mainLinks)[number]): boolean {
-    if (link.match === "exact") return page.url.pathname === link.path;
-    const path = page.url.pathname;
-    return path === link.path || path.startsWith(`${link.path}/`);
+  function isPathActive(path: string, match: "exact" | "prefix"): boolean {
+    if (match === "exact") return page.url.pathname === path;
+    const current = page.url.pathname;
+    return current === path || current.startsWith(`${path}/`);
   }
+
+  function isMainActive(link: (typeof mainLinks)[number]): boolean {
+    return isPathActive(link.path, link.match);
+  }
+
+  function isToolActive(link: (typeof toolsLinks)[number]): boolean {
+    return isPathActive(link.path, link.match);
+  }
+
+  const onToolsPage = $derived(isPathActive(resolve("/tools"), "prefix"));
 
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(resolve("/settings")),
@@ -72,16 +92,42 @@
     return () => window.removeEventListener("scroll", onScroll);
   });
 
-  // ── Settings & Investment hover sub-row ──────────────────────────────
+  // ── Hover sub-rows (Tools + Settings) ──────────────────────────────
+  let toolsHovered = $state(false);
   let settingsHovered = $state(false);
+  let toolsLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
   let settingsLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function onToolsEnter() {
+    if (toolsLeaveTimeout) {
+      clearTimeout(toolsLeaveTimeout);
+      toolsLeaveTimeout = null;
+    }
+    if (settingsLeaveTimeout) {
+      clearTimeout(settingsLeaveTimeout);
+      settingsLeaveTimeout = null;
+    }
+    toolsHovered = true;
+    settingsHovered = false;
+  }
+
+  function onToolsLeave() {
+    toolsLeaveTimeout = setTimeout(() => {
+      toolsHovered = false;
+    }, 120);
+  }
 
   function onSettingsEnter() {
     if (settingsLeaveTimeout) {
       clearTimeout(settingsLeaveTimeout);
       settingsLeaveTimeout = null;
     }
+    if (toolsLeaveTimeout) {
+      clearTimeout(toolsLeaveTimeout);
+      toolsLeaveTimeout = null;
+    }
     settingsHovered = true;
+    toolsHovered = false;
   }
 
   function onSettingsLeave() {
@@ -90,8 +136,11 @@
     }, 120);
   }
 
+  const navSubOpen = $derived(toolsHovered || settingsHovered);
+
   // ── Mobile drawer ──────────────────────────────────────────────────────
   let mobileOpen = $state(false);
+  let toolsDrawerExpanded = $state(false);
   let settingsDrawerExpanded = $state(false);
   let drawerEl: HTMLElement | null = $state(null);
   let hamburgerEl: HTMLButtonElement | null = $state(null);
@@ -105,6 +154,7 @@
       if (mobileOpen) {
         closedByNavigation = true;
         mobileOpen = false;
+        toolsDrawerExpanded = false;
         settingsDrawerExpanded = false;
       }
     });
@@ -132,6 +182,7 @@
       function onKeydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
           mobileOpen = false;
+          toolsDrawerExpanded = false;
           settingsDrawerExpanded = false;
           return;
         }
@@ -172,7 +223,7 @@
   class="nav-bar w-full fixed top-0 z-[100] flex flex-col transition-all duration-300 {scrolled
     ? 'opaque-bg'
     : 'nav-initial'}"
-  class:nav-sub-open={settingsHovered}
+  class:nav-sub-open={navSubOpen}
 >
   <!-- Main row -->
   <div class="nav-row flex items-center justify-between h-16">
@@ -207,6 +258,40 @@
 
     <!-- Desktop links -->
     <div class="hidden md:flex items-center gap-6 relative">
+      <div class="nav-menu-item">
+        <a
+          href={abyssPath}
+          class="nav-link"
+          onmouseenter={onToolsEnter}
+          onmouseleave={onToolsLeave}
+          onfocus={onToolsEnter}
+          onblur={onToolsLeave}>Tools</a
+        >
+
+        <div
+          class="nav-sub-row"
+          class:nav-sub-row-open={toolsHovered}
+          inert={!toolsHovered}
+          role="presentation"
+          onmouseenter={onToolsEnter}
+          onmouseleave={onToolsLeave}
+          onfocusin={onToolsEnter}
+          onfocusout={onToolsLeave}
+        >
+          {#each toolsLinks as link}
+            <a
+              href={link.path}
+              class="nav-sub-link"
+              data-sveltekit-preload-data={"preload" in link
+                ? link.preload
+                : undefined}
+              aria-current={isToolActive(link) ? "page" : undefined}
+              >{link.label}</a
+            >
+          {/each}
+        </div>
+      </div>
+
       {#each mainLinks as link}
         <a
           href={link.path}
@@ -217,7 +302,8 @@
           aria-current={isMainActive(link) ? "page" : undefined}>{link.label}</a
         >
       {/each}
-      <div class="settings-item">
+
+      <div class="nav-menu-item">
         <a
           href={settingsPath}
           class="nav-link"
@@ -228,10 +314,9 @@
           onblur={onSettingsLeave}>Settings</a
         >
 
-        <!-- Settings sub-links -->
         <div
-          class="settings-sub-row"
-          class:settings-sub-row-open={settingsHovered}
+          class="nav-sub-row"
+          class:nav-sub-row-open={settingsHovered}
           inert={!settingsHovered}
           role="presentation"
           onmouseenter={onSettingsEnter}
@@ -264,9 +349,11 @@
       onclick={() => {
         mobileOpen = !mobileOpen;
         if (!mobileOpen) {
+          toolsDrawerExpanded = false;
           settingsDrawerExpanded = false;
-        } else if (onSettingsPage) {
-          settingsDrawerExpanded = true;
+        } else {
+          toolsDrawerExpanded = onToolsPage;
+          settingsDrawerExpanded = onSettingsPage;
         }
       }}
     >
@@ -285,6 +372,7 @@
     transition:fade={{ duration: 200 }}
     onclick={() => {
       mobileOpen = false;
+      toolsDrawerExpanded = false;
       settingsDrawerExpanded = false;
     }}
   ></div>
@@ -307,12 +395,57 @@
 
     <nav class="drawer-nav" aria-label="Primary">
       <p class="eyebrow drawer-section-label">Navigate</p>
+
+      <div class="drawer-group">
+        <button
+          type="button"
+          class="drawer-item drawer-group-toggle"
+          class:is-active={onToolsPage && !toolsDrawerExpanded}
+          style="--i: 0"
+          aria-expanded={toolsDrawerExpanded}
+          onclick={() => {
+            toolsDrawerExpanded = !toolsDrawerExpanded;
+            if (toolsDrawerExpanded) settingsDrawerExpanded = false;
+          }}
+        >
+          <span class="drawer-item-label">Tools</span>
+          <span
+            class="drawer-chevron"
+            class:drawer-chevron-open={toolsDrawerExpanded}
+            aria-hidden="true"
+          >
+            <IconChevronDown size={14} strokeWidth={2.25} />
+          </span>
+        </button>
+
+        <div
+          class="drawer-sub"
+          class:drawer-sub-open={toolsDrawerExpanded}
+          inert={!toolsDrawerExpanded}
+        >
+          {#each toolsLinks as link, i}
+            <a
+              href={link.path}
+              class="drawer-item drawer-item-sub"
+              class:is-active={isToolActive(link)}
+              style="--i: {1 + i}"
+              data-sveltekit-preload-data={"preload" in link
+                ? link.preload
+                : undefined}
+              aria-current={isToolActive(link) ? "page" : undefined}
+            >
+              <span class="drawer-item-label">{link.label}</span>
+            </a>
+          {/each}
+        </div>
+      </div>
+
       {#each mainLinks as link, i}
         <a
           href={link.path}
           class="drawer-item"
           class:is-active={isMainActive(link)}
-          style="--i: {i}"
+          style="--i: {toolsLinks.length + 1 + i}"
           data-sveltekit-preload-data={"preload" in link
             ? link.preload
             : undefined}
@@ -322,16 +455,19 @@
         </a>
       {/each}
 
-      <div class="drawer-settings">
+      <div class="drawer-group">
         <p class="eyebrow drawer-section-label">Account</p>
         <button
           type="button"
-          class="drawer-item drawer-settings-toggle"
+          class="drawer-item drawer-group-toggle"
           class:is-active={onSettingsPage && !settingsDrawerExpanded}
-          style="--i: {mainLinks.length}"
+          style="--i: {toolsLinks.length + 1 + mainLinks.length}"
           aria-expanded={settingsDrawerExpanded}
           aria-current={onSettingsPage ? "page" : undefined}
-          onclick={() => (settingsDrawerExpanded = !settingsDrawerExpanded)}
+          onclick={() => {
+            settingsDrawerExpanded = !settingsDrawerExpanded;
+            if (settingsDrawerExpanded) toolsDrawerExpanded = false;
+          }}
         >
           <span class="drawer-item-icon" aria-hidden="true">
             <IconCog size={18} />
@@ -360,7 +496,7 @@
               href={link.path}
               class="drawer-item drawer-item-sub"
               class:is-active={subActive}
-              style="--i: {mainLinks.length + 1 + i}"
+              style="--i: {toolsLinks.length + 2 + mainLinks.length + i}"
               aria-current={subActive ? "page" : undefined}
             >
               <span class="drawer-item-icon" aria-hidden="true">
@@ -396,7 +532,7 @@
       >
         <span class="drawer-item-icon" aria-hidden="true">
           <img
-            src="https://images.lightkeepers.moe/site/guoba_lightkeepers.webp"
+            src="https://api.lightkeepers.moe/site/guoba_lightkeepers.webp"
             alt=""
             class="drawer-guoba"
           />
@@ -533,16 +669,16 @@
     transform: scaleX(1);
   }
 
-  /* ── Settings sub-row ── */
-  .settings-item {
+  /* ── Hover sub-row (Tools / Settings) ── */
+  .nav-menu-item {
     position: relative;
     display: flex;
     align-items: center;
-    /* Match other nav-link flex items so Settings doesn't sit low */
+    /* Match other nav-link flex items so the parent doesn't sit low */
     align-self: center;
   }
 
-  .settings-sub-row {
+  .nav-sub-row {
     position: absolute;
     left: 50%;
     top: 100%;
@@ -562,7 +698,7 @@
       opacity 0.2s ease;
   }
 
-  .settings-sub-row.settings-sub-row-open {
+  .nav-sub-row.nav-sub-row-open {
     max-height: 2.5rem;
     opacity: 1;
     overflow: visible;
@@ -695,7 +831,7 @@
     color: color-mix(in srgb, var(--foreground-mid) 70%, transparent);
   }
 
-  .drawer-settings .drawer-section-label {
+  .drawer-group .drawer-section-label {
     margin-top: 1rem;
     padding-top: 0.85rem;
     border-top: var(--border-width) solid
@@ -762,7 +898,7 @@
     min-width: 0;
   }
 
-  .drawer-settings {
+  .drawer-group {
     display: flex;
     flex-direction: column;
   }
@@ -788,7 +924,7 @@
   }
 
   .drawer-sub-open {
-    max-height: 12rem;
+    max-height: 16rem;
   }
 
   .drawer-item-sub {

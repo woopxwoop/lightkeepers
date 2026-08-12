@@ -606,7 +606,7 @@ export async function ensureTeamsOwned(owned: CharacterOwned[]): Promise<void> {
 }
 
 /**
- * Clears near-miss stores so the next /pulls visit refetches.
+ * Clears near-miss stores so the next /tools/pulls visit refetches.
  * Call after roster changes instead of eagerly hitting /api/nearmiss.
  */
 export function invalidateNearMissTeams(): void {

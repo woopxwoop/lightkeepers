@@ -225,8 +225,10 @@
     gap: 0.45rem;
     padding: 1.15rem 1.2rem 1.1rem;
     border-radius: var(--radius-lg);
-    border: var(--border-width) solid var(--border-default);
-    background: var(--surface-raised);
+    /* True black page base — not --surface-raised (mid blue). Gold on mid looks murky. */
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 18%, transparent);
+    background: var(--background-color);
     box-shadow: 0 18px 48px color-mix(in oklab, black 45%, transparent);
     pointer-events: auto;
   }
@@ -236,7 +238,8 @@
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--accent-1);
+    /* Cream on black — never gold/yellow text on black. */
+    color: var(--foreground-mid);
   }
 
   .popup-title {

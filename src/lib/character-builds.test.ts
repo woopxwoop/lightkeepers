@@ -11,6 +11,7 @@ import {
   formatReactionFingerprint,
   formatReactionName,
   levelImportanceFromBuilds,
+  ascensionImportanceFromBuilds,
   levelPrioritySection,
   rankSigWeaponsByGain,
   rankWeaponsByRarityAndTeams,
@@ -368,6 +369,22 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
       }),
     );
     assert.equal(level?.priority, "high");
+
+    const ascension = ascensionImportanceFromBuilds(
+      builds({
+        main_stats: { sands: [], goblet: [], circlet: [] },
+        substat_rolls_liquid: { teams: 0, configs: 0, mean: {}, ranked: [] },
+        ascension_importance: {
+          teams: 1,
+          mean_pct_drop: 3,
+          median_pct_drop: 3,
+          min_pct_drop: 3,
+          max_pct_drop: 3,
+        },
+      }),
+    );
+    assert.equal(ascension?.priority, "modest");
+    assert.equal(ascension?.mean, 3);
   });
 
   it("hides talent/level rows when teams are zero", () => {
@@ -640,11 +657,11 @@ describe("reaction helpers", () => {
   it("formats reaction names and fingerprints", () => {
     assert.equal(formatReactionName("lunarcharged"), "Lunar-Charged");
     assert.equal(formatReactionName("swirl-electro"), "Swirl (Electro)");
+    assert.equal(formatReactionName("mystery-reaction"), "Mystery Reaction");
     assert.equal(formatReactionFingerprint(null), "No reactions");
     assert.equal(
       formatReactionFingerprint("bloom+swirl-hydro"),
       "Bloom + Swirl (Hydro)",
     );
   });
-
 });

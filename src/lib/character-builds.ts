@@ -83,11 +83,7 @@ export function recommendedSubstatsFromBuilds(
 
   for (const r of builds.substat_rolls_liquid.ranked) {
     if (!isArtifactSubstatKey(r.key)) continue;
-    if (
-      !guideAuthoredSubs &&
-      r.mean <= 0.5 &&
-      !mainSlots.has(r.key)
-    ) {
+    if (!guideAuthoredSubs && r.mean <= 0.5 && !mainSlots.has(r.key)) {
       continue;
     }
     const slots = mainSlots.get(r.key) ?? [];
@@ -124,16 +120,17 @@ export function rankWeaponsByRarityAndTeams(
 ): CharacterWeaponRank[] {
   if (!weapons?.length) return [];
   const preferred =
-    preferredKeys instanceof Set
-      ? preferredKeys
-      : new Set(preferredKeys ?? []);
+    preferredKeys instanceof Set ? preferredKeys : new Set(preferredKeys ?? []);
   return [...weapons].sort((a, b) => {
     const ra = getStars(a.key);
     const rb = getStars(b.key);
     if (ra !== rb) return rb - ra;
-    const sa = a.strength ?? 0;
-    const sb = b.strength ?? 0;
-    if (sa !== sb) return sb - sa;
+    const sa = a.strength;
+    const sb = b.strength;
+    const aHasStrength = sa != null;
+    const bHasStrength = sb != null;
+    if (aHasStrength !== bHasStrength) return aHasStrength ? -1 : 1;
+    if (aHasStrength && bHasStrength && sa !== sb) return sb - sa;
     if (a.teams !== b.teams) return b.teams - a.teams;
     const pa = preferred.has(a.key) ? 0 : 1;
     const pb = preferred.has(b.key) ? 0 : 1;
@@ -267,11 +264,23 @@ export type LevelImportanceRow = {
   max: number;
 };
 
-/** Character level 90 importance from measured simulation data. */
+/** Character level 90 importance from measured simulation data (90→80/90). */
 export function levelImportanceFromBuilds(
   builds: CharacterIndex | null | undefined,
 ): LevelImportanceRow | null {
-  const li = builds?.level_importance;
+  return importanceRowFromSlot(builds?.level_importance);
+}
+
+/** Final-ascension importance from measured data (80/90→80/80). */
+export function ascensionImportanceFromBuilds(
+  builds: CharacterIndex | null | undefined,
+): LevelImportanceRow | null {
+  return importanceRowFromSlot(builds?.ascension_importance);
+}
+
+function importanceRowFromSlot(
+  li: CharacterIndex["level_importance"] | undefined,
+): LevelImportanceRow | null {
   if (!li || li.teams <= 0) return null;
   const pct = primaryUpgradePct(li.mean_pct_drop, li.median_pct_drop);
   const impact = classifyUpgradeImpact(pct, LEVEL_UPGRADE);
@@ -398,6 +407,15 @@ export function levelPrioritySection(
       priorityLabel: GUIDE_LEVEL_IMPACT.label,
     };
   }
+  if (simRow) return { source: "sim", row: simRow };
+  return null;
+}
+
+/** Sim-only final-ascension band (no guide override yet). */
+export function ascensionPrioritySection(
+  builds: CharacterIndex | null | undefined,
+): LevelPrioritySection | null {
+  const simRow = ascensionImportanceFromBuilds(builds);
   if (simRow) return { source: "sim", row: simRow };
   return null;
 }

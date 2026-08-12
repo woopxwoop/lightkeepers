@@ -208,8 +208,27 @@
     // block so viewport coords from getBoundingClientRect land wrong.
     document.body.appendChild(tip);
 
-    const onEnter = () => showTip(trigger);
-    const onLeave = () => hideTip();
+    let pointerActive = false;
+    let focusActive = false;
+
+    const onPointerEnter = () => {
+      pointerActive = true;
+      showTip(trigger);
+    };
+    const onPointerLeave = () => {
+      pointerActive = false;
+      if (!focusActive) hideTip();
+    };
+    const onFocusEnter = () => {
+      focusActive = true;
+      showTip(trigger);
+    };
+    const onFocusLeave = (event: FocusEvent) => {
+      const related = event.relatedTarget;
+      if (related instanceof Node && trigger.contains(related)) return;
+      focusActive = false;
+      if (!pointerActive) hideTip();
+    };
     const onClick = (event: Event) => {
       void openDetail(event);
     };
@@ -239,10 +258,10 @@
       }
     };
 
-    trigger.addEventListener("pointerenter", onEnter);
-    trigger.addEventListener("pointerleave", onLeave);
-    trigger.addEventListener("focusin", onEnter);
-    trigger.addEventListener("focusout", onLeave);
+    trigger.addEventListener("pointerenter", onPointerEnter);
+    trigger.addEventListener("pointerleave", onPointerLeave);
+    trigger.addEventListener("focusin", onFocusEnter);
+    trigger.addEventListener("focusout", onFocusLeave);
     trigger.addEventListener("click", onClick);
     window.addEventListener("scroll", reposition, true);
     window.addEventListener("resize", reposition);
@@ -253,10 +272,10 @@
       updateTriggerDescription(tipTriggerEl, false);
       updateTriggerDescription(activeTriggerEl, false);
       tipTriggerEl = null;
-      trigger.removeEventListener("pointerenter", onEnter);
-      trigger.removeEventListener("pointerleave", onLeave);
-      trigger.removeEventListener("focusin", onEnter);
-      trigger.removeEventListener("focusout", onLeave);
+      trigger.removeEventListener("pointerenter", onPointerEnter);
+      trigger.removeEventListener("pointerleave", onPointerLeave);
+      trigger.removeEventListener("focusin", onFocusEnter);
+      trigger.removeEventListener("focusout", onFocusLeave);
       trigger.removeEventListener("click", onClick);
       window.removeEventListener("scroll", reposition, true);
       window.removeEventListener("resize", reposition);

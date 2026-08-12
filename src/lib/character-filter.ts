@@ -39,9 +39,28 @@ function releaseTime(releasedAt: string | null | undefined): number | null {
   return Number.isNaN(t) ? null : t;
 }
 
+function isTravelerNameId(nameId: string | null | undefined): boolean {
+  if (!nameId) return false;
+  return (
+    nameId === "PlayerBoy" ||
+    nameId === "PlayerGirl" ||
+    nameId.startsWith("PlayerBoy-") ||
+    nameId.startsWith("PlayerGirl-")
+  );
+}
+
+/** CB / unreleased rows pin to the front of release-date sort; Traveler does not. */
+function isUnreleasedReleasePin(c: CharacterOwned): boolean {
+  const releasedAt = c.released_at;
+  if (releasedAt != null && releasedAt !== "") return false;
+  return !isTravelerNameId(c.name_id);
+}
+
 /**
  * Filter + sort a character roster for browse / roster grids.
- * Release-date nulls sort first (ascending) / last (descending); ties break on game_id.
+ * Release-date: empty `released_at` (non-Traveler) always first; then dated
+ * ascending/descending; Traveler nulls follow normal null placement in that group.
+ * Ties break on game_id.
  */
 export function filterAndSortCharacters(
   characters: CharacterOwned[],
@@ -85,6 +104,13 @@ export function filterAndSortCharacters(
     if (sortBy === "game_id") {
       cmp = (a.game_id ?? 0) - (b.game_id ?? 0);
     } else if (sortBy === "release_date") {
+      const pinA = isUnreleasedReleasePin(a);
+      const pinB = isUnreleasedReleasePin(b);
+      if (pinA !== pinB) {
+        // Unreleased non-Travelers stay first even when newest-first (desc).
+        return pinA ? -1 : 1;
+      }
+
       const ta = releaseTime(a.released_at);
       const tb = releaseTime(b.released_at);
       if (ta === null && tb === null) cmp = (a.game_id ?? 0) - (b.game_id ?? 0);

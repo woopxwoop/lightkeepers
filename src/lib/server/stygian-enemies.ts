@@ -1,5 +1,5 @@
 /**
- * SSR helpers for `/stygian/enemies` — Stygian boss appearances only.
+ * SSR helpers for `/tools/stygian/enemies` — Stygian boss appearances only.
  */
 
 import { error } from "@sveltejs/kit";

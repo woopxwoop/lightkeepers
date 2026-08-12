@@ -305,9 +305,7 @@ function optimizeSlots<
     field_3_rate?: number | null;
   },
   TSlot extends string,
->(
-  assignments: { team: TTeam; slot: TSlot }[],
-): { team: TTeam; slot: TSlot }[] {
+>(assignments: { team: TTeam; slot: TSlot }[]): { team: TTeam; slot: TSlot }[] {
   if (assignments.length <= 1) {
     return assignments.map((a) => ({ ...a }));
   }
@@ -364,7 +362,9 @@ function isRecommendableTeam(team: {
 }
 
 /** Highest usage first — CANDIDATE_DEPTH must explore the meta peak, not array order. */
-function byUsageDesc<T extends { usage_rate?: number | null }>(teams: T[]): T[] {
+function byUsageDesc<T extends { usage_rate?: number | null }>(
+  teams: T[],
+): T[] {
   return [...teams].sort((a, b) => teamUsageRate(b) - teamUsageRate(a));
 }
 
@@ -385,8 +385,7 @@ export function solveAbyss(
   const validTeams = byUsageDesc(
     teams.filter(
       (t) =>
-        isRecommendableTeam(t) &&
-        (t.usage_total ?? 0) >= MIN_ABYSS_USAGE_TOTAL,
+        isRecommendableTeam(t) && (t.usage_total ?? 0) >= MIN_ABYSS_USAGE_TOTAL,
     ),
   );
   const allSlots = ABYSS_SLOT_ORDER;

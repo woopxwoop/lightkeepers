@@ -18,12 +18,7 @@ import type {
   ImportanceImpactTier,
 } from "$lib/types/investment";
 
-export type UpgradeTier =
-  | "exceptional"
-  | "high"
-  | "solid"
-  | "modest"
-  | "negligible";
+export type UpgradeTier = ImportanceImpactTier;
 
 export interface UpgradeImpactBand {
   /** Inclusive lower bound for this band. */

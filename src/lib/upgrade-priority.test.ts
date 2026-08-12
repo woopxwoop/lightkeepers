@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   CONSTELLATION_UPGRADE,
   LEVEL_UPGRADE,
+  MERGED_IMPACT_LABELS,
   SIGNATURE_UPGRADE,
   TALENT_UPGRADE,
   classifyUpgradeImpact,
@@ -83,6 +84,10 @@ describe("upgrade priority", () => {
       }),
       { tier: "solid", label: "Solid impact" },
     );
+    assert.deepEqual(resolveUpgradeImpact("solid", 30, ladder), {
+      tier: "solid",
+      label: MERGED_IMPACT_LABELS.solid,
+    });
     assert.deepEqual(resolveUpgradeImpact(null, 31, ladder), {
       tier: "exceptional",
       label: "Exceptional",
