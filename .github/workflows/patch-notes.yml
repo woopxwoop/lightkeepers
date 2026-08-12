@@ -7,6 +7,7 @@ on:
     paths:
       - "patch-notes/**/*.md"
       - "patch-notes/*.md"
+  workflow_dispatch:
 
 permissions:
   contents: write
