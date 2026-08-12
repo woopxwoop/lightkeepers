@@ -27,7 +27,7 @@ jobs:
           SITE_ORIGIN: https://lightkeepers.moe
         run: |
           python3 <<'PY'
-          import json, os, re, subprocess, urllib.request
+          import json, os, re, subprocess, urllib.error, urllib.parse, urllib.request
           from pathlib import Path
 
           root = Path("patch-notes")
@@ -123,6 +123,9 @@ jobs:
                   )
 
               if webhook:
+                  repo = os.environ.get("GITHUB_REPOSITORY", "")
+                  gh_base = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
+                  gh_url = f"{gh_base}/{repo}/releases/tag/{urllib.parse.quote(tag, safe='')}"
                   embed = {
                       "title": note["title"],
                       "description": note["summary"],
@@ -132,7 +135,7 @@ jobs:
                           {"name": "Date", "value": note["date"], "inline": True},
                           {
                               "name": "Links",
-                              "value": f"[Site]({site_url}) · [GitHub]({os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ.get('GITHUB_REPOSITORY', '')}/releases/tag/{tag})",
+                              "value": f"[Site]({site_url}) · [GitHub]({gh_url})",
                               "inline": False,
                           },
                       ],
@@ -140,11 +143,21 @@ jobs:
                   req = urllib.request.Request(
                       webhook,
                       data=json.dumps({"embeds": [embed]}).encode(),
-                      headers={"Content-Type": "application/json"},
+                      headers={
+                          "Content-Type": "application/json",
+                          # Cloudflare in front of Discord blocks Python-urllib's default UA (403).
+                          "User-Agent": "lightkeepers-patch-notes/1.0",
+                      },
                       method="POST",
                   )
-                  with urllib.request.urlopen(req) as resp:
-                      print(f"Discord webhook status {resp.status} for {tag}")
+                  try:
+                      with urllib.request.urlopen(req) as resp:
+                          print(f"Discord webhook status {resp.status} for {tag}")
+                  except urllib.error.HTTPError as err:
+                      detail = err.read().decode("utf-8", errors="replace")[:500]
+                      print(
+                          f"::warning::Discord webhook HTTP {err.code} for {tag}: {detail}"
+                      )
               else:
                   print("DISCORD_PATCH_WEBHOOK_URL unset — skipped Discord post")
           PY
