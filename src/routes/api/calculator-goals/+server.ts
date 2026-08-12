@@ -2,9 +2,6 @@
  * GET/POST/DELETE /api/calculator-goals
  *
  * Auth-gated upgrade-goal sync. Mirrors `/api/roster`.
- *
- * Requires table `user_calculator_goals` (owner migration + `pnpm update-types`).
- * Until generated types include the table, queries go through a narrow cast.
  */
 
 import { json } from "@sveltejs/kit";
@@ -17,38 +14,6 @@ import {
   requireJsonObject,
   requireUser,
 } from "$lib/server/request-validation";
-import type { CalculatorGoal } from "$lib/types/calculator-goals";
-
-/** Interim client until `user_calculator_goals` lands in database.types.ts. */
-type GoalsRow = {
-  user_id: string;
-  goals: CalculatorGoal[];
-  updated_at: string;
-};
-
-type GoalsTable = {
-  select: (cols: string) => {
-    eq: (
-      col: string,
-      value: string,
-    ) => {
-      maybeSingle: () => Promise<{ data: GoalsRow | null; error: unknown }>;
-    };
-  };
-  upsert: (
-    row: GoalsRow,
-    opts: { onConflict: string },
-  ) => Promise<{ error: unknown }>;
-  delete: () => {
-    eq: (col: string, value: string) => Promise<{ error: unknown }>;
-  };
-};
-
-function goalsTable(): GoalsTable {
-  return (serverDb as unknown as { from: (name: string) => GoalsTable }).from(
-    "user_calculator_goals",
-  );
-}
 
 export const GET: RequestHandler = async ({
   locals,
@@ -58,7 +23,8 @@ export const GET: RequestHandler = async ({
   await enforceApiRateLimit({ request, getClientAddress });
   const user = requireUser(locals);
 
-  const { data, error: err } = await goalsTable()
+  const { data, error: err } = await serverDb
+    .from("user_calculator_goals")
     .select("goals")
     .eq("user_id", user.id)
     .maybeSingle();
@@ -78,7 +44,7 @@ export const POST: RequestHandler = async ({
   const body = await requireJsonObject(request);
   const goals = requireCalculatorGoals(body.goals);
 
-  const { error: err } = await goalsTable().upsert(
+  const { error: err } = await serverDb.from("user_calculator_goals").upsert(
     {
       user_id: user.id,
       goals,
@@ -99,7 +65,10 @@ export const DELETE: RequestHandler = async ({
   await enforceApiRateLimit({ request, getClientAddress });
   const user = requireUser(locals);
 
-  const { error: err } = await goalsTable().delete().eq("user_id", user.id);
+  const { error: err } = await serverDb
+    .from("user_calculator_goals")
+    .delete()
+    .eq("user_id", user.id);
   assertNoDbError("DELETE /api/calculator-goals", err);
 
   return json({ ok: true });

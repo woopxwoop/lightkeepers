@@ -32,7 +32,14 @@
 
   function snapToStep(n: number): number {
     if (!(step > 0)) return n;
-    return Math.round(n / step) * step;
+    return min + Math.round((n - min) / step) * step;
+  }
+
+  function snapAndClamp(n: number): number {
+    let next = snapToStep(n);
+    if (next < effectiveFloor) next = effectiveFloor;
+    else if (next > effectiveCap) next = effectiveCap;
+    return next;
   }
 
   function emit(raw: string) {
@@ -40,11 +47,13 @@
       draft = "";
       return;
     }
+    draft = raw;
+  }
+
+  function clampAndEmit(raw: string) {
     const n = Number(raw);
     if (!Number.isFinite(n)) return;
-    let next = snapToStep(n);
-    if (next < effectiveFloor) next = effectiveFloor;
-    else if (next > effectiveCap) next = effectiveCap;
+    const next = snapAndClamp(n);
     draft = null;
     if (next !== value) onchange(next);
   }
@@ -55,7 +64,7 @@
       draft = null;
       return;
     }
-    emit(draft);
+    clampAndEmit(draft);
   }
 </script>
 
@@ -71,9 +80,7 @@
       {value}
       style="--fill: {fillPct}%"
       aria-label={label}
-      aria-valuemin={effectiveFloor}
-      aria-valuemax={effectiveCap}
-      oninput={(e) => emit(e.currentTarget.value)}
+      oninput={(e) => clampAndEmit(e.currentTarget.value)}
     />
     <div class="nsf-value">
       <input

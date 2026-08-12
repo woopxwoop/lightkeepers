@@ -10,6 +10,8 @@ describe("isBetaCharacter", () => {
 
   it("skips travelers and released rows", () => {
     assert.equal(isBetaCharacter("PlayerBoy", null), false);
+    assert.equal(isBetaCharacter("PlayerGirl-Anemo", null), false);
+    assert.equal(isBetaCharacter("", null), false);
     assert.equal(isBetaCharacter("Hutao", "2020-03-17T00:00:00+00"), false);
   });
 });

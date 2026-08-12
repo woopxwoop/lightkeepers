@@ -136,6 +136,14 @@ describe("mergeUpgradeCostCatalogs", () => {
     assert.equal(merged.materials["9"]?.name, "CB Mat");
     assert.equal(merged.weapons.find((w) => w.id === 1)?.name, "Live Spear");
     assert.ok(merged.weapons.some((w) => w.id === 99));
+    assert.deepEqual(
+      merged.characters.map((c) => c.name_id),
+      ["Hutao", "Odette"],
+    );
+    assert.deepEqual(
+      merged.weapons.map((w) => w.id),
+      [1, 99],
+    );
     assert.deepEqual(merged.curves.avatarLevelExp, live.curves.avatarLevelExp);
   });
 });

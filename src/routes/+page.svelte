@@ -5,6 +5,7 @@
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
+  import { siteAssetUrl } from "$lib/utils";
 
   const session = authClient.useSession();
 
@@ -23,7 +24,7 @@
     href: rosterPath,
     label: "Configure your roster",
     description: "Mark the characters you own for tailored recommendations.",
-    banner: "https://api.lightkeepers.moe/site/team.webp",
+    banner: siteAssetUrl("team"),
   };
 
   const features = $derived([
@@ -32,33 +33,33 @@
       href: abyssPath,
       label: "Spiral Abyss",
       description: "Find your best teams for the current abyss cycle.",
-      banner: "https://api.lightkeepers.moe/site/abyss_banner.webp",
+      banner: siteAssetUrl("abyss_banner"),
       preload: "hover" as const,
     },
     {
       href: stygianPath,
       label: "Stygian Onslaught",
       description: "Find your best teams for the current stygian cycle.",
-      banner: "https://api.lightkeepers.moe/site/stygian_banner.webp",
+      banner: siteAssetUrl("stygian_banner"),
       preload: "hover" as const,
     },
     {
       href: pullsPath,
       label: "Pull Suggestions",
       description: "See which characters would improve your teams.",
-      banner: "https://api.lightkeepers.moe/site/heizou.webp",
+      banner: siteAssetUrl("heizou"),
     },
     {
       href: teamsPath,
       label: "Teams",
       description: "Compare teams across different investment levels.",
-      banner: "https://api.lightkeepers.moe/site/kazuha.webp",
+      banner: siteAssetUrl("kazuha"),
     },
     {
       href: charactersPath,
       label: "Characters",
       description: "Browse character stats and build recommendations",
-      banner: "https://api.lightkeepers.moe/site/xiao.webp",
+      banner: siteAssetUrl("xiao"),
     },
     ...(showNudge ? [] : [rosterCard]),
   ]);

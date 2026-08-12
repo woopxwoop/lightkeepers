@@ -14,7 +14,9 @@ import type {
 function sortedCharacters(
   characters: CharacterUpgradeCosts[],
 ): CharacterUpgradeCosts[] {
-  return [...characters].sort((a, b) => a.name_id.localeCompare(b.name_id));
+  return [...characters].sort((a, b) =>
+    a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0,
+  );
 }
 
 function sortedWeapons(weapons: WeaponUpgradeCosts[]): WeaponUpgradeCosts[] {

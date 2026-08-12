@@ -1,10 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import type {
   CharacterUpgradeCosts,
   UpgradeCurves,
+  UpgradePromoteStep,
+  UpgradeTalentTrack,
   WeaponUpgradeCosts,
 } from "./types/upgrade-costs.ts";
 import {
@@ -15,40 +15,79 @@ import {
   gateWeaponConfig,
   maxTalentForAscension,
   minAscensionForTalent,
+  minAscensionForLevel,
   minLevelForAscension,
   sumLevelExp,
   UPGRADE_DEFAULTS,
 } from "./upgrade-costs.ts";
 
-const ROOT = resolve(process.cwd(), "scripts/data/output/upgrade-costs");
+/** Standard 20/40/50/60/70/80/90 unlock table. */
+const STANDARD_PROMOTES: UpgradePromoteStep[] = [
+  { promoteLevel: 0, mora: 0, unlockMaxLevel: 20, items: [] },
+  { promoteLevel: 1, mora: 1000, unlockMaxLevel: 40, items: [{ id: 11, count: 1 }] },
+  { promoteLevel: 2, mora: 2000, unlockMaxLevel: 50, items: [{ id: 11, count: 2 }] },
+  { promoteLevel: 3, mora: 3000, unlockMaxLevel: 60, items: [{ id: 11, count: 3 }] },
+  { promoteLevel: 4, mora: 4000, unlockMaxLevel: 70, items: [{ id: 11, count: 4 }] },
+  { promoteLevel: 5, mora: 5000, unlockMaxLevel: 80, items: [{ id: 11, count: 5 }] },
+  { promoteLevel: 6, mora: 6000, unlockMaxLevel: 90, items: [{ id: 11, count: 6 }] },
+];
 
-function loadCatalog() {
-  const curves = JSON.parse(
-    readFileSync(resolve(ROOT, "curves.json"), "utf8"),
-  ) as UpgradeCurves;
-  const characters = JSON.parse(
-    readFileSync(resolve(ROOT, "characters.json"), "utf8"),
-  ) as CharacterUpgradeCosts[];
-  const weapons = JSON.parse(
-    readFileSync(resolve(ROOT, "weapons.json"), "utf8"),
-  ) as WeaponUpgradeCosts[];
-  return { curves, characters, weapons };
+function talentTrack(): UpgradeTalentTrack {
+  return {
+    proudSkillGroupId: 1,
+    levels: Array.from({ length: 10 }, (_, i) => ({
+      level: i + 1,
+      mora: (i + 1) * 100,
+      items: i === 0 ? [] : [{ id: 22, count: 1 }],
+    })),
+  };
 }
 
+const character: CharacterUpgradeCosts = {
+  name_id: "TestChar",
+  game_id: 1,
+  name: "Test",
+  avatarPromoteId: 1,
+  promotes: STANDARD_PROMOTES,
+  talents: {
+    normal: talentTrack(),
+    skill: talentTrack(),
+    burst: talentTrack(),
+  },
+};
+
+const weapon: WeaponUpgradeCosts = {
+  id: 14501,
+  name: "Test Spear",
+  rankLevel: 5,
+  weaponPromoteId: 1,
+  icon: "x",
+  promotes: STANDARD_PROMOTES,
+};
+
+/** Index = current level; 1→90 walks indices 1..89. */
+const LEVEL_EXP = 1_000;
+const avatarLevelExp = Array.from({ length: 91 }, (_, level) =>
+  level >= 1 && level < 90 ? LEVEL_EXP : 0,
+);
+
+const curves: UpgradeCurves = {
+  avatarLevelExp,
+  weaponLevelExpByRarity: { "5": avatarLevelExp },
+  avatarExpItems: [],
+  weaponExpItems: [],
+};
+
 describe("upgrade-costs math", () => {
-  it("sums avatar EXP 1→90 as known total", () => {
-    const { curves } = loadCatalog();
-    const total = sumLevelExp(curves.avatarLevelExp, 1, 90);
-    assert.equal(total, 8_362_650);
+  it("sums level EXP across the half-open range", () => {
+    assert.equal(sumLevelExp(avatarLevelExp, 1, 90), 89 * LEVEL_EXP);
+    assert.equal(sumLevelExp(avatarLevelExp, 1, 1), 0);
+    assert.equal(sumLevelExp([0, 10, 20, 30], 1, 4), 60);
   });
 
-  it("Hu Tao 1/0 + 1/1/1 → 90/6 + 9/9/9 has mora, exp, and materials", () => {
-    const { curves, characters } = loadCatalog();
-    const hutao = characters.find((c) => c.name_id === "Hutao");
-    assert.ok(hutao, "Hutao costs missing — run extract-upgrade-costs");
-
+  it("character 1/0 + 1/1/1 → 90/6 + 9/9/9 adds exp, mora, and materials", () => {
     const result = diffCharacterUpgrade(
-      hutao,
+      character,
       curves,
       UPGRADE_DEFAULTS.characterStart,
       {
@@ -58,43 +97,33 @@ describe("upgrade-costs math", () => {
       },
     );
 
-    assert.ok(result.exp === 8_362_650);
-    assert.ok(result.mora > 0);
-    // Agate / silk flower / recruit's insignia appear in Hutao ascension.
-    assert.ok((result.materials["104111"] ?? 0) >= 1);
-    assert.ok((result.materials["100029"] ?? 0) >= 1);
-    // Crown for talent 10 not needed for 9/9/9 — but books should appear.
-    const matCount = Object.values(result.materials).reduce((a, b) => a + b, 0);
-    assert.ok(matCount > 20);
+    assert.equal(result.exp, 89 * LEVEL_EXP);
+    // Promotes 1–6: 1000+…+6000; talents 2–9 × 3 tracks: 4400×3.
+    assert.equal(result.mora, 21_000 + 13_200);
+    assert.equal(result.materials["11"], 21);
+    assert.equal(result.materials["22"], 24);
   });
 
   it("identical start/target yields zero", () => {
-    const { curves, characters } = loadCatalog();
-    const hutao = characters.find((c) => c.name_id === "Hutao")!;
     const cfg = {
       level: 70,
       ascension: 4,
       talents: { normal: 6, skill: 6, burst: 6 },
     };
-    const result = diffCharacterUpgrade(hutao, curves, cfg, cfg);
+    const result = diffCharacterUpgrade(character, curves, cfg, cfg);
     assert.deepEqual(result, { mora: 0, exp: 0, materials: {} });
   });
 
   it("diffs a 5★ weapon 1→90", () => {
-    const { curves, weapons } = loadCatalog();
-    const weapon =
-      weapons.find((w) => w.name === "Staff of Homa") ??
-      weapons.find((w) => w.rankLevel === 5);
-    assert.ok(weapon);
     const result = diffWeaponUpgrade(
       weapon,
       curves,
       UPGRADE_DEFAULTS.weaponStart,
       UPGRADE_DEFAULTS.weaponTarget,
     );
-    assert.ok(result.exp > 0);
-    assert.ok(result.mora > 0);
-    assert.ok(Object.keys(result.materials).length > 0);
+    assert.equal(result.exp, 89 * LEVEL_EXP);
+    assert.equal(result.mora, 21_000);
+    assert.equal(result.materials["11"], 21);
   });
 
   it("greedy EXP books cover the total", () => {
@@ -111,6 +140,15 @@ describe("upgrade-costs math", () => {
     assert.ok(covered >= 53_000);
   });
 
+  it("skips non-positive exp items before greedy fill", () => {
+    const needed = expItemsNeeded(1_000, [
+      { id: 1, exp: 0 },
+      { id: 2, exp: -100 },
+      { id: 3, exp: 400 },
+    ]);
+    assert.deepEqual(needed, [{ id: 3, count: 3 }]);
+  });
+
   it("gates talent caps by ascension", () => {
     assert.equal(maxTalentForAscension(0), 1);
     assert.equal(maxTalentForAscension(2), 2);
@@ -121,24 +159,22 @@ describe("upgrade-costs math", () => {
   });
 
   it("gates level floors by ascension", () => {
-    const { characters } = loadCatalog();
-    const hutao = characters.find((c) => c.name_id === "Hutao")!;
-    assert.equal(minLevelForAscension(hutao.promotes, 0), 1);
-    assert.equal(minLevelForAscension(hutao.promotes, 1), 20);
-    assert.equal(minLevelForAscension(hutao.promotes, 2), 40);
-    assert.equal(minLevelForAscension(hutao.promotes, 6), 80);
+    assert.equal(minLevelForAscension(STANDARD_PROMOTES, 0), 1);
+    assert.equal(minLevelForAscension(STANDARD_PROMOTES, 1), 20);
+    assert.equal(minLevelForAscension(STANDARD_PROMOTES, 2), 40);
+    assert.equal(minLevelForAscension(STANDARD_PROMOTES, 6), 80);
+    assert.equal(minAscensionForLevel([], 50), 0);
+    assert.equal(minAscensionForLevel(STANDARD_PROMOTES, 1), 0);
   });
 
   it("gateCharacterConfig clamps level/talents and raises ascension", () => {
-    const { characters } = loadCatalog();
-    const hutao = characters.find((c) => c.name_id === "Hutao")!;
     const clamped = gateCharacterConfig(
       {
         level: 90,
         ascension: 0,
         talents: { normal: 9, skill: 1, burst: 1 },
       },
-      hutao.promotes,
+      STANDARD_PROMOTES,
     );
     assert.equal(clamped.ascension, 6);
     assert.equal(clamped.level, 90);
@@ -150,9 +186,8 @@ describe("upgrade-costs math", () => {
         ascension: 2,
         talents: { normal: 10, skill: 10, burst: 10 },
       },
-      hutao.promotes,
+      STANDARD_PROMOTES,
     );
-    // Ascension rises to satisfy talent 10 (and level 90).
     assert.equal(lowered.ascension, 6);
     assert.equal(lowered.talents.normal, 10);
 
@@ -162,10 +197,9 @@ describe("upgrade-costs math", () => {
         ascension: 2,
         talents: { normal: 10, skill: 1, burst: 1 },
       },
-      hutao.promotes,
+      STANDARD_PROMOTES,
     );
     assert.equal(ascOnly.ascension, 6);
-    // Asc 6 requires at least Lv 80.
     assert.equal(ascOnly.level, 80);
     assert.equal(ascOnly.talents.normal, 10);
 
@@ -175,7 +209,7 @@ describe("upgrade-costs math", () => {
         ascension: 2,
         talents: { normal: 6, skill: 1, burst: 1 },
       },
-      hutao.promotes,
+      STANDARD_PROMOTES,
       { preferAscension: true },
     );
     assert.equal(downAsc.ascension, 2);
@@ -188,7 +222,7 @@ describe("upgrade-costs math", () => {
         ascension: 6,
         talents: { normal: 1, skill: 1, burst: 1 },
       },
-      hutao.promotes,
+      STANDARD_PROMOTES,
       { preferAscension: true },
     );
     assert.equal(upAscFloor.ascension, 6);
@@ -196,22 +230,20 @@ describe("upgrade-costs math", () => {
   });
 
   it("gateWeaponConfig clamps level to ascension", () => {
-    const { weapons } = loadCatalog();
-    const weapon = weapons.find((w) => w.rankLevel === 5)!;
     const gated = gateWeaponConfig(
       { level: 90, ascension: 1 },
-      weapon.promotes,
+      STANDARD_PROMOTES,
     );
     assert.equal(gated.ascension, 6);
     assert.equal(gated.level, 90);
 
-    const low = gateWeaponConfig({ level: 45, ascension: 1 }, weapon.promotes);
+    const low = gateWeaponConfig({ level: 45, ascension: 1 }, STANDARD_PROMOTES);
     assert.equal(low.ascension, 2);
     assert.equal(low.level, 45);
 
     const forceDown = gateWeaponConfig(
       { level: 90, ascension: 1 },
-      weapon.promotes,
+      STANDARD_PROMOTES,
       { preferAscension: true },
     );
     assert.equal(forceDown.ascension, 1);

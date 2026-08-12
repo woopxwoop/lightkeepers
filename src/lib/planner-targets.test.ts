@@ -13,9 +13,11 @@ import {
 } from "./planner-targets.ts";
 import type {
   CharacterIndex,
+  CharacterTalentImportance,
   ImportanceImpactTier,
 } from "./types/investment.ts";
 import type { UpgradePromoteStep } from "./types/upgrade-costs.ts";
+import { UPGRADE_DEFAULTS } from "./upgrade-costs.ts";
 
 const PROMOTES: UpgradePromoteStep[] = [
   { promoteLevel: 0, mora: 0, unlockMaxLevel: 20, items: [] },
@@ -200,6 +202,68 @@ describe("plannerTargetFromBuilds", () => {
     );
     assert.equal(target.level, 80);
     assert.equal(target.ascension, 5);
+  });
+
+  it("derives level and ascension from pct when tier is null", () => {
+    const lowTalents = {
+      auto: slot("negligible"),
+      skill: slot("negligible"),
+      burst: slot("negligible"),
+    };
+
+    const high = plannerTargetFromBuilds(
+      builds({
+        talent: lowTalents,
+        level: { tier: null, mean_pct_drop: 9, median_pct_drop: 9 },
+        ascension: { tier: null, mean_pct_drop: 9, median_pct_drop: 9 },
+      }),
+      PROMOTES,
+    );
+    assert.equal(high.level, 90);
+    assert.equal(high.ascension, 6);
+
+    const mid = plannerTargetFromBuilds(
+      builds({
+        talent: lowTalents,
+        level: { tier: null, mean_pct_drop: 3, median_pct_drop: 3 },
+        ascension: { tier: null, mean_pct_drop: 3, median_pct_drop: 3 },
+      }),
+      PROMOTES,
+    );
+    assert.equal(mid.level, 80);
+    assert.equal(mid.ascension, 5);
+
+    const low = plannerTargetFromBuilds(
+      builds({
+        talent: lowTalents,
+        level: { tier: null, mean_pct_drop: 1, median_pct_drop: 1 },
+        ascension: { tier: null, mean_pct_drop: 1, median_pct_drop: 1 },
+      }),
+      PROMOTES,
+    );
+    assert.equal(low.level, 70);
+    assert.equal(low.ascension, 4);
+  });
+
+  it("falls back omitted talent slots on a scored summary", () => {
+    const target = plannerTargetFromBuilds(
+      {
+        ...builds({}),
+        talent_importance: {
+          teams: 3,
+          auto: slot("high"),
+          skill: slot("solid"),
+          priority: ["auto", "skill"],
+        } as CharacterTalentImportance,
+      },
+      PROMOTES,
+    );
+    assert.equal(target.talents.normal, 10);
+    assert.equal(target.talents.skill, 9);
+    assert.equal(
+      target.talents.burst,
+      UPGRADE_DEFAULTS.characterTarget.talents.burst,
+    );
   });
 
   it("falls back to 70/70 with 1/1/1 when Builds importance is missing", () => {

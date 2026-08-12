@@ -21,6 +21,9 @@
     expItemsNeeded,
     gateCharacterConfig,
     gateWeaponConfig,
+    MAX_ASCENSION,
+    MAX_LEVEL,
+    MAX_TALENT,
     maxLevelForAscension,
     maxTalentForAscension,
     minLevelForAscension,
@@ -35,6 +38,7 @@
     emptyAggregate,
     emptyGoalsState,
     findGoal,
+    MAX_CALCULATOR_GOALS,
     parseGoalsState,
     removeGoal,
     replaceGoal,
@@ -65,6 +69,7 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
+  import { trapTabKey } from "$lib/ui/focus-trap";
 
   type CostScope = "all" | "selected";
 
@@ -78,12 +83,14 @@
   let showSaved = $state(false);
   let isSaving = $state(false);
   let saveError = $state("");
+  let addError = $state("");
   let costScope = $state<CostScope>("selected");
   /** Configure dialog open (gear on a goal row). */
   let configuring = $state(false);
   /** Start sliders are collapsed until the user expands them. */
   let showStartConfig = $state(false);
   let configCloseEl: HTMLButtonElement | null = $state(null);
+  let configPanelEl: HTMLDivElement | null = $state(null);
   let configFocusReturn: HTMLElement | null = $state(null);
 
   const session = authClient.useSession();
@@ -336,6 +343,7 @@
   );
 
   function beginPick(kind: "character" | "weapon") {
+    addError = "";
     configuring = false;
     picking = kind;
     pickQuery = "";
@@ -357,7 +365,13 @@
     if (!row) return;
     cancelPick();
     const goal = createCharacterGoal(nameId);
-    commitGoals(appendGoal(goalsState, goal));
+    const next = appendGoal(goalsState, goal);
+    if (next.goals.length === goalsState.goals.length) {
+      addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
+      return;
+    }
+    addError = "";
+    commitGoals(next);
     beginConfigure();
     void (async () => {
       const target = await targetFromBuilds(nameId, row.promotes);
@@ -372,7 +386,13 @@
     if (!catalog?.weapons.some((w) => w.id === weaponId)) return;
     cancelPick();
     const goal = createWeaponGoal(weaponId);
-    commitGoals(appendGoal(goalsState, goal));
+    const next = appendGoal(goalsState, goal);
+    if (next.goals.length === goalsState.goals.length) {
+      addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
+      return;
+    }
+    addError = "";
+    commitGoals(next);
     beginConfigure();
   }
 
@@ -406,7 +426,8 @@
   }
 
   function deleteGoal(id: string) {
-    if (goalsState.selectedId === id) configuring = false;
+    if (goalsState.selectedId === id) closeConfigure();
+    addError = "";
     commitGoals(removeGoal(goalsState, id));
   }
 
@@ -417,7 +438,9 @@
       if (e.key === "Escape") {
         e.preventDefault();
         closeConfigure();
+        return;
       }
+      if (configPanelEl) trapTabKey(e, configPanelEl);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -720,6 +743,10 @@
           </div>
         </div>
 
+        {#if addError}
+          <p class="save-error">{addError}</p>
+        {/if}
+
         {#if goalsState.goals.length === 0}
           <p class="section-lede">
             Add a character or weapon goal to start planning costs.
@@ -910,13 +937,14 @@
         onclick={closeConfigure}
         transition:fade={{ duration: configMotion ?? 160 }}
       ></button>
-      <div
-        class="config-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Configure goal"
-        transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
-      >
+        <div
+          class="config-panel"
+          bind:this={configPanelEl}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Configure goal"
+          transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
+        >
         <header class="config-head">
           <h2 class="section-title">Configure</h2>
           <button
@@ -1020,7 +1048,7 @@
               label="Ascension"
               value={selectedGoal.target.ascension}
               min={0}
-              max={6}
+              max={MAX_ASCENSION}
               onchange={(ascension) =>
                 patchCharacterSide("target", { ascension })}
             />
@@ -1028,7 +1056,7 @@
               label="Level"
               value={selectedGoal.target.level}
               min={1}
-              max={90}
+              max={MAX_LEVEL}
               floor={targetMinLevel}
               cap={targetMaxLevel}
               onchange={(level) => patchCharacterSide("target", { level })}
@@ -1037,7 +1065,7 @@
               label="Normal attack"
               value={selectedGoal.target.talents.normal}
               min={1}
-              max={10}
+              max={MAX_TALENT}
               cap={targetMaxTalent}
               onchange={(normal) =>
                 patchCharacterSide("target", { talents: { normal } })}
@@ -1046,7 +1074,7 @@
               label="Skill"
               value={selectedGoal.target.talents.skill}
               min={1}
-              max={10}
+              max={MAX_TALENT}
               cap={targetMaxTalent}
               onchange={(skill) =>
                 patchCharacterSide("target", { talents: { skill } })}
@@ -1055,7 +1083,7 @@
               label="Burst"
               value={selectedGoal.target.talents.burst}
               min={1}
-              max={10}
+              max={MAX_TALENT}
               cap={targetMaxTalent}
               onchange={(burst) =>
                 patchCharacterSide("target", { talents: { burst } })}
@@ -1065,14 +1093,14 @@
               label="Ascension"
               value={selectedGoal.target.ascension}
               min={0}
-              max={6}
+              max={MAX_ASCENSION}
               onchange={(ascension) => patchWeaponSide("target", { ascension })}
             />
             <NumberSliderField
               label="Level"
               value={selectedGoal.target.level}
               min={1}
-              max={90}
+              max={MAX_LEVEL}
               floor={targetMinLevel}
               cap={targetMaxLevel}
               onchange={(level) => patchWeaponSide("target", { level })}
@@ -1088,7 +1116,7 @@
                 label="Ascension"
                 value={selectedGoal.start.ascension}
                 min={0}
-                max={6}
+                max={MAX_ASCENSION}
                 onchange={(ascension) =>
                   patchCharacterSide("start", { ascension })}
               />
@@ -1096,7 +1124,7 @@
                 label="Level"
                 value={selectedGoal.start.level}
                 min={1}
-                max={90}
+                max={MAX_LEVEL}
                 floor={startMinLevel}
                 cap={startMaxLevel}
                 onchange={(level) => patchCharacterSide("start", { level })}
@@ -1105,7 +1133,7 @@
                 label="Normal attack"
                 value={selectedGoal.start.talents.normal}
                 min={1}
-                max={10}
+                max={MAX_TALENT}
                 cap={startMaxTalent}
                 onchange={(normal) =>
                   patchCharacterSide("start", { talents: { normal } })}
@@ -1114,7 +1142,7 @@
                 label="Skill"
                 value={selectedGoal.start.talents.skill}
                 min={1}
-                max={10}
+                max={MAX_TALENT}
                 cap={startMaxTalent}
                 onchange={(skill) =>
                   patchCharacterSide("start", { talents: { skill } })}
@@ -1123,7 +1151,7 @@
                 label="Burst"
                 value={selectedGoal.start.talents.burst}
                 min={1}
-                max={10}
+                max={MAX_TALENT}
                 cap={startMaxTalent}
                 onchange={(burst) =>
                   patchCharacterSide("start", { talents: { burst } })}
@@ -1133,7 +1161,7 @@
                 label="Ascension"
                 value={selectedGoal.start.ascension}
                 min={0}
-                max={6}
+                max={MAX_ASCENSION}
                 onchange={(ascension) =>
                   patchWeaponSide("start", { ascension })}
               />
@@ -1141,7 +1169,7 @@
                 label="Level"
                 value={selectedGoal.start.level}
                 min={1}
-                max={90}
+                max={MAX_LEVEL}
                 floor={startMinLevel}
                 cap={startMaxLevel}
                 onchange={(level) => patchWeaponSide("start", { level })}

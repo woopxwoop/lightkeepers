@@ -48,27 +48,36 @@ async function fetchChannelCatalog(
 async function tryFetchBetaJson<T>(
   file: Parameters<typeof upgradeCostsFileUrl>[0],
 ): Promise<T | null> {
-  const res = await fetchWithTimeout(upgradeCostsFileUrl(file, "beta"));
-  if (res.status === 404 || res.status === 410) return null;
-  if (!res.ok) {
-    console.warn(
-      `/api/upgrade-costs: beta ${file} HTTP ${res.status} — skipping beta merge`,
-    );
+  try {
+    const res = await fetchWithTimeout(upgradeCostsFileUrl(file, "beta"));
+    if (res.status === 404 || res.status === 410) return null;
+    if (!res.ok) {
+      console.warn(
+        `/api/upgrade-costs: beta ${file} HTTP ${res.status} — skipping beta merge`,
+      );
+      return null;
+    }
+    return (await res.json()) as T;
+  } catch (err) {
+    console.warn(`/api/upgrade-costs: beta ${file} failed — skipping`, err);
     return null;
   }
-  return (await res.json()) as T;
 }
 
 /** Soft-fail beta so missing CB upload doesn't break the planner. */
 async function fetchBetaCatalog(): Promise<UpgradeCostsCatalog | null> {
-  const [curves, materials, characters, weapons] = await Promise.all([
-    tryFetchBetaJson<UpgradeCurves>("curves.json"),
-    tryFetchBetaJson<Record<string, UpgradeMaterialMeta>>("materials.json"),
-    tryFetchBetaJson<CharacterUpgradeCosts[]>("characters.json"),
-    tryFetchBetaJson<WeaponUpgradeCosts[]>("weapons.json"),
-  ]);
-  if (!curves || !materials || !characters || !weapons) return null;
-  return { curves, materials, characters, weapons };
+  try {
+    const [curves, materials, characters, weapons] = await Promise.all([
+      tryFetchBetaJson<UpgradeCurves>("curves.json"),
+      tryFetchBetaJson<Record<string, UpgradeMaterialMeta>>("materials.json"),
+      tryFetchBetaJson<CharacterUpgradeCosts[]>("characters.json"),
+      tryFetchBetaJson<WeaponUpgradeCosts[]>("weapons.json"),
+    ]);
+    if (!curves || !materials || !characters || !weapons) return null;
+    return { curves, materials, characters, weapons };
+  } catch {
+    return null;
+  }
 }
 
 async function fetchCatalog(): Promise<UpgradeCostsCatalog> {

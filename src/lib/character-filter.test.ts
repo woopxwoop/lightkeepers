@@ -67,6 +67,34 @@ describe("filterAndSortCharacters release_date", () => {
     assert.equal(ordered[4], "PlayerBoy");
   });
 
+  it("does not pin malformed non-empty released_at", () => {
+    const malformed = char({
+      name_id: "BrokenDate",
+      game_id: 99,
+      released_at: "not-a-date",
+    });
+    const empty = char({
+      name_id: "EmptyDate",
+      game_id: 98,
+      released_at: "",
+    });
+    const missing = char({
+      name_id: "NoDate",
+      game_id: 97,
+      released_at: null,
+    });
+
+    const ordered = filterAndSortCharacters(
+      [hutao, malformed, empty, missing, traveler],
+      { sortBy: "release_date", sortAsc: false },
+    ).map((c) => c.name_id);
+
+    assert.deepEqual(ordered.slice(0, 2).sort(), ["EmptyDate", "NoDate"]);
+    assert.ok(!ordered.slice(0, 2).includes("BrokenDate"));
+    assert.ok(ordered.indexOf("BrokenDate") > ordered.indexOf("Hutao"));
+    assert.equal(ordered.includes("PlayerBoy"), true);
+  });
+
   it("still pins unreleased first when oldest-first", () => {
     const ordered = filterAndSortCharacters([skirk, alyosha, traveler, hutao], {
       sortBy: "release_date",
