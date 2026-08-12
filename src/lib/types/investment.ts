@@ -94,11 +94,7 @@ export interface CharacterBuild {
 
 /** Windowed dropoff impact bands (same vocabulary as Builds upgrade tiers). */
 export type ImportanceImpactTier =
-  | "exceptional"
-  | "high"
-  | "solid"
-  | "modest"
-  | "negligible";
+  "exceptional" | "high" | "solid" | "modest" | "negligible";
 
 /** Shape of `output/characters.json` (aggregate character summaries). */
 export interface CharacterIndexFile {
@@ -214,7 +210,6 @@ export interface TeamReactionEntry {
   count: number;
   share: number;
 }
-
 
 export type TalentSlot = "auto" | "skill" | "burst";
 

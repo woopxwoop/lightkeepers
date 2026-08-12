@@ -13,19 +13,16 @@ import type {
   WeaponUpgradeCosts,
 } from "$lib/types/upgrade-costs";
 
-const MAX_LEVEL = 90;
-const MAX_ASCENSION = 6;
-const MAX_TALENT = 10;
+export const MAX_LEVEL = 90;
+export const MAX_ASCENSION = 6;
+export const MAX_TALENT = 10;
 
 function clamp(n: number, min: number, max: number): number {
   if (!Number.isFinite(n)) return min;
   return Math.min(max, Math.max(min, Math.trunc(n)));
 }
 
-function addItems(
-  bag: Record<string, number>,
-  items: UpgradeCostItem[],
-): void {
+function addItems(bag: Record<string, number>, items: UpgradeCostItem[]): void {
   for (const it of items) {
     const key = String(it.id);
     bag[key] = (bag[key] ?? 0) + it.count;
@@ -66,9 +63,7 @@ export function minAscensionForLevel(
   promotes: UpgradePromoteStep[],
   level: number,
 ): number {
-  const sorted = [...promotes].sort(
-    (a, b) => a.promoteLevel - b.promoteLevel,
-  );
+  const sorted = [...promotes].sort((a, b) => a.promoteLevel - b.promoteLevel);
   for (const step of sorted) {
     if (step.unlockMaxLevel >= level) return step.promoteLevel;
   }
@@ -104,7 +99,9 @@ export function minAscensionForTalent(talentLevel: number): number {
 export function gateCharacterConfig(
   cfg: CharacterUpgradeConfig,
   promotes: UpgradePromoteStep[],
-  opts?: { /** When true, keep ascension and clamp level/talents down. */ preferAscension?: boolean },
+  opts?: {
+    /** When true, keep ascension and clamp level/talents down. */ preferAscension?: boolean;
+  },
 ): CharacterUpgradeConfig {
   if (opts?.preferAscension) {
     const ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
@@ -309,13 +306,15 @@ export function expItemsNeeded(
   items: { id: number; exp: number }[],
 ): UpgradeCostItem[] {
   if (expNeeded <= 0 || items.length === 0) return [];
-  const sorted = [...items].sort((a, b) => b.exp - a.exp);
+  const sorted = items
+    .filter((item) => item.exp > 0)
+    .sort((a, b) => b.exp - a.exp);
+  if (sorted.length === 0) return [];
   let remaining = expNeeded;
   const out: UpgradeCostItem[] = [];
   for (let i = 0; i < sorted.length; i++) {
     const item = sorted[i]!;
     const isLast = i === sorted.length - 1;
-    if (item.exp <= 0) continue;
     const count = isLast
       ? Math.ceil(remaining / item.exp)
       : Math.floor(remaining / item.exp);

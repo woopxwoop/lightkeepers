@@ -575,6 +575,10 @@
       <EmptyState
         message="Set up your roster in Settings to get pull suggestions."
       />
+    {:else}
+      <EmptyState
+        message="No high-usage singles or pairs to suggest for this roster."
+      />
     {/if}
   {:else}
     <div class="suggest-columns">

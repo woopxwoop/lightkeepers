@@ -3,7 +3,12 @@
  * Persistence lives in `calculator-goals-snapshot.ts`.
  */
 
-import { UPGRADE_DEFAULTS } from "$lib/upgrade-costs";
+import {
+  MAX_ASCENSION,
+  MAX_LEVEL,
+  MAX_TALENT,
+  UPGRADE_DEFAULTS,
+} from "$lib/upgrade-costs";
 import type {
   AggregatedUpgradeCosts,
   CalculatorGoal,
@@ -19,6 +24,7 @@ import type {
 
 export const CALCULATOR_GOALS_VERSION = 1 as const;
 export const MAX_CALCULATOR_GOALS = 64;
+export const MAX_GOAL_ID_LENGTH = 64;
 
 export function emptyGoalsState(): CalculatorGoalsState {
   return { version: CALCULATOR_GOALS_VERSION, goals: [], selectedId: null };
@@ -49,9 +55,7 @@ function cloneWeaponConfig(
 
 export function createCharacterGoal(
   name_id: string,
-  overrides?: Partial<
-    Pick<CharacterCalculatorGoal, "start" | "target" | "id">
-  >,
+  overrides?: Partial<Pick<CharacterCalculatorGoal, "start" | "target" | "id">>,
 ): CharacterCalculatorGoal {
   return {
     id: overrides?.id ?? newGoalId(),
@@ -108,17 +112,32 @@ function parseCharacterConfig(
   if (!isRecord(value)) return cloneCharConfig(fallback);
   const talents = isRecord(value.talents) ? value.talents : {};
   return {
-    level: parseIntInRange(value.level, 1, 90, fallback.level),
-    ascension: parseIntInRange(value.ascension, 0, 6, fallback.ascension),
+    level: parseIntInRange(value.level, 1, MAX_LEVEL, fallback.level),
+    ascension: parseIntInRange(
+      value.ascension,
+      0,
+      MAX_ASCENSION,
+      fallback.ascension,
+    ),
     talents: {
       normal: parseIntInRange(
         talents.normal,
         1,
-        10,
+        MAX_TALENT,
         fallback.talents.normal,
       ),
-      skill: parseIntInRange(talents.skill, 1, 10, fallback.talents.skill),
-      burst: parseIntInRange(talents.burst, 1, 10, fallback.talents.burst),
+      skill: parseIntInRange(
+        talents.skill,
+        1,
+        MAX_TALENT,
+        fallback.talents.skill,
+      ),
+      burst: parseIntInRange(
+        talents.burst,
+        1,
+        MAX_TALENT,
+        fallback.talents.burst,
+      ),
     },
   };
 }
@@ -129,8 +148,13 @@ function parseWeaponConfig(
 ): WeaponUpgradeConfig {
   if (!isRecord(value)) return cloneWeaponConfig(fallback);
   return {
-    level: parseIntInRange(value.level, 1, 90, fallback.level),
-    ascension: parseIntInRange(value.ascension, 0, 6, fallback.ascension),
+    level: parseIntInRange(value.level, 1, MAX_LEVEL, fallback.level),
+    ascension: parseIntInRange(
+      value.ascension,
+      0,
+      MAX_ASCENSION,
+      fallback.ascension,
+    ),
   };
 }
 
@@ -140,15 +164,19 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
 
   const goalsRaw = Array.isArray(raw.goals) ? raw.goals : [];
   const goals: CalculatorGoal[] = [];
+  const seenIds = new Set<string>();
 
   for (const item of goalsRaw) {
     if (!isRecord(item)) continue;
     if (typeof item.id !== "string" || item.id.length === 0) continue;
+    if (item.id.length > MAX_GOAL_ID_LENGTH) continue;
+    if (seenIds.has(item.id)) continue;
 
     if (item.kind === "character") {
       if (typeof item.name_id !== "string" || item.name_id.length === 0) {
         continue;
       }
+      seenIds.add(item.id);
       goals.push({
         id: item.id,
         kind: "character",
@@ -172,7 +200,14 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
           : typeof item.weapon_id === "string"
             ? Number(item.weapon_id)
             : NaN;
-      if (!Number.isFinite(weaponId) || !Number.isInteger(weaponId)) continue;
+      if (
+        !Number.isFinite(weaponId) ||
+        !Number.isInteger(weaponId) ||
+        weaponId <= 0
+      ) {
+        continue;
+      }
+      seenIds.add(item.id);
       goals.push({
         id: item.id,
         kind: "weapon",
@@ -197,7 +232,9 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
   };
 }
 
-export function cloneGoalsState(state: CalculatorGoalsState): CalculatorGoalsState {
+export function cloneGoalsState(
+  state: CalculatorGoalsState,
+): CalculatorGoalsState {
   return parseGoalsState(JSON.parse(JSON.stringify(state)) as unknown);
 }
 

@@ -40,10 +40,7 @@ type GoalsTable = {
     opts: { onConflict: string },
   ) => Promise<{ error: unknown }>;
   delete: () => {
-    eq: (
-      col: string,
-      value: string,
-    ) => Promise<{ error: unknown }>;
+    eq: (col: string, value: string) => Promise<{ error: unknown }>;
   };
 };
 

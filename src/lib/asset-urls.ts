@@ -188,9 +188,7 @@ export async function fetchCharacterKitIndex(
  * Fetch + parse one character's kit JSON from the CDN.
  * Tries live first, then beta (`genshin/data/beta/characters/`) on 404/410.
  */
-export async function fetchCharacterKit(
-  nameId: string,
-): Promise<CharacterKit> {
+export async function fetchCharacterKit(nameId: string): Promise<CharacterKit> {
   for (const channel of ["live", "beta"] as const) {
     const resp = await fetchWithTimeout(characterKitUrl(nameId, channel));
     if (resp.ok) return (await resp.json()) as CharacterKit;

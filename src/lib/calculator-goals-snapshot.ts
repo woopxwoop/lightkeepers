@@ -88,34 +88,59 @@ export async function fetchGoalsCloud(): Promise<CalculatorGoal[] | null> {
   }
 }
 
+const POST_TIMEOUT_MS = 10_000;
+const MAX_ERROR_MESSAGE_LEN = 200;
+const GENERIC_SYNC_ERROR = "Could not save goals";
+
 export async function postGoals(
   state: CalculatorGoalsState,
 ): Promise<{ ok: true } | { ok: false; status: number; message?: string }> {
   const normalized = parseGoalsState(state);
-  const res = await fetch("/api/calculator-goals", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ goals: normalized.goals }),
-  });
-  if (res.ok) return { ok: true };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), POST_TIMEOUT_MS);
 
-  let message: string | undefined;
   try {
-    const text = await res.text();
-    if (text) {
-      try {
-        const parsed = JSON.parse(text) as { message?: unknown };
-        message =
-          typeof parsed.message === "string" && parsed.message
-            ? parsed.message
-            : text;
-      } catch {
-        message = text;
-      }
-    }
-  } catch {
-    /* ignore */
-  }
+    const res = await fetch("/api/calculator-goals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goals: normalized.goals }),
+      signal: controller.signal,
+    });
+    if (res.ok) return { ok: true };
 
-  return { ok: false, status: res.status, message };
+    let message: string | undefined;
+    try {
+      const text = await res.text();
+      if (text) {
+        try {
+          const parsed = JSON.parse(text) as { message?: unknown };
+          message =
+            typeof parsed.message === "string" &&
+            parsed.message &&
+            parsed.message.length <= MAX_ERROR_MESSAGE_LEN
+              ? parsed.message
+              : GENERIC_SYNC_ERROR;
+        } catch {
+          message = GENERIC_SYNC_ERROR;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    return { ok: false, status: res.status, message };
+  } catch (err) {
+    const timedOut =
+      typeof err === "object" &&
+      err !== null &&
+      "name" in err &&
+      err.name === "AbortError";
+    return {
+      ok: false,
+      status: timedOut ? 408 : 0,
+      message: timedOut ? "Request timed out" : GENERIC_SYNC_ERROR,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }

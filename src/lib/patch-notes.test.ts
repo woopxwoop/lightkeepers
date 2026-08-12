@@ -58,7 +58,12 @@ describe("patch notes", () => {
   });
 
   it("parsePatchNoteMarkdown rejects calendar-invalid dates", () => {
-    for (const bad of ["2026-02-31", "2026-99-99", "2026-00-10", "2026-13-01"]) {
+    for (const bad of [
+      "2026-02-31",
+      "2026-99-99",
+      "2026-00-10",
+      "2026-13-01",
+    ]) {
       assert.throws(
         () =>
           parsePatchNoteMarkdown(
@@ -78,10 +83,7 @@ describe("patch notes", () => {
     assert.match(html, /<code>name_id<\/code>/);
     assert.match(html, /<strong>Patch notes<\/strong>/);
     assert.match(html, /<em>Discord<\/em>/);
-    assert.match(
-      html,
-      /<a href="https:\/\/lightkeepers\.moe\/patch-notes"/,
-    );
+    assert.match(html, /<a href="https:\/\/lightkeepers\.moe\/patch-notes"/);
     assert.match(html, /<ul>/);
   });
 });

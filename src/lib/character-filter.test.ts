@@ -4,7 +4,8 @@ import { filterAndSortCharacters } from "./character-filter.ts";
 import type { CharacterOwned } from "./definitions.ts";
 
 function char(
-  partial: Partial<CharacterOwned> & Pick<CharacterOwned, "name_id" | "game_id">,
+  partial: Partial<CharacterOwned> &
+    Pick<CharacterOwned, "name_id" | "game_id">,
 ): CharacterOwned {
   return {
     created_at: "",
@@ -67,10 +68,10 @@ describe("filterAndSortCharacters release_date", () => {
   });
 
   it("still pins unreleased first when oldest-first", () => {
-    const ordered = filterAndSortCharacters(
-      [skirk, alyosha, traveler, hutao],
-      { sortBy: "release_date", sortAsc: true },
-    ).map((c) => c.name_id);
+    const ordered = filterAndSortCharacters([skirk, alyosha, traveler, hutao], {
+      sortBy: "release_date",
+      sortAsc: true,
+    }).map((c) => c.name_id);
 
     assert.equal(ordered[0], "Alyosha");
     assert.equal(ordered[1], "PlayerBoy");

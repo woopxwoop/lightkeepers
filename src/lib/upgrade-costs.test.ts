@@ -7,7 +7,7 @@ import type {
   UpgradeCurves,
   WeaponUpgradeCosts,
 } from "./types/upgrade-costs.ts";
-  import {
+import {
   diffCharacterUpgrade,
   diffWeaponUpgrade,
   expItemsNeeded,

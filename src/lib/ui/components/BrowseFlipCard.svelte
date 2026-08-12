@@ -20,9 +20,7 @@
   let showBeta = $derived(
     isBetaCharacter(character.name_id, character.released_at),
   );
-  let showNew = $derived(
-    !showBeta && isNewCharacter(character.released_at),
-  );
+  let showNew = $derived(!showBeta && isNewCharacter(character.released_at));
 </script>
 
 <a

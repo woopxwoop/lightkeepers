@@ -1,6 +1,9 @@
 /**
  * Lazy client loader for per-character Builds summaries (planner autofill).
  * Goes through `/api/character-summary/[key]` — CDN has no browser CORS.
+ *
+ * `null` = genuinely missing (HTTP 404). Transient fetch/parse failures throw
+ * so callers can leave existing targets unchanged.
  */
 import type { CharacterIndex } from "$lib/types/investment";
 
@@ -36,9 +39,6 @@ export function loadCharacterSummary(
       const data = (await res.json()) as CharacterIndex;
       cache.set(key, data);
       return data;
-    } catch {
-      // Don't poison cache on transient errors — allow retry.
-      return null;
     } finally {
       pending.delete(key);
     }

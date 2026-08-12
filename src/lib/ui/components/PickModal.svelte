@@ -55,6 +55,10 @@
 
   $effect(() => {
     if (!open) return;
+    const previous =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     void tick().then(() => searchEl?.focus());
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
@@ -63,7 +67,10 @@
       }
     }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (previous?.isConnected) previous.focus();
+    };
   });
 
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
@@ -231,7 +238,11 @@
     align-content: start;
     padding: 0.05rem 0.15rem 0.2rem 0;
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--foreground-color) 22%, transparent)
+    scrollbar-color: color-mix(
+        in srgb,
+        var(--foreground-color) 22%,
+        transparent
+      )
       transparent;
   }
 

@@ -32,10 +32,7 @@
     <ul class="note-list">
       {#each data.notes as note (note.slug)}
         <li>
-          <a
-            class="note-row"
-            href={resolve(`/patch-notes/${note.slug}`)}
-          >
+          <a class="note-row" href={resolve(`/patch-notes/${note.slug}`)}>
             <time class="note-date" datetime={note.date}
               >{formatDate(note.date)}</time
             >
@@ -64,7 +61,8 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    border-top: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
+    border-top: 1px solid
+      color-mix(in oklab, var(--foreground) 12%, transparent);
   }
 
   .note-row {

@@ -1,6 +1,10 @@
 import { error } from "@sveltejs/kit";
 import type { User } from "better-auth";
-import { MAX_CALCULATOR_GOALS } from "$lib/calculator-goals";
+import {
+  MAX_CALCULATOR_GOALS,
+  MAX_GOAL_ID_LENGTH,
+} from "$lib/calculator-goals";
+import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
 import type { CalculatorGoal } from "$lib/types/calculator-goals";
 
 /** Soft cap — Genshin roster is ~100; leave headroom for future growth. */
@@ -66,6 +70,44 @@ export function requireNumberInRange(
   return value;
 }
 
+/** Require a finite integer inside an inclusive range. */
+export function requireIntegerInRange(
+  value: unknown,
+  min: number,
+  max: number,
+  message: string,
+): number {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    !Number.isInteger(value) ||
+    value < min ||
+    value > max
+  ) {
+    throw error(400, message);
+  }
+  return value;
+}
+
+/** Require a plain object whose own keys are exactly `keys`. */
+function requireExactKeys(
+  value: unknown,
+  keys: readonly string[],
+  message: string,
+): Record<string, unknown> {
+  if (typeof value !== "object" || value === null) {
+    throw error(400, message);
+  }
+  const actual = Object.keys(value);
+  if (
+    actual.length !== keys.length ||
+    keys.some((key) => !actual.includes(key))
+  ) {
+    throw error(400, message);
+  }
+  return value as Record<string, unknown>;
+}
+
 /** Persisted roster entry accepted by `/api/roster`. */
 export type RosterEntry = { name_id: string; isOwned: boolean };
 
@@ -81,18 +123,11 @@ export function requireRosterEntries(value: unknown): RosterEntry[] {
     );
   }
   return value.map((item) => {
-    if (typeof item !== "object" || item === null) {
-      throw error(400, "Invalid roster payload");
-    }
-    const keys = Object.keys(item);
-    if (
-      keys.length !== 2 ||
-      !keys.includes("name_id") ||
-      !keys.includes("isOwned")
-    ) {
-      throw error(400, "Invalid roster payload");
-    }
-    const { name_id, isOwned } = item as Record<string, unknown>;
+    const { name_id, isOwned } = requireExactKeys(
+      item,
+      ["name_id", "isOwned"],
+      "Invalid roster payload",
+    );
     if (
       typeof name_id !== "string" ||
       name_id.length === 0 ||
@@ -105,28 +140,22 @@ export function requireRosterEntries(value: unknown): RosterEntry[] {
   });
 }
 
+const GOALS_PAYLOAD_ERROR = "Invalid calculator goals payload";
+
 function requireTalentLevels(value: unknown): {
   normal: number;
   skill: number;
   burst: number;
 } {
-  if (typeof value !== "object" || value === null) {
-    throw error(400, "Invalid calculator goals payload");
-  }
-  const keys = Object.keys(value);
-  if (
-    keys.length !== 3 ||
-    !keys.includes("normal") ||
-    !keys.includes("skill") ||
-    !keys.includes("burst")
-  ) {
-    throw error(400, "Invalid calculator goals payload");
-  }
-  const { normal, skill, burst } = value as Record<string, unknown>;
+  const { normal, skill, burst } = requireExactKeys(
+    value,
+    ["normal", "skill", "burst"],
+    GOALS_PAYLOAD_ERROR,
+  );
   return {
-    normal: requireNumberInRange(normal, 1, 10, "Invalid calculator goals payload"),
-    skill: requireNumberInRange(skill, 1, 10, "Invalid calculator goals payload"),
-    burst: requireNumberInRange(burst, 1, 10, "Invalid calculator goals payload"),
+    normal: requireIntegerInRange(normal, 1, MAX_TALENT, GOALS_PAYLOAD_ERROR),
+    skill: requireIntegerInRange(skill, 1, MAX_TALENT, GOALS_PAYLOAD_ERROR),
+    burst: requireIntegerInRange(burst, 1, MAX_TALENT, GOALS_PAYLOAD_ERROR),
   };
 }
 
@@ -135,26 +164,18 @@ function requireCharacterUpgradeConfig(value: unknown): {
   ascension: number;
   talents: { normal: number; skill: number; burst: number };
 } {
-  if (typeof value !== "object" || value === null) {
-    throw error(400, "Invalid calculator goals payload");
-  }
-  const keys = Object.keys(value);
-  if (
-    keys.length !== 3 ||
-    !keys.includes("level") ||
-    !keys.includes("ascension") ||
-    !keys.includes("talents")
-  ) {
-    throw error(400, "Invalid calculator goals payload");
-  }
-  const { level, ascension, talents } = value as Record<string, unknown>;
+  const { level, ascension, talents } = requireExactKeys(
+    value,
+    ["level", "ascension", "talents"],
+    GOALS_PAYLOAD_ERROR,
+  );
   return {
-    level: requireNumberInRange(level, 1, 90, "Invalid calculator goals payload"),
-    ascension: requireNumberInRange(
+    level: requireIntegerInRange(level, 1, MAX_LEVEL, GOALS_PAYLOAD_ERROR),
+    ascension: requireIntegerInRange(
       ascension,
       0,
-      6,
-      "Invalid calculator goals payload",
+      MAX_ASCENSION,
+      GOALS_PAYLOAD_ERROR,
     ),
     talents: requireTalentLevels(talents),
   };
@@ -164,25 +185,18 @@ function requireWeaponUpgradeConfig(value: unknown): {
   level: number;
   ascension: number;
 } {
-  if (typeof value !== "object" || value === null) {
-    throw error(400, "Invalid calculator goals payload");
-  }
-  const keys = Object.keys(value);
-  if (
-    keys.length !== 2 ||
-    !keys.includes("level") ||
-    !keys.includes("ascension")
-  ) {
-    throw error(400, "Invalid calculator goals payload");
-  }
-  const { level, ascension } = value as Record<string, unknown>;
+  const { level, ascension } = requireExactKeys(
+    value,
+    ["level", "ascension"],
+    GOALS_PAYLOAD_ERROR,
+  );
   return {
-    level: requireNumberInRange(level, 1, 90, "Invalid calculator goals payload"),
-    ascension: requireNumberInRange(
+    level: requireIntegerInRange(level, 1, MAX_LEVEL, GOALS_PAYLOAD_ERROR),
+    ascension: requireIntegerInRange(
       ascension,
       0,
-      6,
-      "Invalid calculator goals payload",
+      MAX_ASCENSION,
+      GOALS_PAYLOAD_ERROR,
     ),
   };
 }
@@ -193,10 +207,7 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
     throw error(400, "Invalid calculator goals payload");
   }
   if (value.length > MAX_CALCULATOR_GOALS) {
-    throw error(
-      400,
-      `goals must have at most ${MAX_CALCULATOR_GOALS} entries`,
-    );
+    throw error(400, `goals must have at most ${MAX_CALCULATOR_GOALS} entries`);
   }
 
   const seen = new Set<string>();
@@ -209,25 +220,19 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
     if (
       typeof id !== "string" ||
       id.length === 0 ||
-      id.length > 64 ||
+      id.length > MAX_GOAL_ID_LENGTH ||
       seen.has(id)
     ) {
-      throw error(400, "Invalid calculator goals payload");
+      throw error(400, GOALS_PAYLOAD_ERROR);
     }
     seen.add(id);
 
     if (kind === "character") {
-      const keys = Object.keys(row);
-      if (
-        keys.length !== 5 ||
-        !keys.includes("id") ||
-        !keys.includes("kind") ||
-        !keys.includes("name_id") ||
-        !keys.includes("start") ||
-        !keys.includes("target")
-      ) {
-        throw error(400, "Invalid calculator goals payload");
-      }
+      requireExactKeys(
+        row,
+        ["id", "kind", "name_id", "start", "target"],
+        GOALS_PAYLOAD_ERROR,
+      );
       const name_id = requireCharacterNameId(row.name_id);
       return {
         id,
@@ -239,23 +244,17 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
     }
 
     if (kind === "weapon") {
-      const keys = Object.keys(row);
-      if (
-        keys.length !== 5 ||
-        !keys.includes("id") ||
-        !keys.includes("kind") ||
-        !keys.includes("weapon_id") ||
-        !keys.includes("start") ||
-        !keys.includes("target")
-      ) {
-        throw error(400, "Invalid calculator goals payload");
-      }
+      requireExactKeys(
+        row,
+        ["id", "kind", "weapon_id", "start", "target"],
+        GOALS_PAYLOAD_ERROR,
+      );
       const weapon_id = requireFiniteInteger(
         row.weapon_id,
-        "Invalid calculator goals payload",
+        GOALS_PAYLOAD_ERROR,
       );
       if (weapon_id <= 0) {
-        throw error(400, "Invalid calculator goals payload");
+        throw error(400, GOALS_PAYLOAD_ERROR);
       }
       return {
         id,

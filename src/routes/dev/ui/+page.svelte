@@ -277,8 +277,7 @@
         value: key,
         label: `${w.name} (${w.stars}★)`,
       }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-      .slice(0, 120);
+      .sort((a, b) => a.label.localeCompare(b.label));
   });
 
   function openPickDemo(kind: "character" | "weapon") {
@@ -1791,7 +1790,7 @@
           {@const src = weaponIconSrc(opt.value)}
           <div class="weapon-tile">
             {#if src}
-              <img src={src} alt="" loading="lazy" />
+              <img {src} alt="" loading="lazy" />
             {/if}
           </div>
         {/if}
@@ -1821,16 +1820,6 @@
     place-items: center;
     background: var(--background-mid);
   }
-
-
-
-
-
-
-
-
-
-
 
   :global(.analytics-demo) {
     display: flex;

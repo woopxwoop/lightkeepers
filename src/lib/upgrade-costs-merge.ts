@@ -11,15 +11,30 @@ import type {
   WeaponUpgradeCosts,
 } from "$lib/types/upgrade-costs";
 
+function sortedCharacters(
+  characters: CharacterUpgradeCosts[],
+): CharacterUpgradeCosts[] {
+  return [...characters].sort((a, b) => a.name_id.localeCompare(b.name_id));
+}
+
+function sortedWeapons(weapons: WeaponUpgradeCosts[]): WeaponUpgradeCosts[] {
+  return [...weapons].sort((a, b) => a.id - b.id);
+}
+
 export function mergeUpgradeCostCatalogs(
   live: UpgradeCostsCatalog,
   beta: UpgradeCostsCatalog | null | undefined,
 ): UpgradeCostsCatalog {
-  if (!beta) return live;
+  if (!beta) {
+    return {
+      curves: live.curves,
+      materials: live.materials,
+      characters: sortedCharacters(live.characters),
+      weapons: sortedWeapons(live.weapons),
+    };
+  }
 
-  const charById = new Map(
-    live.characters.map((c) => [c.name_id, c] as const),
-  );
+  const charById = new Map(live.characters.map((c) => [c.name_id, c] as const));
   for (const c of beta.characters) {
     if (!charById.has(c.name_id)) charById.set(c.name_id, c);
   }
@@ -34,17 +49,10 @@ export function mergeUpgradeCostCatalogs(
     ...live.materials,
   };
 
-  const characters = [...charById.values()].sort((a, b) =>
-    a.name_id.localeCompare(b.name_id),
-  ) as CharacterUpgradeCosts[];
-  const weapons = [...weaponById.values()].sort(
-    (a, b) => a.id - b.id,
-  ) as WeaponUpgradeCosts[];
-
   return {
     curves: live.curves,
     materials,
-    characters,
-    weapons,
+    characters: sortedCharacters([...charById.values()]),
+    weapons: sortedWeapons([...weaponById.values()]),
   };
 }

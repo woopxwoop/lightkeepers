@@ -3,10 +3,7 @@
  * Live kits under `genshin/data/characters/`; CB kits under `genshin/data/beta/characters/`.
  */
 import type { CharacterKit } from "$lib/types/character-kit";
-import {
-  characterKitUrl,
-  type CharacterKitChannel,
-} from "$lib/asset-urls";
+import { characterKitUrl, type CharacterKitChannel } from "$lib/asset-urls";
 import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 import { mergeTravelerKits, travelerElementKitId } from "$lib/traveler-kits";

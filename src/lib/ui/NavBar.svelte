@@ -13,7 +13,6 @@
   import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
 
   const homePath = resolve("/");
-  const toolsPath = resolve("/tools/abyss");
   const abyssPath = resolve("/tools/abyss");
   const stygianPath = resolve("/tools/stygian");
   const pullsPath = resolve("/tools/pulls");
@@ -63,10 +62,7 @@
     { label: "Characters", path: charactersPath, match: "prefix" as const },
   ] as const;
 
-  function isPathActive(
-    path: string,
-    match: "exact" | "prefix",
-  ): boolean {
+  function isPathActive(path: string, match: "exact" | "prefix"): boolean {
     if (match === "exact") return page.url.pathname === path;
     const current = page.url.pathname;
     return current === path || current.startsWith(`${path}/`);
@@ -80,9 +76,7 @@
     return isPathActive(link.path, link.match);
   }
 
-  const onToolsPage = $derived(
-    page.url.pathname.startsWith(resolve("/tools")),
-  );
+  const onToolsPage = $derived(isPathActive(resolve("/tools"), "prefix"));
 
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(resolve("/settings")),
@@ -266,9 +260,8 @@
     <div class="hidden md:flex items-center gap-6 relative">
       <div class="nav-menu-item">
         <a
-          href={toolsPath}
+          href={abyssPath}
           class="nav-link"
-          aria-current={onToolsPage ? "page" : undefined}
           onmouseenter={onToolsEnter}
           onmouseleave={onToolsLeave}
           onfocus={onToolsEnter}
@@ -410,7 +403,6 @@
           class:is-active={onToolsPage && !toolsDrawerExpanded}
           style="--i: 0"
           aria-expanded={toolsDrawerExpanded}
-          aria-current={onToolsPage ? "page" : undefined}
           onclick={() => {
             toolsDrawerExpanded = !toolsDrawerExpanded;
             if (toolsDrawerExpanded) settingsDrawerExpanded = false;

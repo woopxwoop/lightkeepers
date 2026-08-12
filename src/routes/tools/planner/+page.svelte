@@ -54,11 +54,15 @@
     CalculatorGoal,
     CalculatorGoalsState,
   } from "$lib/types/calculator-goals";
-  import type { UpgradeCostsCatalog, UpgradePromoteStep } from "$lib/types/upgrade-costs";
+  import type {
+    UpgradeCostsCatalog,
+    UpgradePromoteStep,
+  } from "$lib/types/upgrade-costs";
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import IconX from "$lib/ui/icons/IconX.svelte";
+  import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
 
@@ -79,43 +83,47 @@
   let configuring = $state(false);
   /** Start sliders are collapsed until the user expands them. */
   let showStartConfig = $state(false);
+  let configCloseEl: HTMLButtonElement | null = $state(null);
+  let configFocusReturn: HTMLElement | null = $state(null);
 
   const session = authClient.useSession();
 
   /** Dirty ignores selectedId — picking a row shouldn't demand Save. */
+  let parsedSavedSnapshot = $derived.by((): CalculatorGoalsState | null => {
+    if (!savedSnapshot) return null;
+    try {
+      return parseGoalsState(JSON.parse(savedSnapshot) as unknown);
+    } catch {
+      return null;
+    }
+  });
   let hasUnsavedChanges = $derived.by(() => {
     if (!goalsHydrated || !savedSnapshot) return false;
-    try {
-      const saved = parseGoalsState(JSON.parse(savedSnapshot) as unknown);
-      return (
-        JSON.stringify(parseGoalsState(goalsState).goals) !==
-        JSON.stringify(saved.goals)
-      );
-    } catch {
+    if (!parsedSavedSnapshot) {
       return goalsDiffersFromSnapshot(goalsState, savedSnapshot);
     }
+    return (
+      JSON.stringify(parseGoalsState(goalsState).goals) !==
+      JSON.stringify(parsedSavedSnapshot.goals)
+    );
   });
   let savedVisible = $derived(showSaved && !hasUnsavedChanges);
   let changedCount = $derived.by(() => {
     if (!savedSnapshot) return 0;
-    try {
-      const saved = parseGoalsState(JSON.parse(savedSnapshot) as unknown);
-      const current = parseGoalsState(goalsState).goals;
-      const savedMap = new Map(saved.goals.map((g) => [g.id, g]));
-      let n = 0;
-      const seen = new Set<string>();
-      for (const g of current) {
-        seen.add(g.id);
-        const prev = savedMap.get(g.id);
-        if (!prev || JSON.stringify(prev) !== JSON.stringify(g)) n += 1;
-      }
-      for (const id of savedMap.keys()) {
-        if (!seen.has(id)) n += 1;
-      }
-      return n;
-    } catch {
-      return goalsState.goals.length;
+    if (!parsedSavedSnapshot) return goalsState.goals.length;
+    const current = parseGoalsState(goalsState).goals;
+    const savedMap = new Map(parsedSavedSnapshot.goals.map((g) => [g.id, g]));
+    let n = 0;
+    const seen = new Set<string>();
+    for (const g of current) {
+      seen.add(g.id);
+      const prev = savedMap.get(g.id);
+      if (!prev || JSON.stringify(prev) !== JSON.stringify(g)) n += 1;
     }
+    for (const id of savedMap.keys()) {
+      if (!seen.has(id)) n += 1;
+    }
+    return n;
   });
 
   $effect(() => {
@@ -148,27 +156,39 @@
       const local = readGoalsLocal();
       let next = local;
 
-      const { data: sess } = await authClient.getSession();
-      if (cancelled) return;
-
-      if (sess) {
-        const cloud = await fetchGoalsCloud();
+      try {
+        const { data: sess } = await authClient.getSession();
         if (cancelled) return;
-        if (cloud) {
-          // Saved cloud list wins (including intentionally empty []).
-          next = applyCloudGoals(local, cloud);
-          persistGoalsLocal(next);
+
+        if (sess) {
+          const cloud = await fetchGoalsCloud();
+          if (cancelled) return;
+          if (cloud) {
+            // Saved cloud list wins (including intentionally empty []).
+            next = applyCloudGoals(local, cloud);
+            persistGoalsLocal(next);
+          }
+          // No cloud row: keep local guest goals; user Saves to upload.
         }
-        // No cloud row: keep local guest goals; user Saves to upload.
+      } catch {
+        if (cancelled) return;
+        next = local;
       }
 
+      if (cancelled) return;
       const pending = captureGoals(next);
       goalsState = pending.state;
       savedSnapshot = pending.json;
       goalsHydrated = true;
     }
 
-    void hydrate();
+    void hydrate().catch(() => {
+      if (cancelled) return;
+      const pending = captureGoals(readGoalsLocal());
+      goalsState = pending.state;
+      savedSnapshot = pending.json;
+      goalsHydrated = true;
+    });
     return () => {
       cancelled = true;
     };
@@ -273,9 +293,6 @@
   }
 
   function goalSummary(goal: CalculatorGoal): string {
-    if (goal.kind === "character") {
-      return `Lv ${goal.start.level} → ${goal.target.level}`;
-    }
     return `Lv ${goal.start.level} → ${goal.target.level}`;
   }
 
@@ -300,7 +317,12 @@
     promotes: UpgradePromoteStep[],
   ) {
     const seq = ++autofillSeq;
-    const builds = await loadCharacterSummary(simKeyForCatalogCharacter(nameId));
+    let builds;
+    try {
+      builds = await loadCharacterSummary(simKeyForCatalogCharacter(nameId));
+    } catch {
+      return null;
+    }
     if (seq !== autofillSeq) return null;
     return plannerTargetFromBuilds(builds, promotes);
   }
@@ -336,8 +358,7 @@
     cancelPick();
     const goal = createCharacterGoal(nameId);
     commitGoals(appendGoal(goalsState, goal));
-    showStartConfig = false;
-    configuring = true;
+    beginConfigure();
     void (async () => {
       const target = await targetFromBuilds(nameId, row.promotes);
       if (!target) return;
@@ -352,8 +373,7 @@
     cancelPick();
     const goal = createWeaponGoal(weaponId);
     commitGoals(appendGoal(goalsState, goal));
-    showStartConfig = false;
-    configuring = true;
+    beginConfigure();
   }
 
   function selectGoal(id: string) {
@@ -362,18 +382,27 @@
     commitGoals({ ...goalsState, selectedId: id });
   }
 
+  function beginConfigure() {
+    const active = document.activeElement;
+    configFocusReturn = active instanceof HTMLElement ? active : null;
+    showStartConfig = false;
+    configuring = true;
+  }
+
   function openConfigure(id: string) {
     cancelPick();
     if (goalsState.selectedId !== id) {
       commitGoals({ ...goalsState, selectedId: id });
     }
-    showStartConfig = false;
-    configuring = true;
+    beginConfigure();
   }
 
   function closeConfigure() {
     configuring = false;
     showStartConfig = false;
+    const previous = configFocusReturn;
+    configFocusReturn = null;
+    if (previous?.isConnected) previous.focus();
   }
 
   function deleteGoal(id: string) {
@@ -383,6 +412,7 @@
 
   $effect(() => {
     if (!configuring || !browser) return;
+    void tick().then(() => configCloseEl?.focus());
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -870,276 +900,271 @@
     </section>
   {/if}
 
-
-    {#if configuring && selectedGoal}
-      <div class="config-root">
-        <button
-          type="button"
-          class="config-backdrop"
-          tabindex="-1"
-          aria-label="Close"
-          onclick={closeConfigure}
-          transition:fade={{ duration: configMotion ?? 160 }}
-        ></button>
-        <div
-          class="config-panel"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Configure goal"
-          transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
-        >
-          <header class="config-head">
-            <h2 class="section-title">Configure</h2>
-            <button
-              type="button"
-              class="config-close"
-              onclick={closeConfigure}
-              aria-label="Close"
-            >
-              <IconX size={18} />
-            </button>
-          </header>
-          <div class="picker-row">
-            {#if selectedGoal.kind === "character"}
-              <label class="field">
-                <span class="field-label">Character</span>
-                <CharacterSearchSelect
-                  bind:value={
-                    () => selectedGoal.name_id,
-                    (name_id) => {
-                      if (!catalog) return;
-                      const row = catalog.characters.find(
-                        (c) => c.name_id === name_id,
-                      );
-                      updateSelected((g) => {
-                        if (g.kind !== "character") return g;
-                        if (!row) return { ...g, name_id };
-                        return {
-                          ...g,
-                          name_id,
-                          start: gateCharacterConfig(g.start, row.promotes),
-                          target: gateCharacterConfig(g.target, row.promotes),
-                        };
-                      });
-                      if (!row) return;
-                      const goalId = selectedGoal.id;
-                      void (async () => {
-                        const target = await targetFromBuilds(
-                          name_id,
-                          row.promotes,
-                        );
-                        if (!target) return;
-                        const current = findGoal(goalsState, goalId);
-                        if (
-                          !current ||
-                          current.kind !== "character" ||
-                          current.name_id !== name_id
-                        ) {
-                          return;
-                        }
-                        commitGoals(
-                          replaceGoal(goalsState, { ...current, target }),
-                        );
-                      })();
-                    }
-                  }
-                  options={characterOptions}
-                  getCharacter={lookupCharacter}
-                  placeholder="Search character…"
-                  aria-label="Search character"
-                />
-              </label>
-            {:else}
-              <label class="field">
-                <span class="field-label">Weapon</span>
-                <CharacterSearchSelect
-                  bind:value={
-                    () => String(selectedGoal.weapon_id),
-                    (raw) => {
-                      if (!catalog) return;
-                      const weapon_id = Number(raw);
-                      const row = catalog.weapons.find(
-                        (w) => w.id === weapon_id,
-                      );
-                      updateSelected((g) => {
-                        if (g.kind !== "weapon") return g;
-                        if (!row) return { ...g, weapon_id };
-                        return {
-                          ...g,
-                          weapon_id,
-                          start: gateWeaponConfig(g.start, row.promotes),
-                          target: gateWeaponConfig(g.target, row.promotes),
-                        };
-                      });
-                    }
-                  }
-                  options={weaponOptions}
-                  getIconSrc={(id) => {
-                    const row = catalog?.weapons.find(
-                      (w) => String(w.id) === id,
+  {#if configuring && selectedGoal}
+    <div class="config-root">
+      <button
+        type="button"
+        class="config-backdrop"
+        tabindex="-1"
+        aria-label="Close"
+        onclick={closeConfigure}
+        transition:fade={{ duration: configMotion ?? 160 }}
+      ></button>
+      <div
+        class="config-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Configure goal"
+        transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
+      >
+        <header class="config-head">
+          <h2 class="section-title">Configure</h2>
+          <button
+            type="button"
+            class="config-close"
+            bind:this={configCloseEl}
+            onclick={closeConfigure}
+            aria-label="Close"
+          >
+            <IconX size={18} />
+          </button>
+        </header>
+        <div class="picker-row">
+          {#if selectedGoal.kind === "character"}
+            <label class="field">
+              <span class="field-label">Character</span>
+              <CharacterSearchSelect
+                bind:value={
+                  () => selectedGoal.name_id,
+                  (name_id) => {
+                    if (!catalog) return;
+                    const row = catalog.characters.find(
+                      (c) => c.name_id === name_id,
                     );
-                    return row?.icon ? assetUrl(row.icon) : null;
-                  }}
-                  placeholder="Search weapon…"
-                  aria-label="Search weapon"
-                />
-              </label>
-            {/if}
-          </div>
+                    updateSelected((g) => {
+                      if (g.kind !== "character") return g;
+                      if (!row) return { ...g, name_id };
+                      return {
+                        ...g,
+                        name_id,
+                        start: gateCharacterConfig(g.start, row.promotes),
+                        target: gateCharacterConfig(g.target, row.promotes),
+                      };
+                    });
+                    if (!row) return;
+                    const goalId = selectedGoal.id;
+                    void (async () => {
+                      const target = await targetFromBuilds(
+                        name_id,
+                        row.promotes,
+                      );
+                      if (!target) return;
+                      const current = findGoal(goalsState, goalId);
+                      if (
+                        !current ||
+                        current.kind !== "character" ||
+                        current.name_id !== name_id
+                      ) {
+                        return;
+                      }
+                      commitGoals(
+                        replaceGoal(goalsState, { ...current, target }),
+                      );
+                    })();
+                  }
+                }
+                options={characterOptions}
+                getCharacter={lookupCharacter}
+                placeholder="Search character…"
+                aria-label="Search character"
+              />
+            </label>
+          {:else}
+            <label class="field">
+              <span class="field-label">Weapon</span>
+              <CharacterSearchSelect
+                bind:value={
+                  () => String(selectedGoal.weapon_id),
+                  (raw) => {
+                    if (!catalog) return;
+                    const weapon_id = Number(raw);
+                    const row = catalog.weapons.find((w) => w.id === weapon_id);
+                    updateSelected((g) => {
+                      if (g.kind !== "weapon") return g;
+                      if (!row) return { ...g, weapon_id };
+                      return {
+                        ...g,
+                        weapon_id,
+                        start: gateWeaponConfig(g.start, row.promotes),
+                        target: gateWeaponConfig(g.target, row.promotes),
+                      };
+                    });
+                  }
+                }
+                options={weaponOptions}
+                getIconSrc={(id) => {
+                  const row = catalog?.weapons.find((w) => String(w.id) === id);
+                  return row?.icon ? assetUrl(row.icon) : null;
+                }}
+                placeholder="Search weapon…"
+                aria-label="Search weapon"
+              />
+            </label>
+          {/if}
+        </div>
 
+        <div class="config-col">
+          <h3 class="group-title">Target</h3>
+          {#if selectedGoal.kind === "character"}
+            <NumberSliderField
+              label="Ascension"
+              value={selectedGoal.target.ascension}
+              min={0}
+              max={6}
+              onchange={(ascension) =>
+                patchCharacterSide("target", { ascension })}
+            />
+            <NumberSliderField
+              label="Level"
+              value={selectedGoal.target.level}
+              min={1}
+              max={90}
+              floor={targetMinLevel}
+              cap={targetMaxLevel}
+              onchange={(level) => patchCharacterSide("target", { level })}
+            />
+            <NumberSliderField
+              label="Normal attack"
+              value={selectedGoal.target.talents.normal}
+              min={1}
+              max={10}
+              cap={targetMaxTalent}
+              onchange={(normal) =>
+                patchCharacterSide("target", { talents: { normal } })}
+            />
+            <NumberSliderField
+              label="Skill"
+              value={selectedGoal.target.talents.skill}
+              min={1}
+              max={10}
+              cap={targetMaxTalent}
+              onchange={(skill) =>
+                patchCharacterSide("target", { talents: { skill } })}
+            />
+            <NumberSliderField
+              label="Burst"
+              value={selectedGoal.target.talents.burst}
+              min={1}
+              max={10}
+              cap={targetMaxTalent}
+              onchange={(burst) =>
+                patchCharacterSide("target", { talents: { burst } })}
+            />
+          {:else}
+            <NumberSliderField
+              label="Ascension"
+              value={selectedGoal.target.ascension}
+              min={0}
+              max={6}
+              onchange={(ascension) => patchWeaponSide("target", { ascension })}
+            />
+            <NumberSliderField
+              label="Level"
+              value={selectedGoal.target.level}
+              min={1}
+              max={90}
+              floor={targetMinLevel}
+              cap={targetMaxLevel}
+              onchange={(level) => patchWeaponSide("target", { level })}
+            />
+          {/if}
+        </div>
+
+        {#if showStartConfig}
           <div class="config-col">
-            <h3 class="group-title">Target</h3>
+            <h3 class="group-title">Starting point</h3>
             {#if selectedGoal.kind === "character"}
               <NumberSliderField
                 label="Ascension"
-                value={selectedGoal.target.ascension}
+                value={selectedGoal.start.ascension}
                 min={0}
                 max={6}
                 onchange={(ascension) =>
-                  patchCharacterSide("target", { ascension })}
+                  patchCharacterSide("start", { ascension })}
               />
               <NumberSliderField
                 label="Level"
-                value={selectedGoal.target.level}
+                value={selectedGoal.start.level}
                 min={1}
                 max={90}
-                floor={targetMinLevel}
-                cap={targetMaxLevel}
-                onchange={(level) => patchCharacterSide("target", { level })}
+                floor={startMinLevel}
+                cap={startMaxLevel}
+                onchange={(level) => patchCharacterSide("start", { level })}
               />
               <NumberSliderField
                 label="Normal attack"
-                value={selectedGoal.target.talents.normal}
+                value={selectedGoal.start.talents.normal}
                 min={1}
                 max={10}
-                cap={targetMaxTalent}
+                cap={startMaxTalent}
                 onchange={(normal) =>
-                  patchCharacterSide("target", { talents: { normal } })}
+                  patchCharacterSide("start", { talents: { normal } })}
               />
               <NumberSliderField
                 label="Skill"
-                value={selectedGoal.target.talents.skill}
+                value={selectedGoal.start.talents.skill}
                 min={1}
                 max={10}
-                cap={targetMaxTalent}
+                cap={startMaxTalent}
                 onchange={(skill) =>
-                  patchCharacterSide("target", { talents: { skill } })}
+                  patchCharacterSide("start", { talents: { skill } })}
               />
               <NumberSliderField
                 label="Burst"
-                value={selectedGoal.target.talents.burst}
+                value={selectedGoal.start.talents.burst}
                 min={1}
                 max={10}
-                cap={targetMaxTalent}
+                cap={startMaxTalent}
                 onchange={(burst) =>
-                  patchCharacterSide("target", { talents: { burst } })}
+                  patchCharacterSide("start", { talents: { burst } })}
               />
             {:else}
               <NumberSliderField
                 label="Ascension"
-                value={selectedGoal.target.ascension}
+                value={selectedGoal.start.ascension}
                 min={0}
                 max={6}
                 onchange={(ascension) =>
-                  patchWeaponSide("target", { ascension })}
+                  patchWeaponSide("start", { ascension })}
               />
               <NumberSliderField
                 label="Level"
-                value={selectedGoal.target.level}
+                value={selectedGoal.start.level}
                 min={1}
                 max={90}
-                floor={targetMinLevel}
-                cap={targetMaxLevel}
-                onchange={(level) => patchWeaponSide("target", { level })}
+                floor={startMinLevel}
+                cap={startMaxLevel}
+                onchange={(level) => patchWeaponSide("start", { level })}
               />
             {/if}
           </div>
+        {/if}
 
-          {#if showStartConfig}
-            <div class="config-col">
-              <h3 class="group-title">Starting point</h3>
-              {#if selectedGoal.kind === "character"}
-                <NumberSliderField
-                  label="Ascension"
-                  value={selectedGoal.start.ascension}
-                  min={0}
-                  max={6}
-                  onchange={(ascension) =>
-                    patchCharacterSide("start", { ascension })}
-                />
-                <NumberSliderField
-                  label="Level"
-                  value={selectedGoal.start.level}
-                  min={1}
-                  max={90}
-                  floor={startMinLevel}
-                  cap={startMaxLevel}
-                  onchange={(level) => patchCharacterSide("start", { level })}
-                />
-                <NumberSliderField
-                  label="Normal attack"
-                  value={selectedGoal.start.talents.normal}
-                  min={1}
-                  max={10}
-                  cap={startMaxTalent}
-                  onchange={(normal) =>
-                    patchCharacterSide("start", { talents: { normal } })}
-                />
-                <NumberSliderField
-                  label="Skill"
-                  value={selectedGoal.start.talents.skill}
-                  min={1}
-                  max={10}
-                  cap={startMaxTalent}
-                  onchange={(skill) =>
-                    patchCharacterSide("start", { talents: { skill } })}
-                />
-                <NumberSliderField
-                  label="Burst"
-                  value={selectedGoal.start.talents.burst}
-                  min={1}
-                  max={10}
-                  cap={startMaxTalent}
-                  onchange={(burst) =>
-                    patchCharacterSide("start", { talents: { burst } })}
-                />
-              {:else}
-                <NumberSliderField
-                  label="Ascension"
-                  value={selectedGoal.start.ascension}
-                  min={0}
-                  max={6}
-                  onchange={(ascension) =>
-                    patchWeaponSide("start", { ascension })}
-                />
-                <NumberSliderField
-                  label="Level"
-                  value={selectedGoal.start.level}
-                  min={1}
-                  max={90}
-                  floor={startMinLevel}
-                  cap={startMaxLevel}
-                  onchange={(level) => patchWeaponSide("start", { level })}
-                />
-              {/if}
-            </div>
+        <div class="config-actions">
+          {#if !showStartConfig}
+            <button
+              type="button"
+              class="ghost-btn"
+              onclick={() => (showStartConfig = true)}
+            >
+              Configure starting point
+            </button>
           {/if}
-
-          <div class="config-actions">
-            {#if !showStartConfig}
-              <button
-                type="button"
-                class="ghost-btn"
-                onclick={() => (showStartConfig = true)}
-              >
-                Configure starting point
-              </button>
-            {/if}
-            <Button variant="primary" onclick={closeConfigure}>Looks good</Button>
-          </div>
+          <Button variant="primary" onclick={closeConfigure}>Looks good</Button>
         </div>
       </div>
-    {/if}
+    </div>
+  {/if}
 
   {#if picking}
     <PickModal
@@ -1387,7 +1412,11 @@
     box-shadow: 0 22px 56px color-mix(in oklab, black 50%, transparent);
     pointer-events: auto;
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--foreground-color) 22%, transparent)
+    scrollbar-color: color-mix(
+        in srgb,
+        var(--foreground-color) 22%,
+        transparent
+      )
       transparent;
   }
 

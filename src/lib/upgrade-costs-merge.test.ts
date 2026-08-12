@@ -16,7 +16,9 @@ describe("mergeUpgradeCostCatalogs", () => {
   it("returns live when beta is null", () => {
     const live: UpgradeCostsCatalog = {
       curves: emptyCurves(),
-      materials: { "1": { id: 1, name: "A", icon: "UI_ItemIcon_1", rankLevel: 1 } },
+      materials: {
+        "1": { id: 1, name: "A", icon: "UI_ItemIcon_1", rankLevel: 1 },
+      },
       characters: [
         {
           name_id: "Hutao",
@@ -33,7 +35,11 @@ describe("mergeUpgradeCostCatalogs", () => {
       ],
       weapons: [],
     };
-    assert.equal(mergeUpgradeCostCatalogs(live, null), live);
+    assert.deepEqual(mergeUpgradeCostCatalogs(live, null), {
+      ...live,
+      characters: [...live.characters],
+      weapons: [...live.weapons],
+    });
   });
 
   it("adds beta-only characters and materials; live wins on collision", () => {
@@ -56,10 +62,19 @@ describe("mergeUpgradeCostCatalogs", () => {
           },
         },
       ],
-      weapons: [{ id: 1, name: "Live Spear", rankLevel: 5, weaponPromoteId: 1, icon: "x", promotes: [] }],
+      weapons: [
+        {
+          id: 1,
+          name: "Live Spear",
+          rankLevel: 5,
+          weaponPromoteId: 1,
+          icon: "x",
+          promotes: [],
+        },
+      ],
     };
     const beta: UpgradeCostsCatalog = {
-      curves: emptyCurves(),
+      curves: { ...emptyCurves(), avatarLevelExp: [999] },
       materials: {
         "1": { id: 1, name: "Beta Mora", icon: "UI_ItemIcon_1", rankLevel: 1 },
         "9": { id: 9, name: "CB Mat", icon: "UI_ItemIcon_9", rankLevel: 4 },
@@ -91,8 +106,22 @@ describe("mergeUpgradeCostCatalogs", () => {
         },
       ],
       weapons: [
-        { id: 1, name: "Beta Spear", rankLevel: 5, weaponPromoteId: 1, icon: "y", promotes: [] },
-        { id: 99, name: "CB Weapon", rankLevel: 5, weaponPromoteId: 2, icon: "z", promotes: [] },
+        {
+          id: 1,
+          name: "Beta Spear",
+          rankLevel: 5,
+          weaponPromoteId: 1,
+          icon: "y",
+          promotes: [],
+        },
+        {
+          id: 99,
+          name: "CB Weapon",
+          rankLevel: 5,
+          weaponPromoteId: 2,
+          icon: "z",
+          promotes: [],
+        },
       ],
     };
 
@@ -107,5 +136,6 @@ describe("mergeUpgradeCostCatalogs", () => {
     assert.equal(merged.materials["9"]?.name, "CB Mat");
     assert.equal(merged.weapons.find((w) => w.id === 1)?.name, "Live Spear");
     assert.ok(merged.weapons.some((w) => w.id === 99));
+    assert.deepEqual(merged.curves.avatarLevelExp, live.curves.avatarLevelExp);
   });
 });

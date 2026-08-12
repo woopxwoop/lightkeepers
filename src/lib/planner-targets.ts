@@ -12,6 +12,7 @@ import {
   LEVEL_UPGRADE,
   primaryUpgradePct,
   TALENT_UPGRADE,
+  type UpgradeImpactLadder,
 } from "$lib/upgrade-priority";
 import {
   gateCharacterConfig,
@@ -83,14 +84,16 @@ function resolveTalentTier(
   ).tier;
 }
 
-function resolveLevelTier(
+/** Classify a stamped/derived importance row. Defaults to the level ladder. */
+function resolveImportanceTier(
   importance: CharacterLevelImportance | undefined,
+  ladder: UpgradeImpactLadder = LEVEL_UPGRADE,
 ): ImportanceImpactTier | null {
   if (!importance || importance.teams <= 0) return null;
   if (importance.tier) return importance.tier;
   return classifyUpgradeImpact(
     primaryUpgradePct(importance.mean_pct_drop, importance.median_pct_drop),
-    LEVEL_UPGRADE,
+    ladder,
   ).tier;
 }
 
@@ -119,8 +122,8 @@ export function plannerTargetFromBuilds(
     ? talentsFromImportance(talentImp!)
     : { ...UPGRADE_DEFAULTS.characterTarget.talents };
 
-  const levelTier = resolveLevelTier(builds?.level_importance);
-  const ascensionTier = resolveLevelTier(builds?.ascension_importance);
+  const levelTier = resolveImportanceTier(builds?.level_importance);
+  const ascensionTier = resolveImportanceTier(builds?.ascension_importance);
   let level = levelTier
     ? characterLevelFromTier(levelTier)
     : UPGRADE_DEFAULTS.characterTarget.level;
@@ -138,9 +141,7 @@ export function plannerTargetFromBuilds(
 
   const ascFromLevel = minAscensionForLevel(promotes, level);
   // No Builds importance at all → keep the 70/70 shell (A4 @ 70).
-  const hasAnyImportance = Boolean(
-    hasTalentData || levelTier || ascensionTier,
-  );
+  const hasAnyImportance = Boolean(hasTalentData || levelTier || ascensionTier);
   const ascFromDefault = hasAnyImportance
     ? 0
     : UPGRADE_DEFAULTS.characterTarget.ascension;

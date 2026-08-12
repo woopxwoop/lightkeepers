@@ -44,11 +44,73 @@ describe("calculator goals", () => {
           start: { level: 1, ascension: 0 },
           target: { level: 90, ascension: 6 },
         },
+        {
+          id: "w-string",
+          kind: "weapon",
+          weapon_id: "14502",
+          start: { level: 1, ascension: 0 },
+          target: { level: 90, ascension: 6 },
+        },
+        {
+          id: "w-neg",
+          kind: "weapon",
+          weapon_id: -1,
+          start: { level: 1, ascension: 0 },
+          target: { level: 90, ascension: 6 },
+        },
+        {
+          id: "w-zero",
+          kind: "weapon",
+          weapon_id: 0,
+          start: { level: 1, ascension: 0 },
+          target: { level: 90, ascension: 6 },
+        },
+        {
+          id: "w-frac",
+          kind: "weapon",
+          weapon_id: 14.5,
+          start: { level: 1, ascension: 0 },
+          target: { level: 90, ascension: 6 },
+        },
+        {
+          id: "a".repeat(65),
+          kind: "character",
+          name_id: "Xingqiu",
+          start: {
+            level: 1,
+            ascension: 0,
+            talents: { normal: 1, skill: 1, burst: 1 },
+          },
+          target: {
+            level: 90,
+            ascension: 6,
+            talents: { normal: 9, skill: 9, burst: 9 },
+          },
+        },
+        {
+          id: "keep",
+          kind: "character",
+          name_id: "Xingqiu",
+          start: {
+            level: 1,
+            ascension: 0,
+            talents: { normal: 1, skill: 1, burst: 1 },
+          },
+          target: {
+            level: 90,
+            ascension: 6,
+            talents: { normal: 9, skill: 9, burst: 9 },
+          },
+        },
       ],
     });
-    assert.equal(state.goals.length, 2);
+    assert.equal(state.goals.length, 3);
     assert.equal(state.selectedId, "keep");
     assert.equal(state.goals[1]?.kind, "weapon");
+    assert.equal(state.goals[2]?.kind, "weapon");
+    if (state.goals[2]?.kind === "weapon") {
+      assert.equal(state.goals[2].weapon_id, 14502);
+    }
   });
 
   it("applyCloudGoals keeps local selectedId when still present", () => {

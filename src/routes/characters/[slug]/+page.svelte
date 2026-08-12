@@ -92,9 +92,7 @@
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
-  let kitChannel = $derived(
-    (data.kitChannel ?? "live") as "live" | "beta",
-  );
+  let kitChannel = $derived((data.kitChannel ?? "live") as "live" | "beta");
   let builds = $derived((data.builds ?? null) as CharacterIndex | null);
   let travelerKits = $derived(
     (data.travelerKits ?? {}) as Record<string, CharacterKit>,
@@ -1107,7 +1105,8 @@
                                   <span class="team-hand-meta">
                                     <span class="team-hand-rank">#{i + 1}</span>
                                     <span
-                                      >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                                      >{(team.usage_rate ?? 0).toFixed(1)}%
+                                      usage</span
                                     >
                                   </span>
                                 </div>
@@ -1634,7 +1633,8 @@
     border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--foreground-color) 14%, transparent);
     color: var(--foreground-color);
-    border: 1px solid color-mix(in srgb, var(--foreground-color) 32%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--foreground-color) 32%, transparent);
   }
 
   .section-title {
@@ -2028,13 +2028,6 @@
       border-left: var(--border-width) solid rgba(255, 255, 255, 0.1);
     }
   }
-
-
-
-
-
-
-
 
   .kit-list {
     display: flex;

@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    charactersOwned,
-    animationsEnabled,
-  } from "$lib/stores";
+  import { charactersOwned, animationsEnabled } from "$lib/stores";
   import {
     buildGoodKeyMap,
     humanizeTeamName,

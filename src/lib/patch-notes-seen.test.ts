@@ -12,10 +12,7 @@ describe("patch notes seen", () => {
 
   it("shows when a newer slug exists", () => {
     assert.equal(
-      shouldShowPatchNotesPopup(
-        "2026-08-11-next",
-        "2026-08-10-roster-hotfix",
-      ),
+      shouldShowPatchNotesPopup("2026-08-11-next", "2026-08-10-roster-hotfix"),
       true,
     );
   });

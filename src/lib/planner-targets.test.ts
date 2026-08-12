@@ -79,14 +79,12 @@ function builds(partial: {
             ...partial.level,
           },
     ascension_importance:
-      partial.ascension === null
+      partial.ascension == null
         ? undefined
-        : partial.ascension === undefined
-          ? undefined
-          : {
-              ...importance("solid"),
-              ...partial.ascension,
-            },
+        : {
+            ...importance("solid"),
+            ...partial.ascension,
+          },
   };
 }
 

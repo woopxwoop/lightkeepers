@@ -83,11 +83,7 @@ export function recommendedSubstatsFromBuilds(
 
   for (const r of builds.substat_rolls_liquid.ranked) {
     if (!isArtifactSubstatKey(r.key)) continue;
-    if (
-      !guideAuthoredSubs &&
-      r.mean <= 0.5 &&
-      !mainSlots.has(r.key)
-    ) {
+    if (!guideAuthoredSubs && r.mean <= 0.5 && !mainSlots.has(r.key)) {
       continue;
     }
     const slots = mainSlots.get(r.key) ?? [];
@@ -124,16 +120,17 @@ export function rankWeaponsByRarityAndTeams(
 ): CharacterWeaponRank[] {
   if (!weapons?.length) return [];
   const preferred =
-    preferredKeys instanceof Set
-      ? preferredKeys
-      : new Set(preferredKeys ?? []);
+    preferredKeys instanceof Set ? preferredKeys : new Set(preferredKeys ?? []);
   return [...weapons].sort((a, b) => {
     const ra = getStars(a.key);
     const rb = getStars(b.key);
     if (ra !== rb) return rb - ra;
     const sa = a.strength;
     const sb = b.strength;
-    if (sa != null && sb != null && sa !== sb) return sb - sa;
+    const aHasStrength = sa != null;
+    const bHasStrength = sb != null;
+    if (aHasStrength !== bHasStrength) return aHasStrength ? -1 : 1;
+    if (aHasStrength && bHasStrength && sa !== sb) return sb - sa;
     if (a.teams !== b.teams) return b.teams - a.teams;
     const pa = preferred.has(a.key) ? 0 : 1;
     const pb = preferred.has(b.key) ? 0 : 1;

@@ -51,9 +51,9 @@ function isTravelerNameId(nameId: string | null | undefined): boolean {
 
 /** CB / unreleased rows pin to the front of release-date sort; Traveler does not. */
 function isUnreleasedReleasePin(c: CharacterOwned): boolean {
-  return (
-    releaseTime(c.released_at) === null && !isTravelerNameId(c.name_id)
-  );
+  const releasedAt = c.released_at;
+  if (releasedAt != null && releasedAt !== "") return false;
+  return !isTravelerNameId(c.name_id);
 }
 
 /**

@@ -8,6 +8,7 @@
 import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { LRUCache } from "$lib/server/cache";
+import { fetchWithTimeout } from "$lib/cdn-fetch";
 import { upgradeCostsFileUrl, type UpgradeCostsChannel } from "$lib/asset-urls";
 import { mergeUpgradeCostCatalogs } from "$lib/upgrade-costs-merge";
 import type {
@@ -25,7 +26,7 @@ async function fetchJson<T>(
   file: Parameters<typeof upgradeCostsFileUrl>[0],
   channel: UpgradeCostsChannel,
 ): Promise<T> {
-  const res = await fetch(upgradeCostsFileUrl(file, channel));
+  const res = await fetchWithTimeout(upgradeCostsFileUrl(file, channel));
   if (!res.ok) {
     throw error(502, `CDN ${channel}/${file} returned HTTP ${res.status}`);
   }
@@ -47,7 +48,7 @@ async function fetchChannelCatalog(
 async function tryFetchBetaJson<T>(
   file: Parameters<typeof upgradeCostsFileUrl>[0],
 ): Promise<T | null> {
-  const res = await fetch(upgradeCostsFileUrl(file, "beta"));
+  const res = await fetchWithTimeout(upgradeCostsFileUrl(file, "beta"));
   if (res.status === 404 || res.status === 410) return null;
   if (!res.ok) {
     console.warn(

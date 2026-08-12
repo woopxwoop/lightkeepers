@@ -28,19 +28,34 @@
       ? 0
       : Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100)),
   );
+  let draft = $state<string | null>(null);
+
+  function snapToStep(n: number): number {
+    if (!(step > 0)) return n;
+    return Math.round(n / step) * step;
+  }
 
   function emit(raw: string) {
+    if (raw.trim() === "") {
+      draft = "";
+      return;
+    }
     const n = Number(raw);
     if (!Number.isFinite(n)) return;
-    if (n < effectiveFloor) {
-      if (value !== effectiveFloor) onchange(effectiveFloor);
+    let next = snapToStep(n);
+    if (next < effectiveFloor) next = effectiveFloor;
+    else if (next > effectiveCap) next = effectiveCap;
+    draft = null;
+    if (next !== value) onchange(next);
+  }
+
+  function commitDraft() {
+    if (draft === null) return;
+    if (draft.trim() === "") {
+      draft = null;
       return;
     }
-    if (n > effectiveCap) {
-      if (value !== effectiveCap) onchange(effectiveCap);
-      return;
-    }
-    onchange(n);
+    emit(draft);
   }
 </script>
 
@@ -67,9 +82,10 @@
         min={effectiveFloor}
         max={effectiveCap}
         {step}
-        {value}
+        value={draft ?? value}
         aria-label={`${label} value`}
         oninput={(e) => emit(e.currentTarget.value)}
+        onblur={commitDraft}
       />
       <span class="nsf-max" aria-hidden="true">/{effectiveCap}</span>
     </div>

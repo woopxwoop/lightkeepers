@@ -237,7 +237,9 @@
       message="No viable clears for your roster. Pull for characters that unlock better teams."
     >
       {#snippet action()}
-        <a class="pulls-cta" href={resolve("/tools/pulls")}>See pull suggestions</a>
+        <a class="pulls-cta" href={resolve("/tools/pulls")}
+          >See pull suggestions</a
+        >
       {/snippet}
     </EmptyState>
   {:else}
