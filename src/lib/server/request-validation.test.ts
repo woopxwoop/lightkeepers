@@ -9,6 +9,7 @@ import {
   requireCharacterNameId,
   requireCharacterNameIds,
   requireEnemyId,
+  requireTeamEnemyPairs,
   requireFiniteInteger,
   requireIntegerInRange,
   requireJsonObject,
@@ -311,5 +312,33 @@ describe("request validation", () => {
     assert.throws(() => requireEnemyId("1.5"), isBadRequest);
     assert.throws(() => requireEnemyId("abc"), isBadRequest);
     assert.throws(() => requireEnemyId(null), isBadRequest);
+  });
+
+  it("requireTeamEnemyPairs validates and dedupes pairs", () => {
+    assert.deepEqual(
+      requireTeamEnemyPairs([
+        { team_key: "abc", enemy_id: 1 },
+        { team_key: "abc", enemy_id: 1 },
+        { team_key: "def", enemy_id: 2 },
+      ]),
+      [
+        { team_key: "abc", enemy_id: 1 },
+        { team_key: "def", enemy_id: 2 },
+      ],
+    );
+    assert.throws(() => requireTeamEnemyPairs([]), isBadRequest);
+    assert.throws(() => requireTeamEnemyPairs("nope"), isBadRequest);
+    assert.throws(
+      () => requireTeamEnemyPairs([{ team_key: "", enemy_id: 1 }]),
+      isBadRequest,
+    );
+    assert.throws(
+      () => requireTeamEnemyPairs([{ team_key: "a", enemy_id: 0 }]),
+      isBadRequest,
+    );
+    assert.throws(
+      () => requireTeamEnemyPairs([{ team_key: "a", enemy_id: 1, extra: true }]),
+      isBadRequest,
+    );
   });
 });

@@ -31,13 +31,23 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import IconDatabase from "$lib/ui/icons/IconDatabase.svelte";
+  import InfoPopover from "$lib/ui/components/InfoPopover.svelte";
+  import IconPlay from "$lib/ui/icons/IconPlay.svelte";
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
-  import type { StygianTeam } from "$lib/definitions";
+  import type { StygianTeam, StygianClearVideo } from "$lib/definitions";
   import { getEnemyAsset } from "$lib/utils";
   import { resolve } from "$app/paths";
+  import {
+    ensureClearVideos,
+    getClearVideosCached,
+    youtubeThumbnailFallbackUrl,
+    youtubeThumbnailUrl,
+  } from "$lib/app/stygian-clear-videos";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
+  /** Initial / incremental page size for the per-field clear-video list. */
+  const CLEAR_VIDEOS_PAGE = 5;
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -59,6 +69,10 @@
   }
 
   let selectedIndex = $state(0);
+  /** Bumped when clear-video cache fills for the visible solution. */
+  let clearVideosRevision = $state(0);
+  /** Per-field how many clears are listed in the popover (Show more bumps this). */
+  let clearVideosShown = $state<Partial<Record<Slot, number>>>({});
 
   let hasOwnedCharacters = $derived(
     $charactersOwned.some((character) => character.isOwned),
@@ -90,6 +104,38 @@
   });
 
   let solution = $derived(displaySolutions[safeIndex]);
+
+  $effect(() => {
+    void solution;
+    clearVideosShown = {};
+  });
+
+  // After solver: fetch clear videos for the three visible team×boss pairs.
+  $effect(() => {
+    const sol = solution;
+    const board = enemies;
+    if (!sol || !board) return;
+
+    const pairs = SLOTS.flatMap((slot) => {
+      const assignment = sol.assignments.find((a) => a.slot === slot);
+      const enemy = board[slot];
+      const teamKey = assignment?.team?.team_key;
+      if (!teamKey || enemy?.id == null) return [];
+      return [{ team_key: teamKey, enemy_id: enemy.id }];
+    });
+    if (pairs.length === 0) return;
+
+    const ac = new AbortController();
+    ensureClearVideos(pairs, ac.signal)
+      .then(() => {
+        clearVideosRevision += 1;
+      })
+      .catch(() => {
+        /* leave cache empty; UI stays quiet */
+      });
+
+    return () => ac.abort();
+  });
 
   let loading = $derived(
     !$charactersHydrated ||
@@ -129,6 +175,42 @@
     if (next == null) return;
     selectedIndex = next;
   }
+
+  function clearsForSlot(slot: Slot): StygianClearVideo[] {
+    void clearVideosRevision;
+    const assignment = solution?.assignments.find((a) => a.slot === slot);
+    const enemy = enemies?.[slot];
+    const teamKey = assignment?.team?.team_key;
+    if (!teamKey || enemy?.id == null) return [];
+    return getClearVideosCached(teamKey, enemy.id) ?? [];
+  }
+
+  function videoHostLabel(url: string): string {
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, "");
+      if (host.includes("youtu")) return "YouTube";
+      if (host.includes("bilibili")) return "Bilibili";
+      return "Video";
+    } catch {
+      return "Video";
+    }
+  }
+
+  function clearVideoLabel(clear: StygianClearVideo): string {
+    const host = videoHostLabel(clear.video_url);
+    const cost = clear.cost != null ? `cost ${clear.cost}` : null;
+    const time = clear.time_s != null ? `${clear.time_s}s` : null;
+    const bits = [clear.difficulty, cost, time].filter(Boolean);
+    return bits.length ? `${host} · ${bits.join(" · ")}` : host;
+  }
+
+  function clearsShownLimit(slot: Slot): number {
+    return clearVideosShown[slot] ?? CLEAR_VIDEOS_PAGE;
+  }
+
+  function showMoreClears(slot: Slot) {
+    clearVideosShown[slot] = clearsShownLimit(slot) + CLEAR_VIDEOS_PAGE;
+  }
 </script>
 
 {#snippet enemyLabel(slot: Slot, linkClass: string)}
@@ -163,6 +245,7 @@
 
     <div class="hero-body">
       {#if assignment}
+        {@const clears = clearsForSlot(slot)}
         <Team
           team={assignment.team}
           {mapping}
@@ -175,6 +258,70 @@
             >{slotRate(assignment.team, slot).toFixed(0)}% in this field</span
           >
         </div>
+
+        {#if clears.length > 0}
+          {@const shown = Math.min(clears.length, clearsShownLimit(slot))}
+          <div class="clear-videos">
+            <InfoPopover
+              label={clears.length === 1 ? "1 video" : `${clears.length} videos`}
+              align="start"
+              class="clear-videos-trigger"
+              panelClass="clear-videos-panel"
+              anchorSelector=".field-hero"
+            >
+              {#snippet icon()}
+                <IconPlay size={12} />
+              {/snippet}
+              <ul class="clear-videos-panel-list">
+                {#each clears.slice(0, shown) as clear (clear.clear_key)}
+                  {@const thumb = youtubeThumbnailUrl(clear.video_url)}
+                  <li>
+                    <a
+                      class="clear-video-link"
+                      href={clear.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {#if thumb}
+                        <img
+                          class="clear-video-thumb"
+                          src={thumb}
+                          alt=""
+                          width="320"
+                          height="180"
+                          loading="lazy"
+                          decoding="async"
+                          onerror={(event) => {
+                            const img = event.currentTarget;
+                            if (img.dataset.ytFallback === "1") return;
+                            const fallback = youtubeThumbnailFallbackUrl(
+                              clear.video_url,
+                            );
+                            if (!fallback) return;
+                            img.dataset.ytFallback = "1";
+                            img.src = fallback;
+                          }}
+                        />
+                      {/if}
+                      <span class="clear-video-meta"
+                        >{clearVideoLabel(clear)}</span
+                      >
+                    </a>
+                  </li>
+                {/each}
+              </ul>
+              {#if shown < clears.length}
+                <button
+                  type="button"
+                  class="clear-videos-more"
+                  onclick={() => showMoreClears(slot)}
+                >
+                  Show more · {clears.length - shown} left
+                </button>
+              {/if}
+            </InfoPopover>
+          </div>
+        {/if}
       {:else if solution}
         <div class="panel-empty">
           <p>No team available for this field</p>
@@ -519,6 +666,105 @@
 
   .rate-slot {
     color: var(--accent-1);
+  }
+
+  .clear-videos {
+    display: flex;
+    align-items: baseline;
+  }
+
+  /* Inherit mid cream so the dotted trigger matches rate-row, not gold-on-black. */
+  :global(.clear-videos-trigger) {
+    color: var(--foreground-mid);
+    font-size: var(--text-xs);
+  }
+
+  /* Width/left are set in JS to match `.field-hero` (column / stacked cell). */
+  :global(.info-panel.clear-videos-panel) {
+    max-height: min(22rem, calc(100vh - 2rem));
+    padding: 0.65rem 0.75rem;
+    font-size: var(--text-xs);
+    line-height: 1.45;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--background-color) 32%, transparent)
+      transparent;
+  }
+
+  :global(.info-panel.clear-videos-panel::-webkit-scrollbar) {
+    width: 0.55rem;
+  }
+
+  :global(.info-panel.clear-videos-panel::-webkit-scrollbar-track) {
+    background: transparent;
+  }
+
+  :global(.info-panel.clear-videos-panel::-webkit-scrollbar-thumb) {
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--background-color) 32%, transparent);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  :global(.info-panel.clear-videos-panel::-webkit-scrollbar-thumb:hover) {
+    background: color-mix(in srgb, var(--background-color) 48%, transparent);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .clear-videos-panel-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .clear-video-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .clear-video-thumb {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--background-color) 25%, transparent);
+  }
+
+  .clear-video-meta {
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+    line-height: 1.35;
+  }
+
+  .clear-video-link:hover .clear-video-meta {
+    opacity: 0.85;
+  }
+
+  .clear-videos-more {
+    margin: 0.45rem 0 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+    opacity: 0.75;
+  }
+
+  .clear-videos-more:hover {
+    opacity: 1;
   }
 
   .panel-empty {

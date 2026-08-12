@@ -114,4 +114,26 @@ export type StygianSchedule = {
   challengeName: string | null;
 } | null;
 
+/** One verified clear video row (stygian.moe ingest). */
+export type StygianClearVideo = Pick<
+  Tables<"stygian_team_clear_videos">,
+  | "clear_key"
+  | "team_key"
+  | "enemy_id"
+  | "difficulty"
+  | "cost"
+  | "time_s"
+  | "video_url"
+  | "char_names"
+>;
+
+export type StygianClearVideoPair = {
+  team_key: string;
+  enemy_id: number;
+};
+
+export type StygianClearVideosPayload = {
+  clears: StygianClearVideo[];
+};
+
 export type { TierBoard, TierListEntry, TierListPayload } from "$lib/tierlist";

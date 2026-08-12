@@ -5,15 +5,27 @@
   let {
     label,
     children,
+    icon,
     class: className = "",
+    panelClass = "",
     align = "center",
+    anchorSelector = "",
   }: {
     /** Inline trigger text — underlined to signal it explains itself. */
     label: string;
     children: Snippet;
+    /** Optional leading icon inside the trigger button. */
+    icon?: Snippet;
     class?: string;
+    /** Extra class on the floating panel (portaled to body). */
+    panelClass?: string;
     /** Horizontal anchor of the panel relative to the trigger. */
     align?: "start" | "center" | "end";
+    /**
+     * When set, panel left + width match `trigger.closest(anchorSelector)`
+     * (e.g. a column). Vertical placement still uses the trigger.
+     */
+    anchorSelector?: string;
   } = $props();
 
   const EDGE = 8;
@@ -33,6 +45,12 @@
     open = false;
   }
 
+  function anchorBox(trigger: HTMLElement): DOMRect | null {
+    if (!anchorSelector) return null;
+    const el = trigger.closest(anchorSelector);
+    return el instanceof HTMLElement ? el.getBoundingClientRect() : null;
+  }
+
   /** Viewport-fixed placement so overflow:hidden boards can't clip the panel. */
   function placePanel() {
     const trigger = triggerEl;
@@ -40,11 +58,19 @@
     if (!trigger || !panel) return;
 
     const rect = trigger.getBoundingClientRect();
+    const box = anchorBox(trigger);
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    panel.style.maxWidth = `${Math.max(0, vw - EDGE * 2)}px`;
     panel.style.maxHeight = "";
+    if (box) {
+      const width = Math.max(0, Math.min(box.width, vw - EDGE * 2));
+      panel.style.width = `${width}px`;
+      panel.style.maxWidth = `${width}px`;
+    } else {
+      panel.style.width = "";
+      panel.style.maxWidth = "";
+    }
 
     const panelRect = panel.getBoundingClientRect();
     const aboveTop = rect.top - panelRect.height - GAP;
@@ -64,13 +90,24 @@
     }
 
     const placed = panel.getBoundingClientRect();
-    let left =
-      align === "start"
-        ? rect.left
-        : align === "end"
-          ? rect.right - placed.width
-          : rect.left + rect.width / 2 - placed.width / 2;
-    left = Math.max(EDGE, Math.min(left, vw - placed.width - EDGE));
+    let left: number;
+    if (box) {
+      left = Math.max(EDGE, Math.min(box.left, vw - placed.width - EDGE));
+    } else {
+      left =
+        align === "start"
+          ? rect.left
+          : align === "end"
+            ? rect.right - placed.width
+            : rect.left + rect.width / 2 - placed.width / 2;
+      left = Math.max(EDGE, Math.min(left, vw - placed.width - EDGE));
+    }
+
+    // Last-resort viewport clamp if content still overflows (e.g. unbroken strings).
+    if (!box && placed.width > vw - EDGE * 2) {
+      panel.style.maxWidth = `${vw - EDGE * 2}px`;
+      left = EDGE;
+    }
 
     panel.style.top = `${top}px`;
     panel.style.left = `${left}px`;
@@ -129,19 +166,23 @@
   <button
     type="button"
     class="info-trigger"
+    class:info-trigger-with-icon={!!icon}
     bind:this={triggerEl}
     aria-expanded={open}
     aria-controls={panelId}
     aria-describedby={open ? panelId : undefined}
     onclick={toggle}
   >
+    {#if icon}
+      <span class="info-trigger-icon">{@render icon()}</span>
+    {/if}
     {label}
   </button>
 
   {#if open}
     <span
       id={panelId}
-      class="info-panel"
+      class="info-panel {panelClass}"
       role="tooltip"
       tabindex="0"
       data-open="true"
@@ -170,6 +211,18 @@
     text-decoration-style: dotted;
     text-underline-offset: 0.15em;
     transition: var(--control-transition);
+  }
+
+  .info-trigger-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .info-trigger-with-icon .info-trigger-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    opacity: 0.9;
   }
 
   .info-trigger:hover,
