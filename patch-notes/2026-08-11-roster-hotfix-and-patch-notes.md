@@ -1,7 +1,7 @@
 ---
 title: Little bit of this, little bit of that
 date: 2026-08-11
-summary: Fixed cloud roster sync, added patch notes feature, added beta characters.
+summary: Fixed cloud roster sync, added patch notes feature, beta characters, material planner.
 ---
 
 ## Roster sync hotfix
