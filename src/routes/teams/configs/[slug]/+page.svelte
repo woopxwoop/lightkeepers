@@ -32,7 +32,9 @@
     return sim.kind === "baseline"
       ? "Baseline"
       : sim.label
-        ? humanizeInvestmentLabel(sim.label, characterNames)
+        ? humanizeInvestmentLabel(sim.label, characterNames, {
+            fiveStarWeaponsAs: sim.kind === "owned" ? "name" : "R1",
+          })
         : "";
   });
 

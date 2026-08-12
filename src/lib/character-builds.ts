@@ -4,7 +4,11 @@
  * Pure helpers so the character page stays props → $derived → markup.
  */
 
-import { isArtifactSubstatKey } from "$lib/build-stats";
+import {
+  clampSubstatRolls,
+  computeBuildSheetStats,
+  isArtifactSubstatKey,
+} from "$lib/build-stats";
 import { translateStatKey } from "$lib/utils";
 import {
   CONSTELLATION_UPGRADE,
@@ -19,6 +23,8 @@ import {
   type UpgradeTier,
 } from "$lib/upgrade-priority";
 import type {
+  CharacterBuild,
+  CharacterBuildExample,
   CharacterConsGain,
   CharacterGuidePriority,
   CharacterIndex,
@@ -535,4 +541,238 @@ export function formatReactionFingerprint(
     .split("+")
     .map((part) => formatReactionName(part.trim()))
     .join(" + ");
+}
+
+export type LiquidRollChip = { key: string; rolls: number };
+
+/** Non-zero liquid rolls, highest first (for build-example chips). */
+export function liquidRollChips(
+  rolls: Record<string, number> | null | undefined,
+  limit = 6,
+): LiquidRollChip[] {
+  if (!rolls) return [];
+  return Object.entries(rolls)
+    .filter(([, n]) => typeof n === "number" && n > 0)
+    .map(([key, n]) => ({ key, rolls: n }))
+    .sort((a, b) => b.rolls - a.rolls || a.key.localeCompare(b.key))
+    .slice(0, limit);
+}
+
+export type ExampleSheetRow = {
+  /** Sheet / format key (e.g. ``critRate``, ``pyro_dmg_``). */
+  key: string;
+  /** GOOD key for ``statIconUrl``. */
+  iconKey: string;
+  label: string;
+  value: number;
+};
+
+export type ExampleRollTier = "mid" | "high";
+
+function sheetIconKey(stat: string): string {
+  if (stat === "critRate") return "critRate_";
+  if (stat === "critDMG") return "critDMG_";
+  if (stat === "enerRech") return "enerRech_";
+  if (stat === "heal") return "heal_";
+  return stat;
+}
+
+/** True when the example carries a distinct high-invest roll sheet. */
+export function exampleHasHighConfig(example: CharacterBuildExample): boolean {
+  const rolls = example.high_substat_rolls;
+  if (!rolls || typeof rolls !== "object") return false;
+  return Object.keys(rolls).length > 0;
+}
+
+/** True when the example's baseline weapon is a Favonius piece. */
+export function exampleUsesFavonius(example: CharacterBuildExample): boolean {
+  const key = example.weapon?.key;
+  return typeof key === "string" && key.toLowerCase().startsWith("favonius");
+}
+
+/**
+ * Which sheet lines to show for a build example.
+ *
+ * - Mid-only / negligible (`invest: mid`, no high rolls): baseline **ER**,
+ *   plus **CR** only when that team's baseline weapon is Fav
+ * - High invest: **mains + high OptimFull liquids** (not mid leftover rolls)
+ */
+export function exampleRelevantGoodKeys(
+  example: CharacterBuildExample,
+): Set<string> {
+  if (!exampleHasHighConfig(example)) {
+    const keys = new Set<string>(["enerRech_"]);
+    if (exampleUsesFavonius(example)) keys.add("critRate_");
+    return keys;
+  }
+  const keys = new Set<string>();
+  for (const slot of MAIN_STAT_SLOTS) {
+    const k = example.main_stats?.[slot.key];
+    if (typeof k === "string" && k) keys.add(k);
+  }
+  const highLiquid = clampSubstatRolls(
+    example.high_substat_rolls_liquid,
+    example.main_stats,
+  );
+  for (const [k, n] of Object.entries(highLiquid)) {
+    if (n > 0) keys.add(k);
+  }
+  return keys;
+}
+
+/**
+ * Numerical sheet lines for mains + assigned substats only (not the full
+ * default sheet). Flat/percent pairs collapse to one total (ATK, HP, DEF).
+ */
+export function exampleRelevantSheetRows(
+  example: CharacterBuildExample,
+  tier: ExampleRollTier = "mid",
+): ExampleSheetRow[] {
+  const relevant = exampleRelevantGoodKeys(example);
+  if (relevant.size === 0) return [];
+
+  const sheet = computeBuildSheetStats(
+    characterBuildFromExample(example, tier),
+  );
+  if (!sheet) return [];
+
+  const rows: ExampleSheetRow[] = [];
+  const push = (key: string, label: string, value: number) => {
+    rows.push({ key, iconKey: sheetIconKey(key), label, value });
+  };
+
+  if (relevant.has("hp") || relevant.has("hp_")) {
+    push("hp", "HP", sheet.hp);
+  }
+  if (relevant.has("atk") || relevant.has("atk_")) {
+    push("atk", "ATK", sheet.atk);
+  }
+  if (relevant.has("def") || relevant.has("def_")) {
+    push("def", "DEF", sheet.def);
+  }
+  if (relevant.has("eleMas")) {
+    push("eleMas", "Elemental Mastery", sheet.eleMas);
+  }
+  if (relevant.has("critRate_")) {
+    push("critRate", "CRIT Rate", sheet.critRate);
+  }
+  if (relevant.has("critDMG_")) {
+    push("critDMG", "CRIT DMG", sheet.critDMG);
+  }
+  if (relevant.has("enerRech_")) {
+    push("enerRech", "Energy Recharge", sheet.enerRech);
+  }
+  if (relevant.has("heal_")) {
+    push("heal", translateStatKey("heal_"), sheet.heal);
+  }
+
+  for (const [key, value] of Object.entries(sheet.dmgBonus)
+    .filter(([k, v]) => relevant.has(k) && v > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
+    push(key, translateStatKey(key), value);
+  }
+
+  return rows;
+}
+
+function isCompleteBuildExample(example: CharacterBuildExample): boolean {
+  return (
+    typeof example.key === "string" &&
+    example.key.length > 0 &&
+    typeof example.cons === "number" &&
+    typeof example.level === "number" &&
+    !!example.talents &&
+    typeof example.talents.auto === "number" &&
+    typeof example.talents.skill === "number" &&
+    typeof example.talents.burst === "number"
+  );
+}
+
+/** Examples that carry a full CharacterBuild payload (skip stale CDN rows). */
+export function buildExamples(
+  builds: CharacterIndex | null | undefined,
+): CharacterBuildExample[] {
+  const list = builds?.build_examples;
+  if (!Array.isArray(list)) return [];
+  return list.filter(isCompleteBuildExample);
+}
+
+/**
+ * Party GOOD keys for an example. Prefer the stamped list; fall back to
+ * parsing ``state_key`` (``Char~C0~Weapon~R1__…``) for older CDN rows.
+ */
+export function exampleTeamKeys(example: CharacterBuildExample): string[] {
+  if (Array.isArray(example.characters) && example.characters.length > 0) {
+    return example.characters;
+  }
+  if (!example.state_key) return [];
+  return example.state_key
+    .split("__")
+    .map((part) => part.split("~")[0]?.trim() ?? "")
+    .filter(Boolean);
+}
+
+/**
+ * Pulls-style split: featured character first, then up to ``mateSlots`` mates
+ * (null-padded so the strip stays fixed-width).
+ */
+export function exampleFeaturedAndMates(
+  keys: readonly string[],
+  featuredKey: string,
+  mateSlots = 3,
+): { featured: string | null; mates: (string | null)[] } {
+  const featured = keys.find((k) => k === featuredKey) ?? keys[0] ?? null;
+  const rest = featured ? keys.filter((k) => k !== featured) : [...keys];
+  const mates: (string | null)[] = [];
+  for (let i = 0; i < mateSlots; i++) {
+    mates.push(rest[i] ?? null);
+  }
+  return { featured, mates };
+}
+
+/**
+ * Sim configs sometimes stamp 5pc (on-set flower) or 3pc/1pc leftovers.
+ * Real bonuses are only 2pc / 4pc — map 5→4, 3→2; drop 1pc.
+ */
+export function normalizeSetPieceCount(
+  count: number | null | undefined,
+): 2 | 4 | null {
+  if (count == null || !Number.isFinite(count)) return null;
+  const n = Math.trunc(count);
+  if (n >= 4) return 4;
+  if (n >= 2) return 2;
+  return null;
+}
+
+/** Strip example metadata down to the shared InvestmentBuildCard shape. */
+export function characterBuildFromExample(
+  example: CharacterBuildExample,
+  tier: ExampleRollTier = "mid",
+): CharacterBuild {
+  const useHigh = tier === "high" && exampleHasHighConfig(example);
+  const mains = example.main_stats;
+  const totals = useHigh
+    ? (example.high_substat_rolls ?? {})
+    : example.substat_rolls;
+  const liquid = useHigh
+    ? (example.high_substat_rolls_liquid ?? {})
+    : example.substat_rolls_liquid;
+  const setCount = normalizeSetPieceCount(example.set.count) ?? 4;
+  const set2Count = example.set2
+    ? normalizeSetPieceCount(example.set2_count ?? 2)
+    : null;
+  return {
+    key: example.key,
+    cons: example.cons,
+    level: example.level,
+    talents: example.talents,
+    weapon: example.weapon,
+    set: { key: example.set.key, count: setCount },
+    set2: set2Count != null ? example.set2 : undefined,
+    set2_count: set2Count ?? undefined,
+    main_stats: mains,
+    // OptimFull can over-allocate onto mains; clamp for sheet/goals display.
+    substat_rolls: clampSubstatRolls(totals, mains),
+    substat_rolls_liquid: clampSubstatRolls(liquid, mains),
+  };
 }
