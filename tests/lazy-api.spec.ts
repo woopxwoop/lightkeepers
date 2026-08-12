@@ -34,7 +34,7 @@ test("abyss fetches /api/teams but not /api/nearmiss", async ({ page }) => {
     { timeout: CLIENT_API_TIMEOUT },
   );
 
-  await page.goto("/abyss");
+  await page.goto("/tools/abyss");
   await expect(page.getByText("Solution 1")).toBeVisible({ timeout: 15_000 });
   await teamsReq;
 
@@ -66,7 +66,7 @@ test("pulls fetches /api/teams, /api/nearmiss, and /api/tierlist", async ({
     { timeout: CLIENT_API_TIMEOUT },
   );
 
-  await page.goto("/pulls");
+  await page.goto("/tools/pulls");
   await expect(
     page.getByRole("heading", { name: "Pull Suggestions" }),
   ).toBeVisible();

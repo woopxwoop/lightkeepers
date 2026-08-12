@@ -7,17 +7,13 @@ import {
 } from "$lib/server/team-config";
 import { getCharacterKit } from "$lib/server/character-kit";
 import { characterBaseByKey } from "$lib/build-stats";
-import { talentIconUrl } from "$lib/asset-urls";
 import { getSimConfigUrl } from "$lib/utils";
+import {
+  kitIconsFromCharacterKit,
+  type InvestmentBuildKitIcons,
+} from "$lib/investment-build-card";
 
-export type TeamConfigKitIcons = {
-  constellations: { index: number; name: string; icon: string | null }[];
-  talents: {
-    auto: string | null;
-    skill: string | null;
-    burst: string | null;
-  };
-};
+export type TeamConfigKitIcons = InvestmentBuildKitIcons;
 
 export const load: PageServerLoad = async ({ params }) => {
   const slug = params.slug;
@@ -49,25 +45,7 @@ export const load: PageServerLoad = async ({ params }) => {
         return null;
       });
       if (!kit) return;
-
-      const byType = Object.fromEntries(
-        kit.skills.map((s) => [s.type, talentIconUrl(s.icon)]),
-      );
-
-      kitsByKey[build.key] = {
-        constellations: [...kit.constellations]
-          .sort((a, b) => a.index - b.index)
-          .map((c) => ({
-            index: c.index,
-            name: c.name,
-            icon: talentIconUrl(c.icon),
-          })),
-        talents: {
-          auto: byType.normal ?? null,
-          skill: byType.skill ?? null,
-          burst: byType.burst ?? null,
-        },
-      };
+      kitsByKey[build.key] = kitIconsFromCharacterKit(kit);
     }),
   );
 

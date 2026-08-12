@@ -68,12 +68,14 @@
   import {
     MAIN_STAT_SLOTS,
     constellationPrioritySection,
+    ascensionPrioritySection,
     levelPrioritySection,
     rankWeaponsByRarityAndTeams,
     recommendedSubstatsFromBuilds,
     sigWeaponPrioritySection,
     talentPrioritySection,
   } from "$lib/character-builds";
+  import IconCog from "$lib/ui/icons/IconCog.svelte";
   import {
     artifactIconUrl,
     skillIconUrl,
@@ -90,6 +92,7 @@
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
+  let kitChannel = $derived((data.kitChannel ?? "live") as "live" | "beta");
   let builds = $derived((data.builds ?? null) as CharacterIndex | null);
   let travelerKits = $derived(
     (data.travelerKits ?? {}) as Record<string, CharacterKit>,
@@ -480,12 +483,13 @@
     return kitLinkIds.has(ref) ? `#kit-${ref}` : null;
   }
 
-  /** Weapons: higher rarity first, then team usage (stable within ties). */
+  /** Weapons: rarity → BT strength → teams → measured sigs → name. */
   let rankedWeapons = $derived.by(() => {
     $equipmentVersion;
     return rankWeaponsByRarityAndTeams(
       builds?.weapons,
       (key) => weaponByKey.get(key)?.stars ?? 0,
+      builds?.vertical_importance?.sig_weapons?.map((s) => s.key),
     );
   });
 
@@ -500,7 +504,9 @@
   );
 
   let levelSection = $derived(levelPrioritySection(builds));
+  let ascensionSection = $derived(ascensionPrioritySection(builds));
   let levelIcon = $derived(getUiAssetUrl("UI_ItemIcon_104003"));
+  let ascensionIcon = $derived(getUiAssetUrl("UI_ItemIcon_104003"));
 
   let consSection = $derived(constellationPrioritySection(builds));
   let sigSection = $derived(sigWeaponPrioritySection(builds));
@@ -713,7 +719,12 @@
                 { label: kit.name },
               ]}
             />
-            <h1 class="hero-title">{kit.name}</h1>
+            <div class="hero-title-row">
+              <h1 class="hero-title">{kit.name}</h1>
+              {#if kitChannel === "beta"}
+                <span class="hero-beta-badge">BETA</span>
+              {/if}
+            </div>
           </div>
           <p class="hero-eyebrow" style="color: {elColor};">
             {kit.title || "Character"}
@@ -1094,7 +1105,8 @@
                                   <span class="team-hand-meta">
                                     <span class="team-hand-rank">#{i + 1}</span>
                                     <span
-                                      >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                                      >{(team.usage_rate ?? 0).toFixed(1)}%
+                                      usage</span
                                     >
                                   </span>
                                 </div>
@@ -1253,6 +1265,9 @@
                         type="button"
                         class="stat-chip group relative flex items-center justify-center"
                         class:is-main={roll.matchesMain}
+                        style={roll.matchesMain
+                          ? `border-color: ${elColor}`
+                          : undefined}
                         aria-label={translateStatKey(roll.key)}
                       >
                         {#if icon}
@@ -1342,37 +1357,53 @@
                       </section>
                     {/if}
 
-                    {#if levelSection}
+                    {#if levelSection || ascensionSection}
                       <section class="board-section">
                         <h2 class="section-title">
                           Character level
-                          {#if levelSection.source === "guide" && levelSection.simMissing}
+                          {#if levelSection?.source === "guide" && levelSection.simMissing && !ascensionSection}
                             <span class="meta-sub"
                               >(no simulation data yet)</span
                             >
                           {/if}
                         </h2>
                         <ul class="talent-priority-list">
-                          {#if levelSection.source === "sim"}
+                          {#if levelSection}
+                            {#if levelSection.source === "sim"}
+                              {@render talentRow({
+                                name: "Level 90",
+                                icon: levelIcon,
+                                priority: levelSection.row.priority,
+                                kind: "level",
+                                priorityLabel: levelSection.row.priorityLabel,
+                                mean: levelSection.row.mean,
+                                median: levelSection.row.median,
+                                min: levelSection.row.min,
+                                max: levelSection.row.max,
+                                teams: levelSection.row.teams,
+                              })}
+                            {:else}
+                              {@render talentRow({
+                                name: "Level 90",
+                                icon: levelIcon,
+                                priority: levelSection.priority,
+                                kind: "level",
+                                priorityLabel: levelSection.priorityLabel,
+                              })}
+                            {/if}
+                          {/if}
+                          {#if ascensionSection?.source === "sim"}
                             {@render talentRow({
-                              name: "Level 90",
-                              icon: levelIcon,
-                              priority: levelSection.row.priority,
+                              name: "Ascension 6",
+                              icon: ascensionIcon,
+                              priority: ascensionSection.row.priority,
                               kind: "level",
-                              priorityLabel: levelSection.row.priorityLabel,
-                              mean: levelSection.row.mean,
-                              median: levelSection.row.median,
-                              min: levelSection.row.min,
-                              max: levelSection.row.max,
-                              teams: levelSection.row.teams,
-                            })}
-                          {:else}
-                            {@render talentRow({
-                              name: "Level 90",
-                              icon: levelIcon,
-                              priority: levelSection.priority,
-                              kind: "level",
-                              priorityLabel: levelSection.priorityLabel,
+                              priorityLabel: ascensionSection.row.priorityLabel,
+                              mean: ascensionSection.row.mean,
+                              median: ascensionSection.row.median,
+                              min: ascensionSection.row.min,
+                              max: ascensionSection.row.max,
+                              teams: ascensionSection.row.teams,
                             })}
                           {/if}
                         </ul>
@@ -1584,6 +1615,26 @@
     font-weight: 600;
     line-height: 1.05;
     color: var(--foreground-color);
+  }
+
+  .hero-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .hero-beta-badge {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--foreground-color) 14%, transparent);
+    color: var(--foreground-color);
+    border: 1px solid
+      color-mix(in srgb, var(--foreground-color) 32%, transparent);
   }
 
   .section-title {
@@ -2112,11 +2163,6 @@
     background: transparent;
     border: var(--border-width) solid rgba(255, 255, 255, 0.24);
     cursor: pointer;
-  }
-
-  .stat-chip.is-main {
-    border-color: rgba(255, 255, 255, 0.45);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
   .stat-chip-fallback {

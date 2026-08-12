@@ -21,8 +21,13 @@
     syncBackgroundToPath,
   } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
+  import PatchNotesPopup from "$lib/ui/components/PatchNotesPopup.svelte";
+  import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
+  import { getSiteBackgroundUrl } from "$lib/utils";
   import "../app.css";
+
+  const patchNotesPath = resolve("/patch-notes");
 
   if (typeof window !== "undefined") {
     installChunkLoadRecovery();
@@ -85,7 +90,7 @@
   {#if $backgroundVisible}
     <div
       class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-      style="background-image: url('https://images.lightkeepers.moe/site/lightkeepers_dark.webp')"
+      style="background-image: url('{getSiteBackgroundUrl()}')"
     ></div>
     <div
       class="fixed inset-0 -z-10 backdrop-blur-xs bg-overlay"
@@ -94,6 +99,7 @@
     ></div>
   {/if}
   <NavBar />
+  <PatchNotesPopup note={data.latestPatchNote} />
 
   <div class="h-12 w-full"></div>
   <div class="w-full flex flex-col items-center pt-6 md:pt-8">
@@ -113,6 +119,8 @@
     style="color: var(--foreground-mid);"
   >
     <span>© Lightkeepers</span>
+    <span aria-hidden="true">·</span>
+    <a href={patchNotesPath} class="footer-link">Patch notes</a>
     <span aria-hidden="true">·</span>
     <a
       href="https://github.com/woopxwoop/lightkeepers"

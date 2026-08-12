@@ -5,12 +5,20 @@
  * Call sites pass {@link primaryUpgradePct}(mean, median) so a skewed high
  * mean still surfaces when the median alone would understate the upgrade.
  *
+ * Measured talent / cons / sig / artifact rows prefer merge-stamped
+ * {@link ImportanceImpactTier} from CDN JSON; these ladders remain the
+ * fallback when `tier` is missing (stale payload, guide rows, level-90).
+ *
  * Each Builds section passes its own ordered threshold ladder, so both the
  * number of bands and their labels remain section-specific.
  */
 
-export type UpgradeTier =
-  "exceptional" | "high" | "solid" | "modest" | "negligible";
+import type {
+  ImpactTierScale,
+  ImportanceImpactTier,
+} from "$lib/types/investment";
+
+export type UpgradeTier = ImportanceImpactTier;
 
 export interface UpgradeImpactBand {
   /** Inclusive lower bound for this band. */
@@ -25,6 +33,15 @@ export interface UpgradeImpact {
 }
 
 export type UpgradeImpactLadder = readonly UpgradeImpactBand[];
+
+/** Default labels for merge-stamped impact tiers (3–5 bands). */
+export const MERGED_IMPACT_LABELS: Record<ImportanceImpactTier, string> = {
+  exceptional: "Exceptional impact",
+  high: "High impact",
+  solid: "Solid impact",
+  modest: "Modest impact",
+  negligible: "Negligible impact",
+};
 
 export const TALENT_UPGRADE: UpgradeImpactLadder = [
   { minPct: 10, tier: "exceptional", label: "Essential to upgrade" },
@@ -90,4 +107,24 @@ export function classifyUpgradeImpact(
     throw new Error("Upgrade impact ladder must include a zero-percent band");
   }
   return { tier: band.tier, label: band.label };
+}
+
+/**
+ * Prefer merge-stamped CDN tiers (+ roster labels/floors); fall back to the
+ * section ladder when the payload has no tier yet.
+ */
+export function resolveUpgradeImpact(
+  stamped: ImportanceImpactTier | null | undefined,
+  pct: number,
+  ladder: UpgradeImpactLadder,
+  scale?: ImpactTierScale | null,
+): UpgradeImpact {
+  if (stamped) {
+    return {
+      tier: stamped,
+      label:
+        scale?.labels?.[stamped] ?? MERGED_IMPACT_LABELS[stamped] ?? stamped,
+    };
+  }
+  return classifyUpgradeImpact(pct, ladder);
 }

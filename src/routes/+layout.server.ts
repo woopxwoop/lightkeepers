@@ -13,6 +13,7 @@ import { serverDb } from "$lib/server/supabaseServer";
 import { charactersCache } from "$lib/server/cache";
 import { isPlaywrightE2e } from "$lib/server/e2e";
 import { e2eCharacters, e2eStaticPayload } from "$lib/e2e/fixtures";
+import { listPatchNotes } from "$lib/patch-notes-catalog";
 import type { Tables } from "$lib/types/database.types";
 
 type Character = Tables<"characters">;
@@ -72,10 +73,22 @@ export const load: LayoutServerLoad = async () => {
   const mapping = new Map<string, Character>();
   characters.forEach((c) => mapping.set(c.name_id, c));
 
+  // Skip in Playwright so the popup never blocks e2e flows.
+  const latest = isPlaywrightE2e() ? undefined : listPatchNotes()[0];
+  const latestPatchNote = latest
+    ? {
+        slug: latest.slug,
+        title: latest.title,
+        date: latest.date,
+        summary: latest.summary,
+      }
+    : null;
+
   return {
     mapping,
     characters,
     abyssVersionNumber: versions.abyssVersionNumber,
     stygianVersionNumber: versions.stygianVersionNumber,
+    latestPatchNote,
   };
 };

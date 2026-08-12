@@ -4,7 +4,13 @@
  */
 async function globalSetup() {
   const base = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:5173";
-  const paths = ["/", "/abyss", "/stygian", "/pulls", "/api/static"];
+  const paths = [
+    "/",
+    "/tools/abyss",
+    "/tools/stygian",
+    "/tools/pulls",
+    "/api/static",
+  ];
   const timeoutMs = 15_000;
 
   await Promise.all(

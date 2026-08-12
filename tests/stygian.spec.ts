@@ -7,6 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test("stygian page shows board", async ({ page }) => {
   await page.goto("/stygian");
+  expect(new URL(page.url()).pathname).toBe("/tools/stygian");
 
   await expect(
     page.getByRole("heading", { name: "Stygian Onslaught" }),

@@ -29,7 +29,7 @@ export interface InvestmentTeam {
   results: InvestmentSim[];
 }
 
-export type SimKind = "baseline" | "f2p" | "vertical" | "talent";
+export type SimKind = "baseline" | "f2p" | "owned" | "vertical" | "talent";
 
 export interface InvestmentSim {
   /** Stable key: characters sorted, Char~C{cons}~{weapon}, joined by __ */
@@ -37,12 +37,13 @@ export interface InvestmentSim {
   /**
    * Human-readable label.
    * - baseline: full config (every char C / weapon / R)
-   * - f2p / vertical: diffs from baseline only (e.g. "Flins C1", "Aino C2")
+   * - f2p / owned / vertical: diffs from baseline only (e.g. "Flins C1", "Aino C2")
    */
   label: string;
   /**
    * baseline = canonical starting build;
    * f2p = floor-cost alternative (free weapon / 4★ budget cons, etc.);
+   * owned = already-owned 5★ weapon alt (+1 cost, vs baseline — not a pull rung);
    * vertical = limited-pull upgrades (extra cost above floor);
    * talent = one-step talent drop from baseline (single char, one talent at 1).
    */
@@ -91,17 +92,47 @@ export interface CharacterBuild {
   substat_rolls_liquid?: Record<string, number>;
 }
 
+/** Windowed dropoff impact bands (same vocabulary as Builds upgrade tiers). */
+export type ImportanceImpactTier =
+  "exceptional" | "high" | "solid" | "modest" | "negligible";
+
 /** Shape of `output/characters.json` (aggregate character summaries). */
 export interface CharacterIndexFile {
   characters: Record<string, CharacterIndex>;
+  /** Roster-level impact bucket floors + labels (also copied onto each character). */
+  impact_tiers?: ImpactTiersMeta;
+}
+
+/** One impact scale: inclusive % floors and display labels (k may be 3–5). */
+export interface ImpactTierScale {
+  bucket_count?: number | null;
+  floors: Partial<Record<ImportanceImpactTier, number>>;
+  labels: Partial<Record<ImportanceImpactTier, string>>;
+}
+
+/**
+ * Merge-time impact buckets uploaded with character summaries.
+ * Each upgrade axis has its own floors (talents vs cons vs sigs vs artifacts).
+ */
+export interface ImpactTiersMeta {
+  talents: ImpactTierScale;
+  constellations: ImpactTierScale;
+  sig_weapons: ImpactTierScale;
+  artifacts: ImpactTierScale;
 }
 
 export interface CharacterIndex {
   key: string;
   /**
-   * Weapons ranked by distinct team count. Baseline weapons always count;
-   * F2P weapon alts only count teams where that f2p config beats baseline DPS;
-   * vertical/sig weapons still count every appearance.
+   * Roster impact bucket definitions (embedded on per-character CDN JSON so
+   * Builds can label stamped tiers without fetching the full index).
+   */
+  impact_tiers?: ImpactTiersMeta;
+  /**
+   * Weapons ranked by Bradley–Terry strength (same-team weapon one-steps),
+   * then team count. Baseline weapons always count; F2P / owned alts only
+   * count teams where that config beats baseline DPS; vertical/sig weapons
+   * still count every appearance.
    */
   weapons: CharacterWeaponRank[];
   /**
@@ -129,10 +160,15 @@ export interface CharacterIndex {
    */
   talent_importance?: CharacterTalentImportance;
   /**
-   * How much DPS drops when the character runs at level 80 (talents stay
+   * How much DPS drops when the character runs at level 80/90 (talents stay
    * baseline), aggregated across teams.
    */
   level_importance?: CharacterLevelImportance;
+  /**
+   * How much DPS drops from final ascension at level 80 (80/90 vs 80/80 as a
+   * % of the 80/90 rung), aggregated across teams that have both samples.
+   */
+  ascension_importance?: CharacterLevelImportance;
   /**
    * One-step gains: constellations are stepwise vs the previous constellation
    * (C2 vs C1), covering rungs below the team baseline as well as above it;
@@ -140,6 +176,12 @@ export interface CharacterIndex {
    * excluded.
    */
   vertical_importance?: CharacterVerticalImportance;
+  /**
+   * One-hot high-invest artifact gain vs mid baseline (30/18/1 on this character,
+   * others at pipeline mid OptimFull). Aggregated across teams at merge from
+   * `artifact_importance.py` reports. Negative per-team gains are floored to 0.
+   */
+  artifact_importance?: CharacterArtifactImportance;
   /**
    * Editorial upgrade recommendations from a hand-authored guide.
    * Published separately from measured `*_importance` statistics; the Builds
@@ -149,6 +191,24 @@ export interface CharacterIndex {
   guide_priority?: CharacterGuidePriority;
   /** Optional editorial blurb from hand-authored guide (merge-time). */
   notes?: string;
+}
+
+/** Compact team reaction profile from baseline gcsim ``-out`` extract. */
+export interface TeamReactionProfile {
+  rps: number | null;
+  /** Which signal ranked the list. */
+  metric: "damage" | "count";
+  list: TeamReactionEntry[];
+  primary: string | null;
+  /** Diversity key, e.g. ``melt`` or ``melt+vaporize``. */
+  fingerprint: string | null;
+}
+
+export interface TeamReactionEntry {
+  name: string;
+  damage: number;
+  count: number;
+  share: number;
 }
 
 export type TalentSlot = "auto" | "skill" | "burst";
@@ -179,6 +239,11 @@ export interface CharacterTalentSlotImportance {
   min_pct_drop: number;
   /** Largest % DPS drop on any contributing team. */
   max_pct_drop: number;
+  /**
+   * Merge-time impact bucket from the joint talent+cons pool cutoffs.
+   * Null when this slot was not scored.
+   */
+  tier?: ImportanceImpactTier | null;
 }
 
 export interface CharacterTalentImportance {
@@ -192,7 +257,7 @@ export interface CharacterTalentImportance {
 }
 
 export interface CharacterLevelImportance extends CharacterTalentSlotImportance {
-  /** Teams with a level-80 drop sample for this character. */
+  /** Teams with a level-80 (or ascension) drop sample for this character. */
   teams: number;
 }
 
@@ -207,6 +272,11 @@ export interface CharacterVerticalGain {
   min_pct_gain: number;
   /** Largest % DPS gain on any contributing team. */
   max_pct_gain: number;
+  /**
+   * Merge-time impact bucket from shared talent+cons cutoff floors.
+   * Null when this entry was not scored.
+   */
+  tier?: ImportanceImpactTier | null;
 }
 
 export interface CharacterConsGain extends CharacterVerticalGain {
@@ -226,9 +296,31 @@ export interface CharacterVerticalImportance {
   sig_weapons: CharacterSigGain[];
 }
 
+/** Gain from juicing this character's artifacts (high OptimFull) while teammates stay mid. */
+export interface CharacterArtifactImportance {
+  teams: number;
+  mean_pct_gain: number;
+  median_pct_gain: number;
+  min_pct_gain: number;
+  max_pct_gain: number;
+  /**
+   * Merge-time impact bucket from successive largest-dropoff cuts on mean_pct_gain.
+   * Null when no samples.
+   */
+  tier?: ImportanceImpactTier | null;
+}
+
+/** @deprecated Use {@link ImportanceImpactTier}. */
+export type ArtifactImportanceTier = ImportanceImpactTier;
+
 export interface CharacterWeaponRank {
   key: string;
   teams: number;
+  /**
+   * Bradley–Terry strength from same-team pairwise DPS among baseline +
+   * one-weapon-step configs. Higher = stronger. Omitted on older payloads.
+   */
+  strength?: number;
 }
 
 export interface CharacterSetRank {

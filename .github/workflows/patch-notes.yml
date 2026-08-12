@@ -1,0 +1,150 @@
+name: Patch notes
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "patch-notes/**/*.md"
+      - "patch-notes/*.md"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Publish new / changed notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCORD_PATCH_WEBHOOK_URL: ${{ secrets.DISCORD_PATCH_WEBHOOK_URL }}
+          SITE_ORIGIN: https://lightkeepers.moe
+        run: |
+          python3 <<'PY'
+          import json, os, re, subprocess, urllib.request
+          from pathlib import Path
+
+          root = Path("patch-notes")
+          note_re = re.compile(r"^\d{4}-\d{2}-\d{2}-.+\.md$", re.I)
+
+          def changed_note_files() -> list[Path]:
+              before = subprocess.check_output(
+                  ["git", "rev-parse", "HEAD^"], text=True
+              ).strip()
+              out = subprocess.check_output(
+                  ["git", "diff", "--name-only", "--diff-filter=AM", before, "HEAD", "--", "patch-notes"],
+                  text=True,
+              )
+              files = []
+              for line in out.splitlines():
+                  p = Path(line.strip())
+                  if p.name == "README.md":
+                      continue
+                  if note_re.match(p.name):
+                      files.append(p)
+              return files
+
+          def parse(path: Path) -> dict:
+              text = path.read_text(encoding="utf-8").lstrip("\ufeff").replace("\r\n", "\n")
+              m = re.match(r"^---\n([\s\S]*?)\n---\n([\s\S]*)$", text)
+              if not m:
+                  raise SystemExit(f"{path}: missing frontmatter")
+              fields = {}
+              for line in m.group(1).split("\n"):
+                  if ":" not in line:
+                      continue
+                  k, v = line.split(":", 1)
+                  fields[k.strip()] = v.strip().strip("\"'")
+              for key in ("title", "date", "summary"):
+                  if not fields.get(key):
+                      raise SystemExit(f"{path}: missing {key}")
+              slug = path.stem
+              return {
+                  "slug": slug,
+                  "title": fields["title"],
+                  "date": fields["date"],
+                  "summary": fields["summary"],
+                  "body": m.group(2).strip(),
+              }
+
+          site = os.environ["SITE_ORIGIN"].rstrip("/")
+          webhook = os.environ.get("DISCORD_PATCH_WEBHOOK_URL", "").strip()
+          files = changed_note_files()
+          if not files:
+              print("No dated patch-note files changed.")
+              raise SystemExit(0)
+
+          for path in sorted(files):
+              note = parse(path)
+              tag = f"patch-notes/{note['slug']}"
+              site_url = f"{site}/patch-notes/{note['slug']}"
+              notes = f"{note['summary']}\n\n{note['body']}\n\n---\nSite: {site_url}"
+
+              existing = subprocess.run(
+                  ["gh", "release", "view", tag],
+                  capture_output=True,
+                  text=True,
+              )
+              if existing.returncode == 0:
+                  print(f"Updating release {tag}")
+                  subprocess.check_call(
+                      [
+                          "gh",
+                          "release",
+                          "edit",
+                          tag,
+                          "--title",
+                          note["title"],
+                          "--notes",
+                          notes,
+                      ]
+                  )
+              else:
+                  print(f"Creating release {tag}")
+                  subprocess.check_call(
+                      [
+                          "gh",
+                          "release",
+                          "create",
+                          tag,
+                          "--title",
+                          note["title"],
+                          "--notes",
+                          notes,
+                          "--target",
+                          os.environ.get("GITHUB_SHA", "main"),
+                      ]
+                  )
+
+              if webhook:
+                  embed = {
+                      "title": note["title"],
+                      "description": note["summary"],
+                      "url": site_url,
+                      "color": 0xC9A227,
+                      "fields": [
+                          {"name": "Date", "value": note["date"], "inline": True},
+                          {
+                              "name": "Links",
+                              "value": f"[Site]({site_url}) · [GitHub]({os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ.get('GITHUB_REPOSITORY', '')}/releases/tag/{tag})",
+                              "inline": False,
+                          },
+                      ],
+                  }
+                  req = urllib.request.Request(
+                      webhook,
+                      data=json.dumps({"embeds": [embed]}).encode(),
+                      headers={"Content-Type": "application/json"},
+                      method="POST",
+                  )
+                  with urllib.request.urlopen(req) as resp:
+                      print(f"Discord webhook status {resp.status} for {tag}")
+              else:
+                  print("DISCORD_PATCH_WEBHOOK_URL unset — skipped Discord post")
+          PY

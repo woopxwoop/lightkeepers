@@ -607,6 +607,34 @@ export type Database = {
         }
         Relationships: []
       }
+      user_calculator_goals: {
+        Row: {
+          goals: Json
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          goals?: Json
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          goals?: Json
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_calculator_goals_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_rosters: {
         Row: {
           id: string

@@ -1,18 +1,22 @@
 /**
  * Construct CDN asset URLs from datamine `UI_*` icon names / kit JSON.
  *
- * Assets are synced to R2 and served from https://images.lightkeepers.moe:
+ * Assets are synced to R2 and served from https://api.lightkeepers.moe:
  *
  *   genshin/ui/{UI_*}.webp                 — textures (portraits, skills, enemies, …)
  *   characters/{name_id}/card.webp         — TCG cards (see getCharacterCard in utils.ts)
- *   genshin/data/characters/index.json     — kit roster summary
- *   genshin/data/characters/{name_id}.json — full kit per character
+ *   genshin/data/characters/index.json     — kit roster summary (live)
+ *   genshin/data/characters/{name_id}.json — full kit per character (live)
+ *   genshin/data/beta/characters/…         — CB / unreleased kits (YuanShen)
+ *   genshin/data/upgrade-costs/…           — level / ascension / talent costs (live)
+ *   genshin/data/beta/upgrade-costs/…      — CB costs (merged in /api/upgrade-costs)
  *   genshin/data/characters/{name_id}-{Element}.json — Traveler kits (PlayerBoy-Anemo, …)
  *   genshin/data/enemies/index.json        — enemy id → icon stem map
  *
  * Images: scripts/sync/{equipment,namecards,character,character-kit}-images-r2.ts
  * TCG:    scripts/sync/tcg-cards-r2.ts
- * Kits:   scripts/sync/character-data-r2.ts
+ * Kits:   scripts/sync/character-data-r2.ts (+ DATA_CHANNEL=beta for CB)
+ * Costs:  scripts/sync/upgrade-costs-r2.ts (+ DATA_CHANNEL=beta for CB)
  *
  * Note: weapon/artifact tables are loaded via dynamic import in
  * `$lib/equipment-data` (not this module). Character kits + enemy index
@@ -21,12 +25,31 @@
 
 import type { CharacterKit, CharacterKitIndex } from "$lib/types/character-kit";
 import type { EnemyIndex } from "$lib/types/enemy";
+import type {
+  CharacterUpgradeCosts,
+  UpgradeCostsCatalog,
+  UpgradeCurves,
+  UpgradeMaterialMeta,
+  WeaponUpgradeCosts,
+} from "$lib/types/upgrade-costs";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 
-const CDN_BASE = "https://images.lightkeepers.moe";
+const CDN_BASE = "https://api.lightkeepers.moe";
 const UI_PREFIX = `${CDN_BASE}/genshin/ui`;
 const CHARACTERS_DATA_PREFIX = `${CDN_BASE}/genshin/data/characters`;
+const BETA_CHARACTERS_DATA_PREFIX = `${CDN_BASE}/genshin/data/beta/characters`;
+const UPGRADE_COSTS_DATA_PREFIX = `${CDN_BASE}/genshin/data/upgrade-costs`;
+const BETA_UPGRADE_COSTS_DATA_PREFIX = `${CDN_BASE}/genshin/data/beta/upgrade-costs`;
 const ENEMIES_DATA_PREFIX = `${CDN_BASE}/genshin/data/enemies`;
+
+export type CharacterKitChannel = "live" | "beta";
+export type UpgradeCostsChannel = "live" | "beta";
+
+function charactersDataPrefix(channel: CharacterKitChannel): string {
+  return channel === "beta"
+    ? BETA_CHARACTERS_DATA_PREFIX
+    : CHARACTERS_DATA_PREFIX;
+}
 
 function uiUrl(iconName: string): string {
   const base = iconName.replace(/\.(png|webp|jpe?g)$/i, "");
@@ -134,18 +157,25 @@ export function assetUrl(iconName: string | null): string | null {
 // ── Character kit JSON (CDN-fetched, not ESM-bundled) ──
 
 /** Roster summary listing (`index.json`). */
-export function characterKitIndexUrl(): string {
-  return `${CHARACTERS_DATA_PREFIX}/index.json`;
+export function characterKitIndexUrl(
+  channel: CharacterKitChannel = "live",
+): string {
+  return `${charactersDataPrefix(channel)}/index.json`;
 }
 
 /** Full kit for one character (`{name_id}.json`). */
-export function characterKitUrl(nameId: string): string {
-  return `${CHARACTERS_DATA_PREFIX}/${encodeURIComponent(nameId)}.json`;
+export function characterKitUrl(
+  nameId: string,
+  channel: CharacterKitChannel = "live",
+): string {
+  return `${charactersDataPrefix(channel)}/${encodeURIComponent(nameId)}.json`;
 }
 
 /** Fetch + parse the character kit index from the CDN. */
-export async function fetchCharacterKitIndex(): Promise<CharacterKitIndex> {
-  const resp = await fetchWithTimeout(characterKitIndexUrl());
+export async function fetchCharacterKitIndex(
+  channel: CharacterKitChannel = "live",
+): Promise<CharacterKitIndex> {
+  const resp = await fetchWithTimeout(characterKitIndexUrl(channel));
   if (!resp.ok) {
     throw new Error(
       `Failed to fetch character kit index: ${resp.status} ${resp.statusText}`,
@@ -154,15 +184,21 @@ export async function fetchCharacterKitIndex(): Promise<CharacterKitIndex> {
   return (await resp.json()) as CharacterKitIndex;
 }
 
-/** Fetch + parse one character's kit JSON from the CDN. */
+/**
+ * Fetch + parse one character's kit JSON from the CDN.
+ * Tries live first, then beta (`genshin/data/beta/characters/`) on 404/410.
+ */
 export async function fetchCharacterKit(nameId: string): Promise<CharacterKit> {
-  const resp = await fetchWithTimeout(characterKitUrl(nameId));
-  if (!resp.ok) {
-    throw new Error(
-      `Failed to fetch character kit (${nameId}): ${resp.status} ${resp.statusText}`,
-    );
+  for (const channel of ["live", "beta"] as const) {
+    const resp = await fetchWithTimeout(characterKitUrl(nameId, channel));
+    if (resp.ok) return (await resp.json()) as CharacterKit;
+    if (resp.status !== 404 && resp.status !== 410) {
+      throw new Error(
+        `Failed to fetch character kit (${nameId}): ${resp.status} ${resp.statusText}`,
+      );
+    }
   }
-  return (await resp.json()) as CharacterKit;
+  throw new Error(`Failed to fetch character kit (${nameId}): not found`);
 }
 
 // ── Enemy index JSON (CDN map; live slots still come from /api/static) ──
@@ -180,4 +216,45 @@ export async function fetchEnemyIndex(): Promise<EnemyIndex> {
     );
   }
   return (await resp.json()) as EnemyIndex;
+}
+
+// ── Upgrade costs (CDN; planner page only) ──
+
+export function upgradeCostsFileUrl(
+  file:
+    | "index.json"
+    | "curves.json"
+    | "materials.json"
+    | "characters.json"
+    | "weapons.json",
+  channel: UpgradeCostsChannel = "live",
+): string {
+  const prefix =
+    channel === "beta"
+      ? BETA_UPGRADE_COSTS_DATA_PREFIX
+      : UPGRADE_COSTS_DATA_PREFIX;
+  return `${prefix}/${file}`;
+}
+
+/** Fetch the full live upgrade-cost catalog (4 JSON files in parallel). */
+export async function fetchUpgradeCostsCatalog(): Promise<UpgradeCostsCatalog> {
+  const [curves, materials, characters, weapons] = await Promise.all([
+    fetchWithTimeout(upgradeCostsFileUrl("curves.json")).then(async (r) => {
+      if (!r.ok) throw new Error(`upgrade curves: HTTP ${r.status}`);
+      return (await r.json()) as UpgradeCurves;
+    }),
+    fetchWithTimeout(upgradeCostsFileUrl("materials.json")).then(async (r) => {
+      if (!r.ok) throw new Error(`upgrade materials: HTTP ${r.status}`);
+      return (await r.json()) as Record<string, UpgradeMaterialMeta>;
+    }),
+    fetchWithTimeout(upgradeCostsFileUrl("characters.json")).then(async (r) => {
+      if (!r.ok) throw new Error(`upgrade characters: HTTP ${r.status}`);
+      return (await r.json()) as CharacterUpgradeCosts[];
+    }),
+    fetchWithTimeout(upgradeCostsFileUrl("weapons.json")).then(async (r) => {
+      if (!r.ok) throw new Error(`upgrade weapons: HTTP ${r.status}`);
+      return (await r.json()) as WeaponUpgradeCosts[];
+    }),
+  ]);
+  return { curves, materials, characters, weapons };
 }

@@ -8,7 +8,10 @@ import { describe, it } from "node:test";
 import {
   constellationImpactRows,
   constellationPrioritySection,
+  formatReactionFingerprint,
+  formatReactionName,
   levelImportanceFromBuilds,
+  ascensionImportanceFromBuilds,
   levelPrioritySection,
   rankSigWeaponsByGain,
   rankWeaponsByRarityAndTeams,
@@ -110,6 +113,51 @@ describe("rankWeaponsByRarityAndTeams", () => {
       ["fiveA", "fiveB", "fourA"],
     );
   });
+
+  it("prefers measured sigs when rarity and teams tie", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "SurfsUp", teams: 5 },
+        { key: "TomeOfTheEternalFlow", teams: 5 },
+        { key: "PrototypeAmber", teams: 5 },
+      ],
+      () => 5,
+      ["TomeOfTheEternalFlow"],
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
+      ["TomeOfTheEternalFlow", "PrototypeAmber", "SurfsUp"],
+    );
+  });
+
+  it("sorts by Bradley-Terry strength before team count", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "SurfsUp", teams: 5, strength: 0.9 },
+        { key: "TomeOfTheEternalFlow", teams: 5, strength: 1.2 },
+        { key: "PrototypeAmber", teams: 8, strength: 0.7 },
+      ],
+      () => 5,
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
+      ["TomeOfTheEternalFlow", "SurfsUp", "PrototypeAmber"],
+    );
+  });
+
+  it("ranks defined strength ahead of missing strength", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "noStrength", teams: 20 },
+        { key: "hasStrength", teams: 2, strength: 0.5 },
+      ],
+      () => 5,
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
+      ["hasStrength", "noStrength"],
+    );
+  });
 });
 
 describe("rankSigWeaponsByGain", () => {
@@ -188,6 +236,52 @@ describe("rankSigWeaponsByGain", () => {
     assert.deepEqual(
       ranked.map((w) => w.key),
       ["big", "small", "infinite", "nan"],
+    );
+  });
+
+  it("prefers merge-stamped tiers over the fixed ladder", () => {
+    const ranked = rankSigWeaponsByGain(
+      [
+        {
+          key: "small_but_stamped",
+          teams: 1,
+          mean_pct_gain: 1,
+          median_pct_gain: 1,
+          min_pct_gain: 1,
+          max_pct_gain: 1,
+          tier: "exceptional",
+        },
+        {
+          key: "big_unstamped",
+          teams: 1,
+          mean_pct_gain: 24,
+          median_pct_gain: 24,
+          min_pct_gain: 24,
+          max_pct_gain: 24,
+        },
+      ],
+      {
+        floors: {
+          exceptional: 7.83,
+          high: 4.11,
+          solid: 0.79,
+          negligible: 0,
+        },
+        labels: {
+          exceptional: "Exceptional impact",
+          high: "High impact",
+          solid: "Solid impact",
+          modest: "Modest impact",
+          negligible: "Negligible impact",
+        },
+      },
+    );
+    assert.deepEqual(
+      ranked.map((w) => [w.key, w.priority, w.priorityLabel]),
+      [
+        ["big_unstamped", "exceptional", "Exceptional impact"],
+        ["small_but_stamped", "exceptional", "Exceptional impact"],
+      ],
     );
   });
 });
@@ -289,6 +383,22 @@ describe("talentImportanceRows / levelImportanceFromBuilds", () => {
       }),
     );
     assert.equal(level?.priority, "high");
+
+    const ascension = ascensionImportanceFromBuilds(
+      builds({
+        main_stats: { sands: [], goblet: [], circlet: [] },
+        substat_rolls_liquid: { teams: 0, configs: 0, mean: {}, ranked: [] },
+        ascension_importance: {
+          teams: 1,
+          mean_pct_drop: 3,
+          median_pct_drop: 3,
+          min_pct_drop: 3,
+          max_pct_drop: 3,
+        },
+      }),
+    );
+    assert.equal(ascension?.priority, "modest");
+    assert.equal(ascension?.mean, 3);
   });
 
   it("hides talent/level rows when teams are zero", () => {
@@ -554,5 +664,18 @@ describe("guide vs sim section selection", () => {
     );
     assert.equal(level?.source, "sim");
     assert.equal(level?.source === "sim" ? level.row.priority : null, "high");
+  });
+});
+
+describe("reaction helpers", () => {
+  it("formats reaction names and fingerprints", () => {
+    assert.equal(formatReactionName("lunarcharged"), "Lunar-Charged");
+    assert.equal(formatReactionName("swirl-electro"), "Swirl (Electro)");
+    assert.equal(formatReactionName("mystery-reaction"), "Mystery Reaction");
+    assert.equal(formatReactionFingerprint(null), "No reactions");
+    assert.equal(
+      formatReactionFingerprint("bloom+swirl-hydro"),
+      "Bloom + Swirl (Hydro)",
+    );
   });
 });
