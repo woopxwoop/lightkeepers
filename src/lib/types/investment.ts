@@ -54,6 +54,8 @@ export interface InvestmentSim {
   dps: number;
   /** Per-character build snapshot for this simulation. */
   characters: CharacterBuild[];
+  /** Baseline reaction profile (merge pass-through from summary). */
+  reactions?: TeamReactionProfile;
 }
 
 export interface CharacterBuild {
@@ -183,6 +185,19 @@ export interface CharacterIndex {
    */
   artifact_importance?: CharacterArtifactImportance;
   /**
+   * Stat goals from mid→high OptimFull allocation deltas (+ ER if burst, CR if Fav).
+   * Negligible artifact impact collapses to the ER/Fav checklist only.
+   * Character-level summary — prefer ``build_examples`` for team/archetype views.
+   */
+  stat_recommendations?: CharacterStatRecommendations;
+  /**
+   * One example per reaction fingerprint (highest baseline DPS), capped.
+   * `invest: mid` (negligible) → baseline ER (+ CR if that example uses Fav);
+   * `high` → high config + mains.
+   * Shown on the character Builds tab.
+   */
+  build_examples?: CharacterBuildExample[];
+  /**
    * Editorial upgrade recommendations from a hand-authored guide.
    * Published separately from measured `*_importance` statistics; the Builds
    * UI fills missing sim sections by default, or replaces authored sections
@@ -308,6 +323,52 @@ export interface CharacterArtifactImportance {
    * Null when no samples.
    */
   tier?: ImportanceImpactTier | null;
+}
+
+/**
+ * Derived farm targets: mid→high liquid movers, plus conditional ER/Fav overlays.
+ * `checklist` mode (negligible artifact impact) omits delta_stats.
+ */
+export interface CharacterStatRecommendations {
+  mode: "delta" | "checklist";
+  delta_stats: Array<{ key: string; mean_delta: number; teams_positive: number }>;
+  enerRech_if_burst: boolean;
+  critRate_if_fav: boolean;
+  teams: number;
+  burst_teams: number;
+  fav_teams: number;
+}
+
+/** One concrete team build example for a character (CDN character index). */
+export interface CharacterBuildExample {
+  team_key: string;
+  team_name: string;
+  /** GOOD keys for the full party (order matches the sim). */
+  characters: string[];
+  state_key: string;
+  reactions: TeamReactionProfile;
+  /**
+   * ``mid`` = negligible artifact impact → UI shows baseline ER (+ CR if Fav).
+   * ``high`` = otherwise → UI shows high OptimFull sheet from mains + high rolls.
+   */
+  invest: "mid" | "high";
+  artifact_pct_gain: number;
+  /** Featured character GOOD key (same shape as ``CharacterBuild``). */
+  key: string;
+  cons: number;
+  level: number;
+  talents: CharacterBuild["talents"];
+  weapon: CharacterBuild["weapon"];
+  set: CharacterBuild["set"];
+  set2?: string;
+  set2_count?: number;
+  main_stats: CharacterBuild["main_stats"];
+  /** Baseline (mid-invest) OptimFull total rolls. */
+  substat_rolls: Record<string, number>;
+  substat_rolls_liquid: Record<string, number>;
+  /** High-invest OptimFull totals when ``invest === "high"``. */
+  high_substat_rolls?: Record<string, number>;
+  high_substat_rolls_liquid?: Record<string, number>;
 }
 
 /** @deprecated Use {@link ImportanceImpactTier}. */

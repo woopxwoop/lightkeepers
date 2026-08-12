@@ -390,6 +390,55 @@ export type Database = {
           },
         ]
       }
+      stygian_team_clear_videos: {
+        Row: {
+          char_names: string[]
+          clear_key: string
+          cost: number | null
+          difficulty: string
+          enemy_id: number
+          team_key: string
+          time_s: number | null
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          char_names?: string[]
+          clear_key: string
+          cost?: number | null
+          difficulty: string
+          enemy_id: number
+          team_key: string
+          time_s?: number | null
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          char_names?: string[]
+          clear_key?: string
+          cost?: number | null
+          difficulty?: string
+          enemy_id?: number
+          team_key?: string
+          time_s?: number | null
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stygian_team_clear_videos_enemy_id_fkey"
+            columns: ["enemy_id"]
+            referencedRelation: "enemies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stygian_team_clear_videos_team_key_fkey"
+            columns: ["team_key"]
+            referencedRelation: "teams"
+            referencedColumns: ["team_key"]
+          },
+        ]
+      }
       stygian_version_enemies: {
         Row: {
           enemy_id: number
