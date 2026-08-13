@@ -788,6 +788,8 @@ describe("exampleRelevantGoodKeys display rules", () => {
     const example: CharacterBuildExample = {
       ...base,
       invest: "mid",
+      substat_rolls: { enerRech_: 12, critRate_: 10, critDMG_: 4 },
+      substat_rolls_liquid: { enerRech_: 10, critRate_: 8, critDMG_: 2 },
       high_substat_rolls: { eleMas: 16, enerRech_: 16 },
       high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
     };
@@ -800,6 +802,13 @@ describe("exampleRelevantGoodKeys display rules", () => {
       "critRate_",
       "enerRech_",
     ]);
+    const build = characterBuildFromExample(example, "mid");
+    assert.equal(build.substat_rolls.enerRech_, 12);
+    assert.equal(build.substat_rolls.critRate_, 10);
+    assert.equal(build.substat_rolls_liquid.enerRech_, 10);
+    assert.equal(build.substat_rolls_liquid.critRate_, 8);
+    assert.equal(build.substat_rolls.eleMas, undefined);
+    assert.equal(build.substat_rolls_liquid.eleMas, undefined);
   });
 
   it("clamps EM liquid to flower+plume when mains are EM/EM/EM", () => {

@@ -67,7 +67,7 @@ export async function ensureCheapClears(opts: {
     maxCost,
   );
   const hit = cache.get(key);
-  if (hit) return hit.rows;
+  if (hit) return raceAbort(Promise.resolve(hit.rows), opts.signal);
 
   let fetchPromise = inflight.get(key);
   if (!fetchPromise) {
@@ -94,9 +94,14 @@ export async function ensureCheapClears(opts: {
       return rows;
     })();
     inflight.set(key, fetchPromise);
-    void fetchPromise.finally(() => {
-      if (inflight.get(key) === fetchPromise) inflight.delete(key);
-    });
+    void fetchPromise
+      .finally(() => {
+        if (inflight.get(key) === fetchPromise) inflight.delete(key);
+      })
+      .then(
+        () => {},
+        () => {},
+      );
   }
 
   return raceAbort(fetchPromise, opts.signal);

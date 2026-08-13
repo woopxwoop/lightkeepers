@@ -133,12 +133,17 @@ export async function ensureClearVideos(
     for (const p of chunk) {
       inflight.set(pairKey(p.team_key, p.enemy_id), fetchPromise);
     }
-    void fetchPromise.finally(() => {
-      for (const p of chunk) {
-        const key = pairKey(p.team_key, p.enemy_id);
-        if (inflight.get(key) === fetchPromise) inflight.delete(key);
-      }
-    });
+    void fetchPromise
+      .finally(() => {
+        for (const p of chunk) {
+          const key = pairKey(p.team_key, p.enemy_id);
+          if (inflight.get(key) === fetchPromise) inflight.delete(key);
+        }
+      })
+      .then(
+        () => {},
+        () => {},
+      );
     waits.push(fetchPromise);
   }
 
@@ -150,5 +155,5 @@ export async function ensureClearVideos(
   for (const key of unique.keys()) {
     out.set(key, cache.get(key) ?? []);
   }
-  return out;
+  return raceAbort(Promise.resolve(out), signal);
 }

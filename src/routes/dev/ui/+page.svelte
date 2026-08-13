@@ -1201,14 +1201,14 @@
                 <span
                   class="sg-gear-box sg-gear-box--sm"
                   role="img"
-                  aria-label={statGoalArchetype.weapon}
-                  title={statGoalArchetype.weapon}
+                  aria-label={`Weapon: ${statGoalArchetype.weapon}`}
+                  title={`Weapon: ${statGoalArchetype.weapon}`}
                 ></span>
                 <span
                   class="sg-gear-box sg-gear-box--sm"
                   role="img"
-                  aria-label={statGoalArchetype.set}
-                  title={statGoalArchetype.set}
+                  aria-label={`Artifact set: ${statGoalArchetype.set}`}
+                  title={`Artifact set: ${statGoalArchetype.set}`}
                 ></span>
               </div>
               <button
