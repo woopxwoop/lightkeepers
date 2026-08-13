@@ -9,6 +9,7 @@ import {
   constellationImpactRows,
   constellationPrioritySection,
   characterBuildFromExample,
+  exampleHasHighConfig,
   exampleRelevantGoodKeys,
   exampleUsesFavonius,
   formatReactionFingerprint,
@@ -776,11 +777,29 @@ describe("exampleRelevantGoodKeys display rules", () => {
       high_substat_rolls: { eleMas: 16, enerRech_: 16 },
       high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
     };
-    const keys = exampleRelevantGoodKeys(example);
+    const keys = exampleRelevantGoodKeys(example, "high");
     assert.equal(keys.has("eleMas"), true);
     assert.equal(keys.has("enerRech_"), true);
     assert.equal(keys.has("atk_"), false);
     assert.equal(keys.has("critDMG_"), false);
+  });
+
+  it("mid invest keeps mid sheet even when high_substat_rolls is present", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      invest: "mid",
+      high_substat_rolls: { eleMas: 16, enerRech_: 16 },
+      high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
+    };
+    assert.equal(exampleHasHighConfig(example), false);
+    assert.deepEqual([...exampleRelevantGoodKeys(example, "mid")].sort(), [
+      "critRate_",
+      "enerRech_",
+    ]);
+    assert.deepEqual([...exampleRelevantGoodKeys(example, "high")].sort(), [
+      "critRate_",
+      "enerRech_",
+    ]);
   });
 
   it("clamps EM liquid to flower+plume when mains are EM/EM/EM", () => {

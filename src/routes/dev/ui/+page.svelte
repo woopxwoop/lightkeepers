@@ -1133,14 +1133,13 @@
         <div class="sg-frame">
           <div class="sg-c-head">
             <h4 class="section-title">Stat goals</h4>
-            <div class="sg-arch-tabs" role="tablist" aria-label="Archetype">
+            <div class="sg-arch-tabs" role="group" aria-label="Archetype">
               {#each STAT_GOAL_ARCHETYPES as arch (arch.id)}
                 <button
                   type="button"
-                  role="tab"
                   class="sg-arch-tab"
                   class:active={statGoalArchetypeId === arch.id}
-                  aria-selected={statGoalArchetypeId === arch.id}
+                  aria-pressed={statGoalArchetypeId === arch.id}
                   onclick={() => (statGoalArchetypeId = arch.id)}
                 >
                   {arch.label}
@@ -1199,9 +1198,17 @@
                 {/each}
               </div>
               <div class="sg-d-gear">
-                <span class="sg-gear-box sg-gear-box--sm" title={statGoalArchetype.weapon}
+                <span
+                  class="sg-gear-box sg-gear-box--sm"
+                  role="img"
+                  aria-label={statGoalArchetype.weapon}
+                  title={statGoalArchetype.weapon}
                 ></span>
-                <span class="sg-gear-box sg-gear-box--sm" title={statGoalArchetype.set}
+                <span
+                  class="sg-gear-box sg-gear-box--sm"
+                  role="img"
+                  aria-label={statGoalArchetype.set}
+                  title={statGoalArchetype.set}
                 ></span>
               </div>
               <button

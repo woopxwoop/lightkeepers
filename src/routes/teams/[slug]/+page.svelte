@@ -308,7 +308,6 @@
         ownedVariantsList,
         "Owned weapon options",
         "Already-owned 5★ weapon alternatives compared to this team baseline. Highlighted rows are within 2.5% DPS of the best option in this list.",
-        "+1",
       )}
     {/if}
 

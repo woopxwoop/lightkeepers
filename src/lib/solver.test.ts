@@ -15,6 +15,7 @@ import {
   solveStygian,
   solveStygianCheapClears,
   solveStygianHybrid,
+  solveStygianWithFallback,
 } from "./solver.ts";
 
 function abyssTeam(
@@ -571,6 +572,44 @@ describe("solveAbyssWithFallback", () => {
     assert.ok(solutions.length >= 1);
     assert.equal(solutions[0].isFallback, true);
     assert.ok(solutions[0].neededCharacters.includes("x"));
+  });
+});
+
+describe("solveStygianWithFallback", () => {
+  it("keeps partial boards when no complete seating exists", () => {
+    // Every team is under MIN_SLOT_RATE on middle — no complete board possible.
+    const all = [
+      stygianTeam({
+        team_key: "soft-a",
+        members: ["a", "b", "c", "d"],
+        usage_rate: 90,
+        field_1_rate: 50,
+        field_2_rate: 50,
+        field_3_rate: 5,
+      }),
+      stygianTeam({
+        team_key: "soft-b",
+        members: ["e", "f", "g", "h"],
+        usage_rate: 80,
+        field_1_rate: 50,
+        field_2_rate: 50,
+        field_3_rate: 4,
+      }),
+      stygianTeam({
+        team_key: "soft-c",
+        members: ["i", "j", "k", "x"],
+        usage_rate: 70,
+        field_1_rate: 50,
+        field_2_rate: 50,
+        field_3_rate: 3,
+      }),
+    ];
+    const ownedNames = new Set(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]);
+    const solutions = solveStygianWithFallback([], all, ownedNames, 1);
+    assert.ok(solutions.length >= 1);
+    assert.equal(solutions[0].isFallback, true);
+    assert.ok(solutions[0].unfilled.length > 0);
+    assert.ok(solutions[0].unfilled.includes("middle"));
   });
 });
 

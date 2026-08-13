@@ -666,8 +666,13 @@
 
   {#if solution?.isFallback && solution.neededCharacters.length > 0}
     <p class="fallback-note">
-      Unable to find {clearDifficulty} clears with your roster — try teams similar
-      to those suggested on hard or menacing.
+      {#if videoClearsMode}
+        Unable to find {clearDifficulty} clears with your roster — try teams
+        similar to those suggested on hard or menacing.
+      {:else}
+        Unable to field a full board with your roster — missing characters are
+        marked on each team.
+      {/if}
     </p>
   {/if}
 {/if}

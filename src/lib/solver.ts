@@ -1059,5 +1059,14 @@ function buildMinMissingStygianSolutions(
     }
   }
 
-  return sortSolutionsByMissingThenScore(collected);
+  if (collected.length > 0) {
+    return sortSolutionsByMissingThenScore(collected);
+  }
+
+  // No complete board at any missing budget — keep partials (Abyss-style).
+  return sortSolutionsByMissingThenScore(
+    solveStygian(allTeams, count).map((solution) =>
+      annotateSolutionMissing({ ...solution, isFallback: true }, ownedNames),
+    ),
+  );
 }
