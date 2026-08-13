@@ -8,6 +8,10 @@ import { describe, it } from "node:test";
 import {
   constellationImpactRows,
   constellationPrioritySection,
+  characterBuildFromExample,
+  exampleHasHighConfig,
+  exampleRelevantGoodKeys,
+  exampleUsesFavonius,
   formatReactionFingerprint,
   formatReactionName,
   levelImportanceFromBuilds,
@@ -22,6 +26,7 @@ import {
   useGuideSection,
 } from "./character-builds.ts";
 import type {
+  CharacterBuildExample,
   CharacterIndex,
   CharacterTalentImportance,
 } from "./types/investment.ts";
@@ -677,5 +682,184 @@ describe("reaction helpers", () => {
       formatReactionFingerprint("bloom+swirl-hydro"),
       "Bloom + Swirl (Hydro)",
     );
+  });
+});
+
+describe("exampleRelevantGoodKeys display rules", () => {
+  const base = {
+    team_key: "t",
+    team_name: "T",
+    characters: ["Xilonen", "A", "B", "C"],
+    state_key: "Xilonen~C0~FavoniusSword~R5",
+    reactions: {
+      rps: null,
+      metric: "damage" as const,
+      list: [],
+      primary: null,
+      fingerprint: null,
+    },
+    artifact_pct_gain: 0.4,
+    key: "Xilonen",
+    cons: 0,
+    level: 90,
+    talents: { auto: 1, skill: 9, burst: 9 },
+    weapon: { key: "FavoniusSword", refinement: 5, level: 90 },
+    set: { key: "ScrollsOfTheHearthfire", count: 4 },
+    main_stats: {
+      sands: "enerRech_",
+      goblet: "geo_dmg_",
+      circlet: "critRate_",
+    },
+    substat_rolls: { enerRech_: 12, critRate_: 10, critDMG_: 4 },
+    substat_rolls_liquid: { enerRech_: 10, critRate_: 8, critDMG_: 2 },
+  };
+
+  it("mid-only on Fav → ER + CR", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      invest: "mid",
+    };
+    assert.deepEqual(
+      [...exampleRelevantGoodKeys(example)].sort(),
+      ["critRate_", "enerRech_"],
+    );
+  });
+
+  it("mid-only without Fav → ER only (no CR)", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      invest: "mid",
+      state_key: "Mona~C2~ThrillingTalesOfDragonSlayers~R5",
+      weapon: {
+        key: "ThrillingTalesOfDragonSlayers",
+        refinement: 5,
+        level: 90,
+      },
+    };
+    assert.deepEqual([...exampleRelevantGoodKeys(example)].sort(), [
+      "enerRech_",
+    ]);
+  });
+
+  it("mid-only with uniform mains → ER + that main", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      invest: "mid",
+      state_key: "Sucrose~C6~SacrificialFragments~R5",
+      weapon: {
+        key: "SacrificialFragments",
+        refinement: 5,
+        level: 90,
+      },
+      main_stats: {
+        sands: "eleMas",
+        goblet: "eleMas",
+        circlet: "eleMas",
+      },
+    };
+    assert.deepEqual([...exampleRelevantGoodKeys(example)].sort(), [
+      "eleMas",
+      "enerRech_",
+    ]);
+  });
+
+  it("high invest → mains + high liquids (not mid leftovers)", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      key: "RaidenShogun",
+      invest: "high",
+      main_stats: {
+        sands: "eleMas",
+        goblet: "eleMas",
+        circlet: "eleMas",
+      },
+      substat_rolls_liquid: { atk_: 10, critDMG_: 2 },
+      high_substat_rolls: { eleMas: 16, enerRech_: 16 },
+      high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
+    };
+    const keys = exampleRelevantGoodKeys(example, "high");
+    assert.equal(keys.has("eleMas"), true);
+    assert.equal(keys.has("enerRech_"), true);
+    assert.equal(keys.has("atk_"), false);
+    assert.equal(keys.has("critDMG_"), false);
+  });
+
+  it("mid invest keeps mid sheet even when high_substat_rolls is present", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      invest: "mid",
+      substat_rolls: { enerRech_: 12, critRate_: 10, critDMG_: 4 },
+      substat_rolls_liquid: { enerRech_: 10, critRate_: 8, critDMG_: 2 },
+      high_substat_rolls: { eleMas: 16, enerRech_: 16 },
+      high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
+    };
+    assert.equal(exampleHasHighConfig(example), false);
+    assert.deepEqual([...exampleRelevantGoodKeys(example, "mid")].sort(), [
+      "critRate_",
+      "enerRech_",
+    ]);
+    assert.deepEqual([...exampleRelevantGoodKeys(example, "high")].sort(), [
+      "critRate_",
+      "enerRech_",
+    ]);
+    const build = characterBuildFromExample(example, "mid");
+    assert.equal(build.substat_rolls.enerRech_, 12);
+    assert.equal(build.substat_rolls.critRate_, 10);
+    assert.equal(build.substat_rolls_liquid.enerRech_, 10);
+    assert.equal(build.substat_rolls_liquid.critRate_, 8);
+    assert.equal(build.substat_rolls.eleMas, undefined);
+    assert.equal(build.substat_rolls_liquid.eleMas, undefined);
+  });
+
+  it("clamps EM liquid to flower+plume when mains are EM/EM/EM", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      key: "RaidenShogun",
+      invest: "high",
+      main_stats: {
+        sands: "eleMas",
+        goblet: "eleMas",
+        circlet: "eleMas",
+      },
+      high_substat_rolls: { eleMas: 16, enerRech_: 16 },
+      high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
+    };
+    const build = characterBuildFromExample(example, "high");
+    assert.equal(build.substat_rolls_liquid.eleMas, 6);
+    assert.equal(build.substat_rolls.eleMas, 6);
+    assert.equal(build.substat_rolls_liquid.enerRech_, 15);
+  });
+
+  it("clamps CR to 12 when circlet is CR (4 pieces × 3)", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      key: "RaidenShogun",
+      invest: "high",
+      main_stats: {
+        sands: "atk_",
+        goblet: "atk_",
+        circlet: "critRate_",
+      },
+      high_substat_rolls: { critRate_: 18, critDMG_: 19 },
+      high_substat_rolls_liquid: { critRate_: 17, critDMG_: 18 },
+    };
+    const build = characterBuildFromExample(example, "high");
+    assert.equal(build.substat_rolls_liquid.critRate_, 12);
+    assert.equal(build.substat_rolls.critRate_, 12);
+    assert.equal(build.substat_rolls_liquid.critDMG_, 15);
+  });
+
+  it("maps 5pc→4pc and drops 1pc set2", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      invest: "mid",
+      set: { key: "EmblemOfSeveredFate", count: 5 },
+      set2: "NoblesseOblige",
+      set2_count: 1,
+    };
+    const build = characterBuildFromExample(example, "mid");
+    assert.equal(build.set.count, 4);
+    assert.equal(build.set2, undefined);
+    assert.equal(build.set2_count, undefined);
   });
 });

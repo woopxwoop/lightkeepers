@@ -101,7 +101,10 @@
     const names = characterNames;
     return (sim: InvestmentSim): string => {
       if (sim.kind === "baseline") return "Baseline";
-      return humanizeInvestmentLabel(sim.label?.trim() || "variant", names);
+      // Vertical 5★ weapons are signatures → R1. Owned alts keep full names.
+      return humanizeInvestmentLabel(sim.label?.trim() || "variant", names, {
+        fiveStarWeaponsAs: sim.kind === "owned" ? "name" : "R1",
+      });
     };
   });
 
@@ -304,8 +307,7 @@
       {@render variantBoard(
         ownedVariantsList,
         "Owned weapon options",
-        "Already-owned 5★ weapon alternatives compared to this team baseline. The +1 tag is the extra cost for that swap — not a pull recommendation. Highlighted rows are within 2.5% DPS of the best option in this list.",
-        "+1",
+        "Already-owned 5★ weapon alternatives compared to this team baseline. Highlighted rows are within 2.5% DPS of the best option in this list.",
       )}
     {/if}
 

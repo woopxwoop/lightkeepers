@@ -145,15 +145,25 @@ export function formatInvestmentCR(
  * Replace GOOD weapon keys in an investment sim label with display names.
  * When `characterByKey` is provided, character GOOD keys are replaced too
  * (longest-first so compound keys win).
+ *
+ * ``fiveStarWeaponsAs: "R1"`` — limited/signature 5★ keys become ``R1``
+ * instead of the weapon name (vertical upgrades; non-sig 5★s live under
+ * ``owned`` and should keep ``"name"``).
  */
 export function humanizeInvestmentLabel(
   label: string,
   characterByKey?: Map<string, string>,
+  opts?: { fiveStarWeaponsAs?: "name" | "R1" },
 ): string {
   if (!label) return label;
+  const fiveStarAs = opts?.fiveStarWeaponsAs ?? "name";
   let out = label;
   for (const key of weaponKeysByLength) {
     if (!out.includes(key)) continue;
+    if (fiveStarAs === "R1" && isFiveStarWeapon(key)) {
+      out = out.split(key).join("R1");
+      continue;
+    }
     const name = weaponByKey.get(key)?.name;
     if (!name) continue;
     out = out.split(key).join(name);

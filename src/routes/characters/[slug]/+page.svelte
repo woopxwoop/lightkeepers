@@ -67,15 +67,24 @@
   } from "$lib/equipment-data";
   import {
     MAIN_STAT_SLOTS,
+    buildExamples,
+    characterBuildFromExample,
     constellationPrioritySection,
     ascensionPrioritySection,
+    exampleFeaturedAndMates,
+    exampleHasHighConfig,
+    exampleRelevantGoodKeys,
+    exampleTeamKeys,
     levelPrioritySection,
     rankWeaponsByRarityAndTeams,
     recommendedSubstatsFromBuilds,
     sigWeaponPrioritySection,
     talentPrioritySection,
   } from "$lib/character-builds";
+  import { kitIconsFromCharacterKit } from "$lib/investment-build-card";
+  import InvestmentBuildCard from "$lib/ui/components/InvestmentBuildCard.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
+  import IconFileSearch from "$lib/ui/icons/IconFileSearch.svelte";
   import {
     artifactIconUrl,
     skillIconUrl,
@@ -510,6 +519,34 @@
 
   let consSection = $derived(constellationPrioritySection(builds));
   let sigSection = $derived(sigWeaponPrioritySection(builds));
+  let exampleBuilds = $derived(buildExamples(builds));
+  /** User pick among diversified examples; empty → highest-DPS default. */
+  let examplePick = $state("");
+  let exampleMenuOpen = $state(false);
+  let activeExample = $derived.by(() => {
+    const list = exampleBuilds;
+    if (!list.length) return null;
+    return list.find((e) => e.state_key === examplePick) ?? list[0] ?? null;
+  });
+  let exampleAlts = $derived(
+    exampleBuilds.filter((e) => e.state_key !== activeExample?.state_key),
+  );
+  let exampleCardBuild = $derived.by(() => {
+    if (!activeExample) return null;
+    const tier = exampleHasHighConfig(activeExample)
+      ? ("high" as const)
+      : ("mid" as const);
+    return characterBuildFromExample(activeExample, tier);
+  });
+  let exampleCardRelevantKeys = $derived.by(() => {
+    if (!activeExample) return null;
+    const tier = exampleHasHighConfig(activeExample)
+      ? ("high" as const)
+      : ("mid" as const);
+    return exampleRelevantGoodKeys(activeExample, tier);
+  });
+  let exampleCardKit = $derived(kitIconsFromCharacterKit(kit));
+  let exampleCardCharacter = $derived(goodKeyMap.get(goodKey) ?? null);
 </script>
 
 {#snippet descriptionBlock(
@@ -1481,6 +1518,161 @@
                 </div>
               {/if}
 
+              {#if activeExample}
+                {@const activeSplit = exampleFeaturedAndMates(
+                  exampleTeamKeys(activeExample),
+                  goodKey,
+                )}
+                <section class="board-section">
+                  <h2 class="section-title">Stat goals</h2>
+                  <p class="section-lede">
+                    DPS stat goals assume very high artifact investment. A lot
+                    of supports only care about ER (and Crit Rate if running a
+                    Favonius weapon)
+                  </p>
+                  <div class="example-build pt-4">
+                    <div class="example-build-context">
+                      <div class="example-picker-primary">
+                        <div class="example-picker-main">
+                          <div
+                            class="example-picker-grid example-picker-grid--selected"
+                            role="group"
+                            aria-label="Selected team"
+                          >
+                            <div
+                              class="example-picker-slot example-picker-slot--featured"
+                            >
+                              {#if activeSplit.featured}
+                                {@const featured = goodKeyMap.get(
+                                  activeSplit.featured,
+                                )}
+                                {#if featured}
+                                  <CharacterIcon
+                                    character={featured}
+                                    iconStyle="tcg"
+                                    loading="lazy"
+                                  />
+                                {/if}
+                              {/if}
+                            </div>
+                            {#each activeSplit.mates as mateKey, i (mateKey ?? `active-empty-${i}`)}
+                              <div class="example-picker-slot">
+                                {#if mateKey}
+                                  {@const mate = goodKeyMap.get(mateKey)}
+                                  {#if mate}
+                                    <CharacterIcon
+                                      character={mate}
+                                      iconStyle="tcg"
+                                      loading="lazy"
+                                    />
+                                  {/if}
+                                {/if}
+                              </div>
+                            {/each}
+                          </div>
+
+                          {#if exampleAlts.length > 0}
+                            <div
+                              class="example-picker-alts-shell"
+                              class:open={exampleMenuOpen}
+                              id="example-picker-alts"
+                              style="--alt-count: {exampleAlts.length}"
+                              aria-hidden={!exampleMenuOpen}
+                            >
+                              <div class="example-picker-alts-clip">
+                                <ol class="example-picker-alts">
+                                  {#each exampleAlts as example, ti (example.state_key)}
+                                    {@const split = exampleFeaturedAndMates(
+                                      exampleTeamKeys(example),
+                                      goodKey,
+                                    )}
+                                    <li
+                                      class="example-picker-alt-wrap"
+                                      style="--i: {ti}"
+                                    >
+                                      <button
+                                        type="button"
+                                        class="example-picker-alt"
+                                        aria-label={`Select ${example.team_name}`}
+                                        tabindex={exampleMenuOpen ? 0 : -1}
+                                        onclick={() => {
+                                          examplePick = example.state_key;
+                                          exampleMenuOpen = false;
+                                        }}
+                                      >
+                                        <div class="example-picker-grid">
+                                          <div
+                                            class="example-picker-slot example-picker-slot--spacer"
+                                            aria-hidden="true"
+                                          ></div>
+                                          <div class="example-picker-mate-row">
+                                            {#each split.mates as mateKey, i (mateKey ?? `alt-${example.state_key}-${i}`)}
+                                              <div class="example-picker-slot">
+                                                {#if mateKey}
+                                                  {@const mate =
+                                                    goodKeyMap.get(mateKey)}
+                                                  {#if mate}
+                                                    <CharacterIcon
+                                                      character={mate}
+                                                      iconStyle="tcg"
+                                                      loading="lazy"
+                                                    />
+                                                  {/if}
+                                                {/if}
+                                              </div>
+                                            {/each}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    </li>
+                                  {/each}
+                                </ol>
+                              </div>
+                            </div>
+                          {/if}
+                        </div>
+                        <div class="example-picker-actions">
+                          <a
+                            class="example-picker-action"
+                            href="/teams/{activeExample.team_key}"
+                            aria-label="View team details"
+                            title="View team details"
+                          >
+                            <IconFileSearch size={18} />
+                          </a>
+                          {#if exampleAlts.length > 0}
+                            <button
+                              type="button"
+                              class="example-picker-action"
+                              class:open={exampleMenuOpen}
+                              aria-expanded={exampleMenuOpen}
+                              aria-controls="example-picker-alts"
+                              aria-label={exampleMenuOpen
+                                ? "Hide other example teams"
+                                : "Show other example teams"}
+                              onclick={() =>
+                                (exampleMenuOpen = !exampleMenuOpen)}
+                            >
+                              <IconCog size={18} />
+                            </button>
+                          {/if}
+                        </div>
+                      </div>
+                    </div>
+
+                    {#if exampleCardBuild}
+                      <InvestmentBuildCard
+                        build={exampleCardBuild}
+                        character={exampleCardCharacter}
+                        kit={exampleCardKit}
+                        relevantKeys={exampleCardRelevantKeys}
+                        class="example-build-card"
+                      />
+                    {/if}
+                  </div>
+                </section>
+              {/if}
+
               {#if builds.notes}
                 <section class="board-section notes-section">
                   <h2 class="section-title">Notes</h2>
@@ -1916,6 +2108,228 @@
     line-height: 1.55;
     max-width: 42rem;
     white-space: pre-wrap;
+  }
+
+  .example-build {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    column-gap: var(--space-5);
+    row-gap: var(--space-4);
+    align-items: start;
+  }
+
+  .example-build-context {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .example-build :global(.example-build-card) {
+    min-width: 0;
+  }
+
+  .example-build :global(.example-build-card .build-grid) {
+    min-height: 16.5rem;
+  }
+
+  .example-build :global(.example-build-card .build-art--portrait) {
+    width: 10rem;
+  }
+
+  .example-build :global(.example-build-card .build-art--enka) {
+    width: 9.25rem;
+  }
+
+  @media (max-width: 640px) {
+    .example-build :global(.example-build-card .build-grid) {
+      min-height: 14rem;
+    }
+
+    .example-build :global(.example-build-card .build-art--portrait) {
+      width: 7rem;
+    }
+
+    .example-build :global(.example-build-card .build-art--enka) {
+      width: 6.5rem;
+    }
+  }
+
+  .example-picker-primary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 840px) {
+    .example-build {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .example-picker-main {
+    display: contents;
+  }
+
+  .example-picker-grid--selected {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .example-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.3rem;
+    width: 100%;
+  }
+
+  .example-picker-slot {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    background: var(--background-mid);
+  }
+
+  .example-picker-slot--featured {
+    border-color: color-mix(
+      in srgb,
+      var(--accent-1) 55%,
+      rgba(255, 255, 255, 0.2)
+    );
+  }
+
+  .example-picker-slot--spacer {
+    visibility: hidden;
+    border: none;
+    background: transparent;
+  }
+
+  .example-picker-actions {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .example-picker-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: var(--foreground-mid);
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+      color 280ms ease,
+      border-color 280ms ease;
+  }
+
+  .example-picker-action :global(svg) {
+    transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform-origin: center;
+  }
+
+  .example-picker-action:hover,
+  .example-picker-action.open {
+    color: var(--accent-1);
+    border-color: color-mix(
+      in srgb,
+      var(--accent-1) 45%,
+      rgba(255, 255, 255, 0.14)
+    );
+  }
+
+  .example-picker-action.open :global(svg) {
+    transform: rotate(90deg);
+  }
+
+  .example-picker-alts-shell {
+    grid-column: 1;
+    grid-row: 2;
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .example-picker-alts-shell.open {
+    grid-template-rows: 1fr;
+  }
+
+  .example-picker-alts-clip {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .example-picker-alts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.45rem 0 0.15rem;
+    list-style: none;
+  }
+
+  .example-picker-alt-wrap {
+    transform: translateY(-0.65rem);
+    opacity: 0.25;
+    transition:
+      transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 420ms ease;
+    transition-delay: calc((var(--alt-count, 1) - 1 - var(--i, 0)) * 45ms);
+  }
+
+  .example-picker-alts-shell.open .example-picker-alt-wrap {
+    transform: translateY(0);
+    opacity: 1;
+    transition-delay: calc(var(--i, 0) * 55ms);
+  }
+
+  .example-picker-alt {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .example-picker-mate-row {
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.3rem;
+    padding: 0.28rem;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.16);
+    background: color-mix(in srgb, var(--background-mid) 88%, transparent);
+  }
+
+  .example-picker-alt:hover .example-picker-mate-row,
+  .example-picker-alt:focus-visible .example-picker-mate-row {
+    border-color: color-mix(
+      in srgb,
+      var(--accent-1) 50%,
+      rgba(255, 255, 255, 0.2)
+    );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .example-picker-action :global(svg),
+    .example-picker-alts-shell,
+    .example-picker-alt-wrap {
+      transition: none;
+    }
   }
 
   .stat-name {

@@ -390,6 +390,55 @@ export type Database = {
           },
         ]
       }
+      stygian_team_clear_videos: {
+        Row: {
+          char_names: string[]
+          clear_key: string
+          cost: number | null
+          difficulty: string
+          enemy_id: number
+          team_key: string
+          time_s: number | null
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          char_names?: string[]
+          clear_key: string
+          cost?: number | null
+          difficulty: string
+          enemy_id: number
+          team_key: string
+          time_s?: number | null
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          char_names?: string[]
+          clear_key?: string
+          cost?: number | null
+          difficulty?: string
+          enemy_id?: number
+          team_key?: string
+          time_s?: number | null
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stygian_team_clear_videos_enemy_id_fkey"
+            columns: ["enemy_id"]
+            referencedRelation: "enemies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stygian_team_clear_videos_team_key_fkey"
+            columns: ["team_key"]
+            referencedRelation: "teams"
+            referencedColumns: ["team_key"]
+          },
+        ]
+      }
       stygian_version_enemies: {
         Row: {
           enemy_id: number
@@ -855,6 +904,55 @@ export type Database = {
           usage_total: number
         }[]
       }
+      get_stygian_cheap_clears_for_roster:
+        | {
+            Args: {
+              p_difficulty?: string
+              p_enemy_ids: number[]
+              p_name_ids: string[]
+              p_version_number: number
+            }
+            Returns: {
+              avg_usage_rate: number
+              enemy_id: number
+              field_1_rate: number
+              field_2_rate: number
+              field_3_rate: number
+              has_total: number
+              members: string[]
+              members_names: string[]
+              min_cost: number
+              team_key: string
+              usage_rate: number
+              usage_total: number
+              version_number: number
+            }[]
+          }
+        | {
+            Args: {
+              p_difficulty?: string
+              p_enemy_ids: number[]
+              p_max_cost?: number
+              p_name_ids: string[]
+              p_version_number: number
+            }
+            Returns: {
+              avg_usage_rate: number
+              enemy_id: number
+              field_1_rate: number
+              field_2_rate: number
+              field_3_rate: number
+              frontier: Json
+              has_total: number
+              members: string[]
+              members_names: string[]
+              min_cost: number
+              team_key: string
+              usage_rate: number
+              usage_total: number
+              version_number: number
+            }[]
+          }
       get_teams_with_characters_subset: {
         Args: { p_name_ids: string[]; p_version_number: number }
         Returns: {
