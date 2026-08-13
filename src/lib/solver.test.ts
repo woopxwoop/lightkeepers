@@ -5,7 +5,7 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { AbyssTeam, StygianTeam } from "./definitions.ts";
+import type { AbyssTeam, StygianCheapClearRow, StygianTeam } from "./definitions.ts";
 import {
   optimizeStygianSlotAssignments,
   scoreAssignments,
@@ -13,6 +13,8 @@ import {
   solveAbyss,
   solveAbyssWithFallback,
   solveStygian,
+  solveStygianCheapClears,
+  solveStygianHybrid,
 } from "./solver.ts";
 
 function abyssTeam(
@@ -569,5 +571,415 @@ describe("solveAbyssWithFallback", () => {
     assert.ok(solutions.length >= 1);
     assert.equal(solutions[0].isFallback, true);
     assert.ok(solutions[0].neededCharacters.includes("x"));
+  });
+});
+
+describe("solveStygianCheapClears", () => {
+  /** Frontier with a single point at `fromCost` / `time`. */
+  function cheapRow(
+    team: StygianTeam,
+    enemy_id: number,
+    fromCost: number,
+    time: number,
+  ): StygianCheapClearRow {
+    return {
+      ...team,
+      enemy_id,
+      min_cost: fromCost,
+      frontier: [{ c: fromCost, t: time }],
+    };
+  }
+
+  const slotEnemies = { top: 1, middle: 2, bottom: 3 } as const;
+
+  it("minimizes total clear time across three seats", () => {
+    const fastTop = stygianTeam({
+      team_key: "fast-top",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 20,
+      field_1_rate: 80,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const fastMid = stygianTeam({
+      team_key: "fast-mid",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 20,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 80,
+    });
+    const fastBot = stygianTeam({
+      team_key: "fast-bot",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 20,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 10,
+    });
+    const slowTop = stygianTeam({
+      team_key: "slow-top",
+      members: ["m", "n", "o", "p"],
+      usage_rate: 90,
+      field_1_rate: 90,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+
+    const rows = [
+      cheapRow(fastTop, 1, 0, 40),
+      cheapRow(fastMid, 2, 0, 50),
+      cheapRow(fastBot, 3, 0, 60),
+      cheapRow(slowTop, 1, 0, 200),
+      cheapRow(slowTop, 2, 0, 200),
+      cheapRow(slowTop, 3, 0, 200),
+    ];
+
+    const [best] = solveStygianCheapClears(rows, slotEnemies, 1);
+    assert.ok(best);
+    assert.equal(best.unfilled.length, 0);
+    assert.equal(best.score, 40 + 50 + 60);
+    const bySlot = Object.fromEntries(
+      best.assignments.map((a) => [a.slot, a.team.team_key]),
+    );
+    assert.equal(bySlot.top, "fast-top");
+    assert.equal(bySlot.middle, "fast-mid");
+    assert.equal(bySlot.bottom, "fast-bot");
+  });
+
+  it("returns empty when no complete cost board exists", () => {
+    const onlyTop = stygianTeam({
+      team_key: "only",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 50,
+      field_1_rate: 80,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const rows = [cheapRow(onlyTop, 1, 0, 30)];
+    assert.deepEqual(solveStygianCheapClears(rows, slotEnemies, 1), []);
+  });
+
+  it("uses the C0R0 floor + 0.5 even when a faster higher-cost clear exists", () => {
+    const characterByNameId = new Map([
+      [
+        "Mavuika",
+        {
+          game_id: 1,
+          name_id: "Mavuika",
+          name: "Mavuika",
+          rarity: 5,
+        },
+      ],
+      [
+        "Iansan",
+        {
+          game_id: 2,
+          name_id: "Iansan",
+          name: "Iansan",
+          rarity: 4,
+        },
+      ],
+      [
+        "Chevreuse",
+        {
+          game_id: 3,
+          name_id: "Chevreuse",
+          name: "Chevreuse",
+          rarity: 4,
+        },
+      ],
+      [
+        "Ororon",
+        {
+          game_id: 4,
+          name_id: "Ororon",
+          name: "Ororon",
+          rarity: 4,
+        },
+      ],
+    ]);
+
+    // Floor 1 → scrape ≤ 1.5. Faster cost-2 clear must not win.
+    const overload = stygianTeam({
+      team_key: "mavuika-ol",
+      members: ["Mavuika", "Iansan", "Chevreuse", "Ororon"],
+      usage_rate: 50,
+      field_1_rate: 40,
+      field_2_rate: 30,
+      field_3_rate: 30,
+    });
+    const mid = stygianTeam({
+      team_key: "mid",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 40,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 10,
+    });
+    const bot = stygianTeam({
+      team_key: "bot",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 40,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 80,
+    });
+
+    const maskedOnly = {
+      ...overload,
+      enemy_id: 1,
+      min_cost: 2,
+      frontier: [{ c: 2, t: 20 }],
+    } satisfies StygianCheapClearRow;
+
+    assert.deepEqual(
+      solveStygianCheapClears(
+        [
+          maskedOnly,
+          { ...maskedOnly, enemy_id: 2 },
+          { ...maskedOnly, enemy_id: 3 },
+          cheapRow(mid, 2, 0, 50),
+          cheapRow(bot, 3, 0, 60),
+        ],
+        slotEnemies,
+        1,
+        characterByNameId,
+        true,
+        0,
+      ),
+      [],
+    );
+
+    const withC0r0 = {
+      ...overload,
+      enemy_id: 1,
+      min_cost: 1,
+      frontier: [
+        { c: 1, t: 90 },
+        { c: 2, t: 20 },
+      ],
+    } satisfies StygianCheapClearRow;
+
+    const [best] = solveStygianCheapClears(
+      [withC0r0, cheapRow(mid, 2, 0, 50), cheapRow(bot, 3, 0, 60)],
+      slotEnemies,
+      1,
+      characterByNameId,
+      true,
+      0,
+    );
+    assert.ok(best);
+    assert.equal(best.unfilled.length, 0);
+    assert.equal(
+      best.assignments.find((a) => a.slot === "top")?.team.team_key,
+      "mavuika-ol",
+    );
+    assert.equal(best.score, 90 + 50 + 60);
+  });
+
+  it("uses high-cost frontier points when maxCost is above baseline", () => {
+    const top = stygianTeam({
+      team_key: "whale-top",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 40,
+      field_1_rate: 80,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const mid = stygianTeam({
+      team_key: "whale-mid",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 40,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 10,
+    });
+    const bot = stygianTeam({
+      team_key: "whale-bot",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 40,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 80,
+    });
+
+    const row = (
+      team: StygianTeam,
+      enemy_id: number,
+      time: number,
+    ): StygianCheapClearRow => ({
+      ...team,
+      enemy_id,
+      min_cost: 6,
+      frontier: [{ c: 6, t: time }],
+    });
+
+    const [best] = solveStygianCheapClears(
+      [row(top, 1, 33), row(mid, 2, 44), row(bot, 3, 55)],
+      slotEnemies,
+      1,
+      new Map(),
+      false,
+      8,
+    );
+    assert.ok(best);
+    assert.equal(best.score, 33 + 44 + 55);
+  });
+});
+
+describe("solveStygianHybrid", () => {
+  const slotEnemies = { top: 1, middle: 2, bottom: 3 } as const;
+
+  it("prefers boards with more C0R0-covered seats over higher usage", () => {
+    const highTop = stygianTeam({
+      team_key: "high-top",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 90,
+      field_1_rate: 80,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const highMid = stygianTeam({
+      team_key: "high-mid",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 90,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 10,
+    });
+    const highBot = stygianTeam({
+      team_key: "high-bot",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 90,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 80,
+    });
+    const covTop = stygianTeam({
+      team_key: "cov-top",
+      members: ["m", "n", "o", "p"],
+      usage_rate: 40,
+      field_1_rate: 80,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const covMid = stygianTeam({
+      team_key: "cov-mid",
+      members: ["q", "r", "s", "t"],
+      usage_rate: 40,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 10,
+    });
+    const covBot = stygianTeam({
+      team_key: "cov-bot",
+      members: ["u", "v", "w", "x"],
+      usage_rate: 40,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 80,
+    });
+
+    const owned = [highTop, highMid, highBot, covTop, covMid, covBot];
+    const ownedNames = new Set(owned.flatMap((t) => t.members ?? []));
+    const c0r0Pairs = new Set([
+      "cov-top|1",
+      "cov-mid|2",
+      "cov-bot|3",
+    ]);
+
+    const [best] = solveStygianHybrid(
+      owned,
+      owned,
+      ownedNames,
+      slotEnemies,
+      c0r0Pairs,
+      1,
+    );
+    assert.ok(best);
+    const keys = best.assignments.map((a) => a.team.team_key).sort();
+    assert.deepEqual(keys, ["cov-bot", "cov-mid", "cov-top"]);
+  });
+
+  it("keeps the owned board first when fallbacks fill out the pool", () => {
+    const ownedTop = stygianTeam({
+      team_key: "owned-top",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 30,
+      field_1_rate: 80,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const ownedMid = stygianTeam({
+      team_key: "owned-mid",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 30,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 10,
+    });
+    const ownedBot = stygianTeam({
+      team_key: "owned-bot",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 30,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 80,
+    });
+    const whaleTop = stygianTeam({
+      team_key: "whale-top",
+      members: ["m", "n", "o", "p"],
+      usage_rate: 95,
+      field_1_rate: 90,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const whaleMid = stygianTeam({
+      team_key: "whale-mid",
+      members: ["q", "r", "s", "t"],
+      usage_rate: 95,
+      field_1_rate: 10,
+      field_2_rate: 90,
+      field_3_rate: 10,
+    });
+    const whaleBot = stygianTeam({
+      team_key: "whale-bot",
+      members: ["u", "v", "w", "x"],
+      usage_rate: 95,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 90,
+    });
+
+    const owned = [ownedTop, ownedMid, ownedBot];
+    const allTeams = [...owned, whaleTop, whaleMid, whaleBot];
+    const ownedNames = new Set(owned.flatMap((team) => team.members ?? []));
+    const c0r0Pairs = new Set([
+      "owned-top|1",
+      "owned-mid|2",
+      "owned-bot|3",
+      "whale-top|1",
+      "whale-mid|2",
+      "whale-bot|3",
+    ]);
+
+    const solutions = solveStygianHybrid(
+      owned,
+      allTeams,
+      ownedNames,
+      slotEnemies,
+      c0r0Pairs,
+      3,
+    );
+    assert.ok(solutions.length >= 2);
+    assert.equal(solutions[0]?.isFallback, false);
+    const ownedKeys = solutions[0]!.assignments
+      .map((a) => a.team.team_key)
+      .sort();
+    assert.deepEqual(ownedKeys, ["owned-bot", "owned-mid", "owned-top"]);
+    for (const solution of solutions.slice(1)) {
+      assert.equal(solution.isFallback, true);
+    }
   });
 });

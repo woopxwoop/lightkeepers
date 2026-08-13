@@ -904,6 +904,55 @@ export type Database = {
           usage_total: number
         }[]
       }
+      get_stygian_cheap_clears_for_roster:
+        | {
+            Args: {
+              p_difficulty?: string
+              p_enemy_ids: number[]
+              p_name_ids: string[]
+              p_version_number: number
+            }
+            Returns: {
+              avg_usage_rate: number
+              enemy_id: number
+              field_1_rate: number
+              field_2_rate: number
+              field_3_rate: number
+              has_total: number
+              members: string[]
+              members_names: string[]
+              min_cost: number
+              team_key: string
+              usage_rate: number
+              usage_total: number
+              version_number: number
+            }[]
+          }
+        | {
+            Args: {
+              p_difficulty?: string
+              p_enemy_ids: number[]
+              p_max_cost?: number
+              p_name_ids: string[]
+              p_version_number: number
+            }
+            Returns: {
+              avg_usage_rate: number
+              enemy_id: number
+              field_1_rate: number
+              field_2_rate: number
+              field_3_rate: number
+              frontier: Json
+              has_total: number
+              members: string[]
+              members_names: string[]
+              min_cost: number
+              team_key: string
+              usage_rate: number
+              usage_total: number
+              version_number: number
+            }[]
+          }
       get_teams_with_characters_subset: {
         Args: { p_name_ids: string[]; p_version_number: number }
         Returns: {

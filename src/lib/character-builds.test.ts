@@ -740,6 +740,28 @@ describe("exampleRelevantGoodKeys display rules", () => {
     ]);
   });
 
+  it("mid-only with uniform mains → ER + that main", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      invest: "mid",
+      state_key: "Sucrose~C6~SacrificialFragments~R5",
+      weapon: {
+        key: "SacrificialFragments",
+        refinement: 5,
+        level: 90,
+      },
+      main_stats: {
+        sands: "eleMas",
+        goblet: "eleMas",
+        circlet: "eleMas",
+      },
+    };
+    assert.deepEqual([...exampleRelevantGoodKeys(example)].sort(), [
+      "eleMas",
+      "enerRech_",
+    ]);
+  });
+
   it("high invest → mains + high liquids (not mid leftovers)", () => {
     const example: CharacterBuildExample = {
       ...base,
@@ -775,12 +797,12 @@ describe("exampleRelevantGoodKeys display rules", () => {
       high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
     };
     const build = characterBuildFromExample(example, "high");
-    assert.equal(build.substat_rolls_liquid.eleMas, 8);
-    assert.equal(build.substat_rolls.eleMas, 8);
+    assert.equal(build.substat_rolls_liquid.eleMas, 6);
+    assert.equal(build.substat_rolls.eleMas, 6);
     assert.equal(build.substat_rolls_liquid.enerRech_, 15);
   });
 
-  it("clamps CR to 16 when circlet is CR (4 pieces × 4)", () => {
+  it("clamps CR to 12 when circlet is CR (4 pieces × 3)", () => {
     const example: CharacterBuildExample = {
       ...base,
       key: "RaidenShogun",
@@ -794,9 +816,9 @@ describe("exampleRelevantGoodKeys display rules", () => {
       high_substat_rolls_liquid: { critRate_: 17, critDMG_: 18 },
     };
     const build = characterBuildFromExample(example, "high");
-    assert.equal(build.substat_rolls_liquid.critRate_, 16);
-    assert.equal(build.substat_rolls.critRate_, 16);
-    assert.equal(build.substat_rolls_liquid.critDMG_, 18);
+    assert.equal(build.substat_rolls_liquid.critRate_, 12);
+    assert.equal(build.substat_rolls.critRate_, 12);
+    assert.equal(build.substat_rolls_liquid.critDMG_, 15);
   });
 
   it("maps 5pc→4pc and drops 1pc set2", () => {
