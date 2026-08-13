@@ -12,7 +12,7 @@
   import { loadCharacterSummary } from "$lib/app/character-summary";
   import { plannerTargetFromBuilds } from "$lib/planner-targets";
   import { assetUrl } from "$lib/asset-urls";
-  import { getCharacterPortrait, toGoodKey } from "$lib/utils";
+  import { getCharacterPortrait, ownedNameIds, toGoodKey } from "$lib/utils";
   import { charactersOwned } from "$lib/stores";
   import type { Character, CharacterOwned } from "$lib/definitions";
   import {
@@ -61,6 +61,7 @@
     UpgradePromoteStep,
   } from "$lib/types/upgrade-costs";
   import Button from "$lib/ui/components/Button.svelte";
+  import Toggle from "$lib/ui/components/Toggle.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import IconX from "$lib/ui/icons/IconX.svelte";
@@ -83,6 +84,8 @@
   let saveError = $state("");
   let addError = $state("");
   let costScope = $state<CostScope>("selected");
+  /** Character pick lists put roster-owned names first. */
+  let sortOwnedFirst = $state(true);
   /** Configure dialog open (gear on a goal row). */
   let configuring = $state(false);
   /** Start sliders are collapsed until the user expands them. */
@@ -266,12 +269,21 @@
 
   let selectedGoal = $derived(findGoal(goalsState, goalsState.selectedId));
 
-  let characterOptions = $derived(
-    (catalog?.characters ?? []).map((c) => ({
+  let ownedIds = $derived(ownedNameIds($charactersOwned));
+
+  let characterOptions = $derived.by(() => {
+    const opts = (catalog?.characters ?? []).map((c) => ({
       value: c.name_id,
       label: c.name,
-    })),
-  );
+    }));
+    if (!sortOwnedFirst) return opts;
+    const owned: typeof opts = [];
+    const rest: typeof opts = [];
+    for (const opt of opts) {
+      (ownedIds.has(opt.value) ? owned : rest).push(opt);
+    }
+    return [...owned, ...rest];
+  });
   let weaponOptions = $derived(
     (catalog?.weapons ?? []).map((w) => ({
       value: String(w.id),
@@ -1203,10 +1215,22 @@
       onClose={cancelPick}
       onChoose={choosePick}
     >
+      {#snippet toolbar()}
+        {#if picking === "character"}
+          <div class="owned-first">
+            <span class="owned-first-label">Owned first</span>
+            <Toggle
+              bind:pressed={sortOwnedFirst}
+              aria-label="Prioritize owned characters first"
+            />
+          </div>
+        {/if}
+      {/snippet}
       {#snippet tile(opt)}
         {#if picking === "character"}
           <CharacterPortraitCard
             character={pickModalCharacter(opt.value)}
+            dimmed={sortOwnedFirst && !ownedIds.has(opt.value)}
             tintBackground
           />
         {:else}
@@ -1254,7 +1278,7 @@
   .results-head {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 0.5rem 0.75rem;
   }
@@ -1263,6 +1287,19 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
+  }
+
+  .owned-first {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .owned-first-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--foreground-mid);
+    user-select: none;
   }
 
   .ghost-btn,

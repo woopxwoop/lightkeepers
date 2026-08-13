@@ -28,6 +28,7 @@
     onClose,
     onChoose,
     tile,
+    toolbar,
   }: {
     open?: boolean;
     title: string;
@@ -41,6 +42,8 @@
     onChoose: (value: string) => void;
     /** Leading art for each option (portrait, weapon icon, …). */
     tile: Snippet<[PickModalOption]>;
+    /** Optional controls beside the title (filters, toggles). */
+    toolbar?: Snippet;
   } = $props();
 
   let searchEl: HTMLInputElement | null = $state(null);
@@ -105,6 +108,11 @@
     >
       <header class="pick-head">
         <h2 class="section-title pick-title">{title}</h2>
+        {#if toolbar}
+          <div class="pick-toolbar">
+            {@render toolbar()}
+          </div>
+        {/if}
         <button
           type="button"
           class="pick-close"
@@ -198,6 +206,12 @@
 
   .pick-title {
     margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pick-toolbar {
+    flex-shrink: 0;
   }
 
   .pick-close {
