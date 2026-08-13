@@ -2,6 +2,12 @@ import type { Tables, Database, Json } from "$lib/types/database.types";
 
 export type Character = Tables<"characters">;
 
+/** Fields portrait / search tiles actually read (planner stubs are not full rows). */
+export type CharacterPortraitRef = Pick<
+  Character,
+  "name_id" | "name" | "element"
+>;
+
 /** Equipped weapon snapshot from GOOD / roster editor. */
 export type RosterWeapon = {
   key: string;

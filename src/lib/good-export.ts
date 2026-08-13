@@ -7,7 +7,7 @@ import type {
   InventoryArtifact,
   InventoryWeapon,
 } from "$lib/definitions";
-import { toGoodKey } from "$lib/utils";
+import { toGoodKey, travelerElementKey } from "$lib/utils";
 import type {
   IArtifact,
   ICharacter,
@@ -18,18 +18,35 @@ import type {
 export const GOOD_EXPORT_SOURCE = "Lightkeepers";
 export const GOOD_EXPORT_VERSION = 3;
 
+function goodExportCharacterKey(row: CharacterOwned): string | null {
+  const kit = row.name_id.match(/^Player(?:Boy|Girl)-([A-Za-z]+)$/);
+  if (kit) return `Traveler${kit[1]}`;
+  const key = toGoodKey(row.name);
+  if (!key) return null;
+  if (key === "Traveler") return travelerElementKey(row.element) ?? "Traveler";
+  return key;
+}
+
+function isMoreAdvanced(next: ICharacter, existing: ICharacter): boolean {
+  return (
+    next.level > existing.level ||
+    (next.level === existing.level &&
+      next.constellation > existing.constellation)
+  );
+}
+
 export function serializeGoodDocument(input: {
   roster: readonly CharacterOwned[];
   weapons?: readonly InventoryWeapon[];
   artifacts?: readonly InventoryArtifact[];
 }): IGOOD {
-  const characters: ICharacter[] = [];
+  const byKey = new Map<string, ICharacter>();
   for (const row of input.roster) {
     if (!row.isOwned) continue;
-    const key = toGoodKey(row.name);
+    const key = goodExportCharacterKey(row);
     if (!key) continue;
     const progress = row.progress;
-    characters.push({
+    const record: ICharacter = {
       key: key as ICharacter["key"],
       level: progress?.level ?? 1,
       constellation: progress?.constellation ?? 0,
@@ -39,8 +56,13 @@ export function serializeGoodDocument(input: {
         skill: progress?.talents.skill ?? 1,
         burst: progress?.talents.burst ?? 1,
       },
-    });
+    };
+    const existing = byKey.get(key);
+    if (!existing || isMoreAdvanced(record, existing)) {
+      byKey.set(key, record);
+    }
   }
+  const characters = [...byKey.values()];
   return {
     format: "GOOD",
     version: GOOD_EXPORT_VERSION,

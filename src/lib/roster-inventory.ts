@@ -10,12 +10,15 @@ import type {
   InventoryWeapon,
   RosterWeapon,
 } from "$lib/definitions";
+import { MAX_LEVEL } from "$lib/upgrade-costs";
 
 export const MAX_INVENTORY_WEAPONS = 2048;
 export const MAX_INVENTORY_ARTIFACTS = 8192;
 export const MAX_GOOD_KEY_LENGTH = 64;
 export const MAX_STAT_KEY_LENGTH = 32;
 export const MAX_ARTIFACT_LEVEL = 20;
+export const MAX_ARTIFACT_SUBSTATS = 6;
+export const MAX_UNACTIVATED_SUBSTATS = 4;
 export const INVENTORY_ARTIFACT_SLOTS: readonly InventoryArtifactSlot[] = [
   "flower",
   "plume",
@@ -102,6 +105,33 @@ export function bestInventoryWeaponByKey(
   return best;
 }
 
+/** Lowest inventory copy of a weapon key (lowest level, then ascension). */
+export function lowestInventoryWeaponByKey(
+  weapons: readonly InventoryWeapon[],
+  key: string,
+): InventoryWeapon | null {
+  let lowest: InventoryWeapon | null = null;
+  for (const weapon of weapons) {
+    if (weapon.key !== key) continue;
+    if (
+      !lowest ||
+      weapon.level < lowest.level ||
+      (weapon.level === lowest.level && weapon.ascension < lowest.ascension)
+    ) {
+      lowest = weapon;
+    }
+  }
+  return lowest;
+}
+
+/** Planner start from an owned copy; maxed (lv 90) weapons start from 1. */
+export function plannerStartFromOwnedWeapon(
+  weapon: { level: number; ascension: number } | null | undefined,
+): { level: number; ascension: number } | undefined {
+  if (!weapon || weapon.level >= MAX_LEVEL) return undefined;
+  return { level: weapon.level, ascension: weapon.ascension };
+}
+
 /** Artifacts currently on a GOOD character key. */
 export function artifactsForLocation(
   artifacts: readonly InventoryArtifact[],
@@ -125,23 +155,36 @@ export function equipInventoryWeapon(
       : cloneInventoryWeapon(weapon),
   );
   if (!next) return cleared;
-  const free = cleared.findIndex(
-    (weapon) => weapon.key === next.key && weapon.location === "",
+  const exact = cleared.findIndex(
+    (weapon) =>
+      weapon.location === "" &&
+      weapon.key === next.key &&
+      weapon.level === next.level &&
+      weapon.ascension === next.ascension &&
+      weapon.refinement === next.refinement,
   );
-  const equipped: InventoryWeapon = {
-    key: next.key,
-    level: next.level,
-    ascension: next.ascension,
-    refinement: next.refinement,
-    location: characterKey,
-    lock: false,
-  };
+  const free =
+    exact >= 0
+      ? exact
+      : cleared.findIndex(
+          (weapon) => weapon.key === next.key && weapon.location === "",
+        );
   if (free >= 0) {
     const previous = cleared[free]!;
-    cleared[free] = { ...equipped, lock: previous.lock };
+    cleared[free] = { ...previous, location: characterKey };
     return cleared;
   }
-  return [...cleared, equipped];
+  return [
+    ...cleared,
+    {
+      key: next.key,
+      level: next.level,
+      ascension: next.ascension,
+      refinement: next.refinement,
+      location: characterKey,
+      lock: false,
+    },
+  ];
 }
 
 export function isArtifactSlot(value: unknown): value is InventoryArtifactSlot {

@@ -166,6 +166,9 @@
           return;
         }
         hasCloudRoster = true;
+        if (result.inventoryOmitted) {
+          importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}. Cloud saved roster only — inventory columns are not migrated.`;
+        }
       }
 
       setRosterInventory(inventory);
@@ -173,7 +176,9 @@
       invalidateTeamsOwned();
       invalidateNearMissTeams();
       setHasSavedRoster();
-      importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
+      if (!importNote) {
+        importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
+      }
     } catch (err) {
       console.error("GOOD import error:", err);
       importError = "Could not import that file.";
@@ -202,7 +207,7 @@
       link.href = url;
       link.download = "lightkeepers-GOOD.json";
       link.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err) {
       console.error("GOOD export error:", err);
       importError = "Could not export GOOD.";

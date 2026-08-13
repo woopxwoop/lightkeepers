@@ -8,8 +8,11 @@
     floor,
     /** Upper bound for the value. Track still spans `max`. */
     cap,
+    /** Optional start mark on the track (dashed line). Draggable when `onOriginChange` is set. */
+    origin,
     step = 1,
     onchange,
+    onOriginChange,
   }: {
     label: string;
     value: number;
@@ -17,17 +20,25 @@
     max: number;
     floor?: number;
     cap?: number;
+    origin?: number;
     step?: number;
     onchange: (next: number) => void;
+    onOriginChange?: (next: number) => void;
   } = $props();
 
   let effectiveFloor = $derived(floor ?? min);
   let effectiveCap = $derived(cap ?? max);
+  let span = $derived(max - min);
   let fillPct = $derived(
-    max <= min
-      ? 0
-      : Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100)),
+    span <= 0 ? 0 : Math.min(100, Math.max(0, ((value - min) / span) * 100)),
   );
+  let originPct = $derived(
+    origin == null || span <= 0
+      ? 0
+      : Math.min(100, Math.max(0, ((origin - min) / span) * 100)),
+  );
+  let hasOrigin = $derived(origin != null);
+  let showFrom = $derived(origin != null && origin > min);
   let draft = $state<string | null>(null);
 
   $effect(() => {
@@ -40,26 +51,35 @@
     return min + Math.round((n - min) / step) * step;
   }
 
-  function snapAndClamp(n: number): number {
+  function snapAndClamp(n: number, lo: number, hi: number): number {
     let next = snapToStep(n);
-    if (next < effectiveFloor) next = effectiveFloor;
-    else if (next > effectiveCap) next = effectiveCap;
+    if (next < lo) next = lo;
+    else if (next > hi) next = hi;
     return next;
   }
 
   function onRangeInput(el: HTMLInputElement) {
     const n = Number(el.value);
     if (!Number.isFinite(n)) return;
-    const next = snapAndClamp(n);
+    const next = snapAndClamp(n, effectiveFloor, effectiveCap);
     el.value = String(next);
     draft = null;
     if (next !== value) onchange(next);
   }
 
+  function onOriginInput(el: HTMLInputElement) {
+    if (!onOriginChange) return;
+    const n = Number(el.value);
+    if (!Number.isFinite(n)) return;
+    const next = snapAndClamp(n, min, value);
+    el.value = String(next);
+    if (next !== origin) onOriginChange(next);
+  }
+
   function clampAndEmit(raw: string) {
     const n = Number(raw);
     if (!Number.isFinite(n)) return false;
-    const next = snapAndClamp(n);
+    const next = snapAndClamp(n, effectiveFloor, effectiveCap);
     draft = null;
     if (next !== value) onchange(next);
     return true;
@@ -84,19 +104,40 @@
 </script>
 
 <label class="nsf">
-  <span class="nsf-label">{label}</span>
+  <span class="nsf-label">
+    {label}
+    {#if showFrom}
+      <span class="nsf-from">from {origin}</span>
+    {/if}
+  </span>
   <div class="nsf-row">
-    <input
-      class="nsf-range"
-      type="range"
-      {min}
-      {max}
-      {step}
-      {value}
-      style="--fill: {fillPct}%"
-      aria-label={label}
-      oninput={(e) => onRangeInput(e.currentTarget)}
-    />
+    <div class="nsf-track" style="--fill: {fillPct}%; --origin: {originPct}%">
+      {#if hasOrigin}
+        <span class="nsf-origin-mark" style="left: {originPct}%"></span>
+        {#if onOriginChange && origin != null}
+          <input
+            class="nsf-range nsf-range-origin"
+            type="range"
+            {min}
+            {max}
+            {step}
+            value={origin}
+            aria-label="{label} starting point"
+            oninput={(e) => onOriginInput(e.currentTarget)}
+          />
+        {/if}
+      {/if}
+      <input
+        class="nsf-range nsf-range-value"
+        type="range"
+        {min}
+        {max}
+        {step}
+        {value}
+        aria-label={label}
+        oninput={(e) => onRangeInput(e.currentTarget)}
+      />
+    </div>
     <div class="nsf-value">
       <input
         class="nsf-num"
@@ -123,10 +164,21 @@
   }
 
   .nsf-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
     font-size: var(--text-xs);
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--foreground-mid);
+  }
+
+  .nsf-from {
+    letter-spacing: 0.02em;
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, var(--foreground-mid) 80%, transparent);
   }
 
   .nsf-row {
@@ -181,28 +233,57 @@
     padding-left: 0.15rem;
   }
 
-  .nsf-range {
-    width: 100%;
+  .nsf-track {
+    position: relative;
     min-width: 0;
+    height: 1.25rem;
+    --fill: 0%;
+    --origin: 0%;
+    --track-fill: var(--accent-1);
+    --track-rest: color-mix(in srgb, var(--foreground-color) 18%, transparent);
+  }
+
+  .nsf-origin-mark {
+    position: absolute;
+    top: 0;
+    height: 1.25rem;
+    width: 0;
+    border-left: 1px dashed
+      color-mix(in srgb, var(--foreground-color) 55%, transparent);
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .nsf-range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
     height: 1.25rem;
     margin: 0;
     appearance: none;
     background: transparent;
     cursor: pointer;
-    --fill: 0%;
-    --track-fill: var(--accent-1);
-    --track-rest: color-mix(in srgb, var(--foreground-color) 18%, transparent);
+  }
+
+  .nsf-range-origin {
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .nsf-range-value {
+    z-index: 3;
   }
 
   .nsf-range:focus {
     outline: none;
   }
 
-  .nsf-range:focus-visible::-webkit-slider-thumb {
+  .nsf-range-value:focus-visible::-webkit-slider-thumb {
     box-shadow: 0 0 0 1px var(--accent-1);
   }
 
-  .nsf-range:focus-visible::-moz-range-thumb {
+  .nsf-range-value:focus-visible::-moz-range-thumb {
     box-shadow: 0 0 0 1px var(--accent-1);
   }
 
@@ -211,7 +292,9 @@
     border-radius: var(--radius-pill);
     background: linear-gradient(
       to right,
-      var(--track-fill) 0%,
+      var(--track-rest) 0%,
+      var(--track-rest) var(--origin),
+      var(--track-fill) var(--origin),
       var(--track-fill) var(--fill),
       var(--track-rest) var(--fill),
       var(--track-rest) 100%
@@ -228,12 +311,33 @@
     background: var(--foreground-color);
   }
 
+  .nsf-range-origin::-webkit-slider-runnable-track {
+    background: transparent;
+  }
+
+  .nsf-range-origin::-webkit-slider-thumb {
+    pointer-events: auto;
+    width: 0.55rem;
+    height: 1.05rem;
+    margin-top: -0.38rem;
+    border-radius: 1px;
+    border: none;
+    background: transparent;
+  }
+
+  .nsf-range-origin::-moz-range-track {
+    background: transparent;
+    border: none;
+  }
+
   .nsf-range::-moz-range-track {
     height: 0.28rem;
     border-radius: var(--radius-pill);
     background: linear-gradient(
       to right,
-      var(--track-fill) 0%,
+      var(--track-rest) 0%,
+      var(--track-rest) var(--origin),
+      var(--track-fill) var(--origin),
       var(--track-fill) var(--fill),
       var(--track-rest) var(--fill),
       var(--track-rest) 100%
@@ -246,5 +350,14 @@
     border-radius: 50%;
     border: var(--border-width) solid var(--accent-1);
     background: var(--foreground-color);
+  }
+
+  .nsf-range-origin::-moz-range-thumb {
+    pointer-events: auto;
+    width: 0.55rem;
+    height: 1.05rem;
+    border-radius: 1px;
+    border: none;
+    background: transparent;
   }
 </style>

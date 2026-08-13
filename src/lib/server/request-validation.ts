@@ -24,10 +24,12 @@ import {
 import {
   isArtifactSlot,
   MAX_ARTIFACT_LEVEL,
+  MAX_ARTIFACT_SUBSTATS,
   MAX_GOOD_KEY_LENGTH,
   MAX_INVENTORY_ARTIFACTS,
   MAX_INVENTORY_WEAPONS,
   MAX_STAT_KEY_LENGTH,
+  MAX_UNACTIVATED_SUBSTATS,
 } from "$lib/roster-inventory";
 
 /** Soft cap — Genshin roster is ~100; leave headroom for future growth. */
@@ -119,6 +121,29 @@ function requireExactKeys(
   message: string,
 ): Record<string, unknown> {
   return requireKeys(value, keys, [], message);
+}
+
+/** Require `required` keys; ignore unknown extras (GOOD producers add `id`, etc.). */
+function pickKnownKeys(
+  value: unknown,
+  required: readonly string[],
+  optional: readonly string[],
+  message: string,
+): Record<string, unknown> {
+  if (typeof value !== "object" || value === null) {
+    throw error(400, message);
+  }
+  const row = value as Record<string, unknown>;
+  const actual = Object.keys(row);
+  if (required.some((key) => !actual.includes(key))) {
+    throw error(400, message);
+  }
+  const allowed = new Set([...required, ...optional]);
+  const picked: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in row) picked[key] = row[key];
+  }
+  return picked;
 }
 
 /** Require `required` keys; each other own key must be in `optional`. */
@@ -291,12 +316,18 @@ function requireInventoryKey(value: unknown, maxLength: number): string {
   return value;
 }
 
+function isEmptySubstatPlaceholder(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const key = (value as Record<string, unknown>).key;
+  return key === "" || key == null;
+}
+
 function requireInventorySubstat(value: unknown): InventorySubstat {
   const {
     key,
     value: roll,
     initialValue,
-  } = requireKeys(
+  } = pickKnownKeys(
     value,
     ["key", "value"],
     ["initialValue"],
@@ -304,17 +335,30 @@ function requireInventorySubstat(value: unknown): InventorySubstat {
   );
   const parsed: InventorySubstat = {
     key: requireInventoryKey(key, MAX_STAT_KEY_LENGTH),
-    value: requireNumberInRange(roll, -1000, 1000, INVENTORY_PAYLOAD_ERROR),
+    // Flat HP/ATK/DEF rolls are thousands; crit/EM stay small.
+    value: requireNumberInRange(roll, -1e6, 1e6, INVENTORY_PAYLOAD_ERROR),
   };
   if (initialValue !== undefined) {
     parsed.initialValue = requireNumberInRange(
       initialValue,
-      -1000,
-      1000,
+      -1e6,
+      1e6,
       INVENTORY_PAYLOAD_ERROR,
     );
   }
   return parsed;
+}
+
+function requireInventorySubstats(
+  value: unknown,
+  max: number,
+): InventorySubstat[] {
+  if (!Array.isArray(value) || value.length > max) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  return value
+    .filter((row) => !isEmptySubstatPlaceholder(row))
+    .map(requireInventorySubstat);
 }
 
 /** Validate a GOOD `IWeapon[]` inventory slice. */
@@ -329,12 +373,12 @@ export function requireInventoryWeapons(value: unknown): InventoryWeapon[] {
     );
   }
   return value.map((item) => {
-    const { key, level, ascension, refinement, location, lock } =
-      requireExactKeys(
-        item,
-        ["key", "level", "ascension", "refinement", "location", "lock"],
-        INVENTORY_PAYLOAD_ERROR,
-      );
+    const { key, level, ascension, refinement, location, lock } = pickKnownKeys(
+      item,
+      ["key", "level", "ascension", "refinement", "location", "lock"],
+      [],
+      INVENTORY_PAYLOAD_ERROR,
+    );
     if (typeof lock !== "boolean") {
       throw error(400, INVENTORY_PAYLOAD_ERROR);
     }
@@ -389,7 +433,7 @@ export function requireInventoryArtifacts(value: unknown): InventoryArtifact[] {
       astralMark,
       elixirCrafted,
       unactivatedSubstats,
-    } = requireKeys(
+    } = pickKnownKeys(
       item,
       [
         "setKey",
@@ -407,9 +451,6 @@ export function requireInventoryArtifacts(value: unknown): InventoryArtifact[] {
     if (typeof lock !== "boolean" || !isArtifactSlot(slotKey)) {
       throw error(400, INVENTORY_PAYLOAD_ERROR);
     }
-    if (!Array.isArray(substats) || substats.length > 4) {
-      throw error(400, INVENTORY_PAYLOAD_ERROR);
-    }
     const parsed: InventoryArtifact = {
       setKey: requireInventoryKey(setKey, MAX_GOOD_KEY_LENGTH),
       slotKey,
@@ -423,7 +464,7 @@ export function requireInventoryArtifacts(value: unknown): InventoryArtifact[] {
       mainStatKey: requireInventoryKey(mainStatKey, MAX_STAT_KEY_LENGTH),
       location: requireInventoryLocation(location),
       lock,
-      substats: substats.map(requireInventorySubstat),
+      substats: requireInventorySubstats(substats, MAX_ARTIFACT_SUBSTATS),
     };
     if (totalRolls !== undefined) {
       parsed.totalRolls = requireIntegerInRange(
@@ -446,15 +487,11 @@ export function requireInventoryArtifacts(value: unknown): InventoryArtifact[] {
       parsed.elixirCrafted = elixirCrafted;
     }
     if (unactivatedSubstats !== undefined) {
-      if (
-        !Array.isArray(unactivatedSubstats) ||
-        unactivatedSubstats.length > 2
-      ) {
-        throw error(400, INVENTORY_PAYLOAD_ERROR);
-      }
-      parsed.unactivatedSubstats = unactivatedSubstats.map(
-        requireInventorySubstat,
+      const unactivated = requireInventorySubstats(
+        unactivatedSubstats,
+        MAX_UNACTIVATED_SUBSTATS,
       );
+      if (unactivated.length > 0) parsed.unactivatedSubstats = unactivated;
     }
     return parsed;
   });

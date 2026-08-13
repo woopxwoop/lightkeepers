@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import type { Character, CharacterOwned } from "$lib/definitions";
+  import type { CharacterPortraitRef } from "$lib/definitions";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import { elementBg, elementColor } from "$lib/element-colors";
 
@@ -17,7 +17,7 @@
     meta,
     children,
   }: {
-    character: CharacterOwned | Character | undefined;
+    character: CharacterPortraitRef | undefined;
     /** When set, the card renders as a link. */
     href?: string;
     /** When set (and no href), the card renders as a toggle button. */

@@ -49,12 +49,13 @@ export function clearRosterInventory(): void {
 async function fetchSlice<T>(
   url: string,
   key: "weapons" | "artifacts",
-): Promise<T[]> {
+): Promise<{ unauthorized: true } | { unauthorized: false; rows: T[] }> {
   const res = await fetch(url);
-  if (res.status === 401) return [];
+  if (res.status === 401) return { unauthorized: true };
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = (await res.json()) as Record<string, unknown>;
-  return Array.isArray(data[key]) ? (data[key] as T[]) : [];
+  const rows = Array.isArray(data[key]) ? (data[key] as T[]) : [];
+  return { unauthorized: false, rows };
 }
 
 export function loadRosterWeapons(): Promise<InventoryWeapon[]> {
@@ -62,8 +63,9 @@ export function loadRosterWeapons(): Promise<InventoryWeapon[]> {
   if (weaponsPending) return weaponsPending;
 
   weaponsPending = fetchSlice<InventoryWeapon>("/api/roster/weapons", "weapons")
-    .then((rows) => {
-      weaponsCached = rows.map(cloneInventoryWeapon);
+    .then((result) => {
+      if (result.unauthorized) return [];
+      weaponsCached = result.rows.map(cloneInventoryWeapon);
       return weaponsCached;
     })
     .finally(() => {
@@ -81,8 +83,9 @@ export function loadRosterArtifacts(): Promise<InventoryArtifact[]> {
     "/api/roster/artifacts",
     "artifacts",
   )
-    .then((rows) => {
-      artifactsCached = rows.map(cloneInventoryArtifact);
+    .then((result) => {
+      if (result.unauthorized) return [];
+      artifactsCached = result.rows.map(cloneInventoryArtifact);
       return artifactsCached;
     })
     .finally(() => {

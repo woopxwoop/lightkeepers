@@ -29,12 +29,42 @@ import {
 /** Standard 20/40/50/60/70/80/90 unlock table. */
 const STANDARD_PROMOTES: UpgradePromoteStep[] = [
   { promoteLevel: 0, mora: 0, unlockMaxLevel: 20, items: [] },
-  { promoteLevel: 1, mora: 1000, unlockMaxLevel: 40, items: [{ id: 11, count: 1 }] },
-  { promoteLevel: 2, mora: 2000, unlockMaxLevel: 50, items: [{ id: 11, count: 2 }] },
-  { promoteLevel: 3, mora: 3000, unlockMaxLevel: 60, items: [{ id: 11, count: 3 }] },
-  { promoteLevel: 4, mora: 4000, unlockMaxLevel: 70, items: [{ id: 11, count: 4 }] },
-  { promoteLevel: 5, mora: 5000, unlockMaxLevel: 80, items: [{ id: 11, count: 5 }] },
-  { promoteLevel: 6, mora: 6000, unlockMaxLevel: 90, items: [{ id: 11, count: 6 }] },
+  {
+    promoteLevel: 1,
+    mora: 1000,
+    unlockMaxLevel: 40,
+    items: [{ id: 11, count: 1 }],
+  },
+  {
+    promoteLevel: 2,
+    mora: 2000,
+    unlockMaxLevel: 50,
+    items: [{ id: 11, count: 2 }],
+  },
+  {
+    promoteLevel: 3,
+    mora: 3000,
+    unlockMaxLevel: 60,
+    items: [{ id: 11, count: 3 }],
+  },
+  {
+    promoteLevel: 4,
+    mora: 4000,
+    unlockMaxLevel: 70,
+    items: [{ id: 11, count: 4 }],
+  },
+  {
+    promoteLevel: 5,
+    mora: 5000,
+    unlockMaxLevel: 80,
+    items: [{ id: 11, count: 5 }],
+  },
+  {
+    promoteLevel: 6,
+    mora: 6000,
+    unlockMaxLevel: 90,
+    items: [{ id: 11, count: 6 }],
+  },
 ];
 
 function talentTrack(): UpgradeTalentTrack {
@@ -268,7 +298,10 @@ describe("upgrade-costs math", () => {
     assert.equal(gated.ascension, 6);
     assert.equal(gated.level, 90);
 
-    const low = gateWeaponConfig({ level: 45, ascension: 1 }, STANDARD_PROMOTES);
+    const low = gateWeaponConfig(
+      { level: 45, ascension: 1 },
+      STANDARD_PROMOTES,
+    );
     assert.equal(low.ascension, 2);
     assert.equal(low.level, 45);
 
@@ -361,6 +394,44 @@ describe("upgrade-costs math", () => {
     );
     assert.equal(ascensionDrivesLevel.target.ascension, 6);
     assert.equal(ascensionDrivesLevel.target.level, 80);
+
+    const preferStartLevel = orderCharacterConfigs(
+      {
+        level: 45,
+        ascension: 6,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      {
+        level: 20,
+        ascension: 0,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+      { preferStartLevel: true },
+    );
+    assert.equal(preferStartLevel.start.level, 45);
+    assert.equal(preferStartLevel.start.ascension, 2);
+    assert.equal(preferStartLevel.target.level, 45);
+    assert.equal(preferStartLevel.target.ascension, 2);
+
+    const preferStartAscension = orderCharacterConfigs(
+      {
+        level: 90,
+        ascension: 2,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      {
+        level: 90,
+        ascension: 6,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+      { preferStartAscension: true },
+    );
+    assert.equal(preferStartAscension.start.level, 50);
+    assert.equal(preferStartAscension.start.ascension, 2);
+    assert.equal(preferStartAscension.target.level, 90);
+    assert.equal(preferStartAscension.target.ascension, 6);
   });
 
   it("orderWeaponConfigs lifts target level and raises ascension", () => {
@@ -373,6 +444,17 @@ describe("upgrade-costs math", () => {
     assert.equal(start.level, 80);
     assert.equal(target.ascension, 5);
     assert.equal(target.level, 80);
+
+    const preferStartLevel = orderWeaponConfigs(
+      { level: 45, ascension: 6 },
+      { level: 20, ascension: 0 },
+      STANDARD_PROMOTES,
+      { preferStartLevel: true },
+    );
+    assert.equal(preferStartLevel.start.level, 45);
+    assert.equal(preferStartLevel.start.ascension, 2);
+    assert.equal(preferStartLevel.target.level, 45);
+    assert.equal(preferStartLevel.target.ascension, 2);
   });
 });
 
@@ -500,10 +582,7 @@ describe("collapseCraftRanks", () => {
 
   it("rounds gem leftovers up to gemstone", () => {
     assert.deepEqual(
-      collapseCraftRanks(
-        { "11": 2, "12": 4, "13": 2, "14": 1 },
-        catalog,
-      ),
+      collapseCraftRanks({ "11": 2, "12": 4, "13": 2, "14": 1 }, catalog),
       { "14": 3 },
     );
   });
@@ -513,5 +592,31 @@ describe("collapseCraftRanks", () => {
       collapseCraftRanks({ "21": 3, "22": 2, "23": 1 }, catalog),
       { "23": 2 },
     );
+  });
+
+  it("terminates when craftIntoId forms a cycle", () => {
+    const cyclic: UpgradeCostsCatalog = {
+      ...catalog,
+      materials: {
+        "1": {
+          id: 1,
+          name: "A",
+          icon: "a",
+          rankLevel: 2,
+          craftIntoId: 2,
+        },
+        "2": {
+          id: 2,
+          name: "B",
+          icon: "b",
+          rankLevel: 3,
+          craftIntoId: 1,
+        },
+      },
+    };
+    assert.deepEqual(collapseCraftRanks({ "1": 3, "2": 1 }, cyclic), {
+      "1": 3,
+      "2": 1,
+    });
   });
 });

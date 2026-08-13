@@ -17,13 +17,8 @@
   import RosterProgressDialog from "$lib/ui/components/RosterProgressDialog.svelte";
   import type { CharacterOwned, RosterProgress } from "$lib/definitions";
   import { cloneRosterProgress } from "$lib/roster-progress";
-  import { equipInventoryWeapon } from "$lib/roster-inventory";
-  import {
-    getRosterWeaponsCached,
-    loadRosterWeapons,
-    setRosterInventory,
-  } from "$lib/app/roster-inventory";
-  import { toGoodKey, weaponTypeLabel, ownedNameIds } from "$lib/utils";
+  import { getRosterWeaponsCached } from "$lib/app/roster-inventory";
+  import { weaponTypeLabel, ownedNameIds } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
@@ -131,6 +126,10 @@
           return;
         }
         commitSaved(pending);
+        if (result.inventoryOmitted && weapons) {
+          rosterError =
+            "Roster saved; weapon inventory was not stored (migration pending).";
+        }
       } else {
         commitSaved(pending);
       }
@@ -197,26 +196,13 @@
   function saveProgress(next: RosterProgress) {
     const id = configuringId;
     if (!id) return;
-    const character = tempCharactersOwned.find((c) => c.name_id === id);
     tempCharactersOwned = tempCharactersOwned.map((c) =>
       c.name_id === id
         ? { ...c, isOwned: true, progress: cloneRosterProgress(next) ?? next }
         : c,
     );
-    const weapons = getRosterWeaponsCached();
-    const goodKey = toGoodKey(character?.name ?? null);
-    if (weapons && goodKey) {
-      setRosterInventory({
-        weapons: equipInventoryWeapon(weapons, goodKey, next.weapon),
-      });
-    }
     configuringId = null;
   }
-
-  $effect(() => {
-    if (!configuringId) return;
-    void loadRosterWeapons().catch(() => {});
-  });
   let isFiltered = $derived(
     rarityFilter.size > 0 ||
       elementFilter.size > 0 ||
@@ -342,14 +328,11 @@
             {#snippet meta()}
               <div class="meta-name">{character.name}</div>
               <div class="meta-sub">
-                {#if character.progress}
-                  C{character.progress.constellation} · Lv {character.progress
-                    .level}
-                {:else}
-                  {character.rarity}★ · {weaponTypeLabel(
-                    character.weapon_type ?? "",
-                  )}
-                {/if}
+                {character.rarity}★ · {weaponTypeLabel(
+                  character.weapon_type ?? "",
+                )}{character.progress
+                  ? ` · C${character.progress.constellation} · Lv ${character.progress.level}`
+                  : ""}
               </div>
             {/snippet}
           </CharacterPortraitCard>

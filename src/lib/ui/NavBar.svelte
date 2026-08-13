@@ -46,15 +46,22 @@
   ] as const;
 
   const settingsLinks = [
-    { label: "Roster", path: resolve("/settings"), icon: "users" as const },
+    {
+      label: "Roster",
+      path: resolve("/settings"),
+      tab: "roster",
+      icon: "users" as const,
+    },
     {
       label: "Account",
       path: `${resolve("/settings")}?tab=account`,
+      tab: "account",
       icon: "cloud" as const,
     },
     {
       label: "Display",
       path: `${resolve("/settings")}?tab=display`,
+      tab: "display",
       icon: "monitor" as const,
     },
   ] as const;
@@ -332,13 +339,11 @@
             onfocusout={onSettingsLeave}
           >
             {#each settingsLinks as link}
-              {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
-              {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
               {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
               <a
                 href={link.path}
                 class="nav-sub-link"
-                aria-current={onSettingsPage && activeTab === linkTab
+                aria-current={onSettingsPage && activeTab === link.tab
                   ? "page"
                   : undefined}>{link.label}</a
               >
@@ -529,10 +534,8 @@
           inert={!settingsDrawerExpanded}
         >
           {#each settingsLinks as link, i}
-            {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
-            {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
             {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
-            {@const subActive = onSettingsPage && activeTab === linkTab}
+            {@const subActive = onSettingsPage && activeTab === link.tab}
             <a
               href={link.path}
               class="drawer-item drawer-item-sub"

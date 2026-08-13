@@ -13,12 +13,15 @@
 
   let panelEl: HTMLDivElement | null = $state(null);
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
+  let closedByNavigate = false;
 
   function close() {
     plannerItineraryOpen.set(false);
   }
 
   afterNavigate(() => {
+    if (!$plannerItineraryOpen) return;
+    closedByNavigate = true;
     close();
   });
 
@@ -45,7 +48,9 @@
     return () => {
       active = false;
       window.removeEventListener("keydown", onKey);
-      if (previous?.isConnected) previous.focus();
+      const skipFocus = closedByNavigate;
+      closedByNavigate = false;
+      if (previous?.isConnected && !skipFocus) previous.focus();
     };
   });
 </script>

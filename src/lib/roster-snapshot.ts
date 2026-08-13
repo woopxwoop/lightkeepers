@@ -69,7 +69,10 @@ export async function postRoster(
     weapons?: InventoryWeapon[];
     artifacts?: InventoryArtifact[];
   },
-): Promise<{ ok: true } | { ok: false; status: number; message?: string }> {
+): Promise<
+  | { ok: true; inventoryOmitted?: boolean }
+  | { ok: false; status: number; message?: string }
+> {
   const entries = roster.map((c) => {
     const entry: {
       name_id: string;
@@ -100,7 +103,18 @@ export async function postRoster(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (res.ok) return { ok: true };
+  if (res.ok) {
+    let inventoryOmitted = false;
+    try {
+      const parsed = (await res.json()) as { inventoryOmitted?: unknown };
+      inventoryOmitted = parsed.inventoryOmitted === true;
+    } catch {
+      /* ignore parse failures */
+    }
+    return inventoryOmitted
+      ? { ok: true, inventoryOmitted: true }
+      : { ok: true };
+  }
 
   let message: string | undefined;
   try {
@@ -125,6 +139,8 @@ export async function postRoster(
     console.error("[roster sync] 400 Bad Request", {
       message: message ?? "(no body)",
       count: entries.length,
+      weapons: body.weapons?.length ?? 0,
+      artifacts: body.artifacts?.length ?? 0,
       sampleKeys: sample ? Object.keys(sample) : [],
       sample,
     });

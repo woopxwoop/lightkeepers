@@ -96,7 +96,7 @@ export function parseRosterProgress(value: unknown): RosterProgress | null {
   const burst = intInRange(talents.burst, 1, MAX_TALENT);
   if (normal == null || skill == null || burst == null) return null;
   const weapon = row.weapon === undefined ? null : parseWeapon(row.weapon);
-  if (row.weapon != null && row.weapon !== null && weapon == null) return null;
+  if (row.weapon != null && weapon == null) return null;
   return {
     level,
     ascension,
@@ -167,5 +167,5 @@ export function rosterProgressForNameId(
     ...DEFAULT_ROSTER_PROGRESS,
     talents: { ...DEFAULT_ROSTER_PROGRESS.talents },
   };
-  return { ...base, weapon: equipped };
+  return { ...base, weapon: equipped ?? base.weapon };
 }

@@ -23,8 +23,8 @@
     loadRosterWeapons,
   } from "$lib/app/roster-inventory";
   import {
-    bestInventoryWeaponByKey,
-    inventoryWeaponToRoster,
+    lowestInventoryWeaponByKey,
+    plannerStartFromOwnedWeapon,
   } from "$lib/roster-inventory";
   import { assetUrl } from "$lib/asset-urls";
   import {
@@ -35,7 +35,13 @@
     toGoodKey,
   } from "$lib/utils";
   import { charactersOwned } from "$lib/stores";
-  import type { Character, CharacterOwned } from "$lib/definitions";
+  import type {
+    Character,
+    CharacterOwned,
+    CharacterPortraitRef,
+  } from "$lib/definitions";
+  import { itineraryGoalLabel } from "$lib/planner-itinerary";
+  import { wikiHref } from "$lib/wiki";
   import {
     expItemsNeeded,
     MAX_ASCENSION,
@@ -107,14 +113,11 @@
   let addError = $state("");
   /** Character name_id from `?add=` — consumed after catalog + goals hydrate. */
   let pendingPlannerAdd = $state<string | null>(null);
-  let plannerAddConsumed = false;
   let costScope = $state<CostScope>("selected");
   /** Character pick lists put roster-owned names first. */
   let sortOwnedFirst = $state(true);
   /** Configure dialog open (gear on a goal row). */
   let configuring = $state(false);
-  /** Start sliders are collapsed until the user expands them. */
-  let showStartConfig = $state(false);
   let configCloseEl: HTMLButtonElement | null = $state(null);
   let configPanelEl: HTMLDivElement | null = $state(null);
   let configFocusReturn: HTMLElement | null = $state(null);
@@ -234,8 +237,6 @@
     if (!nameId) return;
     const next = nextSearchPath(page.url, { add: null });
     if (next) replaceState(next, page.state);
-    if (plannerAddConsumed) return;
-    plannerAddConsumed = true;
     pendingPlannerAdd = nameId;
   });
 
@@ -340,24 +341,6 @@
       label: `${w.name} (${w.rankLevel}★)`,
     })),
   );
-
-  function goalLabel(goal: CalculatorGoal): string {
-    if (!catalog) {
-      return goal.kind === "character"
-        ? goal.name_id
-        : `Weapon ${goal.weapon_id}`;
-    }
-    if (goal.kind === "character") {
-      return (
-        catalog.characters.find((c) => c.name_id === goal.name_id)?.name ??
-        goal.name_id
-      );
-    }
-    return (
-      catalog.weapons.find((w) => w.id === goal.weapon_id)?.name ??
-      `Weapon ${goal.weapon_id}`
-    );
-  }
 
   function goalSummary(goal: CalculatorGoal): string {
     const promotes =
@@ -516,18 +499,14 @@
     const row = catalog.weapons.find((w) => w.id === weaponId);
     const key = row ? toGoodKey(row.name) : "";
     const inventory = getRosterWeaponsCached();
-    const fromBag = key ? bestInventoryWeaponByKey(inventory ?? [], key) : null;
-    const equipped = fromBag
-      ? inventoryWeaponToRoster(fromBag)
-      : $charactersOwned.find(
-          (c) => c.isOwned && c.progress?.weapon?.key === key,
-        )?.progress?.weapon;
-    const goal = createWeaponGoal(
-      weaponId,
-      equipped
-        ? { start: { level: equipped.level, ascension: equipped.ascension } }
-        : undefined,
-    );
+    const fromBag = key
+      ? lowestInventoryWeaponByKey(inventory ?? [], key)
+      : null;
+    const fromRoster = $charactersOwned.find(
+      (c) => c.isOwned && c.progress?.weapon?.key === key,
+    )?.progress?.weapon;
+    const start = plannerStartFromOwnedWeapon(fromBag ?? fromRoster);
+    const goal = createWeaponGoal(weaponId, start ? { start } : undefined);
     const next = appendGoal(goalsState, goal);
     if (next.goals.length === goalsState.goals.length) {
       addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
@@ -547,7 +526,6 @@
   function beginConfigure() {
     const active = document.activeElement;
     configFocusReturn = active instanceof HTMLElement ? active : null;
-    showStartConfig = false;
     configuring = true;
   }
 
@@ -561,7 +539,6 @@
 
   function closeConfigure() {
     configuring = false;
-    showStartConfig = false;
     const previous = configFocusReturn;
     configFocusReturn = null;
     if (previous?.isConnected) previous.focus();
@@ -736,10 +713,6 @@
     return n.toLocaleString("en-US");
   }
 
-  function wikiHref(name: string): string {
-    return `https://genshin-impact.fandom.com/wiki/${encodeURIComponent(name.replace(/\s+/g, "_"))}`;
-  }
-
   function lookupCharacter(
     nameId: string,
   ): CharacterOwned | Character | undefined {
@@ -753,17 +726,17 @@
     return undefined;
   }
 
-  /** Roster row when owned; otherwise a minimal stub from the cost catalog. */
+  /** Catalog row first (portrait name/element); roster only when the catalog misses. */
   function pickModalCharacter(
     nameId: string,
-  ): CharacterOwned | Character | undefined {
+  ): CharacterPortraitRef | undefined {
     const row = catalog?.characters.find((c) => c.name_id === nameId);
     if (row) {
       return {
         name_id: row.name_id,
         name: row.name,
         element: row.element,
-      } as Character;
+      };
     }
     return lookupCharacter(nameId);
   }
@@ -879,14 +852,16 @@
                     <span class="goal-icon goal-icon-fallback"></span>
                   {/if}
                   <span class="goal-text">
-                    <span class="meta-name">{goalLabel(goal)}</span>
+                    <span class="meta-name"
+                      >{itineraryGoalLabel(goal, catalog)}</span
+                    >
                     <span class="meta-sub">{goalSummary(goal)}</span>
                   </span>
                 </button>
                 <button
                   type="button"
                   class="goal-icon-btn"
-                  aria-label={`Configure ${goalLabel(goal)}`}
+                  aria-label={`Configure ${itineraryGoalLabel(goal, catalog)}`}
                   onclick={() => openConfigure(goal.id)}
                 >
                   <IconCog size={16} />
@@ -894,7 +869,7 @@
                 <button
                   type="button"
                   class="goal-icon-btn"
-                  aria-label={`Remove ${goalLabel(goal)}`}
+                  aria-label={`Remove ${itineraryGoalLabel(goal, catalog)}`}
                   onclick={() => deleteGoal(goal.id)}
                 >
                   <IconX size={16} />
@@ -1016,7 +991,7 @@
                     {#if source}
                       <a
                         class="mat-name mat-name-link"
-                        href={wikiHref(source.name)}
+                        href={wikiHref(mat.name)}
                         target="_blank"
                         rel="noopener noreferrer">{mat.name}</a
                       >
@@ -1185,7 +1160,6 @@
         </div>
 
         <div class="config-col">
-          <h3 class="group-title">Target</h3>
           {#if selectedGoal.kind === "character"}
             <NumberSliderField
               label="Ascension"
@@ -1193,8 +1167,11 @@
               min={0}
               max={MAX_ASCENSION}
               floor={selectedGoal.start.ascension}
+              origin={selectedGoal.start.ascension}
               onchange={(ascension) =>
                 patchCharacterSide("target", { ascension })}
+              onOriginChange={(ascension) =>
+                patchCharacterSide("start", { ascension })}
             />
             <NumberSliderField
               label="Level"
@@ -1202,7 +1179,9 @@
               min={1}
               max={MAX_LEVEL}
               floor={targetLevelFloor}
+              origin={selectedGoal.start.level}
               onchange={(level) => patchCharacterSide("target", { level })}
+              onOriginChange={(level) => patchCharacterSide("start", { level })}
             />
             <NumberSliderField
               label="Normal attack"
@@ -1210,8 +1189,11 @@
               min={1}
               max={MAX_TALENT}
               floor={selectedGoal.start.talents.normal}
+              origin={selectedGoal.start.talents.normal}
               onchange={(normal) =>
                 patchCharacterSide("target", { talents: { normal } })}
+              onOriginChange={(normal) =>
+                patchCharacterSide("start", { talents: { normal } })}
             />
             <NumberSliderField
               label="Skill"
@@ -1219,8 +1201,11 @@
               min={1}
               max={MAX_TALENT}
               floor={selectedGoal.start.talents.skill}
+              origin={selectedGoal.start.talents.skill}
               onchange={(skill) =>
                 patchCharacterSide("target", { talents: { skill } })}
+              onOriginChange={(skill) =>
+                patchCharacterSide("start", { talents: { skill } })}
             />
             <NumberSliderField
               label="Burst"
@@ -1228,8 +1213,11 @@
               min={1}
               max={MAX_TALENT}
               floor={selectedGoal.start.talents.burst}
+              origin={selectedGoal.start.talents.burst}
               onchange={(burst) =>
                 patchCharacterSide("target", { talents: { burst } })}
+              onOriginChange={(burst) =>
+                patchCharacterSide("start", { talents: { burst } })}
             />
           {:else}
             <NumberSliderField
@@ -1238,7 +1226,10 @@
               min={0}
               max={MAX_ASCENSION}
               floor={selectedGoal.start.ascension}
+              origin={selectedGoal.start.ascension}
               onchange={(ascension) => patchWeaponSide("target", { ascension })}
+              onOriginChange={(ascension) =>
+                patchWeaponSide("start", { ascension })}
             />
             <NumberSliderField
               label="Level"
@@ -1246,84 +1237,14 @@
               min={1}
               max={MAX_LEVEL}
               floor={targetLevelFloor}
+              origin={selectedGoal.start.level}
               onchange={(level) => patchWeaponSide("target", { level })}
+              onOriginChange={(level) => patchWeaponSide("start", { level })}
             />
           {/if}
         </div>
 
-        {#if showStartConfig}
-          <div class="config-col">
-            <h3 class="group-title">Starting point</h3>
-            {#if selectedGoal.kind === "character"}
-              <NumberSliderField
-                label="Ascension"
-                value={selectedGoal.start.ascension}
-                min={0}
-                max={MAX_ASCENSION}
-                onchange={(ascension) =>
-                  patchCharacterSide("start", { ascension })}
-              />
-              <NumberSliderField
-                label="Level"
-                value={selectedGoal.start.level}
-                min={1}
-                max={MAX_LEVEL}
-                onchange={(level) => patchCharacterSide("start", { level })}
-              />
-              <NumberSliderField
-                label="Normal attack"
-                value={selectedGoal.start.talents.normal}
-                min={1}
-                max={MAX_TALENT}
-                onchange={(normal) =>
-                  patchCharacterSide("start", { talents: { normal } })}
-              />
-              <NumberSliderField
-                label="Skill"
-                value={selectedGoal.start.talents.skill}
-                min={1}
-                max={MAX_TALENT}
-                onchange={(skill) =>
-                  patchCharacterSide("start", { talents: { skill } })}
-              />
-              <NumberSliderField
-                label="Burst"
-                value={selectedGoal.start.talents.burst}
-                min={1}
-                max={MAX_TALENT}
-                onchange={(burst) =>
-                  patchCharacterSide("start", { talents: { burst } })}
-              />
-            {:else}
-              <NumberSliderField
-                label="Ascension"
-                value={selectedGoal.start.ascension}
-                min={0}
-                max={MAX_ASCENSION}
-                onchange={(ascension) =>
-                  patchWeaponSide("start", { ascension })}
-              />
-              <NumberSliderField
-                label="Level"
-                value={selectedGoal.start.level}
-                min={1}
-                max={MAX_LEVEL}
-                onchange={(level) => patchWeaponSide("start", { level })}
-              />
-            {/if}
-          </div>
-        {/if}
-
         <div class="config-actions">
-          {#if !showStartConfig}
-            <button
-              type="button"
-              class="ghost-btn"
-              onclick={() => (showStartConfig = true)}
-            >
-              Configure starting point
-            </button>
-          {/if}
           <Button variant="primary" onclick={closeConfigure}>Looks good</Button>
         </div>
       </div>
@@ -1347,10 +1268,7 @@
         {#if picking === "character"}
           <div class="owned-first">
             <span class="owned-first-label">Owned first</span>
-            <Toggle
-              bind:pressed={sortOwnedFirst}
-              aria-label="Prioritize owned characters first"
-            />
+            <Toggle bind:pressed={sortOwnedFirst} aria-label="Owned first" />
           </div>
         {/if}
       {/snippet}
@@ -1650,13 +1568,9 @@
   .config-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 0.75rem;
     padding-top: 0.25rem;
-  }
-
-  .config-actions :global(.btn-primary) {
-    margin-left: auto;
   }
 
   .field {
@@ -1745,11 +1659,12 @@
   }
 
   .mat-name-link {
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
   }
 
   .mat-name-link:hover {
-    text-decoration: underline;
+    text-decoration-thickness: 2px;
   }
 
   .mat-source {

@@ -24,7 +24,7 @@ function isMissingInventoryColumn(err: unknown): boolean {
   return (
     code === "42703" ||
     code === "PGRST204" ||
-    /column .* does not exist/i.test(message) ||
+    /column ['"]?(weapons|artifacts)['"]? does not exist/i.test(message) ||
     /Could not find the ['"]?(weapons|artifacts)['"]? column/i.test(message)
   );
 }
@@ -51,10 +51,15 @@ function rosterTable(): RosterQuery {
   return serverDb.from("user_rosters") as unknown as RosterQuery;
 }
 
+export type UpsertUserRosterResult = {
+  error: unknown;
+  inventoryOmitted?: boolean;
+};
+
 /** Upsert roster; include inventory slices only when provided. Retry without them if the columns are missing. */
 export async function upsertUserRoster(
   row: RosterInventoryRow,
-): Promise<{ error: unknown }> {
+): Promise<UpsertUserRosterResult> {
   const payload: Record<string, unknown> = {
     user_id: row.user_id,
     roster: row.roster,
@@ -70,7 +75,10 @@ export async function upsertUserRoster(
     (row.weapons !== undefined || row.artifacts !== undefined) &&
     isMissingInventoryColumn(first.error)
   ) {
-    return table.upsert(
+    console.warn(
+      "POST /api/roster: weapons/artifacts columns missing; saving roster only",
+    );
+    const retry = await table.upsert(
       {
         user_id: row.user_id,
         roster: row.roster,
@@ -78,6 +86,7 @@ export async function upsertUserRoster(
       },
       { onConflict: "user_id" },
     );
+    return { error: retry.error, inventoryOmitted: true };
   }
   return first;
 }

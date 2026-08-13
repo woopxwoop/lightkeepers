@@ -289,6 +289,17 @@ export function addWeaponResult(
   addMaterials(aggregate.materials, result.materials);
 }
 
+/** Merge one aggregate bag into another (mora, both exp pools, materials). */
+export function addAggregate(
+  into: AggregatedUpgradeCosts,
+  from: AggregatedUpgradeCosts,
+): void {
+  into.mora += from.mora;
+  into.characterExp += from.characterExp;
+  into.weaponExp += from.weaponExp;
+  addMaterials(into.materials, from.materials);
+}
+
 /** Start→target bag for one goal; missing catalog rows contribute nothing. */
 export function costsForGoal(
   goal: CalculatorGoal,
@@ -320,11 +331,7 @@ export function aggregateGoalCosts(
 ): AggregatedUpgradeCosts {
   const agg = emptyAggregate();
   for (const goal of goals) {
-    const one = costsForGoal(goal, catalog);
-    agg.mora += one.mora;
-    agg.characterExp += one.characterExp;
-    agg.weaponExp += one.weaponExp;
-    addMaterials(agg.materials, one.materials);
+    addAggregate(agg, costsForGoal(goal, catalog));
   }
   return agg;
 }

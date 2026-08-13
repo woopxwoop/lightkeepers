@@ -10,6 +10,8 @@
   import { cubicOut } from "svelte/easing";
   import type { Character } from "$lib/definitions";
   import { bootstrapClient, seedClientStores } from "$lib/app/bootstrapClient";
+  import { clearRosterInventory } from "$lib/app/roster-inventory";
+  import { authClient } from "$lib/auth-client";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
   import { rememberNavigation } from "$lib/nav-history";
@@ -40,6 +42,20 @@
 
   let { data, children } = $props();
   let characters: Character[] = $derived(data.characters);
+
+  const session = authClient.useSession();
+  let lastRosterUserId: string | null | undefined = undefined;
+  $effect(() => {
+    const id = $session.data?.user?.id ?? null;
+    if (lastRosterUserId === undefined) {
+      lastRosterUserId = id;
+      return;
+    }
+    if (lastRosterUserId !== id) {
+      clearRosterInventory();
+      lastRosterUserId = id;
+    }
+  });
 
   // Route defaults while following route; after a manual toggle, persisted choice wins.
   syncBackgroundToPath(page.url.pathname);

@@ -1,14 +1,13 @@
 <script lang="ts">
   /**
-   * Edit constellation / level / talents / equipped weapon on a roster row.
+   * Edit constellation / level / talents on a roster row.
+   * Equipped weapon stays on the snapshot from GOOD; picker comes later.
    */
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import Button from "$lib/ui/components/Button.svelte";
   import NumberSliderField from "$lib/ui/components/NumberSliderField.svelte";
-  import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
-  import WeaponIcon from "$lib/ui/components/WeaponIcon.svelte";
   import IconX from "$lib/ui/icons/IconX.svelte";
   import { trapTabKey } from "$lib/ui/focus-trap";
   import type { RosterProgress } from "$lib/definitions";
@@ -16,16 +15,8 @@
     cloneRosterProgress,
     DEFAULT_ROSTER_PROGRESS,
     MAX_CONSTELLATION,
-    MAX_REFINEMENT,
   } from "$lib/roster-progress";
   import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
-  import {
-    equipmentVersion,
-    ensureEquipmentData,
-    weaponByKey,
-    weaponIconSrc,
-  } from "$lib/equipment-data";
-  import type { SelectOption } from "$lib/ui/components/Select.svelte";
 
   let {
     open = false,
@@ -56,7 +47,6 @@
       ...DEFAULT_ROSTER_PROGRESS,
       talents: { ...DEFAULT_ROSTER_PROGRESS.talents },
     };
-    void ensureEquipmentData();
   });
 
   $effect(() => {
@@ -82,15 +72,6 @@
   });
 
   let reduced = $derived(prefersReducedMotion.current);
-  let weaponOptions = $derived.by((): SelectOption[] => {
-    $equipmentVersion;
-    return [...weaponByKey.entries()]
-      .map(([value, weapon]) => ({
-        value,
-        label: `${weapon.name} (${weapon.stars}★)`,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  });
 
   function patch(partial: Partial<RosterProgress>) {
     draft = { ...draft, ...partial };
@@ -98,19 +79,6 @@
 
   function patchTalents(slot: "normal" | "skill" | "burst", value: number) {
     draft = { ...draft, talents: { ...draft.talents, [slot]: value } };
-  }
-
-  function setWeaponKey(key: string) {
-    const current = draft.weapon;
-    draft = {
-      ...draft,
-      weapon: {
-        key,
-        level: current?.level ?? 1,
-        ascension: current?.ascension ?? 0,
-        refinement: current?.refinement ?? 1,
-      },
-    };
   }
 </script>
 
@@ -188,54 +156,6 @@
           max={MAX_TALENT}
           onchange={(value) => patchTalents("burst", value)}
         />
-      </div>
-
-      <div class="weapon-block">
-        <span class="weapon-label">Weapon</span>
-        <CharacterSearchSelect
-          value={draft.weapon?.key ?? ""}
-          options={weaponOptions}
-          getIconSrc={(key) => weaponIconSrc(key)}
-          placeholder="Search weapon…"
-          aria-label="Equipped weapon"
-          onChoose={setWeaponKey}
-        />
-        {#if draft.weapon}
-          <div class="weapon-stats">
-            <WeaponIcon weaponKey={draft.weapon.key} class="weapon-icon" />
-            <NumberSliderField
-              label="Level"
-              value={draft.weapon.level}
-              min={1}
-              max={MAX_LEVEL}
-              onchange={(value) =>
-                patch({ weapon: { ...draft.weapon!, level: value } })}
-            />
-            <NumberSliderField
-              label="Ascension"
-              value={draft.weapon.ascension}
-              min={0}
-              max={MAX_ASCENSION}
-              onchange={(value) =>
-                patch({
-                  weapon: { ...draft.weapon!, ascension: value },
-                })}
-            />
-            <NumberSliderField
-              label="Refinement"
-              value={draft.weapon.refinement}
-              min={1}
-              max={MAX_REFINEMENT}
-              onchange={(value) =>
-                patch({
-                  weapon: { ...draft.weapon!, refinement: value },
-                })}
-            />
-            <Button variant="ghost" onclick={() => patch({ weapon: null })}>
-              Remove weapon
-            </Button>
-          </div>
-        {/if}
       </div>
 
       <div class="progress-actions">
@@ -318,31 +238,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
-  }
-
-  .weapon-block {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-  }
-
-  .weapon-label {
-    font-size: var(--text-xs);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
-  .weapon-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-  }
-
-  .weapon-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    object-fit: contain;
   }
 
   .progress-actions {

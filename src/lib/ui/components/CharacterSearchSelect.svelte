@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import type { Character, CharacterOwned } from "$lib/definitions";
+  import type { CharacterPortraitRef } from "$lib/definitions";
   import type { SelectOption } from "$lib/ui/components/Select.svelte";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
 
@@ -18,7 +18,7 @@
   }: {
     value?: string;
     options?: SelectOption[];
-    getCharacter?: (nameId: string) => CharacterOwned | Character | undefined;
+    getCharacter?: (nameId: string) => CharacterPortraitRef | undefined;
     /** Optional leading icon URL (weapons, materials, …). */
     getIconSrc?: (value: string) => string | null | undefined;
     placeholder?: string;

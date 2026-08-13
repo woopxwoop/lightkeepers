@@ -4,6 +4,8 @@ import {
   bestInventoryWeaponByKey,
   equippedWeaponForLocation,
   equipInventoryWeapon,
+  lowestInventoryWeaponByKey,
+  plannerStartFromOwnedWeapon,
 } from "./roster-inventory.ts";
 import { rosterProgressForNameId } from "./roster-progress.ts";
 import type { InventoryWeapon } from "./definitions.ts";
@@ -36,6 +38,23 @@ describe("inventory weapons", () => {
       bestInventoryWeaponByKey([homa, spare], "DragonBane")?.level,
       70,
     );
+    const spareR5: InventoryWeapon = {
+      ...spare,
+      level: 90,
+      ascension: 6,
+      refinement: 5,
+    };
+    assert.equal(
+      bestInventoryWeaponByKey([homa, spare, spareR5], "DragonBane")
+        ?.refinement,
+      5,
+    );
+    assert.equal(
+      lowestInventoryWeaponByKey([homa, spare, spareR5], "DragonBane")?.level,
+      70,
+    );
+    assert.equal(plannerStartFromOwnedWeapon(spare)?.level, 70);
+    assert.equal(plannerStartFromOwnedWeapon(homa), undefined);
   });
 
   it("moves location when equipping", () => {
@@ -46,7 +65,10 @@ describe("inventory weapons", () => {
       refinement: 3,
     });
     assert.equal(next.find((w) => w.key === "StaffOfHoma")?.location, "");
-    assert.equal(next.find((w) => w.key === "DragonBane")?.location, "HuTao");
+    const equipped = next.find((w) => w.key === "DragonBane");
+    assert.equal(equipped?.location, "HuTao");
+    assert.equal(equipped?.level, 70);
+    assert.equal(equipped?.lock, true);
   });
 });
 

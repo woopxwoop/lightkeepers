@@ -33,6 +33,7 @@
   let triggerEl: HTMLButtonElement | null = $state(null);
   let menuEl: HTMLDivElement | null = $state(null);
   let focusOnOpen = false;
+  let focusLastOnOpen = false;
 
   /** Viewport-fixed placement so overflow:hidden surfaces can't clip the menu. */
   function placeMenu() {
@@ -88,6 +89,7 @@
     if (!open && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
       event.preventDefault();
       focusOnOpen = true;
+      focusLastOnOpen = event.key === "ArrowUp" || event.key === "End";
       open = true;
     }
   }
@@ -113,7 +115,11 @@
       placeMenu();
       if (focusOnOpen) {
         focusOnOpen = false;
-        menuEl?.querySelectorAll<HTMLElement>('[role="menuitem"]')[0]?.focus();
+        const items =
+          menuEl?.querySelectorAll<HTMLElement>('[role="menuitem"]');
+        const target = focusLastOnOpen ? items?.[items.length - 1] : items?.[0];
+        focusLastOnOpen = false;
+        target?.focus();
       }
       requestAnimationFrame(placeMenu);
     });

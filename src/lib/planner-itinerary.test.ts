@@ -5,6 +5,7 @@ import {
   farmPlacesFromMaterials,
   groupFarmPlaces,
   resolveItineraryFocus,
+  todayWeekday,
 } from "./planner-itinerary.ts";
 import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
 
@@ -73,7 +74,9 @@ const catalog: UpgradeCostsCatalog = {
       name: "Juvenile Jade",
       icon: "UI_ItemIcon_31",
       rankLevel: 4,
-      sources: [{ kind: "boss", name: "Primo Geovishap", icon: "UI_Monster_1" }],
+      sources: [
+        { kind: "boss", name: "Primo Geovishap", icon: "UI_Monster_1" },
+      ],
     },
     "41": {
       id: 41,
@@ -166,6 +169,27 @@ describe("groupFarmPlaces", () => {
   it("marks every domain family open on Sunday", () => {
     const places = farmPlacesFromMaterials({ "11": 1, "13": 1 }, catalog);
     const sun = groupFarmPlaces(places, "Sun");
-    assert.equal(sun[0]?.groups.every((g) => g.openToday), true);
+    assert.equal(
+      sun[0]?.groups.every((g) => g.openToday),
+      true,
+    );
+  });
+});
+
+describe("todayWeekday", () => {
+  it("maps JavaScript getDay() indices to Sun through Sat", () => {
+    const dates = [
+      "2026-08-09T12:00:00", // Sun
+      "2026-08-10T12:00:00", // Mon
+      "2026-08-11T12:00:00", // Tue
+      "2026-08-12T12:00:00", // Wed
+      "2026-08-13T12:00:00", // Thu
+      "2026-08-14T12:00:00", // Fri
+      "2026-08-15T12:00:00", // Sat
+    ];
+    assert.deepEqual(
+      dates.map((iso) => todayWeekday(new Date(iso))),
+      ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    );
   });
 });

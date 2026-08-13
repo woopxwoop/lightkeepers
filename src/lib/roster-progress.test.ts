@@ -65,4 +65,37 @@ describe("rosterProgressForNameId", () => {
     assert.equal(rosterProgressForNameId(roster, "PlayerBoy-Pyro")?.level, 70);
     assert.equal(rosterProgressForNameId(roster, "Beidou"), null);
   });
+
+  it("overlays an equipped inventory weapon and keeps stored weapon otherwise", () => {
+    const roster = [
+      {
+        name: "Hu Tao",
+        name_id: "Hutao",
+        isOwned: true,
+        progress: hutao,
+      },
+    ];
+    const equipped = rosterProgressForNameId(roster, "Hutao", [
+      {
+        key: "StaffOfTheScarletSands",
+        level: 80,
+        ascension: 5,
+        refinement: 1,
+        location: "HuTao",
+        lock: false,
+      },
+    ]);
+    assert.equal(equipped?.weapon?.key, "StaffOfTheScarletSands");
+    const unequippedOnly = rosterProgressForNameId(roster, "Hutao", [
+      {
+        key: "DragonBane",
+        level: 70,
+        ascension: 5,
+        refinement: 3,
+        location: "",
+        lock: true,
+      },
+    ]);
+    assert.deepEqual(unequippedOnly?.weapon, hutao.weapon);
+  });
 });

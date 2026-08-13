@@ -244,9 +244,59 @@ describe("request validation", () => {
       },
     ]);
     assert.equal(artifact[0]?.setKey, "CrimsonWitchOfFlames");
+    const hpFlower = requireInventoryArtifacts([
+      {
+        setKey: "GladiatorsFinale",
+        slotKey: "flower",
+        level: 20,
+        rarity: 5,
+        mainStatKey: "hp",
+        location: "HuTao",
+        lock: false,
+        substats: [{ key: "hp", value: 4780 }],
+      },
+    ]);
+    assert.equal(hpFlower[0]?.substats[0]?.value, 4780);
+    const goPlaceholders = requireInventoryArtifacts([
+      {
+        setKey: "GladiatorsFinale",
+        slotKey: "flower",
+        level: 20,
+        rarity: 5,
+        mainStatKey: "hp",
+        location: "HuTao",
+        lock: false,
+        substats: [{ key: "hp", value: 1076 }],
+        unactivatedSubstats: [
+          { key: "", value: 0 },
+          { key: "", value: 0 },
+          { key: "eleMas", value: 16 },
+          { key: "", value: 0 },
+        ],
+        id: "artifact-1",
+      },
+    ]);
+    assert.equal(goPlaceholders[0]?.substats[0]?.value, 1076);
+    assert.deepEqual(goPlaceholders[0]?.unactivatedSubstats, [
+      { key: "eleMas", value: 16 },
+    ]);
     assert.throws(
       () => requireInventoryArtifacts([{ setKey: "x" }]),
       isBadRequest,
+    );
+    assert.equal(
+      requireInventoryWeapons([
+        {
+          key: "StaffOfHoma",
+          level: 90,
+          ascension: 6,
+          refinement: 1,
+          location: "HuTao",
+          lock: false,
+          id: "extra",
+        },
+      ])[0]?.key,
+      "StaffOfHoma",
     );
   });
 

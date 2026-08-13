@@ -43,4 +43,40 @@ describe("serializeGoodDocument", () => {
     assert.equal(doc.weapons?.length, 1);
     assert.equal("materials" in doc, false);
   });
+
+  it("emits Traveler{Element} keys and keeps the most advanced duplicate", () => {
+    const roster = [
+      {
+        name: "Traveler",
+        name_id: "PlayerBoy",
+        element: "Pyro",
+        isOwned: true,
+        progress: {
+          level: 60,
+          ascension: 4,
+          constellation: 1,
+          talents: { normal: 6, skill: 6, burst: 6 },
+          weapon: null,
+        },
+      },
+      {
+        name: "Traveler",
+        name_id: "PlayerBoy-Pyro",
+        element: "Pyro",
+        isOwned: true,
+        progress: {
+          level: 90,
+          ascension: 6,
+          constellation: 6,
+          talents: { normal: 10, skill: 10, burst: 10 },
+          weapon: null,
+        },
+      },
+    ] as CharacterOwned[];
+    const doc = serializeGoodDocument({ roster });
+    assert.deepEqual(
+      doc.characters?.map((c) => [c.key, c.level, c.constellation]),
+      [["TravelerPyro", 90, 6]],
+    );
+  });
 });

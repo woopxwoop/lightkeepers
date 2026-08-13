@@ -96,6 +96,7 @@
         <button
           type="button"
           class="back-link goals-bulk"
+          aria-label="Select all goals"
           onclick={onSelectAll}
         >
           All
@@ -103,6 +104,7 @@
         <button
           type="button"
           class="back-link goals-bulk"
+          aria-label="Select none of the goals"
           onclick={onSelectNone}
         >
           None
@@ -140,6 +142,9 @@
                 <span class="goal-icon goal-icon-fallback"></span>
               {/if}
               <span class="meta-name">{itineraryGoalLabel(goal, catalog)}</span>
+              {#if focusIds.has(goal.id)}
+                <span class="goal-check" aria-hidden="true">✓</span>
+              {/if}
             </button>
           </li>
         {/each}
@@ -261,6 +266,13 @@
     color: var(--foreground-color);
     border-color: var(--accent-1);
     background: var(--surface-selected);
+  }
+
+  .goal-check {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: var(--text-sm);
+    color: var(--foreground-color);
   }
 
   .goal-row .meta-name {

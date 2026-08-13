@@ -58,7 +58,7 @@ export const POST: RequestHandler = async ({
       ? undefined
       : requireInventoryArtifacts(body.artifacts);
 
-  const { error: err } = await upsertUserRoster({
+  const { error: err, inventoryOmitted } = await upsertUserRoster({
     user_id: user.id,
     roster,
     updated_at: new Date().toISOString(),
@@ -67,7 +67,10 @@ export const POST: RequestHandler = async ({
   });
   assertNoDbError("POST /api/roster", err);
 
-  return json({ ok: true });
+  return json({
+    ok: true,
+    ...(inventoryOmitted ? { inventoryOmitted: true } : {}),
+  });
 };
 
 export const DELETE: RequestHandler = async ({

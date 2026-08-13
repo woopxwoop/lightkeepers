@@ -6,8 +6,13 @@
   import { onMount } from "svelte";
   import { resolve } from "$app/paths";
   import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
-  import { aggregateGoalCosts } from "$lib/calculator-goals";
-  import { readGoalsLocal } from "$lib/calculator-goals-snapshot";
+  import { applyCloudGoals, aggregateGoalCosts } from "$lib/calculator-goals";
+  import {
+    fetchGoalsCloud,
+    persistGoalsLocal,
+    readGoalsLocal,
+  } from "$lib/calculator-goals-snapshot";
+  import { authClient } from "$lib/auth-client";
   import {
     farmPlacesFromMaterials,
     groupFarmPlaces,
@@ -16,6 +21,7 @@
     todayWeekday,
     writeItineraryFocusIds,
   } from "$lib/planner-itinerary";
+  import { wikiHref } from "$lib/wiki";
   import { assetUrl } from "$lib/asset-urls";
   import { collapseCraftRanks } from "$lib/upgrade-costs";
   import type { CalculatorGoal } from "$lib/types/calculator-goals";
@@ -42,20 +48,44 @@
   let catalogError = $state("");
   let focusIds = $state<Set<string>>(new Set());
   let pickingGoals = $state(false);
+  let weekdayTick = $state(0);
 
   onMount(() => {
-    goals = readGoalsLocal().goals;
-    focusIds = resolveItineraryFocus(goals, readItineraryFocusIds());
-    hydrated = true;
-    if (goals.length === 0) return;
-    void loadUpgradeCosts()
-      .then((data) => {
-        catalog = data;
-      })
-      .catch((e) => {
-        catalogError =
-          (e as Error)?.message ?? "Couldn’t load upgrade costs";
-      });
+    const onVisible = () => {
+      if (document.visibilityState === "visible") weekdayTick += 1;
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    void (async () => {
+      let local = readGoalsLocal();
+      if (local.goals.length === 0) {
+        try {
+          const { data: sess } = await authClient.getSession();
+          if (sess) {
+            const cloud = await fetchGoalsCloud();
+            if (cloud) {
+              local = applyCloudGoals(local, cloud);
+              persistGoalsLocal(local);
+            }
+          }
+        } catch {
+          /* keep local */
+        }
+      }
+      goals = local.goals;
+      focusIds = resolveItineraryFocus(goals, readItineraryFocusIds());
+      hydrated = true;
+      if (goals.length === 0) return;
+      void loadUpgradeCosts()
+        .then((data) => {
+          catalog = data;
+        })
+        .catch((e) => {
+          catalogError = (e as Error)?.message ?? "Couldn’t load upgrade costs";
+        });
+    })();
+
+    return () => document.removeEventListener("visibilitychange", onVisible);
   });
 
   let focusedGoals = $derived(goals.filter((g) => focusIds.has(g.id)));
@@ -71,7 +101,10 @@
     );
   });
 
-  let sections = $derived(groupFarmPlaces(places, todayWeekday()));
+  let sections = $derived.by(() => {
+    weekdayTick;
+    return groupFarmPlaces(places, todayWeekday());
+  });
 
   let focusSummary = $derived.by(() => {
     if (goals.length === 0) return "Goals";
@@ -99,10 +132,6 @@
   function selectNoGoals() {
     persistFocus(new Set());
   }
-
-  function wikiHref(name: string): string {
-    return `https://genshin-impact.fandom.com/wiki/${encodeURIComponent(name.replace(/\s+/g, "_"))}`;
-  }
 </script>
 
 {#if hydrated && (goals.length > 0 || showEmpty)}
@@ -110,7 +139,9 @@
     {#if showHeading}
       <div class="itinerary-head">
         <h2 class="section-title">Farming</h2>
-        <a class="back-link itinerary-edit" href={plannerPath}>Edit in planner</a>
+        <a class="back-link itinerary-edit" href={plannerPath}
+          >Edit in planner</a
+        >
       </div>
     {/if}
 
@@ -178,7 +209,12 @@
                           >
                             {place.name}
                           </a>
-                          <span class="meta-sub place-mats">
+                          <span
+                            class="meta-sub place-mats"
+                            title={place.materials
+                              .map((m) => m.name)
+                              .join(", ")}
+                          >
                             {place.materials.map((m) => m.name).join(", ")}
                           </span>
                         </div>
@@ -235,9 +271,11 @@
 
   .goal-trigger {
     width: fit-content;
+    min-height: 24px;
     margin: 0;
-    padding: 0;
-    border: none;
+    padding: 0.2rem 0.45rem;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-md);
     background: none;
     font-size: var(--text-xs);
     color: var(--foreground-mid);
@@ -338,8 +376,8 @@
   }
 
   .place-mats {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 </style>

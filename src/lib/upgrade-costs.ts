@@ -238,6 +238,13 @@ export function weaponTargetAtLeastStart(
   };
 }
 
+export type UpgradeOrderOpts = {
+  preferStartAscension?: boolean;
+  preferStartLevel?: boolean;
+  preferTargetAscension?: boolean;
+  preferTargetLevel?: boolean;
+};
+
 /**
  * Gate start and target, then lift target so it cannot sit behind start.
  * A later target gate (without preferAscension) raises A/level if the lift
@@ -247,12 +254,7 @@ export function orderCharacterConfigs(
   start: CharacterUpgradeConfig,
   target: CharacterUpgradeConfig,
   promotes: UpgradePromoteStep[],
-  opts?: {
-    preferStartAscension?: boolean;
-    preferStartLevel?: boolean;
-    preferTargetAscension?: boolean;
-    preferTargetLevel?: boolean;
-  },
+  opts?: UpgradeOrderOpts,
 ): { start: CharacterUpgradeConfig; target: CharacterUpgradeConfig } {
   const gatedStart = gateCharacterConfig(start, promotes, {
     preferAscension: opts?.preferStartAscension,
@@ -280,12 +282,7 @@ export function orderWeaponConfigs(
   start: WeaponUpgradeConfig,
   target: WeaponUpgradeConfig,
   promotes: UpgradePromoteStep[],
-  opts?: {
-    preferStartAscension?: boolean;
-    preferStartLevel?: boolean;
-    preferTargetAscension?: boolean;
-    preferTargetLevel?: boolean;
-  },
+  opts?: UpgradeOrderOpts,
 ): { start: WeaponUpgradeConfig; target: WeaponUpgradeConfig } {
   const gatedStart = gateWeaponConfig(start, promotes, {
     preferAscension: opts?.preferStartAscension,
@@ -459,9 +456,11 @@ export function expItemsNeeded(
 /** 3 lower-rank talent books / weapon mats / gems / elite / common craft into 1 of the next rank. */
 export const CRAFT_RANK_RATIO = 3;
 
-function craftChainsFromCatalog(
-  catalog: UpgradeCostsCatalog,
-): number[][] {
+const craftChainsCache = new WeakMap<UpgradeCostsCatalog, number[][]>();
+
+function craftChainsFromCatalog(catalog: UpgradeCostsCatalog): number[][] {
+  const cached = craftChainsCache.get(catalog);
+  if (cached) return cached;
   const into = new Map<number, number>();
   const crafted = new Set<number>();
   for (const meta of Object.values(catalog.materials)) {
@@ -484,6 +483,7 @@ function craftChainsFromCatalog(
     }
     if (chain.length >= 2) chains.push(chain);
   }
+  craftChainsCache.set(catalog, chains);
   return chains;
 }
 
@@ -513,7 +513,9 @@ export function collapseCraftRanks(
 }
 
 /** Planner source line: `Forsaken Rift · Mon/Thu/Sun` when days are known. */
-export function formatMaterialSourceLine(source: UpgradeMaterialSource): string {
+export function formatMaterialSourceLine(
+  source: UpgradeMaterialSource,
+): string {
   if (source.days && source.days.length > 0) {
     return `${source.name} · ${source.days.join("/")}`;
   }

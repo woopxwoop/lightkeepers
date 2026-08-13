@@ -12,10 +12,8 @@ import type {
   InventorySubstat,
   InventoryWeapon,
   RosterProgress,
-  RosterWeapon,
 } from "$lib/definitions";
 import {
-  cloneRosterProgress,
   DEFAULT_ROSTER_PROGRESS,
   goodKeysForRosterName,
   MAX_CONSTELLATION,
@@ -25,10 +23,13 @@ import {
 import {
   cloneInventoryArtifact,
   cloneInventoryWeapon,
+  inventoryWeaponToRoster,
   isArtifactSlot,
   MAX_ARTIFACT_LEVEL,
+  MAX_ARTIFACT_SUBSTATS,
   MAX_GOOD_KEY_LENGTH,
   MAX_STAT_KEY_LENGTH,
+  MAX_UNACTIVATED_SUBSTATS,
 } from "$lib/roster-inventory";
 import type {
   IArtifact,
@@ -129,6 +130,7 @@ function parseGoodArtifact(row: unknown): InventoryArtifact | null {
     ? artifact.substats
         .map(parseSubstat)
         .filter((stat): stat is InventorySubstat => stat != null)
+        .slice(0, MAX_ARTIFACT_SUBSTATS)
     : [];
   const parsed: InventoryArtifact = {
     setKey,
@@ -150,9 +152,11 @@ function parseGoodArtifact(row: unknown): InventoryArtifact | null {
     parsed.elixirCrafted = artifact.elixirCrafted;
   }
   if (Array.isArray(artifact.unactivatedSubstats)) {
-    parsed.unactivatedSubstats = artifact.unactivatedSubstats
+    const unactivated = artifact.unactivatedSubstats
       .map(parseSubstat)
-      .filter((stat): stat is InventorySubstat => stat != null);
+      .filter((stat): stat is InventorySubstat => stat != null)
+      .slice(0, MAX_UNACTIVATED_SUBSTATS);
+    if (unactivated.length > 0) parsed.unactivatedSubstats = unactivated;
   }
   return parsed;
 }
@@ -175,15 +179,6 @@ function parseGoodCharacter(row: unknown): GoodCharacterRecord | null {
       burst: clampInt(talent.burst, 1, MAX_TALENT, 1),
     },
     weapon: null,
-  };
-}
-
-function rosterWeaponFromInventory(weapon: InventoryWeapon): RosterWeapon {
-  return {
-    key: weapon.key,
-    level: weapon.level,
-    ascension: weapon.ascension,
-    refinement: weapon.refinement,
   };
 }
 
@@ -226,11 +221,12 @@ export function parseGoodRoster(value: unknown): GoodParseResult {
         owner = {
           key: location,
           ...DEFAULT_ROSTER_PROGRESS,
-          weapon: rosterWeaponFromInventory(weapon),
+          talents: { ...DEFAULT_ROSTER_PROGRESS.talents },
+          weapon: inventoryWeaponToRoster(weapon),
         };
         characters.set(location, owner);
       } else if (!owner.weapon) {
-        owner.weapon = rosterWeaponFromInventory(weapon);
+        owner.weapon = inventoryWeaponToRoster(weapon);
       }
     }
   }
@@ -299,7 +295,7 @@ export function applyGoodRoster(
     return {
       ...character,
       isOwned: true,
-      progress: cloneRosterProgress(toProgress(record)),
+      progress: toProgress(record),
     };
   });
 }

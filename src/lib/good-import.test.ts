@@ -130,6 +130,12 @@ describe("parseGoodRoster", () => {
           location: "HuTao",
           lock: true,
           substats: [{ key: "critRate_", value: 10.5 }],
+          unactivatedSubstats: [
+            { key: "", value: 0 },
+            { key: "eleMas", value: 16 },
+            { key: "", value: 0 },
+            { key: "", value: 0 },
+          ],
         },
         {
           setKey: "WanderersTroupe",
@@ -147,6 +153,9 @@ describe("parseGoodRoster", () => {
     if (!parsed.ok) return;
     assert.equal(parsed.artifacts.length, 2);
     assert.equal(parsed.artifacts[0]?.location, "HuTao");
+    assert.deepEqual(parsed.artifacts[0]?.unactivatedSubstats, [
+      { key: "eleMas", value: 16 },
+    ]);
     assert.equal(parsed.artifacts[1]?.location, "");
   });
 
