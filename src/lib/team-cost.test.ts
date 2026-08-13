@@ -15,6 +15,7 @@ import {
   clearTimeAtCostCeiling,
   floorTeamCost,
   labeledCostWithinFloor,
+  normalizeClearFrontier,
 } from "./team-cost.ts";
 
 function meta(name_id: string, rarity: number): CharacterMeta {
@@ -113,6 +114,25 @@ describe("bestClearUnderLimit / clearTimeAtCap", () => {
     const row = { frontier };
     assert.equal(clearTimeAtCap(row, 8), 20);
     assert.equal(clearCostAtCap(row, 8), 6);
+  });
+
+  it("normalizes RPC cost/time aliases and skips malformed points", () => {
+    assert.deepEqual(
+      normalizeClearFrontier([
+        { cost: 1.5, time: 90 },
+        { c: 2, time_s: 30 },
+        null,
+        "nope",
+        { cost: "1", t: 10 },
+        { c: 3, t: 40 },
+      ]),
+      [
+        { c: 1.5, t: 90 },
+        { c: 2, t: 30 },
+        { c: 3, t: 40 },
+      ],
+    );
+    assert.deepEqual(normalizeClearFrontier(null), []);
   });
 });
 

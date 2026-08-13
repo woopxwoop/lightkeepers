@@ -901,4 +901,85 @@ describe("solveStygianHybrid", () => {
     const keys = best.assignments.map((a) => a.team.team_key).sort();
     assert.deepEqual(keys, ["cov-bot", "cov-mid", "cov-top"]);
   });
+
+  it("keeps the owned board first when fallbacks fill out the pool", () => {
+    const ownedTop = stygianTeam({
+      team_key: "owned-top",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 30,
+      field_1_rate: 80,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const ownedMid = stygianTeam({
+      team_key: "owned-mid",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 30,
+      field_1_rate: 10,
+      field_2_rate: 80,
+      field_3_rate: 10,
+    });
+    const ownedBot = stygianTeam({
+      team_key: "owned-bot",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 30,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 80,
+    });
+    const whaleTop = stygianTeam({
+      team_key: "whale-top",
+      members: ["m", "n", "o", "p"],
+      usage_rate: 95,
+      field_1_rate: 90,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const whaleMid = stygianTeam({
+      team_key: "whale-mid",
+      members: ["q", "r", "s", "t"],
+      usage_rate: 95,
+      field_1_rate: 10,
+      field_2_rate: 90,
+      field_3_rate: 10,
+    });
+    const whaleBot = stygianTeam({
+      team_key: "whale-bot",
+      members: ["u", "v", "w", "x"],
+      usage_rate: 95,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 90,
+    });
+
+    const owned = [ownedTop, ownedMid, ownedBot];
+    const allTeams = [...owned, whaleTop, whaleMid, whaleBot];
+    const ownedNames = new Set(owned.flatMap((team) => team.members ?? []));
+    const c0r0Pairs = new Set([
+      "owned-top|1",
+      "owned-mid|2",
+      "owned-bot|3",
+      "whale-top|1",
+      "whale-mid|2",
+      "whale-bot|3",
+    ]);
+
+    const solutions = solveStygianHybrid(
+      owned,
+      allTeams,
+      ownedNames,
+      slotEnemies,
+      c0r0Pairs,
+      3,
+    );
+    assert.ok(solutions.length >= 2);
+    assert.equal(solutions[0]?.isFallback, false);
+    const ownedKeys = solutions[0]!.assignments
+      .map((a) => a.team.team_key)
+      .sort();
+    assert.deepEqual(ownedKeys, ["owned-bot", "owned-mid", "owned-top"]);
+    for (const solution of solutions.slice(1)) {
+      assert.equal(solution.isFallback, true);
+    }
+  });
 });

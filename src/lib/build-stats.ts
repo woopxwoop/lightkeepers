@@ -71,10 +71,10 @@ export const ARTIFACT_SUBSTAT_KEYS = new Set(Object.keys(SUBSTAT_ROLL_VALUE));
 
 /**
  * Max rolls of one substat on one piece for goal display. OptimFull ignores
- * piece mains and can over-allocate — UI clamps to 4 × eligible pieces
- * (e.g. EM/EM/EM → 8 EM on flower+plume; ATK/ATK/CR → 16 CR max).
+ * piece mains and can over-allocate — UI clamps to 3 × eligible pieces
+ * (e.g. EM/EM/EM → 6 EM on flower+plume; ATK/ATK/CR → 12 CR max).
  */
-export const MAX_SUBSTAT_ROLLS_PER_PIECE = 4;
+export const MAX_SUBSTAT_ROLLS_PER_PIECE = 3;
 
 export function isArtifactSubstatKey(key: string): boolean {
   return ARTIFACT_SUBSTAT_KEYS.has(key);

@@ -3,9 +3,18 @@
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import StygianSolutionBoard from "$lib/ui/components/StygianSolutionBoard.svelte";
 
+  const MAX_COST_INPUT = 10_000;
+
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let maxCost = $state(STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST);
+  let maxCostInput = $state<number | null>(STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST);
+  let maxCost = $derived.by(() => {
+    const raw = maxCostInput;
+    if (raw == null || !Number.isFinite(raw) || raw < 0) {
+      return STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST;
+    }
+    return Math.min(MAX_COST_INPUT, raw);
+  });
 </script>
 
 <PageShell class="gap-6">
@@ -23,9 +32,9 @@
         class="cost-cap-input"
         type="number"
         min="0"
-        max="10000"
+        max={MAX_COST_INPUT}
         step="1"
-        bind:value={maxCost}
+        bind:value={maxCostInput}
       />
     </label>
   </header>

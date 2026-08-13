@@ -666,7 +666,7 @@
 
   {#if solution?.isFallback && solution.neededCharacters.length > 0}
     <p class="fallback-note">
-      Unable to find fearless mode clears with your roster — try teams similar
+      Unable to find {clearDifficulty} clears with your roster — try teams similar
       to those suggested on hard or menacing.
     </p>
   {/if}

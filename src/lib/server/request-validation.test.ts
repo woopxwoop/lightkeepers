@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  MAX_ENEMY_IDS,
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,
+  MAX_TEAM_ENEMY_PAIRS,
+  MAX_TEAM_KEY_LENGTH,
   assertNoDbError,
   requireAnalyticsMode,
   requireCalculatorGoals,
@@ -321,10 +324,15 @@ describe("request validation", () => {
     assert.throws(() => requireEnemyIds([]), isBadRequest);
     assert.throws(() => requireEnemyIds([0]), isBadRequest);
     assert.throws(() => requireEnemyIds("nope"), isBadRequest);
+    assert.throws(
+      () => requireEnemyIds(Array.from({ length: MAX_ENEMY_IDS + 1 }, (_, i) => i + 1)),
+      isBadRequest,
+    );
   });
 
   it("requireStygianClearDifficulty defaults to Fearless", () => {
     assert.equal(requireStygianClearDifficulty(undefined), "Fearless");
+    assert.equal(requireStygianClearDifficulty(null), "Fearless");
     assert.equal(requireStygianClearDifficulty("Dire"), "Dire");
     assert.throws(() => requireStygianClearDifficulty("Hard"), isBadRequest);
   });
@@ -353,6 +361,23 @@ describe("request validation", () => {
     );
     assert.throws(
       () => requireTeamEnemyPairs([{ team_key: "a", enemy_id: 1, extra: true }]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireTeamEnemyPairs([
+          { team_key: "a".repeat(MAX_TEAM_KEY_LENGTH + 1), enemy_id: 1 },
+        ]),
+      isBadRequest,
+    );
+    assert.throws(
+      () =>
+        requireTeamEnemyPairs(
+          Array.from({ length: MAX_TEAM_ENEMY_PAIRS + 1 }, (_, i) => ({
+            team_key: `t${i}`,
+            enemy_id: i + 1,
+          })),
+        ),
       isBadRequest,
     );
   });

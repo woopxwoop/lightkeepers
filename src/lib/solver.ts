@@ -711,6 +711,12 @@ export function solveStygianHybrid(
 
   return [...pool]
     .sort((a, b) => {
+      if (a.isFallback !== b.isFallback) {
+        return Number(a.isFallback) - Number(b.isFallback);
+      }
+      const missingDiff =
+        a.neededCharacters.length - b.neededCharacters.length;
+      if (missingDiff !== 0) return missingDiff;
       if (a.unfilled.length !== b.unfilled.length) {
         return a.unfilled.length - b.unfilled.length;
       }
@@ -1023,6 +1029,9 @@ function buildMinMissingStygianSolutions(
     missing: getMissingForTeam(team, ownedNames),
   }));
 
+  const collected: Solution<StygianAssignment>[] = [];
+  const seen = new Set<string>();
+
   for (let budget = 0; budget <= 4; budget++) {
     const pool = teamsWithMissing
       .filter((entry) => entry.missing.length <= budget)
@@ -1034,21 +1043,21 @@ function buildMinMissingStygianSolutions(
       .map((entry) => entry.team);
 
     const solutions = solveStygian(pool, count);
-    if (solutions.length > 0 && solutions[0].unfilled.length === 0) {
-      return sortSolutionsByMissingThenScore(
-        solutions.map((solution) =>
-          annotateSolutionMissing(
-            { ...solution, isFallback: true },
-            ownedNames,
-          ),
-        ),
+    for (const solution of solutions) {
+      if (solution.unfilled.length > 0) continue;
+      const annotated = annotateSolutionMissing(
+        { ...solution, isFallback: true },
+        ownedNames,
       );
+      const key = solutionTeamKey(annotated);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      collected.push(annotated);
+      if (collected.length >= count) {
+        return sortSolutionsByMissingThenScore(collected);
+      }
     }
   }
 
-  return sortSolutionsByMissingThenScore(
-    solveStygian(allTeams, count).map((solution) =>
-      annotateSolutionMissing({ ...solution, isFallback: true }, ownedNames),
-    ),
-  );
+  return sortSolutionsByMissingThenScore(collected);
 }

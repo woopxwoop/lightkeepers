@@ -72,6 +72,32 @@ export function getClearVideosCached(
   return cache.get(pairKey(teamKey, enemyId));
 }
 
+/** Reject when `signal` aborts without cancelling `promise`. */
+function raceAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(
+      signal.reason ?? new DOMException("Aborted", "AbortError"),
+    );
+  }
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
 /**
  * Ensure clear videos for these pairs are cached. Only requests missing keys.
  * Returns a map of pairKey → clears (empty arrays for misses).
@@ -87,20 +113,25 @@ export async function ensureClearVideos(
   }
 
   const missing: StygianClearVideoPair[] = [];
+  const waits: Promise<void>[] = [];
   for (const [key, pair] of unique) {
-    if (!cache.has(key) && !inflight.has(key)) missing.push(pair);
+    if (cache.has(key)) continue;
+    const pending = inflight.get(key);
+    if (pending) {
+      waits.push(pending);
+    } else {
+      missing.push(pair);
+    }
   }
 
   if (missing.length > 0) {
     const fetchPromise = (async () => {
       const timeout = AbortSignal.timeout(FETCH_TIMEOUT_MS);
-      const combined =
-        signal !== undefined ? AbortSignal.any([signal, timeout]) : timeout;
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ pairs: missing }),
-        signal: combined,
+        signal: timeout,
       });
       if (!res.ok) {
         throw new Error(`stygian-clear-videos HTTP ${res.status}`);
@@ -124,19 +155,17 @@ export async function ensureClearVideos(
     for (const p of missing) {
       inflight.set(pairKey(p.team_key, p.enemy_id), fetchPromise);
     }
-    try {
-      await fetchPromise;
-    } finally {
+    void fetchPromise.finally(() => {
       for (const p of missing) {
-        inflight.delete(pairKey(p.team_key, p.enemy_id));
+        const key = pairKey(p.team_key, p.enemy_id);
+        if (inflight.get(key) === fetchPromise) inflight.delete(key);
       }
-    }
-  } else {
-    // Wait for any in-flight fetches covering these keys.
-    const waits = [...unique.keys()]
-      .map((k) => inflight.get(k))
-      .filter((p): p is Promise<void> => p != null);
-    if (waits.length) await Promise.all(waits);
+    });
+    waits.push(fetchPromise);
+  }
+
+  if (waits.length > 0) {
+    await raceAbort(Promise.all(waits), signal);
   }
 
   const out = new Map<string, StygianClearVideo[]>();

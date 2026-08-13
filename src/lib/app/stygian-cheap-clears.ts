@@ -39,6 +39,32 @@ function cacheKey(
   return `${stygianVersion}:${difficulty}:c${maxCost}:${enemies}:${rosterKey(characters)}`;
 }
 
+/** Reject when `signal` aborts without cancelling `promise`. */
+function raceAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(
+      signal.reason ?? new DOMException("Aborted", "AbortError"),
+    );
+  }
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
 /**
  * Ensure cost-capped clear rows for this roster × board are cached.
  * Returns the rows (empty if none).
@@ -67,40 +93,35 @@ export async function ensureCheapClears(opts: {
   const hit = cache.get(key);
   if (hit) return hit.rows;
 
-  const pending = inflight.get(key);
-  if (pending) return pending;
-
-  const fetchPromise = (async () => {
-    const timeout = AbortSignal.timeout(FETCH_TIMEOUT_MS);
-    const combined =
-      opts.signal !== undefined
-        ? AbortSignal.any([opts.signal, timeout])
-        : timeout;
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        characters,
-        stygianVersion: opts.stygianVersion,
-        enemyIds,
-        difficulty,
-        maxCost,
-      }),
-      signal: combined,
+  let fetchPromise = inflight.get(key);
+  if (!fetchPromise) {
+    fetchPromise = (async () => {
+      const timeout = AbortSignal.timeout(FETCH_TIMEOUT_MS);
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          characters,
+          stygianVersion: opts.stygianVersion,
+          enemyIds,
+          difficulty,
+          maxCost,
+        }),
+        signal: timeout,
+      });
+      if (!res.ok) {
+        throw new Error(`stygian-cheap-clears HTTP ${res.status}`);
+      }
+      const payload = (await res.json()) as StygianCheapClearsPayload;
+      const rows = payload.rows ?? [];
+      cache.set(key, { rows });
+      return rows;
+    })();
+    inflight.set(key, fetchPromise);
+    void fetchPromise.finally(() => {
+      if (inflight.get(key) === fetchPromise) inflight.delete(key);
     });
-    if (!res.ok) {
-      throw new Error(`stygian-cheap-clears HTTP ${res.status}`);
-    }
-    const payload = (await res.json()) as StygianCheapClearsPayload;
-    const rows = payload.rows ?? [];
-    cache.set(key, { rows });
-    return rows;
-  })();
-
-  inflight.set(key, fetchPromise);
-  try {
-    return await fetchPromise;
-  } finally {
-    inflight.delete(key);
   }
+
+  return raceAbort(fetchPromise, opts.signal);
 }

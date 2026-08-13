@@ -174,7 +174,7 @@
     onclick={toggle}
   >
     {#if icon}
-      <span class="info-trigger-icon">{@render icon()}</span>
+      <span class="info-trigger-icon" aria-hidden="true">{@render icon()}</span>
     {/if}
     {label}
   </button>

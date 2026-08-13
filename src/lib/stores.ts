@@ -29,6 +29,7 @@ import {
   isStygianSolverMode,
   isStygianClearDifficulty,
   STYGIAN_CHEAP_CLEARS_DIFFICULTY,
+  STYGIAN_SOLVER_MODE_DEFAULT,
 } from "$lib/definitions";
 import type {
   NearMissStygianTeam,
@@ -123,7 +124,7 @@ const defaultDisplayPreferences: DisplayPreferences = {
   backgroundApplyToHome: false,
   colorTheme: "dark",
   themeColors: null,
-  stygianSolverMode: "hybrid",
+  stygianSolverMode: STYGIAN_SOLVER_MODE_DEFAULT,
   stygianClearDifficulty: STYGIAN_CHEAP_CLEARS_DIFFICULTY,
 };
 

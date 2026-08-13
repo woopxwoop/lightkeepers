@@ -594,7 +594,8 @@ export function exampleUsesFavonius(example: CharacterBuildExample): boolean {
  * Which sheet lines to show for a build example.
  *
  * - Mid-only / negligible (`invest: mid`, no high rolls): baseline **ER**,
- *   plus **CR** only when that team's baseline weapon is Fav
+ *   plus **CR** only when that team's baseline weapon is Fav; if sands /
+ *   goblet / circlet share one main, include that main too
  * - High invest: **mains + high OptimFull liquids** (not mid leftover rolls)
  */
 export function exampleRelevantGoodKeys(
@@ -603,6 +604,8 @@ export function exampleRelevantGoodKeys(
   if (!exampleHasHighConfig(example)) {
     const keys = new Set<string>(["enerRech_"]);
     if (exampleUsesFavonius(example)) keys.add("critRate_");
+    const uniformMain = uniformMainStatKey(example);
+    if (uniformMain) keys.add(uniformMain);
     return keys;
   }
   const keys = new Set<string>();
@@ -618,6 +621,16 @@ export function exampleRelevantGoodKeys(
     if (n > 0) keys.add(k);
   }
   return keys;
+}
+
+/** Shared sands/goblet/circlet main, or null when they differ / are missing. */
+function uniformMainStatKey(
+  example: CharacterBuildExample,
+): string | null {
+  const mains = MAIN_STAT_SLOTS.map((slot) => example.main_stats?.[slot.key]);
+  const first = mains[0];
+  if (typeof first !== "string" || !first) return null;
+  return mains.every((m) => m === first) ? first : null;
 }
 
 /**

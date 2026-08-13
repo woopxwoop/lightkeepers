@@ -1,4 +1,4 @@
-import type { Tables, Database } from "$lib/types/database.types";
+import type { Tables, Database, Json } from "$lib/types/database.types";
 
 export type Character = Tables<"characters">;
 export type CharacterOwned = Character & { isOwned: boolean };
@@ -146,7 +146,8 @@ export type StygianClearFrontierPoint = {
 
 /** Row fields needed to pick a clear under a scrape-cost limit. */
 export type StygianCheapClearFrontier = {
-  frontier: StygianClearFrontierPoint[] | null;
+  /** Raw RPC jsonb; normalize via team-cost helpers before reading points. */
+  frontier: Json | null;
 };
 
 /**
@@ -156,7 +157,7 @@ export type StygianCheapClearFrontier = {
 export type StygianCheapClearRow = StygianTeam & {
   enemy_id: number;
   min_cost: number | null;
-  frontier: StygianClearFrontierPoint[] | null;
+  frontier: Json | null;
 };
 
 export type StygianCheapClearsPayload = {
@@ -221,26 +222,29 @@ export const STYGIAN_SOLVER_MODE_OPTIONS_RELEASE: ReadonlyArray<{
   { value: "video-c0r0", label: "Video Clears C0R0" },
 ];
 
+/** Default seating mode on `/tools/stygian`. */
+export const STYGIAN_SOLVER_MODE_DEFAULT =
+  "hybrid" as const satisfies StygianSolverModeRelease;
+
 export function isStygianSolverMode(value: unknown): value is StygianSolverMode {
-  return (
-    value === "yshelper" ||
-    value === "hybrid" ||
-    value === "video" ||
-    value === "video-c0r0"
-  );
+  return STYGIAN_SOLVER_MODE_OPTIONS.some((option) => option.value === value);
 }
 
 export function isStygianSolverModeRelease(
   value: unknown,
 ): value is StygianSolverModeRelease {
-  return value === "yshelper" || value === "hybrid" || value === "video-c0r0";
+  return STYGIAN_SOLVER_MODE_OPTIONS_RELEASE.some(
+    (option) => option.value === value,
+  );
 }
 
 /** Map stored prefs onto the production mode set (drops experimental `video`). */
 export function toStygianSolverModeRelease(
   value: StygianSolverMode,
 ): StygianSolverModeRelease {
-  return isStygianSolverModeRelease(value) ? value : "hybrid";
+  return isStygianSolverModeRelease(value)
+    ? value
+    : STYGIAN_SOLVER_MODE_DEFAULT;
 }
 
 export type { TierBoard, TierListEntry, TierListPayload } from "$lib/tierlist";

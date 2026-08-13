@@ -4,6 +4,11 @@ import {
   MAX_CALCULATOR_GOALS,
   MAX_GOAL_ID_LENGTH,
 } from "$lib/calculator-goals";
+import {
+  STYGIAN_CHEAP_CLEARS_DIFFICULTY,
+  isStygianClearDifficulty,
+  type StygianClearDifficulty,
+} from "$lib/definitions";
 import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
 import type { CalculatorGoal } from "$lib/types/calculator-goals";
 
@@ -425,9 +430,13 @@ export function requireEnemyIds(value: unknown): number[] {
 }
 
 /** Fearless (default) or Dire — matches stygian.moe ingest labels. */
-export function requireStygianClearDifficulty(value: unknown): string {
-  if (value === undefined || value === null) return "Fearless";
-  if (value !== "Fearless" && value !== "Dire") {
+export function requireStygianClearDifficulty(
+  value: unknown,
+): StygianClearDifficulty {
+  if (value === undefined || value === null) {
+    return STYGIAN_CHEAP_CLEARS_DIFFICULTY;
+  }
+  if (!isStygianClearDifficulty(value)) {
     throw error(400, "difficulty must be Fearless or Dire.");
   }
   return value;
