@@ -180,7 +180,9 @@ export const STYGIAN_CLEAR_DIFFICULTY_OPTIONS: ReadonlyArray<{
 export function isStygianClearDifficulty(
   value: unknown,
 ): value is StygianClearDifficulty {
-  return value === "Fearless" || value === "Dire";
+  return STYGIAN_CLEAR_DIFFICULTY_OPTIONS.some(
+    (option) => option.value === value,
+  );
 }
 
 /** Default max clear cost when filtering before time ranking. */

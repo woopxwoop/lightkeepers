@@ -579,6 +579,7 @@ function sheetIconKey(stat: string): string {
 
 /** True when the example carries a distinct high-invest roll sheet. */
 export function exampleHasHighConfig(example: CharacterBuildExample): boolean {
+  if (example.invest !== "high") return false;
   const rolls = example.high_substat_rolls;
   if (!rolls || typeof rolls !== "object") return false;
   return Object.keys(rolls).length > 0;
@@ -593,15 +594,17 @@ export function exampleUsesFavonius(example: CharacterBuildExample): boolean {
 /**
  * Which sheet lines to show for a build example.
  *
- * - Mid-only / negligible (`invest: mid`, no high rolls): baseline **ER**,
- *   plus **CR** only when that team's baseline weapon is Fav; if sands /
- *   goblet / circlet share one main, include that main too
- * - High invest: **mains + high OptimFull liquids** (not mid leftover rolls)
+ * - Mid / negligible: baseline **ER**, plus **CR** only when that team's
+ *   baseline weapon is Fav; if sands / goblet / circlet share one main,
+ *   include that main too
+ * - High invest (`tier === "high"` with high rolls): **mains + high OptimFull
+ *   liquids** (not mid leftover rolls)
  */
 export function exampleRelevantGoodKeys(
   example: CharacterBuildExample,
+  tier: ExampleRollTier = "mid",
 ): Set<string> {
-  if (!exampleHasHighConfig(example)) {
+  if (tier !== "high" || !exampleHasHighConfig(example)) {
     const keys = new Set<string>(["enerRech_"]);
     if (exampleUsesFavonius(example)) keys.add("critRate_");
     const uniformMain = uniformMainStatKey(example);
@@ -641,7 +644,7 @@ export function exampleRelevantSheetRows(
   example: CharacterBuildExample,
   tier: ExampleRollTier = "mid",
 ): ExampleSheetRow[] {
-  const relevant = exampleRelevantGoodKeys(example);
+  const relevant = exampleRelevantGoodKeys(example, tier);
   if (relevant.size === 0) return [];
 
   const sheet = computeBuildSheetStats(

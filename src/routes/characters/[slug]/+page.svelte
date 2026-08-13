@@ -538,9 +538,13 @@
       : ("mid" as const);
     return characterBuildFromExample(activeExample, tier);
   });
-  let exampleCardRelevantKeys = $derived(
-    activeExample ? exampleRelevantGoodKeys(activeExample) : null,
-  );
+  let exampleCardRelevantKeys = $derived.by(() => {
+    if (!activeExample) return null;
+    const tier = exampleHasHighConfig(activeExample)
+      ? ("high" as const)
+      : ("mid" as const);
+    return exampleRelevantGoodKeys(activeExample, tier);
+  });
   let exampleCardKit = $derived(kitIconsFromCharacterKit(kit));
   let exampleCardCharacter = $derived(goodKeyMap.get(goodKey) ?? null);
 </script>
@@ -1589,6 +1593,7 @@
                                       <button
                                         type="button"
                                         class="example-picker-alt"
+                                        aria-label={`Select ${example.team_name}`}
                                         tabindex={exampleMenuOpen ? 0 : -1}
                                         onclick={() => {
                                           examplePick = example.state_key;

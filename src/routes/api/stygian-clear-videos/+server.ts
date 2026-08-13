@@ -22,16 +22,16 @@ function pairKey(teamKey: string, enemyId: number): string {
 }
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
-  await enforceApiRateLimit({ request, getClientAddress });
-  const body = await requireJsonObject(request);
-  const pairs = requireTeamEnemyPairs(body.pairs);
-
   if (isPlaywrightE2e()) {
     const payload: StygianClearVideosPayload = { clears: [] };
     return json(payload, {
       headers: { "Cache-Control": "no-store", "X-Playwright-E2E": "1" },
     });
   }
+
+  await enforceApiRateLimit({ request, getClientAddress });
+  const body = await requireJsonObject(request);
+  const pairs = requireTeamEnemyPairs(body.pairs);
 
   const wanted = new Set(pairs.map((p) => pairKey(p.team_key, p.enemy_id)));
   const teamKeys = [...new Set(pairs.map((p) => p.team_key))];

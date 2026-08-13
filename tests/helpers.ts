@@ -12,6 +12,7 @@ import {
   E2E_EMPTY_ABYSS_ENEMIES,
   E2E_EMPTY_STYGIAN_ENEMIES,
   E2E_NEAR_MISS_SINGLE,
+  E2E_STYGIAN_ENEMIES,
   E2E_STYGIAN_OWNED_BASELINE,
   E2E_STYGIAN_TEAM_BOTTOM,
   E2E_STYGIAN_TEAM_MIDDLE,
@@ -40,6 +41,7 @@ export const NEAR_MISS_SINGLE = E2E_NEAR_MISS_SINGLE;
 
 export const emptyAbyssEnemies = E2E_EMPTY_ABYSS_ENEMIES;
 export const emptyStygianEnemies = E2E_EMPTY_STYGIAN_ENEMIES;
+export const stygianEnemies = E2E_STYGIAN_ENEMIES;
 
 type ApiMockOptions = {
   abyssTeams?: AbyssTeam[];
@@ -107,6 +109,15 @@ export async function installApiMocks(
     await route.fulfill({ json: tierList });
   });
 
+  // Hybrid waits on this; empty rows still seats via usage × affinity.
+  await page.route("**/api/stygian-cheap-clears", async (route: Route) => {
+    await route.fulfill({ json: { rows: [] } });
+  });
+
+  await page.route("**/api/stygian-clear-videos", async (route: Route) => {
+    await route.fulfill({ json: { clears: [] } });
+  });
+
   const staticBase = e2eStaticPayload();
   await page.route("**/api/static", async (route: Route) => {
     await route.fulfill({
@@ -115,7 +126,8 @@ export async function installApiMocks(
         allTeamsAbyss,
         allTeamsStygian,
         abyssEnemies: emptyAbyssEnemies,
-        stygianEnemies: emptyStygianEnemies,
+        // Hybrid (default) needs boss ids; empty board never seats.
+        stygianEnemies,
       },
     });
   });

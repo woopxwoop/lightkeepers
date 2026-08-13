@@ -130,6 +130,24 @@ export const E2E_EMPTY_STYGIAN_ENEMIES: StygianEnemies = {
   bottom: null,
 };
 
+function e2eEnemy(id: number, name: string): Enemy {
+  return {
+    id,
+    enemy_name: name,
+    asset: `UI_MonsterIcon_Test_${id}`,
+    icon_path: null,
+    description: null,
+    created_at: "2024-01-01T00:00:00Z",
+  };
+}
+
+/** Board bosses so hybrid (default) seating has slot enemy ids. */
+export const E2E_STYGIAN_ENEMIES: StygianEnemies = {
+  top: e2eEnemy(101, "E2E Top Boss"),
+  middle: e2eEnemy(102, "E2E Middle Boss"),
+  bottom: e2eEnemy(103, "E2E Bottom Boss"),
+};
+
 const E2E_ABYSS_VERSION: AbyssVersion = {
   version_number: 1,
   version_name: "test",
@@ -204,7 +222,7 @@ export function e2eStaticPayload(): E2eStaticPayload {
       E2E_STYGIAN_TEAM_MIDDLE,
       E2E_STYGIAN_TEAM_BOTTOM,
     ],
-    stygianEnemies: E2E_EMPTY_STYGIAN_ENEMIES,
+    stygianEnemies: E2E_STYGIAN_ENEMIES,
     abyssEnemies: E2E_EMPTY_ABYSS_ENEMIES,
     stygianSchedule: null,
   };
@@ -328,14 +346,7 @@ export function e2eCharacterAnalyticsPayload(
   };
 }
 
-export const E2E_STYGIAN_ENEMY: Enemy = {
-  id: 1,
-  enemy_name: "Test Boss",
-  asset: "UI_MonsterIcon_Test",
-  icon_path: null,
-  description: null,
-  created_at: "2024-01-01T00:00:00Z",
-};
+export const E2E_STYGIAN_ENEMY: Enemy = e2eEnemy(1, "Test Boss");
 
 export function e2eStygianEnemyList(): StygianEnemyListItem[] {
   return [
