@@ -469,11 +469,13 @@
     "((?:\\\\n|\\r\\n|\\n|\\r)+((?:<color=[^>]+>)?(?:Hexerei|Radiance:\\s*Stellar-Conduct|Polestar Field)\\b[\\s\\S]*))$",
     "i",
   );
+  const ENHANCE_SEP = /^(?:\r\n|\r|\n|\\r\\n|\\r|\\n)+/;
 
   /**
    * Enhanced Excel text usually prepends the base desc then appends buff text.
    * Return only the new suffix when that's the case; otherwise the full rewrite.
-   * Keep the leading `\\n` on extras — that's the linebreak between base and buff.
+   * Strip separator runs between the base and buff on both the prefix and
+   * trailing-section paths so Hexerei and Polar Field extras match.
    */
   function enhanceExtra(
     base: string,
@@ -481,11 +483,14 @@
   ): { mode: "extra" | "replace"; text: string } | null {
     if (!enhanced || enhanced === base) return null;
     if (enhanced.startsWith(base)) {
-      const extra = enhanced.slice(base.length).replace(/^(\r\n|\n|\r)+/, "");
+      const extra = enhanced.slice(base.length).replace(ENHANCE_SEP, "");
       return extra ? { mode: "extra", text: extra } : null;
     }
     const tail = enhanced.match(ENHANCE_TAIL);
-    if (tail?.[1]) return { mode: "extra", text: tail[1] };
+    if (tail?.[1]) {
+      const extra = tail[1].replace(ENHANCE_SEP, "");
+      return extra ? { mode: "extra", text: extra } : null;
+    }
     return { mode: "replace", text: enhanced };
   }
 

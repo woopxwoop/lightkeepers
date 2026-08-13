@@ -35,31 +35,33 @@
     <p class="cost-lede">
       Cost is a standardized way of measuring team investment level.
     </p>
-    <table class="cost-table">
-      <thead>
-        <tr>
-          <th scope="col">Cost (Characters)</th>
-          {#each COSTS as n (n)}
-            <th scope="col">{n}</th>
-          {/each}
-        </tr>
-      </thead>
-      <tbody>
-        {#each ROWS as row, r (`${row.label}-${row.hint ?? r}`)}
+    <div class="cost-table-wrap">
+      <table class="cost-table">
+        <thead>
           <tr>
-            <th scope="row">
-              {row.label}
-              {#if row.hint}
-                <span class="cost-hint">{row.hint}</span>
-              {/if}
-            </th>
-            {#each row.cells as cell, i (`${r}-${i}`)}
-              <td>{cell}</td>
+            <th scope="col">Cost (Characters)</th>
+            {#each COSTS as n (n)}
+              <th scope="col">{n}</th>
             {/each}
           </tr>
-        {/each}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {#each ROWS as row, r (`${row.label}-${row.hint ?? r}`)}
+            <tr>
+              <th scope="row">
+                {row.label}
+                {#if row.hint}
+                  <span class="cost-hint">{row.hint}</span>
+                {/if}
+              </th>
+              {#each row.cells as cell, i (`${r}-${i}`)}
+                <td>{cell}</td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
     <p class="cost-note">*Each 5★ weapon adds 1 cost.</p>
   </div>
 </InfoPopover>
@@ -84,8 +86,15 @@
     opacity: 0.82;
   }
 
+  .cost-table-wrap {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .cost-table {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     border-collapse: collapse;
     font-variant-numeric: tabular-nums;
   }
