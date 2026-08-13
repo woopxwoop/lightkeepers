@@ -6,7 +6,9 @@ import type {
   CharacterUpgradeCosts,
   UpgradeCostItem,
   UpgradeCostResult,
+  UpgradeCostsCatalog,
   UpgradeCurves,
+  UpgradeMaterialSource,
   UpgradePromoteStep,
   UpgradeTalentTrack,
   WeaponUpgradeConfig,
@@ -452,6 +454,70 @@ export function expItemsNeeded(
     }
   }
   return out.filter((x) => x.count > 0);
+}
+
+/** 3 lower-rank talent books / weapon mats / gems / elite / common craft into 1 of the next rank. */
+export const CRAFT_RANK_RATIO = 3;
+
+function craftChainsFromCatalog(
+  catalog: UpgradeCostsCatalog,
+): number[][] {
+  const into = new Map<number, number>();
+  const crafted = new Set<number>();
+  for (const meta of Object.values(catalog.materials)) {
+    if (meta.craftIntoId == null) continue;
+    into.set(meta.id, meta.craftIntoId);
+    crafted.add(meta.craftIntoId);
+  }
+  const chains: number[][] = [];
+  for (const root of into.keys()) {
+    if (crafted.has(root)) continue;
+    const chain = [root];
+    const seen = new Set([root]);
+    let cur = root;
+    while (into.has(cur)) {
+      const next = into.get(cur)!;
+      if (seen.has(next)) break;
+      seen.add(next);
+      chain.push(next);
+      cur = next;
+    }
+    if (chain.length >= 2) chains.push(chain);
+  }
+  return chains;
+}
+
+/**
+ * Fold talent books, weapon mats, gems, elite, and common drops into the
+ * highest rank this bag actually uses. Remainders round up (3 Teachings → 1 Guide).
+ */
+export function collapseCraftRanks(
+  materials: Record<string, number>,
+  catalog: UpgradeCostsCatalog,
+): Record<string, number> {
+  const out: Record<string, number> = { ...materials };
+  for (const chain of craftChainsFromCatalog(catalog)) {
+    const counts = chain.map((id) => out[String(id)] ?? 0);
+    if (counts.every((c) => c <= 0)) continue;
+    let hi = counts.length - 1;
+    while (hi > 0 && counts[hi]! <= 0) hi -= 1;
+    let base = 0;
+    for (let i = 0; i <= hi; i++) {
+      base += counts[i]! * CRAFT_RANK_RATIO ** i;
+    }
+    const top = Math.ceil(base / CRAFT_RANK_RATIO ** hi);
+    for (const id of chain) delete out[String(id)];
+    if (top > 0) out[String(chain[hi])] = top;
+  }
+  return out;
+}
+
+/** Planner source line: `Forsaken Rift · Mon/Thu/Sun` when days are known. */
+export function formatMaterialSourceLine(source: UpgradeMaterialSource): string {
+  if (source.days && source.days.length > 0) {
+    return `${source.name} · ${source.days.join("/")}`;
+  }
+  return source.name;
 }
 
 export const UPGRADE_DEFAULTS = {

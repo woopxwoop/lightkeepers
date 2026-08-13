@@ -22,6 +22,7 @@
     animationsEnabled,
   } from "$lib/stores";
   import { ownedNameIds } from "$lib/utils";
+  import { loadRosterWeapons } from "$lib/app/roster-inventory";
   import {
     computePullSuggestions,
     computePairSuggestions,
@@ -155,6 +156,7 @@
     ensureTeamsOwned($charactersOwned).catch(() => {
       pageState = "error";
     });
+    void loadRosterWeapons().catch(() => {});
     if (!nearMissReady) {
       ensureNearMissTeams($charactersOwned).catch(() => {
         pageState = "error";

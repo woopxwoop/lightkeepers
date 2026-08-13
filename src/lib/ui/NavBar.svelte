@@ -9,8 +9,10 @@
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
+  import IconListChecks from "$lib/ui/icons/IconListChecks.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
+  import { plannerItineraryOpen } from "$lib/planner-itinerary-open";
 
   const homePath = resolve("/");
   const abyssPath = resolve("/tools/abyss");
@@ -77,6 +79,10 @@
   }
 
   const onToolsPage = $derived(isPathActive(resolve("/tools"), "prefix"));
+  const onPlannerPage = $derived(isPathActive(plannerPath, "prefix"));
+  const hideFarmTrigger = $derived(
+    page.url.pathname === homePath || onPlannerPage,
+  );
 
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(resolve("/settings")),
@@ -303,64 +309,99 @@
         >
       {/each}
 
-      <div class="nav-menu-item">
-        <a
-          href={settingsPath}
-          class="nav-link"
-          aria-current={onSettingsPage ? "page" : undefined}
-          onmouseenter={onSettingsEnter}
-          onmouseleave={onSettingsLeave}
-          onfocus={onSettingsEnter}
-          onblur={onSettingsLeave}>Settings</a
-        >
+      <div class="nav-farm-cluster">
+        <div class="nav-menu-item">
+          <a
+            href={settingsPath}
+            class="nav-link"
+            aria-current={onSettingsPage ? "page" : undefined}
+            onmouseenter={onSettingsEnter}
+            onmouseleave={onSettingsLeave}
+            onfocus={onSettingsEnter}
+            onblur={onSettingsLeave}>Settings</a
+          >
 
-        <div
-          class="nav-sub-row"
-          class:nav-sub-row-open={settingsHovered}
-          inert={!settingsHovered}
-          role="presentation"
-          onmouseenter={onSettingsEnter}
-          onmouseleave={onSettingsLeave}
-          onfocusin={onSettingsEnter}
-          onfocusout={onSettingsLeave}
-        >
-          {#each settingsLinks as link}
-            {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
-            {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
-            {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
-            <a
-              href={link.path}
-              class="nav-sub-link"
-              aria-current={onSettingsPage && activeTab === linkTab
-                ? "page"
-                : undefined}>{link.label}</a
-            >
-          {/each}
+          <div
+            class="nav-sub-row"
+            class:nav-sub-row-open={settingsHovered}
+            inert={!settingsHovered}
+            role="presentation"
+            onmouseenter={onSettingsEnter}
+            onmouseleave={onSettingsLeave}
+            onfocusin={onSettingsEnter}
+            onfocusout={onSettingsLeave}
+          >
+            {#each settingsLinks as link}
+              {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
+              {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
+              {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
+              <a
+                href={link.path}
+                class="nav-sub-link"
+                aria-current={onSettingsPage && activeTab === linkTab
+                  ? "page"
+                  : undefined}>{link.label}</a
+              >
+            {/each}
+          </div>
         </div>
+
+        {#if !hideFarmTrigger}
+          <button
+            type="button"
+            class="nav-farm-btn"
+            aria-label="Farming"
+            aria-haspopup="dialog"
+            aria-expanded={$plannerItineraryOpen}
+            onclick={() => plannerItineraryOpen.set(true)}
+          >
+            <IconListChecks size={18} />
+          </button>
+        {/if}
       </div>
     </div>
 
-    <!-- Hamburger button (mobile only) -->
-    <button
-      class="hamburger md:hidden"
-      aria-label={mobileOpen ? "Close menu" : "Open menu"}
-      aria-expanded={mobileOpen}
-      bind:this={hamburgerEl}
-      onclick={() => {
-        mobileOpen = !mobileOpen;
-        if (!mobileOpen) {
-          toolsDrawerExpanded = false;
-          settingsDrawerExpanded = false;
-        } else {
-          toolsDrawerExpanded = onToolsPage;
-          settingsDrawerExpanded = onSettingsPage;
-        }
-      }}
-    >
-      <span class="bar" class:open={mobileOpen}></span>
-      <span class="bar" class:open={mobileOpen}></span>
-      <span class="bar" class:open={mobileOpen}></span>
-    </button>
+    <div class="nav-end flex items-center gap-1">
+      {#if !hideFarmTrigger}
+        <div class="md:hidden">
+          <button
+            type="button"
+            class="nav-farm-btn"
+            aria-label="Farming"
+            aria-haspopup="dialog"
+            aria-expanded={$plannerItineraryOpen}
+            onclick={() => {
+              plannerItineraryOpen.set(true);
+              mobileOpen = false;
+            }}
+          >
+            <IconListChecks size={18} />
+          </button>
+        </div>
+      {/if}
+
+      <!-- Hamburger button (mobile only) -->
+      <button
+        class="hamburger md:hidden"
+        aria-label={mobileOpen ? "Close menu" : "Open menu"}
+        aria-expanded={mobileOpen}
+        bind:this={hamburgerEl}
+        onclick={() => {
+          mobileOpen = !mobileOpen;
+          if (!mobileOpen) {
+            toolsDrawerExpanded = false;
+            settingsDrawerExpanded = false;
+          } else {
+            toolsDrawerExpanded = onToolsPage;
+            settingsDrawerExpanded = onSettingsPage;
+          }
+        }}
+      >
+        <span class="bar" class:open={mobileOpen}></span>
+        <span class="bar" class:open={mobileOpen}></span>
+        <span class="bar" class:open={mobileOpen}></span>
+      </button>
+    </div>
   </div>
 </nav>
 
@@ -719,6 +760,36 @@
   .nav-sub-link:hover,
   .nav-sub-link[aria-current="page"] {
     color: var(--foreground-color);
+  }
+
+  /* ── Farming (nav sheet) ── */
+  .nav-farm-cluster {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .nav-farm-btn {
+    pointer-events: auto;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--foreground-mid);
+    cursor: pointer;
+    transition:
+      color var(--control-duration) var(--control-ease),
+      background-color var(--control-duration) var(--control-ease);
+  }
+
+  .nav-farm-btn:hover,
+  .nav-farm-btn[aria-expanded="true"] {
+    color: var(--foreground-color);
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
   }
 
   /* ── Hamburger ── */

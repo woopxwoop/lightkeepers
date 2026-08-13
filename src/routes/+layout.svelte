@@ -22,6 +22,7 @@
   } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
   import PatchNotesPopup from "$lib/ui/components/PatchNotesPopup.svelte";
+  import PlannerItinerarySheet from "$lib/ui/components/PlannerItinerarySheet.svelte";
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { getSiteBackgroundUrl } from "$lib/utils";
@@ -99,6 +100,7 @@
     ></div>
   {/if}
   <NavBar />
+  <PlannerItinerarySheet />
   <PatchNotesPopup note={data.latestPatchNote} />
 
   <div class="h-12 w-full"></div>

@@ -20,6 +20,8 @@ import {
   requireJsonObject,
   requireNumberInRange,
   requireRosterEntries,
+  requireInventoryWeapons,
+  requireInventoryArtifacts,
   requireUser,
 } from "./request-validation.ts";
 import {
@@ -139,6 +141,44 @@ describe("request validation", () => {
       requireRosterEntries([{ name_id: "furina", isOwned: true }]),
       [{ name_id: "furina", isOwned: true }],
     );
+    assert.deepEqual(
+      requireRosterEntries([
+        {
+          name_id: "furina",
+          isOwned: true,
+          progress: {
+            level: 90,
+            ascension: 6,
+            constellation: 2,
+            talents: { normal: 6, skill: 8, burst: 8 },
+            weapon: {
+              key: "SplendorOfTranquilWaters",
+              level: 90,
+              ascension: 6,
+              refinement: 1,
+            },
+          },
+        },
+      ]),
+      [
+        {
+          name_id: "furina",
+          isOwned: true,
+          progress: {
+            level: 90,
+            ascension: 6,
+            constellation: 2,
+            talents: { normal: 6, skill: 8, burst: 8 },
+            weapon: {
+              key: "SplendorOfTranquilWaters",
+              level: 90,
+              ascension: 6,
+              refinement: 1,
+            },
+          },
+        },
+      ],
+    );
     assert.throws(() => requireRosterEntries(null), isBadRequest);
     assert.throws(
       () => requireRosterEntries([{ name_id: "furina" }]),
@@ -151,6 +191,61 @@ describe("request validation", () => {
     assert.throws(
       () =>
         requireRosterEntries([{ name_id: "furina", isOwned: true, extra: 1 }]),
+      isBadRequest,
+    );
+  });
+
+  it("validates GOOD weapon and artifact inventory slices", () => {
+    assert.deepEqual(
+      requireInventoryWeapons([
+        {
+          key: "StaffOfHoma",
+          level: 90,
+          ascension: 6,
+          refinement: 1,
+          location: "HuTao",
+          lock: false,
+        },
+      ]),
+      [
+        {
+          key: "StaffOfHoma",
+          level: 90,
+          ascension: 6,
+          refinement: 1,
+          location: "HuTao",
+          lock: false,
+        },
+      ],
+    );
+    assert.throws(
+      () =>
+        requireInventoryWeapons([
+          {
+            key: "StaffOfHoma",
+            level: 90,
+            ascension: 6,
+            refinement: 1,
+            location: "HuTao",
+          },
+        ]),
+      isBadRequest,
+    );
+    const artifact = requireInventoryArtifacts([
+      {
+        setKey: "CrimsonWitchOfFlames",
+        slotKey: "goblet",
+        level: 20,
+        rarity: 5,
+        mainStatKey: "pyro_dmg_",
+        location: "",
+        lock: true,
+        substats: [{ key: "critRate_", value: 10.5 }],
+      },
+    ]);
+    assert.equal(artifact[0]?.setKey, "CrimsonWitchOfFlames");
+    assert.throws(
+      () => requireInventoryArtifacts([{ setKey: "x" }]),
       isBadRequest,
     );
   });
@@ -325,7 +420,10 @@ describe("request validation", () => {
     assert.throws(() => requireEnemyIds([0]), isBadRequest);
     assert.throws(() => requireEnemyIds("nope"), isBadRequest);
     assert.throws(
-      () => requireEnemyIds(Array.from({ length: MAX_ENEMY_IDS + 1 }, (_, i) => i + 1)),
+      () =>
+        requireEnemyIds(
+          Array.from({ length: MAX_ENEMY_IDS + 1 }, (_, i) => i + 1),
+        ),
       isBadRequest,
     );
   });
@@ -360,7 +458,8 @@ describe("request validation", () => {
       isBadRequest,
     );
     assert.throws(
-      () => requireTeamEnemyPairs([{ team_key: "a", enemy_id: 1, extra: true }]),
+      () =>
+        requireTeamEnemyPairs([{ team_key: "a", enemy_id: 1, extra: true }]),
       isBadRequest,
     );
     assert.throws(

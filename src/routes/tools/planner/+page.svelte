@@ -1,5 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/state";
   import { authClient } from "$lib/auth-client";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
@@ -11,13 +13,30 @@
   import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
   import { loadCharacterSummary } from "$lib/app/character-summary";
   import { plannerTargetFromBuilds } from "$lib/planner-targets";
+  import { isStaleBuildSummary } from "$lib/stale-build-summary";
+  import {
+    progressToCharacterStart,
+    rosterProgressForNameId,
+  } from "$lib/roster-progress";
+  import {
+    getRosterWeaponsCached,
+    loadRosterWeapons,
+  } from "$lib/app/roster-inventory";
+  import {
+    bestInventoryWeaponByKey,
+    inventoryWeaponToRoster,
+  } from "$lib/roster-inventory";
   import { assetUrl } from "$lib/asset-urls";
-  import { getCharacterPortrait, ownedNameIds, toGoodKey } from "$lib/utils";
+  import {
+    getCharacterPortrait,
+    isOwnedNameId,
+    ownedNameIds,
+    plannerSimKey,
+    toGoodKey,
+  } from "$lib/utils";
   import { charactersOwned } from "$lib/stores";
   import type { Character, CharacterOwned } from "$lib/definitions";
   import {
-    diffCharacterUpgrade,
-    diffWeaponUpgrade,
     expItemsNeeded,
     MAX_ASCENSION,
     MAX_LEVEL,
@@ -25,12 +44,14 @@
     maxLevelForAscension,
     orderCharacterConfigs,
     orderWeaponConfigs,
+    formatMaterialSourceLine,
+    collapseCraftRanks,
   } from "$lib/upgrade-costs";
   import {
-    addCharacterResult,
-    addWeaponResult,
+    aggregateGoalCosts,
     appendGoal,
     applyCloudGoals,
+    costsForGoal,
     createCharacterGoal,
     createWeaponGoal,
     emptyAggregate,
@@ -51,6 +72,7 @@
     writeGoalsLocal,
     type GoalsCapture,
   } from "$lib/calculator-goals-snapshot";
+  import { nextSearchPath } from "$lib/query-state";
   import type {
     AggregatedUpgradeCosts,
     CalculatorGoal,
@@ -83,6 +105,9 @@
   let isSaving = $state(false);
   let saveError = $state("");
   let addError = $state("");
+  /** Character name_id from `?add=` — consumed after catalog + goals hydrate. */
+  let pendingPlannerAdd = $state<string | null>(null);
+  let plannerAddConsumed = false;
   let costScope = $state<CostScope>("selected");
   /** Character pick lists put roster-owned names first. */
   let sortOwnedFirst = $state(true);
@@ -139,6 +164,7 @@
     let cancelled = false;
     loading = true;
     loadError = null;
+    void loadRosterWeapons().catch(() => {});
     loadUpgradeCosts()
       .then((data) => {
         if (cancelled) return;
@@ -200,6 +226,30 @@
     return () => {
       cancelled = true;
     };
+  });
+
+  $effect(() => {
+    if (!browser) return;
+    const nameId = page.url.searchParams.get("add")?.trim();
+    if (!nameId) return;
+    const next = nextSearchPath(page.url, { add: null });
+    if (next) replaceState(next, page.state);
+    if (plannerAddConsumed) return;
+    plannerAddConsumed = true;
+    pendingPlannerAdd = nameId;
+  });
+
+  $effect(() => {
+    const nameId = pendingPlannerAdd;
+    if (!nameId) return;
+    if (loadError) {
+      pendingPlannerAdd = null;
+      addError = "Couldn't load planner data.";
+      return;
+    }
+    if (!catalog || !goalsHydrated) return;
+    pendingPlannerAdd = null;
+    addOrSelectCharacter(nameId);
   });
 
   function commitGoals(next: CalculatorGoalsState) {
@@ -280,7 +330,7 @@
     const owned: typeof opts = [];
     const rest: typeof opts = [];
     for (const opt of opts) {
-      (ownedIds.has(opt.value) ? owned : rest).push(opt);
+      (isOwnedNameId(opt.value, ownedIds) ? owned : rest).push(opt);
     }
     return [...owned, ...rest];
   });
@@ -338,13 +388,14 @@
 
   function simKeyForCatalogCharacter(nameId: string): string {
     const row = catalog?.characters.find((c) => c.name_id === nameId);
-    return toGoodKey(row?.name ?? nameId);
+    return plannerSimKey(nameId, row?.name);
   }
 
   async function targetFromBuilds(
     nameId: string,
     promotes: UpgradePromoteStep[],
   ) {
+    if (isStaleBuildSummary(nameId)) return null;
     const seq = ++autofillSeq;
     let builds;
     try {
@@ -381,12 +432,62 @@
     else if (picking === "weapon") addWeaponWith(Number(value));
   }
 
+  function addOrSelectCharacter(nameId: string) {
+    const resolved = resolveCatalogCharacterId(nameId) ?? nameId;
+    const existing = goalsState.goals.find(
+      (g) => g.kind === "character" && g.name_id === resolved,
+    );
+    if (existing) {
+      cancelPick();
+      addError = "";
+      if (goalsState.selectedId !== existing.id) {
+        commitGoals({ ...goalsState, selectedId: existing.id });
+      }
+      beginConfigure();
+      return;
+    }
+    addCharacterWith(resolved);
+  }
+
+  /** Bare `PlayerBoy` (old kit links) maps to Pyro; elemental keys pass through. */
+  function resolveCatalogCharacterId(nameId: string): string | undefined {
+    if (!catalog) return undefined;
+    if (catalog.characters.some((c) => c.name_id === nameId)) return nameId;
+    if (nameId === "PlayerBoy" || nameId === "PlayerGirl") {
+      return (
+        catalog.characters.find((c) => c.name_id === "PlayerBoy-Pyro")
+          ?.name_id ??
+        catalog.characters.find((c) => c.name_id.startsWith("PlayerBoy-"))
+          ?.name_id
+      );
+    }
+    return undefined;
+  }
+
   function addCharacterWith(nameId: string) {
     if (!catalog) return;
-    const row = catalog.characters.find((c) => c.name_id === nameId);
-    if (!row) return;
+    const resolved = resolveCatalogCharacterId(nameId);
+    if (!resolved) {
+      cancelPick();
+      addError = "This character isn't in the planner catalog yet.";
+      return;
+    }
+    const row = catalog.characters.find((c) => c.name_id === resolved);
+    if (!row) {
+      cancelPick();
+      addError = "This character isn't in the planner catalog yet.";
+      return;
+    }
     cancelPick();
-    const goal = createCharacterGoal(nameId);
+    const progress = rosterProgressForNameId(
+      $charactersOwned,
+      resolved,
+      getRosterWeaponsCached(),
+    );
+    const goal = createCharacterGoal(
+      resolved,
+      progress ? { start: progressToCharacterStart(progress) } : undefined,
+    );
     const next = appendGoal(goalsState, goal);
     if (next.goals.length === goalsState.goals.length) {
       addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
@@ -396,7 +497,7 @@
     commitGoals(next);
     beginConfigure();
     void (async () => {
-      const target = await targetFromBuilds(nameId, row.promotes);
+      const target = await targetFromBuilds(resolved, row.promotes);
       if (!target) return;
       const current = findGoal(goalsState, goal.id);
       if (!current || current.kind !== "character") return;
@@ -412,7 +513,21 @@
   function addWeaponWith(weaponId: number) {
     if (!catalog?.weapons.some((w) => w.id === weaponId)) return;
     cancelPick();
-    const goal = createWeaponGoal(weaponId);
+    const row = catalog.weapons.find((w) => w.id === weaponId);
+    const key = row ? toGoodKey(row.name) : "";
+    const inventory = getRosterWeaponsCached();
+    const fromBag = key ? bestInventoryWeaponByKey(inventory ?? [], key) : null;
+    const equipped = fromBag
+      ? inventoryWeaponToRoster(fromBag)
+      : $charactersOwned.find(
+          (c) => c.isOwned && c.progress?.weapon?.key === key,
+        )?.progress?.weapon;
+    const goal = createWeaponGoal(
+      weaponId,
+      equipped
+        ? { start: { level: equipped.level, ascension: equipped.ascension } }
+        : undefined,
+    );
     const next = appendGoal(goalsState, goal);
     if (next.goals.length === goalsState.goals.length) {
       addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
@@ -568,46 +683,13 @@
 
   let targetLevelFloor = $derived(selectedGoal?.start.level ?? 1);
 
-  function costForGoal(
-    goal: CalculatorGoal,
-    data: UpgradeCostsCatalog,
-  ): AggregatedUpgradeCosts {
-    const agg = emptyAggregate();
-    if (goal.kind === "character") {
-      const row = data.characters.find((c) => c.name_id === goal.name_id);
-      if (!row) return agg;
-      addCharacterResult(
-        agg,
-        diffCharacterUpgrade(row, data.curves, goal.start, goal.target),
-      );
-      return agg;
-    }
-    const row = data.weapons.find((w) => w.id === goal.weapon_id);
-    if (!row) return agg;
-    addWeaponResult(
-      agg,
-      diffWeaponUpgrade(row, data.curves, goal.start, goal.target),
-    );
-    return agg;
-  }
-
   let aggregate = $derived.by((): AggregatedUpgradeCosts | null => {
     if (!catalog || !goalsHydrated) return null;
     if (costScope === "selected") {
       if (!selectedGoal) return emptyAggregate();
-      return costForGoal(selectedGoal, catalog);
+      return costsForGoal(selectedGoal, catalog);
     }
-    const agg = emptyAggregate();
-    for (const goal of goalsState.goals) {
-      const one = costForGoal(goal, catalog);
-      agg.mora += one.mora;
-      agg.characterExp += one.characterExp;
-      agg.weaponExp += one.weaponExp;
-      for (const [id, count] of Object.entries(one.materials)) {
-        agg.materials[id] = (agg.materials[id] ?? 0) + count;
-      }
-    }
-    return agg;
+    return aggregateGoalCosts(goalsState.goals, catalog);
   });
 
   let characterExpBooks = $derived.by(() => {
@@ -635,7 +717,7 @@
   let materialRows = $derived.by(() => {
     const data = catalog;
     if (!data || !aggregate) return [];
-    return Object.entries(aggregate.materials)
+    return Object.entries(collapseCraftRanks(aggregate.materials, data))
       .map(([id, count]) => {
         const meta = data.materials[id];
         return {
@@ -644,6 +726,7 @@
           name: meta?.name ?? `Material ${id}`,
           icon: meta?.icon ?? `UI_ItemIcon_${id}`,
           rankLevel: meta?.rankLevel ?? 1,
+          sources: meta?.sources ?? [],
         };
       })
       .sort((a, b) => Number(a.id) - Number(b.id));
@@ -653,24 +736,36 @@
     return n.toLocaleString("en-US");
   }
 
+  function wikiHref(name: string): string {
+    return `https://genshin-impact.fandom.com/wiki/${encodeURIComponent(name.replace(/\s+/g, "_"))}`;
+  }
+
   function lookupCharacter(
     nameId: string,
   ): CharacterOwned | Character | undefined {
-    return $charactersOwned.find((c) => c.name_id === nameId);
+    const exact = $charactersOwned.find((c) => c.name_id === nameId);
+    if (exact) return exact;
+    if (nameId.startsWith("PlayerBoy-") || nameId.startsWith("PlayerGirl-")) {
+      return $charactersOwned.find(
+        (c) => c.name_id === "PlayerBoy" || c.name_id === "PlayerGirl",
+      );
+    }
+    return undefined;
   }
 
   /** Roster row when owned; otherwise a minimal stub from the cost catalog. */
   function pickModalCharacter(
     nameId: string,
   ): CharacterOwned | Character | undefined {
-    const owned = lookupCharacter(nameId);
-    if (owned) return owned;
     const row = catalog?.characters.find((c) => c.name_id === nameId);
-    if (!row) return undefined;
-    return {
-      name_id: row.name_id,
-      name: row.name,
-    } as Character;
+    if (row) {
+      return {
+        name_id: row.name_id,
+        name: row.name,
+        element: row.element,
+      } as Character;
+    }
+    return lookupCharacter(nameId);
   }
 </script>
 
@@ -907,6 +1002,7 @@
             <h3 class="group-title">Materials</h3>
             <ul class="mat-list">
               {#each materialRows as mat (mat.id)}
+                {@const source = mat.sources[0]}
                 <li class="mat-row">
                   <img
                     class="mat-icon"
@@ -916,7 +1012,39 @@
                     height="32"
                     loading="lazy"
                   />
-                  <span class="mat-name">{mat.name}</span>
+                  <span class="mat-text">
+                    {#if source}
+                      <a
+                        class="mat-name mat-name-link"
+                        href={wikiHref(source.name)}
+                        target="_blank"
+                        rel="noopener noreferrer">{mat.name}</a
+                      >
+                      <a
+                        class="meta-sub mat-source"
+                        href={wikiHref(source.name)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {#if source.icon && assetUrl(source.icon)}
+                          <img
+                            class="mat-source-icon"
+                            src={assetUrl(source.icon) ?? ""}
+                            alt=""
+                            width="16"
+                            height="16"
+                            loading="lazy"
+                            onerror={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        {/if}
+                        {formatMaterialSourceLine(source)}
+                      </a>
+                    {:else}
+                      <span class="mat-name">{mat.name}</span>
+                    {/if}
+                  </span>
                   <span class="mat-count">×{formatCount(mat.count)}</span>
                 </li>
               {/each}
@@ -943,14 +1071,14 @@
         onclick={closeConfigure}
         transition:fade={{ duration: configMotion ?? 160 }}
       ></button>
-        <div
-          class="config-panel"
-          bind:this={configPanelEl}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Configure goal"
-          transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
-        >
+      <div
+        class="config-panel"
+        bind:this={configPanelEl}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Configure goal"
+        transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
+      >
         <header class="config-head">
           <h2 class="section-title">Configure</h2>
           <button
@@ -1018,7 +1146,7 @@
                   }
                 }
                 options={characterOptions}
-                getCharacter={lookupCharacter}
+                getCharacter={pickModalCharacter}
                 placeholder="Search character…"
                 aria-label="Search character"
               />
@@ -1230,7 +1358,7 @@
         {#if picking === "character"}
           <CharacterPortraitCard
             character={pickModalCharacter(opt.value)}
-            dimmed={sortOwnedFirst && !ownedIds.has(opt.value)}
+            dimmed={sortOwnedFirst && !isOwnedNameId(opt.value, ownedIds)}
             tintBackground
           />
         {:else}
@@ -1595,6 +1723,13 @@
     min-width: 0;
   }
 
+  .mat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
   .mat-icon {
     width: 32px;
     height: 32px;
@@ -1607,6 +1742,33 @@
     font-size: var(--text-sm);
     color: var(--foreground-color);
     min-width: 0;
+  }
+
+  .mat-name-link {
+    text-decoration: none;
+  }
+
+  .mat-name-link:hover {
+    text-decoration: underline;
+  }
+
+  .mat-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-decoration: none;
+    min-width: 0;
+  }
+
+  .mat-source:hover {
+    color: var(--foreground-color);
+  }
+
+  .mat-source-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
   }
 
   .mat-count {

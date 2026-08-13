@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type {
   CharacterUpgradeCosts,
+  UpgradeCostsCatalog,
   UpgradeCurves,
   UpgradePromoteStep,
   UpgradeTalentTrack,
@@ -15,6 +16,8 @@ import {
   gateWeaponConfig,
   orderCharacterConfigs,
   orderWeaponConfigs,
+  formatMaterialSourceLine,
+  collapseCraftRanks,
   maxTalentForAscension,
   minAscensionForTalent,
   minAscensionForLevel,
@@ -49,6 +52,7 @@ const character: CharacterUpgradeCosts = {
   name_id: "TestChar",
   game_id: 1,
   name: "Test",
+  element: "Pyro",
   avatarPromoteId: 1,
   promotes: STANDARD_PROMOTES,
   talents: {
@@ -369,5 +373,145 @@ describe("upgrade-costs math", () => {
     assert.equal(start.level, 80);
     assert.equal(target.ascension, 5);
     assert.equal(target.level, 80);
+  });
+});
+
+describe("formatMaterialSourceLine", () => {
+  it("appends domain weekdays", () => {
+    assert.equal(
+      formatMaterialSourceLine({
+        kind: "domain",
+        name: "Forsaken Rift",
+        days: ["Mon", "Thu", "Sun"],
+      }),
+      "Forsaken Rift · Mon/Thu/Sun",
+    );
+  });
+
+  it("is just the name for bosses", () => {
+    assert.equal(
+      formatMaterialSourceLine({ kind: "boss", name: "Primo Geovishap" }),
+      "Primo Geovishap",
+    );
+  });
+});
+
+describe("collapseCraftRanks", () => {
+  const catalog: UpgradeCostsCatalog = {
+    curves: {
+      avatarLevelExp: [],
+      weaponLevelExpByRarity: {},
+      avatarExpItems: [],
+      weaponExpItems: [],
+    },
+    characters: [],
+    weapons: [],
+    materials: {
+      "1": {
+        id: 1,
+        name: "Teachings",
+        icon: "a",
+        rankLevel: 2,
+        craftIntoId: 2,
+      },
+      "2": {
+        id: 2,
+        name: "Guide",
+        icon: "b",
+        rankLevel: 3,
+        craftIntoId: 3,
+      },
+      "3": {
+        id: 3,
+        name: "Philosophies",
+        icon: "c",
+        rankLevel: 4,
+      },
+      "11": {
+        id: 11,
+        name: "Sliver",
+        icon: "d",
+        rankLevel: 2,
+        craftIntoId: 12,
+      },
+      "12": {
+        id: 12,
+        name: "Fragment",
+        icon: "e",
+        rankLevel: 3,
+        craftIntoId: 13,
+      },
+      "13": {
+        id: 13,
+        name: "Chunk",
+        icon: "f",
+        rankLevel: 4,
+        craftIntoId: 14,
+      },
+      "14": {
+        id: 14,
+        name: "Gemstone",
+        icon: "g",
+        rankLevel: 5,
+      },
+      "99": { id: 99, name: "Boss drop", icon: "h", rankLevel: 4 },
+      "21": {
+        id: 21,
+        name: "Slime Condensate",
+        icon: "i",
+        rankLevel: 1,
+        craftIntoId: 22,
+      },
+      "22": {
+        id: 22,
+        name: "Slime Secretions",
+        icon: "j",
+        rankLevel: 2,
+        craftIntoId: 23,
+      },
+      "23": {
+        id: 23,
+        name: "Slime Concentrate",
+        icon: "k",
+        rankLevel: 3,
+      },
+    },
+  };
+
+  it("leaves a lone lowest rank unchanged", () => {
+    assert.deepEqual(collapseCraftRanks({ "1": 2, "99": 4 }, catalog), {
+      "1": 2,
+      "99": 4,
+    });
+  });
+
+  it("folds teachings into philosophies when the plan uses philosophies", () => {
+    assert.deepEqual(
+      collapseCraftRanks({ "1": 3, "2": 0, "3": 1, "99": 2 }, catalog),
+      { "3": 2, "99": 2 },
+    );
+  });
+
+  it("stops at the highest rank the bag actually needs", () => {
+    assert.deepEqual(collapseCraftRanks({ "1": 6, "2": 1 }, catalog), {
+      "2": 3,
+    });
+  });
+
+  it("rounds gem leftovers up to gemstone", () => {
+    assert.deepEqual(
+      collapseCraftRanks(
+        { "11": 2, "12": 4, "13": 2, "14": 1 },
+        catalog,
+      ),
+      { "14": 3 },
+    );
+  });
+
+  it("folds common/elite drops into the highest rank used", () => {
+    assert.deepEqual(
+      collapseCraftRanks({ "21": 3, "22": 2, "23": 1 }, catalog),
+      { "23": 2 },
+    );
   });
 });

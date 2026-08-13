@@ -686,22 +686,28 @@ export type Database = {
       }
       user_rosters: {
         Row: {
+          artifacts: Json | null
           id: string
           roster: Json
           updated_at: string
           user_id: string
+          weapons: Json | null
         }
         Insert: {
+          artifacts?: Json | null
           id?: string
           roster?: Json
           updated_at?: string
           user_id: string
+          weapons?: Json | null
         }
         Update: {
+          artifacts?: Json | null
           id?: string
           roster?: Json
           updated_at?: string
           user_id?: string
+          weapons?: Json | null
         }
         Relationships: [
           {

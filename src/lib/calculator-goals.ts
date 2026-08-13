@@ -8,6 +8,8 @@ import {
   MAX_LEVEL,
   MAX_TALENT,
   UPGRADE_DEFAULTS,
+  diffCharacterUpgrade,
+  diffWeaponUpgrade,
 } from "$lib/upgrade-costs";
 import type {
   AggregatedUpgradeCosts,
@@ -19,6 +21,7 @@ import type {
 import type {
   CharacterUpgradeConfig,
   UpgradeCostResult,
+  UpgradeCostsCatalog,
   WeaponUpgradeConfig,
 } from "$lib/types/upgrade-costs";
 
@@ -284,6 +287,46 @@ export function addWeaponResult(
   aggregate.mora += result.mora;
   aggregate.weaponExp += result.exp;
   addMaterials(aggregate.materials, result.materials);
+}
+
+/** Start→target bag for one goal; missing catalog rows contribute nothing. */
+export function costsForGoal(
+  goal: CalculatorGoal,
+  catalog: UpgradeCostsCatalog,
+): AggregatedUpgradeCosts {
+  const agg = emptyAggregate();
+  if (goal.kind === "character") {
+    const row = catalog.characters.find((c) => c.name_id === goal.name_id);
+    if (!row) return agg;
+    addCharacterResult(
+      agg,
+      diffCharacterUpgrade(row, catalog.curves, goal.start, goal.target),
+    );
+    return agg;
+  }
+  const row = catalog.weapons.find((w) => w.id === goal.weapon_id);
+  if (!row) return agg;
+  addWeaponResult(
+    agg,
+    diffWeaponUpgrade(row, catalog.curves, goal.start, goal.target),
+  );
+  return agg;
+}
+
+/** Sum start→target bags for a goal list. */
+export function aggregateGoalCosts(
+  goals: CalculatorGoal[],
+  catalog: UpgradeCostsCatalog,
+): AggregatedUpgradeCosts {
+  const agg = emptyAggregate();
+  for (const goal of goals) {
+    const one = costsForGoal(goal, catalog);
+    agg.mora += one.mora;
+    agg.characterExp += one.characterExp;
+    agg.weaponExp += one.weaponExp;
+    addMaterials(agg.materials, one.materials);
+  }
+  return agg;
 }
 
 /**

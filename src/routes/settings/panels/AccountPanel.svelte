@@ -4,6 +4,32 @@
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import IconGoogle from "$lib/ui/icons/IconGoogle.svelte";
   import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
+  import {
+    charactersHydrated,
+    charactersOwned,
+    invalidateNearMissTeams,
+    invalidateTeamsOwned,
+    setHasSavedRoster,
+  } from "$lib/stores";
+  import {
+    captureRoster,
+    postRoster,
+    writeRosterLocal,
+  } from "$lib/roster-snapshot";
+  import {
+    applyGoodRoster,
+    MAX_GOOD_FILE_BYTES,
+    parseGoodRoster,
+  } from "$lib/good-import";
+  import { serializeGoodDocument } from "$lib/good-export";
+  import {
+    clearRosterInventory,
+    getRosterArtifactsCached,
+    getRosterWeaponsCached,
+    loadRosterArtifacts,
+    loadRosterWeapons,
+    setRosterInventory,
+  } from "$lib/app/roster-inventory";
 
   const session = authClient.useSession();
 
@@ -13,6 +39,10 @@
   let confirmReset = $state(false);
 
   let cloudRosterVersion = 0;
+  let fileInputEl: HTMLInputElement | null = $state(null);
+  let importing = $state(false);
+  let importError = $state("");
+  let importNote = $state("");
 
   $effect(() => {
     if ($session.data) {
@@ -61,6 +91,7 @@
       const res = await fetch("/api/roster", { method: "DELETE" });
       if (res.ok) {
         hasCloudRoster = false;
+        clearRosterInventory();
       } else {
         rosterError = `Server error (${res.status}) — roster not reset`;
         console.error("resetCloudRoster: unexpected status", res.status);
@@ -70,7 +101,152 @@
       console.error("resetCloudRoster: network error", err);
     }
   }
+
+  function openGoodPicker() {
+    importError = "";
+    importNote = "";
+    fileInputEl?.click();
+  }
+
+  async function handleGoodFile(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+
+    if (!$charactersHydrated) {
+      importError = "Roster is still loading — try again in a moment.";
+      return;
+    }
+    if (file.size > MAX_GOOD_FILE_BYTES) {
+      importError = "File is too large (max 10 MB).";
+      return;
+    }
+
+    importing = true;
+    importError = "";
+    importNote = "";
+
+    try {
+      const text = await file.text();
+      let json: unknown;
+      try {
+        json = JSON.parse(text) as unknown;
+      } catch {
+        importError = "Could not parse JSON.";
+        return;
+      }
+
+      const parsed = parseGoodRoster(json);
+      if (!parsed.ok) {
+        importError = parsed.message;
+        return;
+      }
+
+      const next = applyGoodRoster($charactersOwned, parsed.characters);
+      const ownedCount = next.filter((c) => c.isOwned).length;
+      const pending = captureRoster(next);
+      const previous = captureRoster($charactersOwned);
+      const inventory = {
+        weapons: parsed.weapons,
+        artifacts: parsed.artifacts,
+      };
+
+      if (!writeRosterLocal(pending.json)) {
+        console.warn("localStorage unavailable — saving to memory only");
+      }
+
+      if ($session.data) {
+        const result = await postRoster(pending.roster, inventory);
+        if (!result.ok) {
+          writeRosterLocal(previous.json);
+          importError = result.message
+            ? `Sync failed (${result.status}): ${result.message}`
+            : `Sync failed (${result.status}) — roster not saved to cloud`;
+          return;
+        }
+        hasCloudRoster = true;
+      }
+
+      setRosterInventory(inventory);
+      charactersOwned.set(pending.roster);
+      invalidateTeamsOwned();
+      invalidateNearMissTeams();
+      setHasSavedRoster();
+      importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
+    } catch (err) {
+      console.error("GOOD import error:", err);
+      importError = "Could not import that file.";
+    } finally {
+      importing = false;
+    }
+  }
+
+  async function downloadGood() {
+    importError = "";
+    try {
+      const [weapons, artifacts] = await Promise.all([
+        loadRosterWeapons().catch(() => getRosterWeaponsCached() ?? []),
+        loadRosterArtifacts().catch(() => getRosterArtifactsCached() ?? []),
+      ]);
+      const doc = serializeGoodDocument({
+        roster: $charactersOwned,
+        weapons,
+        artifacts,
+      });
+      const blob = new Blob([JSON.stringify(doc, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "lightkeepers-GOOD.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("GOOD export error:", err);
+      importError = "Could not export GOOD.";
+    }
+  }
 </script>
+
+{#snippet goodImport()}
+  <div class="import-block">
+    <span class="import-label">Import GOOD</span>
+    <p class="lede">
+      Upload a GOOD JSON export from any app — characters, levels,
+      constellations, talents, weapons, and artifacts. Download rebuilds a GOOD
+      file (minus materials) with source Lightkeepers.
+    </p>
+    <input
+      bind:this={fileInputEl}
+      type="file"
+      accept=".json,application/json"
+      class="file-input"
+      onchange={handleGoodFile}
+    />
+    <Button
+      variant="secondary"
+      disabled={importing || !$charactersHydrated}
+      onclick={openGoodPicker}
+    >
+      {importing ? "Importing…" : "Upload JSON"}
+    </Button>
+    <Button
+      variant="ghost"
+      disabled={!$charactersHydrated}
+      onclick={() => void downloadGood()}
+    >
+      Download GOOD
+    </Button>
+    {#if importNote}
+      <p class="status-note">{importNote}</p>
+    {/if}
+    {#if importError}
+      <p class="error-note">{importError}</p>
+    {/if}
+  </div>
+{/snippet}
 
 <div class="account-panel">
   <header class="panel-head">
@@ -124,6 +300,8 @@
         <p class="error-note">{rosterError}</p>
       {/if}
 
+      {@render goodImport()}
+
       <Button
         variant="secondary"
         class="sign-out"
@@ -133,6 +311,7 @@
       </Button>
     </div>
   {:else}
+    {@render goodImport()}
     <div class="oauth-stack">
       <button
         type="button"
@@ -259,6 +438,30 @@
     margin: 0;
     font-size: var(--text-sm);
     color: var(--foreground-color);
+  }
+
+  .import-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .import-label {
+    font-size: var(--text-sm);
+    color: var(--foreground-color);
+  }
+
+  .file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   :global(.sign-out) {

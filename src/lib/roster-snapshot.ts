@@ -5,12 +5,22 @@
  * commits exactly what was sent, while later editor edits stay unsaved.
  */
 
-import type { CharacterOwned } from "$lib/definitions";
+import type {
+  CharacterOwned,
+  InventoryArtifact,
+  InventoryWeapon,
+  RosterProgress,
+} from "$lib/definitions";
+import { cloneRosterProgress } from "$lib/roster-progress";
+import {
+  cloneInventoryArtifact,
+  cloneInventoryWeapon,
+} from "$lib/roster-inventory";
 
 export const ROSTER_STORAGE_KEY = "charactersOwned";
 
 export type RosterCapture = {
-  /** Shallow-cloned roster frozen at capture time. */
+  /** Cloned roster frozen at capture time (including progress). */
   roster: CharacterOwned[];
   /** Stable JSON of `roster` for comparison / localStorage. */
   json: string;
@@ -20,7 +30,10 @@ export type RosterCapture = {
 
 /** Clone the editor roster and freeze it for a pending save. */
 export function captureRoster(roster: CharacterOwned[]): RosterCapture {
-  const cloned = roster.map((c) => ({ ...c }));
+  const cloned = roster.map((c) => ({
+    ...c,
+    progress: cloneRosterProgress(c.progress),
+  }));
   const json = JSON.stringify(cloned);
   return {
     roster: cloned,
@@ -49,18 +62,43 @@ export function writeRosterLocal(json: string): boolean {
   }
 }
 
-/** POST a captured roster to `/api/roster`. */
+/** POST a captured roster to `/api/roster`. Optional inventory slices ride along on GOOD import. */
 export async function postRoster(
   roster: CharacterOwned[],
+  inventory?: {
+    weapons?: InventoryWeapon[];
+    artifacts?: InventoryArtifact[];
+  },
 ): Promise<{ ok: true } | { ok: false; status: number; message?: string }> {
-  const entries = roster.map((c) => ({
-    name_id: c.name_id,
-    isOwned: c.isOwned,
-  }));
+  const entries = roster.map((c) => {
+    const entry: {
+      name_id: string;
+      isOwned: boolean;
+      progress?: RosterProgress | null;
+    } = {
+      name_id: c.name_id,
+      isOwned: c.isOwned,
+    };
+    if (c.progress !== undefined) {
+      entry.progress = cloneRosterProgress(c.progress);
+    }
+    return entry;
+  });
+  const body: {
+    roster: typeof entries;
+    weapons?: InventoryWeapon[];
+    artifacts?: InventoryArtifact[];
+  } = { roster: entries };
+  if (inventory?.weapons) {
+    body.weapons = inventory.weapons.map(cloneInventoryWeapon);
+  }
+  if (inventory?.artifacts) {
+    body.artifacts = inventory.artifacts.map(cloneInventoryArtifact);
+  }
   const res = await fetch("/api/roster", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roster: entries }),
+    body: JSON.stringify(body),
   });
   if (res.ok) return { ok: true };
 

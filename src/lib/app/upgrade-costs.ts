@@ -1,5 +1,5 @@
 /**
- * Lazy client loader for upgrade-cost JSON (planner route only).
+ * Lazy client loader for upgrade-cost JSON.
  * Goes through `/api/upgrade-costs` (same-origin) — CDN has no browser CORS.
  */
 import { CDN_FETCH_TIMEOUT_MS } from "$lib/cdn-fetch";

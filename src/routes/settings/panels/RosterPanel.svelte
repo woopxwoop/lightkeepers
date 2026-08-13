@@ -13,8 +13,17 @@
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import type { CharacterOwned } from "$lib/definitions";
-  import { weaponTypeLabel, ownedNameIds } from "$lib/utils";
+  import IconCog from "$lib/ui/icons/IconCog.svelte";
+  import RosterProgressDialog from "$lib/ui/components/RosterProgressDialog.svelte";
+  import type { CharacterOwned, RosterProgress } from "$lib/definitions";
+  import { cloneRosterProgress } from "$lib/roster-progress";
+  import { equipInventoryWeapon } from "$lib/roster-inventory";
+  import {
+    getRosterWeaponsCached,
+    loadRosterWeapons,
+    setRosterInventory,
+  } from "$lib/app/roster-inventory";
+  import { toGoodKey, weaponTypeLabel, ownedNameIds } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
     filterAndSortCharacters,
@@ -109,7 +118,11 @@
       }
 
       if ($session.data) {
-        const result = await postRoster(pending.roster);
+        const weapons = getRosterWeaponsCached();
+        const result = await postRoster(
+          pending.roster,
+          weapons ? { weapons } : undefined,
+        );
         if (!result.ok) {
           restoreSavedSnapshot();
           rosterError = result.message
@@ -151,6 +164,9 @@
   });
 
   let savedOwnedSet = $derived(ownedNameIds($charactersOwned));
+  let savedById = $derived(
+    new Map($charactersOwned.map((c) => [c.name_id, c])),
+  );
 
   let ownedCount = $derived(
     tempCharactersOwned.filter((c) => c.isOwned).length,
@@ -160,12 +176,47 @@
     visibleCharacters.filter((c) => c.isOwned).length,
   );
   let changedCount = $derived(
-    tempCharactersOwned.reduce(
-      (count, c) =>
-        count + (c.isOwned !== savedOwnedSet.has(c.name_id) ? 1 : 0),
-      0,
-    ),
+    tempCharactersOwned.reduce((count, c) => {
+      const prev = savedById.get(c.name_id);
+      if (!prev) return count + 1;
+      if (c.isOwned !== prev.isOwned) return count + 1;
+      if (
+        JSON.stringify(c.progress ?? null) !==
+        JSON.stringify(prev.progress ?? null)
+      ) {
+        return count + 1;
+      }
+      return count;
+    }, 0),
   );
+  let configuringId = $state<string | null>(null);
+  let configuring = $derived(
+    tempCharactersOwned.find((c) => c.name_id === configuringId) ?? null,
+  );
+
+  function saveProgress(next: RosterProgress) {
+    const id = configuringId;
+    if (!id) return;
+    const character = tempCharactersOwned.find((c) => c.name_id === id);
+    tempCharactersOwned = tempCharactersOwned.map((c) =>
+      c.name_id === id
+        ? { ...c, isOwned: true, progress: cloneRosterProgress(next) ?? next }
+        : c,
+    );
+    const weapons = getRosterWeaponsCached();
+    const goodKey = toGoodKey(character?.name ?? null);
+    if (weapons && goodKey) {
+      setRosterInventory({
+        weapons: equipInventoryWeapon(weapons, goodKey, next.weapon),
+      });
+    }
+    configuringId = null;
+  }
+
+  $effect(() => {
+    if (!configuringId) return;
+    void loadRosterWeapons().catch(() => {});
+  });
   let isFiltered = $derived(
     rarityFilter.size > 0 ||
       elementFilter.size > 0 ||
@@ -179,7 +230,10 @@
   <div class="roster-page">
     <header class="panel-head">
       <h2 class="section-title">Roster</h2>
-      <p class="lede">Select the characters you own.</p>
+      <p class="lede">
+        Select who you own. Use the gear to set constellation, level, talents,
+        and weapon.
+      </p>
     </header>
 
     <CharacterFilterBar
@@ -267,6 +321,18 @@
               : 'not owned'}"
           >
             {#snippet badge()}
+              <button
+                type="button"
+                class="roster-gear absolute top-1.5 left-1.5 z-20"
+                aria-label="Edit {character.name ?? 'character'}"
+                onclick={(event) => {
+                  event.stopPropagation();
+                  configuringId = character.name_id;
+                }}
+                onpointerdown={(event) => event.stopPropagation()}
+              >
+                <IconCog size={14} />
+              </button>
               {#if showNew}
                 <span class="new-badge absolute top-1.5 right-1.5 z-20"
                   >NEW</span
@@ -276,15 +342,28 @@
             {#snippet meta()}
               <div class="meta-name">{character.name}</div>
               <div class="meta-sub">
-                {character.rarity}★ · {weaponTypeLabel(
-                  character.weapon_type ?? "",
-                )}
+                {#if character.progress}
+                  C{character.progress.constellation} · Lv {character.progress
+                    .level}
+                {:else}
+                  {character.rarity}★ · {weaponTypeLabel(
+                    character.weapon_type ?? "",
+                  )}
+                {/if}
               </div>
             {/snippet}
           </CharacterPortraitCard>
         {/each}
       </div>
     {/if}
+
+    <RosterProgressDialog
+      open={configuring != null}
+      name={configuring?.name ?? "Character"}
+      progress={configuring?.progress ?? null}
+      onClose={() => (configuringId = null)}
+      onSave={saveProgress}
+    />
   </div>
 {:else}
   <LoadingState message="Loading characters…" />
@@ -358,6 +437,22 @@
     border-radius: var(--radius-sm);
     background: var(--accent-1);
     color: var(--background-color);
+  }
+
+  .roster-gear {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--background-color) 62%, transparent);
+    color: var(--foreground-color);
+    cursor: pointer;
+  }
+
+  .roster-gear:hover {
+    background: color-mix(in srgb, var(--background-color) 82%, transparent);
   }
 
   .save-bar {
