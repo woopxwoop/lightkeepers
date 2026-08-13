@@ -20,6 +20,6 @@ Hybrid (New): combines usage rate and video clears - prioritizes solutions with 
 
 Testing using Hybrid by default to see how effective it ends up being. Feedback appreciated.
 
-# Build goals
+## Build goals
 
 Inside /characters/{name}, added stat goals for most characters implemented in gcsim. Updated automatically as more characters get implemented.
