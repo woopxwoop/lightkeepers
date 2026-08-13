@@ -213,7 +213,23 @@
     onclick={toggle}
     {...rest}
   >
-    {triggerText}
+    <span class="trigger-label">
+      {#if trigger}
+        {triggerText}
+      {:else}
+        {#each options as opt (opt.value)}
+          <span
+            class="trigger-option"
+            class:active={opt.value === selected?.value}
+            aria-hidden={opt.value !== selected?.value}
+          >
+            {opt.label}
+          </span>
+        {:else}
+          {triggerText}
+        {/each}
+      {/if}
+    </span>
     <span class="chevron" class:open>
       <IconChevronDown size={10} strokeWidth={2.5} />
     </span>
@@ -282,6 +298,23 @@
   .select-trigger.bare.open {
     border-color: transparent;
     background: transparent;
+  }
+
+  /* Stack every option label so the trigger width fits the longest. */
+  .trigger-label {
+    display: inline-grid;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .trigger-option {
+    grid-area: 1 / 1;
+    visibility: hidden;
+    white-space: nowrap;
+  }
+
+  .trigger-option.active {
+    visibility: visible;
   }
 
   .chevron {

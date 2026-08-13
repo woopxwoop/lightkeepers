@@ -22,6 +22,13 @@ import type {
   StygianEnemies,
   StygianSchedule,
   TierListPayload,
+  StygianSolverMode,
+  StygianClearDifficulty,
+} from "$lib/definitions";
+import {
+  isStygianSolverMode,
+  isStygianClearDifficulty,
+  STYGIAN_CHEAP_CLEARS_DIFFICULTY,
 } from "$lib/definitions";
 import type {
   NearMissStygianTeam,
@@ -103,6 +110,10 @@ export type DisplayPreferences = {
   colorTheme: ColorTheme;
   /** Overrides for individual CSS custom properties. Keyed without the `--` prefix. */
   themeColors: Partial<Record<ThemeColorKey, string>> | null;
+  /** Stygian board seating: usage solver vs Fearless video clears. */
+  stygianSolverMode: StygianSolverMode;
+  /** Dire / Fearless filter for hybrid + video-clear seating. */
+  stygianClearDifficulty: StygianClearDifficulty;
 };
 
 const defaultDisplayPreferences: DisplayPreferences = {
@@ -112,6 +123,8 @@ const defaultDisplayPreferences: DisplayPreferences = {
   backgroundApplyToHome: false,
   colorTheme: "dark",
   themeColors: null,
+  stygianSolverMode: "hybrid",
+  stygianClearDifficulty: STYGIAN_CHEAP_CLEARS_DIFFICULTY,
 };
 
 export const displayPreferences = writable<DisplayPreferences>({
@@ -160,6 +173,18 @@ export function initDisplayPreferences(): void {
                 .map(([k, v]) => [k, normalizeHexColor(v as string)]),
             ) as Partial<Record<ThemeColorKey, string>>)
           : defaultDisplayPreferences.themeColors,
+      stygianSolverMode: isStygianSolverMode(parsed.stygianSolverMode)
+        ? parsed.stygianSolverMode
+        : // Migrate former experimental boolean → video clears (scrape-labeled).
+          (parsed as { stygianCheapClears?: unknown }).stygianCheapClears ===
+            true
+          ? "video"
+          : defaultDisplayPreferences.stygianSolverMode,
+      stygianClearDifficulty: isStygianClearDifficulty(
+        parsed.stygianClearDifficulty,
+      )
+        ? parsed.stygianClearDifficulty
+        : defaultDisplayPreferences.stygianClearDifficulty,
     });
   } catch {
     displayPreferences.set({ ...defaultDisplayPreferences });

@@ -9,8 +9,14 @@
  * the owned roster can't cover every slot.
  */
 
-import type { AbyssTeam, StygianTeam } from "$lib/definitions";
+import type { AbyssTeam, StygianCheapClearRow, StygianTeam } from "$lib/definitions";
 import { teamSlotFieldRate } from "$lib/slot-fields";
+import {
+  clearTimeAtCap,
+  clearTimeAtCostCeiling,
+  floorTeamCost,
+} from "$lib/team-cost";
+import type { CharacterMeta } from "$lib/tierlist";
 
 // ---- Types ----------------------------------------------------------------
 
@@ -345,7 +351,7 @@ const MIN_ABYSS_USAGE_TOTAL = 0.001;
 /** Drop near-zero meta teams — shown as "0.0% usage" and not worth recommending. */
 export const MIN_USAGE_RATE = 0.1;
 /** Bump when solver policy changes so page memos cannot reuse stale boards. */
-export const SOLVER_REVISION = 4;
+export const SOLVER_REVISION = 7;
 
 function teamUsageRate(team: { usage_rate?: number | null }): number {
   const value = Number(team.usage_rate);
@@ -532,6 +538,376 @@ export function solveStygianWithFallback(
   });
 
   return [...completeOwned, ...supplemental].slice(0, count);
+}
+
+/** How many hybrid forced-first boards to explore before ranking by C0R0 seats. */
+const HYBRID_POOL = 12;
+
+function hasC0r0Clear(
+  teamKey: string | null,
+  enemyId: number,
+  c0r0Pairs: ReadonlySet<string>,
+): boolean {
+  return teamKey != null && c0r0Pairs.has(`${teamKey}|${enemyId}`);
+}
+
+function c0r0SeatCoverage(
+  solution: Solution<StygianAssignment>,
+  slotEnemies: Record<StygianSlot, number>,
+  c0r0Pairs: ReadonlySet<string>,
+): number {
+  let covered = 0;
+  for (const assignment of solution.assignments) {
+    if (
+      hasC0r0Clear(
+        assignment.team.team_key,
+        slotEnemies[assignment.slot],
+        c0r0Pairs,
+      )
+    ) {
+      covered += 1;
+    }
+  }
+  return covered;
+}
+
+/**
+ * Slot fill: prefer a C0R0 clear for that boss, then usage × affinity.
+ * Forced-first still walks the usage peak so meta boards stay in the pool.
+ */
+function greedyHybridPass(
+  teams: StygianTeam[],
+  slotEnemies: Record<StygianSlot, number>,
+  c0r0Pairs: ReadonlySet<string>,
+  forcedFirst?: StygianTeam,
+): Solution<StygianAssignment> {
+  const placement = createPlacementContext<StygianTeam, StygianSlot>(
+    STYGIAN_SLOT_ORDER,
+  );
+
+  const pairRank = (
+    team: StygianTeam,
+    slot: StygianSlot,
+  ): { cover: number; usage: number } => {
+    if (!isSlotViable(team, slot)) {
+      return { cover: -1, usage: Number.NEGATIVE_INFINITY };
+    }
+    return {
+      cover: hasC0r0Clear(team.team_key, slotEnemies[slot], c0r0Pairs)
+        ? 1
+        : 0,
+      usage: placementScore(team, slot),
+    };
+  };
+
+  const better = (
+    a: { cover: number; usage: number },
+    b: { cover: number; usage: number },
+  ): boolean => a.cover > b.cover || (a.cover === b.cover && a.usage > b.usage);
+
+  const pickBest = (): boolean => {
+    let bestTeam: StygianTeam | null = null;
+    let bestSlot: StygianSlot | null = null;
+    let best = { cover: -1, usage: Number.NEGATIVE_INFINITY };
+
+    for (const team of teams) {
+      if (!placement.canUseTeam(team)) continue;
+      for (const slot of STYGIAN_SLOT_ORDER) {
+        if (placement.isSlotFilled(slot)) continue;
+        const rank = pairRank(team, slot);
+        if (better(rank, best)) {
+          best = rank;
+          bestTeam = team;
+          bestSlot = slot;
+        }
+      }
+    }
+
+    if (bestTeam == null || bestSlot == null || best.cover < 0) return false;
+    placement.commit(bestTeam, bestSlot);
+    return true;
+  };
+
+  if (forcedFirst) {
+    const open = STYGIAN_SLOT_ORDER.filter((s) => isSlotViable(forcedFirst, s));
+    if (open.length > 0) {
+      const preferred = preferredStygianSlot(forcedFirst);
+      const slot = open.includes(preferred)
+        ? preferred
+        : open.reduce((bestSlot, slot) =>
+            better(pairRank(forcedFirst, slot), pairRank(forcedFirst, bestSlot))
+              ? slot
+              : bestSlot,
+          );
+      placement.commit(forcedFirst, slot);
+    }
+  }
+
+  while (!placement.isComplete) {
+    if (!pickBest()) break;
+  }
+
+  // Do not run usage-only slot swaps — they undo C0R0 seat coverage.
+  const assignments = sortAssignments(
+    placement.assignments,
+    STYGIAN_SLOT_ORDER,
+  ).map((a) => ({
+    ...a,
+    missingCharacters: [] as string[],
+  }));
+
+  return {
+    assignments,
+    score: scoreAssignments(assignments),
+    unfilled: STYGIAN_SLOT_ORDER.filter(
+      (slot) => !assignments.some((a) => a.slot === slot),
+    ),
+    isFallback: false,
+    neededCharacters: [],
+  };
+}
+
+/**
+ * YSHelper-shaped seating that prefers seats with a baseline C0R0 clear for
+ * that boss, then ranks boards by how many of the three seats are covered.
+ */
+export function solveStygianHybrid(
+  ownedTeams: StygianTeam[],
+  allTeams: StygianTeam[],
+  ownedNames: Set<string>,
+  slotEnemies: Record<StygianSlot, number>,
+  c0r0Pairs: ReadonlySet<string>,
+  count = 3,
+): Solution<StygianAssignment>[] {
+  const validOwned = byUsageDesc(ownedTeams.filter(isRecommendableTeam));
+  const candidates = validOwned.slice(0, CANDIDATE_DEPTH);
+
+  const ownedSolutions = deduplicateSolutions(
+    candidates.map((forcedFirst) =>
+      greedyHybridPass(validOwned, slotEnemies, c0r0Pairs, forcedFirst),
+    ),
+  )
+    .map((solution) => ({ ...solution, isFallback: false }))
+    .filter((solution) => solution.unfilled.length === 0);
+
+  let pool = ownedSolutions;
+  if (pool.length === 0) {
+    pool = buildMinMissingStygianSolutions(allTeams, ownedNames, HYBRID_POOL);
+  } else if (pool.length < count) {
+    const seen = new Set(pool.map((solution) => solutionTeamKey(solution)));
+    const supplemental = buildMinMissingStygianSolutions(
+      allTeams,
+      ownedNames,
+      HYBRID_POOL,
+    ).filter((solution) => {
+      if (solution.unfilled.length > 0) return false;
+      const key = solutionTeamKey(solution);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    pool = [...pool, ...supplemental];
+  }
+
+  return [...pool]
+    .sort((a, b) => {
+      if (a.unfilled.length !== b.unfilled.length) {
+        return a.unfilled.length - b.unfilled.length;
+      }
+      const coverDiff =
+        c0r0SeatCoverage(b, slotEnemies, c0r0Pairs) -
+        c0r0SeatCoverage(a, slotEnemies, c0r0Pairs);
+      if (coverDiff !== 0) return coverDiff;
+      return b.score - a.score;
+    })
+    .slice(0, count);
+}
+
+/**
+ * Seat fully-owned teams to minimize Σ clear time under a cost ceiling.
+ * Rows carry a cost/time Pareto `frontier`. With `enforceCharacterFloor`
+ * (Video Clears C0R0), each team uses floor + 0.5; otherwise `maxCost` + 0.5.
+ */
+export function solveStygianCheapClears(
+  rows: StygianCheapClearRow[],
+  slotEnemies: Record<StygianSlot, number>,
+  count = 3,
+  characterByNameId: ReadonlyMap<string, CharacterMeta> = new Map(),
+  enforceCharacterFloor = false,
+  maxCost = 0,
+): Solution<StygianAssignment>[] {
+  const timeByPair = new Map<string, number>();
+  const teamByKey = new Map<string, StygianTeam>();
+
+  for (const row of rows) {
+    if (!row.team_key) continue;
+    if (!isRecommendableTeam(row)) continue;
+    const time = enforceCharacterFloor
+      ? clearTimeAtCostCeiling(
+          row,
+          floorTeamCost(row.members ?? [], characterByNameId),
+        )
+      : clearTimeAtCap(row, maxCost);
+    if (time == null) continue;
+    const key = `${row.team_key}|${row.enemy_id}`;
+    const prev = timeByPair.get(key);
+    if (prev == null || time < prev) {
+      timeByPair.set(key, time);
+    }
+    if (!teamByKey.has(row.team_key)) {
+      teamByKey.set(row.team_key, row);
+    }
+  }
+
+  const timeFor = (teamKey: string, enemyId: number): number | null => {
+    const value = timeByPair.get(`${teamKey}|${enemyId}`);
+    return value == null ? null : value;
+  };
+
+  const canSeat = (team: StygianTeam, slot: StygianSlot): boolean => {
+    if (!team.team_key || !isSlotViable(team, slot)) return false;
+    return timeFor(team.team_key, slotEnemies[slot]) != null;
+  };
+
+  const seatTime = (team: StygianTeam, slot: StygianSlot): number => {
+    return timeFor(team.team_key!, slotEnemies[slot])!;
+  };
+
+  const teams = [...teamByKey.values()];
+  if (teams.length === 0) return [];
+
+  /** Fastest best-enemy time first — explore quick forced-first picks. */
+  const byBestTime = [...teams].sort((a, b) => {
+    const best = (team: StygianTeam) => {
+      let min = Number.POSITIVE_INFINITY;
+      for (const slot of STYGIAN_SLOT_ORDER) {
+        if (!canSeat(team, slot)) continue;
+        min = Math.min(min, seatTime(team, slot));
+      }
+      return min;
+    };
+    return best(a) - best(b);
+  });
+
+  const candidates = byBestTime
+    .filter((team) => STYGIAN_SLOT_ORDER.some((slot) => canSeat(team, slot)))
+    .slice(0, CANDIDATE_DEPTH);
+
+  function greedyFast(
+    forcedFirst?: StygianTeam,
+  ): Solution<StygianAssignment> {
+    const placement = createPlacementContext<StygianTeam, StygianSlot>(
+      STYGIAN_SLOT_ORDER,
+    );
+
+    const pickBest = (): boolean => {
+      let bestTeam: StygianTeam | null = null;
+      let bestSlot: StygianSlot | null = null;
+      let bestTime = Number.POSITIVE_INFINITY;
+
+      for (const team of teams) {
+        if (!placement.canUseTeam(team)) continue;
+        for (const slot of STYGIAN_SLOT_ORDER) {
+          if (placement.isSlotFilled(slot)) continue;
+          if (!canSeat(team, slot)) continue;
+          const time = seatTime(team, slot);
+          if (time < bestTime) {
+            bestTime = time;
+            bestTeam = team;
+            bestSlot = slot;
+          }
+        }
+      }
+
+      if (bestTeam == null || bestSlot == null) return false;
+      placement.commit(bestTeam, bestSlot);
+      return true;
+    };
+
+    if (forcedFirst) {
+      const open = STYGIAN_SLOT_ORDER.filter((s) => canSeat(forcedFirst, s));
+      if (open.length > 0) {
+        const preferred = preferredStygianSlot(forcedFirst);
+        const slot = open.includes(preferred)
+          ? preferred
+          : open.reduce((best, s) =>
+              seatTime(forcedFirst, s) < seatTime(forcedFirst, best) ? s : best,
+            );
+        placement.commit(forcedFirst, slot);
+      }
+    }
+
+    while (!placement.isComplete) {
+      if (!pickBest()) break;
+    }
+
+    const optimized = optimizeCheapSlots(
+      placement.assignments,
+      canSeat,
+      seatTime,
+    );
+    const assignments = sortAssignments(optimized, STYGIAN_SLOT_ORDER).map(
+      (a) => ({
+        ...a,
+        missingCharacters: [] as string[],
+      }),
+    );
+    const score = assignments.reduce(
+      (sum, a) => sum + seatTime(a.team, a.slot),
+      0,
+    );
+
+    return {
+      assignments,
+      score,
+      unfilled: placement.unfilled,
+      isFallback: false,
+      neededCharacters: [],
+    };
+  }
+
+  const solutions = (candidates.length > 0 ? candidates : [undefined]).map(
+    (forced) => greedyFast(forced),
+  );
+
+  const complete = solutions.filter((sol) => sol.unfilled.length === 0);
+  if (complete.length === 0) return [];
+
+  complete.sort((a, b) => a.score - b.score);
+  return deduplicateSolutions(complete).slice(0, count);
+}
+
+/** Re-seat the same teams to minimize Σ clear time (enemy-specific). */
+function optimizeCheapSlots(
+  assignments: { team: StygianTeam; slot: StygianSlot }[],
+  canSeat: (team: StygianTeam, slot: StygianSlot) => boolean,
+  seatTime: (team: StygianTeam, slot: StygianSlot) => number,
+): { team: StygianTeam; slot: StygianSlot }[] {
+  if (assignments.length <= 1) {
+    return assignments.map((a) => ({ ...a }));
+  }
+
+  const teams = assignments.map((a) => a.team);
+  const slots = assignments.map((a) => a.slot);
+  let best = assignments.map((a) => ({ ...a }));
+  let bestTime = best.reduce((sum, a) => sum + seatTime(a.team, a.slot), 0);
+
+  for (const perm of permutations(slots)) {
+    const candidate = teams.map((team, i) => ({
+      team,
+      slot: perm[i]!,
+    }));
+    if (candidate.some((a) => !canSeat(a.team, a.slot))) continue;
+    const time = candidate.reduce(
+      (sum, a) => sum + seatTime(a.team, a.slot),
+      0,
+    );
+    if (time < bestTime) {
+      bestTime = time;
+      best = candidate;
+    }
+  }
+  return best;
 }
 
 // ---- Missing character helpers --------------------------------------------

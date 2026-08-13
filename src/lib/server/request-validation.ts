@@ -336,6 +336,8 @@ export function requireCharacterNameIds(value: unknown): string[] {
 
 /** Soft cap — Stygian board needs 3; leave headroom for batching. */
 export const MAX_TEAM_ENEMY_PAIRS = 12;
+/** Soft cap for cheap-clears enemy id lists (board is 3). */
+export const MAX_ENEMY_IDS = 8;
 /** team_key is sha256 hex (64); allow a little headroom. */
 export const MAX_TEAM_KEY_LENGTH = 128;
 
@@ -389,4 +391,44 @@ export function requireTeamEnemyPairs(value: unknown): TeamEnemyPair[] {
     out.push({ team_key: rec.team_key, enemy_id: enemyId });
   }
   return out;
+}
+
+/** Validate a non-empty list of positive enemy ids (cheap-clears board). */
+export function requireEnemyIds(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    throw error(400, "enemyIds must be an array of positive integers.");
+  }
+  if (value.length === 0) {
+    throw error(400, "enemyIds must not be empty.");
+  }
+  if (value.length > MAX_ENEMY_IDS) {
+    throw error(
+      400,
+      `enemyIds must have at most ${MAX_ENEMY_IDS} entries.`,
+    );
+  }
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (const item of value) {
+    const id = requireFiniteInteger(
+      item,
+      "enemyIds must be an array of positive integers.",
+    );
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw error(400, "enemyIds must be an array of positive integers.");
+    }
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+/** Fearless (default) or Dire — matches stygian.moe ingest labels. */
+export function requireStygianClearDifficulty(value: unknown): string {
+  if (value === undefined || value === null) return "Fearless";
+  if (value !== "Fearless" && value !== "Dire") {
+    throw error(400, "difficulty must be Fearless or Dire.");
+  }
+  return value;
 }

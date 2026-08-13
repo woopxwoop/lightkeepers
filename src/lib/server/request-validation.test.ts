@@ -9,6 +9,8 @@ import {
   requireCharacterNameId,
   requireCharacterNameIds,
   requireEnemyId,
+  requireEnemyIds,
+  requireStygianClearDifficulty,
   requireTeamEnemyPairs,
   requireFiniteInteger,
   requireIntegerInRange,
@@ -312,6 +314,19 @@ describe("request validation", () => {
     assert.throws(() => requireEnemyId("1.5"), isBadRequest);
     assert.throws(() => requireEnemyId("abc"), isBadRequest);
     assert.throws(() => requireEnemyId(null), isBadRequest);
+  });
+
+  it("requireEnemyIds validates and dedupes", () => {
+    assert.deepEqual(requireEnemyIds([1, 1, 2]), [1, 2]);
+    assert.throws(() => requireEnemyIds([]), isBadRequest);
+    assert.throws(() => requireEnemyIds([0]), isBadRequest);
+    assert.throws(() => requireEnemyIds("nope"), isBadRequest);
+  });
+
+  it("requireStygianClearDifficulty defaults to Fearless", () => {
+    assert.equal(requireStygianClearDifficulty(undefined), "Fearless");
+    assert.equal(requireStygianClearDifficulty("Dire"), "Dire");
+    assert.throws(() => requireStygianClearDifficulty("Hard"), isBadRequest);
   });
 
   it("requireTeamEnemyPairs validates and dedupes pairs", () => {
