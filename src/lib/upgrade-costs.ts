@@ -96,28 +96,72 @@ export function minAscensionForTalent(talentLevel: number): number {
   return 6;
 }
 
+export type UpgradeGateOpts = {
+  /** Keep ascension; clamp level/talents into that phase. */
+  preferAscension?: boolean;
+  /** Keep level; set ascension from it and clamp talents into that phase. */
+  preferLevel?: boolean;
+};
+
+function fitCharacterToAscension(
+  level: number,
+  talents: CharacterUpgradeConfig["talents"],
+  ascension: number,
+  promotes: UpgradePromoteStep[],
+): CharacterUpgradeConfig {
+  const a = clamp(ascension, 0, MAX_ASCENSION);
+  const minLevel = minLevelForAscension(promotes, a);
+  const maxLevel = maxLevelForAscension(promotes, a);
+  const maxTalent = maxTalentForAscension(a);
+  return {
+    level: clamp(level, minLevel, maxLevel),
+    ascension: a,
+    talents: {
+      normal: clamp(talents.normal, 1, maxTalent),
+      skill: clamp(talents.skill, 1, maxTalent),
+      burst: clamp(talents.burst, 1, maxTalent),
+    },
+  };
+}
+
+function fitWeaponToAscension(
+  level: number,
+  ascension: number,
+  promotes: UpgradePromoteStep[],
+): WeaponUpgradeConfig {
+  const a = clamp(ascension, 0, MAX_ASCENSION);
+  return {
+    level: clamp(
+      level,
+      minLevelForAscension(promotes, a),
+      maxLevelForAscension(promotes, a),
+    ),
+    ascension: a,
+  };
+}
+
 /** Clamp level/talents to ascension; raise ascension if level/talents require it. */
 export function gateCharacterConfig(
   cfg: CharacterUpgradeConfig,
   promotes: UpgradePromoteStep[],
-  opts?: {
-    /** When true, keep ascension and clamp level/talents down. */ preferAscension?: boolean;
-  },
+  opts?: UpgradeGateOpts,
 ): CharacterUpgradeConfig {
   if (opts?.preferAscension) {
-    const ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
-    const minLevel = minLevelForAscension(promotes, ascension);
-    const maxLevel = maxLevelForAscension(promotes, ascension);
-    const maxTalent = maxTalentForAscension(ascension);
-    return {
-      level: clamp(cfg.level, minLevel, maxLevel),
-      ascension,
-      talents: {
-        normal: clamp(cfg.talents.normal, 1, maxTalent),
-        skill: clamp(cfg.talents.skill, 1, maxTalent),
-        burst: clamp(cfg.talents.burst, 1, maxTalent),
-      },
-    };
+    return fitCharacterToAscension(
+      cfg.level,
+      cfg.talents,
+      cfg.ascension,
+      promotes,
+    );
+  }
+  if (opts?.preferLevel) {
+    const level = clamp(cfg.level, 1, MAX_LEVEL);
+    return fitCharacterToAscension(
+      level,
+      cfg.talents,
+      minAscensionForLevel(promotes, level),
+      promotes,
+    );
   }
 
   let ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
@@ -133,50 +177,133 @@ export function gateCharacterConfig(
     minAscensionForTalent(skill),
     minAscensionForTalent(burst),
   );
-  ascension = clamp(ascension, 0, MAX_ASCENSION);
-
-  const minLevel = minLevelForAscension(promotes, ascension);
-  const maxLevel = maxLevelForAscension(promotes, ascension);
-  const maxTalent = maxTalentForAscension(ascension);
-  level = clamp(level, minLevel, maxLevel);
-  normal = clamp(normal, 1, maxTalent);
-  skill = clamp(skill, 1, maxTalent);
-  burst = clamp(burst, 1, maxTalent);
-
-  return {
+  return fitCharacterToAscension(
     level,
+    { normal, skill, burst },
     ascension,
-    talents: { normal, skill, burst },
-  };
+    promotes,
+  );
 }
 
 /** Clamp weapon level to ascension; raise ascension if level requires it. */
 export function gateWeaponConfig(
   cfg: WeaponUpgradeConfig,
   promotes: UpgradePromoteStep[],
-  opts?: { preferAscension?: boolean },
+  opts?: UpgradeGateOpts,
 ): WeaponUpgradeConfig {
   if (opts?.preferAscension) {
-    const ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
-    const minLevel = minLevelForAscension(promotes, ascension);
-    const maxLevel = maxLevelForAscension(promotes, ascension);
-    return {
-      level: clamp(cfg.level, minLevel, maxLevel),
-      ascension,
-    };
+    return fitWeaponToAscension(cfg.level, cfg.ascension, promotes);
+  }
+  if (opts?.preferLevel) {
+    const level = clamp(cfg.level, 1, MAX_LEVEL);
+    return fitWeaponToAscension(
+      level,
+      minAscensionForLevel(promotes, level),
+      promotes,
+    );
   }
 
   let ascension = clamp(cfg.ascension, 0, MAX_ASCENSION);
   let level = clamp(cfg.level, 1, MAX_LEVEL);
-
   ascension = Math.max(ascension, minAscensionForLevel(promotes, level));
-  ascension = clamp(ascension, 0, MAX_ASCENSION);
+  return fitWeaponToAscension(level, ascension, promotes);
+}
 
-  const minLevel = minLevelForAscension(promotes, ascension);
-  const maxLevel = maxLevelForAscension(promotes, ascension);
-  level = clamp(level, minLevel, maxLevel);
+/** Raise each target axis so it is not behind start. */
+export function characterTargetAtLeastStart(
+  start: CharacterUpgradeConfig,
+  target: CharacterUpgradeConfig,
+): CharacterUpgradeConfig {
+  return {
+    level: Math.max(start.level, target.level),
+    ascension: Math.max(start.ascension, target.ascension),
+    talents: {
+      normal: Math.max(start.talents.normal, target.talents.normal),
+      skill: Math.max(start.talents.skill, target.talents.skill),
+      burst: Math.max(start.talents.burst, target.talents.burst),
+    },
+  };
+}
 
-  return { level, ascension };
+/** Raise each target axis so it is not behind start. */
+export function weaponTargetAtLeastStart(
+  start: WeaponUpgradeConfig,
+  target: WeaponUpgradeConfig,
+): WeaponUpgradeConfig {
+  return {
+    level: Math.max(start.level, target.level),
+    ascension: Math.max(start.ascension, target.ascension),
+  };
+}
+
+/**
+ * Gate start and target, then lift target so it cannot sit behind start.
+ * A later target gate (without preferAscension) raises A/level if the lift
+ * needs a higher phase.
+ */
+export function orderCharacterConfigs(
+  start: CharacterUpgradeConfig,
+  target: CharacterUpgradeConfig,
+  promotes: UpgradePromoteStep[],
+  opts?: {
+    preferStartAscension?: boolean;
+    preferStartLevel?: boolean;
+    preferTargetAscension?: boolean;
+    preferTargetLevel?: boolean;
+  },
+): { start: CharacterUpgradeConfig; target: CharacterUpgradeConfig } {
+  const gatedStart = gateCharacterConfig(start, promotes, {
+    preferAscension: opts?.preferStartAscension,
+    preferLevel: opts?.preferStartLevel,
+  });
+  const gatedTarget = gateCharacterConfig(
+    characterTargetAtLeastStart(gatedStart, target),
+    promotes,
+    {
+      preferAscension: opts?.preferTargetAscension,
+      preferLevel: opts?.preferTargetLevel,
+    },
+  );
+  return {
+    start: gatedStart,
+    target: gateCharacterConfig(
+      characterTargetAtLeastStart(gatedStart, gatedTarget),
+      promotes,
+    ),
+  };
+}
+
+/** Gate start and target, then lift target so it cannot sit behind start. */
+export function orderWeaponConfigs(
+  start: WeaponUpgradeConfig,
+  target: WeaponUpgradeConfig,
+  promotes: UpgradePromoteStep[],
+  opts?: {
+    preferStartAscension?: boolean;
+    preferStartLevel?: boolean;
+    preferTargetAscension?: boolean;
+    preferTargetLevel?: boolean;
+  },
+): { start: WeaponUpgradeConfig; target: WeaponUpgradeConfig } {
+  const gatedStart = gateWeaponConfig(start, promotes, {
+    preferAscension: opts?.preferStartAscension,
+    preferLevel: opts?.preferStartLevel,
+  });
+  const gatedTarget = gateWeaponConfig(
+    weaponTargetAtLeastStart(gatedStart, target),
+    promotes,
+    {
+      preferAscension: opts?.preferTargetAscension,
+      preferLevel: opts?.preferTargetLevel,
+    },
+  );
+  return {
+    start: gatedStart,
+    target: gateWeaponConfig(
+      weaponTargetAtLeastStart(gatedStart, gatedTarget),
+      promotes,
+    ),
+  };
 }
 
 function normalizeCharacterConfig(

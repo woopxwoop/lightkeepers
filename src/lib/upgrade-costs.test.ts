@@ -13,6 +13,8 @@ import {
   expItemsNeeded,
   gateCharacterConfig,
   gateWeaponConfig,
+  orderCharacterConfigs,
+  orderWeaponConfigs,
   maxTalentForAscension,
   minAscensionForTalent,
   minAscensionForLevel,
@@ -227,6 +229,31 @@ describe("upgrade-costs math", () => {
     );
     assert.equal(upAscFloor.ascension, 6);
     assert.equal(upAscFloor.level, 80);
+
+    const preferLevelDown = gateCharacterConfig(
+      {
+        level: 50,
+        ascension: 6,
+        talents: { normal: 10, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+      { preferLevel: true },
+    );
+    assert.equal(preferLevelDown.ascension, 2);
+    assert.equal(preferLevelDown.level, 50);
+    assert.equal(preferLevelDown.talents.normal, 2);
+
+    const preferLevelUp = gateCharacterConfig(
+      {
+        level: 90,
+        ascension: 0,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+      { preferLevel: true },
+    );
+    assert.equal(preferLevelUp.ascension, 6);
+    assert.equal(preferLevelUp.level, 90);
   });
 
   it("gateWeaponConfig clamps level to ascension", () => {
@@ -248,5 +275,99 @@ describe("upgrade-costs math", () => {
     );
     assert.equal(forceDown.ascension, 1);
     assert.equal(forceDown.level, 40);
+
+    const preferLevel = gateWeaponConfig(
+      { level: 45, ascension: 6 },
+      STANDARD_PROMOTES,
+      { preferLevel: true },
+    );
+    assert.equal(preferLevel.ascension, 2);
+    assert.equal(preferLevel.level, 45);
+  });
+
+  it("orderCharacterConfigs lifts target and raises ascension for level/talents", () => {
+    const { start, target } = orderCharacterConfigs(
+      {
+        level: 50,
+        ascension: 2,
+        talents: { normal: 8, skill: 1, burst: 1 },
+      },
+      {
+        level: 20,
+        ascension: 0,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+    );
+    assert.equal(start.ascension, 5);
+    assert.equal(start.level, 70);
+    assert.equal(start.talents.normal, 8);
+    assert.equal(target.ascension, 5);
+    assert.equal(target.level, 70);
+    assert.equal(target.talents.normal, 8);
+
+    const raised = orderCharacterConfigs(
+      {
+        level: 1,
+        ascension: 0,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      {
+        level: 90,
+        ascension: 0,
+        talents: { normal: 10, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+    );
+    assert.equal(raised.target.ascension, 6);
+    assert.equal(raised.target.level, 90);
+    assert.equal(raised.target.talents.normal, 10);
+
+    const levelDrivesAscension = orderCharacterConfigs(
+      {
+        level: 1,
+        ascension: 0,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      {
+        level: 50,
+        ascension: 6,
+        talents: { normal: 10, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+      { preferTargetLevel: true },
+    );
+    assert.equal(levelDrivesAscension.target.ascension, 2);
+    assert.equal(levelDrivesAscension.target.level, 50);
+    assert.equal(levelDrivesAscension.target.talents.normal, 2);
+
+    const ascensionDrivesLevel = orderCharacterConfigs(
+      {
+        level: 1,
+        ascension: 0,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      {
+        level: 1,
+        ascension: 6,
+        talents: { normal: 1, skill: 1, burst: 1 },
+      },
+      STANDARD_PROMOTES,
+      { preferTargetAscension: true },
+    );
+    assert.equal(ascensionDrivesLevel.target.ascension, 6);
+    assert.equal(ascensionDrivesLevel.target.level, 80);
+  });
+
+  it("orderWeaponConfigs lifts target level and raises ascension", () => {
+    const { start, target } = orderWeaponConfigs(
+      { level: 80, ascension: 1 },
+      { level: 40, ascension: 0 },
+      STANDARD_PROMOTES,
+    );
+    assert.equal(start.ascension, 5);
+    assert.equal(start.level, 80);
+    assert.equal(target.ascension, 5);
+    assert.equal(target.level, 80);
   });
 });

@@ -19,14 +19,12 @@
     diffCharacterUpgrade,
     diffWeaponUpgrade,
     expItemsNeeded,
-    gateCharacterConfig,
-    gateWeaponConfig,
     MAX_ASCENSION,
     MAX_LEVEL,
     MAX_TALENT,
     maxLevelForAscension,
-    maxTalentForAscension,
-    minLevelForAscension,
+    orderCharacterConfigs,
+    orderWeaponConfigs,
   } from "$lib/upgrade-costs";
   import {
     addCharacterResult,
@@ -300,7 +298,19 @@
   }
 
   function goalSummary(goal: CalculatorGoal): string {
-    return `Lv ${goal.start.level} → ${goal.target.level}`;
+    const promotes =
+      goal.kind === "character"
+        ? (catalog?.characters.find((c) => c.name_id === goal.name_id)
+            ?.promotes ?? [])
+        : (catalog?.weapons.find((w) => w.id === goal.weapon_id)?.promotes ??
+          []);
+    const cap = (ascension: number) =>
+      maxLevelForAscension(promotes, ascension);
+    const lv = `Lv ${goal.start.level}/${cap(goal.start.ascension)} → ${goal.target.level}/${cap(goal.target.ascension)}`;
+    if (goal.kind !== "character") return lv;
+    const s = goal.start.talents;
+    const t = goal.target.talents;
+    return `${lv}, ${s.normal}/${s.skill}/${s.burst} → ${t.normal}/${t.skill}/${t.burst}`;
   }
 
   function goalIcon(goal: CalculatorGoal): string | null {
@@ -378,7 +388,12 @@
       if (!target) return;
       const current = findGoal(goalsState, goal.id);
       if (!current || current.kind !== "character") return;
-      commitGoals(replaceGoal(goalsState, { ...current, target }));
+      const ordered = orderCharacterConfigs(
+        current.start,
+        target,
+        row.promotes,
+      );
+      commitGoals(replaceGoal(goalsState, { ...current, ...ordered }));
     })();
   }
 
@@ -470,25 +485,37 @@
     updateSelected((g) => {
       if (g.kind !== "character") return g;
       const prev = g[side];
-      const gated = gateCharacterConfig(
-        {
-          level: patch.level ?? prev.level,
-          ascension: patch.ascension ?? prev.ascension,
-          talents: {
-            normal: patch.talents?.normal ?? prev.talents.normal,
-            skill: patch.talents?.skill ?? prev.talents.skill,
-            burst: patch.talents?.burst ?? prev.talents.burst,
+      const next = {
+        level: patch.level ?? prev.level,
+        ascension: patch.ascension ?? prev.ascension,
+        talents: {
+          normal: patch.talents?.normal ?? prev.talents.normal,
+          skill: patch.talents?.skill ?? prev.talents.skill,
+          burst: patch.talents?.burst ?? prev.talents.burst,
+        },
+      };
+      const preferAscension =
+        patch.ascension !== undefined &&
+        patch.level === undefined &&
+        patch.talents === undefined;
+      const preferLevel =
+        patch.level !== undefined &&
+        patch.ascension === undefined &&
+        patch.talents === undefined;
+      return {
+        ...g,
+        ...orderCharacterConfigs(
+          side === "start" ? next : g.start,
+          side === "target" ? next : g.target,
+          row.promotes,
+          {
+            preferStartAscension: side === "start" && preferAscension,
+            preferStartLevel: side === "start" && preferLevel,
+            preferTargetAscension: side === "target" && preferAscension,
+            preferTargetLevel: side === "target" && preferLevel,
           },
-        },
-        row.promotes,
-        {
-          preferAscension:
-            patch.ascension !== undefined &&
-            patch.level === undefined &&
-            patch.talents === undefined,
-        },
-      );
-      return { ...g, [side]: gated };
+        ),
+      };
     });
   }
 
@@ -502,65 +529,32 @@
     updateSelected((g) => {
       if (g.kind !== "weapon") return g;
       const prev = g[side];
-      const gated = gateWeaponConfig(
-        {
-          level: patch.level ?? prev.level,
-          ascension: patch.ascension ?? prev.ascension,
-        },
-        row.promotes,
-        {
-          preferAscension:
-            patch.ascension !== undefined && patch.level === undefined,
-        },
-      );
-      return { ...g, [side]: gated };
+      const next = {
+        level: patch.level ?? prev.level,
+        ascension: patch.ascension ?? prev.ascension,
+      };
+      const preferAscension =
+        patch.ascension !== undefined && patch.level === undefined;
+      const preferLevel =
+        patch.level !== undefined && patch.ascension === undefined;
+      return {
+        ...g,
+        ...orderWeaponConfigs(
+          side === "start" ? next : g.start,
+          side === "target" ? next : g.target,
+          row.promotes,
+          {
+            preferStartAscension: side === "start" && preferAscension,
+            preferStartLevel: side === "start" && preferLevel,
+            preferTargetAscension: side === "target" && preferAscension,
+            preferTargetLevel: side === "target" && preferLevel,
+          },
+        ),
+      };
     });
   }
 
-  let selectedPromotes = $derived.by(() => {
-    if (!catalog || !selectedGoal) return [];
-    if (selectedGoal.kind === "character") {
-      return (
-        catalog.characters.find((c) => c.name_id === selectedGoal.name_id)
-          ?.promotes ?? []
-      );
-    }
-    return (
-      catalog.weapons.find((w) => w.id === selectedGoal.weapon_id)?.promotes ??
-      []
-    );
-  });
-
-  let startMinLevel = $derived(
-    selectedGoal
-      ? minLevelForAscension(selectedPromotes, selectedGoal.start.ascension)
-      : 1,
-  );
-  let startMaxLevel = $derived(
-    selectedGoal
-      ? maxLevelForAscension(selectedPromotes, selectedGoal.start.ascension)
-      : 90,
-  );
-  let targetMinLevel = $derived(
-    selectedGoal
-      ? minLevelForAscension(selectedPromotes, selectedGoal.target.ascension)
-      : 1,
-  );
-  let targetMaxLevel = $derived(
-    selectedGoal
-      ? maxLevelForAscension(selectedPromotes, selectedGoal.target.ascension)
-      : 90,
-  );
-  let startMaxTalent = $derived(
-    selectedGoal?.kind === "character"
-      ? maxTalentForAscension(selectedGoal.start.ascension)
-      : 1,
-  );
-  let targetMaxTalent = $derived(
-    selectedGoal?.kind === "character"
-      ? maxTalentForAscension(selectedGoal.target.ascension)
-      : 1,
-  );
+  let targetLevelFloor = $derived(selectedGoal?.start.level ?? 1);
 
   function costForGoal(
     goal: CalculatorGoal,
@@ -975,8 +969,11 @@
                       return {
                         ...g,
                         name_id,
-                        start: gateCharacterConfig(g.start, row.promotes),
-                        target: gateCharacterConfig(g.target, row.promotes),
+                        ...orderCharacterConfigs(
+                          g.start,
+                          g.target,
+                          row.promotes,
+                        ),
                       };
                     });
                     if (!row) return;
@@ -996,7 +993,14 @@
                         return;
                       }
                       commitGoals(
-                        replaceGoal(goalsState, { ...current, target }),
+                        replaceGoal(goalsState, {
+                          ...current,
+                          ...orderCharacterConfigs(
+                            current.start,
+                            target,
+                            row.promotes,
+                          ),
+                        }),
                       );
                     })();
                   }
@@ -1023,8 +1027,7 @@
                       return {
                         ...g,
                         weapon_id,
-                        start: gateWeaponConfig(g.start, row.promotes),
-                        target: gateWeaponConfig(g.target, row.promotes),
+                        ...orderWeaponConfigs(g.start, g.target, row.promotes),
                       };
                     });
                   }
@@ -1049,6 +1052,7 @@
               value={selectedGoal.target.ascension}
               min={0}
               max={MAX_ASCENSION}
+              floor={selectedGoal.start.ascension}
               onchange={(ascension) =>
                 patchCharacterSide("target", { ascension })}
             />
@@ -1057,8 +1061,7 @@
               value={selectedGoal.target.level}
               min={1}
               max={MAX_LEVEL}
-              floor={targetMinLevel}
-              cap={targetMaxLevel}
+              floor={targetLevelFloor}
               onchange={(level) => patchCharacterSide("target", { level })}
             />
             <NumberSliderField
@@ -1066,7 +1069,7 @@
               value={selectedGoal.target.talents.normal}
               min={1}
               max={MAX_TALENT}
-              cap={targetMaxTalent}
+              floor={selectedGoal.start.talents.normal}
               onchange={(normal) =>
                 patchCharacterSide("target", { talents: { normal } })}
             />
@@ -1075,7 +1078,7 @@
               value={selectedGoal.target.talents.skill}
               min={1}
               max={MAX_TALENT}
-              cap={targetMaxTalent}
+              floor={selectedGoal.start.talents.skill}
               onchange={(skill) =>
                 patchCharacterSide("target", { talents: { skill } })}
             />
@@ -1084,7 +1087,7 @@
               value={selectedGoal.target.talents.burst}
               min={1}
               max={MAX_TALENT}
-              cap={targetMaxTalent}
+              floor={selectedGoal.start.talents.burst}
               onchange={(burst) =>
                 patchCharacterSide("target", { talents: { burst } })}
             />
@@ -1094,6 +1097,7 @@
               value={selectedGoal.target.ascension}
               min={0}
               max={MAX_ASCENSION}
+              floor={selectedGoal.start.ascension}
               onchange={(ascension) => patchWeaponSide("target", { ascension })}
             />
             <NumberSliderField
@@ -1101,8 +1105,7 @@
               value={selectedGoal.target.level}
               min={1}
               max={MAX_LEVEL}
-              floor={targetMinLevel}
-              cap={targetMaxLevel}
+              floor={targetLevelFloor}
               onchange={(level) => patchWeaponSide("target", { level })}
             />
           {/if}
@@ -1125,8 +1128,6 @@
                 value={selectedGoal.start.level}
                 min={1}
                 max={MAX_LEVEL}
-                floor={startMinLevel}
-                cap={startMaxLevel}
                 onchange={(level) => patchCharacterSide("start", { level })}
               />
               <NumberSliderField
@@ -1134,7 +1135,6 @@
                 value={selectedGoal.start.talents.normal}
                 min={1}
                 max={MAX_TALENT}
-                cap={startMaxTalent}
                 onchange={(normal) =>
                   patchCharacterSide("start", { talents: { normal } })}
               />
@@ -1143,7 +1143,6 @@
                 value={selectedGoal.start.talents.skill}
                 min={1}
                 max={MAX_TALENT}
-                cap={startMaxTalent}
                 onchange={(skill) =>
                   patchCharacterSide("start", { talents: { skill } })}
               />
@@ -1152,7 +1151,6 @@
                 value={selectedGoal.start.talents.burst}
                 min={1}
                 max={MAX_TALENT}
-                cap={startMaxTalent}
                 onchange={(burst) =>
                   patchCharacterSide("start", { talents: { burst } })}
               />
@@ -1170,8 +1168,6 @@
                 value={selectedGoal.start.level}
                 min={1}
                 max={MAX_LEVEL}
-                floor={startMinLevel}
-                cap={startMaxLevel}
                 onchange={(level) => patchWeaponSide("start", { level })}
               />
             {/if}

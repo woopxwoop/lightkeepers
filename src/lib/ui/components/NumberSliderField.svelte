@@ -4,9 +4,9 @@
     value,
     min,
     max,
-    /** Soft floor (e.g. ascension-gated). Track still spans from `min`. */
+    /** Lower bound for the value (e.g. planner start). Track still spans `min`. */
     floor,
-    /** Soft ceiling (e.g. ascension-gated). Track still spans to `max`. */
+    /** Upper bound for the value. Track still spans `max`. */
     cap,
     step = 1,
     onchange,
@@ -30,6 +30,11 @@
   );
   let draft = $state<string | null>(null);
 
+  $effect(() => {
+    void value;
+    draft = null;
+  });
+
   function snapToStep(n: number): number {
     if (!(step > 0)) return n;
     return min + Math.round((n - min) / step) * step;
@@ -42,20 +47,30 @@
     return next;
   }
 
-  function emit(raw: string) {
-    if (raw.trim() === "") {
-      draft = "";
-      return;
-    }
-    draft = raw;
+  function onRangeInput(el: HTMLInputElement) {
+    const n = Number(el.value);
+    if (!Number.isFinite(n)) return;
+    const next = snapAndClamp(n);
+    el.value = String(next);
+    draft = null;
+    if (next !== value) onchange(next);
   }
 
   function clampAndEmit(raw: string) {
     const n = Number(raw);
-    if (!Number.isFinite(n)) return;
+    if (!Number.isFinite(n)) return false;
     const next = snapAndClamp(n);
     draft = null;
     if (next !== value) onchange(next);
+    return true;
+  }
+
+  function onNumberInput(raw: string) {
+    if (raw.trim() === "" || raw === "-" || raw.endsWith(".")) {
+      draft = raw;
+      return;
+    }
+    if (!clampAndEmit(raw)) draft = raw;
   }
 
   function commitDraft() {
@@ -80,7 +95,7 @@
       {value}
       style="--fill: {fillPct}%"
       aria-label={label}
-      oninput={(e) => clampAndEmit(e.currentTarget.value)}
+      oninput={(e) => onRangeInput(e.currentTarget)}
     />
     <div class="nsf-value">
       <input
@@ -91,7 +106,8 @@
         {step}
         value={draft ?? value}
         aria-label={`${label} value`}
-        oninput={(e) => emit(e.currentTarget.value)}
+        oninput={(e) => onNumberInput(e.currentTarget.value)}
+        onchange={() => commitDraft()}
         onblur={commitDraft}
       />
       <span class="nsf-max" aria-hidden="true">/{effectiveCap}</span>
