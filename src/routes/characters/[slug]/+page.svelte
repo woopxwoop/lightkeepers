@@ -460,18 +460,32 @@
   }
 
   /**
+   * Trailing Hexerei / Polestar Field section. Polar Excel rows often rewrite
+   * a sentence or two before this heading, so `startsWith(base)` fails and
+   * we'd otherwise replace the whole talent instead of appending.
+   * Kit JSON stores Hoyoverse `\\n` as two characters, not a real newline.
+   */
+  const ENHANCE_TAIL = new RegExp(
+    "((?:\\\\n|\\r\\n|\\n|\\r)+((?:<color=[^>]+>)?(?:Hexerei|Radiance:\\s*Stellar-Conduct|Polestar Field)\\b[\\s\\S]*))$",
+    "i",
+  );
+
+  /**
    * Enhanced Excel text usually prepends the base desc then appends buff text.
    * Return only the new suffix when that's the case; otherwise the full rewrite.
+   * Keep the leading `\\n` on extras — that's the linebreak between base and buff.
    */
   function enhanceExtra(
     base: string,
     enhanced: string | undefined,
   ): { mode: "extra" | "replace"; text: string } | null {
-    if (!enhanced) return null;
+    if (!enhanced || enhanced === base) return null;
     if (enhanced.startsWith(base)) {
       const extra = enhanced.slice(base.length).replace(/^(\r\n|\n|\r)+/, "");
       return extra ? { mode: "extra", text: extra } : null;
     }
+    const tail = enhanced.match(ENHANCE_TAIL);
+    if (tail?.[1]) return { mode: "extra", text: tail[1] };
     return { mode: "replace", text: enhanced };
   }
 
