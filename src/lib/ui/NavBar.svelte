@@ -9,8 +9,16 @@
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
+  import IconPerson from "$lib/ui/icons/IconPerson.svelte";
+  import IconCalendarWeek from "$lib/ui/icons/IconCalendarWeek.svelte";
+  import NavAppsLauncher from "$lib/ui/components/NavAppsLauncher.svelte";
+  import { authClient } from "$lib/auth-client";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
+  import { plannerItineraryOpen } from "$lib/planner-itinerary-open";
+  import { accountSettingsOpen } from "$lib/account-settings-open";
+
+  const session = authClient.useSession();
 
   const homePath = resolve("/");
   const abyssPath = resolve("/tools/abyss");
@@ -44,15 +52,22 @@
   ] as const;
 
   const settingsLinks = [
-    { label: "Roster", path: resolve("/settings"), icon: "users" as const },
+    {
+      label: "Roster",
+      path: resolve("/settings"),
+      tab: "roster",
+      icon: "users" as const,
+    },
     {
       label: "Account",
       path: `${resolve("/settings")}?tab=account`,
+      tab: "account",
       icon: "cloud" as const,
     },
     {
       label: "Display",
       path: `${resolve("/settings")}?tab=display`,
+      tab: "display",
       icon: "monitor" as const,
     },
   ] as const;
@@ -81,6 +96,18 @@
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(resolve("/settings")),
   );
+
+  const appItems = [
+    {
+      id: "itinerary",
+      label: "Itinerary",
+      icon: IconCalendarWeek,
+      onclick: () => {
+        plannerItineraryOpen.set(true);
+        mobileOpen = false;
+      },
+    },
+  ];
 
   let scrolled = $state(false);
 
@@ -134,6 +161,11 @@
     settingsLeaveTimeout = setTimeout(() => {
       settingsHovered = false;
     }, 120);
+  }
+
+  function openAccount() {
+    accountSettingsOpen.set(true);
+    mobileOpen = false;
   }
 
   const navSubOpen = $derived(toolsHovered || settingsHovered);
@@ -325,13 +357,11 @@
           onfocusout={onSettingsLeave}
         >
           {#each settingsLinks as link}
-            {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
-            {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
             {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
             <a
               href={link.path}
               class="nav-sub-link"
-              aria-current={onSettingsPage && activeTab === linkTab
+              aria-current={onSettingsPage && activeTab === link.tab
                 ? "page"
                 : undefined}>{link.label}</a
             >
@@ -340,27 +370,51 @@
       </div>
     </div>
 
-    <!-- Hamburger button (mobile only) -->
-    <button
-      class="hamburger md:hidden"
-      aria-label={mobileOpen ? "Close menu" : "Open menu"}
-      aria-expanded={mobileOpen}
-      bind:this={hamburgerEl}
-      onclick={() => {
-        mobileOpen = !mobileOpen;
-        if (!mobileOpen) {
-          toolsDrawerExpanded = false;
-          settingsDrawerExpanded = false;
-        } else {
-          toolsDrawerExpanded = onToolsPage;
-          settingsDrawerExpanded = onSettingsPage;
-        }
-      }}
-    >
-      <span class="bar" class:open={mobileOpen}></span>
-      <span class="bar" class:open={mobileOpen}></span>
-      <span class="bar" class:open={mobileOpen}></span>
-    </button>
+    <div class="nav-end flex items-center gap-1">
+      <NavAppsLauncher items={appItems} />
+      <button
+        type="button"
+        class="nav-account-btn"
+        aria-label="Account"
+        aria-haspopup="dialog"
+        aria-expanded={$accountSettingsOpen}
+        onclick={openAccount}
+      >
+        {#if $session.data?.user?.image}
+          <img
+            class="nav-account-avatar"
+            src={$session.data.user.image}
+            alt=""
+            width="32"
+            height="32"
+          />
+        {:else}
+          <IconPerson size={14} />
+        {/if}
+      </button>
+
+      <!-- Hamburger button (mobile only) -->
+      <button
+        class="hamburger md:hidden"
+        aria-label={mobileOpen ? "Close menu" : "Open menu"}
+        aria-expanded={mobileOpen}
+        bind:this={hamburgerEl}
+        onclick={() => {
+          mobileOpen = !mobileOpen;
+          if (!mobileOpen) {
+            toolsDrawerExpanded = false;
+            settingsDrawerExpanded = false;
+          } else {
+            toolsDrawerExpanded = onToolsPage;
+            settingsDrawerExpanded = onSettingsPage;
+          }
+        }}
+      >
+        <span class="bar" class:open={mobileOpen}></span>
+        <span class="bar" class:open={mobileOpen}></span>
+        <span class="bar" class:open={mobileOpen}></span>
+      </button>
+    </div>
   </div>
 </nav>
 
@@ -488,10 +542,8 @@
           inert={!settingsDrawerExpanded}
         >
           {#each settingsLinks as link, i}
-            {@const linkUrl = new URL(link.path, "https://lightkeepers.local")}
-            {@const linkTab = linkUrl.searchParams.get("tab") ?? "roster"}
             {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
-            {@const subActive = onSettingsPage && activeTab === linkTab}
+            {@const subActive = onSettingsPage && activeTab === link.tab}
             <a
               href={link.path}
               class="drawer-item drawer-item-sub"
@@ -719,6 +771,39 @@
   .nav-sub-link:hover,
   .nav-sub-link[aria-current="page"] {
     color: var(--foreground-color);
+  }
+
+  .nav-account-btn {
+    pointer-events: auto;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 999px;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.22);
+    background: none;
+    color: var(--foreground-mid);
+    cursor: pointer;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition:
+      color var(--control-duration) var(--control-ease),
+      background-color var(--control-duration) var(--control-ease),
+      border-color var(--control-duration) var(--control-ease);
+  }
+
+  .nav-account-btn:hover,
+  .nav-account-btn[aria-expanded="true"] {
+    color: var(--foreground-color);
+    border-color: rgba(255, 255, 255, 0.4);
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+  }
+
+  .nav-account-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   /* ── Hamburger ── */

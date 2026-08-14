@@ -33,6 +33,8 @@ export type CharacterUpgradeCosts = {
   name_id: string;
   game_id: number;
   name: string;
+  /** Vision / Traveler resonance. Traveler kits use `PlayerBoy-{Element}`. */
+  element: string;
   avatarPromoteId: number;
   promotes: UpgradePromoteStep[];
   talents: {
@@ -51,11 +53,43 @@ export type WeaponUpgradeCosts = {
   promotes: UpgradePromoteStep[];
 };
 
+export type UpgradeMaterialSourceKind =
+  | "boss"
+  | "elite"
+  | "common"
+  | "weekly"
+  | "domain";
+
+export type UpgradeMaterialWeekday =
+  | "Mon"
+  | "Tue"
+  | "Wed"
+  | "Thu"
+  | "Fri"
+  | "Sat"
+  | "Sun";
+
+/** World/weekly boss, enemy family, or weekday domain that drops this material. */
+export type UpgradeMaterialSource = {
+  kind: UpgradeMaterialSourceKind;
+  name: string;
+  /** `UI_MonsterIcon_*` from the handbook / monster describe table. */
+  icon?: string;
+  /** Talent-book / weapon-mat domains: Mon/Thu/Sun, etc. */
+  days?: UpgradeMaterialWeekday[];
+};
+
 export type UpgradeMaterialMeta = {
   id: number;
   name: string;
   icon: string;
   rankLevel: number;
+  sources?: UpgradeMaterialSource[];
+  /**
+   * 3 of this item craft into 1 of `craftIntoId`.
+   * Talent books, weapon mats, elemental gems, elite, and common drops.
+   */
+  craftIntoId?: number;
 };
 
 export type UpgradeCurves = {

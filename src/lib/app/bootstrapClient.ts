@@ -19,6 +19,7 @@ import {
 } from "$lib/stores";
 import { isNewCharacter } from "$lib/is-new-character";
 import { isBetaCharacter } from "$lib/is-beta-character";
+import { parseRosterProgress } from "$lib/roster-progress";
 
 type LayoutHydration = {
   characters: Character[];
@@ -26,8 +27,12 @@ type LayoutHydration = {
   stygianVersionNumber: number;
 };
 
-type CachedOwnedEntry =
-  { name_id: unknown; isOwned?: unknown } | { id: unknown; isOwned?: unknown };
+type CachedOwnedEntry = {
+  name_id?: unknown;
+  id?: unknown;
+  isOwned?: unknown;
+  progress?: unknown;
+};
 
 /**
  * Reads and validates the cached roster from localStorage.
@@ -57,7 +62,9 @@ function readOwnedCache(): CachedOwnedEntry[] | undefined {
     if (!Array.isArray(parsed)) return undefined;
     return parsed.filter(
       (v): v is CachedOwnedEntry =>
-        typeof v === "object" && v !== null && ("name_id" in v || "id" in v),
+        typeof v === "object" &&
+        v !== null &&
+        ("name_id" in v || "id" in v),
     );
   } catch {
     return undefined;
@@ -78,20 +85,28 @@ function mergeOwnedFlags(
   };
 
   if (!cachedOwned) {
-    return characters.map((c) => ({ ...c, isOwned: defaultOwned(c) }));
+    return characters.map((c) => ({
+      ...c,
+      isOwned: defaultOwned(c),
+      progress: null,
+    }));
   }
 
   const normalized = cachedOwned.map((v) => ({
-    name_id:
-      "name_id" in v ? v.name_id : (v as { id: unknown; isOwned?: unknown }).id,
+    name_id: "name_id" in v && v.name_id != null ? v.name_id : v.id,
     isOwned: v.isOwned,
+    progress: parseRosterProgress(v.progress),
   }));
 
   return characters.map((c) => {
     const cached = normalized.find((x) => x.name_id === c.name_id);
     const isOwned =
       typeof cached?.isOwned === "boolean" ? cached.isOwned : defaultOwned(c);
-    return { ...c, isOwned };
+    return {
+      ...c,
+      isOwned,
+      progress: cached?.progress ?? null,
+    };
   });
 }
 

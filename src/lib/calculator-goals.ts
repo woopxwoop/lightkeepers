@@ -8,6 +8,8 @@ import {
   MAX_LEVEL,
   MAX_TALENT,
   UPGRADE_DEFAULTS,
+  diffCharacterUpgrade,
+  diffWeaponUpgrade,
 } from "$lib/upgrade-costs";
 import type {
   AggregatedUpgradeCosts,
@@ -19,6 +21,7 @@ import type {
 import type {
   CharacterUpgradeConfig,
   UpgradeCostResult,
+  UpgradeCostsCatalog,
   WeaponUpgradeConfig,
 } from "$lib/types/upgrade-costs";
 
@@ -55,7 +58,9 @@ function cloneWeaponConfig(
 
 export function createCharacterGoal(
   name_id: string,
-  overrides?: Partial<Pick<CharacterCalculatorGoal, "start" | "target" | "id">>,
+  overrides?: Partial<
+    Pick<CharacterCalculatorGoal, "start" | "target" | "id" | "starred">
+  >,
 ): CharacterCalculatorGoal {
   return {
     id: overrides?.id ?? newGoalId(),
@@ -65,12 +70,15 @@ export function createCharacterGoal(
     target: cloneCharConfig(
       overrides?.target ?? UPGRADE_DEFAULTS.characterTarget,
     ),
+    ...(overrides?.starred ? { starred: true as const } : {}),
   };
 }
 
 export function createWeaponGoal(
   weapon_id: number,
-  overrides?: Partial<Pick<WeaponCalculatorGoal, "start" | "target" | "id">>,
+  overrides?: Partial<
+    Pick<WeaponCalculatorGoal, "start" | "target" | "id" | "starred">
+  >,
 ): WeaponCalculatorGoal {
   return {
     id: overrides?.id ?? newGoalId(),
@@ -80,7 +88,12 @@ export function createWeaponGoal(
     target: cloneWeaponConfig(
       overrides?.target ?? UPGRADE_DEFAULTS.weaponTarget,
     ),
+    ...(overrides?.starred ? { starred: true as const } : {}),
   };
+}
+
+function starredFlag(value: unknown): true | undefined {
+  return value === true ? true : undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -189,6 +202,7 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
           item.target,
           UPGRADE_DEFAULTS.characterTarget,
         ),
+        ...(starredFlag(item.starred) ? { starred: true as const } : {}),
       });
       continue;
     }
@@ -214,6 +228,7 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
         weapon_id: weaponId,
         start: parseWeaponConfig(item.start, UPGRADE_DEFAULTS.weaponStart),
         target: parseWeaponConfig(item.target, UPGRADE_DEFAULTS.weaponTarget),
+        ...(starredFlag(item.starred) ? { starred: true as const } : {}),
       });
     }
   }
@@ -242,16 +257,34 @@ export function cloneGoalsState(
 export function cloneGoal(goal: CalculatorGoal): CalculatorGoal {
   if (goal.kind === "character") {
     return {
-      ...goal,
+      id: goal.id,
+      kind: "character",
+      name_id: goal.name_id,
       start: cloneCharConfig(goal.start),
       target: cloneCharConfig(goal.target),
+      ...(goal.starred ? { starred: true as const } : {}),
     };
   }
   return {
-    ...goal,
+    id: goal.id,
+    kind: "weapon",
+    weapon_id: goal.weapon_id,
     start: cloneWeaponConfig(goal.start),
     target: cloneWeaponConfig(goal.target),
+    ...(goal.starred ? { starred: true as const } : {}),
   };
+}
+
+export function toggleGoalStarred(goal: CalculatorGoal): CalculatorGoal {
+  const next = cloneGoal(goal);
+  if (next.starred) delete next.starred;
+  else next.starred = true;
+  return next;
+}
+
+/** Goals marked for the farming itinerary / Starred cost scope. */
+export function starredGoals(goals: CalculatorGoal[]): CalculatorGoal[] {
+  return goals.filter((g) => g.starred);
 }
 
 export function addMaterials(
@@ -284,6 +317,53 @@ export function addWeaponResult(
   aggregate.mora += result.mora;
   aggregate.weaponExp += result.exp;
   addMaterials(aggregate.materials, result.materials);
+}
+
+/** Merge one aggregate bag into another (mora, both exp pools, materials). */
+export function addAggregate(
+  into: AggregatedUpgradeCosts,
+  from: AggregatedUpgradeCosts,
+): void {
+  into.mora += from.mora;
+  into.characterExp += from.characterExp;
+  into.weaponExp += from.weaponExp;
+  addMaterials(into.materials, from.materials);
+}
+
+/** Start→target bag for one goal; missing catalog rows contribute nothing. */
+export function costsForGoal(
+  goal: CalculatorGoal,
+  catalog: UpgradeCostsCatalog,
+): AggregatedUpgradeCosts {
+  const agg = emptyAggregate();
+  if (goal.kind === "character") {
+    const row = catalog.characters.find((c) => c.name_id === goal.name_id);
+    if (!row) return agg;
+    addCharacterResult(
+      agg,
+      diffCharacterUpgrade(row, catalog.curves, goal.start, goal.target),
+    );
+    return agg;
+  }
+  const row = catalog.weapons.find((w) => w.id === goal.weapon_id);
+  if (!row) return agg;
+  addWeaponResult(
+    agg,
+    diffWeaponUpgrade(row, catalog.curves, goal.start, goal.target),
+  );
+  return agg;
+}
+
+/** Sum start→target bags for a goal list. */
+export function aggregateGoalCosts(
+  goals: CalculatorGoal[],
+  catalog: UpgradeCostsCatalog,
+): AggregatedUpgradeCosts {
+  const agg = emptyAggregate();
+  for (const goal of goals) {
+    addAggregate(agg, costsForGoal(goal, catalog));
+  }
+  return agg;
 }
 
 /**
@@ -330,6 +410,35 @@ export function removeGoal(
   const selectedId =
     state.selectedId === id ? (goals[0]?.id ?? null) : state.selectedId;
   return { version: CALCULATOR_GOALS_VERSION, goals, selectedId };
+}
+
+/** Move a goal to another index; no-op if the indices are invalid. */
+export function moveGoal(
+  state: CalculatorGoalsState,
+  fromIndex: number,
+  toIndex: number,
+): CalculatorGoalsState {
+  const n = state.goals.length;
+  if (
+    !Number.isInteger(fromIndex) ||
+    !Number.isInteger(toIndex) ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= n ||
+    toIndex >= n ||
+    fromIndex === toIndex
+  ) {
+    return state;
+  }
+  const goals = [...state.goals];
+  const [item] = goals.splice(fromIndex, 1);
+  if (!item) return state;
+  goals.splice(toIndex, 0, item);
+  return {
+    version: CALCULATOR_GOALS_VERSION,
+    goals,
+    selectedId: state.selectedId,
+  };
 }
 
 /** Append a goal (respects max); selects it. */

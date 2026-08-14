@@ -10,6 +10,8 @@
   import { cubicOut } from "svelte/easing";
   import type { Character } from "$lib/definitions";
   import { bootstrapClient, seedClientStores } from "$lib/app/bootstrapClient";
+  import { clearRosterInventory } from "$lib/app/roster-inventory";
+  import { authClient } from "$lib/auth-client";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
   import { rememberNavigation } from "$lib/nav-history";
@@ -22,6 +24,8 @@
   } from "$lib/stores";
   import NavBar from "$lib/ui/NavBar.svelte";
   import PatchNotesPopup from "$lib/ui/components/PatchNotesPopup.svelte";
+  import PlannerItinerarySheet from "$lib/ui/components/PlannerItinerarySheet.svelte";
+  import AccountSettingsModal from "$lib/ui/components/AccountSettingsModal.svelte";
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { getSiteBackgroundUrl } from "$lib/utils";
@@ -39,6 +43,21 @@
 
   let { data, children } = $props();
   let characters: Character[] = $derived(data.characters);
+
+  const session = authClient.useSession();
+  let lastRosterUserId: string | null | undefined = undefined;
+  $effect(() => {
+    if ($session.isPending) return;
+    const id = $session.data?.user?.id ?? null;
+    if (lastRosterUserId === undefined) {
+      lastRosterUserId = id;
+      return;
+    }
+    if (lastRosterUserId !== id) {
+      clearRosterInventory();
+      lastRosterUserId = id;
+    }
+  });
 
   // Route defaults while following route; after a manual toggle, persisted choice wins.
   syncBackgroundToPath(page.url.pathname);
@@ -99,6 +118,8 @@
     ></div>
   {/if}
   <NavBar />
+  <PlannerItinerarySheet />
+  <AccountSettingsModal />
   <PatchNotesPopup note={data.latestPatchNote} />
 
   <div class="h-12 w-full"></div>

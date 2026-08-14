@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import type { Character, CharacterOwned } from "$lib/definitions";
+  import type { CharacterPortraitRef } from "$lib/definitions";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import { elementBg, elementColor } from "$lib/element-colors";
 
@@ -17,7 +17,7 @@
     meta,
     children,
   }: {
-    character: CharacterOwned | Character | undefined;
+    character: CharacterPortraitRef | undefined;
     /** When set, the card renders as a link. */
     href?: string;
     /** When set (and no href), the card renders as a toggle button. */
@@ -47,8 +47,10 @@
   );
 </script>
 
-{#snippet body()}
-  {@render badge?.()}
+{#snippet body(includeBadge = true)}
+  {#if includeBadge}
+    {@render badge?.()}
+  {/if}
 
   <div class="portrait">
     {#if character}
@@ -79,17 +81,27 @@
     {@render body()}
   </a>
 {:else if onclick}
-  <button
-    type="button"
-    class={shellClass}
+  <div
+    class="{shellClass} is-interactive"
     class:is-pressed={pressed}
     style="--shine: {shine}; background: {bg};"
     title={tip || undefined}
-    aria-pressed={pressed}
-    {onclick}
   >
-    {@render body()}
-  </button>
+    {#if badge}
+      <div class="char-card-badge">
+        {@render badge()}
+      </div>
+    {/if}
+    <button
+      type="button"
+      class="char-card-hit"
+      aria-pressed={pressed}
+      aria-label={tip || undefined}
+      {onclick}
+    >
+      {@render body(false)}
+    </button>
+  </div>
 {:else}
   <div
     class={shellClass}
@@ -117,13 +129,40 @@
   }
 
   a.char-card,
-  button.char-card {
+  .char-card.is-interactive {
     cursor: pointer;
   }
 
-  button.char-card.is-pressed {
+  .char-card.is-pressed {
     outline: var(--border-width) solid rgba(255, 255, 255, 0.4);
     outline-offset: -1px;
+  }
+
+  .char-card-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: inherit;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .char-card-badge {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .char-card-badge :global(button) {
+    pointer-events: auto;
   }
 
   .char-card::after {

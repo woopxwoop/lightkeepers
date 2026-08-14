@@ -1,6 +1,6 @@
 <script lang="ts">
   import avatarImg from "$lib/assets/default-avatar.jpg";
-  import type { CharacterOwned, Character } from "$lib/definitions";
+  import type { CharacterPortraitRef } from "$lib/definitions";
   import { displayPreferences } from "$lib/stores";
   import {
     getCharacterPortrait,
@@ -15,7 +15,7 @@
     /** Prefer eager for above-the-fold teams; lazy can stall until scroll/focus under transforms. */
     loading = "eager",
   }: {
-    character: CharacterOwned | Character | undefined;
+    character: CharacterPortraitRef | undefined;
     zoom?: number;
     iconStyle?: "preference" | "enka" | "coop" | "tcg";
     loading?: "lazy" | "eager";

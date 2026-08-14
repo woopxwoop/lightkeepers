@@ -81,6 +81,12 @@ export async function installApiMocks(
   const nearMissPairs = options.nearMissPairs ?? [];
   const tierList = options.tierList ?? e2eTierListPayload();
 
+  await page.route("**/api/roster/weapons", async (route: Route) => {
+    await route.fulfill({ json: { weapons: [] } });
+  });
+  await page.route("**/api/roster/artifacts", async (route: Route) => {
+    await route.fulfill({ json: { artifacts: [] } });
+  });
   await page.route("**/api/roster", async (route: Route) => {
     await route.fulfill({ status: 401, body: "Unauthorized" });
   });

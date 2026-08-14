@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
+  import { resolve } from "$app/paths";
   import {
     animationsEnabled,
     charactersOwned,
@@ -18,6 +19,7 @@
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import PageTrail from "$lib/ui/components/PageTrail.svelte";
+  import ActionMenu from "$lib/ui/components/ActionMenu.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
@@ -37,6 +39,7 @@
     dimmedKeysFromGoodKeys,
   } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  import { loadRosterArtifacts } from "$lib/app/roster-inventory";
   import {
     fetchCharacterAnalytics,
     isAbortError,
@@ -58,6 +61,7 @@
   import {
     availableTravelerElements,
     defaultTravelerElement,
+    travelerElementKitId,
   } from "$lib/traveler-kits";
   import {
     artifactSetByKey,
@@ -98,11 +102,16 @@
     CharacterAnalyticsPayload,
   } from "$lib/definitions";
   import type { UpgradeTier } from "$lib/upgrade-priority";
+  import { isStaleBuildSummary } from "$lib/stale-build-summary";
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
   let kitChannel = $derived((data.kitChannel ?? "live") as "live" | "beta");
-  let builds = $derived((data.builds ?? null) as CharacterIndex | null);
+  let rawBuilds = $derived((data.builds ?? null) as CharacterIndex | null);
+  let summaryStale = $derived(
+    isStaleBuildSummary(kit.name_id) || rawBuilds?.upToDate === false,
+  );
+  let builds = $derived(summaryStale ? null : rawBuilds);
   let travelerKits = $derived(
     (data.travelerKits ?? {}) as Record<string, CharacterKit>,
   );
@@ -197,6 +206,11 @@
   let analyticsLoading = $state(false);
   let analyticsKey = $state<string | null>(null);
   let analyticsAbort: AbortController | null = null;
+
+  $effect(() => {
+    if (activeTab !== "builds") return;
+    void loadRosterArtifacts().catch(() => {});
+  });
 
   $effect(() => {
     if (activeTab !== "teams") return;
@@ -402,6 +416,13 @@
   // Kit asset stem, not name_id: an elemental Traveler kit (`PlayerBoy-Anemo`)
   // still resolves `UI_NameCardPic_PlayerBoy_P` rather than a missing suffix key.
   let namecard = $derived(getUiAssetUrl(kit.assets.namecard));
+  let plannerAddHref = $derived(
+    `${resolve("/tools/planner")}?add=${encodeURIComponent(
+      kit.is_traveler
+        ? travelerElementKitId(kit.name_id, kit.element ?? "Pyro")
+        : kit.name_id,
+    )}`,
+  );
 
   /** Kit card currently flashing after an in-page talent link click. */
   let flashId = $state<string | null>(null);
@@ -786,6 +807,18 @@
             {kit.title || "Character"}
           </p>
         </div>
+      </div>
+      <div class="hero-menu">
+        <ActionMenu
+          label="Character actions"
+          items={[
+            {
+              id: "planner",
+              label: "Add to planner",
+              href: plannerAddHref,
+            },
+          ]}
+        />
       </div>
     </section>
 
@@ -1701,27 +1734,36 @@
             {:else}
               <section class="board-section">
                 <p class="muted-note builds-empty-msg">
-                  No Lightkeepers build summary for {kit.name} yet.
+                  {#if summaryStale}
+                    {kit.name}'s Lightkeepers build numbers are outdated after a
+                    recent kit change.
+                  {:else}
+                    No Lightkeepers build summary for {kit.name} yet.
+                  {/if}
                 </p>
                 {#if crimsonWitchLinks.length === 1 && crimsonWitchLinks[0]}
-                  <a
-                    class="useful-link-cta"
-                    href={crimsonWitchLinks[0].url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      class="useful-link-icon"
-                      src={CRIMSON_WITCH_FAVICON_URL}
-                      alt=""
-                      width="32"
-                      height="32"
-                      loading="lazy"
-                      referrerpolicy="no-referrer"
-                    />
-                    Crimson Witch build guide
-                  </a>
+                  <p class="builds-try">
+                    <span>Try:</span>
+                    <a
+                      class="useful-link-cta"
+                      href={crimsonWitchLinks[0].url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img
+                        class="useful-link-icon"
+                        src={CRIMSON_WITCH_FAVICON_URL}
+                        alt=""
+                        width="32"
+                        height="32"
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                      />
+                      Crimson Witch build guide
+                    </a>
+                  </p>
                 {:else if crimsonWitchLinks.length > 1}
+                  <p class="builds-try">Try:</p>
                   {@render guideLinkList(crimsonWitchLinks)}
                 {/if}
               </section>
@@ -1768,7 +1810,14 @@
   }
 
   .hero-body {
-    padding: 1rem 0.75rem 1rem 1rem;
+    padding: 1rem 3.25rem 1rem 1rem;
+  }
+
+  .hero-menu {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.65rem;
+    z-index: 20;
   }
 
   .hero-portrait {
@@ -1913,6 +1962,15 @@
   .builds-empty-msg {
     margin-bottom: var(--space-4);
     font-size: var(--text-sm);
+  }
+
+  .builds-try {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+    font-size: var(--text-sm);
+    color: var(--foreground-mid);
   }
 
   .useful-link {
@@ -2826,6 +2884,12 @@
   @media (min-width: 640px) {
     .hero-body {
       padding: 1.25rem;
+      padding-right: 3.5rem;
+    }
+
+    .hero-menu {
+      top: 0.85rem;
+      right: 0.85rem;
     }
 
     .hero-portrait {
@@ -2836,6 +2900,12 @@
   @media (min-width: 768px) {
     .hero-body {
       padding: 1.5rem 1.75rem;
+      padding-right: 3.75rem;
+    }
+
+    .hero-menu {
+      top: 1rem;
+      right: 1.15rem;
     }
 
     .hero-portrait {

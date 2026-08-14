@@ -41,4 +41,7 @@ scripts/archive
 /playwright/.cache/
 /playwright/.auth/
 
+# Local GOOD exports (personal inventory dumps)
+/Me_*.json
+
 /scripts/

@@ -16,7 +16,7 @@ import type { MaterialKey } from "./materialKey";
 import type { CharacterKey } from "./characterKey";
 import type { StatKey } from "./statKey";
 
-interface IGOOD {
+export interface IGOOD {
   format: "GOOD"; // A way for people to recognize this format.
   version: number; // GOOD API version.
   source: string; // The app that generates this data.
@@ -27,7 +27,7 @@ interface IGOOD {
 }
 
 // Artifact data representation
-interface IArtifact {
+export interface IArtifact {
   setKey: SetKey; //e.g. "GladiatorsFinale"
   slotKey: SlotKey; //e.g. "plume"
   level: number; //0-20 inclusive
@@ -42,17 +42,17 @@ interface IArtifact {
   elixirCrafted?: boolean; // Flag for if the artifact was created using Sanctifying Elixir. This guarantees the main stat + 2 additional rolls on the first 2 substats
   unactivatedSubstats?: ISubstat[]; // Unactivated substat(s). Once a substat is activated, it should be moved to `substats` instead
 }
-interface ISubstat {
+export interface ISubstat {
   key: StatKey; //e.g. "critDMG_"
   value: number; //e.g. 19.4
   // Below is new to GOOD 3
   initialValue?: number; // Initial roll of the artifact, if it is known. This includes the first roll of this stat, even if it was not revealed initially e.g. from `unactivatedSubstats`
 }
-type SlotKey = "flower" | "plume" | "sands" | "goblet" | "circlet";
+export type SlotKey = "flower" | "plume" | "sands" | "goblet" | "circlet";
 
 // Weapon data representation
 
-interface IWeapon {
+export interface IWeapon {
   key: WeaponKey; //"CrescentPike"
   level: number; //1-90 inclusive
   ascension: number; //0-6 inclusive. need to disambiguate 80/90 or 80/80
@@ -63,7 +63,7 @@ interface IWeapon {
 
 // Character data representation
 
-interface ICharacter {
+export interface ICharacter {
   key: CharacterKey; //e.g. "Rosaria"
   level: number; //1-100 inclusive
   constellation: number; //0-6 inclusive

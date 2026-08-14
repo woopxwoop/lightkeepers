@@ -14,6 +14,8 @@ export type CharacterCalculatorGoal = {
   name_id: string;
   start: CharacterUpgradeConfig;
   target: CharacterUpgradeConfig;
+  /** Included in the farming itinerary and the Starred cost scope. */
+  starred?: true;
 };
 
 export type WeaponCalculatorGoal = {
@@ -23,6 +25,8 @@ export type WeaponCalculatorGoal = {
   weapon_id: number;
   start: WeaponUpgradeConfig;
   target: WeaponUpgradeConfig;
+  /** Included in the farming itinerary and the Starred cost scope. */
+  starred?: true;
 };
 
 export type CalculatorGoal = CharacterCalculatorGoal | WeaponCalculatorGoal;

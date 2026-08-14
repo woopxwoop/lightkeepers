@@ -58,6 +58,9 @@
   that mixes to olive. Selected backgrounds use --surface-selected (neutral).
   Never put yellow/gold (--accent-1) text on black (--background-color) — murky;
   use cream foreground on black. Patch-notes popup uses black page base for this.
+  Control borders: enabled = solid --accent-1; disabled = silver/cream
+  (e.g. rgba white / cool gray), never low-opacity accent-3 or washed gold —
+  those read murky on dark surfaces.
 */
 :root {
   /* ── Paint (Display theme templates override these) ─────────────────── */
@@ -108,6 +111,8 @@
   --border-default: color-mix(in srgb, var(--accent-1) 22%, transparent);
   --border-strong: color-mix(in srgb, var(--accent-1) 45%, transparent);
   --border-width: 0.5px;
+  /* Quiet silver for muted control chrome (disabled inputs, soft toggles). */
+  --border-control-quiet: rgba(220, 224, 230, 0.35);
 
   /* ── Radii ──────────────────────────────────────────────────────────── */
   --radius-sm: 0.25rem;

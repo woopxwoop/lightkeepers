@@ -5,16 +5,22 @@ import {
   MAX_GOAL_ID_LENGTH,
   addCharacterResult,
   addWeaponResult,
+  addAggregate,
+  aggregateGoalCosts,
   appendGoal,
   applyCloudGoals,
   createCharacterGoal,
   createWeaponGoal,
   emptyAggregate,
   emptyGoalsState,
+  moveGoal,
   parseGoalsState,
   removeGoal,
   replaceGoal,
+  starredGoals,
+  toggleGoalStarred,
 } from "./calculator-goals.ts";
+import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
 
 describe("calculator goals", () => {
   it("parseGoalsState drops invalid entries and caps selection", () => {
@@ -159,6 +165,30 @@ describe("calculator goals", () => {
     assert.equal(state.selectedId, "a");
   });
 
+  it("moveGoal reorders and ignores invalid indices", () => {
+    let state = emptyGoalsState();
+    state = appendGoal(state, createCharacterGoal("Hutao", { id: "a" }));
+    state = appendGoal(state, createWeaponGoal(14501, { id: "b" }));
+    state = appendGoal(state, createCharacterGoal("Xingqiu", { id: "c" }));
+    state = moveGoal(state, 2, 0);
+    assert.deepEqual(
+      state.goals.map((g) => g.id),
+      ["c", "a", "b"],
+    );
+    assert.equal(state.selectedId, "c");
+    const same = moveGoal(state, 1, 1);
+    assert.equal(same, state);
+    assert.deepEqual(
+      moveGoal(state, -1, 0).goals.map((g) => g.id),
+      ["c", "a", "b"],
+    );
+    // Last-row ArrowDown uses onReorder(index, index + 1) → toIndex === length.
+    assert.deepEqual(
+      moveGoal(state, 2, 3).goals.map((g) => g.id),
+      ["c", "a", "b"],
+    );
+  });
+
   it("append respects max goals", () => {
     let state = emptyGoalsState();
     for (let i = 0; i < MAX_CALCULATOR_GOALS; i++) {
@@ -178,5 +208,69 @@ describe("calculator goals", () => {
     assert.equal(agg.characterExp, 100);
     assert.equal(agg.weaponExp, 50);
     assert.deepEqual(agg.materials, { "1": 5, "2": 1 });
+  });
+
+  it("addAggregate merges mora, EXP pools, and materials", () => {
+    const into = emptyAggregate();
+    addAggregate(into, {
+      mora: 10,
+      characterExp: 100,
+      weaponExp: 0,
+      materials: { "1": 2 },
+    });
+    addAggregate(into, {
+      mora: 5,
+      characterExp: 0,
+      weaponExp: 50,
+      materials: { "1": 1, "2": 3 },
+    });
+    assert.equal(into.mora, 15);
+    assert.equal(into.characterExp, 100);
+    assert.equal(into.weaponExp, 50);
+    assert.deepEqual(into.materials, { "1": 3, "2": 3 });
+  });
+
+  it("aggregateGoalCosts skips missing catalog rows", () => {
+    const catalog: UpgradeCostsCatalog = {
+      characters: [],
+      weapons: [],
+      materials: {},
+      curves: {
+        avatarLevelExp: [],
+        weaponLevelExpByRarity: {},
+        avatarExpItems: [],
+        weaponExpItems: [],
+      },
+    };
+    assert.deepEqual(
+      aggregateGoalCosts(
+        [
+          createCharacterGoal("Missing", { id: "c" }),
+          createWeaponGoal(999, { id: "w" }),
+        ],
+        catalog,
+      ),
+      emptyAggregate(),
+    );
+  });
+
+  it("keeps starred flags and filters starredGoals", () => {
+    const starred = createCharacterGoal("Hutao", { id: "a", starred: true });
+    const plain = createWeaponGoal(14501, { id: "b" });
+    const state = parseGoalsState({
+      goals: [starred, { ...plain, starred: false }],
+      selectedId: "a",
+    });
+    assert.equal(state.goals[0]?.starred, true);
+    assert.equal(state.goals[1]?.starred, undefined);
+    assert.deepEqual(
+      starredGoals(state.goals).map((g) => g.id),
+      ["a"],
+    );
+
+    const off = toggleGoalStarred(starred);
+    assert.equal(off.starred, undefined);
+    const on = toggleGoalStarred(plain);
+    assert.equal(on.starred, true);
   });
 });

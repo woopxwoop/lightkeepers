@@ -128,12 +128,23 @@ function genshinUiUrl(uiName: string): string {
   return `${GENSIN_UI_BASE}/${encodeURIComponent(uiName)}.webp`;
 }
 
+/**
+ * UI_* / TCG stems: elemental Traveler kits (`PlayerBoy-Anemo`) share
+ * `PlayerBoy` art.
+ */
+export function uiAssetNameId(nameId: string): string {
+  if (nameId.startsWith("PlayerBoy-") || nameId.startsWith("PlayerGirl-")) {
+    return nameId.slice(0, nameId.indexOf("-"));
+  }
+  return nameId;
+}
+
 export function getCharacterPortrait(nameId: string) {
-  return genshinUiUrl(`UI_AvatarIcon_${nameId}`);
+  return genshinUiUrl(`UI_AvatarIcon_${uiAssetNameId(nameId)}`);
 }
 
 export function getCharacterCoop(nameId: string) {
-  return genshinUiUrl(`UI_CoopImg_${nameId}`);
+  return genshinUiUrl(`UI_CoopImg_${uiAssetNameId(nameId)}`);
 }
 
 /**
@@ -141,16 +152,16 @@ export function getCharacterCoop(nameId: string) {
  * `characters/{name_id}/card.webp` (not genshin/ui — keep that prefix for TCG).
  */
 export function getCharacterCard(nameId: string) {
-  return `${CDN_BASE}/characters/${encodeURIComponent(nameId)}/card.webp`;
+  return `${CDN_BASE}/characters/${encodeURIComponent(uiAssetNameId(nameId))}/card.webp`;
 }
 
 export function getCharacterGachaSplash(nameId: string) {
-  return genshinUiUrl(`UI_Gacha_AvatarImg_${nameId}`);
+  return genshinUiUrl(`UI_Gacha_AvatarImg_${uiAssetNameId(nameId)}`);
 }
 
 /** Wish-result portrait crop (`UI_Gacha_AvatarIcon_*`). */
 export function getCharacterGachaIcon(nameId: string) {
-  return genshinUiUrl(`UI_Gacha_AvatarIcon_${nameId}`);
+  return genshinUiUrl(`UI_Gacha_AvatarIcon_${uiAssetNameId(nameId)}`);
 }
 
 /** Marketing / UI stills under `site/` on the CDN. */
@@ -344,6 +355,36 @@ export function ownedNameIds(
   characters: { isOwned: boolean; name_id: string }[],
 ): Set<string> {
   return new Set(characters.filter((c) => c.isOwned).map((c) => c.name_id));
+}
+
+/**
+ * Catalog / kit `name_id` against a roster owned set.
+ * Traveler elements (`PlayerBoy-Anemo`, …) share the `PlayerBoy` / `PlayerGirl` row.
+ */
+export function isOwnedNameId(
+  nameId: string,
+  owned: ReadonlySet<string>,
+): boolean {
+  if (owned.has(nameId)) return true;
+  if (nameId.startsWith("PlayerBoy-") || nameId.startsWith("PlayerGirl-")) {
+    return owned.has("PlayerBoy") || owned.has("PlayerGirl");
+  }
+  return false;
+}
+
+/**
+ * Builds CDN key for a planner catalog `name_id`.
+ * `PlayerBoy-Anemo` → `TravelerAnemo` (Cryo has no gcsim key; still `TravelerCryo`).
+ */
+export function plannerSimKey(
+  nameId: string,
+  displayName?: string | null,
+): string {
+  if (nameId.startsWith("PlayerBoy-") || nameId.startsWith("PlayerGirl-")) {
+    const element = nameId.slice(nameId.indexOf("-") + 1);
+    return travelerElementKey(element) ?? `Traveler${element}`;
+  }
+  return toGoodKey(displayName ?? nameId);
 }
 
 /** GOOD key → display name map for humanize helpers. */

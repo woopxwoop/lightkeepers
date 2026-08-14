@@ -1,7 +1,74 @@
 import type { Tables, Database, Json } from "$lib/types/database.types";
 
 export type Character = Tables<"characters">;
-export type CharacterOwned = Character & { isOwned: boolean };
+
+/** Fields portrait / search tiles actually read (planner stubs are not full rows). */
+export type CharacterPortraitRef = Pick<
+  Character,
+  "name_id" | "name" | "element"
+>;
+
+/** Equipped weapon snapshot from GOOD / roster editor. */
+export type RosterWeapon = {
+  key: string;
+  level: number;
+  ascension: number;
+  refinement: number;
+};
+
+/**
+ * GOOD `IWeapon` as stored on `user_rosters.weapons` (owner adds the column).
+ * Keys stay strings so unknown/new weapons still persist.
+ */
+export type InventoryWeapon = {
+  key: string;
+  level: number;
+  ascension: number;
+  refinement: number;
+  location: string;
+  lock: boolean;
+};
+
+export type InventoryArtifactSlot =
+  "flower" | "plume" | "sands" | "goblet" | "circlet";
+
+export type InventorySubstat = {
+  key: string;
+  value: number;
+  initialValue?: number;
+};
+
+/**
+ * GOOD `IArtifact` as stored on `user_rosters.artifacts` (owner adds the column).
+ */
+export type InventoryArtifact = {
+  setKey: string;
+  slotKey: InventoryArtifactSlot;
+  level: number;
+  rarity: number;
+  mainStatKey: string;
+  location: string;
+  lock: boolean;
+  substats: InventorySubstat[];
+  totalRolls?: number;
+  astralMark?: boolean;
+  elixirCrafted?: boolean;
+  unactivatedSubstats?: InventorySubstat[];
+};
+
+/** Per-character investment snapshot (optional; absent = unknown). */
+export type RosterProgress = {
+  level: number;
+  ascension: number;
+  constellation: number;
+  talents: { normal: number; skill: number; burst: number };
+  weapon: RosterWeapon | null;
+};
+
+export type CharacterOwned = Character & {
+  isOwned: boolean;
+  progress?: RosterProgress | null;
+};
 
 export type AbyssTeam =
   Database["public"]["Functions"]["get_teams_with_characters_subset"]["Returns"][number];
@@ -167,7 +234,8 @@ export type StygianCheapClearsPayload = {
 /** Difficulty used for cost-capped video-clear seating. */
 export type StygianClearDifficulty = "Fearless" | "Dire";
 
-export const STYGIAN_CHEAP_CLEARS_DIFFICULTY = "Fearless" as const satisfies StygianClearDifficulty;
+export const STYGIAN_CHEAP_CLEARS_DIFFICULTY =
+  "Fearless" as const satisfies StygianClearDifficulty;
 
 export const STYGIAN_CLEAR_DIFFICULTY_OPTIONS: ReadonlyArray<{
   value: StygianClearDifficulty;
@@ -195,11 +263,7 @@ export const STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST = 0;
  * - video: clear videos under the cost cap (scrape cost as labeled; dev)
  * - video-c0r0: same, but only baseline (character floor + 0.5)
  */
-export type StygianSolverMode =
-  | "yshelper"
-  | "hybrid"
-  | "video"
-  | "video-c0r0";
+export type StygianSolverMode = "yshelper" | "hybrid" | "video" | "video-c0r0";
 
 /** Modes shown on `/tools/stygian` (Fearless only). */
 export type StygianSolverModeRelease = Exclude<StygianSolverMode, "video">;
@@ -228,7 +292,9 @@ export const STYGIAN_SOLVER_MODE_OPTIONS_RELEASE: ReadonlyArray<{
 export const STYGIAN_SOLVER_MODE_DEFAULT =
   "hybrid" as const satisfies StygianSolverModeRelease;
 
-export function isStygianSolverMode(value: unknown): value is StygianSolverMode {
+export function isStygianSolverMode(
+  value: unknown,
+): value is StygianSolverMode {
   return STYGIAN_SOLVER_MODE_OPTIONS.some((option) => option.value === value);
 }
 

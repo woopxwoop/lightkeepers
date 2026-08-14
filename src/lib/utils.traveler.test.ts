@@ -8,8 +8,11 @@ import { describe, it } from "node:test";
 import {
   buildGoodKeyMap,
   ownedGoodKeys,
+  plannerSimKey,
   simCharacterKey,
   travelerElementKey,
+  uiAssetNameId,
+  isOwnedNameId,
 } from "./utils.ts";
 
 describe("travelerElementKey / simCharacterKey", () => {
@@ -62,5 +65,27 @@ describe("buildGoodKeyMap / ownedGoodKeys traveler fan-out", () => {
     assert.ok(owned.has("Traveler"));
     assert.ok(owned.has("TravelerPyro"));
     assert.ok(owned.has("TravelerDendro"));
+  });
+});
+
+describe("uiAssetNameId / isOwnedNameId / plannerSimKey", () => {
+  it("strips Traveler element suffixes for UI art stems", () => {
+    assert.equal(uiAssetNameId("PlayerBoy-Anemo"), "PlayerBoy");
+    assert.equal(uiAssetNameId("PlayerGirl-Hydro"), "PlayerGirl");
+    assert.equal(uiAssetNameId("Hutao"), "Hutao");
+  });
+
+  it("treats every Traveler element as owned when PlayerBoy is owned", () => {
+    const owned = new Set(["PlayerBoy", "Hutao"]);
+    assert.equal(isOwnedNameId("PlayerBoy-Anemo", owned), true);
+    assert.equal(isOwnedNameId("PlayerBoy-Cryo", owned), true);
+    assert.equal(isOwnedNameId("Hutao", owned), true);
+    assert.equal(isOwnedNameId("Ayaka", owned), false);
+  });
+
+  it("maps planner name_ids to Traveler{Element} builds keys", () => {
+    assert.equal(plannerSimKey("PlayerBoy-Anemo"), "TravelerAnemo");
+    assert.equal(plannerSimKey("PlayerBoy-Cryo"), "TravelerCryo");
+    assert.equal(plannerSimKey("Hutao", "Hu Tao"), "HuTao");
   });
 });

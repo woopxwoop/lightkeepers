@@ -7,10 +7,32 @@ import {
 import {
   STYGIAN_CHEAP_CLEARS_DIFFICULTY,
   isStygianClearDifficulty,
+  type InventoryArtifact,
+  type InventorySubstat,
+  type InventoryWeapon,
+  type RosterProgress,
+  type RosterWeapon,
   type StygianClearDifficulty,
 } from "$lib/definitions";
 import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
 import type { CalculatorGoal } from "$lib/types/calculator-goals";
+import {
+  MAX_CONSTELLATION,
+  MAX_REFINEMENT,
+  MAX_WEAPON_KEY_LENGTH,
+} from "$lib/roster-progress";
+import {
+  isArtifactSlot,
+  MAX_ARTIFACT_LEVEL,
+  MAX_ARTIFACT_SUBSTATS,
+  MAX_ARTIFACT_TOTAL_ROLLS,
+  MAX_GOOD_KEY_LENGTH,
+  MAX_INVENTORY_ARTIFACTS,
+  MAX_INVENTORY_WEAPONS,
+  MAX_STAT_KEY_LENGTH,
+  MAX_SUBSTAT_INPUT_ROWS,
+  MAX_UNACTIVATED_SUBSTATS,
+} from "$lib/roster-inventory";
 
 /** Soft cap — Genshin roster is ~100; leave headroom for future growth. */
 export const MAX_ROSTER_CHARACTERS = 256;
@@ -100,23 +122,143 @@ function requireExactKeys(
   keys: readonly string[],
   message: string,
 ): Record<string, unknown> {
+  return requireKeys(value, keys, [], message);
+}
+
+/** Require `required` keys; ignore unknown extras (GOOD producers add `id`, etc.). */
+function pickKnownKeys(
+  value: unknown,
+  required: readonly string[],
+  optional: readonly string[],
+  message: string,
+): Record<string, unknown> {
   if (typeof value !== "object" || value === null) {
     throw error(400, message);
   }
+  const row = value as Record<string, unknown>;
+  const actual = Object.keys(row);
+  if (required.some((key) => !actual.includes(key))) {
+    throw error(400, message);
+  }
+  const allowed = new Set([...required, ...optional]);
+  const picked: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in row) picked[key] = row[key];
+  }
+  return picked;
+}
+
+/** Require `required` keys; each other own key must be in `optional`. */
+function requireKeys(
+  value: unknown,
+  required: readonly string[],
+  optional: readonly string[],
+  message: string,
+): Record<string, unknown> {
+  if (typeof value !== "object" || value === null) {
+    throw error(400, message);
+  }
+  const allowed = new Set([...required, ...optional]);
   const actual = Object.keys(value);
-  if (
-    actual.length !== keys.length ||
-    keys.some((key) => !actual.includes(key))
-  ) {
+  if (required.some((key) => !actual.includes(key))) {
+    throw error(400, message);
+  }
+  if (actual.some((key) => !allowed.has(key))) {
     throw error(400, message);
   }
   return value as Record<string, unknown>;
 }
 
 /** Persisted roster entry accepted by `/api/roster`. */
-export type RosterEntry = { name_id: string; isOwned: boolean };
+export type RosterEntry = {
+  name_id: string;
+  isOwned: boolean;
+  progress?: RosterProgress | null;
+};
 
-/** Validate a `{ name_id, isOwned }[]` roster payload, rejecting extra keys. */
+const ROSTER_PAYLOAD_ERROR = "Invalid roster payload";
+
+function requireRosterWeapon(value: unknown): RosterWeapon {
+  const { key, level, ascension, refinement } = requireExactKeys(
+    value,
+    ["key", "level", "ascension", "refinement"],
+    ROSTER_PAYLOAD_ERROR,
+  );
+  if (
+    typeof key !== "string" ||
+    key.length === 0 ||
+    key.length > MAX_WEAPON_KEY_LENGTH
+  ) {
+    throw error(400, ROSTER_PAYLOAD_ERROR);
+  }
+  return {
+    key,
+    level: requireIntegerInRange(level, 1, MAX_LEVEL, ROSTER_PAYLOAD_ERROR),
+    ascension: requireIntegerInRange(
+      ascension,
+      0,
+      MAX_ASCENSION,
+      ROSTER_PAYLOAD_ERROR,
+    ),
+    refinement: requireIntegerInRange(
+      refinement,
+      1,
+      MAX_REFINEMENT,
+      ROSTER_PAYLOAD_ERROR,
+    ),
+  };
+}
+
+function requireRosterProgress(value: unknown): RosterProgress {
+  const { level, ascension, constellation, talents, weapon } = requireExactKeys(
+    value,
+    ["level", "ascension", "constellation", "talents", "weapon"],
+    ROSTER_PAYLOAD_ERROR,
+  );
+  const parsedTalents = requireExactKeys(
+    talents,
+    ["normal", "skill", "burst"],
+    ROSTER_PAYLOAD_ERROR,
+  );
+  return {
+    level: requireIntegerInRange(level, 1, MAX_LEVEL, ROSTER_PAYLOAD_ERROR),
+    ascension: requireIntegerInRange(
+      ascension,
+      0,
+      MAX_ASCENSION,
+      ROSTER_PAYLOAD_ERROR,
+    ),
+    constellation: requireIntegerInRange(
+      constellation,
+      0,
+      MAX_CONSTELLATION,
+      ROSTER_PAYLOAD_ERROR,
+    ),
+    talents: {
+      normal: requireIntegerInRange(
+        parsedTalents.normal,
+        1,
+        MAX_TALENT,
+        ROSTER_PAYLOAD_ERROR,
+      ),
+      skill: requireIntegerInRange(
+        parsedTalents.skill,
+        1,
+        MAX_TALENT,
+        ROSTER_PAYLOAD_ERROR,
+      ),
+      burst: requireIntegerInRange(
+        parsedTalents.burst,
+        1,
+        MAX_TALENT,
+        ROSTER_PAYLOAD_ERROR,
+      ),
+    },
+    weapon: weapon == null ? null : requireRosterWeapon(weapon),
+  };
+}
+
+/** Validate a `{ name_id, isOwned, progress? }[]` roster payload. */
 export function requireRosterEntries(value: unknown): RosterEntry[] {
   if (!Array.isArray(value)) {
     throw error(400, "Invalid roster payload");
@@ -128,9 +270,10 @@ export function requireRosterEntries(value: unknown): RosterEntry[] {
     );
   }
   return value.map((item) => {
-    const { name_id, isOwned } = requireExactKeys(
+    const { name_id, isOwned, progress } = requireKeys(
       item,
       ["name_id", "isOwned"],
+      ["progress"],
       "Invalid roster payload",
     );
     if (
@@ -141,7 +284,222 @@ export function requireRosterEntries(value: unknown): RosterEntry[] {
     ) {
       throw error(400, "Invalid roster payload");
     }
-    return { name_id, isOwned };
+    const entry: RosterEntry = { name_id, isOwned };
+    if (progress !== undefined) {
+      entry.progress =
+        progress == null ? null : requireRosterProgress(progress);
+    }
+    return entry;
+  });
+}
+
+const INVENTORY_PAYLOAD_ERROR = "Invalid inventory payload";
+
+function requireInventoryLocation(value: unknown): string {
+  if (value === "") return "";
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > MAX_GOOD_KEY_LENGTH
+  ) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  return value;
+}
+
+function requireInventoryKey(value: unknown, maxLength: number): string {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > maxLength
+  ) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  return value;
+}
+
+function isEmptySubstatPlaceholder(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  // Only explicit empty-string keys are GO placeholders; missing key is invalid.
+  return (value as Record<string, unknown>).key === "";
+}
+
+function requireInventorySubstat(value: unknown): InventorySubstat {
+  const {
+    key,
+    value: roll,
+    initialValue,
+  } = pickKnownKeys(
+    value,
+    ["key", "value"],
+    ["initialValue"],
+    INVENTORY_PAYLOAD_ERROR,
+  );
+  const parsed: InventorySubstat = {
+    key: requireInventoryKey(key, MAX_STAT_KEY_LENGTH),
+    // Flat HP/ATK/DEF rolls are thousands; crit/EM stay small.
+    value: requireNumberInRange(roll, -1e6, 1e6, INVENTORY_PAYLOAD_ERROR),
+  };
+  if (initialValue !== undefined) {
+    parsed.initialValue = requireNumberInRange(
+      initialValue,
+      -1e6,
+      1e6,
+      INVENTORY_PAYLOAD_ERROR,
+    );
+  }
+  return parsed;
+}
+
+function requireInventorySubstats(
+  value: unknown,
+  max: number,
+): InventorySubstat[] {
+  if (!Array.isArray(value) || value.length > MAX_SUBSTAT_INPUT_ROWS) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  const rows = value
+    .filter((row) => !isEmptySubstatPlaceholder(row))
+    .map(requireInventorySubstat);
+  if (rows.length > max) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  return rows;
+}
+
+/** Validate a GOOD `IWeapon[]` inventory slice. */
+export function requireInventoryWeapons(value: unknown): InventoryWeapon[] {
+  if (!Array.isArray(value)) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  if (value.length > MAX_INVENTORY_WEAPONS) {
+    throw error(
+      400,
+      `weapons must have at most ${MAX_INVENTORY_WEAPONS} entries`,
+    );
+  }
+  return value.map((item) => {
+    const { key, level, ascension, refinement, location, lock } = pickKnownKeys(
+      item,
+      ["key", "level", "ascension", "refinement", "location", "lock"],
+      [],
+      INVENTORY_PAYLOAD_ERROR,
+    );
+    if (typeof lock !== "boolean") {
+      throw error(400, INVENTORY_PAYLOAD_ERROR);
+    }
+    return {
+      key: requireInventoryKey(key, MAX_WEAPON_KEY_LENGTH),
+      level: requireIntegerInRange(
+        level,
+        1,
+        MAX_LEVEL,
+        INVENTORY_PAYLOAD_ERROR,
+      ),
+      ascension: requireIntegerInRange(
+        ascension,
+        0,
+        MAX_ASCENSION,
+        INVENTORY_PAYLOAD_ERROR,
+      ),
+      refinement: requireIntegerInRange(
+        refinement,
+        1,
+        MAX_REFINEMENT,
+        INVENTORY_PAYLOAD_ERROR,
+      ),
+      location: requireInventoryLocation(location),
+      lock,
+    };
+  });
+}
+
+/** Validate a GOOD `IArtifact[]` inventory slice. */
+export function requireInventoryArtifacts(value: unknown): InventoryArtifact[] {
+  if (!Array.isArray(value)) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  if (value.length > MAX_INVENTORY_ARTIFACTS) {
+    throw error(
+      400,
+      `artifacts must have at most ${MAX_INVENTORY_ARTIFACTS} entries`,
+    );
+  }
+  return value.map((item) => {
+    const {
+      setKey,
+      slotKey,
+      level,
+      rarity,
+      mainStatKey,
+      location,
+      lock,
+      substats,
+      totalRolls,
+      astralMark,
+      elixirCrafted,
+      unactivatedSubstats,
+    } = pickKnownKeys(
+      item,
+      [
+        "setKey",
+        "slotKey",
+        "level",
+        "rarity",
+        "mainStatKey",
+        "location",
+        "lock",
+        "substats",
+      ],
+      ["totalRolls", "astralMark", "elixirCrafted", "unactivatedSubstats"],
+      INVENTORY_PAYLOAD_ERROR,
+    );
+    if (typeof lock !== "boolean" || !isArtifactSlot(slotKey)) {
+      throw error(400, INVENTORY_PAYLOAD_ERROR);
+    }
+    const parsed: InventoryArtifact = {
+      setKey: requireInventoryKey(setKey, MAX_GOOD_KEY_LENGTH),
+      slotKey,
+      level: requireIntegerInRange(
+        level,
+        0,
+        MAX_ARTIFACT_LEVEL,
+        INVENTORY_PAYLOAD_ERROR,
+      ),
+      rarity: requireIntegerInRange(rarity, 1, 5, INVENTORY_PAYLOAD_ERROR),
+      mainStatKey: requireInventoryKey(mainStatKey, MAX_STAT_KEY_LENGTH),
+      location: requireInventoryLocation(location),
+      lock,
+      substats: requireInventorySubstats(substats, MAX_ARTIFACT_SUBSTATS),
+    };
+    if (totalRolls !== undefined) {
+      parsed.totalRolls = requireIntegerInRange(
+        totalRolls,
+        0,
+        MAX_ARTIFACT_TOTAL_ROLLS,
+        INVENTORY_PAYLOAD_ERROR,
+      );
+    }
+    if (astralMark !== undefined) {
+      if (typeof astralMark !== "boolean") {
+        throw error(400, INVENTORY_PAYLOAD_ERROR);
+      }
+      parsed.astralMark = astralMark;
+    }
+    if (elixirCrafted !== undefined) {
+      if (typeof elixirCrafted !== "boolean") {
+        throw error(400, INVENTORY_PAYLOAD_ERROR);
+      }
+      parsed.elixirCrafted = elixirCrafted;
+    }
+    if (unactivatedSubstats !== undefined) {
+      const unactivated = requireInventorySubstats(
+        unactivatedSubstats,
+        MAX_UNACTIVATED_SUBSTATS,
+      );
+      if (unactivated.length > 0) parsed.unactivatedSubstats = unactivated;
+    }
+    return parsed;
   });
 }
 
@@ -206,6 +564,15 @@ function requireWeaponUpgradeConfig(value: unknown): {
   };
 }
 
+function optionalStarred(
+  row: Record<string, unknown>,
+): { starred: true } | Record<string, never> {
+  if (!("starred" in row)) return {};
+  if (row.starred === true) return { starred: true };
+  if (row.starred === false) return {};
+  throw error(400, GOALS_PAYLOAD_ERROR);
+}
+
 /** Validate `{ goals: CalculatorGoal[] }` for `/api/calculator-goals`. */
 export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
   if (!Array.isArray(value)) {
@@ -233,9 +600,10 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
     seen.add(id);
 
     if (kind === "character") {
-      requireExactKeys(
+      requireKeys(
         row,
         ["id", "kind", "name_id", "start", "target"],
+        ["starred"],
         GOALS_PAYLOAD_ERROR,
       );
       const name_id = requireCharacterNameId(row.name_id);
@@ -245,13 +613,15 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
         name_id,
         start: requireCharacterUpgradeConfig(row.start),
         target: requireCharacterUpgradeConfig(row.target),
+        ...optionalStarred(row),
       };
     }
 
     if (kind === "weapon") {
-      requireExactKeys(
+      requireKeys(
         row,
         ["id", "kind", "weapon_id", "start", "target"],
+        ["starred"],
         GOALS_PAYLOAD_ERROR,
       );
       const weapon_id = requireFiniteInteger(
@@ -267,6 +637,7 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
         weapon_id,
         start: requireWeaponUpgradeConfig(row.start),
         target: requireWeaponUpgradeConfig(row.target),
+        ...optionalStarred(row),
       };
     }
 
@@ -407,10 +778,7 @@ export function requireEnemyIds(value: unknown): number[] {
     throw error(400, "enemyIds must not be empty.");
   }
   if (value.length > MAX_ENEMY_IDS) {
-    throw error(
-      400,
-      `enemyIds must have at most ${MAX_ENEMY_IDS} entries.`,
-    );
+    throw error(400, `enemyIds must have at most ${MAX_ENEMY_IDS} entries.`);
   }
   const out: number[] = [];
   const seen = new Set<number>();

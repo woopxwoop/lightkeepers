@@ -26,7 +26,8 @@
   .btn {
     font-size: var(--text-sm);
     border-radius: var(--radius-md);
-    border: var(--border-width) solid var(--border-default);
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 18%, transparent);
     padding: 0.35rem 0.7rem;
     transition: var(--control-transition);
   }
@@ -55,7 +56,7 @@
 
   .btn-secondary:hover {
     background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
-    border-color: color-mix(in srgb, var(--accent-1) 40%, transparent);
+    border-color: color-mix(in srgb, var(--foreground-color) 32%, transparent);
   }
 
   .btn-ghost,
@@ -69,8 +70,8 @@
 
   .btn-ghost:hover,
   .btn-icon:hover {
-    color: var(--accent-1);
-    border-color: color-mix(in srgb, var(--accent-1) 40%, transparent);
+    color: var(--foreground-color);
+    border-color: color-mix(in srgb, var(--foreground-color) 32%, transparent);
     background: var(--surface-quiet);
   }
 

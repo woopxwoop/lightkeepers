@@ -7,8 +7,8 @@
 
 <script lang="ts">
   /**
-   * Full-viewport pick dialog — search + dense tile grid.
-   * Used by Planner (+ Character / + Weapon) and demos.
+   * Large pick dialog — search + dense tile grid.
+   * Used by Planner / itinerary (+ Character / + Weapon) and demos.
    */
   import type { Snippet } from "svelte";
   import { tick } from "svelte";
@@ -28,6 +28,8 @@
     onClose,
     onChoose,
     tile,
+    toolbar,
+    filters,
   }: {
     open?: boolean;
     title: string;
@@ -41,6 +43,10 @@
     onChoose: (value: string) => void;
     /** Leading art for each option (portrait, weapon icon, …). */
     tile: Snippet<[PickModalOption]>;
+    /** Optional controls beside the title (filters, toggles). */
+    toolbar?: Snippet;
+    /** Optional chip filters between search and the grid. */
+    filters?: Snippet;
   } = $props();
 
   let searchEl: HTMLInputElement | null = $state(null);
@@ -69,15 +75,16 @@
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
+        e.stopImmediatePropagation();
         onClose();
         return;
       }
       if (panelEl) trapTabKey(e, panelEl);
     }
-    window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
     return () => {
       active = false;
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
       if (previous?.isConnected) previous.focus();
     };
   });
@@ -105,6 +112,11 @@
     >
       <header class="pick-head">
         <h2 class="section-title pick-title">{title}</h2>
+        {#if toolbar}
+          <div class="pick-toolbar">
+            {@render toolbar()}
+          </div>
+        {/if}
         <button
           type="button"
           class="pick-close"
@@ -123,6 +135,12 @@
         placeholder={searchPlaceholder}
         aria-label={searchPlaceholder}
       />
+
+      {#if filters}
+        <div class="pick-filters">
+          {@render filters()}
+        </div>
+      {/if}
 
       <div class="pick-grid">
         {#each filtered as opt (opt.value)}
@@ -149,10 +167,10 @@
 
 <style>
   .pick-root {
-    /* Above NavBar (z-100) so the panel isn’t clipped by the fixed nav. */
+    /* Above itinerary sheet (z-120) and goals picker (z-130). */
     position: fixed;
     inset: 0;
-    z-index: 120;
+    z-index: 140;
     display: grid;
     place-items: center;
     padding: clamp(0.75rem, 2vw, 1.25rem);
@@ -198,6 +216,12 @@
 
   .pick-title {
     margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pick-toolbar {
+    flex-shrink: 0;
   }
 
   .pick-close {
@@ -236,6 +260,10 @@
     outline: none;
     border-color: var(--accent-1);
     box-shadow: 0 0 0 1px var(--accent-1);
+  }
+
+  .pick-filters {
+    flex-shrink: 0;
   }
 
   .pick-grid {

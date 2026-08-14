@@ -126,6 +126,13 @@ export interface ImpactTiersMeta {
 export interface CharacterIndex {
   key: string;
   /**
+   * Stamped at merge from gcsim `characters.json`.
+   * - `true` (or omitted on old payloads): current sim/guide index
+   * - `false` with weapons/sets: summary exists but teams are stale (kit buff)
+   * - `false` without a body: tombstone so R2 overwrites a dropped summary
+   */
+  upToDate?: boolean;
+  /**
    * Roster impact bucket definitions (embedded on per-character CDN JSON so
    * Builds can label stamped tiers without fetching the full index).
    */

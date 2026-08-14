@@ -24,6 +24,7 @@ describe("mergeUpgradeCostCatalogs", () => {
           name_id: "Hutao",
           game_id: 1,
           name: "Hu Tao",
+          element: "Pyro",
           avatarPromoteId: 1,
           promotes: [],
           talents: {
@@ -53,6 +54,7 @@ describe("mergeUpgradeCostCatalogs", () => {
           name_id: "Hutao",
           game_id: 1,
           name: "Hu Tao",
+          element: "Pyro",
           avatarPromoteId: 1,
           promotes: [],
           talents: {
@@ -84,6 +86,7 @@ describe("mergeUpgradeCostCatalogs", () => {
           name_id: "Hutao",
           game_id: 1,
           name: "Hu Tao BETA",
+          element: "Pyro",
           avatarPromoteId: 1,
           promotes: [],
           talents: {
@@ -96,6 +99,7 @@ describe("mergeUpgradeCostCatalogs", () => {
           name_id: "Odette",
           game_id: 2,
           name: "Odette",
+          element: "Cryo",
           avatarPromoteId: 2,
           promotes: [],
           talents: {
