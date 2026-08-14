@@ -80,18 +80,32 @@ export function rostersDifferForSync(
   a: CharacterOwned[],
   b: CharacterOwned[],
 ): boolean {
-  return (
-    JSON.stringify(toRosterSyncCompareEntries(a)) !==
-    JSON.stringify(toRosterSyncCompareEntries(b))
-  );
+  const left = toRosterSyncCompareEntries(a);
+  const right = toRosterSyncCompareEntries(b);
+  if (left.length !== right.length) return true;
+  for (let i = 0; i < left.length; i++) {
+    const l = left[i]!;
+    const r = right[i]!;
+    if (l.name_id !== r.name_id) return true;
+    if (l.isOwned !== r.isOwned) return true;
+    if (!sameProgressBits(l.progress, r.progress)) return true;
+  }
+  return false;
 }
+
+export type RosterSyncWeaponBits = {
+  key: string;
+  level: number;
+  ascension: number;
+  refinement: number;
+};
 
 export type RosterSyncProgressBits = {
   level: number;
   ascension: number;
   constellation: number;
   talents: string;
-  weapon: string | null;
+  weapon: RosterSyncWeaponBits | null;
 };
 
 export type RosterSyncDiff = {
@@ -118,9 +132,44 @@ function progressBits(
     constellation: progress.constellation,
     talents: `${progress.talents.normal}/${progress.talents.skill}/${progress.talents.burst}`,
     weapon: progress.weapon
-      ? `${progress.weapon.key} R${progress.weapon.refinement}`
+      ? {
+          key: progress.weapon.key,
+          level: progress.weapon.level,
+          ascension: progress.weapon.ascension,
+          refinement: progress.weapon.refinement,
+        }
       : null,
   };
+}
+
+function sameWeaponBits(
+  a: RosterSyncWeaponBits | null,
+  b: RosterSyncWeaponBits | null,
+): boolean {
+  if (a === null && b === null) return true;
+  if (a === null || b === null) return false;
+  return (
+    a.key === b.key &&
+    a.level === b.level &&
+    a.ascension === b.ascension &&
+    a.refinement === b.refinement
+  );
+}
+
+/** Structural equality for progressBits projections (null-safe). */
+function sameProgressBits(
+  a: RosterSyncProgressBits | null,
+  b: RosterSyncProgressBits | null,
+): boolean {
+  if (a === null && b === null) return true;
+  if (a === null || b === null) return false;
+  return (
+    a.level === b.level &&
+    a.ascension === b.ascension &&
+    a.constellation === b.constellation &&
+    a.talents === b.talents &&
+    sameWeaponBits(a.weapon, b.weapon)
+  );
 }
 
 /** Same owned + progressBits projection used by conflict detection and the diff UI. */
@@ -154,8 +203,7 @@ export function diffRostersForSync(
     const localProgress = progressBits(localRow?.progress);
     const cloudProgress = progressBits(cloudRow?.progress);
     const ownedChanged = localOwned !== cloudOwned;
-    const progressChanged =
-      JSON.stringify(localProgress) !== JSON.stringify(cloudProgress);
+    const progressChanged = !sameProgressBits(localProgress, cloudProgress);
     if (!ownedChanged && !progressChanged) continue;
     const name = localRow?.name || cloudRow?.name || name_id;
     diffs.push({

@@ -213,7 +213,7 @@ describe("roster snapshot", () => {
     assert.equal(localOnly.cloudProgress, null);
   });
 
-  it("rostersDifferForSync ignores ascension-invisible weapon level-only noise via bits", () => {
+  it("rostersDifferForSync detects weapon level and ascension changes", () => {
     const baseProgress = {
       level: 90,
       ascension: 6,
@@ -238,8 +238,47 @@ describe("roster snapshot", () => {
         },
       },
     ];
-    // Same key+refinement in progressBits → not a visible sync conflict.
-    assert.equal(rostersDifferForSync(a, b), false);
-    assert.equal(diffRostersForSync(a, b).length, 0);
+    assert.equal(rostersDifferForSync(a, b), true);
+    assert.equal(diffRostersForSync(a, b).length, 1);
+  });
+
+  it("rostersDifferForSync detects weapon key and refinement changes", () => {
+    const baseProgress = {
+      level: 90,
+      ascension: 6,
+      constellation: 0,
+      talents: { normal: 1, skill: 1, burst: 1 },
+      weapon: {
+        key: "Deathmatch",
+        level: 90,
+        ascension: 6,
+        refinement: 1,
+      },
+    };
+    const local: CharacterOwned[] = [
+      { ...char("a", true), progress: baseProgress },
+    ];
+    const keyChanged: CharacterOwned[] = [
+      {
+        ...char("a", true),
+        progress: {
+          ...baseProgress,
+          weapon: { ...baseProgress.weapon, key: "StaffOfHoma" },
+        },
+      },
+    ];
+    const refinementChanged: CharacterOwned[] = [
+      {
+        ...char("a", true),
+        progress: {
+          ...baseProgress,
+          weapon: { ...baseProgress.weapon, refinement: 5 },
+        },
+      },
+    ];
+    assert.equal(rostersDifferForSync(local, keyChanged), true);
+    assert.equal(diffRostersForSync(local, keyChanged).length, 1);
+    assert.equal(rostersDifferForSync(local, refinementChanged), true);
+    assert.equal(diffRostersForSync(local, refinementChanged).length, 1);
   });
 });

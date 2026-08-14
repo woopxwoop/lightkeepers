@@ -128,12 +128,14 @@ function mergeOwnedFlags(
   });
 }
 
-async function activeSessionUserId(): Promise<string | null> {
+async function activeSessionUserId(): Promise<
+  { status: "ok"; userId: string | null } | { status: "error" }
+> {
   try {
     const { data: session } = await authClient.getSession();
-    return session?.user?.id ?? null;
+    return { status: "ok", userId: session?.user?.id ?? null };
   } catch {
-    return null;
+    return { status: "error" };
   }
 }
 
@@ -152,6 +154,7 @@ async function fetchCloudRoster(
     const { roster } = await res.json();
     if (roster === null) return { status: "missing", userId };
     if (!Array.isArray(roster)) return { status: "error" };
+    if (roster.length === 0) return { status: "missing", userId };
     return {
       status: "ok",
       userId,
@@ -202,8 +205,9 @@ async function resolveRosterConflict(args: {
   userId: string;
   local: CharacterOwned[];
   cloud: CharacterOwned[];
+  error?: string | null;
 }): Promise<void> {
-  let error: string | null = null;
+  let error: string | null = args.error ?? null;
 
   for (;;) {
     const choice = await promptRosterSyncConflict(
@@ -213,8 +217,12 @@ async function resolveRosterConflict(args: {
     );
     error = null;
 
-    const currentId = await activeSessionUserId();
-    if (currentId !== args.userId) {
+    const session = await activeSessionUserId();
+    if (session.status === "error") {
+      error = "Could not verify signed-in account. Try again.";
+      continue;
+    }
+    if (session.userId !== args.userId) {
       return;
     }
 
@@ -265,7 +273,14 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   const localRoster = get(charactersOwned);
 
   if (cloud.status === "missing") {
-    await uploadLocalRoster(localRoster);
+    const result = await uploadLocalRoster(localRoster);
+    if (result.ok) return;
+    await resolveRosterConflict({
+      userId: cloud.userId,
+      local: localRoster,
+      cloud: localRoster,
+      error: uploadFailureMessage(result),
+    });
     return;
   }
 
