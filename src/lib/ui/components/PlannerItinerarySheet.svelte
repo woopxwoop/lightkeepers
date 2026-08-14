@@ -73,7 +73,7 @@
       bind:this={panelEl}
       role="dialog"
       aria-modal="true"
-      aria-label="Open domains today"
+      aria-label="Farming itinerary"
       tabindex="-1"
       transition:scale={{ duration: motion ?? 200, start: 0.98 }}
     >

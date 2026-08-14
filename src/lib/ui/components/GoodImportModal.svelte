@@ -32,11 +32,13 @@
   let pasteText = $state("");
   let fileError = $state("");
   let readingFile = $state(false);
+  let readGeneration = 0;
 
   $effect(() => {
     if (!open) {
       pasteText = "";
       fileError = "";
+      readGeneration += 1;
       return;
     }
     const previous =
@@ -85,17 +87,22 @@
       return;
     }
     readingFile = true;
+    const generation = readGeneration;
     try {
       const text = await file.text();
+      if (generation !== readGeneration || !open) return;
       onImport(text);
     } catch {
-      fileError = "Couldn't read that file.";
+      if (generation === readGeneration) {
+        fileError = "Couldn't read that file.";
+      }
     } finally {
       readingFile = false;
     }
   }
 
   function importPaste() {
+    if (busy) return;
     const text = pasteText.trim();
     if (!text) {
       fileError = "Paste GOOD JSON, or choose a file.";

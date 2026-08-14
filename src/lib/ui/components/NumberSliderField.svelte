@@ -341,7 +341,7 @@
       <input
         class="nsf-num nsf-num-value"
         type="number"
-        min={effectiveFloor}
+        min={valueFloor()}
         max={effectiveCap}
         {step}
         value={draft ?? value}
