@@ -1,7 +1,8 @@
 /**
  * `user_rosters` extra JSONB slices (`weapons`, `artifacts`).
- * Generated Database types do not include these columns until the owner
- * migrates + `pnpm update-types`. Payloads are asserted at the call site.
+ * Fallback for missing columns is temporary and may be removed once all target
+ * deployments include the migration and generated types are synchronized
+ * (`pnpm update-types`). Until then, payloads stay asserted at the call site.
  */
 
 import { serverDb } from "$lib/server/supabaseServer";
@@ -100,6 +101,10 @@ export async function selectUserRosterColumn(
     .eq("user_id", userId)
     .maybeSingle();
   if (error && isMissingInventoryColumn(error)) {
+    console.warn(
+      `GET /api/roster/${column}: column missing; returning empty slice`,
+      error,
+    );
     return { data: null, error: null };
   }
   return { data: data?.[column] ?? null, error };

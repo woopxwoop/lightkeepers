@@ -156,7 +156,8 @@
     ensureTeamsOwned($charactersOwned).catch(() => {
       pageState = "error";
     });
-    void loadRosterWeapons().catch(() => {});
+    // Prefetch weapons into the shared cache for planner surfaces.
+    loadRosterWeapons().catch(() => {});
     if (!nearMissReady) {
       ensureNearMissTeams($charactersOwned).catch(() => {
         pageState = "error";

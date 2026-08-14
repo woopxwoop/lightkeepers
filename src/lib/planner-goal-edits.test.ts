@@ -8,7 +8,9 @@ import {
 import {
   appendCatalogCharacterGoal,
   appendCatalogWeaponGoal,
+  filterPlannerWeaponPickOptions,
   plannerCharacterOptions,
+  plannerWeaponOptions,
   resolveCatalogCharacterId,
 } from "./planner-goal-edits.ts";
 import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
@@ -214,5 +216,55 @@ describe("planner goal edits", () => {
     assert.equal(result.ok, false);
     if (result.ok) return;
     assert.match(result.error, /at most/);
+  });
+});
+
+describe("filterPlannerWeaponPickOptions", () => {
+  it("keeps default 4★/5★ and type chips", () => {
+    const catalog: UpgradeCostsCatalog = {
+      ...catalogWith([]),
+      weapons: [
+        {
+          id: 1,
+          name: "Homa",
+          rankLevel: 5,
+          weaponPromoteId: 1,
+          icon: "a",
+          promotes: [],
+        },
+        {
+          id: 2,
+          name: "Iron",
+          rankLevel: 3,
+          weaponPromoteId: 1,
+          icon: "b",
+          promotes: [],
+        },
+        {
+          id: 3,
+          name: "Favonius",
+          rankLevel: 4,
+          weaponPromoteId: 1,
+          icon: "c",
+          promotes: [],
+        },
+      ],
+    };
+    const options = plannerWeaponOptions(catalog);
+    const meta: Record<number, { stars: number; weaponType: string }> = {
+      1: { stars: 5, weaponType: "WEAPON_POLE" },
+      2: { stars: 3, weaponType: "WEAPON_SWORD_ONE_HAND" },
+      3: { stars: 4, weaponType: "WEAPON_SWORD_ONE_HAND" },
+    };
+    const filtered = filterPlannerWeaponPickOptions(
+      options,
+      catalog,
+      { rarity: new Set(["4", "5"]), types: new Set(["Sword"]) },
+      (id) => meta[id],
+    );
+    assert.deepEqual(
+      filtered.map((o) => o.value),
+      ["3"],
+    );
   });
 });

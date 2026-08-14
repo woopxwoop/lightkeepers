@@ -111,6 +111,8 @@
   --border-default: color-mix(in srgb, var(--accent-1) 22%, transparent);
   --border-strong: color-mix(in srgb, var(--accent-1) 45%, transparent);
   --border-width: 0.5px;
+  /* Quiet silver for muted control chrome (disabled inputs, soft toggles). */
+  --border-control-quiet: rgba(220, 224, 230, 0.35);
 
   /* ── Radii ──────────────────────────────────────────────────────────── */
   --radius-sm: 0.25rem;

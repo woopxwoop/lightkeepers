@@ -47,11 +47,11 @@ export function goalsDiffersFromSnapshot(
 export function writeGoalsLocal(json: string): boolean {
   try {
     localStorage.setItem(CALCULATOR_GOALS_STORAGE_KEY, json);
-    goalsLocalRevision.update((n) => n + 1);
-    return true;
   } catch {
     return false;
   }
+  goalsLocalRevision.update((n) => n + 1);
+  return true;
 }
 
 /** Normalize + write full local state (includes selectedId). */

@@ -19,6 +19,10 @@ export const MAX_STAT_KEY_LENGTH = 32;
 export const MAX_ARTIFACT_LEVEL = 20;
 export const MAX_ARTIFACT_SUBSTATS = 6;
 export const MAX_UNACTIVATED_SUBSTATS = 4;
+/** Ceiling for GOOD `totalRolls` (shared by client + request validation). */
+export const MAX_ARTIFACT_TOTAL_ROLLS = 9;
+/** Raw substat array cap before placeholder filtering (DoS guard). */
+export const MAX_SUBSTAT_INPUT_ROWS = 64;
 export const INVENTORY_ARTIFACT_SLOTS: readonly InventoryArtifactSlot[] = [
   "flower",
   "plume",

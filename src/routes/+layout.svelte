@@ -47,6 +47,7 @@
   const session = authClient.useSession();
   let lastRosterUserId: string | null | undefined = undefined;
   $effect(() => {
+    if ($session.isPending) return;
     const id = $session.data?.user?.id ?? null;
     if (lastRosterUserId === undefined) {
       lastRosterUserId = id;

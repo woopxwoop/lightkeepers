@@ -25,10 +25,12 @@ import {
   isArtifactSlot,
   MAX_ARTIFACT_LEVEL,
   MAX_ARTIFACT_SUBSTATS,
+  MAX_ARTIFACT_TOTAL_ROLLS,
   MAX_GOOD_KEY_LENGTH,
   MAX_INVENTORY_ARTIFACTS,
   MAX_INVENTORY_WEAPONS,
   MAX_STAT_KEY_LENGTH,
+  MAX_SUBSTAT_INPUT_ROWS,
   MAX_UNACTIVATED_SUBSTATS,
 } from "$lib/roster-inventory";
 
@@ -353,12 +355,16 @@ function requireInventorySubstats(
   value: unknown,
   max: number,
 ): InventorySubstat[] {
-  if (!Array.isArray(value) || value.length > max) {
+  if (!Array.isArray(value) || value.length > MAX_SUBSTAT_INPUT_ROWS) {
     throw error(400, INVENTORY_PAYLOAD_ERROR);
   }
-  return value
+  const rows = value
     .filter((row) => !isEmptySubstatPlaceholder(row))
     .map(requireInventorySubstat);
+  if (rows.length > max) {
+    throw error(400, INVENTORY_PAYLOAD_ERROR);
+  }
+  return rows;
 }
 
 /** Validate a GOOD `IWeapon[]` inventory slice. */
@@ -470,7 +476,7 @@ export function requireInventoryArtifacts(value: unknown): InventoryArtifact[] {
       parsed.totalRolls = requireIntegerInRange(
         totalRolls,
         0,
-        9,
+        MAX_ARTIFACT_TOTAL_ROLLS,
         INVENTORY_PAYLOAD_ERROR,
       );
     }

@@ -123,6 +123,7 @@
   }
 
   async function importGoodSource(text: string) {
+    if (importing) return;
     if (!$charactersHydrated) {
       importError = "Roster is still loading — try again in a moment.";
       return;
@@ -187,10 +188,15 @@
   async function downloadGood() {
     importError = "";
     try {
-      const [weapons, artifacts] = await Promise.all([
-        loadRosterWeapons().catch(() => getRosterWeaponsCached() ?? []),
-        loadRosterArtifacts().catch(() => getRosterArtifactsCached() ?? []),
-      ]);
+      const [weapons, artifacts] = $session.data
+        ? await Promise.all([
+            loadRosterWeapons().catch(() => getRosterWeaponsCached() ?? []),
+            loadRosterArtifacts().catch(() => getRosterArtifactsCached() ?? []),
+          ])
+        : [
+            getRosterWeaponsCached() ?? [],
+            getRosterArtifactsCached() ?? [],
+          ];
       const doc = serializeGoodDocument({
         roster: $charactersOwned,
         weapons,
@@ -203,8 +209,10 @@
       const link = document.createElement("a");
       link.href = url;
       link.download = "lightkeepers-GOOD.json";
+      document.body.appendChild(link);
       link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      link.remove();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("GOOD export error:", err);
       importError = "Could not export GOOD.";

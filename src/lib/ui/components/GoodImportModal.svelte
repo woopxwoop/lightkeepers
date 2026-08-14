@@ -108,6 +108,10 @@
       fileError = "Paste GOOD JSON, or choose a file.";
       return;
     }
+    if (new TextEncoder().encode(text).byteLength > MAX_GOOD_FILE_BYTES) {
+      fileError = "JSON is too large (max 10 MB).";
+      return;
+    }
     fileError = "";
     onImport(text);
   }

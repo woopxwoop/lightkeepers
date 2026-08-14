@@ -12,37 +12,36 @@
     loadRosterWeapons,
   } from "$lib/app/roster-inventory";
   import {
-    applyCloudGoals,
     aggregateGoalCosts,
     cloneGoal,
     emptyGoalsState,
     findGoal,
     moveGoal,
     parseGoalsState,
-    removeGoal,
     replaceGoal,
     starredGoals,
     toggleGoalStarred,
   } from "$lib/calculator-goals";
   import {
+    autofillCharacterGoalState,
+    goalsHaveUnsavedChanges,
+    hydrateGoalsState,
+    readGoalsIfChanged,
+    saveGoalsState,
+  } from "$lib/calculator-goals-lifecycle";
+  import {
     captureGoals,
-    fetchGoalsCloud,
     goalsLocalRevision,
-    persistGoalsLocal,
-    postGoals,
     readGoalsLocal,
-    writeGoalsLocal,
   } from "$lib/calculator-goals-snapshot";
   import { authClient } from "$lib/auth-client";
   import type { Character, CharacterPortraitRef } from "$lib/definitions";
   import {
     appendCatalogCharacterGoal,
     appendCatalogWeaponGoal,
-    fetchPlannerTargetFromBuilds,
     pickModalCharacter,
     plannerCharacterOptions,
     plannerWeaponOptions,
-    simKeyForCatalogCharacter,
   } from "$lib/planner-goal-edits";
   import {
     FARM_KIND_LABEL,
@@ -59,7 +58,6 @@
   import { assetUrl } from "$lib/asset-urls";
   import { charactersOwned } from "$lib/stores";
   import { ownedNameIds } from "$lib/utils";
-  import { orderCharacterConfigs } from "$lib/upgrade-costs";
   import type { CalculatorGoalsState } from "$lib/types/calculator-goals";
   import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
@@ -112,11 +110,14 @@
       return goalsState.goals;
     }
   });
-  let hasUnsavedChanges = $derived.by(() => {
-    if (!savedSnapshot) return false;
-    if (pendingRemoveIds.size > 0) return true;
-    return captureGoals(goalsState).json !== savedSnapshot;
-  });
+  let hasUnsavedChanges = $derived(
+    goalsHaveUnsavedChanges({
+      hydrated,
+      state: goalsState,
+      savedSnapshot,
+      pendingRemoveIds,
+    }),
+  );
   let focusedGoals = $derived(starredGoals(savedGoals));
 
   function ensureCatalog() {
@@ -174,28 +175,20 @@
       if (document.visibilityState !== "visible") return;
       weekdayTick += 1;
       if (hydrated && !hasUnsavedChanges && !pickingGoals) {
-        commitSaved(readGoalsLocal());
+        const pending = readGoalsIfChanged(savedSnapshot);
+        if (pending) commitSaved(pending.state);
       }
     };
     document.addEventListener("visibilitychange", onVisible);
 
     void (async () => {
-      let local = readGoalsLocal();
-      if (local.goals.length === 0) {
-        try {
-          const { data: sess } = await authClient.getSession();
-          if (sess) {
-            const cloud = await fetchGoalsCloud();
-            if (cloud) {
-              local = applyCloudGoals(local, cloud);
-              persistGoalsLocal(local);
-            }
-          }
-        } catch {
-          /* keep local */
-        }
+      try {
+        const { data: sess } = await authClient.getSession();
+        const pending = await hydrateGoalsState(Boolean(sess));
+        commitSaved(pending.state);
+      } catch {
+        commitSaved(readGoalsLocal());
       }
-      commitSaved(local);
       hydrated = true;
       ensureCatalog();
       void loadRosterWeapons().catch(() => {});
@@ -208,8 +201,8 @@
   $effect(() => {
     void $goalsLocalRevision;
     if (!hydrated || hasUnsavedChanges || pickingGoals) return;
-    const pending = captureGoals(readGoalsLocal());
-    if (pending.json === savedSnapshot) return;
+    const pending = readGoalsIfChanged(savedSnapshot);
+    if (!pending) return;
     commitSaved(pending.state);
   });
 
@@ -282,29 +275,15 @@
 
   async function autofillCharacterTarget(nameId: string, goalId: string) {
     if (!catalog) return;
-    const row = catalog.characters.find((c) => c.name_id === nameId);
-    if (!row) return;
     const seq = ++autofillSeq;
-    const target = await fetchPlannerTargetFromBuilds(
+    const next = await autofillCharacterGoalState({
+      state: goalsState,
+      catalog,
       nameId,
-      row.promotes,
-      simKeyForCatalogCharacter(catalog, nameId),
-    );
-    if (seq !== autofillSeq || !target) return;
-    const current = findGoal(goalsState, goalId);
-    if (
-      !current ||
-      current.kind !== "character" ||
-      current.name_id !== nameId
-    ) {
-      return;
-    }
-    applySavedGoals(
-      replaceGoal(goalsState, {
-        ...current,
-        ...orderCharacterConfigs(current.start, target, row.promotes),
-      }),
-    );
+      goalId,
+    });
+    if (seq !== autofillSeq || !next) return;
+    applySavedGoals(next);
   }
 
   function addCharacterWith(nameId: string) {
@@ -364,48 +343,29 @@
     pendingRemoveIds = next;
   }
 
-  function goalsWithoutPendingRemoves(
-    state: CalculatorGoalsState,
-  ): CalculatorGoalsState {
-    let next = state;
-    for (const id of pendingRemoveIds) {
-      next = removeGoal(next, id);
-    }
-    return next;
-  }
-
   async function saveStars() {
     if (isSaving || !hasUnsavedChanges) return;
     isSaving = true;
     saveError = "";
-    const pending = captureGoals(goalsWithoutPendingRemoves(goalsState));
-    try {
-      if (!writeGoalsLocal(pending.json)) {
-        console.warn("localStorage unavailable — saving to memory only");
-      }
-      if ($session.data) {
-        const result = await postGoals(pending.state);
-        if (!result.ok) {
-          writeGoalsLocal(savedSnapshot);
-          saveError = result.message
-            ? `Sync failed (${result.status}): ${result.message}`
-            : `Sync failed (${result.status})`;
-          return;
-        }
-      }
-      pendingRemoveIds = new Set();
-      savedSnapshot = pending.json;
-      applySavedGoals(pending.state);
-      pickingGoals = false;
-      picking = null;
-      configuringId = null;
-      addError = "";
-    } catch {
-      writeGoalsLocal(savedSnapshot);
-      saveError = "Could not save goals";
-    } finally {
+    const result = await saveGoalsState({
+      state: goalsState,
+      pendingRemoveIds,
+      savedSnapshot,
+      cloud: Boolean($session.data),
+    });
+    if (!result.ok) {
+      saveError = result.message;
       isSaving = false;
+      return;
     }
+    pendingRemoveIds = new Set();
+    savedSnapshot = result.capture.json;
+    applySavedGoals(result.capture.state);
+    pickingGoals = false;
+    picking = null;
+    configuringId = null;
+    addError = "";
+    isSaving = false;
   }
 
   let focusedMaterials = $derived.by((): Record<string, number> => {
@@ -711,6 +671,7 @@
   bind:query={pickQuery}
   bind:sortOwnedFirst
   {ownedIds}
+  roster={$charactersOwned}
   getCharacter={portraitFor}
   onClose={cancelPick}
   onChoose={choosePick}

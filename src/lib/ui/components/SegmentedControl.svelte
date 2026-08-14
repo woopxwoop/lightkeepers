@@ -38,7 +38,7 @@
     display: inline-flex;
     border-radius: var(--radius-md);
     overflow: hidden;
-    border: var(--border-width) solid rgba(220, 224, 230, 0.35);
+    border: var(--border-width) solid var(--border-control-quiet);
   }
 
   .segment {

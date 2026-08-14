@@ -18,8 +18,8 @@ export const GET: RequestHandler = async ({
   getClientAddress,
 }) => {
   await enforceApiRateLimit({ request, getClientAddress });
-  if (isPlaywrightE2e()) return json({ weapons: [] });
   const user = requireUser(locals);
+  if (isPlaywrightE2e()) return json({ weapons: [] });
 
   const { data, error: err } = await selectUserRosterColumn(user.id, "weapons");
   assertNoDbError("GET /api/roster/weapons", err);

@@ -29,6 +29,7 @@
     onChoose,
     tile,
     toolbar,
+    filters,
   }: {
     open?: boolean;
     title: string;
@@ -44,6 +45,8 @@
     tile: Snippet<[PickModalOption]>;
     /** Optional controls beside the title (filters, toggles). */
     toolbar?: Snippet;
+    /** Optional chip filters between search and the grid. */
+    filters?: Snippet;
   } = $props();
 
   let searchEl: HTMLInputElement | null = $state(null);
@@ -132,6 +135,12 @@
         placeholder={searchPlaceholder}
         aria-label={searchPlaceholder}
       />
+
+      {#if filters}
+        <div class="pick-filters">
+          {@render filters()}
+        </div>
+      {/if}
 
       <div class="pick-grid">
         {#each filtered as opt (opt.value)}
@@ -251,6 +260,10 @@
     outline: none;
     border-color: var(--accent-1);
     box-shadow: 0 0 0 1px var(--accent-1);
+  }
+
+  .pick-filters {
+    flex-shrink: 0;
   }
 
   .pick-grid {

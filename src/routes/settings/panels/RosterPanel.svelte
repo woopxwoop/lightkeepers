@@ -17,7 +17,6 @@
   import RosterProgressDialog from "$lib/ui/components/RosterProgressDialog.svelte";
   import type { CharacterOwned, RosterProgress } from "$lib/definitions";
   import { cloneRosterProgress } from "$lib/roster-progress";
-  import { getRosterWeaponsCached } from "$lib/app/roster-inventory";
   import { weaponTypeLabel, ownedNameIds } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
@@ -113,11 +112,7 @@
       }
 
       if ($session.data) {
-        const weapons = getRosterWeaponsCached();
-        const result = await postRoster(
-          pending.roster,
-          weapons ? { weapons } : undefined,
-        );
+        const result = await postRoster(pending.roster);
         if (!result.ok) {
           restoreSavedSnapshot();
           rosterError = result.message
@@ -126,10 +121,6 @@
           return;
         }
         commitSaved(pending);
-        if (result.inventoryOmitted && weapons) {
-          rosterError =
-            "Roster saved; weapon inventory was not stored (migration pending).";
-        }
       } else {
         commitSaved(pending);
       }
@@ -179,9 +170,10 @@
       const prev = savedById.get(c.name_id);
       if (!prev) return count + 1;
       if (c.isOwned !== prev.isOwned) return count + 1;
+      // Same progress clone as captureRoster / rosterDiffersFromSnapshot.
       if (
-        JSON.stringify(c.progress ?? null) !==
-        JSON.stringify(prev.progress ?? null)
+        JSON.stringify(cloneRosterProgress(c.progress) ?? null) !==
+        JSON.stringify(cloneRosterProgress(prev.progress) ?? null)
       ) {
         return count + 1;
       }

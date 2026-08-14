@@ -15,6 +15,9 @@ let weaponsCached: InventoryWeapon[] | null = null;
 let artifactsCached: InventoryArtifact[] | null = null;
 let weaponsPending: Promise<InventoryWeapon[]> | null = null;
 let artifactsPending: Promise<InventoryArtifact[]> | null = null;
+/** Bumped on clear/seed so in-flight fetches cannot overwrite fresher state. */
+let weaponsGeneration = 0;
+let artifactsGeneration = 0;
 
 export function getRosterWeaponsCached(): InventoryWeapon[] | null {
   return weaponsCached;
@@ -30,16 +33,20 @@ export function setRosterInventory(input: {
   artifacts?: InventoryArtifact[];
 }): void {
   if (input.weapons) {
+    weaponsGeneration += 1;
     weaponsCached = input.weapons.map(cloneInventoryWeapon);
     weaponsPending = null;
   }
   if (input.artifacts) {
+    artifactsGeneration += 1;
     artifactsCached = input.artifacts.map(cloneInventoryArtifact);
     artifactsPending = null;
   }
 }
 
 export function clearRosterInventory(): void {
+  weaponsGeneration += 1;
+  artifactsGeneration += 1;
   weaponsCached = null;
   artifactsCached = null;
   weaponsPending = null;
@@ -62,35 +69,45 @@ export function loadRosterWeapons(): Promise<InventoryWeapon[]> {
   if (weaponsCached) return Promise.resolve(weaponsCached);
   if (weaponsPending) return weaponsPending;
 
-  weaponsPending = fetchSlice<InventoryWeapon>("/api/roster/weapons", "weapons")
+  const generation = weaponsGeneration;
+  const request = fetchSlice<InventoryWeapon>("/api/roster/weapons", "weapons")
     .then((result) => {
+      if (generation !== weaponsGeneration) {
+        return weaponsCached ?? [];
+      }
       if (result.unauthorized) return [];
       weaponsCached = result.rows.map(cloneInventoryWeapon);
       return weaponsCached;
     })
     .finally(() => {
-      weaponsPending = null;
+      if (weaponsPending === request) weaponsPending = null;
     });
 
-  return weaponsPending;
+  weaponsPending = request;
+  return request;
 }
 
 export function loadRosterArtifacts(): Promise<InventoryArtifact[]> {
   if (artifactsCached) return Promise.resolve(artifactsCached);
   if (artifactsPending) return artifactsPending;
 
-  artifactsPending = fetchSlice<InventoryArtifact>(
+  const generation = artifactsGeneration;
+  const request = fetchSlice<InventoryArtifact>(
     "/api/roster/artifacts",
     "artifacts",
   )
     .then((result) => {
+      if (generation !== artifactsGeneration) {
+        return artifactsCached ?? [];
+      }
       if (result.unauthorized) return [];
       artifactsCached = result.rows.map(cloneInventoryArtifact);
       return artifactsCached;
     })
     .finally(() => {
-      artifactsPending = null;
+      if (artifactsPending === request) artifactsPending = null;
     });
 
-  return artifactsPending;
+  artifactsPending = request;
+  return request;
 }

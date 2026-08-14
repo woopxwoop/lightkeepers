@@ -41,6 +41,9 @@ export interface ArtifactSetData {
 /** Populated in place after `ensureEquipmentData()` resolves. */
 export const weaponByKey = new Map<string, WeaponData>();
 
+/** Same rows as `weaponByKey`, keyed by numeric game id. */
+export const weaponById = new Map<number, WeaponData>();
+
 /** Populated in place after `ensureEquipmentData()` resolves. */
 export const artifactSetByKey = new Map<string, ArtifactSetData>();
 
@@ -72,8 +75,10 @@ export function ensureEquipmentData(): Promise<void> {
       (artifactsMod as unknown as ArtifactSetData[]);
 
     weaponByKey.clear();
+    weaponById.clear();
     for (const [key, value] of buildGoodKeyMap(weaponsRaw)) {
       weaponByKey.set(key, value);
+      weaponById.set(value.id, value);
     }
     artifactSetByKey.clear();
     for (const [key, value] of buildGoodKeyMap(artifactSetsRaw)) {

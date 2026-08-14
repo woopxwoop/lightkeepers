@@ -221,6 +221,7 @@
             role="menuitem"
             onclick={() => {
               close();
+              triggerEl?.focus();
               item.onclick?.();
             }}
           >

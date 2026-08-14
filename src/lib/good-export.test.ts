@@ -79,4 +79,45 @@ describe("serializeGoodDocument", () => {
       [["TravelerPyro", 90, 6]],
     );
   });
+
+  it("prefers equal level/constellation Traveler with higher talents", () => {
+    const roster = [
+      {
+        name: "Traveler",
+        name_id: "PlayerBoy",
+        element: "Pyro",
+        isOwned: true,
+        progress: {
+          level: 90,
+          ascension: 6,
+          constellation: 0,
+          talents: { normal: 1, skill: 1, burst: 1 },
+          weapon: null,
+        },
+      },
+      {
+        name: "Traveler",
+        name_id: "PlayerBoy-Pyro",
+        element: "Pyro",
+        isOwned: true,
+        progress: {
+          level: 90,
+          ascension: 6,
+          constellation: 0,
+          talents: { normal: 8, skill: 8, burst: 8 },
+          weapon: null,
+        },
+      },
+    ] as CharacterOwned[];
+    const doc = serializeGoodDocument({ roster });
+    assert.deepEqual(
+      doc.characters?.map((c) => [
+        c.key,
+        c.talent.auto,
+        c.talent.skill,
+        c.talent.burst,
+      ]),
+      [["TravelerPyro", 8, 8, 8]],
+    );
+  });
 });

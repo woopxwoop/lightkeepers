@@ -28,6 +28,8 @@
     sortBy = $bindable("name" as CharacterSortKey),
     sortAsc = $bindable(true),
     filtersOpen = $bindable(false),
+    showSearch = true,
+    showSort = true,
     class: className = "",
   }: {
     search?: string;
@@ -38,6 +40,10 @@
     sortBy?: CharacterSortKey;
     sortAsc?: boolean;
     filtersOpen?: boolean;
+    /** When false, omit the search field (pick modal keeps its own). */
+    showSearch?: boolean;
+    /** When false, omit sort controls. */
+    showSort?: boolean;
     class?: string;
   } = $props();
 
@@ -57,13 +63,15 @@
 
 <div class="filter-bar {className}">
   <div class="toolbar">
-    <input
-      type="search"
-      placeholder="Search…"
-      bind:value={search}
-      class="search-input"
-      aria-label="Search characters"
-    />
+    {#if showSearch}
+      <input
+        type="search"
+        placeholder="Search…"
+        bind:value={search}
+        class="search-input"
+        aria-label="Search characters"
+      />
+    {/if}
     <button
       type="button"
       class="tool-btn"
@@ -74,23 +82,25 @@
       <IconFilter size={14} />
       Filters
     </button>
-    <Select
-      options={[...SORT_OPTIONS]}
-      bind:value={sortBy}
-      trigger="Sort"
-      aria-label="Sort by"
-    />
-    <button
-      type="button"
-      class="tool-btn"
-      onclick={() => (sortAsc = !sortAsc)}
-      aria-label={sortAsc ? "Ascending" : "Descending"}
-      title={sortAsc ? "Ascending" : "Descending"}
-    >
-      <span class:chevron-flip={sortAsc}>
-        <IconChevronDown size={12} strokeWidth={2.5} />
-      </span>
-    </button>
+    {#if showSort}
+      <Select
+        options={[...SORT_OPTIONS]}
+        bind:value={sortBy}
+        trigger="Sort"
+        aria-label="Sort by"
+      />
+      <button
+        type="button"
+        class="tool-btn"
+        onclick={() => (sortAsc = !sortAsc)}
+        aria-label={sortAsc ? "Ascending" : "Descending"}
+        title={sortAsc ? "Ascending" : "Descending"}
+      >
+        <span class:chevron-flip={sortAsc}>
+          <IconChevronDown size={12} strokeWidth={2.5} />
+        </span>
+      </button>
+    {/if}
   </div>
 
   {#if filtersOpen}

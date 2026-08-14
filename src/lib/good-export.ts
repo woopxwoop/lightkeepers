@@ -28,11 +28,18 @@ function goodExportCharacterKey(row: CharacterOwned): string | null {
 }
 
 function isMoreAdvanced(next: ICharacter, existing: ICharacter): boolean {
-  return (
-    next.level > existing.level ||
-    (next.level === existing.level &&
-      next.constellation > existing.constellation)
-  );
+  if (next.level !== existing.level) return next.level > existing.level;
+  if (next.constellation !== existing.constellation) {
+    return next.constellation > existing.constellation;
+  }
+  if (next.ascension !== existing.ascension) {
+    return next.ascension > existing.ascension;
+  }
+  const nt = next.talent;
+  const et = existing.talent;
+  if (nt.auto !== et.auto) return nt.auto > et.auto;
+  if (nt.skill !== et.skill) return nt.skill > et.skill;
+  return nt.burst > et.burst;
 }
 
 export function serializeGoodDocument(input: {

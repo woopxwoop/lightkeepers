@@ -19,18 +19,15 @@
     formatMaterialSourceLine,
     collapseCraftRanks,
     craftRanksCanExpand,
-    orderCharacterConfigs,
   } from "$lib/upgrade-costs";
   import {
     aggregateGoalCosts,
-    applyCloudGoals,
     costsForGoal,
     emptyAggregate,
     emptyGoalsState,
     findGoal,
     moveGoal,
     parseGoalsState,
-    removeGoal,
     replaceGoal,
     starredGoals,
     toggleGoalStarred,
@@ -38,22 +35,22 @@
   import {
     appendCatalogCharacterGoal,
     appendCatalogWeaponGoal,
-    fetchPlannerTargetFromBuilds,
     pickModalCharacter,
     plannerCharacterOptions,
     plannerWeaponOptions,
     resolveCatalogCharacterId,
-    simKeyForCatalogCharacter,
   } from "$lib/planner-goal-edits";
   import {
+    autofillCharacterGoalState,
+    goalsHaveUnsavedChanges,
+    hydrateGoalsState,
+    readGoalsIfChanged,
+    saveGoalsState,
+  } from "$lib/calculator-goals-lifecycle";
+  import {
     captureGoals,
-    fetchGoalsCloud,
-    goalsDiffersFromSnapshot,
     goalsLocalRevision,
-    persistGoalsLocal,
-    postGoals,
     readGoalsLocal,
-    writeGoalsLocal,
     type GoalsCapture,
   } from "$lib/calculator-goals-snapshot";
   import { nextSearchPath } from "$lib/query-state";
@@ -94,6 +91,15 @@
   const session = authClient.useSession();
 
   /** Dirty ignores selectedId — picking a row shouldn't demand Save. */
+  let hasUnsavedChanges = $derived(
+    goalsHaveUnsavedChanges({
+      hydrated: goalsHydrated,
+      state: goalsState,
+      savedSnapshot,
+      pendingRemoveIds,
+    }),
+  );
+  let savedVisible = $derived(showSaved && !hasUnsavedChanges);
   let parsedSavedSnapshot = $derived.by((): CalculatorGoalsState | null => {
     if (!savedSnapshot) return null;
     try {
@@ -102,18 +108,6 @@
       return null;
     }
   });
-  let hasUnsavedChanges = $derived.by(() => {
-    if (!goalsHydrated || !savedSnapshot) return false;
-    if (pendingRemoveIds.size > 0) return true;
-    if (!parsedSavedSnapshot) {
-      return goalsDiffersFromSnapshot(goalsState, savedSnapshot);
-    }
-    return (
-      JSON.stringify(parseGoalsState(goalsState).goals) !==
-      JSON.stringify(parsedSavedSnapshot.goals)
-    );
-  });
-  let savedVisible = $derived(showSaved && !hasUnsavedChanges);
   let changedCount = $derived.by(() => {
     if (!savedSnapshot) return 0;
     if (!parsedSavedSnapshot) return goalsState.goals.length;
@@ -164,30 +158,10 @@
     let cancelled = false;
 
     async function hydrate() {
-      const local = readGoalsLocal();
-      let next = local;
-
-      try {
-        const { data: sess } = await authClient.getSession();
-        if (cancelled) return;
-
-        if (sess) {
-          const cloud = await fetchGoalsCloud();
-          if (cancelled) return;
-          if (cloud) {
-            // Saved cloud list wins (including intentionally empty []).
-            next = applyCloudGoals(local, cloud);
-            persistGoalsLocal(next);
-          }
-          // No cloud row: keep local guest goals; user Saves to upload.
-        }
-      } catch {
-        if (cancelled) return;
-        next = local;
-      }
-
+      const { data: sess } = await authClient.getSession();
       if (cancelled) return;
-      const pending = captureGoals(next);
+      const pending = await hydrateGoalsState(Boolean(sess));
+      if (cancelled) return;
       goalsState = pending.state;
       savedSnapshot = pending.json;
       goalsHydrated = true;
@@ -209,8 +183,8 @@
   $effect(() => {
     void $goalsLocalRevision;
     if (!browser || !goalsHydrated || hasUnsavedChanges) return;
-    const pending = captureGoals(readGoalsLocal());
-    if (pending.json === savedSnapshot) return;
+    const pending = readGoalsIfChanged(savedSnapshot);
+    if (!pending) return;
     goalsState = pending.state;
     savedSnapshot = pending.json;
   });
@@ -241,10 +215,6 @@
     goalsState = next;
   }
 
-  function restoreSavedSnapshot() {
-    writeGoalsLocal(savedSnapshot);
-  }
-
   function commitSaved(pending: GoalsCapture) {
     savedSnapshot = pending.json;
     goalsState = pending.state;
@@ -265,50 +235,27 @@
     }
   }
 
-  function goalsWithoutPendingRemoves(
-    state: CalculatorGoalsState,
-  ): CalculatorGoalsState {
-    let next = state;
-    for (const id of pendingRemoveIds) {
-      next = removeGoal(next, id);
-    }
-    return next;
-  }
-
   async function saveGoals() {
     if (isSaving) return;
     isSaving = true;
     saveError = "";
 
-    const pending = captureGoals(goalsWithoutPendingRemoves(goalsState));
+    const result = await saveGoalsState({
+      state: goalsState,
+      pendingRemoveIds,
+      savedSnapshot,
+      cloud: Boolean($session.data),
+    });
 
-    try {
-      if (!writeGoalsLocal(pending.json)) {
-        console.warn("localStorage unavailable — saving to memory only");
-      }
-
-      if ($session.data) {
-        const result = await postGoals(pending.state);
-        if (!result.ok) {
-          restoreSavedSnapshot();
-          saveError = result.message
-            ? `Sync failed (${result.status}): ${result.message}`
-            : `Sync failed (${result.status}) — goals not saved to cloud`;
-          return;
-        }
-        pendingRemoveIds = new Set();
-        commitSaved(pending);
-      } else {
-        pendingRemoveIds = new Set();
-        commitSaved(pending);
-      }
-    } catch (e) {
-      restoreSavedSnapshot();
-      console.error("Goals save error:", e);
-      saveError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
-    } finally {
+    if (!result.ok) {
+      saveError = result.message;
       isSaving = false;
+      return;
     }
+
+    pendingRemoveIds = new Set();
+    commitSaved(result.capture);
+    isSaving = false;
 
     setTimeout(() => {
       showSaved = false;
@@ -328,29 +275,15 @@
 
   async function autofillCharacterTarget(nameId: string, goalId: string) {
     if (!catalog) return;
-    const row = catalog.characters.find((c) => c.name_id === nameId);
-    if (!row) return;
     const seq = ++autofillSeq;
-    const target = await fetchPlannerTargetFromBuilds(
+    const next = await autofillCharacterGoalState({
+      state: goalsState,
+      catalog,
       nameId,
-      row.promotes,
-      simKeyForCatalogCharacter(catalog, nameId),
-    );
-    if (seq !== autofillSeq || !target) return;
-    const current = findGoal(goalsState, goalId);
-    if (
-      !current ||
-      current.kind !== "character" ||
-      current.name_id !== nameId
-    ) {
-      return;
-    }
-    commitGoals(
-      replaceGoal(goalsState, {
-        ...current,
-        ...orderCharacterConfigs(current.start, target, row.promotes),
-      }),
-    );
+      goalId,
+    });
+    if (seq !== autofillSeq || !next) return;
+    commitGoals(next);
   }
 
   /** Pick modal after + Character / + Weapon. */
@@ -852,6 +785,7 @@
     bind:query={pickQuery}
     bind:sortOwnedFirst
     {ownedIds}
+    roster={$charactersOwned}
     getCharacter={portraitFor}
     onClose={cancelPick}
     onChoose={choosePick}

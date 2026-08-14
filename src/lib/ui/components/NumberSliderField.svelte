@@ -305,6 +305,7 @@
       onpointermove={onTrackPointerMove}
       onpointerup={onTrackPointerUp}
       onpointercancel={onTrackPointerUp}
+      onlostpointercapture={onTrackPointerUp}
     >
       {#if hasOrigin}
         <span class="nsf-remain" aria-hidden="true"></span>
@@ -419,7 +420,7 @@
   }
 
   .nsf-num:disabled {
-    border-color: rgba(192, 196, 204, 0.55);
+    border-color: var(--border-control-quiet);
     color: var(--foreground-mid);
     cursor: default;
     opacity: 1;

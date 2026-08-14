@@ -185,7 +185,7 @@
       use:portal
       bind:this={menuEl}
     >
-      <div class="nav-apps-grid">
+      <div class="nav-apps-grid" role="presentation">
         {#each items as item (item.id)}
           <button
             type="button"

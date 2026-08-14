@@ -136,3 +136,33 @@ export function characterFiltersActive(state: CharacterFilterState): boolean {
     (state.ownership ?? "all") !== "all"
   );
 }
+
+/** Chip filters only (search is owned by the pick modal). */
+export function characterMatchesChipFilters(
+  c: Pick<
+    CharacterOwned,
+    "rarity" | "element" | "weapon_type" | "isOwned"
+  >,
+  state: Omit<CharacterFilterState, "search" | "sortBy" | "sortAsc"> = {},
+): boolean {
+  const rarity = state.rarity ?? new Set<string>();
+  const elements = state.elements ?? new Set<string>();
+  const weapons = state.weapons ?? new Set<string>();
+  const ownership = state.ownership ?? "all";
+
+  const matchesRarity =
+    rarity.size === 0 ||
+    (rarity.has("5") && c.rarity === 5) ||
+    (rarity.has("4") && c.rarity === 4);
+  const matchesElement =
+    elements.size === 0 || (c.element != null && elements.has(c.element));
+  const matchesWeapon =
+    weapons.size === 0 ||
+    (c.weapon_type != null && weapons.has(weaponTypeLabel(c.weapon_type)));
+  const matchesOwnership =
+    ownership === "all" ||
+    (ownership === "owned" && c.isOwned) ||
+    (ownership === "unowned" && !c.isOwned);
+
+  return matchesRarity && matchesElement && matchesWeapon && matchesOwnership;
+}

@@ -38,6 +38,15 @@ import {
 } from "$lib/roster-progress";
 import { isOwnedNameId, plannerSimKey, toGoodKey } from "$lib/utils";
 import {
+  characterMatchesChipFilters,
+  type OwnershipFilter,
+} from "$lib/character-filter";
+import {
+  filterWeapons,
+  weaponFilterTypeLabel,
+  type WeaponFilterState,
+} from "$lib/weapon-filter";
+import {
   MAX_ASCENSION,
   MAX_LEVEL,
   orderCharacterConfigs,
@@ -172,6 +181,71 @@ export function plannerWeaponOptions(
     value: String(w.id),
     label: `${w.name} (${w.rankLevel}★)`,
   }));
+}
+
+/**
+ * Keep pick options that pass character chip filters.
+ * Roster supplies rarity / weapon_type; catalog covers element; ownedIds for ownership.
+ */
+export function filterPlannerCharacterPickOptions(
+  options: readonly PlannerPickOption[],
+  roster: readonly CharacterOwned[],
+  catalog: UpgradeCostsCatalog | null,
+  ownedIds: ReadonlySet<string>,
+  state: {
+    rarity?: Set<string>;
+    elements?: Set<string>;
+    weapons?: Set<string>;
+    ownership?: OwnershipFilter;
+  },
+): PlannerPickOption[] {
+  const byNameId = new Map(roster.map((c) => [c.name_id, c]));
+  return options.filter((opt) => {
+    const cat = catalog?.characters.find((c) => c.name_id === opt.value);
+    const owned = byNameId.get(opt.value);
+    const travelerBase =
+      !owned &&
+      (opt.value.startsWith("PlayerBoy-") || opt.value.startsWith("PlayerGirl-"))
+        ? (byNameId.get("PlayerBoy") ?? byNameId.get("PlayerGirl"))
+        : undefined;
+    const base = owned ?? travelerBase;
+    const row = {
+      rarity: base?.rarity ?? 0,
+      element: cat?.element ?? base?.element ?? null,
+      weapon_type: base?.weapon_type ?? null,
+      isOwned: isOwnedNameId(opt.value, ownedIds),
+    };
+    return characterMatchesChipFilters(row, state);
+  });
+}
+
+export function filterPlannerWeaponPickOptions(
+  options: readonly PlannerPickOption[],
+  catalog: UpgradeCostsCatalog | null,
+  state: WeaponFilterState,
+  resolveWeapon: (
+    id: number,
+  ) => { stars: number; weaponType: string } | undefined,
+): PlannerPickOption[] {
+  const byId = new Map(
+    (catalog?.weapons ?? []).map((w) => [String(w.id), w] as const),
+  );
+  const rows = options.map((opt) => {
+    const w = byId.get(opt.value);
+    const id = Number(opt.value);
+    const meta = Number.isFinite(id) ? resolveWeapon(id) : undefined;
+    return {
+      option: opt,
+      id,
+      name: w?.name ?? opt.label,
+      rarity: meta?.stars ?? w?.rankLevel ?? 0,
+      typeLabel: weaponFilterTypeLabel(meta?.weaponType ?? null),
+    };
+  });
+  const kept = new Set(
+    filterWeapons(rows, state).map((r) => r.option.value),
+  );
+  return options.filter((o) => kept.has(o.value));
 }
 
 export function pickModalCharacter(

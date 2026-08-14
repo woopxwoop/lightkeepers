@@ -5,6 +5,8 @@ import {
   MAX_GOAL_ID_LENGTH,
   addCharacterResult,
   addWeaponResult,
+  addAggregate,
+  aggregateGoalCosts,
   appendGoal,
   applyCloudGoals,
   createCharacterGoal,
@@ -18,6 +20,7 @@ import {
   starredGoals,
   toggleGoalStarred,
 } from "./calculator-goals.ts";
+import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
 
 describe("calculator goals", () => {
   it("parseGoalsState drops invalid entries and caps selection", () => {
@@ -205,6 +208,50 @@ describe("calculator goals", () => {
     assert.equal(agg.characterExp, 100);
     assert.equal(agg.weaponExp, 50);
     assert.deepEqual(agg.materials, { "1": 5, "2": 1 });
+  });
+
+  it("addAggregate merges mora, EXP pools, and materials", () => {
+    const into = emptyAggregate();
+    addAggregate(into, {
+      mora: 10,
+      characterExp: 100,
+      weaponExp: 0,
+      materials: { "1": 2 },
+    });
+    addAggregate(into, {
+      mora: 5,
+      characterExp: 0,
+      weaponExp: 50,
+      materials: { "1": 1, "2": 3 },
+    });
+    assert.equal(into.mora, 15);
+    assert.equal(into.characterExp, 100);
+    assert.equal(into.weaponExp, 50);
+    assert.deepEqual(into.materials, { "1": 3, "2": 3 });
+  });
+
+  it("aggregateGoalCosts skips missing catalog rows", () => {
+    const catalog: UpgradeCostsCatalog = {
+      characters: [],
+      weapons: [],
+      materials: {},
+      curves: {
+        avatarLevelExp: [],
+        weaponLevelExpByRarity: {},
+        avatarExpItems: [],
+        weaponExpItems: [],
+      },
+    };
+    assert.deepEqual(
+      aggregateGoalCosts(
+        [
+          createCharacterGoal("Missing", { id: "c" }),
+          createWeaponGoal(999, { id: "w" }),
+        ],
+        catalog,
+      ),
+      emptyAggregate(),
+    );
   });
 
   it("keeps starred flags and filters starredGoals", () => {

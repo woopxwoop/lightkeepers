@@ -18,8 +18,8 @@ export const GET: RequestHandler = async ({
   getClientAddress,
 }) => {
   await enforceApiRateLimit({ request, getClientAddress });
-  if (isPlaywrightE2e()) return json({ artifacts: [] });
   const user = requireUser(locals);
+  if (isPlaywrightE2e()) return json({ artifacts: [] });
 
   const { data, error: err } = await selectUserRosterColumn(
     user.id,
