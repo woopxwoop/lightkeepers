@@ -4,8 +4,14 @@
  * seedClientStores — sync, safe during SSR/hydration (versions + local roster).
  * bootstrapClient — onMount only: warm /api/static, sync /api/roster if logged in.
  * Owned teams stay lazy (Abyss / Stygian / Pulls call ensureTeamsOwned).
+ *
+ * Roster sync on login:
+ * - no cloud row → upload local
+ * - cloud differs from local → confirm use-cloud vs upload-local
+ * - same → no-op
  */
 
+import { get } from "svelte/store";
 import type { Character, CharacterOwned } from "$lib/definitions";
 import { authClient } from "$lib/auth-client";
 import {
@@ -20,6 +26,12 @@ import {
 import { isNewCharacter } from "$lib/is-new-character";
 import { isBetaCharacter } from "$lib/is-beta-character";
 import { parseRosterProgress } from "$lib/roster-progress";
+import {
+  postRoster,
+  rostersDifferForSync,
+  writeRosterLocal,
+} from "$lib/roster-snapshot";
+import { promptRosterSyncConflict } from "$lib/app/roster-sync-conflict";
 
 type LayoutHydration = {
   characters: Character[];
@@ -33,6 +45,12 @@ type CachedOwnedEntry = {
   isOwned?: unknown;
   progress?: unknown;
 };
+
+type CloudRosterFetch =
+  | { status: "guest" }
+  | { status: "error" }
+  | { status: "missing" }
+  | { status: "ok"; roster: CharacterOwned[] };
 
 /**
  * Reads and validates the cached roster from localStorage.
@@ -108,20 +126,38 @@ function mergeOwnedFlags(
   });
 }
 
-async function loadDbRoster(
+async function fetchCloudRoster(
   characters: Character[],
-): Promise<CharacterOwned[] | null> {
+): Promise<CloudRosterFetch> {
   try {
     const { data: session } = await authClient.getSession();
-    if (!session) return null;
+    if (!session) return { status: "guest" };
 
     const res = await fetch("/api/roster");
-    if (!res.ok) return null;
+    if (!res.ok) return { status: "error" };
     const { roster } = await res.json();
-    if (!Array.isArray(roster)) return null;
-    return mergeOwnedFlags(characters, roster);
+    if (roster === null) return { status: "missing" };
+    if (!Array.isArray(roster)) return { status: "error" };
+    return { status: "ok", roster: mergeOwnedFlags(characters, roster) };
   } catch {
-    return null;
+    return { status: "error" };
+  }
+}
+
+function applyCloudRoster(roster: CharacterOwned[]): void {
+  charactersOwned.set(roster);
+  writeRosterLocal(JSON.stringify(roster));
+  invalidateTeamsOwned();
+  invalidateNearMissTeams();
+}
+
+async function uploadLocalRoster(roster: CharacterOwned[]): Promise<void> {
+  const result = await postRoster(roster);
+  if (!result.ok) {
+    console.error("[roster sync] upload failed", {
+      status: result.status,
+      message: result.message,
+    });
   }
 }
 
@@ -153,15 +189,22 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   // Investment JSON is loaded on Teams / character routes (not every visit).
   void ensureStaticBoards();
 
-  const dbRoster = await loadDbRoster(data.characters);
+  const cloud = await fetchCloudRoster(data.characters);
+  if (cloud.status === "guest" || cloud.status === "error") return;
 
-  // DB takes precedence — update store, sync localStorage, invalidate team caches
-  if (dbRoster) {
-    charactersOwned.set(dbRoster);
-    try {
-      localStorage.setItem("charactersOwned", JSON.stringify(dbRoster));
-    } catch {}
-    invalidateTeamsOwned();
-    invalidateNearMissTeams();
+  const localRoster = get(charactersOwned);
+
+  if (cloud.status === "missing") {
+    await uploadLocalRoster(localRoster);
+    return;
+  }
+
+  if (!rostersDifferForSync(localRoster, cloud.roster)) return;
+
+  const choice = await promptRosterSyncConflict(localRoster, cloud.roster);
+  if (choice === "use-cloud") {
+    applyCloudRoster(cloud.roster);
+  } else if (choice === "upload-local") {
+    await uploadLocalRoster(localRoster);
   }
 }

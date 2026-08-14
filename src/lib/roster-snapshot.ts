@@ -52,6 +52,39 @@ export function rosterDiffersFromSnapshot(
   return JSON.stringify(roster) !== savedJson;
 }
 
+/** Sync-relevant fields only — catalog metadata is ignored for local↔cloud compare. */
+export type RosterSyncEntry = {
+  name_id: string;
+  isOwned: boolean;
+  progress: RosterProgress | null;
+};
+
+/** Normalize a hydrated roster for stable local↔cloud equality checks. */
+export function toRosterSyncEntries(
+  roster: CharacterOwned[],
+): RosterSyncEntry[] {
+  return roster
+    .map((c) => ({
+      name_id: c.name_id,
+      isOwned: c.isOwned,
+      progress: cloneRosterProgress(c.progress) ?? null,
+    }))
+    .sort((a, b) =>
+      a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0,
+    );
+}
+
+/** True when owned flags or progress differ between two rosters. */
+export function rostersDifferForSync(
+  a: CharacterOwned[],
+  b: CharacterOwned[],
+): boolean {
+  return (
+    JSON.stringify(toRosterSyncEntries(a)) !==
+    JSON.stringify(toRosterSyncEntries(b))
+  );
+}
+
 /** Persist roster JSON to localStorage. Returns false if storage is unavailable. */
 export function writeRosterLocal(json: string): boolean {
   try {

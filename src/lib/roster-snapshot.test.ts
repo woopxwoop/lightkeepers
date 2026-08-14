@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { captureRoster, rosterDiffersFromSnapshot } from "./roster-snapshot.ts";
+import {
+  captureRoster,
+  rosterDiffersFromSnapshot,
+  rostersDifferForSync,
+  toRosterSyncEntries,
+} from "./roster-snapshot.ts";
 import type { CharacterOwned } from "./definitions.ts";
 
 function char(name_id: string, isOwned: boolean): CharacterOwned {
@@ -49,5 +54,49 @@ describe("roster snapshot", () => {
     const saved = JSON.stringify(roster);
     assert.equal(rosterDiffersFromSnapshot(roster, saved), false);
     assert.equal(rosterDiffersFromSnapshot([char("a", false)], saved), true);
+  });
+
+  it("rostersDifferForSync ignores catalog-only differences", () => {
+    const local = [{ ...char("a", true), rarity: 5 }] as CharacterOwned[];
+    const cloud = [{ ...char("a", true), rarity: 4 }] as CharacterOwned[];
+    assert.equal(rostersDifferForSync(local, cloud), false);
+  });
+
+  it("rostersDifferForSync detects owned and progress changes", () => {
+    const base = [char("b", true), char("a", false)];
+    assert.equal(
+      rostersDifferForSync(base, [char("a", false), char("b", true)]),
+      false,
+    );
+    assert.equal(
+      rostersDifferForSync(base, [char("a", true), char("b", true)]),
+      true,
+    );
+
+    const withProgress: CharacterOwned[] = [
+      {
+        ...char("a", true),
+        progress: {
+          level: 90,
+          ascension: 6,
+          constellation: 0,
+          talents: { normal: 1, skill: 1, burst: 1 },
+          weapon: null,
+        },
+      },
+    ];
+    const withoutProgress = [char("a", true)];
+    assert.equal(rostersDifferForSync(withProgress, withoutProgress), true);
+  });
+
+  it("toRosterSyncEntries sorts by name_id and normalizes null progress", () => {
+    const entries = toRosterSyncEntries([
+      char("b", false),
+      { ...char("a", true), progress: undefined },
+    ]);
+    assert.deepEqual(entries, [
+      { name_id: "a", isOwned: true, progress: null },
+      { name_id: "b", isOwned: false, progress: null },
+    ]);
   });
 });
