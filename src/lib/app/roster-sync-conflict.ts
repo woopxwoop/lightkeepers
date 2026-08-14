@@ -24,6 +24,11 @@ export function promptRosterSyncConflict(
   cloud: CharacterOwned[],
   error: string | null = null,
 ): Promise<RosterSyncChoice> {
+  const previous = get(rosterSyncConflict);
+  if (previous) {
+    previous.resolve("dismiss");
+  }
+
   return new Promise((resolve) => {
     rosterSyncConflict.set({
       local,
@@ -45,5 +50,4 @@ export function cancelRosterSyncConflict(): void {
   const pending = get(rosterSyncConflict);
   if (!pending) return;
   pending.resolve("dismiss");
-  rosterSyncConflict.set(null);
 }

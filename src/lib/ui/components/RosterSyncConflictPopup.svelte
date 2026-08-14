@@ -36,7 +36,6 @@
     if (!pending || busy) return;
     busy = true;
     pending.resolve(choice);
-    busy = false;
   }
 
   function dismiss(): void {
@@ -126,7 +125,11 @@
   {@const constellationChanged =
     (bits?.constellation ?? null) !== (other?.constellation ?? null)}
   {@const talentsChanged = (bits?.talents ?? null) !== (other?.talents ?? null)}
-  {@const weaponChanged = (bits?.weapon ?? null) !== (other?.weapon ?? null)}
+  {@const weaponChanged =
+    (bits?.weapon?.key ?? null) !== (other?.weapon?.key ?? null) ||
+    (bits?.weapon?.level ?? null) !== (other?.weapon?.level ?? null) ||
+    (bits?.weapon?.ascension ?? null) !== (other?.weapon?.ascension ?? null) ||
+    (bits?.weapon?.refinement ?? null) !== (other?.weapon?.refinement ?? null)}
   <div class="diff-cell-stack">
     {#if args.ownedChanged}
       <span
@@ -154,7 +157,14 @@
             <span class="bit-changed">{bits.talents}</span>
           {/if}
           {#if weaponChanged}
-            <span class="bit-changed">{bits.weapon ?? "—"}</span>
+            <span class="bit-changed">
+              {#if bits.weapon}
+                {bits.weapon.key} Lv{bits.weapon.level} A{bits.weapon.ascension}
+                R{bits.weapon.refinement}
+              {:else}
+                —
+              {/if}
+            </span>
           {/if}
         </div>
       {/if}
