@@ -7,7 +7,10 @@
   import { weaponById } from "$lib/equipment-data";
   import { useEquipmentData } from "$lib/equipment-data.svelte";
   import type { OwnershipFilter } from "$lib/character-filter";
-  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
+  import type {
+    UpgradeCostsCatalog,
+    WeaponUpgradeCosts,
+  } from "$lib/types/upgrade-costs";
   import { isOwnedNameId } from "$lib/utils";
   import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
@@ -103,7 +106,7 @@
   });
 
   let weaponByCatalogId = $derived.by(() => {
-    const map = new Map<string, NonNullable<typeof catalog>["weapons"][number]>();
+    const map = new Map<string, WeaponUpgradeCosts>();
     for (const w of catalog?.weapons ?? []) {
       map.set(String(w.id), w);
     }

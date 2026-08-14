@@ -267,4 +267,47 @@ describe("filterPlannerWeaponPickOptions", () => {
       ["3"],
     );
   });
+
+  it("falls back to catalog rankLevel when weapon metadata is missing", () => {
+    const catalog: UpgradeCostsCatalog = {
+      ...catalogWith([]),
+      weapons: [
+        {
+          id: 4,
+          name: "Unresolved",
+          rankLevel: 4,
+          weaponPromoteId: 1,
+          icon: "d",
+          promotes: [],
+        },
+        {
+          id: 5,
+          name: "Low",
+          rankLevel: 3,
+          weaponPromoteId: 1,
+          icon: "e",
+          promotes: [],
+        },
+      ],
+    };
+    const options = plannerWeaponOptions(catalog);
+    const byRarity = filterPlannerWeaponPickOptions(
+      options,
+      catalog,
+      { rarity: new Set(["4", "5"]) },
+      () => undefined,
+    );
+    assert.deepEqual(
+      byRarity.map((o) => o.value),
+      ["4"],
+    );
+    // No type label without metadata — type chips exclude unresolved rows.
+    const byType = filterPlannerWeaponPickOptions(
+      options,
+      catalog,
+      { rarity: new Set(["4", "5"]), types: new Set(["Sword"]) },
+      () => undefined,
+    );
+    assert.deepEqual(byType.map((o) => o.value), []);
+  });
 });

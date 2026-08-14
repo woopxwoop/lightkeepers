@@ -39,6 +39,7 @@
       pasteText = "";
       fileError = "";
       readGeneration += 1;
+      readingFile = false;
       return;
     }
     const previous =
@@ -97,7 +98,9 @@
         fileError = "Couldn't read that file.";
       }
     } finally {
-      readingFile = false;
+      if (generation === readGeneration) {
+        readingFile = false;
+      }
     }
   }
 

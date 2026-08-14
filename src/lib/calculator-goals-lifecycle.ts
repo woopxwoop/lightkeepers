@@ -112,7 +112,8 @@ export async function saveGoalsState(input: {
     goalsWithoutPendingRemoves(input.state, input.pendingRemoveIds),
   );
   try {
-    if (!writeGoalsLocal(pending.json)) {
+    const localOk = writeGoalsLocal(pending.json);
+    if (!localOk) {
       console.warn("localStorage unavailable — saving to memory only");
     }
     if (input.cloud) {
@@ -126,6 +127,13 @@ export async function saveGoalsState(input: {
             : `Sync failed (${result.status}) — goals not saved to cloud`,
         };
       }
+      return { ok: true, capture: pending };
+    }
+    if (!localOk) {
+      return {
+        ok: false,
+        message: "Could not save goals locally",
+      };
     }
     return { ok: true, capture: pending };
   } catch (e) {

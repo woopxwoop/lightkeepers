@@ -46,6 +46,7 @@
             type="button"
             class="chip"
             class:chip-active={typeFilter.has(wt)}
+            aria-pressed={typeFilter.has(wt)}
             onclick={() => (typeFilter = toggleFilterSet(typeFilter, wt))}
             >{wt}</button
           >
@@ -56,6 +57,7 @@
           type="button"
           class="chip"
           class:chip-active={rarityFilter.has("5")}
+          aria-pressed={rarityFilter.has("5")}
           onclick={() => (rarityFilter = toggleFilterSet(rarityFilter, "5"))}
           >5★</button
         >
@@ -63,6 +65,7 @@
           type="button"
           class="chip"
           class:chip-active={rarityFilter.has("4")}
+          aria-pressed={rarityFilter.has("4")}
           onclick={() => (rarityFilter = toggleFilterSet(rarityFilter, "4"))}
           >4★</button
         >
@@ -70,6 +73,7 @@
           type="button"
           class="chip"
           class:chip-active={rarityFilter.has("3")}
+          aria-pressed={rarityFilter.has("3")}
           onclick={() => (rarityFilter = toggleFilterSet(rarityFilter, "3"))}
           >3★</button
         >
