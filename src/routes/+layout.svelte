@@ -11,6 +11,7 @@
   import type { Character } from "$lib/definitions";
   import { bootstrapClient, seedClientStores } from "$lib/app/bootstrapClient";
   import { clearRosterInventory } from "$lib/app/roster-inventory";
+  import { cancelRosterSyncConflict } from "$lib/app/roster-sync-conflict";
   import { authClient } from "$lib/auth-client";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
@@ -26,6 +27,7 @@
   import PatchNotesPopup from "$lib/ui/components/PatchNotesPopup.svelte";
   import PlannerItinerarySheet from "$lib/ui/components/PlannerItinerarySheet.svelte";
   import AccountSettingsModal from "$lib/ui/components/AccountSettingsModal.svelte";
+  import RosterSyncConflictPopup from "$lib/ui/components/RosterSyncConflictPopup.svelte";
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { getSiteBackgroundUrl } from "$lib/utils";
@@ -55,6 +57,7 @@
     }
     if (lastRosterUserId !== id) {
       clearRosterInventory();
+      cancelRosterSyncConflict();
       lastRosterUserId = id;
     }
   });
@@ -120,6 +123,7 @@
   <NavBar />
   <PlannerItinerarySheet />
   <AccountSettingsModal />
+  <RosterSyncConflictPopup />
   <PatchNotesPopup note={data.latestPatchNote} />
 
   <div class="h-12 w-full"></div>
