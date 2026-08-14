@@ -7,6 +7,7 @@
 
 import type {
   CharacterOwned,
+  CharacterPortraitRef,
   InventoryArtifact,
   InventoryWeapon,
   RosterProgress,
@@ -83,6 +84,95 @@ export function rostersDifferForSync(
     JSON.stringify(toRosterSyncEntries(a)) !==
     JSON.stringify(toRosterSyncEntries(b))
   );
+}
+
+export type RosterSyncProgressBits = {
+  level: number;
+  constellation: number;
+  talents: string;
+  weapon: string | null;
+};
+
+export type RosterSyncDiff = {
+  name_id: string;
+  /** Display name from either side (prefers local). */
+  name: string;
+  /** Enough for CharacterIcon (prefers local row). */
+  portrait: CharacterPortraitRef;
+  ownedChanged: boolean;
+  localOwned: boolean;
+  cloudOwned: boolean;
+  progressChanged: boolean;
+  localProgress: RosterSyncProgressBits | null;
+  cloudProgress: RosterSyncProgressBits | null;
+};
+
+function progressBits(
+  progress: RosterProgress | null | undefined,
+): RosterSyncProgressBits | null {
+  if (!progress) return null;
+  return {
+    level: progress.level,
+    constellation: progress.constellation,
+    talents: `${progress.talents.normal}/${progress.talents.skill}/${progress.talents.burst}`,
+    weapon: progress.weapon
+      ? `${progress.weapon.key} R${progress.weapon.refinement}`
+      : null,
+  };
+}
+
+/** Per-character owned/progress deltas between local and cloud (unchanged omitted). */
+export function diffRostersForSync(
+  local: CharacterOwned[],
+  cloud: CharacterOwned[],
+): RosterSyncDiff[] {
+  const localById = new Map(local.map((c) => [c.name_id, c]));
+  const cloudById = new Map(cloud.map((c) => [c.name_id, c]));
+  const nameIds = new Set([...localById.keys(), ...cloudById.keys()]);
+  const diffs: RosterSyncDiff[] = [];
+
+  for (const name_id of nameIds) {
+    const localRow = localById.get(name_id);
+    const cloudRow = cloudById.get(name_id);
+    const localOwned = localRow?.isOwned ?? false;
+    const cloudOwned = cloudRow?.isOwned ?? false;
+    const localProgress = progressBits(localRow?.progress);
+    const cloudProgress = progressBits(cloudRow?.progress);
+    const ownedChanged = localOwned !== cloudOwned;
+    const progressChanged =
+      JSON.stringify(localProgress) !== JSON.stringify(cloudProgress);
+    if (!ownedChanged && !progressChanged) continue;
+    const name = localRow?.name || cloudRow?.name || name_id;
+    diffs.push({
+      name_id,
+      name,
+      portrait: {
+        name_id,
+        name,
+        element: localRow?.element ?? cloudRow?.element ?? null,
+      },
+      ownedChanged,
+      localOwned,
+      cloudOwned,
+      progressChanged,
+      localProgress,
+      cloudProgress,
+    });
+  }
+
+  diffs.sort((a, b) => {
+    // Ownership-only first, then mixed, then progress-only — then name.
+    const rank = (d: RosterSyncDiff) =>
+      d.ownedChanged && !d.progressChanged
+        ? 0
+        : d.ownedChanged && d.progressChanged
+          ? 1
+          : 2;
+    const byKind = rank(a) - rank(b);
+    if (byKind !== 0) return byKind;
+    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  });
+  return diffs;
 }
 
 /** Persist roster JSON to localStorage. Returns false if storage is unavailable. */

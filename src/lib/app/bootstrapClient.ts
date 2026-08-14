@@ -31,7 +31,10 @@ import {
   rostersDifferForSync,
   writeRosterLocal,
 } from "$lib/roster-snapshot";
-import { promptRosterSyncConflict } from "$lib/app/roster-sync-conflict";
+import {
+  cancelRosterSyncConflict,
+  promptRosterSyncConflict,
+} from "$lib/app/roster-sync-conflict";
 
 type LayoutHydration = {
   characters: Character[];
@@ -49,8 +52,8 @@ type CachedOwnedEntry = {
 type CloudRosterFetch =
   | { status: "guest" }
   | { status: "error" }
-  | { status: "missing" }
-  | { status: "ok"; roster: CharacterOwned[] };
+  | { status: "missing"; userId: string }
+  | { status: "ok"; userId: string; roster: CharacterOwned[] };
 
 /**
  * Reads and validates the cached roster from localStorage.
@@ -126,19 +129,33 @@ function mergeOwnedFlags(
   });
 }
 
+async function activeSessionUserId(): Promise<string | null> {
+  try {
+    const { data: session } = await authClient.getSession();
+    return session?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchCloudRoster(
   characters: Character[],
 ): Promise<CloudRosterFetch> {
   try {
     const { data: session } = await authClient.getSession();
-    if (!session) return { status: "guest" };
+    const userId = session?.user?.id;
+    if (!userId) return { status: "guest" };
 
     const res = await fetch("/api/roster");
     if (!res.ok) return { status: "error" };
     const { roster } = await res.json();
-    if (roster === null) return { status: "missing" };
+    if (roster === null) return { status: "missing", userId };
     if (!Array.isArray(roster)) return { status: "error" };
-    return { status: "ok", roster: mergeOwnedFlags(characters, roster) };
+    return {
+      status: "ok",
+      userId,
+      roster: mergeOwnedFlags(characters, roster),
+    };
   } catch {
     return { status: "error" };
   }
@@ -151,13 +168,66 @@ function applyCloudRoster(roster: CharacterOwned[]): void {
   invalidateNearMissTeams();
 }
 
-async function uploadLocalRoster(roster: CharacterOwned[]): Promise<void> {
+async function uploadLocalRoster(
+  roster: CharacterOwned[],
+): Promise<
+  | { ok: true; inventoryOmitted?: boolean }
+  | { ok: false; status: number; message?: string }
+> {
   const result = await postRoster(roster);
   if (!result.ok) {
     console.error("[roster sync] upload failed", {
       status: result.status,
       message: result.message,
     });
+  }
+  return result;
+}
+
+function uploadFailureMessage(result: {
+  status: number;
+  message?: string;
+}): string {
+  return result.message
+    ? `Upload failed (${result.status}): ${result.message}`
+    : `Upload failed (${result.status}). Try again.`;
+}
+
+/**
+ * Conflict popup → revalidate session → apply/upload.
+ * Upload failures reopen the popup with an error so the user can retry.
+ */
+async function resolveRosterConflict(args: {
+  userId: string;
+  local: CharacterOwned[];
+  cloud: CharacterOwned[];
+}): Promise<void> {
+  let error: string | null = null;
+
+  for (;;) {
+    const choice = await promptRosterSyncConflict(
+      args.local,
+      args.cloud,
+      error,
+    );
+    error = null;
+
+    const currentId = await activeSessionUserId();
+    if (currentId !== args.userId) {
+      cancelRosterSyncConflict();
+      return;
+    }
+
+    if (choice === "dismiss") return;
+
+    if (choice === "use-cloud") {
+      applyCloudRoster(args.cloud);
+      return;
+    }
+
+    const result = await uploadLocalRoster(args.local);
+    if (result.ok) return;
+    error = uploadFailureMessage(result);
   }
 }
 
@@ -201,10 +271,9 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
 
   if (!rostersDifferForSync(localRoster, cloud.roster)) return;
 
-  const choice = await promptRosterSyncConflict(localRoster, cloud.roster);
-  if (choice === "use-cloud") {
-    applyCloudRoster(cloud.roster);
-  } else if (choice === "upload-local") {
-    await uploadLocalRoster(localRoster);
-  }
+  await resolveRosterConflict({
+    userId: cloud.userId,
+    local: localRoster,
+    cloud: cloud.roster,
+  });
 }

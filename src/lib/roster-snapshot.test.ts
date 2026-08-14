@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   captureRoster,
+  diffRostersForSync,
   rosterDiffersFromSnapshot,
   rostersDifferForSync,
   toRosterSyncEntries,
@@ -98,5 +99,46 @@ describe("roster snapshot", () => {
       { name_id: "a", isOwned: true, progress: null },
       { name_id: "b", isOwned: false, progress: null },
     ]);
+  });
+
+  it("diffRostersForSync lists owned and progress deltas only", () => {
+    const local: CharacterOwned[] = [
+      char("same", true),
+      char("owned-local", true),
+      {
+        ...char("progress", true),
+        progress: {
+          level: 90,
+          ascension: 6,
+          constellation: 0,
+          talents: { normal: 1, skill: 1, burst: 1 },
+          weapon: null,
+        },
+      },
+    ];
+    const cloud: CharacterOwned[] = [
+      char("same", true),
+      char("owned-local", false),
+      {
+        ...char("progress", true),
+        progress: {
+          level: 80,
+          ascension: 5,
+          constellation: 2,
+          talents: { normal: 6, skill: 6, burst: 6 },
+          weapon: null,
+        },
+      },
+    ];
+    const diffs = diffRostersForSync(local, cloud);
+    assert.equal(diffs.length, 2);
+    assert.equal(diffs[0]!.name_id, "owned-local");
+    assert.equal(diffs[0]!.ownedChanged, true);
+    assert.equal(diffs[0]!.progressChanged, false);
+    assert.equal(diffs[1]!.name_id, "progress");
+    assert.equal(diffs[1]!.ownedChanged, false);
+    assert.equal(diffs[1]!.progressChanged, true);
+    assert.equal(diffs[1]!.localProgress?.level, 90);
+    assert.equal(diffs[1]!.cloudProgress?.constellation, 2);
   });
 });
