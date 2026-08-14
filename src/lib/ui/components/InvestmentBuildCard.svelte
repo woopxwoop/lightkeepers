@@ -68,9 +68,7 @@
   let s2Icon = $derived(set2 ? artifactIconUrl(set2.icon) : null);
   let relevantKeySet = $derived.by(() => {
     if (relevantKeys == null) return null;
-    return relevantKeys instanceof Set
-      ? relevantKeys
-      : new Set(relevantKeys);
+    return relevantKeys instanceof Set ? relevantKeys : new Set(relevantKeys);
   });
 
   function dmgBonusEntries(bag: SheetStatBag) {
@@ -297,10 +295,7 @@
           {/if}
           <p class="set-name">{set?.name ?? build.set.key}</p>
           <span class="set-badge shrink-0">{setCount}</span>
-          <ArtifactTooltip
-            setKey={build.set.key}
-            pieceCount={setCount}
-          />
+          <ArtifactTooltip setKey={build.set.key} pieceCount={setCount} />
         </div>
         {#if build.set2 && set2Count != null}
           <div class="set-row group">
@@ -314,10 +309,7 @@
             {/if}
             <p class="set-name">{set2?.name ?? build.set2}</p>
             <span class="set-badge shrink-0">{set2Count}</span>
-            <ArtifactTooltip
-              setKey={build.set2}
-              pieceCount={set2Count}
-            />
+            <ArtifactTooltip setKey={build.set2} pieceCount={set2Count} />
           </div>
         {/if}
       </div>

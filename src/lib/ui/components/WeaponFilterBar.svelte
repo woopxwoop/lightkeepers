@@ -1,10 +1,7 @@
 <script lang="ts">
   import { slide } from "svelte/transition";
   import { toggleFilterSet } from "$lib/character-filter";
-  import {
-    WEAPON_FILTER_TYPES,
-    weaponFiltersActive,
-  } from "$lib/weapon-filter";
+  import { WEAPON_FILTER_TYPES, weaponFiltersActive } from "$lib/weapon-filter";
   import IconFilter from "$lib/ui/icons/IconFilter.svelte";
 
   let {

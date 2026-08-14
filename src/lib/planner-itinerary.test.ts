@@ -400,16 +400,19 @@ describe("farmMaterialContributors", () => {
     // Collapsed bag shows only the higher book rank (11); char costs 12.
     const displayed = { "11": 3 };
     const byMat = farmMaterialContributors(goals, contribCatalog, displayed);
-    assert.deepEqual(
-      (byMat.get("11") ?? []).map((g) => g.id).sort(),
-      ["c1", "w1"],
-    );
+    assert.deepEqual((byMat.get("11") ?? []).map((g) => g.id).sort(), [
+      "c1",
+      "w1",
+    ]);
   });
 });
 
 describe("farmGoalRef", () => {
   it("keeps name_id on character goals and omits it on weapons", () => {
-    const hu = farmGoalRef(createCharacterGoal("hu_tao", { id: "c1" }), catalog);
+    const hu = farmGoalRef(
+      createCharacterGoal("hu_tao", { id: "c1" }),
+      catalog,
+    );
     assert.equal(hu.name_id, "hu_tao");
     const weapon = farmGoalRef(createWeaponGoal(1, { id: "w1" }), catalog);
     assert.equal(weapon.name_id, undefined);

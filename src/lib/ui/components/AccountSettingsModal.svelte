@@ -52,9 +52,7 @@
     };
   });
 
-  const oauthCallbackUrl = $derived(
-    `${page.url.pathname}${page.url.search}`,
-  );
+  const oauthCallbackUrl = $derived(`${page.url.pathname}${page.url.search}`);
 </script>
 
 {#if $accountSettingsOpen}
@@ -87,11 +85,7 @@
           <IconX size={16} />
         </button>
       </header>
-      <AccountPanel
-        showHeading={false}
-        embed
-        {oauthCallbackUrl}
-      />
+      <AccountPanel showHeading={false} embed {oauthCallbackUrl} />
     </div>
   </div>
 {/if}

@@ -91,9 +91,7 @@
       placeMenu();
       if (focusOnOpen) {
         focusOnOpen = false;
-        menuEl
-          ?.querySelector<HTMLElement>('[role="menuitem"]')
-          ?.focus();
+        menuEl?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
       }
       requestAnimationFrame(placeMenu);
     });
@@ -114,7 +112,16 @@
         return;
       }
 
-      if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key))
+      if (
+        ![
+          "ArrowDown",
+          "ArrowUp",
+          "ArrowLeft",
+          "ArrowRight",
+          "Home",
+          "End",
+        ].includes(e.key)
+      )
         return;
 
       const options = [

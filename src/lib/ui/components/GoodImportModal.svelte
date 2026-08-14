@@ -158,9 +158,7 @@
         </button>
       </header>
 
-      <p class="section-lede">
-        Choose a GOOD JSON file or paste it below.
-      </p>
+      <p class="section-lede">Choose a GOOD JSON file or paste it below.</p>
 
       <input
         bind:this={fileInputEl}
@@ -185,8 +183,7 @@
           spellcheck="false"
           aria-label="GOOD JSON"
           disabled={busy}
-          onkeydown={onPasteKeydown}
-        ></textarea>
+          onkeydown={onPasteKeydown}></textarea>
       </label>
 
       <div class="good-actions">

@@ -3,9 +3,7 @@ import { describe, it } from "node:test";
 import { liveCharacterSummary } from "./character-summary.ts";
 import type { CharacterIndex } from "../types/investment.ts";
 
-function summary(
-  partial: Partial<CharacterIndex> = {},
-): CharacterIndex {
+function summary(partial: Partial<CharacterIndex> = {}): CharacterIndex {
   return {
     key: "Furina",
     weapons: [],
@@ -32,7 +30,10 @@ describe("liveCharacterSummary", () => {
   });
 
   it("returns stale summaries that still have a body", () => {
-    const stale = summary({ upToDate: false, weapons: [{ key: "KagurasVerity", teams: 1 }] });
+    const stale = summary({
+      upToDate: false,
+      weapons: [{ key: "KagurasVerity", teams: 1 }],
+    });
     assert.equal(liveCharacterSummary(stale), stale);
   });
 

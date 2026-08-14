@@ -43,9 +43,7 @@ export async function getCharacterSummary(
       return null;
     }
 
-    const summary = liveCharacterSummary(
-      (await res.json()) as CharacterIndex,
-    );
+    const summary = liveCharacterSummary((await res.json()) as CharacterIndex);
     summaryCache.set(goodKey, summary);
     return summary;
   } catch {

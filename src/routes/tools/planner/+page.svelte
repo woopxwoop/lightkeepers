@@ -332,15 +332,10 @@
   function addCharacterWith(nameId: string) {
     if (!catalog) return;
     cancelPick();
-    const result = appendCatalogCharacterGoal(
-      goalsState,
-      catalog,
-      nameId,
-      {
-        owned: $charactersOwned,
-        weapons: getRosterWeaponsCached(),
-      },
-    );
+    const result = appendCatalogCharacterGoal(goalsState, catalog, nameId, {
+      owned: $charactersOwned,
+      weapons: getRosterWeaponsCached(),
+    });
     if (!result.ok) {
       addError = result.error;
       return;
@@ -413,9 +408,7 @@
   }
 
   let starredGoalList = $derived(
-    starredGoals(
-      goalsState.goals.filter((g) => !pendingRemoveIds.has(g.id)),
-    ),
+    starredGoals(goalsState.goals.filter((g) => !pendingRemoveIds.has(g.id))),
   );
 
   let aggregate = $derived.by((): AggregatedUpgradeCosts | null => {

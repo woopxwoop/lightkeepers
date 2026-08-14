@@ -596,7 +596,7 @@ describe("collapseCraftRanks", () => {
     );
   });
 
-    it("terminates when craftIntoId forms a cycle", () => {
+  it("terminates when craftIntoId forms a cycle", () => {
     const cyclic: UpgradeCostsCatalog = {
       ...catalog,
       materials: {

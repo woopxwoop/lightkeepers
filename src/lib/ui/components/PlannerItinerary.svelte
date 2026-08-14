@@ -497,82 +497,82 @@
       <p class="section-lede">Nothing to farm for these goals.</p>
     {:else}
       <div class="farm-sections">
-          {#if hasDomainWeek}
-            <section class="farm-section">
-              <div class="farm-section-head">
-                <h3 class="eyebrow">Open domains today</h3>
-                <div class="farm-section-tools">
+        {#if hasDomainWeek}
+          <section class="farm-section">
+            <div class="farm-section-head">
+              <h3 class="eyebrow">Open domains today</h3>
+              <div class="farm-section-tools">
+                <button
+                  type="button"
+                  class="goal-trigger"
+                  aria-haspopup="dialog"
+                  aria-expanded={pickingGoals}
+                  onclick={openPicker}
+                >
+                  Edit goals
+                </button>
+                <div
+                  class="view-toggle"
+                  role="group"
+                  aria-label="Domain calendar view"
+                >
                   <button
                     type="button"
-                    class="goal-trigger"
-                    aria-haspopup="dialog"
-                    aria-expanded={pickingGoals}
-                    onclick={openPicker}
+                    class="view-btn"
+                    class:is-on={!weekExpanded}
+                    aria-pressed={!weekExpanded}
+                    aria-label="Today"
+                    onclick={() => (weekExpanded = false)}
                   >
-                    Edit goals
+                    <IconCalendarDay size={16} strokeWidth={2.25} />
                   </button>
-                  <div
-                    class="view-toggle"
-                    role="group"
-                    aria-label="Domain calendar view"
+                  <button
+                    type="button"
+                    class="view-btn"
+                    class:is-on={weekExpanded}
+                    aria-pressed={weekExpanded}
+                    aria-label="Week"
+                    onclick={() => (weekExpanded = true)}
                   >
-                    <button
-                      type="button"
-                      class="view-btn"
-                      class:is-on={!weekExpanded}
-                      aria-pressed={!weekExpanded}
-                      aria-label="Today"
-                      onclick={() => (weekExpanded = false)}
-                    >
-                      <IconCalendarDay size={16} strokeWidth={2.25} />
-                    </button>
-                    <button
-                      type="button"
-                      class="view-btn"
-                      class:is-on={weekExpanded}
-                      aria-pressed={weekExpanded}
-                      aria-label="Week"
-                      onclick={() => (weekExpanded = true)}
-                    >
-                      <IconCalendarWeek size={16} strokeWidth={2.25} />
-                    </button>
-                  </div>
+                    <IconCalendarWeek size={16} strokeWidth={2.25} />
+                  </button>
                 </div>
               </div>
-              <div class="farm-week" class:is-collapsed={!weekExpanded}>
-                {#each shownWeek as col (col.day)}
-                  {@const who = uniqueGoalsOnPlaces(col.places, contributors)}
-                  <div
-                    class="farm-day"
-                    class:farm-day-today={col.today}
-                    aria-current={col.today ? "date" : undefined}
-                  >
-                    <p class="eyebrow farm-day-head">{col.day}</p>
-                    <ul class="farm-day-places">
-                      {#each who as g (g.id)}
-                        <li>{@render goalFace(g)}</li>
-                      {/each}
-                    </ul>
-                  </div>
-                {/each}
-              </div>
-            </section>
-          {/if}
+            </div>
+            <div class="farm-week" class:is-collapsed={!weekExpanded}>
+              {#each shownWeek as col (col.day)}
+                {@const who = uniqueGoalsOnPlaces(col.places, contributors)}
+                <div
+                  class="farm-day"
+                  class:farm-day-today={col.today}
+                  aria-current={col.today ? "date" : undefined}
+                >
+                  <p class="eyebrow farm-day-head">{col.day}</p>
+                  <ul class="farm-day-places">
+                    {#each who as g (g.id)}
+                      <li>{@render goalFace(g)}</li>
+                    {/each}
+                  </ul>
+                </div>
+              {/each}
+            </div>
+          </section>
+        {/if}
 
-          {#if weeklyPlaces.length > 0}
-            <section class="farm-section">
-              <h3 class="eyebrow">{FARM_KIND_LABEL.weekly}</h3>
-              {@render placeRows(weeklyPlaces)}
-            </section>
-          {/if}
-          {#if bossPlaces.length > 0}
-            <section class="farm-section">
-              <h3 class="eyebrow">{FARM_KIND_LABEL.boss}</h3>
-              {@render placeRows(bossPlaces)}
-            </section>
-          {/if}
-        </div>
-      {/if}
+        {#if weeklyPlaces.length > 0}
+          <section class="farm-section">
+            <h3 class="eyebrow">{FARM_KIND_LABEL.weekly}</h3>
+            {@render placeRows(weeklyPlaces)}
+          </section>
+        {/if}
+        {#if bossPlaces.length > 0}
+          <section class="farm-section">
+            <h3 class="eyebrow">{FARM_KIND_LABEL.boss}</h3>
+            {@render placeRows(bossPlaces)}
+          </section>
+        {/if}
+      </div>
+    {/if}
   </section>
 {/if}
 

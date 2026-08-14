@@ -719,10 +719,10 @@ describe("exampleRelevantGoodKeys display rules", () => {
       ...base,
       invest: "mid",
     };
-    assert.deepEqual(
-      [...exampleRelevantGoodKeys(example)].sort(),
-      ["critRate_", "enerRech_"],
-    );
+    assert.deepEqual([...exampleRelevantGoodKeys(example)].sort(), [
+      "critRate_",
+      "enerRech_",
+    ]);
   });
 
   it("mid-only without Fav → ER only (no CR)", () => {

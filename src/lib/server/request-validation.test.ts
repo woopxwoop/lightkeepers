@@ -407,13 +407,11 @@ describe("request validation", () => {
       substats: [{ key: "critRate_", value: 10.5 }],
     };
     assert.throws(
-      () =>
-        requireInventoryArtifacts([{ ...base, level: 21, rarity: 5 }]),
+      () => requireInventoryArtifacts([{ ...base, level: 21, rarity: 5 }]),
       isBadRequest,
     );
     assert.throws(
-      () =>
-        requireInventoryArtifacts([{ ...base, level: 20, rarity: 6 }]),
+      () => requireInventoryArtifacts([{ ...base, level: 20, rarity: 6 }]),
       isBadRequest,
     );
   });
@@ -677,10 +675,9 @@ describe("request validation", () => {
 
     const starred = createCharacterGoal("Hutao", { id: "s", starred: true });
     assert.deepEqual(requireCalculatorGoals([starred]), [starred]);
-    assert.deepEqual(
-      requireCalculatorGoals([{ ...char, starred: false }]),
-      [char],
-    );
+    assert.deepEqual(requireCalculatorGoals([{ ...char, starred: false }]), [
+      char,
+    ]);
     assert.throws(
       () => requireCalculatorGoals([{ ...char, starred: "yes" }]),
       isBadRequest,

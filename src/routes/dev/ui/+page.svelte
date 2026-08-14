@@ -482,9 +482,7 @@
       invest: "mid",
       weapon: "Thrilling Tales",
       set: "Noblesse 4pc",
-      stats: [
-        { key: "enerRech_", label: "Energy Recharge", value: "186.5%" },
-      ],
+      stats: [{ key: "enerRech_", label: "Energy Recharge", value: "186.5%" }],
     },
     {
       id: "hyperbloom",
@@ -1040,11 +1038,19 @@
               <div class="sg-party">
                 {#each statGoalTeam as c, i (c.name_id ?? i)}
                   <div class="sg-slot" class:featured={i === 0}>
-                    <CharacterIcon character={c} iconStyle="tcg" loading="lazy" />
+                    <CharacterIcon
+                      character={c}
+                      iconStyle="tcg"
+                      loading="lazy"
+                    />
                   </div>
                 {/each}
               </div>
-              <button type="button" class="sg-gear-btn" aria-label="Other teams">
+              <button
+                type="button"
+                class="sg-gear-btn"
+                aria-label="Other teams"
+              >
                 <IconCog size={16} />
               </button>
             </div>
@@ -1064,7 +1070,9 @@
                 </div>
               </div>
             </div>
-            <a class="sg-team-link" href="#stat-goals-layout">View team details →</a>
+            <a class="sg-team-link" href="#stat-goals-layout"
+              >View team details →</a
+            >
             <div class="sg-stat-stack">
               {#each statGoalArchetype.stats as row (row.key)}
                 <StatRow
@@ -1094,19 +1102,27 @@
               <div class="sg-party">
                 {#each statGoalTeam as c, i (c.name_id ?? i)}
                   <div class="sg-slot" class:featured={i === 0}>
-                    <CharacterIcon character={c} iconStyle="tcg" loading="lazy" />
+                    <CharacterIcon
+                      character={c}
+                      iconStyle="tcg"
+                      loading="lazy"
+                    />
                   </div>
                 {/each}
               </div>
               <p class="sg-fingerprint meta-sub">
                 {statGoalArchetype.label}
-                · {statGoalArchetype.invest === "high" ? "high invest" : "checklist"}
+                · {statGoalArchetype.invest === "high"
+                  ? "high invest"
+                  : "checklist"}
               </p>
               <div class="sg-gear-chips">
                 <span class="sg-chip">{statGoalArchetype.weapon}</span>
                 <span class="sg-chip">{statGoalArchetype.set}</span>
               </div>
-              <a class="sg-team-link" href="#stat-goals-layout">Team details →</a>
+              <a class="sg-team-link" href="#stat-goals-layout"
+                >Team details →</a
+              >
             </div>
             <div class="sg-b-goals" aria-label="Target sheet">
               {#each statGoalArchetype.stats as row (row.key)}
@@ -1193,7 +1209,11 @@
               <div class="sg-party sg-party--sm">
                 {#each statGoalTeam as c, i (c.name_id ?? i)}
                   <div class="sg-slot" class:featured={i === 0}>
-                    <CharacterIcon character={c} iconStyle="tcg" loading="lazy" />
+                    <CharacterIcon
+                      character={c}
+                      iconStyle="tcg"
+                      loading="lazy"
+                    />
                   </div>
                 {/each}
               </div>
@@ -1248,7 +1268,9 @@
                 />
               {/each}
             </div>
-            <a class="sg-team-link" href="#stat-goals-layout">View team details →</a>
+            <a class="sg-team-link" href="#stat-goals-layout"
+              >View team details →</a
+            >
           </div>
         </div>
       </article>
@@ -3706,7 +3728,11 @@
     flex-shrink: 0;
     border-radius: var(--radius-sm);
     border: var(--border-width) solid rgba(255, 255, 255, 0.12);
-    background: color-mix(in srgb, var(--accent-1) 18%, var(--background-color));
+    background: color-mix(
+      in srgb,
+      var(--accent-1) 18%,
+      var(--background-color)
+    );
   }
 
   .sg-gear-box--sm {

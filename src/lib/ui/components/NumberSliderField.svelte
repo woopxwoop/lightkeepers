@@ -299,7 +299,8 @@
       class:has-origin={hasOrigin}
       class:edit-origin={editOrigin}
       class:edit-value={editValue && splitHandles}
-      style="--fill-ratio: {fillPct / 100}; --origin-ratio: {originPct / 100}; --thumb: {THUMB_REM}rem"
+      style="--fill-ratio: {fillPct / 100}; --origin-ratio: {originPct /
+        100}; --thumb: {THUMB_REM}rem"
       bind:this={trackEl}
       onpointerdown={onTrackPointerDown}
       onpointermove={onTrackPointerMove}
@@ -618,7 +619,8 @@
   }
 
   .nsf-track.edit-value .nsf-range-value::-webkit-slider-thumb,
-  .nsf:not(.edit-origin):not(.edit-value) .nsf-range-value::-webkit-slider-thumb {
+  .nsf:not(.edit-origin):not(.edit-value)
+    .nsf-range-value::-webkit-slider-thumb {
     opacity: 1;
   }
 

@@ -108,7 +108,9 @@ export function maxSubstatRolls(
   stat: string,
   mainStats: MainStatSlots | null | undefined,
 ): number {
-  return MAX_SUBSTAT_ROLLS_PER_PIECE * eligibleSubstatPieceCount(stat, mainStats);
+  return (
+    MAX_SUBSTAT_ROLLS_PER_PIECE * eligibleSubstatPieceCount(stat, mainStats)
+  );
 }
 
 /** Cap each OptimFull roll count to what artifact pieces can actually hold. */

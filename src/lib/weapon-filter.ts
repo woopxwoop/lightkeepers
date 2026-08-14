@@ -37,11 +37,9 @@ export function filterWeapons<T extends WeaponFilterRow>(
   const types = state.types ?? new Set<string>();
 
   return weapons.filter((w) => {
-    const matchesRarity =
-      rarity.size === 0 || rarity.has(String(w.rarity));
+    const matchesRarity = rarity.size === 0 || rarity.has(String(w.rarity));
     const matchesType =
-      types.size === 0 ||
-      (w.typeLabel != null && types.has(w.typeLabel));
+      types.size === 0 || (w.typeLabel != null && types.has(w.typeLabel));
     return matchesRarity && matchesType;
   });
 }

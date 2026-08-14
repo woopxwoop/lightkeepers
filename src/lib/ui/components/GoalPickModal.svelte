@@ -98,9 +98,7 @@
       { rarity: weaponRarityFilter, types: weaponTypeFilter },
       (id) => {
         const w = weaponById.get(id);
-        return w
-          ? { stars: w.stars, weaponType: w.weaponType }
-          : undefined;
+        return w ? { stars: w.stars, weaponType: w.weaponType } : undefined;
       },
     );
   });
@@ -166,7 +164,7 @@
         {#if weapon}
           {@const src = assetUrl(weapon.icon)}
           {#if src}
-            <img src={src} alt="" loading="lazy" />
+            <img {src} alt="" loading="lazy" />
           {/if}
         {/if}
       </div>

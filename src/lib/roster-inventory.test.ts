@@ -58,8 +58,7 @@ describe("inventory weapons", () => {
       ascension: 3,
     };
     assert.equal(
-      lowestInventoryWeaponByKey([spare, spareLowAsc], "DragonBane")
-        ?.ascension,
+      lowestInventoryWeaponByKey([spare, spareLowAsc], "DragonBane")?.ascension,
       3,
     );
     assert.equal(plannerStartFromOwnedWeapon(spare)?.level, 70);

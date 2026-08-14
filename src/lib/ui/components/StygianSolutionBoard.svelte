@@ -558,8 +558,7 @@
         {#if displaySolutions.length > 0 && !waitingForOwned && !waitingForCheapClears}
           <span class="eyebrow board-eyebrow">
             Solution {safeIndex + 1}
-            <span class="board-eyebrow-total"
-              >of {displaySolutions.length}</span
+            <span class="board-eyebrow-total">of {displaySolutions.length}</span
             >
           </span>
         {:else}
@@ -667,8 +666,8 @@
   {#if solution?.isFallback && solution.neededCharacters.length > 0}
     <p class="fallback-note">
       {#if videoClearsMode}
-        Unable to find {clearDifficulty} clears with your roster — try teams
-        similar to those suggested on hard or menacing.
+        Unable to find {clearDifficulty} clears with your roster — try teams similar
+        to those suggested on hard or menacing.
       {:else}
         Unable to field a full board with your roster — missing characters are
         marked on each team.

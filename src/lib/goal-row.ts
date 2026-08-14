@@ -21,8 +21,8 @@ export function goalRowSummary(
 ): string {
   const promotes =
     goal.kind === "character"
-      ? (catalog?.characters.find((c) => c.name_id === goal.name_id)?.promotes ??
-        [])
+      ? (catalog?.characters.find((c) => c.name_id === goal.name_id)
+          ?.promotes ?? [])
       : (catalog?.weapons.find((w) => w.id === goal.weapon_id)?.promotes ?? []);
   const cap = (ascension: number) => maxLevelForAscension(promotes, ascension);
   const lv = `Lv ${goal.start.level}/${cap(goal.start.ascension)} → ${goal.target.level}/${cap(goal.target.ascension)}`;

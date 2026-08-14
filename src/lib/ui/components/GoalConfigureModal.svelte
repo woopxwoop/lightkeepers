@@ -20,11 +20,7 @@
   import type { CalculatorGoal } from "$lib/types/calculator-goals";
   import type { CharacterPortraitRef } from "$lib/definitions";
   import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-  import {
-    MAX_ASCENSION,
-    MAX_LEVEL,
-    MAX_TALENT,
-  } from "$lib/upgrade-costs";
+  import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
   import Button from "$lib/ui/components/Button.svelte";
   import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
   import NumberSliderField from "$lib/ui/components/NumberSliderField.svelte";
@@ -76,14 +72,9 @@
       : undefined,
   );
 
-  function patchCharacter(
-    side: "start" | "target",
-    patch: CharacterSidePatch,
-  ) {
+  function patchCharacter(side: "start" | "target", patch: CharacterSidePatch) {
     if (goal?.kind !== "character" || !characterRow) return;
-    onChange(
-      patchCharacterGoalSide(goal, characterRow.promotes, side, patch),
-    );
+    onChange(patchCharacterGoalSide(goal, characterRow.promotes, side, patch));
   }
 
   function patchWeapon(side: "start" | "target", patch: WeaponSidePatch) {
@@ -173,9 +164,7 @@
                   const row = catalog.characters.find(
                     (c) => c.name_id === name_id,
                   );
-                  onChange(
-                    retargetCharacterGoal(goal, name_id, row?.promotes),
-                  );
+                  onChange(retargetCharacterGoal(goal, name_id, row?.promotes));
                   if (row) onAutofillCharacter?.(name_id, goal.id);
                 }
               }
@@ -195,9 +184,7 @@
                   if (goal.kind !== "weapon") return;
                   const weapon_id = Number(raw);
                   const row = catalog.weapons.find((w) => w.id === weapon_id);
-                  onChange(
-                    retargetWeaponGoal(goal, weapon_id, row?.promotes),
-                  );
+                  onChange(retargetWeaponGoal(goal, weapon_id, row?.promotes));
                 }
               }
               options={weaponOptions}
@@ -288,8 +275,7 @@
             origin={weaponGoal.start.ascension}
             editSide={editingStart ? "origin" : "value"}
             onchange={(ascension) => patchWeapon("target", { ascension })}
-            onOriginChange={(ascension) =>
-              patchWeapon("start", { ascension })}
+            onOriginChange={(ascension) => patchWeapon("start", { ascension })}
           />
           <NumberSliderField
             label="Level"

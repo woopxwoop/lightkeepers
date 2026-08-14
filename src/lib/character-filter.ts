@@ -139,10 +139,7 @@ export function characterFiltersActive(state: CharacterFilterState): boolean {
 
 /** Chip filters only (search is owned by the pick modal). */
 export function characterMatchesChipFilters(
-  c: Pick<
-    CharacterOwned,
-    "rarity" | "element" | "weapon_type" | "isOwned"
-  >,
+  c: Pick<CharacterOwned, "rarity" | "element" | "weapon_type" | "isOwned">,
   state: Omit<CharacterFilterState, "search" | "sortBy" | "sortAsc"> = {},
 ): boolean {
   const rarity = state.rarity ?? new Set<string>();

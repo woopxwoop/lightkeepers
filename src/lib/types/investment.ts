@@ -338,7 +338,11 @@ export interface CharacterArtifactImportance {
  */
 export interface CharacterStatRecommendations {
   mode: "delta" | "checklist";
-  delta_stats: Array<{ key: string; mean_delta: number; teams_positive: number }>;
+  delta_stats: Array<{
+    key: string;
+    mean_delta: number;
+    teams_positive: number;
+  }>;
   enerRech_if_burst: boolean;
   critRate_if_fav: boolean;
   teams: number;

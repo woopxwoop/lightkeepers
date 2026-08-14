@@ -54,20 +54,10 @@ export type WeaponUpgradeCosts = {
 };
 
 export type UpgradeMaterialSourceKind =
-  | "boss"
-  | "elite"
-  | "common"
-  | "weekly"
-  | "domain";
+  "boss" | "elite" | "common" | "weekly" | "domain";
 
 export type UpgradeMaterialWeekday =
-  | "Mon"
-  | "Tue"
-  | "Wed"
-  | "Thu"
-  | "Fri"
-  | "Sat"
-  | "Sun";
+  "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
 /** World/weekly boss, enemy family, or weekday domain that drops this material. */
 export type UpgradeMaterialSource = {

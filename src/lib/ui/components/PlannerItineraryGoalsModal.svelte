@@ -122,15 +122,11 @@
         </button>
       </div>
       <div class="goals-actions">
-        <Button
-          variant="secondary"
-          disabled={!catalog}
-          onclick={onAddCharacter}>+ Character</Button
+        <Button variant="secondary" disabled={!catalog} onclick={onAddCharacter}
+          >+ Character</Button
         >
-        <Button
-          variant="secondary"
-          disabled={!catalog}
-          onclick={onAddWeapon}>+ Weapon</Button
+        <Button variant="secondary" disabled={!catalog} onclick={onAddWeapon}
+          >+ Weapon</Button
         >
         <Button variant="secondary" onclick={onStarAll}>Star all</Button>
         <Button variant="secondary" onclick={onStarNone}>Unstar all</Button>
@@ -148,7 +144,7 @@
             {goals}
             {catalog}
             {removedIds}
-            onStar={onStar}
+            {onStar}
             {onReorder}
             {onConfigure}
             {onRemove}

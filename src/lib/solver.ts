@@ -9,7 +9,11 @@
  * the owned roster can't cover every slot.
  */
 
-import type { AbyssTeam, StygianCheapClearRow, StygianTeam } from "$lib/definitions";
+import type {
+  AbyssTeam,
+  StygianCheapClearRow,
+  StygianTeam,
+} from "$lib/definitions";
 import { teamSlotFieldRate } from "$lib/slot-fields";
 import {
   clearTimeAtCap,
@@ -593,9 +597,7 @@ function greedyHybridPass(
       return { cover: -1, usage: Number.NEGATIVE_INFINITY };
     }
     return {
-      cover: hasC0r0Clear(team.team_key, slotEnemies[slot], c0r0Pairs)
-        ? 1
-        : 0,
+      cover: hasC0r0Clear(team.team_key, slotEnemies[slot], c0r0Pairs) ? 1 : 0,
       usage: placementScore(team, slot),
     };
   };
@@ -714,8 +716,7 @@ export function solveStygianHybrid(
       if (a.isFallback !== b.isFallback) {
         return Number(a.isFallback) - Number(b.isFallback);
       }
-      const missingDiff =
-        a.neededCharacters.length - b.neededCharacters.length;
+      const missingDiff = a.neededCharacters.length - b.neededCharacters.length;
       if (missingDiff !== 0) return missingDiff;
       if (a.unfilled.length !== b.unfilled.length) {
         return a.unfilled.length - b.unfilled.length;
@@ -799,9 +800,7 @@ export function solveStygianCheapClears(
     .filter((team) => STYGIAN_SLOT_ORDER.some((slot) => canSeat(team, slot)))
     .slice(0, CANDIDATE_DEPTH);
 
-  function greedyFast(
-    forcedFirst?: StygianTeam,
-  ): Solution<StygianAssignment> {
+  function greedyFast(forcedFirst?: StygianTeam): Solution<StygianAssignment> {
     const placement = createPlacementContext<StygianTeam, StygianSlot>(
       STYGIAN_SLOT_ORDER,
     );

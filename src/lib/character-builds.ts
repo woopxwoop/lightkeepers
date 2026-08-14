@@ -627,9 +627,7 @@ export function exampleRelevantGoodKeys(
 }
 
 /** Shared sands/goblet/circlet main, or null when they differ / are missing. */
-function uniformMainStatKey(
-  example: CharacterBuildExample,
-): string | null {
+function uniformMainStatKey(example: CharacterBuildExample): string | null {
   const mains = MAIN_STAT_SLOTS.map((slot) => example.main_stats?.[slot.key]);
   const first = mains[0];
   if (typeof first !== "string" || !first) return null;

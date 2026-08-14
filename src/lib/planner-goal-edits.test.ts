@@ -153,12 +153,11 @@ describe("planner goal edits", () => {
 
   it("stars a weapon added from the itinerary", () => {
     const catalog = catalogWith([]);
-    const result = appendCatalogWeaponGoal(
-      emptyGoalsState(),
-      catalog,
-      14501,
-      { owned: [], weapons: null, starred: true },
-    );
+    const result = appendCatalogWeaponGoal(emptyGoalsState(), catalog, 14501, {
+      owned: [],
+      weapons: null,
+      starred: true,
+    });
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.goal.kind, "weapon");
@@ -180,20 +179,12 @@ describe("planner goal edits", () => {
 
   it("puts owned characters first when asked", () => {
     const catalog = catalogWith(["Xingqiu", "Hutao"]);
-    const owned = plannerCharacterOptions(
-      catalog,
-      new Set(["Hutao"]),
-      true,
-    );
+    const owned = plannerCharacterOptions(catalog, new Set(["Hutao"]), true);
     assert.deepEqual(
       owned.map((o) => o.value),
       ["Hutao", "Xingqiu"],
     );
-    const natural = plannerCharacterOptions(
-      catalog,
-      new Set(["Hutao"]),
-      false,
-    );
+    const natural = plannerCharacterOptions(catalog, new Set(["Hutao"]), false);
     assert.deepEqual(
       natural.map((o) => o.value),
       ["Xingqiu", "Hutao"],
@@ -308,6 +299,9 @@ describe("filterPlannerWeaponPickOptions", () => {
       { rarity: new Set(["4", "5"]), types: new Set(["Sword"]) },
       () => undefined,
     );
-    assert.deepEqual(byType.map((o) => o.value), []);
+    assert.deepEqual(
+      byType.map((o) => o.value),
+      [],
+    );
   });
 });

@@ -36,9 +36,7 @@ const craftFromByCatalog = new WeakMap<
   Map<number, string[]>
 >();
 
-function craftFromIndex(
-  catalog: UpgradeCostsCatalog,
-): Map<number, string[]> {
+function craftFromIndex(catalog: UpgradeCostsCatalog): Map<number, string[]> {
   const cached = craftFromByCatalog.get(catalog);
   if (cached) return cached;
   const index = new Map<number, string[]>();

@@ -85,7 +85,8 @@ export async function ensureClearVideos(
 ): Promise<Map<string, StygianClearVideo[]>> {
   const unique = new Map<string, StygianClearVideoPair>();
   for (const p of pairs) {
-    if (!p.team_key || !Number.isFinite(p.enemy_id) || p.enemy_id <= 0) continue;
+    if (!p.team_key || !Number.isFinite(p.enemy_id) || p.enemy_id <= 0)
+      continue;
     unique.set(pairKey(p.team_key, p.enemy_id), p);
   }
 

@@ -7,7 +7,9 @@
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
-  let maxCostInput = $state<number | null>(STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST);
+  let maxCostInput = $state<number | null>(
+    STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST,
+  );
   let maxCost = $derived.by(() => {
     const raw = maxCostInput;
     if (raw == null || !Number.isFinite(raw) || raw < 0) {

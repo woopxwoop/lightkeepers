@@ -43,12 +43,15 @@ export function baselineTeamCost(
   nameIds: readonly (string | null | undefined)[],
   characterByNameId: ReadonlyMap<string, CharacterMeta>,
 ): number {
-  return floorTeamCost(nameIds, characterByNameId) + STYGIAN_BASELINE_COST_SLACK;
+  return (
+    floorTeamCost(nameIds, characterByNameId) + STYGIAN_BASELINE_COST_SLACK
+  );
 }
 
 /** Inclusive scrape-cost limit for a user / floor cap (adds +0.5 slack). */
 export function scrapeCostLimitForCap(maxCost: number): number {
-  if (!Number.isFinite(maxCost) || maxCost < 0) return STYGIAN_BASELINE_COST_SLACK;
+  if (!Number.isFinite(maxCost) || maxCost < 0)
+    return STYGIAN_BASELINE_COST_SLACK;
   return maxCost + STYGIAN_BASELINE_COST_SLACK;
 }
 
@@ -99,7 +102,9 @@ export function clearTimeAtCap(
   row: StygianCheapClearFrontier,
   maxCost: number,
 ): number | null {
-  return bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(maxCost))?.t ?? null;
+  return (
+    bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(maxCost))?.t ?? null
+  );
 }
 
 /** Scrape cost of the clear that set {@link clearTimeAtCap}. */
@@ -107,7 +112,9 @@ export function clearCostAtCap(
   row: StygianCheapClearFrontier,
   maxCost: number,
 ): number | null {
-  return bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(maxCost))?.c ?? null;
+  return (
+    bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(maxCost))?.c ?? null
+  );
 }
 
 /**
@@ -119,7 +126,9 @@ export function clearTimeAtCostCeiling(
   ceiling: number,
 ): number | null {
   if (!Number.isFinite(ceiling) || ceiling < 0) return null;
-  return bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(ceiling))?.t ?? null;
+  return (
+    bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(ceiling))?.t ?? null
+  );
 }
 
 /** Scrape cost of the clear that set {@link clearTimeAtCostCeiling}. */
@@ -128,7 +137,9 @@ export function clearCostAtCostCeiling(
   ceiling: number,
 ): number | null {
   if (!Number.isFinite(ceiling) || ceiling < 0) return null;
-  return bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(ceiling))?.c ?? null;
+  return (
+    bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(ceiling))?.c ?? null
+  );
 }
 
 /** True when scrape label ≤ baseline team cost (C0R0 + 0.5). */

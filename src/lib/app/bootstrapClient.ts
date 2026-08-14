@@ -62,9 +62,7 @@ function readOwnedCache(): CachedOwnedEntry[] | undefined {
     if (!Array.isArray(parsed)) return undefined;
     return parsed.filter(
       (v): v is CachedOwnedEntry =>
-        typeof v === "object" &&
-        v !== null &&
-        ("name_id" in v || "id" in v),
+        typeof v === "object" && v !== null && ("name_id" in v || "id" in v),
     );
   } catch {
     return undefined;

@@ -5,7 +5,11 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { AbyssTeam, StygianCheapClearRow, StygianTeam } from "./definitions.ts";
+import type {
+  AbyssTeam,
+  StygianCheapClearRow,
+  StygianTeam,
+} from "./definitions.ts";
 import {
   optimizeStygianSlotAssignments,
   scoreAssignments,
@@ -604,7 +608,19 @@ describe("solveStygianWithFallback", () => {
         field_3_rate: 3,
       }),
     ];
-    const ownedNames = new Set(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]);
+    const ownedNames = new Set([
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+    ]);
     const solutions = solveStygianWithFallback([], all, ownedNames, 1);
     assert.ok(solutions.length >= 1);
     assert.equal(solutions[0].isFallback, true);
@@ -922,11 +938,7 @@ describe("solveStygianHybrid", () => {
 
     const owned = [highTop, highMid, highBot, covTop, covMid, covBot];
     const ownedNames = new Set(owned.flatMap((t) => t.members ?? []));
-    const c0r0Pairs = new Set([
-      "cov-top|1",
-      "cov-mid|2",
-      "cov-bot|3",
-    ]);
+    const c0r0Pairs = new Set(["cov-top|1", "cov-mid|2", "cov-bot|3"]);
 
     const [best] = solveStygianHybrid(
       owned,

@@ -147,8 +147,7 @@ export function resolveCatalogCharacterId(
   if (catalog.characters.some((c) => c.name_id === nameId)) return nameId;
   if (nameId === "PlayerBoy" || nameId === "PlayerGirl") {
     return (
-      catalog.characters.find((c) => c.name_id === "PlayerBoy-Pyro")
-        ?.name_id ??
+      catalog.characters.find((c) => c.name_id === "PlayerBoy-Pyro")?.name_id ??
       catalog.characters.find((c) => c.name_id.startsWith("PlayerBoy-"))
         ?.name_id
     );
@@ -205,7 +204,8 @@ export function filterPlannerCharacterPickOptions(
     const owned = byNameId.get(opt.value);
     const travelerBase =
       !owned &&
-      (opt.value.startsWith("PlayerBoy-") || opt.value.startsWith("PlayerGirl-"))
+      (opt.value.startsWith("PlayerBoy-") ||
+        opt.value.startsWith("PlayerGirl-"))
         ? (byNameId.get("PlayerBoy") ?? byNameId.get("PlayerGirl"))
         : undefined;
     const base = owned ?? travelerBase;
@@ -242,9 +242,7 @@ export function filterPlannerWeaponPickOptions(
       typeLabel: weaponFilterTypeLabel(meta?.weaponType ?? null),
     };
   });
-  const kept = new Set(
-    filterWeapons(rows, state).map((r) => r.option.value),
-  );
+  const kept = new Set(filterWeapons(rows, state).map((r) => r.option.value));
   return options.filter((o) => kept.has(o.value));
 }
 
@@ -322,7 +320,10 @@ export function appendCatalogWeaponGoal(
 ): AppendPlannerGoalResult {
   const row = catalog.weapons.find((w) => w.id === weaponId);
   if (!row) {
-    return { ok: false, error: "This weapon isn't in the planner catalog yet." };
+    return {
+      ok: false,
+      error: "This weapon isn't in the planner catalog yet.",
+    };
   }
   const key = toGoodKey(row.name);
   const fromBag = lowestInventoryWeaponByKey(opts.weapons ?? [], key);

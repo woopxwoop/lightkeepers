@@ -69,7 +69,9 @@ export function goalsHaveUnsavedChanges(input: {
  * Local → optional cloud (signed-in). Cloud list wins when a row exists.
  * Always returns a capture ready to commit as the saved baseline.
  */
-export async function hydrateGoalsState(signedIn: boolean): Promise<GoalsCapture> {
+export async function hydrateGoalsState(
+  signedIn: boolean,
+): Promise<GoalsCapture> {
   let local = readGoalsLocal();
   if (signedIn) {
     try {
@@ -86,17 +88,14 @@ export async function hydrateGoalsState(signedIn: boolean): Promise<GoalsCapture
 }
 
 /** Same-tab sync: re-read local only when it differs from the saved baseline. */
-export function readGoalsIfChanged(
-  savedSnapshot: string,
-): GoalsCapture | null {
+export function readGoalsIfChanged(savedSnapshot: string): GoalsCapture | null {
   const pending = captureGoals(readGoalsLocal());
   if (pending.json === savedSnapshot) return null;
   return pending;
 }
 
 export type SaveGoalsResult =
-  | { ok: true; capture: GoalsCapture }
-  | { ok: false; message: string };
+  { ok: true; capture: GoalsCapture } | { ok: false; message: string };
 
 /**
  * Persist pending removes + editor state. On cloud failure, restores

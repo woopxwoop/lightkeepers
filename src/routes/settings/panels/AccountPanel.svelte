@@ -16,10 +16,7 @@
     postRoster,
     writeRosterLocal,
   } from "$lib/roster-snapshot";
-  import {
-    applyGoodRoster,
-    parseGoodText,
-  } from "$lib/good-import";
+  import { applyGoodRoster, parseGoodText } from "$lib/good-import";
   import { serializeGoodDocument } from "$lib/good-export";
   import {
     clearRosterInventory,
@@ -193,10 +190,7 @@
             loadRosterWeapons().catch(() => getRosterWeaponsCached() ?? []),
             loadRosterArtifacts().catch(() => getRosterArtifactsCached() ?? []),
           ])
-        : [
-            getRosterWeaponsCached() ?? [],
-            getRosterArtifactsCached() ?? [],
-          ];
+        : [getRosterWeaponsCached() ?? [], getRosterArtifactsCached() ?? []];
       const doc = serializeGoodDocument({
         roster: $charactersOwned,
         weapons,
@@ -328,7 +322,6 @@
       {@render goodImport()}
     </div>
   {:else}
-    {@render goodImport()}
     <div class="oauth-stack">
       <button
         type="button"
@@ -355,6 +348,7 @@
         Continue with Discord
       </button>
     </div>
+    {@render goodImport()}
   {/if}
 </div>
 
