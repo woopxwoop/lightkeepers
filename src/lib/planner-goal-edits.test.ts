@@ -14,6 +14,24 @@ import {
 import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
 
 function catalogWith(ids: string[]): UpgradeCostsCatalog {
+  const emptyTrack = {
+    proudSkillGroupId: 0,
+    levels: [] as { level: number; mora: number; items: never[] }[],
+  };
+  const promotes = [
+    { promoteLevel: 0, mora: 0, unlockMaxLevel: 20, items: [] },
+    {
+      promoteLevel: 1,
+      mora: 1000,
+      unlockMaxLevel: 40,
+      items: [] as { id: number; count: number }[],
+    },
+    { promoteLevel: 2, mora: 2000, unlockMaxLevel: 50, items: [] },
+    { promoteLevel: 3, mora: 3000, unlockMaxLevel: 60, items: [] },
+    { promoteLevel: 4, mora: 4000, unlockMaxLevel: 70, items: [] },
+    { promoteLevel: 5, mora: 5000, unlockMaxLevel: 80, items: [] },
+    { promoteLevel: 6, mora: 6000, unlockMaxLevel: 90, items: [] },
+  ];
   return {
     characters: ids.map((name_id) => ({
       name_id,
@@ -21,8 +39,12 @@ function catalogWith(ids: string[]): UpgradeCostsCatalog {
       name: name_id,
       element: "Pyro",
       avatarPromoteId: 1,
-      promotes: [],
-      talents: { normal: [], skill: [], burst: [] },
+      promotes,
+      talents: {
+        normal: emptyTrack,
+        skill: emptyTrack,
+        burst: emptyTrack,
+      },
     })),
     weapons: [
       {
@@ -31,7 +53,7 @@ function catalogWith(ids: string[]): UpgradeCostsCatalog {
         rankLevel: 5,
         weaponPromoteId: 1,
         icon: "",
-        promotes: [],
+        promotes,
       },
     ],
     materials: {},
@@ -41,7 +63,7 @@ function catalogWith(ids: string[]): UpgradeCostsCatalog {
       avatarExpItems: [],
       weaponExpItems: [],
     },
-  } as unknown as UpgradeCostsCatalog;
+  };
 }
 
 describe("planner goal edits", () => {
@@ -69,6 +91,62 @@ describe("planner goal edits", () => {
     if (result.goal.kind !== "character") return;
     assert.equal(result.goal.name_id, "Hutao");
     assert.equal(result.goal.starred, true);
+  });
+
+  it("lifts target above GOOD start when start is past the default goal", () => {
+    const catalog = catalogWith(["Hutao"]);
+    const result = appendCatalogCharacterGoal(
+      emptyGoalsState(),
+      catalog,
+      "Hutao",
+      {
+        owned: [
+          {
+            name: "Hu Tao",
+            name_id: "Hutao",
+            isOwned: true,
+            progress: {
+              level: 80,
+              ascension: 5,
+              constellation: 0,
+              talents: { normal: 6, skill: 8, burst: 8 },
+              weapon: null,
+            },
+          },
+        ],
+        weapons: null,
+      },
+    );
+    assert.equal(result.ok, true);
+    if (!result.ok || result.goal.kind !== "character") return;
+    assert.equal(result.goal.start.level, 80);
+    assert.equal(result.goal.start.ascension, 5);
+    assert.ok(result.goal.target.level > result.goal.start.level);
+    assert.ok(result.goal.target.ascension >= result.goal.start.ascension);
+  });
+
+  it("lifts weapon target above GOOD start", () => {
+    const catalog = catalogWith([]);
+    const result = appendCatalogWeaponGoal(emptyGoalsState(), catalog, 14501, {
+      owned: [],
+      weapons: [
+        {
+          key: "AThousandFloatingDreams",
+          level: 70,
+          ascension: 5,
+          refinement: 1,
+          location: "",
+          lock: false,
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok || result.goal.kind !== "weapon") return;
+    assert.equal(result.goal.start.level, 70);
+    assert.ok(
+      result.goal.target.level > result.goal.start.level ||
+        result.goal.target.ascension > result.goal.start.ascension,
+    );
   });
 
   it("stars a weapon added from the itinerary", () => {

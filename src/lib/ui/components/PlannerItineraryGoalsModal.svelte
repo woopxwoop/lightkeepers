@@ -24,7 +24,7 @@
     removedIds = new Set<string>(),
     suspendKeys = false,
     onClose,
-    onToggle,
+    onStar,
     onReorder,
     onStarAll,
     onStarNone,
@@ -46,7 +46,7 @@
     /** When a nested pick/configure overlay is open, skip Escape / tab trap. */
     suspendKeys?: boolean;
     onClose: () => void;
-    onToggle: (id: string) => void;
+    onStar: (id: string) => void;
     onReorder: (from: number, to: number) => void;
     onStarAll: () => void;
     onStarNone: () => void;
@@ -132,11 +132,11 @@
           disabled={!catalog}
           onclick={onAddWeapon}>+ Weapon</Button
         >
-        <Button variant="secondary" onclick={onStarAll}>Select all</Button>
-        <Button variant="secondary" onclick={onStarNone}>Deselect all</Button>
+        <Button variant="secondary" onclick={onStarAll}>Star all</Button>
+        <Button variant="secondary" onclick={onStarNone}>Unstar all</Button>
       </div>
       {#if addError}
-        <p class="save-error">{addError}</p>
+        <p class="save-error" role="alert">{addError}</p>
       {/if}
       <div class="goals-list">
         {#if goals.length === 0}
@@ -148,7 +148,7 @@
             {goals}
             {catalog}
             {removedIds}
-            onStar={onToggle}
+            onStar={onStar}
             {onReorder}
             {onConfigure}
             {onRemove}
@@ -158,7 +158,7 @@
       {#if dirty || saveError}
         <div class="goals-foot">
           {#if saveError}
-            <span class="save-error">{saveError}</span>
+            <span class="save-error" role="alert">{saveError}</span>
           {/if}
           {#if dirty}
             <div class="goals-save">

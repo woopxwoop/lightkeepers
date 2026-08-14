@@ -8,6 +8,7 @@ import { assetUrl } from "$lib/asset-urls";
 import { getCharacterPortrait } from "$lib/utils";
 import type {
   UpgradeCostsCatalog,
+  UpgradeMaterialMeta,
   UpgradeMaterialSource,
   UpgradeMaterialWeekday,
 } from "$lib/types/upgrade-costs";
@@ -28,6 +29,37 @@ export const FARM_KIND_LABEL: Record<
   weekly: "Weekly bosses",
   boss: "World bosses",
 };
+
+/** craftIntoId → lower-rank material ids (cached per catalog object). */
+const craftFromByCatalog = new WeakMap<
+  UpgradeCostsCatalog,
+  Map<number, string[]>
+>();
+
+function craftFromIndex(
+  catalog: UpgradeCostsCatalog,
+): Map<number, string[]> {
+  const cached = craftFromByCatalog.get(catalog);
+  if (cached) return cached;
+  const index = new Map<number, string[]>();
+  for (const row of Object.values(catalog.materials)) {
+    if (row.craftIntoId == null) continue;
+    const list = index.get(row.craftIntoId) ?? [];
+    list.push(String(row.id));
+    index.set(row.craftIntoId, list);
+  }
+  craftFromByCatalog.set(catalog, index);
+  return index;
+}
+
+function materialInCraftChain(
+  id: number,
+  catalog: UpgradeCostsCatalog,
+): boolean {
+  const meta = catalog.materials[String(id)];
+  if (meta?.craftIntoId != null) return true;
+  return craftFromIndex(catalog).has(id);
+}
 
 export const WEEKDAY_ORDER: UpgradeMaterialWeekday[] = [
   "Mon",
@@ -148,12 +180,18 @@ export function uniqueGoalsOnPlaces(
 
 function farmPlaceKind(
   source: UpgradeMaterialSource,
-  rankLevel: number,
+  meta: UpgradeMaterialMeta | undefined,
+  catalog: UpgradeCostsCatalog,
 ): FarmPlaceKind | null {
   if (source.kind === "domain" || source.kind === "weekly") return source.kind;
   if (source.kind !== "boss") return null;
-  // Catalog tags Lupus Boreas as a world boss; 5★ talent drops are weekly.
-  return rankLevel >= 5 ? "weekly" : "boss";
+  // CDN tags Lupus Boreas weekly talent mats as world bosses. Promote only
+  // isolated 5★ drops — craft-chain gemstones stay world bosses.
+  const rank = meta?.rankLevel ?? 1;
+  if (rank >= 5 && meta && !materialInCraftChain(meta.id, catalog)) {
+    return "weekly";
+  }
+  return "boss";
 }
 
 function placeKey(kind: FarmPlaceKind, source: UpgradeMaterialSource): string {
@@ -175,7 +213,7 @@ export function farmPlacesFromMaterials(
     const meta = catalog.materials[id];
     const source = meta?.sources?.[0];
     if (!source) continue;
-    const kind = farmPlaceKind(source, meta?.rankLevel ?? 1);
+    const kind = farmPlaceKind(source, meta, catalog);
     if (!kind) continue;
     const key = placeKey(kind, source);
     let place = byKey.get(key);
@@ -302,6 +340,7 @@ export function displayedMaterialId(
   catalog: UpgradeCostsCatalog,
 ): string | null {
   if ((displayed[id] ?? 0) > 0) return id;
+  const craftFrom = craftFromIndex(catalog);
   const seen = new Set<string>();
   const queue = [id];
   while (queue.length > 0) {
@@ -312,9 +351,7 @@ export function displayedMaterialId(
     const meta = catalog.materials[cur];
     if (meta?.craftIntoId != null) queue.push(String(meta.craftIntoId));
     const n = Number(cur);
-    for (const row of Object.values(catalog.materials)) {
-      if (row.craftIntoId === n) queue.push(String(row.id));
-    }
+    for (const lower of craftFrom.get(n) ?? []) queue.push(lower);
   }
   return null;
 }

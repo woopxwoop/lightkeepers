@@ -318,8 +318,8 @@ function requireInventoryKey(value: unknown, maxLength: number): string {
 
 function isEmptySubstatPlaceholder(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
-  const key = (value as Record<string, unknown>).key;
-  return key === "" || key == null;
+  // Only explicit empty-string keys are GO placeholders; missing key is invalid.
+  return (value as Record<string, unknown>).key === "";
 }
 
 function requireInventorySubstat(value: unknown): InventorySubstat {

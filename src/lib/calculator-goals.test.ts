@@ -179,6 +179,11 @@ describe("calculator goals", () => {
       moveGoal(state, -1, 0).goals.map((g) => g.id),
       ["c", "a", "b"],
     );
+    // Last-row ArrowDown uses onReorder(index, index + 1) → toIndex === length.
+    assert.deepEqual(
+      moveGoal(state, 2, 3).goals.map((g) => g.id),
+      ["c", "a", "b"],
+    );
   });
 
   it("append respects max goals", () => {

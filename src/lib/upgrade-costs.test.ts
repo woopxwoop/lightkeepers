@@ -596,7 +596,7 @@ describe("collapseCraftRanks", () => {
     );
   });
 
-  it("terminates when craftIntoId forms a cycle", () => {
+    it("terminates when craftIntoId forms a cycle", () => {
     const cyclic: UpgradeCostsCatalog = {
       ...catalog,
       materials: {
@@ -618,6 +618,40 @@ describe("collapseCraftRanks", () => {
     };
     assert.deepEqual(collapseCraftRanks({ "1": 3, "2": 1 }, cyclic), {
       "1": 3,
+      "2": 1,
+    });
+  });
+
+  it("drops chains that enter a cycle mid-path", () => {
+    const cyclic: UpgradeCostsCatalog = {
+      ...catalog,
+      materials: {
+        "3": {
+          id: 3,
+          name: "C",
+          icon: "c",
+          rankLevel: 1,
+          craftIntoId: 1,
+        },
+        "1": {
+          id: 1,
+          name: "A",
+          icon: "a",
+          rankLevel: 2,
+          craftIntoId: 2,
+        },
+        "2": {
+          id: 2,
+          name: "B",
+          icon: "b",
+          rankLevel: 3,
+          craftIntoId: 1,
+        },
+      },
+    };
+    assert.deepEqual(collapseCraftRanks({ "3": 2, "1": 1, "2": 1 }, cyclic), {
+      "3": 2,
+      "1": 1,
       "2": 1,
     });
   });

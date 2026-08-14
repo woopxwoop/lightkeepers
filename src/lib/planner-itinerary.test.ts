@@ -5,6 +5,7 @@ import {
   FARM_WEEK_PAIRS,
   displayedMaterialId,
   farmGoalRef,
+  farmMaterialContributors,
   farmPlacesFromMaterials,
   farmPlacesOfKind,
   farmTodayColumn,
@@ -158,6 +159,36 @@ describe("farmPlacesFromMaterials", () => {
     );
   });
 
+  it("keeps 5-star world-boss gemstones as boss (craft chain)", () => {
+    const withGem: UpgradeCostsCatalog = {
+      ...catalog,
+      materials: {
+        ...catalog.materials,
+        "71": {
+          id: 71,
+          name: "Agnidus Agate Sliver",
+          icon: "UI_ItemIcon_71",
+          rankLevel: 2,
+          craftIntoId: 72,
+          sources: [{ kind: "boss", name: "Pyro Regisvine" }],
+        },
+        "72": {
+          id: 72,
+          name: "Agnidus Agate Gemstone",
+          icon: "UI_ItemIcon_72",
+          rankLevel: 5,
+          sources: [{ kind: "boss", name: "Pyro Regisvine" }],
+        },
+      },
+    };
+    const places = farmPlacesFromMaterials({ "72": 1 }, withGem);
+    assert.deepEqual(
+      farmPlacesOfKind(places, "boss").map((p) => p.name),
+      ["Pyro Regisvine"],
+    );
+    assert.deepEqual(farmPlacesOfKind(places, "weekly"), []);
+  });
+
   it("lists unique contributing goals on a day's places", () => {
     const places = farmPlacesFromMaterials({ "11": 1, "12": 1 }, catalog);
     const hu: FarmGoalRef = { id: "a", name: "Hu Tao", icon: null };
@@ -282,6 +313,97 @@ describe("displayedMaterialId", () => {
 
   it("returns null when the chain never hits the displayed bag", () => {
     assert.equal(displayedMaterialId("12", { "21": 1 }, chainCatalog), null);
+  });
+});
+
+describe("farmMaterialContributors", () => {
+  it("maps collapsed materials onto character and weapon goals", () => {
+    const promotes = [
+      {
+        promoteLevel: 0,
+        mora: 0,
+        unlockMaxLevel: 20,
+        items: [] as { id: number; count: number }[],
+      },
+      {
+        promoteLevel: 1,
+        mora: 1000,
+        unlockMaxLevel: 40,
+        items: [{ id: 12, count: 2 }],
+      },
+    ];
+    const contribCatalog: UpgradeCostsCatalog = {
+      ...catalog,
+      materials: {
+        ...catalog.materials,
+        "12": { ...catalog.materials["12"]!, craftIntoId: 11 },
+      },
+      characters: [
+        {
+          name_id: "Hutao",
+          game_id: 1,
+          name: "Hu Tao",
+          element: "Pyro",
+          avatarPromoteId: 1,
+          promotes,
+          talents: {
+            normal: { proudSkillGroupId: 1, levels: [] },
+            skill: { proudSkillGroupId: 1, levels: [] },
+            burst: { proudSkillGroupId: 1, levels: [] },
+          },
+        },
+      ],
+      weapons: [
+        {
+          id: 14501,
+          name: "Staff of Homa",
+          rankLevel: 5,
+          weaponPromoteId: 1,
+          icon: "UI_EquipIcon_Pole_Homa",
+          promotes: [
+            {
+              promoteLevel: 0,
+              mora: 0,
+              unlockMaxLevel: 20,
+              items: [],
+            },
+            {
+              promoteLevel: 1,
+              mora: 500,
+              unlockMaxLevel: 40,
+              items: [{ id: 11, count: 1 }],
+            },
+          ],
+        },
+      ],
+    };
+    const goals = [
+      createCharacterGoal("Hutao", {
+        id: "c1",
+        start: {
+          level: 1,
+          ascension: 0,
+          talents: { normal: 1, skill: 1, burst: 1 },
+        },
+        target: {
+          level: 40,
+          ascension: 1,
+          talents: { normal: 1, skill: 1, burst: 1 },
+        },
+      }),
+      createWeaponGoal(14501, {
+        id: "w1",
+        start: { level: 1, ascension: 0 },
+        target: { level: 40, ascension: 1 },
+      }),
+    ];
+    // Collapsed bag shows only the higher book rank (11); char costs 12.
+    const displayed = { "11": 3 };
+    const byMat = farmMaterialContributors(goals, contribCatalog, displayed);
+    assert.deepEqual(
+      (byMat.get("11") ?? []).map((g) => g.id).sort(),
+      ["c1", "w1"],
+    );
   });
 });
 

@@ -49,6 +49,7 @@
     captureGoals,
     fetchGoalsCloud,
     goalsDiffersFromSnapshot,
+    goalsLocalRevision,
     persistGoalsLocal,
     postGoals,
     readGoalsLocal,
@@ -202,6 +203,16 @@
     return () => {
       cancelled = true;
     };
+  });
+
+  /** Same-tab sync when itinerary (or another surface) persists goals. */
+  $effect(() => {
+    void $goalsLocalRevision;
+    if (!browser || !goalsHydrated || hasUnsavedChanges) return;
+    const pending = captureGoals(readGoalsLocal());
+    if (pending.json === savedSnapshot) return;
+    goalsState = pending.state;
+    savedSnapshot = pending.json;
   });
 
   $effect(() => {
@@ -650,13 +661,12 @@
       <div class="results-panel">
         <div class="results-head">
           <h2 class="section-title">Required</h2>
-          <div class="scope-row" role="tablist" aria-label="Cost scope">
+          <div class="scope-row" role="group" aria-label="Cost scope">
             <button
               type="button"
               class="scope-btn"
               class:active={costScope === "all"}
-              role="tab"
-              aria-selected={costScope === "all"}
+              aria-pressed={costScope === "all"}
               onclick={() => (costScope = "all")}
             >
               All goals
@@ -665,8 +675,7 @@
               type="button"
               class="scope-btn"
               class:active={costScope === "selected"}
-              role="tab"
-              aria-selected={costScope === "selected"}
+              aria-pressed={costScope === "selected"}
               onclick={() => (costScope = "selected")}
             >
               Selected
@@ -675,8 +684,7 @@
               type="button"
               class="scope-btn"
               class:active={costScope === "starred"}
-              role="tab"
-              aria-selected={costScope === "starred"}
+              aria-pressed={costScope === "starred"}
               onclick={() => (costScope = "starred")}
             >
               Starred

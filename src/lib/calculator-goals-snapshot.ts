@@ -3,6 +3,7 @@
  * Mirrors `roster-snapshot.ts`.
  */
 
+import { writable } from "svelte/store";
 import {
   CALCULATOR_GOALS_VERSION,
   emptyGoalsState,
@@ -14,6 +15,9 @@ import type {
 } from "$lib/types/calculator-goals";
 
 export const CALCULATOR_GOALS_STORAGE_KEY = "calculatorGoals";
+
+/** Bumps after a successful local write — same-tab sync for planner + itinerary. */
+export const goalsLocalRevision = writable(0);
 
 export type GoalsCapture = {
   state: CalculatorGoalsState;
@@ -43,6 +47,7 @@ export function goalsDiffersFromSnapshot(
 export function writeGoalsLocal(json: string): boolean {
   try {
     localStorage.setItem(CALCULATOR_GOALS_STORAGE_KEY, json);
+    goalsLocalRevision.update((n) => n + 1);
     return true;
   } catch {
     return false;

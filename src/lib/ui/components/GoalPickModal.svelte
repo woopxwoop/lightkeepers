@@ -66,8 +66,11 @@
     {:else}
       {@const weapon = catalog?.weapons.find((w) => String(w.id) === opt.value)}
       <div class="weapon-tile">
-        {#if weapon?.icon}
-          <img src={assetUrl(weapon.icon) ?? ""} alt="" loading="lazy" />
+        {#if weapon}
+          {@const src = assetUrl(weapon.icon)}
+          {#if src}
+            <img src={src} alt="" loading="lazy" />
+          {/if}
         {/if}
       </div>
     {/if}

@@ -31,6 +31,7 @@
   let fileInputEl: HTMLInputElement | null = $state(null);
   let pasteText = $state("");
   let fileError = $state("");
+  let readingFile = $state(false);
 
   $effect(() => {
     if (!open) {
@@ -65,10 +66,11 @@
   });
 
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
-  let busy = $derived(importing || disabled);
+  let busy = $derived(importing || disabled || readingFile);
   let shownError = $derived(fileError || error);
 
   function openFilePicker() {
+    if (busy) return;
     fileError = "";
     fileInputEl?.click();
   }
@@ -77,12 +79,20 @@
     const input = event.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
-    if (!file) return;
+    if (!file || busy) return;
     if (file.size > MAX_GOOD_FILE_BYTES) {
       fileError = "JSON is too large (max 10 MB).";
       return;
     }
-    onImport(await file.text());
+    readingFile = true;
+    try {
+      const text = await file.text();
+      onImport(text);
+    } catch {
+      fileError = "Couldn't read that file.";
+    } finally {
+      readingFile = false;
+    }
   }
 
   function importPaste() {
@@ -143,6 +153,8 @@
         type="file"
         accept=".json,application/json"
         class="file-input"
+        disabled={busy}
+        tabindex="-1"
         onchange={handleFile}
       />
 

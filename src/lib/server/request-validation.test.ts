@@ -281,6 +281,22 @@ describe("request validation", () => {
       { key: "eleMas", value: 16 },
     ]);
     assert.throws(
+      () =>
+        requireInventoryArtifacts([
+          {
+            setKey: "GladiatorsFinale",
+            slotKey: "flower",
+            level: 0,
+            rarity: 5,
+            mainStatKey: "hp",
+            location: "",
+            lock: false,
+            substats: [{ value: 10 }],
+          },
+        ]),
+      isBadRequest,
+    );
+    assert.throws(
       () => requireInventoryArtifacts([{ setKey: "x" }]),
       isBadRequest,
     );

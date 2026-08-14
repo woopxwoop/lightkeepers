@@ -474,14 +474,18 @@ function craftChainsFromCatalog(catalog: UpgradeCostsCatalog): number[][] {
     const chain = [root];
     const seen = new Set([root]);
     let cur = root;
+    let cyclic = false;
     while (into.has(cur)) {
       const next = into.get(cur)!;
-      if (seen.has(next)) break;
+      if (seen.has(next)) {
+        cyclic = true;
+        break;
+      }
       seen.add(next);
       chain.push(next);
       cur = next;
     }
-    if (chain.length >= 2) chains.push(chain);
+    if (!cyclic && chain.length >= 2) chains.push(chain);
   }
   craftChainsCache.set(catalog, chains);
   return chains;

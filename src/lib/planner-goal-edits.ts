@@ -38,6 +38,8 @@ import {
 } from "$lib/roster-progress";
 import { isOwnedNameId, plannerSimKey, toGoodKey } from "$lib/utils";
 import {
+  MAX_ASCENSION,
+  MAX_LEVEL,
   orderCharacterConfigs,
   orderWeaponConfigs,
 } from "$lib/upgrade-costs";
@@ -57,6 +59,77 @@ export type CharacterSidePatch = Partial<{
 export type WeaponSidePatch = Partial<{ level: number; ascension: number }>;
 
 const NOT_IN_CATALOG = "This character isn't in the planner catalog yet.";
+
+/** True when target is ahead of start on at least one upgrade axis. */
+function characterTargetAhead(
+  start: CharacterUpgradeConfig,
+  target: CharacterUpgradeConfig,
+): boolean {
+  return (
+    target.level > start.level ||
+    target.ascension > start.ascension ||
+    target.talents.normal > start.talents.normal ||
+    target.talents.skill > start.talents.skill ||
+    target.talents.burst > start.talents.burst
+  );
+}
+
+function weaponTargetAhead(
+  start: { level: number; ascension: number },
+  target: { level: number; ascension: number },
+): boolean {
+  return target.level > start.level || target.ascension > start.ascension;
+}
+
+/**
+ * After GOOD/roster start is applied, lift target so it is not behind start.
+ * If that leaves a zero-progress goal, push target toward max (90/6).
+ */
+function characterGoalWithOwnedStart(
+  nameId: string,
+  start: CharacterUpgradeConfig,
+  promotes: UpgradePromoteStep[],
+  starred?: boolean,
+): CharacterCalculatorGoal {
+  const base = createCharacterGoal(nameId, {
+    start,
+    ...(starred ? { starred: true } : {}),
+  });
+  let ordered = orderCharacterConfigs(base.start, base.target, promotes);
+  if (!characterTargetAhead(ordered.start, ordered.target)) {
+    ordered = orderCharacterConfigs(
+      ordered.start,
+      {
+        level: MAX_LEVEL,
+        ascension: MAX_ASCENSION,
+        talents: ordered.target.talents,
+      },
+      promotes,
+    );
+  }
+  return { ...base, ...ordered };
+}
+
+function weaponGoalWithOwnedStart(
+  weaponId: number,
+  start: { level: number; ascension: number },
+  promotes: UpgradePromoteStep[],
+  starred?: boolean,
+): WeaponCalculatorGoal {
+  const base = createWeaponGoal(weaponId, {
+    start,
+    ...(starred ? { starred: true } : {}),
+  });
+  let ordered = orderWeaponConfigs(base.start, base.target, promotes);
+  if (!weaponTargetAhead(ordered.start, ordered.target)) {
+    ordered = orderWeaponConfigs(
+      ordered.start,
+      { level: MAX_LEVEL, ascension: MAX_ASCENSION },
+      promotes,
+    );
+  }
+  return { ...base, ...ordered };
+}
 
 export function resolveCatalogCharacterId(
   catalog: UpgradeCostsCatalog,
@@ -143,10 +216,16 @@ export function appendCatalogCharacterGoal(
     resolved,
     opts.weapons,
   );
-  const goal = createCharacterGoal(resolved, {
-    ...(progress ? { start: progressToCharacterStart(progress) } : {}),
-    ...(opts.starred ? { starred: true } : {}),
-  });
+  const goal = progress
+    ? characterGoalWithOwnedStart(
+        resolved,
+        progressToCharacterStart(progress),
+        row.promotes,
+        opts.starred,
+      )
+    : createCharacterGoal(resolved, {
+        ...(opts.starred ? { starred: true } : {}),
+      });
   const next = appendGoal(state, goal);
   if (next.goals.length === state.goals.length) {
     return {
@@ -167,22 +246,21 @@ export function appendCatalogWeaponGoal(
     starred?: boolean;
   },
 ): AppendPlannerGoalResult {
-  if (!catalog.weapons.some((w) => w.id === weaponId)) {
+  const row = catalog.weapons.find((w) => w.id === weaponId);
+  if (!row) {
     return { ok: false, error: "This weapon isn't in the planner catalog yet." };
   }
-  const row = catalog.weapons.find((w) => w.id === weaponId);
-  const key = row ? toGoodKey(row.name) : "";
-  const fromBag = key
-    ? lowestInventoryWeaponByKey(opts.weapons ?? [], key)
-    : null;
+  const key = toGoodKey(row.name);
+  const fromBag = lowestInventoryWeaponByKey(opts.weapons ?? [], key);
   const fromRoster = opts.owned.find(
     (c) => c.isOwned && c.progress?.weapon?.key === key,
   )?.progress?.weapon;
   const start = plannerStartFromOwnedWeapon(fromBag ?? fromRoster);
-  const goal = createWeaponGoal(weaponId, {
-    ...(start ? { start } : {}),
-    ...(opts.starred ? { starred: true } : {}),
-  });
+  const goal = start
+    ? weaponGoalWithOwnedStart(weaponId, start, row.promotes, opts.starred)
+    : createWeaponGoal(weaponId, {
+        ...(opts.starred ? { starred: true } : {}),
+      });
   const next = appendGoal(state, goal);
   if (next.goals.length === state.goals.length) {
     return {
@@ -300,7 +378,8 @@ export async function fetchPlannerTargetFromBuilds(
     const builds = await loadCharacterSummary(simKey);
     if (builds?.upToDate === false) return null;
     return plannerTargetFromBuilds(builds, promotes);
-  } catch {
+  } catch (err) {
+    console.debug("[planner] loadCharacterSummary failed:", err);
     return null;
   }
 }

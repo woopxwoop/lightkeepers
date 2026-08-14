@@ -27,6 +27,7 @@
   import {
     captureGoals,
     fetchGoalsCloud,
+    goalsLocalRevision,
     persistGoalsLocal,
     postGoals,
     readGoalsLocal,
@@ -68,6 +69,7 @@
   import IconCalendarDay from "$lib/ui/icons/IconCalendarDay.svelte";
   import IconCalendarWeek from "$lib/ui/icons/IconCalendarWeek.svelte";
   import PlannerItineraryGoalsModal from "$lib/ui/components/PlannerItineraryGoalsModal.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
 
   let {
     chrome = "card",
@@ -200,6 +202,15 @@
     })();
 
     return () => document.removeEventListener("visibilitychange", onVisible);
+  });
+
+  /** Same-tab sync when the planner page persists goals. */
+  $effect(() => {
+    void $goalsLocalRevision;
+    if (!hydrated || hasUnsavedChanges || pickingGoals) return;
+    const pending = captureGoals(readGoalsLocal());
+    if (pending.json === savedSnapshot) return;
+    commitSaved(pending.state);
   });
 
   function toggleStar(id: string) {
@@ -423,6 +434,7 @@
   let shownWeek = $derived(weekExpanded ? week : [todayCol]);
   let hasDomainWeek = $derived(places.some((p) => p.kind === "domain"));
   let weeklyPlaces = $derived(farmPlacesOfKind(places, "weekly"));
+  let bossPlaces = $derived(farmPlacesOfKind(places, "boss"));
 
   function placeIdentity(place: FarmPlace): string {
     return `${place.kind}:${place.name}:${place.days?.join("/") ?? ""}`;
@@ -460,8 +472,13 @@
 </script>
 
 {#if hydrated && (goals.length > 0 || showEmpty)}
-  <section class="itinerary" class:itinerary-card={chrome === "card"}>
-    {#if showHeading || !hasDomainWeek}
+  {@const needsGoalSetup = goals.length === 0 || focusedGoals.length === 0}
+  <section
+    class="itinerary"
+    class:itinerary-card={chrome === "card"}
+    class:itinerary-empty-state={needsGoalSetup}
+  >
+    {#if !needsGoalSetup && (showHeading || !hasDomainWeek)}
       <div class="itinerary-head">
         {#if showHeading}
           <a class="back-link itinerary-planner" href={plannerPath}
@@ -470,7 +487,7 @@
         {:else}
           <span class="itinerary-head-spacer"></span>
         {/if}
-        {#if !hasDomainWeek}
+        {#if !hasDomainWeek && goals.length > 0 && focusedGoals.length > 0}
           <button
             type="button"
             class="goal-trigger"
@@ -485,23 +502,45 @@
     {/if}
 
     {#if goals.length === 0}
-      <p class="section-lede">
-        Add a character or weapon goal to see which domains and bosses to run.
-      </p>
+      <div class="itinerary-empty">
+        <p class="itinerary-empty-copy">
+          Create a character or weapon goal to see what’s available to farm.
+        </p>
+        <Button
+          variant="primary"
+          aria-haspopup="dialog"
+          aria-expanded={pickingGoals}
+          onclick={openPicker}
+        >
+          Create a goal
+        </Button>
+      </div>
     {:else if focusedGoals.length === 0}
-      <p class="section-lede">Star a goal to include it here.</p>
+      <div class="itinerary-empty">
+        <p class="itinerary-empty-copy">
+          Star your highest priority goals to include them here.
+        </p>
+        <Button
+          variant="primary"
+          aria-haspopup="dialog"
+          aria-expanded={pickingGoals}
+          onclick={openPicker}
+        >
+          Star goals
+        </Button>
+      </div>
     {:else if !catalog && !catalogError}
       <LoadingState message="Loading upgrade costs…" />
     {:else if catalogError}
       <p class="section-lede">{catalogError}</p>
-    {:else if !hasDomainWeek && weeklyPlaces.length === 0}
+    {:else if !hasDomainWeek && weeklyPlaces.length === 0 && bossPlaces.length === 0}
       <p class="section-lede">Nothing to farm for these goals.</p>
     {:else}
       <div class="farm-sections">
           {#if hasDomainWeek}
             <section class="farm-section">
               <div class="farm-section-head">
-                <h3 class="eyebrow">Open Domains</h3>
+                <h3 class="eyebrow">Open domains today</h3>
                 <div class="farm-section-tools">
                   <button
                     type="button"
@@ -564,6 +603,12 @@
             <section class="farm-section">
               <h3 class="eyebrow">{FARM_KIND_LABEL.weekly}</h3>
               {@render placeRows(weeklyPlaces)}
+            </section>
+          {/if}
+          {#if bossPlaces.length > 0}
+            <section class="farm-section">
+              <h3 class="eyebrow">{FARM_KIND_LABEL.boss}</h3>
+              {@render placeRows(bossPlaces)}
             </section>
           {/if}
         </div>
@@ -635,7 +680,7 @@
   removedIds={pendingRemoveIds}
   suspendKeys={picking !== null || configuringId !== null}
   onClose={closePicker}
-  onToggle={toggleStar}
+  onStar={toggleStar}
   onReorder={reorderGoals}
   onStarAll={starAll}
   onStarNone={starNone}
@@ -712,6 +757,31 @@
     flex: 1;
     min-width: 0;
     margin: 0;
+  }
+
+  .itinerary-empty-state {
+    flex: 1;
+    min-height: min(22rem, 55vh);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .itinerary-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    max-width: 22rem;
+    margin-inline: auto;
+    padding: 0.5rem 1rem;
+  }
+
+  .itinerary-empty-copy {
+    margin: 0;
+    font-size: var(--text-base);
+    line-height: 1.45;
+    color: var(--foreground-color);
   }
 
   .goal-trigger {

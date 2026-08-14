@@ -53,6 +53,15 @@ describe("inventory weapons", () => {
       lowestInventoryWeaponByKey([homa, spare, spareR5], "DragonBane")?.level,
       70,
     );
+    const spareLowAsc: InventoryWeapon = {
+      ...spare,
+      ascension: 3,
+    };
+    assert.equal(
+      lowestInventoryWeaponByKey([spare, spareLowAsc], "DragonBane")
+        ?.ascension,
+      3,
+    );
     assert.equal(plannerStartFromOwnedWeapon(spare)?.level, 70);
     assert.equal(plannerStartFromOwnedWeapon(homa), undefined);
   });

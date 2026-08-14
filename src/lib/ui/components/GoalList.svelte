@@ -33,6 +33,7 @@
 
   let dragFrom = $state<number | null>(null);
   let dragOver = $state<number | null>(null);
+  let reorderAnnounce = $state("");
 
   function startReorder(e: PointerEvent, index: number) {
     if (e.button !== 0) return;
@@ -64,15 +65,27 @@
   }
 
   function onReorderKey(e: KeyboardEvent, index: number) {
-    if (removedIds.has(goals[index]?.id ?? "")) return;
+    const goal = goals[index];
+    if (!goal || removedIds.has(goal.id)) return;
+    const label = itineraryGoalLabel(goal, catalog);
     if (e.key === "ArrowUp") {
       e.preventDefault();
+      if (index <= 0) {
+        reorderAnnounce = `${label} is already first`;
+        return;
+      }
       onReorder(index, index - 1);
+      reorderAnnounce = `${label} moved to position ${index}`;
       return;
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      if (index >= goals.length - 1) {
+        reorderAnnounce = `${label} is already last`;
+        return;
+      }
       onReorder(index, index + 1);
+      reorderAnnounce = `${label} moved to position ${index + 2}`;
     }
   }
 </script>
@@ -84,6 +97,7 @@
     {@const label = itineraryGoalLabel(goal, catalog)}
     {@const icon = goalRowIcon(goal, catalog)}
     {@const summary = goalRowSummary(goal, catalog)}
+    {@const starred = !!goal.starred && !removed}
     {#snippet face()}
       {#if icon}
         <img
@@ -114,7 +128,7 @@
       <button
         type="button"
         class="goal-drag"
-        aria-label={`Reorder ${label}`}
+        aria-label={`Reorder ${label}, position ${i + 1} of ${goals.length}`}
         disabled={goals.length < 2 || removed}
         onpointerdown={(e) => startReorder(e, i)}
         onpointermove={moveReorder}
@@ -140,15 +154,13 @@
       <button
         type="button"
         class="goal-icon-btn goal-star"
-        class:is-on={!!goal.starred && !removed}
-        aria-pressed={!!goal.starred}
-        aria-label={goal.starred
-          ? `Unstar ${label}`
-          : `Star ${label} for the farming itinerary`}
+        class:is-on={starred}
+        aria-pressed={starred}
+        aria-label={`Star ${label} for the farming itinerary`}
         disabled={removed}
         onclick={() => onStar(goal.id)}
       >
-        <IconStar size={16} filled={!!goal.starred && !removed} />
+        <IconStar size={16} filled={starred} />
       </button>
       {#if onConfigure}
         <button
@@ -175,6 +187,7 @@
     </li>
   {/each}
 </ul>
+<p class="sr-only" aria-live="polite">{reorderAnnounce}</p>
 
 <style>
   .goal-list {
@@ -184,6 +197,18 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .goal-item {

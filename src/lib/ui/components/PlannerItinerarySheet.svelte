@@ -73,7 +73,7 @@
       bind:this={panelEl}
       role="dialog"
       aria-modal="true"
-      aria-label="Farming itinerary"
+      aria-label="Open domains today"
       tabindex="-1"
       transition:scale={{ duration: motion ?? 200, start: 0.98 }}
     >
@@ -172,6 +172,8 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     padding: 0.15rem 0.15rem 0.35rem;
     scrollbar-width: thin;
     scrollbar-color: color-mix(
@@ -180,6 +182,11 @@
         transparent
       )
       transparent;
+  }
+
+  .sheet-body :global(.itinerary) {
+    flex: 1;
+    min-height: 0;
   }
 
   .sheet-body::-webkit-scrollbar {

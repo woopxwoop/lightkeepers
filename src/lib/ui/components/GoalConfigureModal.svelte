@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Configure start→target for a planner goal.
+   * Configure start or goal for a planner goal (one side at a time).
    * Stacks above the itinerary goals picker (z-140).
    */
   import { tick } from "svelte";
@@ -12,7 +12,9 @@
     patchWeaponGoalSide,
     retargetCharacterGoal,
     retargetWeaponGoal,
+    type CharacterSidePatch,
     type PlannerPickOption,
+    type WeaponSidePatch,
   } from "$lib/planner-goal-edits";
   import { assetUrl } from "$lib/asset-urls";
   import type { CalculatorGoal } from "$lib/types/calculator-goals";
@@ -26,6 +28,7 @@
   import Button from "$lib/ui/components/Button.svelte";
   import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
   import NumberSliderField from "$lib/ui/components/NumberSliderField.svelte";
+  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
   import IconX from "$lib/ui/icons/IconX.svelte";
 
   let {
@@ -50,10 +53,47 @@
     onAutofillCharacter?: (nameId: string, goalId: string) => void;
   } = $props();
 
+  type ConfigSide = "start" | "goal";
+  const CONFIG_SIDE_OPTIONS = [
+    { value: "start" as const, label: "Start" },
+    { value: "goal" as const, label: "Goal" },
+  ];
+
   let panelEl: HTMLDivElement | null = $state(null);
   let closeEl: HTMLButtonElement | null = $state(null);
+  let configSide = $state<ConfigSide>("goal");
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
-  let targetLevelFloor = $derived(goal?.start.level ?? 1);
+  let editingStart = $derived(configSide === "start");
+
+  let characterRow = $derived(
+    goal?.kind === "character"
+      ? catalog?.characters.find((c) => c.name_id === goal.name_id)
+      : undefined,
+  );
+  let weaponRow = $derived(
+    goal?.kind === "weapon"
+      ? catalog?.weapons.find((w) => w.id === goal.weapon_id)
+      : undefined,
+  );
+
+  function patchCharacter(
+    side: "start" | "target",
+    patch: CharacterSidePatch,
+  ) {
+    if (goal?.kind !== "character" || !characterRow) return;
+    onChange(
+      patchCharacterGoalSide(goal, characterRow.promotes, side, patch),
+    );
+  }
+
+  function patchWeapon(side: "start" | "target", patch: WeaponSidePatch) {
+    if (goal?.kind !== "weapon" || !weaponRow) return;
+    onChange(patchWeaponGoalSide(goal, weaponRow.promotes, side, patch));
+  }
+
+  $effect(() => {
+    if (open) configSide = "goal";
+  });
 
   $effect(() => {
     if (!open) return;
@@ -105,6 +145,12 @@
     >
       <header class="config-head">
         <h2 class="section-title">Configure</h2>
+        <SegmentedControl
+          class="config-side"
+          options={CONFIG_SIDE_OPTIONS}
+          bind:value={configSide}
+          aria-label="Edit start or goal"
+        />
         <button
           type="button"
           class="config-close"
@@ -176,64 +222,21 @@
             max={MAX_ASCENSION}
             floor={characterGoal.start.ascension}
             origin={characterGoal.start.ascension}
-            onchange={(ascension) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(
-                  characterGoal,
-                  row.promotes,
-                  "target",
-                  { ascension },
-                ),
-              );
-            }}
-            onOriginChange={(ascension) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(
-                  characterGoal,
-                  row.promotes,
-                  "start",
-                  { ascension },
-                ),
-              );
-            }}
+            editSide={editingStart ? "origin" : "value"}
+            onchange={(ascension) => patchCharacter("target", { ascension })}
+            onOriginChange={(ascension) =>
+              patchCharacter("start", { ascension })}
           />
           <NumberSliderField
             label="Level"
             value={characterGoal.target.level}
             min={1}
             max={MAX_LEVEL}
-            floor={targetLevelFloor}
+            floor={characterGoal.start.level}
             origin={characterGoal.start.level}
-            onchange={(level) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "target", {
-                  level,
-                }),
-              );
-            }}
-            onOriginChange={(level) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "start", {
-                  level,
-                }),
-              );
-            }}
+            editSide={editingStart ? "origin" : "value"}
+            onchange={(level) => patchCharacter("target", { level })}
+            onOriginChange={(level) => patchCharacter("start", { level })}
           />
           <NumberSliderField
             label="Normal attack"
@@ -242,28 +245,11 @@
             max={MAX_TALENT}
             floor={characterGoal.start.talents.normal}
             origin={characterGoal.start.talents.normal}
-            onchange={(normal) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "target", {
-                  talents: { normal },
-                }),
-              );
-            }}
-            onOriginChange={(normal) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "start", {
-                  talents: { normal },
-                }),
-              );
-            }}
+            editSide={editingStart ? "origin" : "value"}
+            onchange={(normal) =>
+              patchCharacter("target", { talents: { normal } })}
+            onOriginChange={(normal) =>
+              patchCharacter("start", { talents: { normal } })}
           />
           <NumberSliderField
             label="Skill"
@@ -272,28 +258,11 @@
             max={MAX_TALENT}
             floor={characterGoal.start.talents.skill}
             origin={characterGoal.start.talents.skill}
-            onchange={(skill) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "target", {
-                  talents: { skill },
-                }),
-              );
-            }}
-            onOriginChange={(skill) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "start", {
-                  talents: { skill },
-                }),
-              );
-            }}
+            editSide={editingStart ? "origin" : "value"}
+            onchange={(skill) =>
+              patchCharacter("target", { talents: { skill } })}
+            onOriginChange={(skill) =>
+              patchCharacter("start", { talents: { skill } })}
           />
           <NumberSliderField
             label="Burst"
@@ -302,28 +271,11 @@
             max={MAX_TALENT}
             floor={characterGoal.start.talents.burst}
             origin={characterGoal.start.talents.burst}
-            onchange={(burst) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "target", {
-                  talents: { burst },
-                }),
-              );
-            }}
-            onOriginChange={(burst) => {
-              const row = catalog.characters.find(
-                (c) => c.name_id === characterGoal.name_id,
-              );
-              if (!row) return;
-              onChange(
-                patchCharacterGoalSide(characterGoal, row.promotes, "start", {
-                  talents: { burst },
-                }),
-              );
-            }}
+            editSide={editingStart ? "origin" : "value"}
+            onchange={(burst) =>
+              patchCharacter("target", { talents: { burst } })}
+            onOriginChange={(burst) =>
+              patchCharacter("start", { talents: { burst } })}
           />
         {:else}
           {@const weaponGoal = goal}
@@ -334,58 +286,21 @@
             max={MAX_ASCENSION}
             floor={weaponGoal.start.ascension}
             origin={weaponGoal.start.ascension}
-            onchange={(ascension) => {
-              const row = catalog.weapons.find(
-                (w) => w.id === weaponGoal.weapon_id,
-              );
-              if (!row) return;
-              onChange(
-                patchWeaponGoalSide(weaponGoal, row.promotes, "target", {
-                  ascension,
-                }),
-              );
-            }}
-            onOriginChange={(ascension) => {
-              const row = catalog.weapons.find(
-                (w) => w.id === weaponGoal.weapon_id,
-              );
-              if (!row) return;
-              onChange(
-                patchWeaponGoalSide(weaponGoal, row.promotes, "start", {
-                  ascension,
-                }),
-              );
-            }}
+            editSide={editingStart ? "origin" : "value"}
+            onchange={(ascension) => patchWeapon("target", { ascension })}
+            onOriginChange={(ascension) =>
+              patchWeapon("start", { ascension })}
           />
           <NumberSliderField
             label="Level"
             value={weaponGoal.target.level}
             min={1}
             max={MAX_LEVEL}
-            floor={targetLevelFloor}
+            floor={weaponGoal.start.level}
             origin={weaponGoal.start.level}
-            onchange={(level) => {
-              const row = catalog.weapons.find(
-                (w) => w.id === weaponGoal.weapon_id,
-              );
-              if (!row) return;
-              onChange(
-                patchWeaponGoalSide(weaponGoal, row.promotes, "target", {
-                  level,
-                }),
-              );
-            }}
-            onOriginChange={(level) => {
-              const row = catalog.weapons.find(
-                (w) => w.id === weaponGoal.weapon_id,
-              );
-              if (!row) return;
-              onChange(
-                patchWeaponGoalSide(weaponGoal, row.promotes, "start", {
-                  level,
-                }),
-              );
-            }}
+            editSide={editingStart ? "origin" : "value"}
+            onchange={(level) => patchWeapon("target", { level })}
+            onOriginChange={(level) => patchWeapon("start", { level })}
           />
         {/if}
       </div>
@@ -448,9 +363,12 @@
   .config-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.75rem;
     flex-shrink: 0;
+  }
+
+  .config-head :global(.config-side) {
+    margin-left: auto;
   }
 
   .config-close {
