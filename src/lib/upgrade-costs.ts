@@ -489,7 +489,8 @@ function craftChainsFromCatalog(catalog: UpgradeCostsCatalog): number[][] {
 
 /**
  * Fold talent books, weapon mats, gems, elite, and common drops into the
- * highest rank this bag actually uses. Remainders round up (3 Teachings → 1 Guide).
+ * lowest rank this bag actually uses. Higher ranks convert down exactly
+ * (1 Guide → 3 Teachings).
  */
 export function collapseCraftRanks(
   materials: Record<string, number>,
@@ -499,17 +500,29 @@ export function collapseCraftRanks(
   for (const chain of craftChainsFromCatalog(catalog)) {
     const counts = chain.map((id) => out[String(id)] ?? 0);
     if (counts.every((c) => c <= 0)) continue;
-    let hi = counts.length - 1;
-    while (hi > 0 && counts[hi]! <= 0) hi -= 1;
+    let lo = 0;
+    while (lo < counts.length - 1 && counts[lo]! <= 0) lo += 1;
     let base = 0;
-    for (let i = 0; i <= hi; i++) {
-      base += counts[i]! * CRAFT_RANK_RATIO ** i;
+    for (let i = lo; i < counts.length; i++) {
+      base += counts[i]! * CRAFT_RANK_RATIO ** (i - lo);
     }
-    const top = Math.ceil(base / CRAFT_RANK_RATIO ** hi);
     for (const id of chain) delete out[String(id)];
-    if (top > 0) out[String(chain[hi])] = top;
+    if (base > 0) out[String(chain[lo])] = base;
   }
   return out;
+}
+
+/** True when collapsing ranks would change the bag (higher ranks to reveal). */
+export function craftRanksCanExpand(
+  materials: Record<string, number>,
+  catalog: UpgradeCostsCatalog,
+): boolean {
+  const collapsed = collapseCraftRanks(materials, catalog);
+  const keys = new Set([...Object.keys(materials), ...Object.keys(collapsed)]);
+  for (const key of keys) {
+    if ((materials[key] ?? 0) !== (collapsed[key] ?? 0)) return true;
+  }
+  return false;
 }
 
 /** Planner source line: `Forsaken Rift · Mon/Thu/Sun` when days are known. */

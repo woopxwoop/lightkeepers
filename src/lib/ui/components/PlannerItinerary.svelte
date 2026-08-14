@@ -1,32 +1,72 @@
 <script lang="ts">
   /**
-   * Farming itinerary — pick saved planner goals, see domains / bosses.
-   * Home mounts the card; the nav sheet mounts the plain layout.
+   * Farming itinerary — starred planner goals, domains / bosses.
+   * The nav sheet mounts the plain layout as a large overlay.
    */
   import { onMount } from "svelte";
+  import { page } from "$app/state";
   import { resolve } from "$app/paths";
   import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
-  import { applyCloudGoals, aggregateGoalCosts } from "$lib/calculator-goals";
   import {
+    getRosterWeaponsCached,
+    loadRosterWeapons,
+  } from "$lib/app/roster-inventory";
+  import {
+    applyCloudGoals,
+    aggregateGoalCosts,
+    cloneGoal,
+    emptyGoalsState,
+    findGoal,
+    moveGoal,
+    parseGoalsState,
+    removeGoal,
+    replaceGoal,
+    starredGoals,
+    toggleGoalStarred,
+  } from "$lib/calculator-goals";
+  import {
+    captureGoals,
     fetchGoalsCloud,
     persistGoalsLocal,
+    postGoals,
     readGoalsLocal,
+    writeGoalsLocal,
   } from "$lib/calculator-goals-snapshot";
   import { authClient } from "$lib/auth-client";
+  import type { Character, CharacterPortraitRef } from "$lib/definitions";
   import {
+    appendCatalogCharacterGoal,
+    appendCatalogWeaponGoal,
+    fetchPlannerTargetFromBuilds,
+    pickModalCharacter,
+    plannerCharacterOptions,
+    plannerWeaponOptions,
+    simKeyForCatalogCharacter,
+  } from "$lib/planner-goal-edits";
+  import {
+    FARM_KIND_LABEL,
+    farmMaterialContributors,
     farmPlacesFromMaterials,
-    groupFarmPlaces,
-    readItineraryFocusIds,
-    resolveItineraryFocus,
+    farmPlacesOfKind,
+    farmTodayColumn,
+    farmWeekDays,
     todayWeekday,
-    writeItineraryFocusIds,
+    uniqueGoalsOnPlaces,
+    type FarmGoalRef,
+    type FarmPlace,
   } from "$lib/planner-itinerary";
-  import { wikiHref } from "$lib/wiki";
   import { assetUrl } from "$lib/asset-urls";
-  import { collapseCraftRanks } from "$lib/upgrade-costs";
-  import type { CalculatorGoal } from "$lib/types/calculator-goals";
+  import { charactersOwned } from "$lib/stores";
+  import { ownedNameIds } from "$lib/utils";
+  import { orderCharacterConfigs } from "$lib/upgrade-costs";
+  import type { CalculatorGoalsState } from "$lib/types/calculator-goals";
   import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
+  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import GoalConfigureModal from "$lib/ui/components/GoalConfigureModal.svelte";
+  import GoalPickModal from "$lib/ui/components/GoalPickModal.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import IconCalendarDay from "$lib/ui/icons/IconCalendarDay.svelte";
+  import IconCalendarWeek from "$lib/ui/icons/IconCalendarWeek.svelte";
   import PlannerItineraryGoalsModal from "$lib/ui/components/PlannerItineraryGoalsModal.svelte";
 
   let {
@@ -35,24 +75,105 @@
     showHeading = true,
   }: {
     chrome?: "card" | "plain";
-    /** When no goals, render a planner CTA instead of nothing. */
+    /** When no goals, still render the picker CTA. */
     showEmpty?: boolean;
     showHeading?: boolean;
   } = $props();
 
   const plannerPath = resolve("/tools/planner");
+  const session = authClient.useSession();
 
-  let goals = $state<CalculatorGoal[]>([]);
+  let goalsState = $state<CalculatorGoalsState>(emptyGoalsState());
   let hydrated = $state(false);
   let catalog = $state<UpgradeCostsCatalog | null>(null);
   let catalogError = $state("");
-  let focusIds = $state<Set<string>>(new Set());
-  let pickingGoals = $state(false);
+  let weekExpanded = $state(false);
   let weekdayTick = $state(0);
+  let pickingGoals = $state(false);
+  let picking = $state<"character" | "weapon" | null>(null);
+  let pickQuery = $state("");
+  let sortOwnedFirst = $state(true);
+  let configuringId = $state<string | null>(null);
+  let pendingRemoveIds = $state(new Set<string>());
+  let addError = $state("");
+  let autofillSeq = 0;
+  let savedSnapshot = $state("");
+  let isSaving = $state(false);
+  let saveError = $state("");
+
+  let goals = $derived(goalsState.goals);
+  let savedGoals = $derived.by(() => {
+    if (!savedSnapshot) return goalsState.goals;
+    try {
+      return parseGoalsState(JSON.parse(savedSnapshot) as unknown).goals;
+    } catch {
+      return goalsState.goals;
+    }
+  });
+  let hasUnsavedChanges = $derived.by(() => {
+    if (!savedSnapshot) return false;
+    if (pendingRemoveIds.size > 0) return true;
+    return captureGoals(goalsState).json !== savedSnapshot;
+  });
+  let focusedGoals = $derived(starredGoals(savedGoals));
+
+  function ensureCatalog() {
+    if (catalog || catalogError) return;
+    void loadUpgradeCosts()
+      .then((data) => {
+        catalog = data;
+      })
+      .catch((e) => {
+        catalogError = (e as Error)?.message ?? "Couldn’t load upgrade costs";
+      });
+  }
+
+  function applySavedGoals(next: CalculatorGoalsState) {
+    goalsState = next;
+    ensureCatalog();
+  }
+
+  function commitSaved(next: CalculatorGoalsState) {
+    const pending = captureGoals(next);
+    savedSnapshot = pending.json;
+    applySavedGoals(pending.state);
+  }
+
+  function cancelEdits() {
+    try {
+      applySavedGoals(parseGoalsState(JSON.parse(savedSnapshot) as unknown));
+      pendingRemoveIds = new Set();
+      saveError = "";
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function closePicker() {
+    if (hasUnsavedChanges) cancelEdits();
+    pickingGoals = false;
+    picking = null;
+    pickQuery = "";
+    configuringId = null;
+    pendingRemoveIds = new Set();
+    addError = "";
+    saveError = "";
+  }
+
+  function openPicker() {
+    pickingGoals = true;
+    addError = "";
+    ensureCatalog();
+    void loadRosterWeapons().catch(() => {});
+  }
 
   onMount(() => {
     const onVisible = () => {
-      if (document.visibilityState === "visible") weekdayTick += 1;
+      if (document.visibilityState !== "visible") return;
+      weekdayTick += 1;
+      if (hydrated && !hasUnsavedChanges && !pickingGoals) {
+        commitSaved(readGoalsLocal());
+      }
     };
     document.addEventListener("visibilitychange", onVisible);
 
@@ -72,182 +193,499 @@
           /* keep local */
         }
       }
-      goals = local.goals;
-      focusIds = resolveItineraryFocus(goals, readItineraryFocusIds());
+      commitSaved(local);
       hydrated = true;
-      if (goals.length === 0) return;
-      void loadUpgradeCosts()
-        .then((data) => {
-          catalog = data;
-        })
-        .catch((e) => {
-          catalogError = (e as Error)?.message ?? "Couldn’t load upgrade costs";
-        });
+      ensureCatalog();
+      void loadRosterWeapons().catch(() => {});
     })();
 
     return () => document.removeEventListener("visibilitychange", onVisible);
   });
 
-  let focusedGoals = $derived(goals.filter((g) => focusIds.has(g.id)));
+  function toggleStar(id: string) {
+    const current = findGoal(goalsState, id);
+    if (!current) return;
+    applySavedGoals(replaceGoal(goalsState, toggleGoalStarred(current)));
+  }
+
+  function starAll() {
+    applySavedGoals({
+      ...goalsState,
+      goals: goalsState.goals.map((g) => {
+        const next = cloneGoal(g);
+        next.starred = true;
+        return next;
+      }),
+    });
+  }
+
+  function starNone() {
+    applySavedGoals({
+      ...goalsState,
+      goals: goalsState.goals.map((g) => {
+        const next = cloneGoal(g);
+        delete next.starred;
+        return next;
+      }),
+    });
+  }
+
+  function reorderGoals(from: number, to: number) {
+    applySavedGoals(moveGoal(goalsState, from, to));
+  }
+
+  let ownedIds = $derived(ownedNameIds($charactersOwned));
+  let characterOptions = $derived(
+    plannerCharacterOptions(catalog, ownedIds, sortOwnedFirst),
+  );
+  let weaponOptions = $derived(plannerWeaponOptions(catalog));
+  let pickOptions = $derived(
+    picking === "weapon" ? weaponOptions : characterOptions,
+  );
+  let configuringGoal = $derived(
+    configuringId ? findGoal(goalsState, configuringId) : null,
+  );
+
+  function portraitFor(nameId: string) {
+    return pickModalCharacter(nameId, catalog, $charactersOwned);
+  }
+
+  function beginPick(kind: "character" | "weapon") {
+    addError = "";
+    configuringId = null;
+    picking = kind;
+    pickQuery = "";
+    ensureCatalog();
+    void loadRosterWeapons().catch(() => {});
+  }
+
+  function cancelPick() {
+    picking = null;
+    pickQuery = "";
+  }
+
+  function choosePick(value: string) {
+    if (picking === "character") addCharacterWith(value);
+    else if (picking === "weapon") addWeaponWith(Number(value));
+  }
+
+  async function autofillCharacterTarget(nameId: string, goalId: string) {
+    if (!catalog) return;
+    const row = catalog.characters.find((c) => c.name_id === nameId);
+    if (!row) return;
+    const seq = ++autofillSeq;
+    const target = await fetchPlannerTargetFromBuilds(
+      nameId,
+      row.promotes,
+      simKeyForCatalogCharacter(catalog, nameId),
+    );
+    if (seq !== autofillSeq || !target) return;
+    const current = findGoal(goalsState, goalId);
+    if (
+      !current ||
+      current.kind !== "character" ||
+      current.name_id !== nameId
+    ) {
+      return;
+    }
+    applySavedGoals(
+      replaceGoal(goalsState, {
+        ...current,
+        ...orderCharacterConfigs(current.start, target, row.promotes),
+      }),
+    );
+  }
+
+  function addCharacterWith(nameId: string) {
+    if (!catalog) return;
+    cancelPick();
+    const result = appendCatalogCharacterGoal(goalsState, catalog, nameId, {
+      owned: $charactersOwned,
+      weapons: getRosterWeaponsCached(),
+      starred: true,
+    });
+    if (!result.ok) {
+      addError = result.error;
+      return;
+    }
+    addError = "";
+    applySavedGoals(result.state);
+    configuringId = result.goal.id;
+    void autofillCharacterTarget(
+      result.goal.kind === "character" ? result.goal.name_id : nameId,
+      result.goal.id,
+    );
+  }
+
+  function addWeaponWith(weaponId: number) {
+    if (!catalog) return;
+    cancelPick();
+    const result = appendCatalogWeaponGoal(goalsState, catalog, weaponId, {
+      owned: $charactersOwned,
+      weapons: getRosterWeaponsCached(),
+      starred: true,
+    });
+    if (!result.ok) {
+      addError = result.error;
+      return;
+    }
+    addError = "";
+    applySavedGoals(result.state);
+    configuringId = result.goal.id;
+  }
+
+  function openConfigure(id: string) {
+    if (pendingRemoveIds.has(id)) return;
+    cancelPick();
+    configuringId = id;
+  }
+
+  function closeConfigure() {
+    configuringId = null;
+  }
+
+  function deleteGoal(id: string) {
+    if (configuringId === id) configuringId = null;
+    addError = "";
+    const next = new Set(pendingRemoveIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    pendingRemoveIds = next;
+  }
+
+  function goalsWithoutPendingRemoves(
+    state: CalculatorGoalsState,
+  ): CalculatorGoalsState {
+    let next = state;
+    for (const id of pendingRemoveIds) {
+      next = removeGoal(next, id);
+    }
+    return next;
+  }
+
+  async function saveStars() {
+    if (isSaving || !hasUnsavedChanges) return;
+    isSaving = true;
+    saveError = "";
+    const pending = captureGoals(goalsWithoutPendingRemoves(goalsState));
+    try {
+      if (!writeGoalsLocal(pending.json)) {
+        console.warn("localStorage unavailable — saving to memory only");
+      }
+      if ($session.data) {
+        const result = await postGoals(pending.state);
+        if (!result.ok) {
+          writeGoalsLocal(savedSnapshot);
+          saveError = result.message
+            ? `Sync failed (${result.status}): ${result.message}`
+            : `Sync failed (${result.status})`;
+          return;
+        }
+      }
+      pendingRemoveIds = new Set();
+      savedSnapshot = pending.json;
+      applySavedGoals(pending.state);
+      pickingGoals = false;
+      picking = null;
+      configuringId = null;
+      addError = "";
+    } catch {
+      writeGoalsLocal(savedSnapshot);
+      saveError = "Could not save goals";
+    } finally {
+      isSaving = false;
+    }
+  }
+
+  let focusedMaterials = $derived.by((): Record<string, number> => {
+    if (!catalog || focusedGoals.length === 0) return {};
+    return aggregateGoalCosts(focusedGoals, catalog).materials;
+  });
 
   let places = $derived.by(() => {
     if (!catalog || focusedGoals.length === 0) return [];
-    return farmPlacesFromMaterials(
-      collapseCraftRanks(
-        aggregateGoalCosts(focusedGoals, catalog).materials,
-        catalog,
-      ),
-      catalog,
-    );
+    return farmPlacesFromMaterials(focusedMaterials, catalog);
   });
 
-  let sections = $derived.by(() => {
+  let contributors = $derived.by(() => {
+    if (!catalog || focusedGoals.length === 0) {
+      return new Map<string, FarmGoalRef[]>();
+    }
+    return farmMaterialContributors(focusedGoals, catalog, focusedMaterials);
+  });
+
+  let today = $derived.by(() => {
     weekdayTick;
-    return groupFarmPlaces(places, todayWeekday());
+    return todayWeekday();
   });
+  let week = $derived(farmWeekDays(places, today));
+  let todayCol = $derived(farmTodayColumn(places, today));
+  let shownWeek = $derived(weekExpanded ? week : [todayCol]);
+  let hasDomainWeek = $derived(places.some((p) => p.kind === "domain"));
+  let weeklyPlaces = $derived(farmPlacesOfKind(places, "weekly"));
 
-  let focusSummary = $derived.by(() => {
-    if (goals.length === 0) return "Goals";
-    if (focusedGoals.length === 0) return "No goals";
-    if (focusedGoals.length === goals.length) return "All goals";
-    return `${focusedGoals.length} of ${goals.length} goals`;
-  });
-
-  function persistFocus(next: Set<string>) {
-    focusIds = next;
-    writeItineraryFocusIds([...next]);
+  function placeIdentity(place: FarmPlace): string {
+    return `${place.kind}:${place.name}:${place.days?.join("/") ?? ""}`;
   }
 
-  function toggleGoal(id: string) {
-    const next = new Set(focusIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    persistFocus(next);
+  let mapping = $derived(
+    (page.data.mapping as Map<string, Character> | undefined) ??
+      new Map<string, Character>(),
+  );
+
+  function characterFor(g: FarmGoalRef): CharacterPortraitRef | undefined {
+    if (!g.name_id) return undefined;
+    return (
+      mapping.get(g.name_id) ?? {
+        name_id: g.name_id,
+        name: g.name,
+        element:
+          catalog?.characters.find((c) => c.name_id === g.name_id)?.element ??
+          "",
+      }
+    );
   }
 
-  function selectAllGoals() {
-    persistFocus(new Set(goals.map((g) => g.id)));
-  }
-
-  function selectNoGoals() {
-    persistFocus(new Set());
+  function onGoalArtError(
+    el: HTMLImageElement,
+    fallback: string | null | undefined,
+  ) {
+    if (!fallback || el.dataset.fallback === "1") {
+      el.style.display = "none";
+      return;
+    }
+    el.dataset.fallback = "1";
+    el.src = fallback;
   }
 </script>
 
 {#if hydrated && (goals.length > 0 || showEmpty)}
   <section class="itinerary" class:itinerary-card={chrome === "card"}>
-    {#if showHeading}
+    {#if showHeading || !hasDomainWeek}
       <div class="itinerary-head">
-        <h2 class="section-title">Farming</h2>
-        <a class="back-link itinerary-edit" href={plannerPath}
-          >Edit in planner</a
-        >
+        {#if showHeading}
+          <a class="back-link itinerary-planner" href={plannerPath}
+            >View full planner</a
+          >
+        {:else}
+          <span class="itinerary-head-spacer"></span>
+        {/if}
+        {#if !hasDomainWeek}
+          <button
+            type="button"
+            class="goal-trigger"
+            aria-haspopup="dialog"
+            aria-expanded={pickingGoals}
+            onclick={openPicker}
+          >
+            Edit goals
+          </button>
+        {/if}
       </div>
     {/if}
 
     {#if goals.length === 0}
       <p class="section-lede">
-        Set character and weapon goals in the planner to see which domains and
-        bosses to run.
+        Add a character or weapon goal to see which domains and bosses to run.
       </p>
+    {:else if focusedGoals.length === 0}
+      <p class="section-lede">Star a goal to include it here.</p>
+    {:else if !catalog && !catalogError}
+      <LoadingState message="Loading upgrade costs…" />
+    {:else if catalogError}
+      <p class="section-lede">{catalogError}</p>
+    {:else if !hasDomainWeek && weeklyPlaces.length === 0}
+      <p class="section-lede">Nothing to farm for these goals.</p>
     {:else}
-      <button
-        type="button"
-        class="goal-trigger"
-        aria-haspopup="dialog"
-        aria-expanded={pickingGoals}
-        onclick={() => (pickingGoals = true)}
-      >
-        {focusSummary}
-      </button>
-
-      {#if !catalog && !catalogError}
-        <LoadingState message="Loading upgrade costs…" />
-      {:else if catalogError}
-        <p class="section-lede">{catalogError}</p>
-      {:else if focusedGoals.length === 0}
-        <p class="section-lede">Select a goal to see where to farm.</p>
-      {:else if places.length === 0}
-        <p class="section-lede">Nothing to farm for these goals.</p>
-      {:else}
-        <div class="farm-sections">
-          {#each sections as section (section.kind)}
+      <div class="farm-sections">
+          {#if hasDomainWeek}
             <section class="farm-section">
-              <h3 class="farm-group-label">{section.label}</h3>
-              {#each section.groups as group (`${section.kind}:${group.daysKey}`)}
-                <div class="farm-day-group">
-                  {#if group.daysLabel}
-                    <p class="farm-day-label">
-                      {group.daysLabel}
-                      {#if group.openToday}
-                        <span class="farm-today">today</span>
-                      {/if}
-                    </p>
-                  {/if}
-                  <ul class="place-list">
-                    {#each group.places as place (`${place.kind}:${place.name}`)}
-                      <li class="place-row">
-                        {#if place.icon && assetUrl(place.icon)}
-                          <img
-                            class="place-icon"
-                            src={assetUrl(place.icon) ?? ""}
-                            alt=""
-                            width="28"
-                            height="28"
-                            loading="lazy"
-                            onerror={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        {/if}
-                        <div class="place-text">
-                          <a
-                            class="meta-name place-name"
-                            href={wikiHref(place.name)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {place.name}
-                          </a>
-                          <span
-                            class="meta-sub place-mats"
-                            title={place.materials
-                              .map((m) => m.name)
-                              .join(", ")}
-                          >
-                            {place.materials.map((m) => m.name).join(", ")}
-                          </span>
-                        </div>
-                      </li>
-                    {/each}
-                  </ul>
+              <div class="farm-section-head">
+                <h3 class="eyebrow">Open Domains</h3>
+                <div class="farm-section-tools">
+                  <button
+                    type="button"
+                    class="goal-trigger"
+                    aria-haspopup="dialog"
+                    aria-expanded={pickingGoals}
+                    onclick={openPicker}
+                  >
+                    Edit goals
+                  </button>
+                  <div
+                    class="view-toggle"
+                    role="group"
+                    aria-label="Domain calendar view"
+                  >
+                    <button
+                      type="button"
+                      class="view-btn"
+                      class:is-on={!weekExpanded}
+                      aria-pressed={!weekExpanded}
+                      aria-label="Today"
+                      onclick={() => (weekExpanded = false)}
+                    >
+                      <IconCalendarDay size={16} strokeWidth={2.25} />
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn"
+                      class:is-on={weekExpanded}
+                      aria-pressed={weekExpanded}
+                      aria-label="Week"
+                      onclick={() => (weekExpanded = true)}
+                    >
+                      <IconCalendarWeek size={16} strokeWidth={2.25} />
+                    </button>
+                  </div>
                 </div>
-              {/each}
+              </div>
+              <div class="farm-week" class:is-collapsed={!weekExpanded}>
+                {#each shownWeek as col (col.day)}
+                  {@const who = uniqueGoalsOnPlaces(col.places, contributors)}
+                  <div
+                    class="farm-day"
+                    class:farm-day-today={col.today}
+                    aria-current={col.today ? "date" : undefined}
+                  >
+                    <p class="eyebrow farm-day-head">{col.day}</p>
+                    <ul class="farm-day-places">
+                      {#each who as g (g.id)}
+                        <li>{@render goalFace(g)}</li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/each}
+              </div>
             </section>
-          {/each}
+          {/if}
+
+          {#if weeklyPlaces.length > 0}
+            <section class="farm-section">
+              <h3 class="eyebrow">{FARM_KIND_LABEL.weekly}</h3>
+              {@render placeRows(weeklyPlaces)}
+            </section>
+          {/if}
         </div>
       {/if}
-    {/if}
   </section>
 {/if}
+
+{#snippet placeRows(list: FarmPlace[])}
+  <ul class="place-list">
+    {#each list as place (placeIdentity(place))}
+      {@const who = uniqueGoalsOnPlaces([place], contributors)}
+      <li class="place-row">
+        <span class="meta-name place-text">{place.name}</span>
+        <div class="place-icons">
+          {#if place.icon && assetUrl(place.icon)}
+            <img
+              class="place-boss"
+              src={assetUrl(place.icon) ?? ""}
+              alt=""
+              title={place.name}
+              width="80"
+              height="80"
+              loading="lazy"
+              onerror={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          {/if}
+          <div class="place-faces">
+            {#each who as g (g.id)}
+              {@render goalFace(g)}
+            {/each}
+          </div>
+        </div>
+      </li>
+    {/each}
+  </ul>
+{/snippet}
+
+{#snippet goalFace(g: FarmGoalRef)}
+  {@const character = characterFor(g)}
+  <div class="farm-face" title={g.name}>
+    {#if character}
+      <CharacterIcon {character} loading="lazy" />
+    {:else if g.icon}
+      <img
+        class="farm-face-splash"
+        src={g.icon}
+        alt={g.name}
+        width="64"
+        height="86"
+        loading="lazy"
+        onerror={(e) => onGoalArtError(e.currentTarget, g.fallbackIcon)}
+      />
+    {:else}
+      <span class="farm-face-fallback"></span>
+    {/if}
+  </div>
+{/snippet}
 
 <PlannerItineraryGoalsModal
   open={pickingGoals}
   {goals}
-  {focusIds}
   {catalog}
-  onClose={() => (pickingGoals = false)}
-  onToggle={toggleGoal}
-  onSelectAll={selectAllGoals}
-  onSelectNone={selectNoGoals}
+  dirty={hasUnsavedChanges}
+  saving={isSaving}
+  {saveError}
+  {addError}
+  removedIds={pendingRemoveIds}
+  suspendKeys={picking !== null || configuringId !== null}
+  onClose={closePicker}
+  onToggle={toggleStar}
+  onReorder={reorderGoals}
+  onStarAll={starAll}
+  onStarNone={starNone}
+  onAddCharacter={() => beginPick("character")}
+  onAddWeapon={() => beginPick("weapon")}
+  onConfigure={openConfigure}
+  onRemove={deleteGoal}
+  onSave={() => void saveStars()}
+  onCancel={closePicker}
+/>
+<GoalConfigureModal
+  open={configuringId !== null && !!configuringGoal}
+  goal={configuringGoal}
+  {catalog}
+  {characterOptions}
+  {weaponOptions}
+  getCharacter={portraitFor}
+  onClose={closeConfigure}
+  onChange={(next) => applySavedGoals(replaceGoal(goalsState, next))}
+  onAutofillCharacter={(nameId, goalId) =>
+    void autofillCharacterTarget(nameId, goalId)}
+/>
+<GoalPickModal
+  open={picking !== null}
+  kind={picking ?? "character"}
+  {catalog}
+  options={pickOptions}
+  bind:query={pickQuery}
+  bind:sortOwnedFirst
+  {ownedIds}
+  getCharacter={portraitFor}
+  onClose={cancelPick}
+  onChoose={choosePick}
 />
 
 <style>
   .itinerary {
+    --farm-face: 64px;
+    --farm-boss: 80px;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1.15rem;
     min-width: 0;
+  }
+
+  @media (min-width: 768px) {
+    .itinerary {
+      --farm-face: 80px;
+      --farm-boss: 96px;
+    }
   }
 
   .itinerary-card {
@@ -260,124 +698,285 @@
   .itinerary-head {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 0.35rem 0.85rem;
   }
 
-  .itinerary-edit {
+  .itinerary-head-spacer {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .itinerary-planner {
+    flex: 1;
+    min-width: 0;
     margin: 0;
   }
 
   .goal-trigger {
     width: fit-content;
-    min-height: 24px;
+    min-height: 2rem;
     margin: 0;
-    padding: 0.2rem 0.45rem;
-    border: var(--border-width) solid rgba(255, 255, 255, 0.16);
+    padding: 0.3rem 0.7rem;
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 18%, transparent);
     border-radius: var(--radius-md);
     background: none;
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     color: var(--foreground-mid);
     cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .itinerary-head .goal-trigger {
+    margin-left: auto;
   }
 
   .goal-trigger:hover,
   .goal-trigger[aria-expanded="true"] {
     color: var(--foreground-color);
+    border-color: color-mix(in srgb, var(--foreground-color) 32%, transparent);
   }
 
   .farm-sections {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 1.5rem;
   }
 
   .farm-section {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: 0.85rem;
     min-width: 0;
   }
 
   .farm-section + .farm-section {
-    padding-top: 0.75rem;
-    border-top: var(--border-width) solid rgba(255, 255, 255, 0.12);
+    padding-top: 1.35rem;
+    border-top: var(--border-width) solid var(--border-subtle);
   }
 
-  .farm-group-label {
+  .farm-section > .eyebrow,
+  .farm-section-head .eyebrow {
     margin: 0;
-    font-size: var(--text-xs);
-    letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
-    color: var(--foreground-mid);
   }
 
-  .farm-day-group {
+  .farm-section-head {
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .farm-section-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+  }
+
+  .view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+  }
+
+  .view-btn {
+    display: grid;
+    place-items: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    margin: 0;
+    padding: 0;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--foreground-mid);
+    cursor: pointer;
+  }
+
+  .view-btn:hover {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
+  }
+
+  .view-btn.is-on {
+    color: var(--foreground-color);
+    border-color: color-mix(in srgb, var(--foreground-color) 22%, transparent);
+    background: var(--surface-quiet);
+  }
+
+  .farm-week {
+    --farm-face: 48px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     min-width: 0;
   }
 
-  .farm-day-label {
-    margin: 0.15rem 0 0;
+  @media (min-width: 768px) {
+    .farm-week {
+      --farm-face: 64px;
+    }
+  }
+
+  .farm-week.is-collapsed {
+    --farm-face: 64px;
     display: flex;
-    align-items: baseline;
-    gap: 0.4rem;
-    font-size: var(--text-xs);
+  }
+
+  @media (min-width: 768px) {
+    .farm-week.is-collapsed {
+      --farm-face: 80px;
+    }
+  }
+
+  .farm-week.is-collapsed .farm-day {
+    flex: 1;
+    min-width: 0;
+    border-left: none;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1rem 0.35rem 1.15rem;
+  }
+
+  .farm-week.is-collapsed .farm-day-places {
+    justify-content: center;
+    align-content: center;
+    gap: 0.45rem;
+    flex: 1;
+  }
+
+  .farm-day {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.55rem 0.25rem 0.7rem;
+    border-left: var(--border-width) solid var(--border-subtle);
+  }
+
+  .farm-day:first-child {
+    border-left: none;
+  }
+
+  .farm-day-today {
+    background: color-mix(
+      in srgb,
+      var(--foreground-color) 7%,
+      var(--background-color)
+    );
+    box-shadow: inset 0 0 0 1px var(--accent-1);
+  }
+
+  .farm-day-head {
+    margin: 0;
+    text-align: center;
+  }
+
+  .farm-day-today .farm-day-head {
     color: var(--foreground-color);
   }
 
-  .farm-today {
-    font-size: 0.6rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--foreground-mid);
+  .farm-day-places {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    gap: 0.3rem;
+    flex: 1;
+  }
+
+  .farm-day-places li {
+    flex: 0 0 auto;
+    line-height: 0;
+  }
+
+  .farm-face {
+    width: var(--farm-face);
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    background: var(--surface-quiet);
+    outline: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 18%, transparent);
+    outline-offset: -1px;
+    line-height: 0;
+  }
+
+  .farm-face :global(.icon-root) {
+    display: block;
+  }
+
+  .farm-face-splash,
+  .farm-face-fallback {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+  }
+
+  .farm-face-splash {
+    object-fit: cover;
+    object-position: center 38%;
+    transform-origin: 50% 38%;
+    transform: scale(1.55);
+  }
+
+  .farm-face-fallback {
+    background: color-mix(in srgb, var(--foreground-color) 16%, transparent);
   }
 
   .place-list {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+
+  @media (min-width: 768px) {
+    .place-list {
+      grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+      gap: 1.25rem 1.75rem;
+    }
   }
 
   .place-row {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 0.55rem;
+    gap: 0.45rem;
     min-width: 0;
   }
 
-  .place-icon {
-    width: 28px;
-    height: 28px;
+  .place-icons {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    min-width: 0;
+  }
+
+  .place-boss {
+    width: var(--farm-boss);
+    height: var(--farm-boss);
     object-fit: contain;
     flex-shrink: 0;
-    margin-top: 0.1rem;
+  }
+
+  .place-faces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-width: 0;
   }
 
   .place-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.12rem;
-    min-width: 0;
-  }
-
-  .place-name {
-    text-decoration: none;
-  }
-
-  .place-name:hover {
-    text-decoration: underline;
-  }
-
-  .place-mats {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
+    max-width: 100%;
   }
 </style>

@@ -3,7 +3,6 @@
   import { hasSavedRoster } from "$lib/stores";
   import { authClient } from "$lib/auth-client";
   import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PlannerItinerary from "$lib/ui/components/PlannerItinerary.svelte";
   import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { siteAssetUrl } from "$lib/utils";
@@ -84,8 +83,6 @@
       <span class="discord-cta-hint">feedback & updates</span>
     </a>
   </header>
-
-  <PlannerItinerary />
 
   <div class="feature-grid">
     {#each features as feature}

@@ -435,6 +435,17 @@ describe("request validation", () => {
         ]),
       isBadRequest,
     );
+
+    const starred = createCharacterGoal("Hutao", { id: "s", starred: true });
+    assert.deepEqual(requireCalculatorGoals([starred]), [starred]);
+    assert.deepEqual(
+      requireCalculatorGoals([{ ...char, starred: false }]),
+      [char],
+    );
+    assert.throws(
+      () => requireCalculatorGoals([{ ...char, starred: "yes" }]),
+      isBadRequest,
+    );
   });
 
   it("requireUser returns the session user or 401", () => {

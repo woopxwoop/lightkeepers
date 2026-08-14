@@ -18,8 +18,7 @@
   } from "$lib/roster-snapshot";
   import {
     applyGoodRoster,
-    MAX_GOOD_FILE_BYTES,
-    parseGoodRoster,
+    parseGoodText,
   } from "$lib/good-import";
   import { serializeGoodDocument } from "$lib/good-export";
   import {
@@ -30,6 +29,17 @@
     loadRosterWeapons,
     setRosterInventory,
   } from "$lib/app/roster-inventory";
+  import GoodImportModal from "$lib/ui/components/GoodImportModal.svelte";
+
+  let {
+    showHeading = true,
+    embed = false,
+    oauthCallbackUrl = "/settings?tab=account",
+  }: {
+    showHeading?: boolean;
+    embed?: boolean;
+    oauthCallbackUrl?: string;
+  } = $props();
 
   const session = authClient.useSession();
 
@@ -39,7 +49,7 @@
   let confirmReset = $state(false);
 
   let cloudRosterVersion = 0;
-  let fileInputEl: HTMLInputElement | null = $state(null);
+  let pickingGood = $state(false);
   let importing = $state(false);
   let importError = $state("");
   let importNote = $state("");
@@ -102,24 +112,19 @@
     }
   }
 
-  function openGoodPicker() {
+  function openGoodModal() {
     importError = "";
-    importNote = "";
-    fileInputEl?.click();
+    pickingGood = true;
   }
 
-  async function handleGoodFile(event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file) return;
+  function closeGoodModal() {
+    pickingGood = false;
+    importError = "";
+  }
 
+  async function importGoodSource(text: string) {
     if (!$charactersHydrated) {
       importError = "Roster is still loading — try again in a moment.";
-      return;
-    }
-    if (file.size > MAX_GOOD_FILE_BYTES) {
-      importError = "File is too large (max 10 MB).";
       return;
     }
 
@@ -128,16 +133,7 @@
     importNote = "";
 
     try {
-      const text = await file.text();
-      let json: unknown;
-      try {
-        json = JSON.parse(text) as unknown;
-      } catch {
-        importError = "Could not parse JSON.";
-        return;
-      }
-
-      const parsed = parseGoodRoster(json);
+      const parsed = parseGoodText(text);
       if (!parsed.ok) {
         importError = parsed.message;
         return;
@@ -176,12 +172,13 @@
       invalidateTeamsOwned();
       invalidateNearMissTeams();
       setHasSavedRoster();
+      pickingGood = false;
       if (!importNote) {
         importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
       }
     } catch (err) {
       console.error("GOOD import error:", err);
-      importError = "Could not import that file.";
+      importError = "Could not import that GOOD JSON.";
     } finally {
       importing = false;
     }
@@ -218,46 +215,54 @@
 {#snippet goodImport()}
   <div class="import-block">
     <span class="import-label">Import GOOD</span>
-    <p class="lede">
-      Upload a GOOD JSON export from any app — characters, levels,
-      constellations, talents, weapons, and artifacts. Download rebuilds a GOOD
-      file (minus materials) with source Lightkeepers.
+    <p class="import-links">
+      <a
+        class="back-link"
+        href="https://frzyc.github.io/genshin-optimizer/#/scanner"
+        target="_blank"
+        rel="noopener noreferrer">Scanner</a
+      >
+      <a
+        class="back-link"
+        href="https://frzyc.github.io/genshin-optimizer/#/doc"
+        target="_blank"
+        rel="noopener noreferrer">Documentation</a
+      >
     </p>
-    <input
-      bind:this={fileInputEl}
-      type="file"
-      accept=".json,application/json"
-      class="file-input"
-      onchange={handleGoodFile}
-    />
-    <Button
-      variant="secondary"
-      disabled={importing || !$charactersHydrated}
-      onclick={openGoodPicker}
-    >
-      {importing ? "Importing…" : "Upload JSON"}
-    </Button>
-    <Button
-      variant="ghost"
-      disabled={!$charactersHydrated}
-      onclick={() => void downloadGood()}
-    >
-      Download GOOD
-    </Button>
+    <div class="import-actions">
+      <Button
+        variant="secondary"
+        disabled={importing || !$charactersHydrated}
+        onclick={openGoodModal}
+      >
+        {importing ? "Importing…" : "Upload GOOD"}
+      </Button>
+      <Button
+        variant="ghost"
+        disabled={!$charactersHydrated}
+        onclick={() => void downloadGood()}
+      >
+        Download GOOD
+      </Button>
+    </div>
     {#if importNote}
       <p class="status-note">{importNote}</p>
     {/if}
-    {#if importError}
+    {#if importError && !pickingGood}
       <p class="error-note">{importError}</p>
     {/if}
   </div>
 {/snippet}
 
-<div class="account-panel">
-  <header class="panel-head">
-    <h2 class="section-title">Account / Sync</h2>
+<div class="account-panel" class:account-embed={embed}>
+  {#if showHeading}
+    <header class="panel-head">
+      <h2 class="section-title">Account / Sync</h2>
+      <p class="lede">Log in to back up your roster and sync across devices.</p>
+    </header>
+  {:else}
     <p class="lede">Log in to back up your roster and sync across devices.</p>
-  </header>
+  {/if}
 
   {#if $session.isPending}
     <LoadingState message="Loading…" />
@@ -277,6 +282,13 @@
           <span class="user-name">{$session.data.user.name}</span>
           <span class="user-email">{$session.data.user.email}</span>
         </div>
+        <Button
+          variant="secondary"
+          class="sign-out"
+          onclick={() => authClient.signOut()}
+        >
+          Sign out
+        </Button>
       </div>
 
       {#if rosterLoading}
@@ -306,14 +318,6 @@
       {/if}
 
       {@render goodImport()}
-
-      <Button
-        variant="secondary"
-        class="sign-out"
-        onclick={() => authClient.signOut()}
-      >
-        Sign out
-      </Button>
     </div>
   {:else}
     {@render goodImport()}
@@ -324,7 +328,7 @@
         onclick={() =>
           authClient.signIn.social({
             provider: "google",
-            callbackURL: "/settings?tab=account",
+            callbackURL: oauthCallbackUrl,
           })}
       >
         <IconGoogle size={18} />
@@ -336,7 +340,7 @@
         onclick={() =>
           authClient.signIn.social({
             provider: "discord",
-            callbackURL: "/settings?tab=account",
+            callbackURL: oauthCallbackUrl,
           })}
       >
         <IconDiscord size={18} />
@@ -346,6 +350,15 @@
   {/if}
 </div>
 
+<GoodImportModal
+  open={pickingGood}
+  {importing}
+  error={importError}
+  disabled={!$charactersHydrated}
+  onClose={closeGoodModal}
+  onImport={(text) => void importGoodSource(text)}
+/>
+
 <style>
   .account-panel {
     min-height: 21rem;
@@ -353,6 +366,12 @@
     flex-direction: column;
     gap: var(--space-6);
     padding: var(--space-4);
+  }
+
+  .account-embed {
+    min-height: 0;
+    padding: 0;
+    gap: var(--space-4);
   }
 
   .panel-head {
@@ -377,6 +396,7 @@
 
   .user-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
   }
@@ -390,6 +410,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
   }
 
   .user-name {
@@ -450,6 +472,8 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+    width: 100%;
+    max-width: 42rem;
   }
 
   .import-label {
@@ -457,16 +481,20 @@
     color: var(--foreground-color);
   }
 
-  .file-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+  .import-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .import-links .back-link {
+    margin: 0;
+  }
+
+  .import-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
   :global(.sign-out) {

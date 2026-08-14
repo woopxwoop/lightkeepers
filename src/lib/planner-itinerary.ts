@@ -1,16 +1,16 @@
 /**
  * Farming itinerary — group planner costs by domain / boss.
- * Goal subset is local (not part of the saved plan).
+ * Starred goals from the saved plan are the itinerary set.
  */
 import type { CalculatorGoal } from "$lib/types/calculator-goals";
+import { costsForGoal } from "$lib/calculator-goals";
+import { assetUrl } from "$lib/asset-urls";
+import { getCharacterPortrait } from "$lib/utils";
 import type {
   UpgradeCostsCatalog,
   UpgradeMaterialSource,
-  UpgradeMaterialSourceKind,
   UpgradeMaterialWeekday,
 } from "$lib/types/upgrade-costs";
-
-export const ITINERARY_FOCUS_STORAGE_KEY = "plannerItineraryGoalIds";
 
 const FARM_KINDS = ["domain", "weekly", "boss"] as const;
 export type FarmPlaceKind = (typeof FARM_KINDS)[number];
@@ -21,20 +21,31 @@ const KIND_ORDER: Record<FarmPlaceKind, number> = {
   boss: 2,
 };
 
-export const FARM_KIND_LABEL: Record<FarmPlaceKind, string> = {
-  domain: "Domains",
+export const FARM_KIND_LABEL: Record<
+  Exclude<FarmPlaceKind, "domain">,
+  string
+> = {
   weekly: "Weekly bosses",
   boss: "World bosses",
 };
 
-const WEEKDAY_ORDER: UpgradeMaterialWeekday[] = [
+export const WEEKDAY_ORDER: UpgradeMaterialWeekday[] = [
   "Mon",
   "Tue",
   "Wed",
   "Thu",
   "Fri",
   "Sat",
-  "Sun",
+];
+
+/** Domain rotations share Mon/Thu, Tue/Fri, Wed/Sat (Sunday is every book). */
+export const FARM_WEEK_PAIRS: readonly {
+  label: string;
+  days: readonly [UpgradeMaterialWeekday, UpgradeMaterialWeekday];
+}[] = [
+  { label: "Mon / Thu", days: ["Mon", "Thu"] },
+  { label: "Tue / Fri", days: ["Tue", "Fri"] },
+  { label: "Wed / Sat", days: ["Wed", "Sat"] },
 ];
 
 const JS_DAY_TO_WEEKDAY: UpgradeMaterialWeekday[] = [
@@ -47,103 +58,12 @@ const JS_DAY_TO_WEEKDAY: UpgradeMaterialWeekday[] = [
   "Sat",
 ];
 
-export type FarmPlaceDayGroup = {
-  daysKey: string;
-  daysLabel: string | null;
-  openToday: boolean;
-  places: FarmPlace[];
-};
-
-export type FarmPlaceSection = {
-  kind: FarmPlaceKind;
-  label: string;
-  groups: FarmPlaceDayGroup[];
-};
-
-export function todayWeekday(now = new Date()): UpgradeMaterialWeekday {
-  return JS_DAY_TO_WEEKDAY[now.getDay()] ?? "Sun";
-}
-
-function daysKey(days?: UpgradeMaterialWeekday[]): string {
-  return days?.length ? days.join("/") : "";
-}
-
-function firstWeekdayIndex(days?: UpgradeMaterialWeekday[]): number {
-  if (!days?.length) return WEEKDAY_ORDER.length;
-  const idx = WEEKDAY_ORDER.indexOf(days[0]!);
-  return idx < 0 ? WEEKDAY_ORDER.length : idx;
-}
-
-function opensOn(
-  days: UpgradeMaterialWeekday[] | undefined,
-  today: UpgradeMaterialWeekday,
-): boolean {
-  return !days?.length || days.includes(today);
-}
-
-/** Kind sections; domains split by weekday family, with today's rotation first. */
-export function groupFarmPlaces(
-  places: FarmPlace[],
-  today: UpgradeMaterialWeekday,
-): FarmPlaceSection[] {
-  const byKind = new Map<FarmPlaceKind, FarmPlace[]>();
-  for (const kind of FARM_KINDS) byKind.set(kind, []);
-  for (const place of places) {
-    byKind.get(place.kind)?.push(place);
-  }
-
-  const sections: FarmPlaceSection[] = [];
-  for (const kind of FARM_KINDS) {
-    const list = byKind.get(kind) ?? [];
-    if (list.length === 0) continue;
-    if (kind !== "domain") {
-      sections.push({
-        kind,
-        label: FARM_KIND_LABEL[kind],
-        groups: [
-          {
-            daysKey: "",
-            daysLabel: null,
-            openToday: false,
-            places: list,
-          },
-        ],
-      });
-      continue;
-    }
-
-    const byDays = new Map<string, FarmPlace[]>();
-    for (const place of list) {
-      const key = daysKey(place.days);
-      const bucket = byDays.get(key);
-      if (bucket) bucket.push(place);
-      else byDays.set(key, [place]);
-    }
-    const groups: FarmPlaceDayGroup[] = [...byDays.entries()].map(
-      ([key, grouped]) => ({
-        daysKey: key,
-        daysLabel: key || null,
-        openToday: grouped.some((p) => opensOn(p.days, today)),
-        places: grouped,
-      }),
-    );
-    groups.sort((a, b) => {
-      if (a.openToday !== b.openToday) return a.openToday ? -1 : 1;
-      return (
-        firstWeekdayIndex(a.places[0]?.days) -
-        firstWeekdayIndex(b.places[0]?.days)
-      );
-    });
-    sections.push({ kind, label: FARM_KIND_LABEL[kind], groups });
-  }
-  return sections;
-}
-
 export type FarmPlaceMaterial = {
   id: string;
   name: string;
   icon: string;
   count: number;
+  rankLevel: number;
 };
 
 export type FarmPlace = {
@@ -154,12 +74,94 @@ export type FarmPlace = {
   materials: FarmPlaceMaterial[];
 };
 
-function isFarmKind(kind: UpgradeMaterialSourceKind): kind is FarmPlaceKind {
-  return (FARM_KINDS as readonly string[]).includes(kind);
+export type FarmWeekDay = {
+  /** Column heading — a weekday, or "Mon / Thu" when the week is expanded. */
+  day: string;
+  today: boolean;
+  places: FarmPlace[];
+};
+
+export function todayWeekday(now = new Date()): UpgradeMaterialWeekday {
+  return JS_DAY_TO_WEEKDAY[now.getDay()] ?? "Sun";
 }
 
-function placeKey(source: UpgradeMaterialSource): string {
-  return `${source.kind}:${source.name}`;
+function daysKey(days?: UpgradeMaterialWeekday[]): string {
+  return days?.length ? days.join("/") : "";
+}
+
+function opensOn(
+  days: UpgradeMaterialWeekday[] | undefined,
+  today: UpgradeMaterialWeekday,
+): boolean {
+  return !days?.length || days.includes(today);
+}
+
+/** Paired Mon–Sat columns used when the week is expanded. Sunday is not a column. */
+export function farmWeekDays(
+  places: FarmPlace[],
+  today: UpgradeMaterialWeekday,
+): FarmWeekDay[] {
+  const domains = places.filter((p) => p.kind === "domain");
+  return FARM_WEEK_PAIRS.map(({ label, days }) => ({
+    day: label,
+    today: days.includes(today),
+    places: domains.filter((p) => days.some((d) => opensOn(p.days, d))),
+  }));
+}
+
+/** Collapsed “today” strip — Sunday includes every rotation. */
+export function farmTodayColumn(
+  places: FarmPlace[],
+  today: UpgradeMaterialWeekday,
+): FarmWeekDay {
+  const domains = places.filter((p) => p.kind === "domain");
+  return {
+    day: today,
+    today: true,
+    places: domains.filter((p) => opensOn(p.days, today)),
+  };
+}
+
+export function farmPlacesOfKind(
+  places: FarmPlace[],
+  kind: Exclude<FarmPlaceKind, "domain">,
+): FarmPlace[] {
+  return places.filter((p) => p.kind === kind);
+}
+
+/** Unique contributing faces for these places, name-sorted. */
+export function uniqueGoalsOnPlaces(
+  places: FarmPlace[],
+  contributors: Map<string, FarmGoalRef[]>,
+): FarmGoalRef[] {
+  const seen = new Map<string, FarmGoalRef>();
+  for (const place of places) {
+    for (const mat of place.materials) {
+      for (const g of contributors.get(mat.id) ?? []) {
+        const key = farmGoalFaceKey(g);
+        if (!seen.has(key)) seen.set(key, g);
+      }
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function farmPlaceKind(
+  source: UpgradeMaterialSource,
+  rankLevel: number,
+): FarmPlaceKind | null {
+  if (source.kind === "domain" || source.kind === "weekly") return source.kind;
+  if (source.kind !== "boss") return null;
+  // Catalog tags Lupus Boreas as a world boss; 5★ talent drops are weekly.
+  return rankLevel >= 5 ? "weekly" : "boss";
+}
+
+function placeKey(kind: FarmPlaceKind, source: UpgradeMaterialSource): string {
+  const days = daysKey(source.days);
+  if (kind === "domain" && days) {
+    return `${kind}:${source.name}:${days}`;
+  }
+  return `${kind}:${source.name}`;
 }
 
 /** Group a material bag into domains, weekly bosses, then world bosses. */
@@ -172,11 +174,13 @@ export function farmPlacesFromMaterials(
     if (count <= 0) continue;
     const meta = catalog.materials[id];
     const source = meta?.sources?.[0];
-    if (!source || !isFarmKind(source.kind)) continue;
-    const key = placeKey(source);
+    if (!source) continue;
+    const kind = farmPlaceKind(source, meta?.rankLevel ?? 1);
+    if (!kind) continue;
+    const key = placeKey(kind, source);
     let place = byKey.get(key);
     if (!place) {
-      place = { kind: source.kind, name: source.name, materials: [] };
+      place = { kind, name: source.name, materials: [] };
       if (source.days?.length) place.days = source.days;
       if (source.icon) place.icon = source.icon;
       byKey.set(key, place);
@@ -186,10 +190,15 @@ export function farmPlacesFromMaterials(
       name: meta?.name ?? `Material ${id}`,
       icon: meta?.icon ?? `UI_ItemIcon_${id}`,
       count,
+      rankLevel: meta?.rankLevel ?? 1,
     });
   }
   for (const place of byKey.values()) {
-    place.materials.sort((a, b) => a.name.localeCompare(b.name));
+    place.materials.sort((a, b) => {
+      const rank = b.rankLevel - a.rankLevel;
+      if (rank !== 0) return rank;
+      return a.name.localeCompare(b.name);
+    });
     if (!place.icon && place.materials[0]) {
       place.icon = place.materials[0].icon;
     }
@@ -197,7 +206,9 @@ export function farmPlacesFromMaterials(
   return [...byKey.values()].sort((a, b) => {
     const kind = KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
     if (kind !== 0) return kind;
-    return a.name.localeCompare(b.name);
+    const name = a.name.localeCompare(b.name);
+    if (name !== 0) return name;
+    return daysKey(a.days).localeCompare(daysKey(b.days));
   });
 }
 
@@ -217,36 +228,117 @@ export function itineraryGoalLabel(
   );
 }
 
-/** `null` = never saved (treat as all). Otherwise the last explicit subset. */
-export function readItineraryFocusIds(): string[] | null {
-  try {
-    const raw = localStorage.getItem(ITINERARY_FOCUS_STORAGE_KEY);
-    if (raw == null) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return null;
-    return parsed.filter((id): id is string => typeof id === "string");
-  } catch {
-    return null;
-  }
+/** Tall gacha splash stem (`UI_Gacha_EquipIcon_*`) from a square equip icon. */
+export function weaponGachaIconName(icon: string): string {
+  if (!icon.startsWith("UI_EquipIcon_")) return icon;
+  return `UI_Gacha_EquipIcon_${icon.slice("UI_EquipIcon_".length)}`;
 }
 
-export function writeItineraryFocusIds(ids: string[]): void {
-  try {
-    localStorage.setItem(ITINERARY_FOCUS_STORAGE_KEY, JSON.stringify(ids));
-  } catch {
-    /* private mode */
-  }
+function weaponCatalogIcon(
+  goal: CalculatorGoal,
+  catalog: UpgradeCostsCatalog | null,
+): string | null {
+  if (goal.kind !== "weapon") return null;
+  return catalog?.weapons.find((w) => w.id === goal.weapon_id)?.icon ?? null;
 }
 
-/**
- * Resolve which goal ids are focused.
- * Unsaved → all. Saved ids are dropped if those goals are gone.
- */
-export function resolveItineraryFocus(
+export function itineraryGoalIcon(
+  goal: CalculatorGoal,
+  catalog: UpgradeCostsCatalog | null,
+): string | null {
+  if (goal.kind === "character") return getCharacterPortrait(goal.name_id);
+  const icon = weaponCatalogIcon(goal, catalog);
+  if (!icon) return null;
+  return assetUrl(weaponGachaIconName(icon)) ?? assetUrl(icon);
+}
+
+/** Square equip icon — used if the gacha splash 404s. */
+export function itineraryGoalFallbackIcon(
+  goal: CalculatorGoal,
+  catalog: UpgradeCostsCatalog | null,
+): string | null {
+  return assetUrl(weaponCatalogIcon(goal, catalog));
+}
+
+export type FarmGoalRef = {
+  id: string;
+  name: string;
+  icon: string | null;
+  /** Square weapon icon if the gacha splash is missing. */
+  fallbackIcon?: string | null;
+  /** Character goals — UI renders TCG/portrait via CharacterIcon. */
+  name_id?: string;
+  /** Weapon goals — gacha splash lookup / calendar identity. */
+  weapon_id?: number;
+};
+
+/** Same face even when two planner goals share a character or weapon. */
+export function farmGoalFaceKey(g: FarmGoalRef): string {
+  if (g.name_id) return `c:${g.name_id}`;
+  if (g.weapon_id != null) return `w:${g.weapon_id}`;
+  return `g:${g.id}`;
+}
+
+export function farmGoalRef(
+  goal: CalculatorGoal,
+  catalog: UpgradeCostsCatalog | null,
+): FarmGoalRef {
+  const icon = itineraryGoalIcon(goal, catalog);
+  const fallbackIcon = itineraryGoalFallbackIcon(goal, catalog);
+  return {
+    id: goal.id,
+    name: itineraryGoalLabel(goal, catalog),
+    icon,
+    ...(fallbackIcon && fallbackIcon !== icon ? { fallbackIcon } : {}),
+    ...(goal.kind === "character" ? { name_id: goal.name_id } : {}),
+    ...(goal.kind === "weapon" ? { weapon_id: goal.weapon_id } : {}),
+  };
+}
+
+/** Displayed rank this raw material id maps onto (craft-up or craft-down). */
+export function displayedMaterialId(
+  id: string,
+  displayed: Record<string, number>,
+  catalog: UpgradeCostsCatalog,
+): string | null {
+  if ((displayed[id] ?? 0) > 0) return id;
+  const seen = new Set<string>();
+  const queue = [id];
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    if (seen.has(cur)) continue;
+    seen.add(cur);
+    if ((displayed[cur] ?? 0) > 0) return cur;
+    const meta = catalog.materials[cur];
+    if (meta?.craftIntoId != null) queue.push(String(meta.craftIntoId));
+    const n = Number(cur);
+    for (const row of Object.values(catalog.materials)) {
+      if (row.craftIntoId === n) queue.push(String(row.id));
+    }
+  }
+  return null;
+}
+
+/** Goals whose start→target bag feeds each displayed material id. */
+export function farmMaterialContributors(
   goals: CalculatorGoal[],
-  stored: string[] | null,
-): Set<string> {
-  const valid = new Set(goals.map((g) => g.id));
-  if (stored == null) return valid;
-  return new Set(stored.filter((id) => valid.has(id)));
+  catalog: UpgradeCostsCatalog,
+  displayed: Record<string, number>,
+): Map<string, FarmGoalRef[]> {
+  const byMat = new Map<string, FarmGoalRef[]>();
+  for (const goal of goals) {
+    const ref = farmGoalRef(goal, catalog);
+    const bag = costsForGoal(goal, catalog).materials;
+    const seen = new Set<string>();
+    for (const [id, count] of Object.entries(bag)) {
+      if (!(count > 0)) continue;
+      const target = displayedMaterialId(id, displayed, catalog);
+      if (!target || seen.has(target)) continue;
+      seen.add(target);
+      const list = byMat.get(target) ?? [];
+      if (!list.some((g) => g.id === ref.id)) list.push(ref);
+      byMat.set(target, list);
+    }
+  }
+  return byMat;
 }

@@ -9,10 +9,16 @@
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
-  import IconListChecks from "$lib/ui/icons/IconListChecks.svelte";
+  import IconPerson from "$lib/ui/icons/IconPerson.svelte";
+  import IconCalendarWeek from "$lib/ui/icons/IconCalendarWeek.svelte";
+  import NavAppsLauncher from "$lib/ui/components/NavAppsLauncher.svelte";
+  import { authClient } from "$lib/auth-client";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
   import { plannerItineraryOpen } from "$lib/planner-itinerary-open";
+  import { accountSettingsOpen } from "$lib/account-settings-open";
+
+  const session = authClient.useSession();
 
   const homePath = resolve("/");
   const abyssPath = resolve("/tools/abyss");
@@ -86,14 +92,22 @@
   }
 
   const onToolsPage = $derived(isPathActive(resolve("/tools"), "prefix"));
-  const onPlannerPage = $derived(isPathActive(plannerPath, "prefix"));
-  const hideFarmTrigger = $derived(
-    page.url.pathname === homePath || onPlannerPage,
-  );
 
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(resolve("/settings")),
   );
+
+  const appItems = [
+    {
+      id: "itinerary",
+      label: "Itinerary",
+      icon: IconCalendarWeek,
+      onclick: () => {
+        plannerItineraryOpen.set(true);
+        mobileOpen = false;
+      },
+    },
+  ];
 
   let scrolled = $state(false);
 
@@ -147,6 +161,11 @@
     settingsLeaveTimeout = setTimeout(() => {
       settingsHovered = false;
     }, 120);
+  }
+
+  function openAccount() {
+    accountSettingsOpen.set(true);
+    mobileOpen = false;
   }
 
   const navSubOpen = $derived(toolsHovered || settingsHovered);
@@ -316,74 +335,63 @@
         >
       {/each}
 
-      <div class="nav-farm-cluster">
-        <div class="nav-menu-item">
-          <a
-            href={settingsPath}
-            class="nav-link"
-            aria-current={onSettingsPage ? "page" : undefined}
-            onmouseenter={onSettingsEnter}
-            onmouseleave={onSettingsLeave}
-            onfocus={onSettingsEnter}
-            onblur={onSettingsLeave}>Settings</a
-          >
+      <div class="nav-menu-item">
+        <a
+          href={settingsPath}
+          class="nav-link"
+          aria-current={onSettingsPage ? "page" : undefined}
+          onmouseenter={onSettingsEnter}
+          onmouseleave={onSettingsLeave}
+          onfocus={onSettingsEnter}
+          onblur={onSettingsLeave}>Settings</a
+        >
 
-          <div
-            class="nav-sub-row"
-            class:nav-sub-row-open={settingsHovered}
-            inert={!settingsHovered}
-            role="presentation"
-            onmouseenter={onSettingsEnter}
-            onmouseleave={onSettingsLeave}
-            onfocusin={onSettingsEnter}
-            onfocusout={onSettingsLeave}
-          >
-            {#each settingsLinks as link}
-              {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
-              <a
-                href={link.path}
-                class="nav-sub-link"
-                aria-current={onSettingsPage && activeTab === link.tab
-                  ? "page"
-                  : undefined}>{link.label}</a
-              >
-            {/each}
-          </div>
+        <div
+          class="nav-sub-row"
+          class:nav-sub-row-open={settingsHovered}
+          inert={!settingsHovered}
+          role="presentation"
+          onmouseenter={onSettingsEnter}
+          onmouseleave={onSettingsLeave}
+          onfocusin={onSettingsEnter}
+          onfocusout={onSettingsLeave}
+        >
+          {#each settingsLinks as link}
+            {@const activeTab = page.url.searchParams.get("tab") ?? "roster"}
+            <a
+              href={link.path}
+              class="nav-sub-link"
+              aria-current={onSettingsPage && activeTab === link.tab
+                ? "page"
+                : undefined}>{link.label}</a
+            >
+          {/each}
         </div>
-
-        {#if !hideFarmTrigger}
-          <button
-            type="button"
-            class="nav-farm-btn"
-            aria-label="Farming"
-            aria-haspopup="dialog"
-            aria-expanded={$plannerItineraryOpen}
-            onclick={() => plannerItineraryOpen.set(true)}
-          >
-            <IconListChecks size={18} />
-          </button>
-        {/if}
       </div>
     </div>
 
     <div class="nav-end flex items-center gap-1">
-      {#if !hideFarmTrigger}
-        <div class="md:hidden">
-          <button
-            type="button"
-            class="nav-farm-btn"
-            aria-label="Farming"
-            aria-haspopup="dialog"
-            aria-expanded={$plannerItineraryOpen}
-            onclick={() => {
-              plannerItineraryOpen.set(true);
-              mobileOpen = false;
-            }}
-          >
-            <IconListChecks size={18} />
-          </button>
-        </div>
-      {/if}
+      <NavAppsLauncher items={appItems} />
+      <button
+        type="button"
+        class="nav-account-btn"
+        aria-label="Account"
+        aria-haspopup="dialog"
+        aria-expanded={$accountSettingsOpen}
+        onclick={openAccount}
+      >
+        {#if $session.data?.user?.image}
+          <img
+            class="nav-account-avatar"
+            src={$session.data.user.image}
+            alt=""
+            width="32"
+            height="32"
+          />
+        {:else}
+          <IconPerson size={14} />
+        {/if}
+      </button>
 
       <!-- Hamburger button (mobile only) -->
       <button
@@ -765,34 +773,37 @@
     color: var(--foreground-color);
   }
 
-  /* ── Farming (nav sheet) ── */
-  .nav-farm-cluster {
-    display: flex;
-    align-items: center;
-    gap: 0.2rem;
-  }
-
-  .nav-farm-btn {
+  .nav-account-btn {
     pointer-events: auto;
     display: grid;
     place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2rem;
+    height: 2rem;
     padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.22);
     background: none;
     color: var(--foreground-mid);
     cursor: pointer;
+    overflow: hidden;
+    flex-shrink: 0;
     transition:
       color var(--control-duration) var(--control-ease),
-      background-color var(--control-duration) var(--control-ease);
+      background-color var(--control-duration) var(--control-ease),
+      border-color var(--control-duration) var(--control-ease);
   }
 
-  .nav-farm-btn:hover,
-  .nav-farm-btn[aria-expanded="true"] {
+  .nav-account-btn:hover,
+  .nav-account-btn[aria-expanded="true"] {
     color: var(--foreground-color);
+    border-color: rgba(255, 255, 255, 0.4);
     background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+  }
+
+  .nav-account-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   /* ── Hamburger ── */

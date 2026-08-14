@@ -6,9 +6,13 @@
  * for Jean), not GOOD keys. Traveler element suffixes are stripped, so
  * `PlayerBoy` covers every resonance.
  *
- * While listed, the Builds tab hides the summary and points at Crimson Witch;
+ * Fallback until CDN summaries carry `upToDate: false` from gcsim
+ * `characters.json` (Yae / Beidou stellar buffs). Prefer the payload flag
+ * after merge+sync; keep ids here so the site hides numbers before that.
+ *
+ * While stale, the Builds tab hides the summary and points at Crimson Witch;
  * planner autofill also skips those numbers. Remove the id once summaries
- * are regenerated.
+ * are regenerated and marked up to date.
  */
 import { travelerBaseNameId } from "$lib/traveler-kits";
 

@@ -58,7 +58,9 @@ function cloneWeaponConfig(
 
 export function createCharacterGoal(
   name_id: string,
-  overrides?: Partial<Pick<CharacterCalculatorGoal, "start" | "target" | "id">>,
+  overrides?: Partial<
+    Pick<CharacterCalculatorGoal, "start" | "target" | "id" | "starred">
+  >,
 ): CharacterCalculatorGoal {
   return {
     id: overrides?.id ?? newGoalId(),
@@ -68,12 +70,15 @@ export function createCharacterGoal(
     target: cloneCharConfig(
       overrides?.target ?? UPGRADE_DEFAULTS.characterTarget,
     ),
+    ...(overrides?.starred ? { starred: true as const } : {}),
   };
 }
 
 export function createWeaponGoal(
   weapon_id: number,
-  overrides?: Partial<Pick<WeaponCalculatorGoal, "start" | "target" | "id">>,
+  overrides?: Partial<
+    Pick<WeaponCalculatorGoal, "start" | "target" | "id" | "starred">
+  >,
 ): WeaponCalculatorGoal {
   return {
     id: overrides?.id ?? newGoalId(),
@@ -83,7 +88,12 @@ export function createWeaponGoal(
     target: cloneWeaponConfig(
       overrides?.target ?? UPGRADE_DEFAULTS.weaponTarget,
     ),
+    ...(overrides?.starred ? { starred: true as const } : {}),
   };
+}
+
+function starredFlag(value: unknown): true | undefined {
+  return value === true ? true : undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -192,6 +202,7 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
           item.target,
           UPGRADE_DEFAULTS.characterTarget,
         ),
+        ...(starredFlag(item.starred) ? { starred: true as const } : {}),
       });
       continue;
     }
@@ -217,6 +228,7 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
         weapon_id: weaponId,
         start: parseWeaponConfig(item.start, UPGRADE_DEFAULTS.weaponStart),
         target: parseWeaponConfig(item.target, UPGRADE_DEFAULTS.weaponTarget),
+        ...(starredFlag(item.starred) ? { starred: true as const } : {}),
       });
     }
   }
@@ -245,16 +257,34 @@ export function cloneGoalsState(
 export function cloneGoal(goal: CalculatorGoal): CalculatorGoal {
   if (goal.kind === "character") {
     return {
-      ...goal,
+      id: goal.id,
+      kind: "character",
+      name_id: goal.name_id,
       start: cloneCharConfig(goal.start),
       target: cloneCharConfig(goal.target),
+      ...(goal.starred ? { starred: true as const } : {}),
     };
   }
   return {
-    ...goal,
+    id: goal.id,
+    kind: "weapon",
+    weapon_id: goal.weapon_id,
     start: cloneWeaponConfig(goal.start),
     target: cloneWeaponConfig(goal.target),
+    ...(goal.starred ? { starred: true as const } : {}),
   };
+}
+
+export function toggleGoalStarred(goal: CalculatorGoal): CalculatorGoal {
+  const next = cloneGoal(goal);
+  if (next.starred) delete next.starred;
+  else next.starred = true;
+  return next;
+}
+
+/** Goals marked for the farming itinerary / Starred cost scope. */
+export function starredGoals(goals: CalculatorGoal[]): CalculatorGoal[] {
+  return goals.filter((g) => g.starred);
 }
 
 export function addMaterials(
@@ -380,6 +410,35 @@ export function removeGoal(
   const selectedId =
     state.selectedId === id ? (goals[0]?.id ?? null) : state.selectedId;
   return { version: CALCULATOR_GOALS_VERSION, goals, selectedId };
+}
+
+/** Move a goal to another index; no-op if the indices are invalid. */
+export function moveGoal(
+  state: CalculatorGoalsState,
+  fromIndex: number,
+  toIndex: number,
+): CalculatorGoalsState {
+  const n = state.goals.length;
+  if (
+    !Number.isInteger(fromIndex) ||
+    !Number.isInteger(toIndex) ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= n ||
+    toIndex >= n ||
+    fromIndex === toIndex
+  ) {
+    return state;
+  }
+  const goals = [...state.goals];
+  const [item] = goals.splice(fromIndex, 1);
+  if (!item) return state;
+  goals.splice(toIndex, 0, item);
+  return {
+    version: CALCULATOR_GOALS_VERSION,
+    goals,
+    selectedId: state.selectedId,
+  };
 }
 
 /** Append a goal (respects max); selects it. */

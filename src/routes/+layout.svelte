@@ -25,6 +25,7 @@
   import NavBar from "$lib/ui/NavBar.svelte";
   import PatchNotesPopup from "$lib/ui/components/PatchNotesPopup.svelte";
   import PlannerItinerarySheet from "$lib/ui/components/PlannerItinerarySheet.svelte";
+  import AccountSettingsModal from "$lib/ui/components/AccountSettingsModal.svelte";
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { getSiteBackgroundUrl } from "$lib/utils";
@@ -117,6 +118,7 @@
   {/if}
   <NavBar />
   <PlannerItinerarySheet />
+  <AccountSettingsModal />
   <PatchNotesPopup note={data.latestPatchNote} />
 
   <div class="h-12 w-full"></div>

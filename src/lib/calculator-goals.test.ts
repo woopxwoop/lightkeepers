@@ -11,9 +11,12 @@ import {
   createWeaponGoal,
   emptyAggregate,
   emptyGoalsState,
+  moveGoal,
   parseGoalsState,
   removeGoal,
   replaceGoal,
+  starredGoals,
+  toggleGoalStarred,
 } from "./calculator-goals.ts";
 
 describe("calculator goals", () => {
@@ -159,6 +162,25 @@ describe("calculator goals", () => {
     assert.equal(state.selectedId, "a");
   });
 
+  it("moveGoal reorders and ignores invalid indices", () => {
+    let state = emptyGoalsState();
+    state = appendGoal(state, createCharacterGoal("Hutao", { id: "a" }));
+    state = appendGoal(state, createWeaponGoal(14501, { id: "b" }));
+    state = appendGoal(state, createCharacterGoal("Xingqiu", { id: "c" }));
+    state = moveGoal(state, 2, 0);
+    assert.deepEqual(
+      state.goals.map((g) => g.id),
+      ["c", "a", "b"],
+    );
+    assert.equal(state.selectedId, "c");
+    const same = moveGoal(state, 1, 1);
+    assert.equal(same, state);
+    assert.deepEqual(
+      moveGoal(state, -1, 0).goals.map((g) => g.id),
+      ["c", "a", "b"],
+    );
+  });
+
   it("append respects max goals", () => {
     let state = emptyGoalsState();
     for (let i = 0; i < MAX_CALCULATOR_GOALS; i++) {
@@ -178,5 +200,25 @@ describe("calculator goals", () => {
     assert.equal(agg.characterExp, 100);
     assert.equal(agg.weaponExp, 50);
     assert.deepEqual(agg.materials, { "1": 5, "2": 1 });
+  });
+
+  it("keeps starred flags and filters starredGoals", () => {
+    const starred = createCharacterGoal("Hutao", { id: "a", starred: true });
+    const plain = createWeaponGoal(14501, { id: "b" });
+    const state = parseGoalsState({
+      goals: [starred, { ...plain, starred: false }],
+      selectedId: "a",
+    });
+    assert.equal(state.goals[0]?.starred, true);
+    assert.equal(state.goals[1]?.starred, undefined);
+    assert.deepEqual(
+      starredGoals(state.goals).map((g) => g.id),
+      ["a"],
+    );
+
+    const off = toggleGoalStarred(starred);
+    assert.equal(off.starred, undefined);
+    const on = toggleGoalStarred(plain);
+    assert.equal(on.starred, true);
   });
 });

@@ -107,10 +107,11 @@
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
   let kitChannel = $derived((data.kitChannel ?? "live") as "live" | "beta");
-  let summaryStale = $derived(isStaleBuildSummary(kit.name_id));
-  let builds = $derived(
-    summaryStale ? null : ((data.builds ?? null) as CharacterIndex | null),
+  let rawBuilds = $derived((data.builds ?? null) as CharacterIndex | null);
+  let summaryStale = $derived(
+    isStaleBuildSummary(kit.name_id) || rawBuilds?.upToDate === false,
   );
+  let builds = $derived(summaryStale ? null : rawBuilds);
   let travelerKits = $derived(
     (data.travelerKits ?? {}) as Record<string, CharacterKit>,
   );

@@ -41,6 +41,24 @@ import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
 
 export const MAX_GOOD_FILE_BYTES = 10 * 1024 * 1024;
 
+function utf8ByteLength(text: string): number {
+  return new TextEncoder().encode(text).length;
+}
+
+/** Parse a GOOD document from file contents or pasted JSON. */
+export function parseGoodText(text: string): GoodParseResult {
+  if (utf8ByteLength(text) > MAX_GOOD_FILE_BYTES) {
+    return { ok: false, message: "JSON is too large (max 10 MB)." };
+  }
+  let json: unknown;
+  try {
+    json = JSON.parse(text) as unknown;
+  } catch {
+    return { ok: false, message: "Could not parse JSON." };
+  }
+  return parseGoodRoster(json);
+}
+
 /** GOOD character row after ingest (clamped to app caps, weapon attached). */
 export type GoodCharacterRecord = RosterProgress & { key: string };
 

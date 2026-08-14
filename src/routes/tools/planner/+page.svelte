@@ -4,70 +4,47 @@
   import { page } from "$app/state";
   import { authClient } from "$lib/auth-client";
   import PageShell from "$lib/ui/components/PageShell.svelte";
-  import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
-  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import PickModal from "$lib/ui/components/PickModal.svelte";
-  import NumberSliderField from "$lib/ui/components/NumberSliderField.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
-  import { loadCharacterSummary } from "$lib/app/character-summary";
-  import { plannerTargetFromBuilds } from "$lib/planner-targets";
-  import { isStaleBuildSummary } from "$lib/stale-build-summary";
-  import {
-    progressToCharacterStart,
-    rosterProgressForNameId,
-  } from "$lib/roster-progress";
   import {
     getRosterWeaponsCached,
     loadRosterWeapons,
   } from "$lib/app/roster-inventory";
-  import {
-    lowestInventoryWeaponByKey,
-    plannerStartFromOwnedWeapon,
-  } from "$lib/roster-inventory";
   import { assetUrl } from "$lib/asset-urls";
-  import {
-    getCharacterPortrait,
-    isOwnedNameId,
-    ownedNameIds,
-    plannerSimKey,
-    toGoodKey,
-  } from "$lib/utils";
+  import { ownedNameIds } from "$lib/utils";
   import { charactersOwned } from "$lib/stores";
-  import type {
-    Character,
-    CharacterOwned,
-    CharacterPortraitRef,
-  } from "$lib/definitions";
-  import { itineraryGoalLabel } from "$lib/planner-itinerary";
-  import { wikiHref } from "$lib/wiki";
   import {
     expItemsNeeded,
-    MAX_ASCENSION,
-    MAX_LEVEL,
-    MAX_TALENT,
-    maxLevelForAscension,
-    orderCharacterConfigs,
-    orderWeaponConfigs,
     formatMaterialSourceLine,
     collapseCraftRanks,
+    craftRanksCanExpand,
+    orderCharacterConfigs,
   } from "$lib/upgrade-costs";
   import {
     aggregateGoalCosts,
-    appendGoal,
     applyCloudGoals,
     costsForGoal,
-    createCharacterGoal,
-    createWeaponGoal,
     emptyAggregate,
     emptyGoalsState,
     findGoal,
-    MAX_CALCULATOR_GOALS,
+    moveGoal,
     parseGoalsState,
     removeGoal,
     replaceGoal,
+    starredGoals,
+    toggleGoalStarred,
   } from "$lib/calculator-goals";
+  import {
+    appendCatalogCharacterGoal,
+    appendCatalogWeaponGoal,
+    fetchPlannerTargetFromBuilds,
+    pickModalCharacter,
+    plannerCharacterOptions,
+    plannerWeaponOptions,
+    resolveCatalogCharacterId,
+    simKeyForCatalogCharacter,
+  } from "$lib/planner-goal-edits";
   import {
     captureGoals,
     fetchGoalsCloud,
@@ -81,24 +58,16 @@
   import { nextSearchPath } from "$lib/query-state";
   import type {
     AggregatedUpgradeCosts,
-    CalculatorGoal,
     CalculatorGoalsState,
   } from "$lib/types/calculator-goals";
-  import type {
-    UpgradeCostsCatalog,
-    UpgradePromoteStep,
-  } from "$lib/types/upgrade-costs";
+  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
   import Button from "$lib/ui/components/Button.svelte";
-  import Toggle from "$lib/ui/components/Toggle.svelte";
+  import GoalConfigureModal from "$lib/ui/components/GoalConfigureModal.svelte";
+  import GoalList from "$lib/ui/components/GoalList.svelte";
+  import GoalPickModal from "$lib/ui/components/GoalPickModal.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import { tick } from "svelte";
-  import { fade, scale } from "svelte/transition";
-  import { prefersReducedMotion } from "svelte/motion";
-  import { trapTabKey } from "$lib/ui/focus-trap";
 
-  type CostScope = "all" | "selected";
+  type CostScope = "all" | "selected" | "starred";
 
   let catalog = $state<UpgradeCostsCatalog | null>(null);
   let loadError = $state<string | null>(null);
@@ -118,9 +87,8 @@
   let sortOwnedFirst = $state(true);
   /** Configure dialog open (gear on a goal row). */
   let configuring = $state(false);
-  let configCloseEl: HTMLButtonElement | null = $state(null);
-  let configPanelEl: HTMLDivElement | null = $state(null);
-  let configFocusReturn: HTMLElement | null = $state(null);
+  /** Soft-deleted rows; applied on Save. */
+  let pendingRemoveIds = $state(new Set<string>());
 
   const session = authClient.useSession();
 
@@ -135,6 +103,7 @@
   });
   let hasUnsavedChanges = $derived.by(() => {
     if (!goalsHydrated || !savedSnapshot) return false;
+    if (pendingRemoveIds.size > 0) return true;
     if (!parsedSavedSnapshot) {
       return goalsDiffersFromSnapshot(goalsState, savedSnapshot);
     }
@@ -153,6 +122,10 @@
     const seen = new Set<string>();
     for (const g of current) {
       seen.add(g.id);
+      if (pendingRemoveIds.has(g.id)) {
+        n += 1;
+        continue;
+      }
       const prev = savedMap.get(g.id);
       if (!prev || JSON.stringify(prev) !== JSON.stringify(g)) n += 1;
     }
@@ -274,10 +247,21 @@
       );
       goalsState = pending.state;
       savedSnapshot = pending.json;
+      pendingRemoveIds = new Set();
       saveError = "";
     } catch {
       /* ignore */
     }
+  }
+
+  function goalsWithoutPendingRemoves(
+    state: CalculatorGoalsState,
+  ): CalculatorGoalsState {
+    let next = state;
+    for (const id of pendingRemoveIds) {
+      next = removeGoal(next, id);
+    }
+    return next;
   }
 
   async function saveGoals() {
@@ -285,7 +269,7 @@
     isSaving = true;
     saveError = "";
 
-    const pending = captureGoals(goalsState);
+    const pending = captureGoals(goalsWithoutPendingRemoves(goalsState));
 
     try {
       if (!writeGoalsLocal(pending.json)) {
@@ -301,8 +285,10 @@
             : `Sync failed (${result.status}) — goals not saved to cloud`;
           return;
         }
+        pendingRemoveIds = new Set();
         commitSaved(pending);
       } else {
+        pendingRemoveIds = new Set();
         commitSaved(pending);
       }
     } catch (e) {
@@ -322,75 +308,41 @@
 
   let ownedIds = $derived(ownedNameIds($charactersOwned));
 
-  let characterOptions = $derived.by(() => {
-    const opts = (catalog?.characters ?? []).map((c) => ({
-      value: c.name_id,
-      label: c.name,
-    }));
-    if (!sortOwnedFirst) return opts;
-    const owned: typeof opts = [];
-    const rest: typeof opts = [];
-    for (const opt of opts) {
-      (isOwnedNameId(opt.value, ownedIds) ? owned : rest).push(opt);
-    }
-    return [...owned, ...rest];
-  });
-  let weaponOptions = $derived(
-    (catalog?.weapons ?? []).map((w) => ({
-      value: String(w.id),
-      label: `${w.name} (${w.rankLevel}★)`,
-    })),
+  let characterOptions = $derived(
+    plannerCharacterOptions(catalog, ownedIds, sortOwnedFirst),
   );
+  let weaponOptions = $derived(plannerWeaponOptions(catalog));
 
-  function goalSummary(goal: CalculatorGoal): string {
-    const promotes =
-      goal.kind === "character"
-        ? (catalog?.characters.find((c) => c.name_id === goal.name_id)
-            ?.promotes ?? [])
-        : (catalog?.weapons.find((w) => w.id === goal.weapon_id)?.promotes ??
-          []);
-    const cap = (ascension: number) =>
-      maxLevelForAscension(promotes, ascension);
-    const lv = `Lv ${goal.start.level}/${cap(goal.start.ascension)} → ${goal.target.level}/${cap(goal.target.ascension)}`;
-    if (goal.kind !== "character") return lv;
-    const s = goal.start.talents;
-    const t = goal.target.talents;
-    return `${lv}, ${s.normal}/${s.skill}/${s.burst} → ${t.normal}/${t.skill}/${t.burst}`;
-  }
-
-  function goalIcon(goal: CalculatorGoal): string | null {
-    if (goal.kind === "character") {
-      return getCharacterPortrait(goal.name_id);
-    }
-    const icon = catalog?.weapons.find((w) => w.id === goal.weapon_id)?.icon;
-    return assetUrl(icon ?? null);
-  }
-
-  /** Drop stale Builds autofill when the user switches characters quickly. */
   let autofillSeq = 0;
 
-  function simKeyForCatalogCharacter(nameId: string): string {
-    const row = catalog?.characters.find((c) => c.name_id === nameId);
-    return plannerSimKey(nameId, row?.name);
-  }
-
-  async function targetFromBuilds(
-    nameId: string,
-    promotes: UpgradePromoteStep[],
-  ) {
-    if (isStaleBuildSummary(nameId)) return null;
+  async function autofillCharacterTarget(nameId: string, goalId: string) {
+    if (!catalog) return;
+    const row = catalog.characters.find((c) => c.name_id === nameId);
+    if (!row) return;
     const seq = ++autofillSeq;
-    let builds;
-    try {
-      builds = await loadCharacterSummary(simKeyForCatalogCharacter(nameId));
-    } catch {
-      return null;
+    const target = await fetchPlannerTargetFromBuilds(
+      nameId,
+      row.promotes,
+      simKeyForCatalogCharacter(catalog, nameId),
+    );
+    if (seq !== autofillSeq || !target) return;
+    const current = findGoal(goalsState, goalId);
+    if (
+      !current ||
+      current.kind !== "character" ||
+      current.name_id !== nameId
+    ) {
+      return;
     }
-    if (seq !== autofillSeq) return null;
-    return plannerTargetFromBuilds(builds, promotes);
+    commitGoals(
+      replaceGoal(goalsState, {
+        ...current,
+        ...orderCharacterConfigs(current.start, target, row.promotes),
+      }),
+    );
   }
 
-  /** Full-screen pick modal after + Character / + Weapon. */
+  /** Pick modal after + Character / + Weapon. */
   let picking = $state<"character" | "weapon" | null>(null);
   let pickQuery = $state("");
 
@@ -416,7 +368,8 @@
   }
 
   function addOrSelectCharacter(nameId: string) {
-    const resolved = resolveCatalogCharacterId(nameId) ?? nameId;
+    if (!catalog) return;
+    const resolved = resolveCatalogCharacterId(catalog, nameId) ?? nameId;
     const existing = goalsState.goals.find(
       (g) => g.kind === "character" && g.name_id === resolved,
     );
@@ -432,88 +385,44 @@
     addCharacterWith(resolved);
   }
 
-  /** Bare `PlayerBoy` (old kit links) maps to Pyro; elemental keys pass through. */
-  function resolveCatalogCharacterId(nameId: string): string | undefined {
-    if (!catalog) return undefined;
-    if (catalog.characters.some((c) => c.name_id === nameId)) return nameId;
-    if (nameId === "PlayerBoy" || nameId === "PlayerGirl") {
-      return (
-        catalog.characters.find((c) => c.name_id === "PlayerBoy-Pyro")
-          ?.name_id ??
-        catalog.characters.find((c) => c.name_id.startsWith("PlayerBoy-"))
-          ?.name_id
-      );
-    }
-    return undefined;
-  }
-
   function addCharacterWith(nameId: string) {
     if (!catalog) return;
-    const resolved = resolveCatalogCharacterId(nameId);
-    if (!resolved) {
-      cancelPick();
-      addError = "This character isn't in the planner catalog yet.";
-      return;
-    }
-    const row = catalog.characters.find((c) => c.name_id === resolved);
-    if (!row) {
-      cancelPick();
-      addError = "This character isn't in the planner catalog yet.";
-      return;
-    }
     cancelPick();
-    const progress = rosterProgressForNameId(
-      $charactersOwned,
-      resolved,
-      getRosterWeaponsCached(),
+    const result = appendCatalogCharacterGoal(
+      goalsState,
+      catalog,
+      nameId,
+      {
+        owned: $charactersOwned,
+        weapons: getRosterWeaponsCached(),
+      },
     );
-    const goal = createCharacterGoal(
-      resolved,
-      progress ? { start: progressToCharacterStart(progress) } : undefined,
-    );
-    const next = appendGoal(goalsState, goal);
-    if (next.goals.length === goalsState.goals.length) {
-      addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
+    if (!result.ok) {
+      addError = result.error;
       return;
     }
     addError = "";
-    commitGoals(next);
+    commitGoals(result.state);
     beginConfigure();
-    void (async () => {
-      const target = await targetFromBuilds(resolved, row.promotes);
-      if (!target) return;
-      const current = findGoal(goalsState, goal.id);
-      if (!current || current.kind !== "character") return;
-      const ordered = orderCharacterConfigs(
-        current.start,
-        target,
-        row.promotes,
-      );
-      commitGoals(replaceGoal(goalsState, { ...current, ...ordered }));
-    })();
+    void autofillCharacterTarget(
+      result.goal.kind === "character" ? result.goal.name_id : nameId,
+      result.goal.id,
+    );
   }
 
   function addWeaponWith(weaponId: number) {
-    if (!catalog?.weapons.some((w) => w.id === weaponId)) return;
+    if (!catalog) return;
     cancelPick();
-    const row = catalog.weapons.find((w) => w.id === weaponId);
-    const key = row ? toGoodKey(row.name) : "";
-    const inventory = getRosterWeaponsCached();
-    const fromBag = key
-      ? lowestInventoryWeaponByKey(inventory ?? [], key)
-      : null;
-    const fromRoster = $charactersOwned.find(
-      (c) => c.isOwned && c.progress?.weapon?.key === key,
-    )?.progress?.weapon;
-    const start = plannerStartFromOwnedWeapon(fromBag ?? fromRoster);
-    const goal = createWeaponGoal(weaponId, start ? { start } : undefined);
-    const next = appendGoal(goalsState, goal);
-    if (next.goals.length === goalsState.goals.length) {
-      addError = `You can have at most ${MAX_CALCULATOR_GOALS} goals.`;
+    const result = appendCatalogWeaponGoal(goalsState, catalog, weaponId, {
+      owned: $charactersOwned,
+      weapons: getRosterWeaponsCached(),
+    });
+    if (!result.ok) {
+      addError = result.error;
       return;
     }
     addError = "";
-    commitGoals(next);
+    commitGoals(result.state);
     beginConfigure();
   }
 
@@ -524,12 +433,11 @@
   }
 
   function beginConfigure() {
-    const active = document.activeElement;
-    configFocusReturn = active instanceof HTMLElement ? active : null;
     configuring = true;
   }
 
   function openConfigure(id: string) {
+    if (pendingRemoveIds.has(id)) return;
     cancelPick();
     if (goalsState.selectedId !== id) {
       commitGoals({ ...goalsState, selectedId: id });
@@ -539,134 +447,48 @@
 
   function closeConfigure() {
     configuring = false;
-    const previous = configFocusReturn;
-    configFocusReturn = null;
-    if (previous?.isConnected) previous.focus();
   }
 
   function deleteGoal(id: string) {
     if (goalsState.selectedId === id) closeConfigure();
     addError = "";
-    commitGoals(removeGoal(goalsState, id));
+    const next = new Set(pendingRemoveIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    pendingRemoveIds = next;
   }
 
-  $effect(() => {
-    if (!configuring || !browser) return;
-    void tick().then(() => configCloseEl?.focus());
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        closeConfigure();
-        return;
-      }
-      if (configPanelEl) trapTabKey(e, configPanelEl);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
-
-  const configMotion = $derived(prefersReducedMotion.current ? 0 : undefined);
-
-  function updateSelected(mutator: (goal: CalculatorGoal) => CalculatorGoal) {
-    const current = selectedGoal;
+  function toggleStar(id: string) {
+    const current = findGoal(goalsState, id);
     if (!current) return;
-    commitGoals(replaceGoal(goalsState, mutator(current)));
+    commitGoals(replaceGoal(goalsState, toggleGoalStarred(current)));
   }
 
-  function patchCharacterSide(
-    side: "start" | "target",
-    patch: Partial<{
-      level: number;
-      ascension: number;
-      talents: Partial<{ normal: number; skill: number; burst: number }>;
-    }>,
-  ) {
-    if (!catalog || !selectedGoal || selectedGoal.kind !== "character") return;
-    const row = catalog.characters.find(
-      (c) => c.name_id === selectedGoal.name_id,
-    );
-    if (!row) return;
-    updateSelected((g) => {
-      if (g.kind !== "character") return g;
-      const prev = g[side];
-      const next = {
-        level: patch.level ?? prev.level,
-        ascension: patch.ascension ?? prev.ascension,
-        talents: {
-          normal: patch.talents?.normal ?? prev.talents.normal,
-          skill: patch.talents?.skill ?? prev.talents.skill,
-          burst: patch.talents?.burst ?? prev.talents.burst,
-        },
-      };
-      const preferAscension =
-        patch.ascension !== undefined &&
-        patch.level === undefined &&
-        patch.talents === undefined;
-      const preferLevel =
-        patch.level !== undefined &&
-        patch.ascension === undefined &&
-        patch.talents === undefined;
-      return {
-        ...g,
-        ...orderCharacterConfigs(
-          side === "start" ? next : g.start,
-          side === "target" ? next : g.target,
-          row.promotes,
-          {
-            preferStartAscension: side === "start" && preferAscension,
-            preferStartLevel: side === "start" && preferLevel,
-            preferTargetAscension: side === "target" && preferAscension,
-            preferTargetLevel: side === "target" && preferLevel,
-          },
-        ),
-      };
-    });
+  function portraitFor(nameId: string) {
+    return pickModalCharacter(nameId, catalog, $charactersOwned);
   }
 
-  function patchWeaponSide(
-    side: "start" | "target",
-    patch: Partial<{ level: number; ascension: number }>,
-  ) {
-    if (!catalog || !selectedGoal || selectedGoal.kind !== "weapon") return;
-    const row = catalog.weapons.find((w) => w.id === selectedGoal.weapon_id);
-    if (!row) return;
-    updateSelected((g) => {
-      if (g.kind !== "weapon") return g;
-      const prev = g[side];
-      const next = {
-        level: patch.level ?? prev.level,
-        ascension: patch.ascension ?? prev.ascension,
-      };
-      const preferAscension =
-        patch.ascension !== undefined && patch.level === undefined;
-      const preferLevel =
-        patch.level !== undefined && patch.ascension === undefined;
-      return {
-        ...g,
-        ...orderWeaponConfigs(
-          side === "start" ? next : g.start,
-          side === "target" ? next : g.target,
-          row.promotes,
-          {
-            preferStartAscension: side === "start" && preferAscension,
-            preferStartLevel: side === "start" && preferLevel,
-            preferTargetAscension: side === "target" && preferAscension,
-            preferTargetLevel: side === "target" && preferLevel,
-          },
-        ),
-      };
-    });
-  }
-
-  let targetLevelFloor = $derived(selectedGoal?.start.level ?? 1);
+  let starredGoalList = $derived(
+    starredGoals(
+      goalsState.goals.filter((g) => !pendingRemoveIds.has(g.id)),
+    ),
+  );
 
   let aggregate = $derived.by((): AggregatedUpgradeCosts | null => {
     if (!catalog || !goalsHydrated) return null;
+    const activeGoals = goalsState.goals.filter(
+      (g) => !pendingRemoveIds.has(g.id),
+    );
     if (costScope === "selected") {
-      if (!selectedGoal) return emptyAggregate();
+      if (!selectedGoal || pendingRemoveIds.has(selectedGoal.id)) {
+        return emptyAggregate();
+      }
       return costsForGoal(selectedGoal, catalog);
     }
-    return aggregateGoalCosts(goalsState.goals, catalog);
+    if (costScope === "starred") {
+      return aggregateGoalCosts(starredGoalList, catalog);
+    }
+    return aggregateGoalCosts(activeGoals, catalog);
   });
 
   let characterExpBooks = $derived.by(() => {
@@ -691,10 +513,17 @@
     );
   });
 
+  let ranksExpanded = $state(true);
+
   let materialRows = $derived.by(() => {
     const data = catalog;
     if (!data || !aggregate) return [];
-    return Object.entries(collapseCraftRanks(aggregate.materials, data))
+    const bag =
+      ranksExpanded || !craftRanksCanExpand(aggregate.materials, data)
+        ? aggregate.materials
+        : collapseCraftRanks(aggregate.materials, data);
+    return Object.entries(bag)
+      .filter(([, count]) => count > 0)
       .map(([id, count]) => {
         const meta = data.materials[id];
         return {
@@ -709,36 +538,13 @@
       .sort((a, b) => Number(a.id) - Number(b.id));
   });
 
+  let ranksCanExpand = $derived.by(() => {
+    if (!catalog || !aggregate) return false;
+    return craftRanksCanExpand(aggregate.materials, catalog);
+  });
+
   function formatCount(n: number): string {
     return n.toLocaleString("en-US");
-  }
-
-  function lookupCharacter(
-    nameId: string,
-  ): CharacterOwned | Character | undefined {
-    const exact = $charactersOwned.find((c) => c.name_id === nameId);
-    if (exact) return exact;
-    if (nameId.startsWith("PlayerBoy-") || nameId.startsWith("PlayerGirl-")) {
-      return $charactersOwned.find(
-        (c) => c.name_id === "PlayerBoy" || c.name_id === "PlayerGirl",
-      );
-    }
-    return undefined;
-  }
-
-  /** Catalog row first (portrait name/element); roster only when the catalog misses. */
-  function pickModalCharacter(
-    nameId: string,
-  ): CharacterPortraitRef | undefined {
-    const row = catalog?.characters.find((c) => c.name_id === nameId);
-    if (row) {
-      return {
-        name_id: row.name_id,
-        name: row.name,
-        element: row.element,
-      };
-    }
-    return lookupCharacter(nameId);
   }
 </script>
 
@@ -826,57 +632,18 @@
             Add a character or weapon goal to start planning costs.
           </p>
         {:else}
-          <ul class="goal-list">
-            {#each goalsState.goals as goal (goal.id)}
-              {@const active = goal.id === goalsState.selectedId}
-              <li
-                class="goal-item"
-                class:is-active={active}
-                aria-current={active ? "true" : undefined}
-              >
-                <button
-                  type="button"
-                  class="goal-select"
-                  onclick={() => selectGoal(goal.id)}
-                >
-                  {#if goalIcon(goal)}
-                    <img
-                      class="goal-icon"
-                      src={goalIcon(goal) ?? ""}
-                      alt=""
-                      width="32"
-                      height="32"
-                      loading="lazy"
-                    />
-                  {:else}
-                    <span class="goal-icon goal-icon-fallback"></span>
-                  {/if}
-                  <span class="goal-text">
-                    <span class="meta-name"
-                      >{itineraryGoalLabel(goal, catalog)}</span
-                    >
-                    <span class="meta-sub">{goalSummary(goal)}</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="goal-icon-btn"
-                  aria-label={`Configure ${itineraryGoalLabel(goal, catalog)}`}
-                  onclick={() => openConfigure(goal.id)}
-                >
-                  <IconCog size={16} />
-                </button>
-                <button
-                  type="button"
-                  class="goal-icon-btn"
-                  aria-label={`Remove ${itineraryGoalLabel(goal, catalog)}`}
-                  onclick={() => deleteGoal(goal.id)}
-                >
-                  <IconX size={16} />
-                </button>
-              </li>
-            {/each}
-          </ul>
+          <GoalList
+            goals={goalsState.goals}
+            {catalog}
+            selectedId={goalsState.selectedId}
+            removedIds={pendingRemoveIds}
+            onSelect={selectGoal}
+            onStar={toggleStar}
+            onReorder={(from, to) =>
+              commitGoals(moveGoal(goalsState, from, to))}
+            onConfigure={openConfigure}
+            onRemove={deleteGoal}
+          />
         {/if}
       </aside>
 
@@ -904,8 +671,24 @@
             >
               Selected
             </button>
+            <button
+              type="button"
+              class="scope-btn"
+              class:active={costScope === "starred"}
+              role="tab"
+              aria-selected={costScope === "starred"}
+              onclick={() => (costScope = "starred")}
+            >
+              Starred
+            </button>
           </div>
         </div>
+
+        {#if costScope === "starred" && starredGoalList.length > 0}
+          <p class="section-lede">
+            Starred goals appear here and on the farming itinerary.
+          </p>
+        {/if}
 
         {#if aggregate}
           <ul class="totals">
@@ -974,7 +757,20 @@
           {/if}
 
           {#if materialRows.length > 0}
-            <h3 class="group-title">Materials</h3>
+            <div class="group-head">
+              <h3 class="group-title">Materials</h3>
+              {#if ranksCanExpand}
+                <button
+                  type="button"
+                  class="eyebrow ranks-toggle"
+                  aria-expanded={ranksExpanded}
+                  onclick={() => (ranksExpanded = !ranksExpanded)}
+                >
+                  {ranksExpanded ? "Collapse" : "Expand"}
+                  <IconChevronDown size={14} strokeWidth={2.25} />
+                </button>
+              {/if}
+            </div>
             <ul class="mat-list">
               {#each materialRows as mat (mat.id)}
                 {@const source = mat.sources[0]}
@@ -988,19 +784,9 @@
                     loading="lazy"
                   />
                   <span class="mat-text">
+                    <span class="mat-name">{mat.name}</span>
                     {#if source}
-                      <a
-                        class="mat-name mat-name-link"
-                        href={wikiHref(mat.name)}
-                        target="_blank"
-                        rel="noopener noreferrer">{mat.name}</a
-                      >
-                      <a
-                        class="meta-sub mat-source"
-                        href={wikiHref(source.name)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <span class="meta-sub mat-source">
                         {#if source.icon && assetUrl(source.icon)}
                           <img
                             class="mat-source-icon"
@@ -1015,9 +801,7 @@
                           />
                         {/if}
                         {formatMaterialSourceLine(source)}
-                      </a>
-                    {:else}
-                      <span class="mat-name">{mat.name}</span>
+                      </span>
                     {/if}
                   </span>
                   <span class="mat-count">×{formatCount(mat.count)}</span>
@@ -1026,9 +810,13 @@
             </ul>
           {:else if aggregate.mora === 0 && aggregate.characterExp === 0 && aggregate.weaponExp === 0}
             <p class="section-lede">
-              {goalsState.goals.length === 0
-                ? "Add a goal to see costs."
-                : "Nothing to farm — configs match."}
+              {#if goalsState.goals.length === 0}
+                Add a goal to see costs.
+              {:else if costScope === "starred" && starredGoalList.length === 0}
+                Star a goal to include it here and on the farming itinerary.
+              {:else}
+                Nothing to farm — configs match.
+              {/if}
             </p>
           {/if}
         {/if}
@@ -1036,262 +824,30 @@
     </section>
   {/if}
 
-  {#if configuring && selectedGoal}
-    <div class="config-root">
-      <button
-        type="button"
-        class="config-backdrop"
-        tabindex="-1"
-        aria-label="Close"
-        onclick={closeConfigure}
-        transition:fade={{ duration: configMotion ?? 160 }}
-      ></button>
-      <div
-        class="config-panel"
-        bind:this={configPanelEl}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Configure goal"
-        transition:scale={{ duration: configMotion ?? 200, start: 0.98 }}
-      >
-        <header class="config-head">
-          <h2 class="section-title">Configure</h2>
-          <button
-            type="button"
-            class="config-close"
-            bind:this={configCloseEl}
-            onclick={closeConfigure}
-            aria-label="Close"
-          >
-            <IconX size={18} />
-          </button>
-        </header>
-        <div class="picker-row">
-          {#if selectedGoal.kind === "character"}
-            <label class="field">
-              <span class="field-label">Character</span>
-              <CharacterSearchSelect
-                bind:value={
-                  () => selectedGoal.name_id,
-                  (name_id) => {
-                    if (!catalog) return;
-                    const row = catalog.characters.find(
-                      (c) => c.name_id === name_id,
-                    );
-                    updateSelected((g) => {
-                      if (g.kind !== "character") return g;
-                      if (!row) return { ...g, name_id };
-                      return {
-                        ...g,
-                        name_id,
-                        ...orderCharacterConfigs(
-                          g.start,
-                          g.target,
-                          row.promotes,
-                        ),
-                      };
-                    });
-                    if (!row) return;
-                    const goalId = selectedGoal.id;
-                    void (async () => {
-                      const target = await targetFromBuilds(
-                        name_id,
-                        row.promotes,
-                      );
-                      if (!target) return;
-                      const current = findGoal(goalsState, goalId);
-                      if (
-                        !current ||
-                        current.kind !== "character" ||
-                        current.name_id !== name_id
-                      ) {
-                        return;
-                      }
-                      commitGoals(
-                        replaceGoal(goalsState, {
-                          ...current,
-                          ...orderCharacterConfigs(
-                            current.start,
-                            target,
-                            row.promotes,
-                          ),
-                        }),
-                      );
-                    })();
-                  }
-                }
-                options={characterOptions}
-                getCharacter={pickModalCharacter}
-                placeholder="Search character…"
-                aria-label="Search character"
-              />
-            </label>
-          {:else}
-            <label class="field">
-              <span class="field-label">Weapon</span>
-              <CharacterSearchSelect
-                bind:value={
-                  () => String(selectedGoal.weapon_id),
-                  (raw) => {
-                    if (!catalog) return;
-                    const weapon_id = Number(raw);
-                    const row = catalog.weapons.find((w) => w.id === weapon_id);
-                    updateSelected((g) => {
-                      if (g.kind !== "weapon") return g;
-                      if (!row) return { ...g, weapon_id };
-                      return {
-                        ...g,
-                        weapon_id,
-                        ...orderWeaponConfigs(g.start, g.target, row.promotes),
-                      };
-                    });
-                  }
-                }
-                options={weaponOptions}
-                getIconSrc={(id) => {
-                  const row = catalog?.weapons.find((w) => String(w.id) === id);
-                  return row?.icon ? assetUrl(row.icon) : null;
-                }}
-                placeholder="Search weapon…"
-                aria-label="Search weapon"
-              />
-            </label>
-          {/if}
-        </div>
-
-        <div class="config-col">
-          {#if selectedGoal.kind === "character"}
-            <NumberSliderField
-              label="Ascension"
-              value={selectedGoal.target.ascension}
-              min={0}
-              max={MAX_ASCENSION}
-              floor={selectedGoal.start.ascension}
-              origin={selectedGoal.start.ascension}
-              onchange={(ascension) =>
-                patchCharacterSide("target", { ascension })}
-              onOriginChange={(ascension) =>
-                patchCharacterSide("start", { ascension })}
-            />
-            <NumberSliderField
-              label="Level"
-              value={selectedGoal.target.level}
-              min={1}
-              max={MAX_LEVEL}
-              floor={targetLevelFloor}
-              origin={selectedGoal.start.level}
-              onchange={(level) => patchCharacterSide("target", { level })}
-              onOriginChange={(level) => patchCharacterSide("start", { level })}
-            />
-            <NumberSliderField
-              label="Normal attack"
-              value={selectedGoal.target.talents.normal}
-              min={1}
-              max={MAX_TALENT}
-              floor={selectedGoal.start.talents.normal}
-              origin={selectedGoal.start.talents.normal}
-              onchange={(normal) =>
-                patchCharacterSide("target", { talents: { normal } })}
-              onOriginChange={(normal) =>
-                patchCharacterSide("start", { talents: { normal } })}
-            />
-            <NumberSliderField
-              label="Skill"
-              value={selectedGoal.target.talents.skill}
-              min={1}
-              max={MAX_TALENT}
-              floor={selectedGoal.start.talents.skill}
-              origin={selectedGoal.start.talents.skill}
-              onchange={(skill) =>
-                patchCharacterSide("target", { talents: { skill } })}
-              onOriginChange={(skill) =>
-                patchCharacterSide("start", { talents: { skill } })}
-            />
-            <NumberSliderField
-              label="Burst"
-              value={selectedGoal.target.talents.burst}
-              min={1}
-              max={MAX_TALENT}
-              floor={selectedGoal.start.talents.burst}
-              origin={selectedGoal.start.talents.burst}
-              onchange={(burst) =>
-                patchCharacterSide("target", { talents: { burst } })}
-              onOriginChange={(burst) =>
-                patchCharacterSide("start", { talents: { burst } })}
-            />
-          {:else}
-            <NumberSliderField
-              label="Ascension"
-              value={selectedGoal.target.ascension}
-              min={0}
-              max={MAX_ASCENSION}
-              floor={selectedGoal.start.ascension}
-              origin={selectedGoal.start.ascension}
-              onchange={(ascension) => patchWeaponSide("target", { ascension })}
-              onOriginChange={(ascension) =>
-                patchWeaponSide("start", { ascension })}
-            />
-            <NumberSliderField
-              label="Level"
-              value={selectedGoal.target.level}
-              min={1}
-              max={MAX_LEVEL}
-              floor={targetLevelFloor}
-              origin={selectedGoal.start.level}
-              onchange={(level) => patchWeaponSide("target", { level })}
-              onOriginChange={(level) => patchWeaponSide("start", { level })}
-            />
-          {/if}
-        </div>
-
-        <div class="config-actions">
-          <Button variant="primary" onclick={closeConfigure}>Looks good</Button>
-        </div>
-      </div>
-    </div>
-  {/if}
-
-  {#if picking}
-    <PickModal
-      open
-      title={picking === "character" ? "Add character" : "Add weapon"}
-      searchPlaceholder={picking === "character"
-        ? "Search character…"
-        : "Search weapon…"}
-      options={pickOptions}
-      art={picking === "weapon" ? "square" : "portrait"}
-      bind:query={pickQuery}
-      onClose={cancelPick}
-      onChoose={choosePick}
-    >
-      {#snippet toolbar()}
-        {#if picking === "character"}
-          <div class="owned-first">
-            <span class="owned-first-label">Owned first</span>
-            <Toggle bind:pressed={sortOwnedFirst} aria-label="Owned first" />
-          </div>
-        {/if}
-      {/snippet}
-      {#snippet tile(opt)}
-        {#if picking === "character"}
-          <CharacterPortraitCard
-            character={pickModalCharacter(opt.value)}
-            dimmed={sortOwnedFirst && !isOwnedNameId(opt.value, ownedIds)}
-            tintBackground
-          />
-        {:else}
-          {@const weapon = catalog?.weapons.find(
-            (w) => String(w.id) === opt.value,
-          )}
-          <div class="weapon-tile">
-            {#if weapon?.icon}
-              <img src={assetUrl(weapon.icon) ?? ""} alt="" loading="lazy" />
-            {/if}
-          </div>
-        {/if}
-      {/snippet}
-    </PickModal>
-  {/if}
+  <GoalConfigureModal
+    open={configuring && !!selectedGoal}
+    goal={selectedGoal}
+    {catalog}
+    {characterOptions}
+    {weaponOptions}
+    getCharacter={portraitFor}
+    onClose={closeConfigure}
+    onChange={(next) => commitGoals(replaceGoal(goalsState, next))}
+    onAutofillCharacter={(nameId, goalId) =>
+      void autofillCharacterTarget(nameId, goalId)}
+  />
+  <GoalPickModal
+    open={picking !== null}
+    kind={picking ?? "character"}
+    {catalog}
+    options={pickOptions}
+    bind:query={pickQuery}
+    bind:sortOwnedFirst
+    {ownedIds}
+    getCharacter={portraitFor}
+    onClose={cancelPick}
+    onChoose={choosePick}
+  />
 </PageShell>
 
 <style>
@@ -1333,19 +889,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
-  }
-
-  .owned-first {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-  }
-
-  .owned-first-label {
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--foreground-mid);
-    user-select: none;
   }
 
   .ghost-btn,
@@ -1400,200 +943,6 @@
     gap: 0.35rem;
   }
 
-  .goal-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .goal-item {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 0.1rem;
-    align-items: center;
-    padding: 0.3rem 0.3rem 0.3rem 0.45rem;
-    border-radius: var(--radius-md);
-    border: var(--border-width) solid transparent;
-    background: transparent;
-  }
-
-  .goal-item:hover {
-    background: color-mix(in srgb, var(--foreground-color) 7%, transparent);
-  }
-
-  .goal-item.is-active {
-    background: var(--surface-selected);
-    border-color: var(--accent-1);
-  }
-
-  .goal-select {
-    display: grid;
-    grid-template-columns: 32px 1fr;
-    gap: 0.55rem;
-    align-items: center;
-    min-width: 0;
-    padding: 0.15rem 0.25rem;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    text-align: left;
-    cursor: pointer;
-    color: inherit;
-  }
-
-  .goal-icon {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
-  }
-
-  .goal-icon-fallback {
-    display: block;
-  }
-
-  .goal-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0;
-  }
-
-  .goal-icon-btn {
-    width: 1.85rem;
-    height: 1.85rem;
-    display: grid;
-    place-items: center;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-  }
-
-  .goal-icon-btn:hover {
-    color: var(--foreground-color);
-    background: color-mix(in srgb, var(--foreground-color) 10%, transparent);
-  }
-
-  .config-root {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    display: grid;
-    place-items: center;
-    padding: clamp(0.75rem, 2vw, 1.25rem);
-    pointer-events: none;
-  }
-
-  .config-backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    background: color-mix(in oklab, black 62%, transparent);
-    backdrop-filter: blur(4px);
-    pointer-events: auto;
-  }
-
-  .config-panel {
-    position: relative;
-    z-index: 1;
-    width: min(92vw, 28rem);
-    max-height: min(88vh, 44rem);
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-    padding: 0.85rem 1rem 1rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 14%, transparent);
-    background: var(--background-color);
-    box-shadow: 0 22px 56px color-mix(in oklab, black 50%, transparent);
-    pointer-events: auto;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(
-        in srgb,
-        var(--foreground-color) 22%,
-        transparent
-      )
-      transparent;
-  }
-
-  .config-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-shrink: 0;
-  }
-
-  .config-close {
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    padding: 0;
-    border-radius: var(--radius-md);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 12%, transparent);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-  }
-
-  .config-close:hover {
-    color: var(--foreground-color);
-    border-color: color-mix(in srgb, var(--foreground-color) 26%, transparent);
-  }
-
-  .picker-row {
-    max-width: none;
-  }
-
-  .config-col {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-  }
-
-  .config-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    padding-top: 0.25rem;
-  }
-
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .field-label {
-    font-size: var(--text-xs);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--foreground-mid);
-  }
-
-  .weapon-tile {
-    width: 100%;
-    height: 100%;
-    display: grid;
-    place-items: center;
-    background: var(--background-mid);
-  }
-
   .totals {
     list-style: none;
     margin: 0;
@@ -1610,6 +959,41 @@
     padding: 0.35rem 0;
     border-bottom: 1px solid
       color-mix(in srgb, var(--foreground-color) 12%, transparent);
+  }
+
+  .group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .group-head .group-title {
+    margin: 0;
+  }
+
+  .ranks-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .ranks-toggle:hover {
+    color: var(--foreground-color);
+  }
+
+  .ranks-toggle :global(svg) {
+    transition: transform 160ms ease;
+  }
+
+  .ranks-toggle[aria-expanded="true"] :global(svg) {
+    transform: rotate(180deg);
   }
 
   .group-title {
@@ -1658,25 +1042,11 @@
     min-width: 0;
   }
 
-  .mat-name-link {
-    text-decoration: underline;
-    text-underline-offset: 0.12em;
-  }
-
-  .mat-name-link:hover {
-    text-decoration-thickness: 2px;
-  }
-
   .mat-source {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    text-decoration: none;
     min-width: 0;
-  }
-
-  .mat-source:hover {
-    color: var(--foreground-color);
   }
 
   .mat-source-icon {

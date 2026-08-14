@@ -31,6 +31,8 @@
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     let active = true;
     void tick().then(() => {
       if (!active || !$plannerItineraryOpen) return;
@@ -47,6 +49,7 @@
     window.addEventListener("keydown", onKey);
     return () => {
       active = false;
+      document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
       const skipFocus = closedByNavigate;
       closedByNavigate = false;
@@ -70,13 +73,14 @@
       bind:this={panelEl}
       role="dialog"
       aria-modal="true"
-      aria-label="Farming"
+      aria-label="Farming itinerary"
       tabindex="-1"
       transition:scale={{ duration: motion ?? 200, start: 0.98 }}
     >
       <div class="sheet-head">
-        <h2 class="section-title">Farming</h2>
-        <a class="back-link sheet-edit" href={plannerPath}>Edit in planner</a>
+        <a class="back-link sheet-planner" href={plannerPath}
+          >View full planner</a
+        >
         <button
           type="button"
           class="sheet-close"
@@ -86,7 +90,9 @@
           <IconX size={18} />
         </button>
       </div>
-      <PlannerItinerary chrome="plain" showEmpty showHeading={false} />
+      <div class="sheet-body">
+        <PlannerItinerary chrome="plain" showEmpty showHeading={false} />
+      </div>
     </div>
   </div>
 {/if}
@@ -117,41 +123,38 @@
   .sheet-panel {
     position: relative;
     z-index: 1;
-    width: min(32rem, 100%);
-    max-height: min(36rem, calc(100vh - 2rem));
-    overflow-y: auto;
-    padding: 1.15rem 1.2rem 1.25rem;
+    width: min(90vw, 72rem);
+    height: min(88vh, 56rem);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.65rem;
+    padding: 0.75rem 0.85rem 0.85rem;
     border-radius: var(--radius-lg);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.22);
-    background: var(--background-mid);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 14%, transparent);
+    background: var(--background-color);
+    box-shadow: 0 22px 56px color-mix(in oklab, black 50%, transparent);
     pointer-events: auto;
   }
 
   .sheet-head {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    flex-shrink: 0;
   }
 
-  .sheet-head .section-title {
+  .sheet-planner {
     flex: 1;
     min-width: 0;
-  }
-
-  .sheet-edit {
     margin: 0;
-    flex-shrink: 0;
   }
 
   .sheet-close {
     display: grid;
     place-items: center;
-    width: 2rem;
-    height: 2rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border: none;
     border-radius: var(--radius-md);
     background: transparent;
@@ -163,5 +166,39 @@
   .sheet-close:hover {
     color: var(--foreground-color);
     background: var(--surface-quiet);
+  }
+
+  .sheet-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.15rem 0.15rem 0.35rem;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(
+        in srgb,
+        var(--foreground-color) 22%,
+        transparent
+      )
+      transparent;
+  }
+
+  .sheet-body::-webkit-scrollbar {
+    width: 0.55rem;
+  }
+
+  .sheet-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sheet-body::-webkit-scrollbar-thumb {
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--foreground-color) 22%, transparent);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .sheet-body::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--foreground-color) 36%, transparent);
+    background-clip: padding-box;
   }
 </style>

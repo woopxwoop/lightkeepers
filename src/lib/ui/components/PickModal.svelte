@@ -7,8 +7,8 @@
 
 <script lang="ts">
   /**
-   * Full-viewport pick dialog — search + dense tile grid.
-   * Used by Planner (+ Character / + Weapon) and demos.
+   * Large pick dialog — search + dense tile grid.
+   * Used by Planner / itinerary (+ Character / + Weapon) and demos.
    */
   import type { Snippet } from "svelte";
   import { tick } from "svelte";
@@ -72,15 +72,16 @@
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
+        e.stopImmediatePropagation();
         onClose();
         return;
       }
       if (panelEl) trapTabKey(e, panelEl);
     }
-    window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
     return () => {
       active = false;
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
       if (previous?.isConnected) previous.focus();
     };
   });
@@ -157,10 +158,10 @@
 
 <style>
   .pick-root {
-    /* Above NavBar (z-100) so the panel isn’t clipped by the fixed nav. */
+    /* Above itinerary sheet (z-120) and goals picker (z-130). */
     position: fixed;
     inset: 0;
-    z-index: 120;
+    z-index: 140;
     display: grid;
     place-items: center;
     padding: clamp(0.75rem, 2vw, 1.25rem);

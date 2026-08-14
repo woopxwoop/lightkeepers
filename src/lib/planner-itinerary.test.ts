@@ -2,10 +2,16 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createCharacterGoal, createWeaponGoal } from "./calculator-goals.ts";
 import {
+  FARM_WEEK_PAIRS,
+  displayedMaterialId,
+  farmGoalRef,
   farmPlacesFromMaterials,
-  groupFarmPlaces,
-  resolveItineraryFocus,
+  farmPlacesOfKind,
+  farmTodayColumn,
+  farmWeekDays,
   todayWeekday,
+  uniqueGoalsOnPlaces,
+  type FarmGoalRef,
 } from "./planner-itinerary.ts";
 import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
 
@@ -62,6 +68,19 @@ const catalog: UpgradeCostsCatalog = {
         },
       ],
     },
+    "14": {
+      id: 14,
+      name: "Philosophies of Resistance",
+      icon: "UI_ItemIcon_14",
+      rankLevel: 4,
+      sources: [
+        {
+          kind: "domain",
+          name: "Forsaken Rift",
+          days: ["Tue", "Fri", "Sun"],
+        },
+      ],
+    },
     "21": {
       id: 21,
       name: "Dvalin's Plume",
@@ -91,30 +110,21 @@ const catalog: UpgradeCostsCatalog = {
       icon: "UI_ItemIcon_51",
       rankLevel: 1,
     },
+    "61": {
+      id: 61,
+      name: "Tail of Boreas",
+      icon: "UI_ItemIcon_61",
+      rankLevel: 5,
+      sources: [
+        {
+          kind: "boss",
+          name: "Lupus Boreas, Dominator of Wolves",
+          icon: "UI_MonsterIcon_LupiBoreas",
+        },
+      ],
+    },
   },
 };
-
-describe("resolveItineraryFocus", () => {
-  const goals = [
-    createCharacterGoal("Hutao", { id: "a" }),
-    createWeaponGoal(1, { id: "b" }),
-  ];
-
-  it("defaults to every goal when nothing is stored", () => {
-    assert.deepEqual([...resolveItineraryFocus(goals, null)].sort(), [
-      "a",
-      "b",
-    ]);
-  });
-
-  it("keeps an explicit subset and drops stale ids", () => {
-    assert.deepEqual([...resolveItineraryFocus(goals, ["a", "gone"])], ["a"]);
-  });
-
-  it("allows an empty explicit subset", () => {
-    assert.equal(resolveItineraryFocus(goals, []).size, 0);
-  });
-});
 
 describe("farmPlacesFromMaterials", () => {
   it("groups domain/weekly/boss and skips locals and common drops", () => {
@@ -128,51 +138,180 @@ describe("farmPlacesFromMaterials", () => {
     );
     assert.deepEqual(
       places[0]?.materials.map((m) => m.name),
-      ["Guide to Freedom", "Philosophies of Freedom"],
+      ["Philosophies of Freedom", "Guide to Freedom"],
     );
     assert.deepEqual(places[0]?.days, ["Mon", "Thu", "Sun"]);
-    assert.equal(places[0]?.icon, "UI_ItemIcon_12");
+    assert.equal(places[0]?.icon, "UI_ItemIcon_11");
     assert.equal(places[1]?.icon, "UI_ItemIcon_21");
     assert.equal(places[2]?.icon, "UI_Monster_1");
   });
-});
 
-describe("groupFarmPlaces", () => {
-  it("splits domains by weekday and puts today's rotation first", () => {
-    const places = farmPlacesFromMaterials(
-      { "11": 1, "13": 1, "21": 1, "31": 1 },
-      catalog,
-    );
-    const thu = groupFarmPlaces(places, "Thu");
+  it("counts 5-star Boreas drops as a weekly boss", () => {
+    const places = farmPlacesFromMaterials({ "31": 1, "61": 1 }, catalog);
     assert.deepEqual(
-      thu.map((s) => s.label),
-      ["Domains", "Weekly bosses", "World bosses"],
+      farmPlacesOfKind(places, "weekly").map((p) => p.name),
+      ["Lupus Boreas, Dominator of Wolves"],
     );
     assert.deepEqual(
-      thu[0]?.groups.map((g) => [g.daysLabel, g.openToday, g.places[0]?.name]),
-      [
-        ["Mon/Thu/Sun", true, "Forsaken Rift"],
-        ["Tue/Fri/Sun", false, "Taishan Mansion"],
-      ],
-    );
-
-    const tue = groupFarmPlaces(places, "Tue");
-    assert.deepEqual(
-      tue[0]?.groups.map((g) => [g.daysLabel, g.openToday, g.places[0]?.name]),
-      [
-        ["Tue/Fri/Sun", true, "Taishan Mansion"],
-        ["Mon/Thu/Sun", false, "Forsaken Rift"],
-      ],
+      farmPlacesOfKind(places, "boss").map((p) => p.name),
+      ["Primo Geovishap"],
     );
   });
 
-  it("marks every domain family open on Sunday", () => {
-    const places = farmPlacesFromMaterials({ "11": 1, "13": 1 }, catalog);
-    const sun = groupFarmPlaces(places, "Sun");
-    assert.equal(
-      sun[0]?.groups.every((g) => g.openToday),
-      true,
+  it("lists unique contributing goals on a day's places", () => {
+    const places = farmPlacesFromMaterials({ "11": 1, "12": 1 }, catalog);
+    const hu: FarmGoalRef = { id: "a", name: "Hu Tao", icon: null };
+    const xq: FarmGoalRef = { id: "b", name: "Xingqiu", icon: null };
+    const contributors = new Map<string, FarmGoalRef[]>([
+      ["11", [hu, xq]],
+      ["12", [hu]],
+    ]);
+    assert.deepEqual(
+      uniqueGoalsOnPlaces(places, contributors).map((g) => g.name),
+      ["Hu Tao", "Xingqiu"],
     );
+  });
+
+  it("keeps one face when two goals share a character", () => {
+    const places = farmPlacesFromMaterials({ "11": 1 }, catalog);
+    const huA: FarmGoalRef = {
+      id: "a",
+      name: "Hu Tao",
+      icon: null,
+      name_id: "hu_tao",
+    };
+    const huB: FarmGoalRef = {
+      id: "b",
+      name: "Hu Tao",
+      icon: null,
+      name_id: "hu_tao",
+    };
+    const contributors = new Map<string, FarmGoalRef[]>([["11", [huA, huB]]]);
+    assert.deepEqual(
+      uniqueGoalsOnPlaces(places, contributors).map((g) => g.id),
+      ["a"],
+    );
+  });
+
+  it("keeps the same domain as separate places when rotations differ", () => {
+    const places = farmPlacesFromMaterials({ "11": 1, "14": 1 }, catalog);
+    assert.deepEqual(
+      places.map((p) => [p.name, p.days, p.materials[0]?.name]),
+      [
+        ["Forsaken Rift", ["Mon", "Thu", "Sun"], "Philosophies of Freedom"],
+        ["Forsaken Rift", ["Tue", "Fri", "Sun"], "Philosophies of Resistance"],
+      ],
+    );
+  });
+});
+
+describe("farmWeekDays", () => {
+  it("groups domains onto Mon/Thu, Tue/Fri, Wed/Sat columns", () => {
+    const places = farmPlacesFromMaterials(
+      { "11": 1, "13": 1, "14": 1, "21": 1, "31": 1 },
+      catalog,
+    );
+    const thu = farmWeekDays(places, "Thu");
+    assert.deepEqual(
+      thu.map((d) => d.day),
+      FARM_WEEK_PAIRS.map((p) => p.label),
+    );
+    assert.deepEqual(
+      thu.map((d) => [d.today, d.places.map((p) => p.materials[0]?.name)]),
+      [
+        [true, ["Philosophies of Freedom"]],
+        [false, ["Philosophies of Resistance", "Guide to Diligence"]],
+        [false, []],
+      ],
+    );
+    assert.deepEqual(
+      farmPlacesOfKind(places, "weekly").map((p) => p.name),
+      ["Stormterror"],
+    );
+    assert.deepEqual(
+      farmPlacesOfKind(places, "boss").map((p) => p.name),
+      ["Primo Geovishap"],
+    );
+  });
+
+  it("omits Sunday from the expanded paired grid", () => {
+    const places = farmPlacesFromMaterials({ "11": 1, "13": 1 }, catalog);
+    const sun = farmWeekDays(places, "Sun");
+    assert.deepEqual(
+      sun.map((d) => d.day),
+      FARM_WEEK_PAIRS.map((p) => p.label),
+    );
+    assert.equal(
+      sun.some((d) => d.today),
+      false,
+    );
+  });
+
+  it("Sunday today includes every domain rotation", () => {
+    const places = farmPlacesFromMaterials({ "11": 1, "13": 1 }, catalog);
+    const col = farmTodayColumn(places, "Sun");
+    assert.equal(col.day, "Sun");
+    assert.equal(col.today, true);
+    assert.deepEqual(
+      col.places.map((p) => p.name),
+      ["Forsaken Rift", "Taishan Mansion"],
+    );
+  });
+});
+
+describe("displayedMaterialId", () => {
+  const chainCatalog: UpgradeCostsCatalog = {
+    ...catalog,
+    materials: {
+      ...catalog.materials,
+      "12": { ...catalog.materials["12"]!, craftIntoId: 11 },
+    },
+  };
+
+  it("keeps an id that is already displayed", () => {
+    assert.equal(displayedMaterialId("11", { "11": 2 }, chainCatalog), "11");
+  });
+
+  it("walks craft-up onto a displayed higher rank", () => {
+    assert.equal(displayedMaterialId("12", { "11": 2 }, chainCatalog), "11");
+  });
+
+  it("walks craft-down onto a displayed lower rank", () => {
+    assert.equal(displayedMaterialId("11", { "12": 2 }, chainCatalog), "12");
+  });
+
+  it("returns null when the chain never hits the displayed bag", () => {
+    assert.equal(displayedMaterialId("12", { "21": 1 }, chainCatalog), null);
+  });
+});
+
+describe("farmGoalRef", () => {
+  it("keeps name_id on character goals and omits it on weapons", () => {
+    const hu = farmGoalRef(createCharacterGoal("hu_tao", { id: "c1" }), catalog);
+    assert.equal(hu.name_id, "hu_tao");
+    const weapon = farmGoalRef(createWeaponGoal(1, { id: "w1" }), catalog);
+    assert.equal(weapon.name_id, undefined);
+    assert.equal(weapon.weapon_id, 1);
+  });
+
+  it("uses tall gacha splash art for weapons, with the square icon as fallback", () => {
+    const withWeapon: UpgradeCostsCatalog = {
+      ...catalog,
+      weapons: [
+        {
+          id: 14501,
+          name: "Lost Prayer to the Sacred Winds",
+          rankLevel: 5,
+          weaponPromoteId: 1,
+          icon: "UI_EquipIcon_Catalyst_Fourwinds",
+          promotes: [],
+        },
+      ],
+    };
+    const ref = farmGoalRef(createWeaponGoal(14501, { id: "w1" }), withWeapon);
+    assert.match(ref.icon ?? "", /UI_Gacha_EquipIcon_Catalyst_Fourwinds/);
+    assert.match(ref.fallbackIcon ?? "", /UI_EquipIcon_Catalyst_Fourwinds/);
+    assert.ok(!ref.fallbackIcon?.includes("UI_Gacha_EquipIcon"));
   });
 });
 

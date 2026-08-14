@@ -18,6 +18,7 @@ import {
   orderWeaponConfigs,
   formatMaterialSourceLine,
   collapseCraftRanks,
+  craftRanksCanExpand,
   maxTalentForAscension,
   minAscensionForTalent,
   minAscensionForLevel,
@@ -567,30 +568,31 @@ describe("collapseCraftRanks", () => {
     });
   });
 
-  it("folds teachings into philosophies when the plan uses philosophies", () => {
+  it("folds philosophies into teachings when the plan uses teachings", () => {
     assert.deepEqual(
       collapseCraftRanks({ "1": 3, "2": 0, "3": 1, "99": 2 }, catalog),
-      { "3": 2, "99": 2 },
+      { "1": 12, "99": 2 },
     );
   });
 
-  it("stops at the highest rank the bag actually needs", () => {
+  it("stops at the lowest rank the bag actually needs", () => {
     assert.deepEqual(collapseCraftRanks({ "1": 6, "2": 1 }, catalog), {
-      "2": 3,
+      "1": 9,
     });
+    assert.deepEqual(collapseCraftRanks({ "2": 1 }, catalog), { "2": 1 });
   });
 
-  it("rounds gem leftovers up to gemstone", () => {
+  it("folds gems down to sliver", () => {
     assert.deepEqual(
       collapseCraftRanks({ "11": 2, "12": 4, "13": 2, "14": 1 }, catalog),
-      { "14": 3 },
+      { "11": 59 },
     );
   });
 
-  it("folds common/elite drops into the highest rank used", () => {
+  it("folds common/elite drops into the lowest rank used", () => {
     assert.deepEqual(
       collapseCraftRanks({ "21": 3, "22": 2, "23": 1 }, catalog),
-      { "23": 2 },
+      { "21": 18 },
     );
   });
 
@@ -618,5 +620,11 @@ describe("collapseCraftRanks", () => {
       "1": 3,
       "2": 1,
     });
+  });
+
+  it("reports when higher ranks are folded down", () => {
+    assert.equal(craftRanksCanExpand({ "1": 3, "2": 1 }, catalog), true);
+    assert.equal(craftRanksCanExpand({ "3": 2, "99": 4 }, catalog), false);
+    assert.equal(craftRanksCanExpand({ "1": 2, "99": 4 }, catalog), false);
   });
 });

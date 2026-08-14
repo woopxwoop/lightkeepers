@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyGoodRoster, parseGoodRoster } from "./good-import.ts";
+import {
+  applyGoodRoster,
+  parseGoodRoster,
+  parseGoodText,
+} from "./good-import.ts";
 import type { CharacterOwned } from "./definitions.ts";
 
 function char(name: string, name_id: string, isOwned: boolean): CharacterOwned {
@@ -163,6 +167,29 @@ describe("parseGoodRoster", () => {
     assert.equal(parseGoodRoster(null).ok, false);
     assert.equal(parseGoodRoster({ characters: [] }).ok, false);
     assert.equal(parseGoodRoster({ format: "GOOD", characters: [] }).ok, false);
+  });
+});
+
+describe("parseGoodText", () => {
+  it("parses a GOOD JSON string", () => {
+    const parsed = parseGoodText(
+      JSON.stringify({
+        format: "GOOD",
+        version: 3,
+        characters: [
+          { key: "HuTao", level: 90, constellation: 0, ascension: 6 },
+        ],
+      }),
+    );
+    assert.equal(parsed.ok, true);
+    if (!parsed.ok) return;
+    assert.equal(parsed.characters.get("HuTao")?.level, 90);
+  });
+
+  it("rejects invalid JSON text", () => {
+    const parsed = parseGoodText("{");
+    assert.equal(parsed.ok, false);
+    if (!parsed.ok) assert.match(parsed.message, /JSON/);
   });
 });
 

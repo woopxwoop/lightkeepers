@@ -1,37 +1,61 @@
 <script lang="ts">
   /**
-   * Multi-select which planner goals feed the farming itinerary.
-   * Nested above the itinerary sheet (z-130).
+   * Star, add, configure, and delete planner goals for the farming itinerary.
+   * Nested above the itinerary sheet (z-130). Draft until Save.
    */
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { trapTabKey } from "$lib/ui/focus-trap";
   import IconX from "$lib/ui/icons/IconX.svelte";
-  import { assetUrl } from "$lib/asset-urls";
-  import { getCharacterPortrait } from "$lib/utils";
-  import { itineraryGoalLabel } from "$lib/planner-itinerary";
+  import Button from "$lib/ui/components/Button.svelte";
+  import GoalList from "$lib/ui/components/GoalList.svelte";
   import type { CalculatorGoal } from "$lib/types/calculator-goals";
   import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
 
   let {
     open = false,
-    goals = [] as CalculatorGoal[],
-    focusIds,
+    goals = [],
     catalog = null,
+    dirty = false,
+    saving = false,
+    saveError = "",
+    addError = "",
+    removedIds = new Set<string>(),
+    suspendKeys = false,
     onClose,
     onToggle,
-    onSelectAll,
-    onSelectNone,
+    onReorder,
+    onStarAll,
+    onStarNone,
+    onAddCharacter,
+    onAddWeapon,
+    onConfigure,
+    onRemove,
+    onSave,
+    onCancel,
   }: {
     open?: boolean;
     goals?: CalculatorGoal[];
-    focusIds: Set<string>;
     catalog?: UpgradeCostsCatalog | null;
+    dirty?: boolean;
+    saving?: boolean;
+    saveError?: string;
+    addError?: string;
+    removedIds?: ReadonlySet<string>;
+    /** When a nested pick/configure overlay is open, skip Escape / tab trap. */
+    suspendKeys?: boolean;
     onClose: () => void;
     onToggle: (id: string) => void;
-    onSelectAll: () => void;
-    onSelectNone: () => void;
+    onReorder: (from: number, to: number) => void;
+    onStarAll: () => void;
+    onStarNone: () => void;
+    onAddCharacter: () => void;
+    onAddWeapon: () => void;
+    onConfigure: (id: string) => void;
+    onRemove: (id: string) => void;
+    onSave: () => void;
+    onCancel: () => void;
   } = $props();
 
   let panelEl: HTMLDivElement | null = $state(null);
@@ -49,6 +73,7 @@
       panelEl?.querySelector<HTMLElement>(".goals-close")?.focus();
     });
     function onKey(event: KeyboardEvent) {
+      if (suspendKeys) return;
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -64,12 +89,6 @@
       if (previous?.isConnected) previous.focus();
     };
   });
-
-  function goalIcon(goal: CalculatorGoal): string | null {
-    if (goal.kind === "character") return getCharacterPortrait(goal.name_id);
-    const icon = catalog?.weapons.find((w) => w.id === goal.weapon_id)?.icon;
-    return assetUrl(icon ?? null);
-  }
 </script>
 
 {#if open}
@@ -95,22 +114,6 @@
         <h2 class="section-title">Goals</h2>
         <button
           type="button"
-          class="back-link goals-bulk"
-          aria-label="Select all goals"
-          onclick={onSelectAll}
-        >
-          All
-        </button>
-        <button
-          type="button"
-          class="back-link goals-bulk"
-          aria-label="Select none of the goals"
-          onclick={onSelectNone}
-        >
-          None
-        </button>
-        <button
-          type="button"
           class="goals-close"
           onclick={onClose}
           aria-label="Close"
@@ -118,37 +121,57 @@
           <IconX size={18} />
         </button>
       </div>
-      <ul class="goals-list">
-        {#each goals as goal (goal.id)}
-          {@const icon = goalIcon(goal)}
-          <li>
-            <button
-              type="button"
-              class="goal-row"
-              class:is-on={focusIds.has(goal.id)}
-              aria-pressed={focusIds.has(goal.id)}
-              onclick={() => onToggle(goal.id)}
-            >
-              {#if icon}
-                <img
-                  class="goal-icon"
-                  src={icon}
-                  alt=""
-                  width="32"
-                  height="32"
-                  loading="lazy"
-                />
-              {:else}
-                <span class="goal-icon goal-icon-fallback"></span>
-              {/if}
-              <span class="meta-name">{itineraryGoalLabel(goal, catalog)}</span>
-              {#if focusIds.has(goal.id)}
-                <span class="goal-check" aria-hidden="true">✓</span>
-              {/if}
-            </button>
-          </li>
-        {/each}
-      </ul>
+      <div class="goals-actions">
+        <Button
+          variant="secondary"
+          disabled={!catalog}
+          onclick={onAddCharacter}>+ Character</Button
+        >
+        <Button
+          variant="secondary"
+          disabled={!catalog}
+          onclick={onAddWeapon}>+ Weapon</Button
+        >
+        <Button variant="secondary" onclick={onStarAll}>Select all</Button>
+        <Button variant="secondary" onclick={onStarNone}>Deselect all</Button>
+      </div>
+      {#if addError}
+        <p class="save-error">{addError}</p>
+      {/if}
+      <div class="goals-list">
+        {#if goals.length === 0}
+          <p class="section-lede">
+            Add a character or weapon goal to start planning.
+          </p>
+        {:else}
+          <GoalList
+            {goals}
+            {catalog}
+            {removedIds}
+            onStar={onToggle}
+            {onReorder}
+            {onConfigure}
+            {onRemove}
+          />
+        {/if}
+      </div>
+      {#if dirty || saveError}
+        <div class="goals-foot">
+          {#if saveError}
+            <span class="save-error">{saveError}</span>
+          {/if}
+          {#if dirty}
+            <div class="goals-save">
+              <Button variant="ghost" disabled={saving} onclick={onCancel}
+                >Cancel</Button
+              >
+              <Button variant="primary" disabled={saving} onclick={onSave}>
+                {saving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          {/if}
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -180,7 +203,7 @@
   .goals-panel {
     position: relative;
     z-index: 1;
-    width: min(24rem, 100%);
+    width: min(32rem, 100%);
     max-height: min(32rem, calc(100vh - 2rem));
     overflow: hidden;
     padding: 1rem 1.05rem 1.1rem;
@@ -207,14 +230,12 @@
     margin: 0;
   }
 
-  .goals-bulk {
-    margin: 0;
+  .goals-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
     flex-shrink: 0;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font: inherit;
   }
 
   .goals-close {
@@ -236,61 +257,63 @@
   }
 
   .goals-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
     min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(
+        in srgb,
+        var(--foreground-color) 22%,
+        transparent
+      )
+      transparent;
   }
 
-  .goal-row {
-    width: 100%;
+  .goals-list .section-lede {
+    margin: 0;
+  }
+
+  .goals-list::-webkit-scrollbar {
+    width: 0.55rem;
+  }
+
+  .goals-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .goals-list::-webkit-scrollbar-thumb {
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--foreground-color) 22%, transparent);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .goals-list::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--foreground-color) 36%, transparent);
+    background-clip: padding-box;
+  }
+
+  .goals-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem 0.75rem;
+    flex-shrink: 0;
+    padding-top: 0.15rem;
+  }
+
+  .goals-save {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    min-width: 0;
-    padding: 0.35rem 0.5rem;
-    border-radius: var(--radius-md);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-    text-align: left;
-    transition: var(--control-transition);
-  }
-
-  .goal-row.is-on {
-    color: var(--foreground-color);
-    border-color: var(--accent-1);
-    background: var(--surface-selected);
-  }
-
-  .goal-check {
+    gap: 0.5rem;
     margin-left: auto;
-    flex-shrink: 0;
-    font-size: var(--text-sm);
-    color: var(--foreground-color);
   }
 
-  .goal-row .meta-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .goal-icon {
-    width: 32px;
-    height: 32px;
-    object-fit: cover;
-    border-radius: var(--radius-sm);
-    flex-shrink: 0;
-  }
-
-  .goal-icon-fallback {
-    display: block;
-    background: var(--surface-quiet);
+  .save-error {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: var(--text-xs);
+    color: color-mix(in srgb, #e07070 85%, var(--foreground-color));
   }
 </style>

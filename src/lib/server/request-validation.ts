@@ -558,6 +558,15 @@ function requireWeaponUpgradeConfig(value: unknown): {
   };
 }
 
+function optionalStarred(
+  row: Record<string, unknown>,
+): { starred: true } | Record<string, never> {
+  if (!("starred" in row)) return {};
+  if (row.starred === true) return { starred: true };
+  if (row.starred === false) return {};
+  throw error(400, GOALS_PAYLOAD_ERROR);
+}
+
 /** Validate `{ goals: CalculatorGoal[] }` for `/api/calculator-goals`. */
 export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
   if (!Array.isArray(value)) {
@@ -585,9 +594,10 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
     seen.add(id);
 
     if (kind === "character") {
-      requireExactKeys(
+      requireKeys(
         row,
         ["id", "kind", "name_id", "start", "target"],
+        ["starred"],
         GOALS_PAYLOAD_ERROR,
       );
       const name_id = requireCharacterNameId(row.name_id);
@@ -597,13 +607,15 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
         name_id,
         start: requireCharacterUpgradeConfig(row.start),
         target: requireCharacterUpgradeConfig(row.target),
+        ...optionalStarred(row),
       };
     }
 
     if (kind === "weapon") {
-      requireExactKeys(
+      requireKeys(
         row,
         ["id", "kind", "weapon_id", "start", "target"],
+        ["starred"],
         GOALS_PAYLOAD_ERROR,
       );
       const weapon_id = requireFiniteInteger(
@@ -619,6 +631,7 @@ export function requireCalculatorGoals(value: unknown): CalculatorGoal[] {
         weapon_id,
         start: requireWeaponUpgradeConfig(row.start),
         target: requireWeaponUpgradeConfig(row.target),
+        ...optionalStarred(row),
       };
     }
 
