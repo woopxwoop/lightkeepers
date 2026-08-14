@@ -141,4 +141,105 @@ describe("roster snapshot", () => {
     assert.equal(diffs[1]!.localProgress?.level, 90);
     assert.equal(diffs[1]!.cloudProgress?.constellation, 2);
   });
+
+  it("diffRostersForSync orders ownership, mixed, then progress with name ties", () => {
+    const progress = (level: number): NonNullable<CharacterOwned["progress"]> => ({
+      level,
+      ascension: 6,
+      constellation: 0,
+      talents: { normal: 1, skill: 1, burst: 1 },
+      weapon: null,
+    });
+    const local: CharacterOwned[] = [
+      { ...char("zeta", true), progress: progress(90) },
+      char("beta", true),
+      {
+        ...char("alpha", true),
+        name: "Alpha",
+        element: "Pyro",
+        progress: progress(90),
+      } as CharacterOwned,
+      char("gamma", false),
+    ];
+    const cloud: CharacterOwned[] = [
+      { ...char("zeta", true), progress: progress(80) },
+      char("beta", false),
+      {
+        ...char("alpha", false),
+        name: "Alpha",
+        element: "Pyro",
+        progress: progress(70),
+      } as CharacterOwned,
+      // cloud-only row — local missing
+      {
+        ...char("cloud-only", true),
+        name: "Cloud Only",
+        element: "Cryo",
+        progress: progress(60),
+      } as CharacterOwned,
+      char("gamma", true),
+    ];
+    // local-only ownership change for gamma already; add local-only char
+    local.push({
+      ...char("local-only", true),
+      name: "Local Only",
+      element: "Anemo",
+    } as CharacterOwned);
+
+    const diffs = diffRostersForSync(local, cloud);
+    assert.deepEqual(
+      diffs.map((d) => d.name_id),
+      ["beta", "gamma", "local-only", "alpha", "cloud-only", "zeta"],
+    );
+
+    const mixed = diffs.find((d) => d.name_id === "alpha")!;
+    assert.equal(mixed.ownedChanged, true);
+    assert.equal(mixed.progressChanged, true);
+
+    const cloudOnly = diffs.find((d) => d.name_id === "cloud-only")!;
+    assert.equal(cloudOnly.name, "Cloud Only");
+    assert.equal(cloudOnly.portrait.element, "Cryo");
+    assert.equal(cloudOnly.localOwned, false);
+    assert.equal(cloudOnly.cloudOwned, true);
+    assert.equal(cloudOnly.localProgress, null);
+    assert.equal(cloudOnly.cloudProgress?.level, 60);
+
+    const localOnly = diffs.find((d) => d.name_id === "local-only")!;
+    assert.equal(localOnly.name, "Local Only");
+    assert.equal(localOnly.portrait.element, "Anemo");
+    assert.equal(localOnly.localOwned, true);
+    assert.equal(localOnly.cloudOwned, false);
+    assert.equal(localOnly.localProgress, null);
+    assert.equal(localOnly.cloudProgress, null);
+  });
+
+  it("rostersDifferForSync ignores ascension-invisible weapon level-only noise via bits", () => {
+    const baseProgress = {
+      level: 90,
+      ascension: 6,
+      constellation: 0,
+      talents: { normal: 1, skill: 1, burst: 1 },
+      weapon: {
+        key: "Deathmatch",
+        level: 90,
+        ascension: 6,
+        refinement: 1,
+      },
+    };
+    const a: CharacterOwned[] = [
+      { ...char("a", true), progress: baseProgress },
+    ];
+    const b: CharacterOwned[] = [
+      {
+        ...char("a", true),
+        progress: {
+          ...baseProgress,
+          weapon: { ...baseProgress.weapon, level: 80, ascension: 5 },
+        },
+      },
+    ];
+    // Same key+refinement in progressBits → not a visible sync conflict.
+    assert.equal(rostersDifferForSync(a, b), false);
+    assert.equal(diffRostersForSync(a, b).length, 0);
+  });
 });

@@ -11,6 +11,7 @@
   import type { Character } from "$lib/definitions";
   import { bootstrapClient, seedClientStores } from "$lib/app/bootstrapClient";
   import { clearRosterInventory } from "$lib/app/roster-inventory";
+  import { cancelRosterSyncConflict } from "$lib/app/roster-sync-conflict";
   import { authClient } from "$lib/auth-client";
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
@@ -56,6 +57,7 @@
     }
     if (lastRosterUserId !== id) {
       clearRosterInventory();
+      cancelRosterSyncConflict();
       lastRosterUserId = id;
     }
   });

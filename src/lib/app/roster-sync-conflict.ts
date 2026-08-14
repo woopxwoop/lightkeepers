@@ -3,7 +3,7 @@
  * UI resolves via promptRosterSyncConflict; dismiss leaves both sides unchanged.
  */
 
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import type { CharacterOwned } from "$lib/definitions";
 
 export type RosterSyncChoice = "use-cloud" | "upload-local" | "dismiss";
@@ -37,7 +37,13 @@ export function promptRosterSyncConflict(
   });
 }
 
-/** Drop any leftover conflict UI (e.g. account changed after a choice). */
+/**
+ * Close a pending conflict (e.g. account changed while the popup is open).
+ * Resolves the waiter as dismiss so bootstrap does not apply either side.
+ */
 export function cancelRosterSyncConflict(): void {
+  const pending = get(rosterSyncConflict);
+  if (!pending) return;
+  pending.resolve("dismiss");
   rosterSyncConflict.set(null);
 }

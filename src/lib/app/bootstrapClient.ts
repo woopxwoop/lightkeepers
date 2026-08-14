@@ -31,10 +31,7 @@ import {
   rostersDifferForSync,
   writeRosterLocal,
 } from "$lib/roster-snapshot";
-import {
-  cancelRosterSyncConflict,
-  promptRosterSyncConflict,
-} from "$lib/app/roster-sync-conflict";
+import { promptRosterSyncConflict } from "$lib/app/roster-sync-conflict";
 
 type LayoutHydration = {
   characters: Character[];
@@ -54,6 +51,8 @@ type CloudRosterFetch =
   | { status: "error" }
   | { status: "missing"; userId: string }
   | { status: "ok"; userId: string; roster: CharacterOwned[] };
+
+const ROSTER_FETCH_TIMEOUT_MS = 15_000;
 
 /**
  * Reads and validates the cached roster from localStorage.
@@ -146,7 +145,9 @@ async function fetchCloudRoster(
     const userId = session?.user?.id;
     if (!userId) return { status: "guest" };
 
-    const res = await fetch("/api/roster");
+    const res = await fetch("/api/roster", {
+      signal: AbortSignal.timeout(ROSTER_FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) return { status: "error" };
     const { roster } = await res.json();
     if (roster === null) return { status: "missing", userId };
@@ -214,7 +215,6 @@ async function resolveRosterConflict(args: {
 
     const currentId = await activeSessionUserId();
     if (currentId !== args.userId) {
-      cancelRosterSyncConflict();
       return;
     }
 

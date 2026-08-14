@@ -111,34 +111,41 @@
   });
 </script>
 
-{#snippet sideCell(
-  owned: boolean,
-  ownedChanged: boolean,
-  bits: RosterSyncProgressBits | null,
-  other: RosterSyncProgressBits | null,
-  progressChanged: boolean,
-)}
+{#snippet sideCell(args: {
+  owned: boolean;
+  ownedChanged: boolean;
+  bits: RosterSyncProgressBits | null;
+  other: RosterSyncProgressBits | null;
+  progressChanged: boolean;
+})}
+  {@const bits = args.bits}
+  {@const other = args.other}
   {@const levelChanged = (bits?.level ?? null) !== (other?.level ?? null)}
+  {@const ascensionChanged =
+    (bits?.ascension ?? null) !== (other?.ascension ?? null)}
   {@const constellationChanged =
     (bits?.constellation ?? null) !== (other?.constellation ?? null)}
   {@const talentsChanged = (bits?.talents ?? null) !== (other?.talents ?? null)}
   {@const weaponChanged = (bits?.weapon ?? null) !== (other?.weapon ?? null)}
   <div class="diff-cell-stack">
-    {#if ownedChanged}
+    {#if args.ownedChanged}
       <span
         class="own-chip own-chip-changed"
-        class:own-chip-yes={owned}
+        class:own-chip-yes={args.owned}
       >
-        {owned ? "Owned" : "Not owned"}
+        {args.owned ? "Owned" : "Not owned"}
       </span>
     {/if}
-    {#if progressChanged}
+    {#if args.progressChanged}
       {#if !bits && other}
         <span class="prog-empty bit-changed">No progress</span>
       {:else if bits}
         <div class="prog-bits">
           {#if levelChanged}
             <span class="bit-changed">Lv{bits.level}</span>
+          {/if}
+          {#if ascensionChanged}
+            <span class="bit-changed">A{bits.ascension}</span>
           {/if}
           {#if constellationChanged}
             <span class="bit-changed">C{bits.constellation}</span>
@@ -241,22 +248,22 @@
                       </div>
                     </th>
                     <td class="diff-side-cell" data-label="Local">
-                      {@render sideCell(
-                        row.localOwned,
-                        row.ownedChanged,
-                        row.localProgress,
-                        row.cloudProgress,
-                        row.progressChanged,
-                      )}
+                      {@render sideCell({
+                        owned: row.localOwned,
+                        ownedChanged: row.ownedChanged,
+                        bits: row.localProgress,
+                        other: row.cloudProgress,
+                        progressChanged: row.progressChanged,
+                      })}
                     </td>
                     <td class="diff-side-cell" data-label="Cloud">
-                      {@render sideCell(
-                        row.cloudOwned,
-                        row.ownedChanged,
-                        row.cloudProgress,
-                        row.localProgress,
-                        row.progressChanged,
-                      )}
+                      {@render sideCell({
+                        owned: row.cloudOwned,
+                        ownedChanged: row.ownedChanged,
+                        bits: row.cloudProgress,
+                        other: row.localProgress,
+                        progressChanged: row.progressChanged,
+                      })}
                     </td>
                   </tr>
                 {/each}

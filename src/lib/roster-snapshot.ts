@@ -75,19 +75,20 @@ export function toRosterSyncEntries(
     );
 }
 
-/** True when owned flags or progress differ between two rosters. */
+/** True when owned flags or visible progress fields differ between two rosters. */
 export function rostersDifferForSync(
   a: CharacterOwned[],
   b: CharacterOwned[],
 ): boolean {
   return (
-    JSON.stringify(toRosterSyncEntries(a)) !==
-    JSON.stringify(toRosterSyncEntries(b))
+    JSON.stringify(toRosterSyncCompareEntries(a)) !==
+    JSON.stringify(toRosterSyncCompareEntries(b))
   );
 }
 
 export type RosterSyncProgressBits = {
   level: number;
+  ascension: number;
   constellation: number;
   talents: string;
   weapon: string | null;
@@ -113,12 +114,26 @@ function progressBits(
   if (!progress) return null;
   return {
     level: progress.level,
+    ascension: progress.ascension,
     constellation: progress.constellation,
     talents: `${progress.talents.normal}/${progress.talents.skill}/${progress.talents.burst}`,
     weapon: progress.weapon
       ? `${progress.weapon.key} R${progress.weapon.refinement}`
       : null,
   };
+}
+
+/** Same owned + progressBits projection used by conflict detection and the diff UI. */
+function toRosterSyncCompareEntries(roster: CharacterOwned[]) {
+  return roster
+    .map((c) => ({
+      name_id: c.name_id,
+      isOwned: c.isOwned,
+      progress: progressBits(c.progress),
+    }))
+    .sort((a, b) =>
+      a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0,
+    );
 }
 
 /** Per-character owned/progress deltas between local and cloud (unchanged omitted). */
