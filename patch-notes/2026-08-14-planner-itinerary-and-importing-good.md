@@ -1,6 +1,6 @@
 ---
 title: Itinerary + GOOD Imports
-date: 2026-08-13
+date: 2026-08-14
 summary: Add itinerary as an app in the navbar, allow user to import GOOD (and configure constellations and talents of characters)
 ---
 
