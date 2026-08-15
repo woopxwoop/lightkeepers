@@ -66,7 +66,18 @@ async function loadSummaryFromCdn(
     );
   }
 
-  const summary = liveCharacterSummary((await res.json()) as CharacterIndex);
+  // Empty successful responses (204 / empty 200) are definitive absences.
+  if (res.status === 204) {
+    summaryCache.set(goodKey, null);
+    return null;
+  }
+  const raw = await res.text();
+  if (!raw.trim()) {
+    summaryCache.set(goodKey, null);
+    return null;
+  }
+
+  const summary = liveCharacterSummary(JSON.parse(raw) as CharacterIndex);
   summaryCache.set(goodKey, summary);
   return summary;
 }

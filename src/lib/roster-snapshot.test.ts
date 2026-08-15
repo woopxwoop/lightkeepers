@@ -215,7 +215,7 @@ describe("roster snapshot", () => {
     assert.equal(localOnly.cloudProgress, null);
   });
 
-  it("rostersDifferForSync detects weapon level and ascension changes", () => {
+  it("rostersDifferForSync detects weapon level changes", () => {
     const baseProgress = {
       level: 90,
       ascension: 6,
@@ -236,7 +236,65 @@ describe("roster snapshot", () => {
         ...char("a", true),
         progress: {
           ...baseProgress,
-          weapon: { ...baseProgress.weapon, level: 80, ascension: 5 },
+          weapon: { ...baseProgress.weapon, level: 80 },
+        },
+      },
+    ];
+    assert.equal(rostersDifferForSync(a, b), true);
+    assert.equal(diffRostersForSync(a, b).length, 1);
+  });
+
+  it("rostersDifferForSync detects weapon ascension changes", () => {
+    const baseProgress = {
+      level: 90,
+      ascension: 6,
+      constellation: 0,
+      talents: { normal: 1, skill: 1, burst: 1 },
+      weapon: {
+        key: "Deathmatch",
+        level: 90,
+        ascension: 6,
+        refinement: 1,
+      },
+    };
+    const a: CharacterOwned[] = [
+      { ...char("a", true), progress: baseProgress },
+    ];
+    const b: CharacterOwned[] = [
+      {
+        ...char("a", true),
+        progress: {
+          ...baseProgress,
+          weapon: { ...baseProgress.weapon, ascension: 5 },
+        },
+      },
+    ];
+    assert.equal(rostersDifferForSync(a, b), true);
+    assert.equal(diffRostersForSync(a, b).length, 1);
+  });
+
+  it("rostersDifferForSync detects talent-only changes", () => {
+    const baseProgress = {
+      level: 90,
+      ascension: 6,
+      constellation: 0,
+      talents: { normal: 1, skill: 1, burst: 1 },
+      weapon: {
+        key: "Deathmatch",
+        level: 90,
+        ascension: 6,
+        refinement: 1,
+      },
+    };
+    const a: CharacterOwned[] = [
+      { ...char("a", true), progress: baseProgress },
+    ];
+    const b: CharacterOwned[] = [
+      {
+        ...char("a", true),
+        progress: {
+          ...baseProgress,
+          talents: { normal: 9, skill: 9, burst: 9 },
         },
       },
     ];

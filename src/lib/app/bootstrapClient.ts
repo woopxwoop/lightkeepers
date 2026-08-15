@@ -200,21 +200,29 @@ function uploadFailureMessage(result: {
 /**
  * Conflict popup → revalidate session → apply/upload.
  * Upload failures reopen the popup with an error so the user can retry.
+ * `uploadRetry` is for missing-cloud upload failures (no “Use cloud” side).
  */
 async function resolveRosterConflict(args: {
   userId: string;
   local: CharacterOwned[];
   cloud: CharacterOwned[];
   error?: string | null;
+  uploadRetry?: boolean;
 }): Promise<void> {
   let error: string | null = args.error ?? null;
+  const uploadRetry = args.uploadRetry === true;
 
   for (;;) {
     const choice = await promptRosterSyncConflict(
       args.local,
       args.cloud,
       error,
+      { uploadRetry },
     );
+
+    // Dismiss needs no session revalidation — leave both sides unchanged.
+    if (choice === "dismiss") return;
+
     error = null;
 
     const session = await activeSessionUserId();
@@ -226,9 +234,8 @@ async function resolveRosterConflict(args: {
       return;
     }
 
-    if (choice === "dismiss") return;
-
     if (choice === "use-cloud") {
+      if (uploadRetry) continue;
       applyCloudRoster(args.cloud);
       return;
     }
@@ -278,8 +285,9 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
     await resolveRosterConflict({
       userId: cloud.userId,
       local: localRoster,
-      cloud: localRoster,
+      cloud: [],
       error: uploadFailureMessage(result),
+      uploadRetry: true,
     });
     return;
   }

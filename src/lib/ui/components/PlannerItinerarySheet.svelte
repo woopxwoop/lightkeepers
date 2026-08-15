@@ -6,6 +6,7 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { plannerItineraryOpen } from "$lib/planner-itinerary-open";
   import { trapTabKey } from "$lib/ui/focus-trap";
+  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
   import IconX from "$lib/ui/icons/IconX.svelte";
   import PlannerItinerary from "$lib/ui/components/PlannerItinerary.svelte";
 
@@ -31,8 +32,7 @@
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScrollLock = acquireBodyScrollLock();
     let active = true;
     void tick().then(() => {
       if (!active || !$plannerItineraryOpen) return;
@@ -49,7 +49,7 @@
     window.addEventListener("keydown", onKey);
     return () => {
       active = false;
-      document.body.style.overflow = prevOverflow;
+      releaseScrollLock();
       window.removeEventListener("keydown", onKey);
       const skipFocus = closedByNavigate;
       closedByNavigate = false;

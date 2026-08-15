@@ -20,6 +20,7 @@
     type RosterSyncDiff,
     type RosterSyncProgressBits,
   } from "$lib/roster-snapshot";
+  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
 
   let dialogEl: HTMLElement | null = $state(null);
   let busy = $state(false);
@@ -27,9 +28,11 @@
 
   let diffs = $derived.by((): RosterSyncDiff[] => {
     const pending = $rosterSyncConflict;
-    if (!pending) return [];
+    if (!pending || pending.uploadRetry) return [];
     return diffRostersForSync(pending.local, pending.cloud);
   });
+
+  let uploadRetry = $derived($rosterSyncConflict?.uploadRetry === true);
 
   function choose(choice: RosterSyncChoice): void {
     const pending = $rosterSyncConflict;
@@ -89,11 +92,7 @@
     };
     window.addEventListener("keydown", onKey);
 
-    let prevOverflow = "";
-    if (browser) {
-      prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-    }
+    const releaseScrollLock = browser ? acquireBodyScrollLock() : () => {};
 
     void tick().then(() => {
       const first = dialogEl?.querySelector<HTMLElement>(focusableSelector);
@@ -102,7 +101,7 @@
 
     return () => {
       window.removeEventListener("keydown", onKey);
-      if (browser) document.body.style.overflow = prevOverflow;
+      releaseScrollLock();
       if (previouslyFocused?.isConnected) {
         previouslyFocused.focus();
       }
@@ -202,82 +201,89 @@
       </button>
       <p class="popup-eyebrow">Roster sync</p>
       <h2 id="roster-sync-conflict-title" class="section-title popup-title">
-        Local and cloud differ
+        {uploadRetry ? "Cloud upload failed" : "Local and cloud differ"}
       </h2>
       <p class="section-lede popup-summary">
-        Your device roster doesn't match the cloud backup. Use the cloud copy
-        here, or upload this device's roster to the cloud.
+        {#if uploadRetry}
+          Couldn't save this device's roster to the cloud. Retry the upload, or
+          dismiss and keep using the local roster.
+        {:else}
+          Your device roster doesn't match the cloud backup. Use the cloud copy
+          here, or upload this device's roster to the cloud.
+        {/if}
       </p>
       {#if $rosterSyncConflict.error}
         <p class="popup-error" role="alert">{$rosterSyncConflict.error}</p>
       {/if}
 
-      <div class="diff-toggle-row">
-        <Button
-          variant="secondary"
-          class="diff-toggle"
-          disabled={busy || diffs.length === 0}
-          onclick={() => (showDiffs = !showDiffs)}
-          aria-expanded={showDiffs}
-        >
-          {showDiffs ? "Hide diffs" : "Show diffs"}
-          {#if diffs.length > 0}
-            ({diffs.length})
-          {/if}
-        </Button>
-      </div>
-
-      {#if showDiffs}
-        <div class="diff-panel">
-          {#if diffs.length === 0}
-            <p class="diff-empty">No field-level differences found.</p>
-          {:else}
-            <table class="diff-table">
-              <thead>
-                <tr>
-                  <th scope="col">Character</th>
-                  <th scope="col">Local</th>
-                  <th scope="col">Cloud</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each diffs as row (row.name_id)}
-                  <tr>
-                    <th scope="row" class="diff-char">
-                      <div class="diff-char-inner">
-                        <span class="diff-portrait">
-                          <CharacterIcon
-                            character={row.portrait}
-                            loading="lazy"
-                          />
-                        </span>
-                        <span class="diff-name">{row.name}</span>
-                      </div>
-                    </th>
-                    <td class="diff-side-cell" data-label="Local">
-                      {@render sideCell({
-                        owned: row.localOwned,
-                        ownedChanged: row.ownedChanged,
-                        bits: row.localProgress,
-                        other: row.cloudProgress,
-                        progressChanged: row.progressChanged,
-                      })}
-                    </td>
-                    <td class="diff-side-cell" data-label="Cloud">
-                      {@render sideCell({
-                        owned: row.cloudOwned,
-                        ownedChanged: row.ownedChanged,
-                        bits: row.cloudProgress,
-                        other: row.localProgress,
-                        progressChanged: row.progressChanged,
-                      })}
-                    </td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          {/if}
+      {#if !uploadRetry}
+        <div class="diff-toggle-row">
+          <Button
+            variant="secondary"
+            class="diff-toggle"
+            disabled={busy || diffs.length === 0}
+            onclick={() => (showDiffs = !showDiffs)}
+            aria-expanded={showDiffs}
+          >
+            {showDiffs ? "Hide diffs" : "Show diffs"}
+            {#if diffs.length > 0}
+              ({diffs.length})
+            {/if}
+          </Button>
         </div>
+
+        {#if showDiffs}
+          <div class="diff-panel">
+            {#if diffs.length === 0}
+              <p class="diff-empty">No field-level differences found.</p>
+            {:else}
+              <table class="diff-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Character</th>
+                    <th scope="col">Local</th>
+                    <th scope="col">Cloud</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each diffs as row (row.name_id)}
+                    <tr>
+                      <th scope="row" class="diff-char">
+                        <div class="diff-char-inner">
+                          <span class="diff-portrait">
+                            <CharacterIcon
+                              character={row.portrait}
+                              loading="lazy"
+                            />
+                          </span>
+                          <span class="diff-name">{row.name}</span>
+                        </div>
+                      </th>
+                      <td class="diff-side-cell" data-label="Local">
+                        {@render sideCell({
+                          owned: row.localOwned,
+                          ownedChanged: row.ownedChanged,
+                          bits: row.localProgress,
+                          other: row.cloudProgress,
+                          progressChanged: row.progressChanged,
+                        })}
+                      </td>
+                      <td class="diff-side-cell" data-label="Cloud">
+                        {@render sideCell({
+                          owned: row.cloudOwned,
+                          ownedChanged: row.ownedChanged,
+                          bits: row.cloudProgress,
+                          other: row.localProgress,
+                          progressChanged: row.progressChanged,
+                        })}
+                      </td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            {/if}
+          </div>
+        {/if}
       {/if}
 
       <div class="popup-actions">
@@ -286,15 +292,17 @@
           disabled={busy}
           onclick={() => choose("upload-local")}
         >
-          Upload local
+          {uploadRetry ? "Retry upload" : "Upload local"}
         </Button>
-        <Button
-          variant="primary"
-          disabled={busy}
-          onclick={() => choose("use-cloud")}
-        >
-          Use cloud
-        </Button>
+        {#if !uploadRetry}
+          <Button
+            variant="primary"
+            disabled={busy}
+            onclick={() => choose("use-cloud")}
+          >
+            Use cloud
+          </Button>
+        {/if}
       </div>
     </div>
   </div>
@@ -475,12 +483,8 @@
     border-bottom: none;
   }
 
-  .diff-table col:nth-child(1),
   .diff-char {
     width: 32%;
-  }
-
-  .diff-char {
     font-weight: 600;
     color: var(--foreground-color);
     background: transparent;

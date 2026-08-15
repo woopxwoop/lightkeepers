@@ -33,6 +33,8 @@
     createMemo,
     rosterFingerprint,
     teamsFingerprint,
+    characterMetaFingerprint,
+    cheapClearsFingerprint,
   } from "$lib/board-solutions";
   import { ownedNameIds, getEnemyAsset } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
@@ -234,7 +236,7 @@
     const cheapKey =
       cheapClearsRows === null
         ? "null"
-        : `${cheapClearsRows.length}:${hashCheapClears(cheapClearsRows)}`;
+        : cheapClearsFingerprint(cheapClearsRows);
     const key = [
       SOLVER_REVISION,
       solverMode,
@@ -242,6 +244,7 @@
       rosterFingerprint(owned),
       teamsFingerprint(teams),
       teamsFingerprint(all),
+      characterMetaFingerprint(mapping),
       slotEnemies
         ? `${slotEnemies.top}:${slotEnemies.middle}:${slotEnemies.bottom}`
         : "none",
@@ -296,13 +299,6 @@
       };
     });
   });
-
-  function hashCheapClears(rows: StygianCheapClearRow[]): string {
-    if (rows.length === 0) return "0";
-    const first = rows[0]?.team_key ?? "";
-    const last = rows[rows.length - 1]?.team_key ?? "";
-    return `${first}:${last}`;
-  }
 
   let solutions = $derived(solutionsResult.solutions);
   let showingVideoClears = $derived(videoClearsMode);

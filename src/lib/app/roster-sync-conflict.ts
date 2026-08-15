@@ -13,6 +13,11 @@ export type RosterSyncConflict = {
   cloud: CharacterOwned[];
   /** Set when a prior upload failed and the dialog reopened for retry. */
   error: string | null;
+  /**
+   * No cloud roster exists (or upload of local failed before any cloud row).
+   * Dialog omits “Use cloud”; upload-local retries the upload.
+   */
+  uploadRetry: boolean;
   resolve: (choice: RosterSyncChoice) => void;
 };
 
@@ -23,22 +28,31 @@ export function promptRosterSyncConflict(
   local: CharacterOwned[],
   cloud: CharacterOwned[],
   error: string | null = null,
+  opts?: { uploadRetry?: boolean },
 ): Promise<RosterSyncChoice> {
   const previous = get(rosterSyncConflict);
   if (previous) {
     previous.resolve("dismiss");
   }
 
+  const uploadRetry = opts?.uploadRetry === true;
+
   return new Promise((resolve) => {
-    rosterSyncConflict.set({
+    const conflict: RosterSyncConflict = {
       local,
       cloud,
       error,
+      uploadRetry,
       resolve: (choice) => {
-        rosterSyncConflict.set(null);
+        // Only clear if this conflict is still the active one — a newer prompt
+        // may have already replaced the store entry.
+        if (get(rosterSyncConflict) === conflict) {
+          rosterSyncConflict.set(null);
+        }
         resolve(choice);
       },
-    });
+    };
+    rosterSyncConflict.set(conflict);
   });
 }
 

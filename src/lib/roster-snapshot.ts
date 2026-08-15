@@ -60,6 +60,14 @@ export type RosterSyncEntry = {
   progress: RosterProgress | null;
 };
 
+/** Shared name_id ordering for sync entry projections. */
+function compareNameId(
+  a: { name_id: string },
+  b: { name_id: string },
+): number {
+  return a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0;
+}
+
 /** Normalize a hydrated roster for stable local↔cloud equality checks. */
 export function toRosterSyncEntries(
   roster: CharacterOwned[],
@@ -70,9 +78,7 @@ export function toRosterSyncEntries(
       isOwned: c.isOwned,
       progress: cloneRosterProgress(c.progress) ?? null,
     }))
-    .sort((a, b) =>
-      a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0,
-    );
+    .sort(compareNameId);
 }
 
 /** True when owned flags or visible progress fields differ between two rosters. */
@@ -180,9 +186,7 @@ function toRosterSyncCompareEntries(roster: CharacterOwned[]) {
       isOwned: c.isOwned,
       progress: progressBits(c.progress),
     }))
-    .sort((a, b) =>
-      a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0,
-    );
+    .sort(compareNameId);
 }
 
 /** Per-character owned/progress deltas between local and cloud (unchanged omitted). */
@@ -233,7 +237,7 @@ export function diffRostersForSync(
           : 2;
     const byKind = rank(a) - rank(b);
     if (byKind !== 0) return byKind;
-    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+    return a.name.localeCompare(b.name, "en", { sensitivity: "base" });
   });
   return diffs;
 }

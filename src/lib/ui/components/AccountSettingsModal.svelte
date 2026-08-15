@@ -6,6 +6,7 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { accountSettingsOpen } from "$lib/account-settings-open";
   import { trapTabKey } from "$lib/ui/focus-trap";
+  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
   import IconX from "$lib/ui/icons/IconX.svelte";
   import AccountPanel from "../../../routes/settings/panels/AccountPanel.svelte";
 
@@ -29,6 +30,7 @@
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+    const releaseScrollLock = acquireBodyScrollLock();
     let active = true;
     void tick().then(() => {
       if (!active || !$accountSettingsOpen) return;
@@ -45,6 +47,7 @@
     window.addEventListener("keydown", onKey);
     return () => {
       active = false;
+      releaseScrollLock();
       window.removeEventListener("keydown", onKey);
       const skipFocus = closedByNavigate;
       closedByNavigate = false;
