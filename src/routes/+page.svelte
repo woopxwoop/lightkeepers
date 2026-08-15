@@ -18,7 +18,9 @@
   const rosterPath = resolve("/settings");
 
   /** Show the nudge only when the user has never saved a roster AND isn't logged in. */
-  let showNudge = $derived(!$hasSavedRoster && !$session.data);
+  let showNudge = $derived(
+    !$session.isPending && !$hasSavedRoster && !$session.data,
+  );
 
   const rosterCard = {
     href: rosterPath,

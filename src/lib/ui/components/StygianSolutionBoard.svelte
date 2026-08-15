@@ -160,7 +160,9 @@
 
   const session = authClient.useSession();
   /** Same gate as the home-page “configure roster first” card. */
-  let showRosterSetup = $derived(!$hasSavedRoster && !$session.data);
+  let showRosterSetup = $derived(
+    !$session.isPending && !$hasSavedRoster && !$session.data,
+  );
 
   $effect(() => {
     if (!needsCheapClears) {
@@ -569,10 +571,6 @@
             </InfoPopover>
           </div>
         {/if}
-      {:else if solution}
-        <div class="panel-empty">
-          <p>No team available for this field</p>
-        </div>
       {:else}
         <div class="panel-empty">
           <p>No team available for this field</p>

@@ -49,7 +49,9 @@
   const session = authClient.useSession();
 
   /** Same gate as the home-page “configure roster first” card. */
-  let showRosterSetup = $derived(!$hasSavedRoster && !$session.data);
+  let showRosterSetup = $derived(
+    !$session.isPending && !$hasSavedRoster && !$session.data,
+  );
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
@@ -205,10 +207,6 @@
           <span class="rate-slot"
             >{slotRate(assignment.team, slot).toFixed(0)}% in this half</span
           >
-        </div>
-      {:else if solution}
-        <div class="panel-empty">
-          <p>No team available for this side</p>
         </div>
       {:else}
         <div class="panel-empty">

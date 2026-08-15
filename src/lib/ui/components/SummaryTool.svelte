@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { toPng } from "html-to-image";
   import {
     allTeamsAbyss,
     allTeamsStygian,
@@ -11,8 +10,6 @@
     staticBoardsError,
     ensureStaticBoards,
     isIconCompact,
-    abyssVersionNumber,
-    stygianVersionNumber,
     charactersOwned,
     hasSavedRoster,
   } from "$lib/stores";
@@ -45,8 +42,6 @@
 
   const ABYSS_SLOTS = ["top", "bottom"] as const;
   const STYGIAN_SLOTS = ["top", "middle", "bottom"] as const;
-  const EXPORT_WIDTH = 1600;
-  const CDN_HOST = "api.lightkeepers.moe";
 
   const ABYSS_HALF_LABEL: Record<(typeof ABYSS_SLOTS)[number], string> = {
     top: "First Half",
@@ -72,9 +67,6 @@
   let dpsTags = $state<string[]>([]);
   let rosterFilter = $state<"all" | "owned">("all");
   let altsModal = $state<DisplayGroup | null>(null);
-  let exportRoot: HTMLElement | null = $state(null);
-  let exporting = $state(false);
-  let exportMessage = $state<string | null>(null);
   let altsPanelEl: HTMLDivElement | null = $state(null);
   let altsCloseEl: HTMLButtonElement | null = $state(null);
 
@@ -135,7 +127,9 @@
   let ownedIds = $derived(ownedNameIds($charactersOwned));
   const session = authClient.useSession();
   /** Same gate as the home-page “configure roster first” card. */
-  let showRosterSetup = $derived(!$hasSavedRoster && !$session.data);
+  let showRosterSetup = $derived(
+    !$session.isPending && !$hasSavedRoster && !$session.data,
+  );
 
   let trailItems = $derived(
     mode === "abyss"
@@ -362,213 +356,6 @@
       if (previous?.isConnected) previous.focus();
     };
   });
-
-  function proxiedAssetSrc(src: string): string | null {
-    try {
-      const u = new URL(src, location.href);
-      if (u.origin === location.origin) return null;
-      if (u.hostname !== CDN_HOST) return null;
-      return `/api/asset-proxy?u=${encodeURIComponent(u.href)}`;
-    } catch {
-      return null;
-    }
-  }
-
-  function blobToDataUrl(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  async function waitForImg(img: HTMLImageElement): Promise<void> {
-    if (img.complete && img.naturalWidth > 0) {
-      try {
-        await img.decode();
-      } catch {
-        /* still usable for export */
-      }
-      return;
-    }
-    await new Promise<void>((resolve) => {
-      const done = () => {
-        img.removeEventListener("load", done);
-        img.removeEventListener("error", done);
-        resolve();
-      };
-      img.addEventListener("load", done);
-      img.addEventListener("error", done);
-    });
-  }
-
-  async function waitForImages(root: HTMLElement): Promise<void> {
-    await Promise.all(
-      [...root.querySelectorAll("img")].map((img) => waitForImg(img)),
-    );
-  }
-
-  /** Inline pixel data so html-to-image does not re-fetch (and mis-cache) across sides. */
-  async function withInlinedImages<T>(
-    root: HTMLElement,
-    run: () => Promise<T>,
-  ): Promise<T> {
-    await waitForImages(root);
-    const imgs = [...root.querySelectorAll("img")];
-    const restore: { img: HTMLImageElement; src: string }[] = [];
-    const concurrency = Math.min(6, imgs.length);
-    let next = 0;
-
-    async function inlineOne(img: HTMLImageElement): Promise<void> {
-      const original = img.getAttribute("src") ?? img.src;
-      const current = img.currentSrc || img.src;
-      if (!current || current.startsWith("data:")) return;
-      const fetchUrl = proxiedAssetSrc(current) ?? current;
-      try {
-        const res = await fetch(fetchUrl);
-        if (!res.ok) return;
-        const dataUrl = await blobToDataUrl(await res.blob());
-        restore.push({ img, src: original });
-        img.src = dataUrl;
-        await waitForImg(img);
-      } catch {
-        /* leave original src; export may skip this pixel */
-      }
-    }
-
-    async function worker(): Promise<void> {
-      while (next < imgs.length) {
-        const img = imgs[next++]!;
-        await inlineOne(img);
-      }
-    }
-
-    if (concurrency > 0) {
-      await Promise.all(
-        Array.from({ length: concurrency }, () => worker()),
-      );
-    }
-
-    try {
-      return await run();
-    } finally {
-      for (const { img, src } of restore) img.src = src;
-    }
-  }
-
-  async function capturePng(opts?: {
-    manageExporting?: boolean;
-  }): Promise<string | null> {
-    if (!exportRoot) return null;
-    const root = exportRoot;
-    const manageExporting = opts?.manageExporting !== false;
-    closeAltsModal();
-    if (manageExporting) {
-      exportMessage = null;
-      exporting = true;
-    }
-    const prevWidth = root.style.width;
-    const prevMinWidth = root.style.minWidth;
-    try {
-      // Preview is fluid; lock export canvas to a shareable fixed width.
-      root.style.width = `${EXPORT_WIDTH}px`;
-      root.style.minWidth = `${EXPORT_WIDTH}px`;
-      await tick();
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await waitForImages(root);
-      return await withInlinedImages(root, async () => {
-        await new Promise((r) => requestAnimationFrame(() => r(null)));
-        return await toPng(root, {
-          width: EXPORT_WIDTH,
-          pixelRatio: 2,
-          cacheBust: true,
-          includeQueryParams: true,
-          backgroundColor:
-            getComputedStyle(document.documentElement)
-              .getPropertyValue("--background-color")
-              .trim() || "#0a0e14",
-          imagePlaceholder:
-            "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
-        });
-      });
-    } catch (err) {
-      console.error("[summary] PNG export failed", err);
-      exportMessage =
-        err instanceof Error ? err.message : "Failed to render image";
-      return null;
-    } finally {
-      root.style.width = prevWidth;
-      root.style.minWidth = prevMinWidth;
-      if (manageExporting) exporting = false;
-    }
-  }
-
-  function exportVersionTag(): string {
-    if (mode === "stygian") {
-      const named = headerMeta.version?.trim();
-      if (named) return named.replace(/[^\w.-]+/g, "-");
-      return stygianVersionNumber > 0
-        ? String(stygianVersionNumber)
-        : "unknown";
-    }
-    return abyssVersionNumber > 0 ? String(abyssVersionNumber) : "unknown";
-  }
-
-  function slotFileSlug(slot: InfographicSlot): string {
-    if (mode === "abyss") return slot === "top" ? "first-half" : "second-half";
-    if (slot === "top") return "field-1";
-    if (slot === "middle") return "field-2";
-    return "field-3";
-  }
-
-  function pngFilename(slot: InfographicSlot): string {
-    return `lightkeepers-${mode}-v${exportVersionTag()}-${slotFileSlug(slot)}.png`;
-  }
-
-  function triggerDownload(dataUrl: string, filename: string) {
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = filename;
-    a.click();
-  }
-
-  async function downloadPng() {
-    const dataUrl = await capturePng();
-    if (!dataUrl) return;
-    triggerDownload(dataUrl, pngFilename(activeSlot));
-    exportMessage = "Downloaded PNG";
-  }
-
-  async function downloadAllPngs() {
-    const slots = mode === "abyss" ? [...ABYSS_SLOTS] : [...STYGIAN_SLOTS];
-    const prevSlot = activeSlot;
-    exportMessage = null;
-    exporting = true;
-    let ok = 0;
-    try {
-      for (const slot of slots) {
-        activeSlot = slot;
-        await tick();
-        await new Promise((r) => requestAnimationFrame(() => r(null)));
-        if (exportRoot) await waitForImages(exportRoot);
-        const dataUrl = await capturePng({ manageExporting: false });
-        if (!dataUrl) continue;
-        triggerDownload(dataUrl, pngFilename(slot));
-        ok += 1;
-        // Browsers often drop rapid consecutive downloads without a beat.
-        await new Promise((r) => setTimeout(r, 350));
-      }
-      exportMessage =
-        ok === slots.length
-          ? `Downloaded ${ok} PNGs`
-          : `Downloaded ${ok} of ${slots.length} PNGs`;
-    } finally {
-      activeSlot = prevSlot;
-      await tick();
-      exporting = false;
-    }
-  }
 </script>
 
 {#snippet featuredTeam(team: BoardTeam, alt = false)}
@@ -604,7 +391,7 @@
 {#snippet dpsGroup(_slot: InfographicSlot, group: DisplayGroup)}
   <li class="dps-group">
     <div class="team-body">
-      {#if group.alternates.length > 0 && !exporting}
+      {#if group.alternates.length > 0}
         <div class="dps-tools">
           <button
             type="button"
@@ -684,8 +471,6 @@
         class="summary"
         class:summary-abyss={mode === "abyss"}
         class:summary-stygian={mode === "stygian"}
-        class:summary-exporting={exporting}
-        bind:this={exportRoot}
       >
         <header class="info-head">
           <div class="info-titles">
@@ -1069,10 +854,6 @@
     top: 0.15rem;
     right: 0.15rem;
     z-index: 2;
-  }
-
-  .summary-exporting .dps-tools {
-    display: none;
   }
 
   .featured-team {

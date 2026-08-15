@@ -23,10 +23,16 @@ export const GET: RequestHandler = async ({ url }) => {
     error(400, "Host not allowed");
   }
 
-  const upstream = await fetchWithTimeout(target.href, {
-    headers: { Accept: "image/*,*/*" },
-    redirect: "manual",
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetchWithTimeout(target.href, {
+      headers: { Accept: "image/*,*/*" },
+      redirect: "manual",
+    });
+  } catch {
+    error(502, "Upstream fetch failed");
+  }
+
   if (!upstream.ok) {
     error(upstream.status === 404 ? 404 : 502, "Upstream fetch failed");
   }
