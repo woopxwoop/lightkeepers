@@ -36,6 +36,7 @@
     exampleTeamKeys,
     levelPrioritySection,
     rankWeaponsByRarityAndTeams,
+    recommendedSubstatSourceLabel,
     recommendedSubstatsFromBuilds,
     sigWeaponPrioritySection,
     talentPrioritySection,
@@ -390,22 +391,12 @@
                   </div>
                 {/if}
                 {#if roll.mean > 0}
-                  {@const teams = roll.isDelta
-                    ? (builds.stat_recommendations?.teams ??
-                      builds.substat_rolls_liquid?.teams ??
-                      0)
-                    : (builds.high_substat_rolls_liquid?.teams ??
-                      builds.substat_rolls_liquid?.teams ??
-                      0)}
+                  {@const teams = roll.teams}
                   <div
                     class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
                   >
                     {roll.mean.toFixed(1)}
-                    {roll.isDelta
-                      ? "avg mid→high liquid"
-                      : builds.high_substat_rolls_liquid?.teams != null
-                        ? "avg high liquid"
-                        : "avg liquid rolls"} · {teams} team{teams === 1
+                    {recommendedSubstatSourceLabel(roll.source)} · {teams} team{teams === 1
                       ? ""
                       : "s"}
                   </div>

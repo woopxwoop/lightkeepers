@@ -55,6 +55,14 @@ export const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
   burst: "burst",
 };
 
+export type RecommendedSubstatSource =
+  | "guide"
+  | "checklist"
+  | "high"
+  | "delta"
+  | "mid"
+  | "main";
+
 export type RecommendedSubstat = {
   key: string;
   /** High liquid mean, mid→high delta, or 0 for main-only chips. */
@@ -63,7 +71,22 @@ export type RecommendedSubstat = {
   mainSlots: string[];
   /** True when ``mean`` is a mid→high OptimFull allocation delta. */
   isDelta: boolean;
+  /** Which Builds payload branch produced this chip. */
+  source: RecommendedSubstatSource;
+  /** Team count stamped with that source (for tooltips). */
+  teams: number;
 };
+
+/** Tooltip phrase for a recommended-substat source. */
+export function recommendedSubstatSourceLabel(
+  source: RecommendedSubstatSource,
+): string {
+  if (source === "checklist" || source === "delta") {
+    return "avg mid→high liquid";
+  }
+  if (source === "high") return "avg high liquid";
+  return "avg liquid rolls";
+}
 
 function mainSlotsBySubstatKey(
   builds: CharacterIndex,
@@ -90,6 +113,25 @@ function sortRecommendedSubstats(
   });
 }
 
+function putRecommended(
+  byKey: Map<string, RecommendedSubstat>,
+  key: string,
+  mean: number,
+  slots: string[],
+  source: RecommendedSubstatSource,
+  teams: number,
+) {
+  byKey.set(key, {
+    key,
+    mean,
+    matchesMain: slots.length > 0,
+    mainSlots: slots,
+    isDelta: source === "checklist" || source === "delta",
+    source,
+    teams,
+  });
+}
+
 /**
  * Recommended substats:
  * - Non-negligible: absolute high OptimFull liquids
@@ -113,87 +155,82 @@ export function recommendedSubstatsFromBuilds(
   const high = builds.high_substat_rolls_liquid;
   const liquid = builds.substat_rolls_liquid;
   const ranked = liquid?.ranked ?? [];
+  const midTeams = liquid?.teams ?? 0;
   // Guide merges stamp mid ranks with teams=0; only take that path when ranks exist.
   // Empty/missing liquid must not block checklist delta_stats.
-  const guideAuthoredSubs = (liquid?.teams ?? 0) <= 0 && ranked.length > 0;
+  const guideAuthoredSubs = midTeams <= 0 && ranked.length > 0;
   const negligible = rec?.mode === "checklist";
 
   if (guideAuthoredSubs) {
     for (const r of ranked) {
       if (!isArtifactSubstatKey(r.key)) continue;
-      const slots = mainSlots.get(r.key) ?? [];
-      byKey.set(r.key, {
-        key: r.key,
-        mean: r.mean,
-        matchesMain: slots.length > 0,
-        mainSlots: slots,
-        isDelta: false,
-      });
+      putRecommended(
+        byKey,
+        r.key,
+        r.mean,
+        mainSlots.get(r.key) ?? [],
+        "guide",
+        midTeams,
+      );
     }
   } else if (negligible && rec) {
     for (const row of rec.delta_stats) {
       if (!isArtifactSubstatKey(row.key)) continue;
       if (!(row.mean_delta > 0)) continue;
-      const slots = mainSlots.get(row.key) ?? [];
-      byKey.set(row.key, {
-        key: row.key,
-        mean: row.mean_delta,
-        matchesMain: slots.length > 0,
-        mainSlots: slots,
-        isDelta: true,
-      });
+      putRecommended(
+        byKey,
+        row.key,
+        row.mean_delta,
+        mainSlots.get(row.key) ?? [],
+        "checklist",
+        rec.teams,
+      );
     }
   } else if (high && high.teams > 0) {
     for (const r of high.ranked) {
       if (!isArtifactSubstatKey(r.key)) continue;
       if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
-      const slots = mainSlots.get(r.key) ?? [];
-      byKey.set(r.key, {
-        key: r.key,
-        mean: r.mean,
-        matchesMain: slots.length > 0,
-        mainSlots: slots,
-        isDelta: false,
-      });
+      putRecommended(
+        byKey,
+        r.key,
+        r.mean,
+        mainSlots.get(r.key) ?? [],
+        "high",
+        high.teams,
+      );
     }
   } else if (rec?.mode === "delta") {
     // High liquid missing (older CDN): fall back to stamped deltas.
     for (const row of rec.delta_stats) {
       if (!isArtifactSubstatKey(row.key)) continue;
       if (!(row.mean_delta > 0)) continue;
-      const slots = mainSlots.get(row.key) ?? [];
-      byKey.set(row.key, {
-        key: row.key,
-        mean: row.mean_delta,
-        matchesMain: slots.length > 0,
-        mainSlots: slots,
-        isDelta: true,
-      });
+      putRecommended(
+        byKey,
+        row.key,
+        row.mean_delta,
+        mainSlots.get(row.key) ?? [],
+        "delta",
+        rec.teams,
+      );
     }
   } else {
     for (const r of ranked) {
       if (!isArtifactSubstatKey(r.key)) continue;
       if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
-      const slots = mainSlots.get(r.key) ?? [];
-      byKey.set(r.key, {
-        key: r.key,
-        mean: r.mean,
-        matchesMain: slots.length > 0,
-        mainSlots: slots,
-        isDelta: false,
-      });
+      putRecommended(
+        byKey,
+        r.key,
+        r.mean,
+        mainSlots.get(r.key) ?? [],
+        "mid",
+        midTeams,
+      );
     }
   }
 
   for (const [key, slots] of mainSlots) {
     if (byKey.has(key)) continue;
-    byKey.set(key, {
-      key,
-      mean: 0,
-      matchesMain: true,
-      mainSlots: slots,
-      isDelta: false,
-    });
+    putRecommended(byKey, key, 0, slots, "main", 0);
   }
 
   return sortRecommendedSubstats(byKey.values());

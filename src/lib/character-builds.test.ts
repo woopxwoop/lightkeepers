@@ -19,6 +19,7 @@ import {
   levelPrioritySection,
   rankSigWeaponsByGain,
   rankWeaponsByRarityAndTeams,
+  recommendedSubstatSourceLabel,
   recommendedSubstatsFromBuilds,
   sigWeaponPrioritySection,
   talentImportanceRows,
@@ -277,6 +278,43 @@ describe("recommendedSubstatsFromBuilds", () => {
         ["enerRech_", 4, true],
         ["critRate_", 0, false],
       ],
+    );
+  });
+
+  it("falls back to mid liquid when high liquid exists but teams is 0", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "eleMas", teams: 2 }],
+          goblet: [{ key: "hydro_dmg_", teams: 2 }],
+          circlet: [{ key: "critRate_", teams: 2 }],
+        },
+        substat_rolls_liquid: {
+          teams: 2,
+          configs: 2,
+          mean: {},
+          ranked: [
+            { key: "critDMG_", mean: 3.5 },
+            { key: "atk_", mean: 0.2 },
+          ],
+        },
+        high_substat_rolls_liquid: {
+          teams: 0,
+          configs: 0,
+          mean: {},
+          ranked: [{ key: "enerRech_", mean: 99 }],
+        },
+      }),
+    );
+    const crit = result.find((r) => r.key === "critDMG_");
+    assert.ok(crit);
+    assert.equal(crit.source, "mid");
+    assert.equal(crit.teams, 2);
+    assert.equal(crit.mean, 3.5);
+    assert.equal(recommendedSubstatSourceLabel(crit.source), "avg liquid rolls");
+    assert.equal(
+      result.some((r) => r.key === "enerRech_" && r.mean === 99),
+      false,
     );
   });
 });

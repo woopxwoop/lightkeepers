@@ -271,30 +271,6 @@
         </div>
       </div>
 
-      {#if mainStatRows.length > 0}
-        <ul class="main-stats" aria-label="Artifact main stats">
-          {#each mainStatRows as row (row.slot)}
-            <li class="main-stat">
-              <img
-                src={row.slotIcon}
-                alt=""
-                class="main-stat-slot"
-                loading="lazy"
-              />
-              {#if row.statIcon}
-                <img
-                  src={row.statIcon}
-                  alt=""
-                  class="main-stat-icon"
-                  loading="lazy"
-                />
-              {/if}
-              <span class="main-stat-label">{row.label}</span>
-            </li>
-          {/each}
-        </ul>
-      {/if}
-
       {#if sheet}
         <div class="stat-list">
           {#each coreStats as row (row.key)}
@@ -347,6 +323,36 @@
           </div>
         {/if}
       </div>
+
+      {#if mainStatRows.length > 0}
+        <ul class="main-stats" aria-label="Artifact main stats">
+          {#each mainStatRows as row (row.slot)}
+            <li
+              class="main-stat"
+              aria-label="{row.slotLabel}: {row.label}"
+            >
+              <img
+                src={row.slotIcon}
+                alt=""
+                class="stat-icon main-stat-slot"
+                loading="lazy"
+              />
+              {#if row.statIcon}
+                <img
+                  src={row.statIcon}
+                  alt=""
+                  class="stat-icon main-stat-icon"
+                  loading="lazy"
+                />
+              {:else}
+                <span class="main-stat-fallback" aria-hidden="true"
+                  >{row.label}</span
+                >
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
     </div>
   </div>
 </Surface>
@@ -497,35 +503,62 @@
 
   .main-stats {
     display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
+    align-items: center;
+    gap: 0.55rem;
     margin: 0;
     padding: 0;
     list-style: none;
+    font-size: 0.65rem;
+    color: var(--foreground-mid);
   }
 
   .main-stat {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    min-width: 0;
-    font-size: 0.72rem;
-    color: var(--foreground-mid);
+    gap: 0.2rem;
+  }
+
+  .main-stat + .main-stat {
+    padding-left: 0.55rem;
+    border-left: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
   .main-stat-slot,
   .main-stat-icon {
-    width: 1rem;
-    height: 1rem;
-    object-fit: contain;
-    flex-shrink: 0;
+    width: 0.95rem;
+    height: 0.95rem;
   }
 
-  .main-stat-label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .main-stat-fallback {
+    font-weight: 600;
+  }
+
+  .talent-row {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.65rem;
+    color: var(--foreground-mid);
+  }
+
+  .talent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .talent-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    object-fit: contain;
+    border-radius: 999px;
+  }
+
+  .talent-fallback {
+    font-weight: 600;
+  }
+
+  .talent-level {
+    color: var(--foreground-color);
   }
 
   .equip-trigger {
@@ -643,34 +676,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-  }
-
-  .talent-row {
-    display: flex;
-    gap: 0.75rem;
-    font-size: 0.65rem;
-    color: var(--foreground-mid);
-  }
-
-  .talent-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-
-  .talent-icon {
-    width: 1.15rem;
-    height: 1.15rem;
-    object-fit: contain;
-    border-radius: 999px;
-  }
-
-  .talent-fallback {
-    font-weight: 600;
-  }
-
-  .talent-level {
-    color: var(--foreground-color);
   }
 
   .muted {

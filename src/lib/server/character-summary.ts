@@ -33,15 +33,21 @@ export function isSummaryTombstone(
   return !Array.isArray(summary.weapons);
 }
 
+function asNonNegativeSafeInt(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  if (!Number.isSafeInteger(value) || value < 0) return null;
+  return value;
+}
+
 function asStatRanks(value: unknown): CharacterStatRank[] {
   if (!Array.isArray(value)) return [];
   const out: CharacterStatRank[] = [];
   for (const entry of value) {
     if (!entry || typeof entry !== "object") continue;
     const key = (entry as { key?: unknown }).key;
-    const teams = (entry as { teams?: unknown }).teams;
+    const teams = asNonNegativeSafeInt((entry as { teams?: unknown }).teams);
     if (typeof key !== "string" || !key) continue;
-    if (typeof teams !== "number" || !Number.isFinite(teams)) continue;
+    if (teams == null) continue;
     out.push({ key, teams });
   }
   return out;
@@ -59,6 +65,18 @@ function asLiquidRanks(
     if (typeof key !== "string" || !key) continue;
     if (typeof mean !== "number" || !Number.isFinite(mean)) continue;
     out.push({ key, mean });
+  }
+  return out;
+}
+
+/** Mean bag: nonempty keys → finite numbers only; arrays / junk → {}. */
+function asLiquidMean(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: Record<string, number> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!key) continue;
+    if (typeof raw !== "number" || !Number.isFinite(raw)) continue;
+    out[key] = raw;
   }
   return out;
 }
@@ -86,16 +104,9 @@ export function normalizeCharacterSummary(
     };
   } else {
     summary.substat_rolls_liquid = {
-      teams:
-        typeof liquid.teams === "number" && Number.isFinite(liquid.teams)
-          ? liquid.teams
-          : 0,
-      configs:
-        typeof liquid.configs === "number" && Number.isFinite(liquid.configs)
-          ? liquid.configs
-          : 0,
-      mean:
-        liquid.mean && typeof liquid.mean === "object" ? liquid.mean : {},
+      teams: asNonNegativeSafeInt(liquid.teams) ?? 0,
+      configs: asNonNegativeSafeInt(liquid.configs) ?? 0,
+      mean: asLiquidMean(liquid.mean),
       ranked: asLiquidRanks(liquid.ranked),
     };
   }
