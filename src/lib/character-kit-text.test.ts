@@ -16,10 +16,10 @@ describe("enhanceExtra", () => {
   });
 
   it("strips Hoyoverse escaped newlines between base and extra", () => {
-    assert.deepEqual(
-      enhanceExtra("Deal DMG.", "Deal DMG.\\n\\nExtra buff."),
-      { mode: "extra", text: "Extra buff." },
-    );
+    assert.deepEqual(enhanceExtra("Deal DMG.", "Deal DMG.\\n\\nExtra buff."), {
+      mode: "extra",
+      text: "Extra buff.",
+    });
   });
 
   it("returns null when prefix extra is only separators", () => {

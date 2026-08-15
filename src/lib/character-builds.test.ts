@@ -220,7 +220,8 @@ describe("recommendedSubstatsFromBuilds", () => {
           goblet: [{ key: "hydro_dmg_", teams: 1 }],
           circlet: [{ key: "critRate_", teams: 1 }],
         },
-        substat_rolls_liquid: undefined as unknown as CharacterIndex["substat_rolls_liquid"],
+        substat_rolls_liquid:
+          undefined as unknown as CharacterIndex["substat_rolls_liquid"],
         stat_recommendations: {
           mode: "checklist",
           delta_stats: [
@@ -311,7 +312,10 @@ describe("recommendedSubstatsFromBuilds", () => {
     assert.equal(crit.source, "mid");
     assert.equal(crit.teams, 2);
     assert.equal(crit.mean, 3.5);
-    assert.equal(recommendedSubstatSourceLabel(crit.source), "avg liquid rolls");
+    assert.equal(
+      recommendedSubstatSourceLabel(crit.source),
+      "avg liquid rolls",
+    );
     assert.equal(
       result.some((r) => r.key === "enerRech_" && r.mean === 99),
       false,

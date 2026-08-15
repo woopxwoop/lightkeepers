@@ -138,14 +138,8 @@
 
   let trailItems = $derived(
     mode === "abyss"
-      ? [
-          { label: "Abyss", href: abyssPath },
-          { label: "Summary" },
-        ]
-      : [
-          { label: "Stygian", href: stygianPath },
-          { label: "Summary" },
-        ],
+      ? [{ label: "Abyss", href: abyssPath }, { label: "Summary" }]
+      : [{ label: "Stygian", href: stygianPath }, { label: "Summary" }],
   );
 
   const rosterFilterOptions = [
@@ -493,7 +487,9 @@
     if (mode === "stygian") {
       const named = headerMeta.version?.trim();
       if (named) return named.replace(/[^\w.-]+/g, "-");
-      return stygianVersionNumber > 0 ? String(stygianVersionNumber) : "unknown";
+      return stygianVersionNumber > 0
+        ? String(stygianVersionNumber)
+        : "unknown";
     }
     return abyssVersionNumber > 0 ? String(abyssVersionNumber) : "unknown";
   }
@@ -596,8 +592,7 @@
             aria-label={`Show ${group.alternates.length} alternate ${dpsDisplayName(group.mainDps)} teams`}
             onpointerdown={(e) =>
               handlePointerAction(e, () => openAltsModal(group))}
-            onclick={(e) =>
-              handleKeyboardClick(e, () => openAltsModal(group))}
+            onclick={(e) => handleKeyboardClick(e, () => openAltsModal(group))}
           >
             <span
               >{group.alternates.length} alt{group.alternates.length === 1
@@ -749,15 +744,15 @@
               {#each activeColumn.groups as group (group.mainDps)}
                 {@render dpsGroup(activeColumn.slot, group)}
               {:else}
-                <li class="team-empty">No On-Field DPS teams clear the filters.</li>
+                <li class="team-empty">
+                  No On-Field DPS teams clear the filters.
+                </li>
               {/each}
             </ul>
           </section>
         {/if}
 
-        <footer class="info-foot"
-          >lightkeepers.moe/tools/{mode}/summary</footer
-        >
+        <footer class="info-foot">lightkeepers.moe/tools/{mode}/summary</footer>
       </div>
     </div>
   {/if}
@@ -797,8 +792,7 @@
         </button>
       </header>
       <p class="section-lede">
-        {1 + altsModal.alternates.length} team{altsModal.alternates.length ===
-        0
+        {1 + altsModal.alternates.length} team{altsModal.alternates.length === 0
           ? ""
           : "s"} for {dpsDisplayName(altsModal.mainDps)}.
       </p>

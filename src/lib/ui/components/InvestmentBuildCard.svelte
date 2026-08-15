@@ -4,7 +4,11 @@
    * Shared by team-config pages and character build examples.
    */
   import { displayPreferences } from "$lib/stores";
-  import { translateStatKey, statIconUrl, artifactSlotIconUrl } from "$lib/utils";
+  import {
+    translateStatKey,
+    statIconUrl,
+    artifactSlotIconUrl,
+  } from "$lib/utils";
   import { useWeapon, useArtifactSet } from "$lib/equipment-data.svelte";
   import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
@@ -17,7 +21,10 @@
     formatSheetStat,
     type SheetStatBag,
   } from "$lib/build-stats";
-  import { MAIN_STAT_SLOTS, normalizeSetPieceCount } from "$lib/character-builds";
+  import {
+    MAIN_STAT_SLOTS,
+    normalizeSetPieceCount,
+  } from "$lib/character-builds";
   import type { CharacterBuild } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
   import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
@@ -327,10 +334,7 @@
       {#if mainStatRows.length > 0}
         <ul class="main-stats" aria-label="Artifact main stats">
           {#each mainStatRows as row (row.slot)}
-            <li
-              class="main-stat"
-              aria-label="{row.slotLabel}: {row.label}"
-            >
+            <li class="main-stat" aria-label="{row.slotLabel}: {row.label}">
               <img
                 src={row.slotIcon}
                 alt=""

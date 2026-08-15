@@ -56,12 +56,7 @@ export const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
 };
 
 export type RecommendedSubstatSource =
-  | "guide"
-  | "checklist"
-  | "high"
-  | "delta"
-  | "mid"
-  | "main";
+  "guide" | "checklist" | "high" | "delta" | "mid" | "main";
 
 export type RecommendedSubstat = {
   key: string;
@@ -88,9 +83,7 @@ export function recommendedSubstatSourceLabel(
   return "avg liquid rolls";
 }
 
-function mainSlotsBySubstatKey(
-  builds: CharacterIndex,
-): Map<string, string[]> {
+function mainSlotsBySubstatKey(builds: CharacterIndex): Map<string, string[]> {
   const mainSlots = new Map<string, string[]>();
   for (const slot of MAIN_STAT_SLOTS) {
     for (const s of builds.main_stats?.[slot.key] ?? []) {

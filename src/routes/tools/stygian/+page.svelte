@@ -39,7 +39,8 @@
         {#if metaParts.length > 0}
           <span class="page-meta-sep" aria-hidden="true">·</span>
         {/if}
-        <a class="back-link" href={resolve("/tools/stygian/summary")}>Summary</a>
+        <a class="back-link" href={resolve("/tools/stygian/summary")}>Summary</a
+        >
         <span class="page-meta-sep" aria-hidden="true">·</span>
         <a class="back-link" href={resolve("/tools/stygian/enemies")}
           >Enemy Database</a

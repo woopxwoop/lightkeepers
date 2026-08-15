@@ -53,9 +53,7 @@ function asStatRanks(value: unknown): CharacterStatRank[] {
   return out;
 }
 
-function asLiquidRanks(
-  value: unknown,
-): CharacterLiquidSubstats["ranked"] {
+function asLiquidRanks(value: unknown): CharacterLiquidSubstats["ranked"] {
   if (!Array.isArray(value)) return [];
   const out: CharacterLiquidSubstats["ranked"] = [];
   for (const entry of value) {

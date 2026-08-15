@@ -165,18 +165,13 @@
         />
       </div>
       {#if teamsMode === "simulated"}
-        <span class="teams-cost"
-          >{CHARACTER_SIM_COST} <CostPopover /></span
-        >
+        <span class="teams-cost">{CHARACTER_SIM_COST} <CostPopover /></span>
       {/if}
     </div>
 
     {#if teamsMode === "simulated"}
       {#if teamsLoading}
-        <LoadingState
-          variant="pulse"
-          message="Loading simulated teams…"
-        />
+        <LoadingState variant="pulse" message="Loading simulated teams…" />
       {:else if investmentError && simulatedTeams.length === 0}
         <EmptyState message="Could not load simulated teams right now.">
           {#snippet action()}

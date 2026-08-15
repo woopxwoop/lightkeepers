@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    CRIMSON_WITCH_FAVICON_URL,
-    type CrimsonWitchLink,
-  } from "$lib/utils";
+  import { CRIMSON_WITCH_FAVICON_URL, type CrimsonWitchLink } from "$lib/utils";
 
   let { links }: { links: CrimsonWitchLink[] } = $props();
 </script>

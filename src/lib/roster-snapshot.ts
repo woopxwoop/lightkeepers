@@ -61,10 +61,7 @@ export type RosterSyncEntry = {
 };
 
 /** Shared name_id ordering for sync entry projections. */
-function compareNameId(
-  a: { name_id: string },
-  b: { name_id: string },
-): number {
+function compareNameId(a: { name_id: string }, b: { name_id: string }): number {
   return a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0;
 }
 

@@ -122,10 +122,7 @@
 </script>
 
 <PageShell class="char-detail {$animationsEnabled ? '' : 'no-page-anim'}">
-  <div
-    class="char-page"
-    style="--hero-accent: {elColor};"
-  >
+  <div class="char-page" style="--hero-accent: {elColor};">
     <section class="hero relative overflow-hidden">
       <div
         class="hero-bg absolute inset-0"

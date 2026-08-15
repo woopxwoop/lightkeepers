@@ -57,10 +57,11 @@ describe("pickTopMainDpsGroups", () => {
         onFieldDpsIds: new Set(["carryA", "carryB", "Mavuika"]),
       },
     );
-    assert.deepEqual(
-      groups.map((g) => g.mainDps).sort(),
-      ["Mavuika", "carryA", "carryB"],
-    );
+    assert.deepEqual(groups.map((g) => g.mainDps).sort(), [
+      "Mavuika",
+      "carryA",
+      "carryB",
+    ]);
     const carryA = groups.find((g) => g.mainDps === "carryA");
     assert.deepEqual(carryA?.primary.members, [
       "Mavuika",
@@ -69,12 +70,7 @@ describe("pickTopMainDpsGroups", () => {
       "s4",
     ]);
     const carryB = groups.find((g) => g.mainDps === "carryB");
-    assert.deepEqual(carryB?.primary.members, [
-      "carryB",
-      "s5",
-      "s6",
-      "s7",
-    ]);
+    assert.deepEqual(carryB?.primary.members, ["carryB", "s5", "s6", "s7"]);
   });
 
   it("halves usage floors for 4★ main DPS", () => {
@@ -166,12 +162,7 @@ describe("pickTopMainDpsGroups", () => {
     );
     assert.equal(groups.length, 2);
     assert.equal(groups[0]?.mainDps, "carryA");
-    assert.deepEqual(groups[0]?.primary.members, [
-      "carryA",
-      "s1",
-      "s2",
-      "s3",
-    ]);
+    assert.deepEqual(groups[0]?.primary.members, ["carryA", "s1", "s2", "s3"]);
     assert.equal(groups[0]?.alternates.length, 2);
     assert.deepEqual(groups[0]?.alternates[0]?.members, [
       "carryA",

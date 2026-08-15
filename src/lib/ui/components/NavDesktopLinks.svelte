@@ -118,8 +118,7 @@
           data-sveltekit-preload-data={"preload" in link
             ? link.preload
             : undefined}
-          aria-current={isToolActive(link) ? "page" : undefined}
-          >{link.label}</a
+          aria-current={isToolActive(link) ? "page" : undefined}>{link.label}</a
         >
       {/each}
     </div>
@@ -129,9 +128,7 @@
     <a
       href={link.path}
       class="nav-link"
-      data-sveltekit-preload-data={"preload" in link
-        ? link.preload
-        : undefined}
+      data-sveltekit-preload-data={"preload" in link ? link.preload : undefined}
       aria-current={isMainActive(link) ? "page" : undefined}>{link.label}</a
     >
   {/each}

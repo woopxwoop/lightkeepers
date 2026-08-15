@@ -6,10 +6,12 @@ describe("orderMembersMainDpsFirst", () => {
   const onField = new Set(["carry", "carry2"]);
 
   it("leaves order unchanged when no on-field DPS is present", () => {
-    assert.deepEqual(
-      orderMembersMainDpsFirst(["a", "b", "c", "d"], onField),
-      ["a", "b", "c", "d"],
-    );
+    assert.deepEqual(orderMembersMainDpsFirst(["a", "b", "c", "d"], onField), [
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
   });
 
   it("moves a single on-field DPS to the front", () => {

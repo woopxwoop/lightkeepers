@@ -147,7 +147,11 @@
 
   /* ── Scrollbars (cream thumb, transparent track) ─────────────────────── */
   --scrollbar-size: 0.55rem;
-  --scrollbar-thumb: color-mix(in srgb, var(--foreground-color) 22%, transparent);
+  --scrollbar-thumb: color-mix(
+    in srgb,
+    var(--foreground-color) 22%,
+    transparent
+  );
   --scrollbar-thumb-hover: color-mix(
     in srgb,
     var(--foreground-color) 36%,

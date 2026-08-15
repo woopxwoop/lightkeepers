@@ -101,9 +101,7 @@ describe("liveCharacterSummary", () => {
     const live = liveCharacterSummary(dirty);
     assert.ok(live);
     assert.deepEqual(live.main_stats.sands, [{ key: "hp_", teams: 2 }]);
-    assert.deepEqual(live.main_stats.goblet, [
-      { key: "hydro_dmg_", teams: 1 },
-    ]);
+    assert.deepEqual(live.main_stats.goblet, [{ key: "hydro_dmg_", teams: 1 }]);
     assert.deepEqual(live.substat_rolls_liquid.ranked, [
       { key: "critDMG_", mean: 4 },
     ]);

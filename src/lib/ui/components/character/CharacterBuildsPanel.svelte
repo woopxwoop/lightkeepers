@@ -301,10 +301,7 @@
                   </div>
                 {/if}
               </div>
-              <ArtifactTooltip
-                setKey={s.key}
-                pieceCount={s.count ?? null}
-              />
+              <ArtifactTooltip setKey={s.key} pieceCount={s.count ?? null} />
             </div>
           {/each}
         </div>
@@ -341,7 +338,8 @@
                           loading="lazy"
                         />
                       {/if}
-                      <span class="stat-name">{translateStatKey(stat.key)}</span>
+                      <span class="stat-name">{translateStatKey(stat.key)}</span
+                      >
                     </span>
                   </li>
                 {/each}
@@ -364,9 +362,7 @@
               type="button"
               class="stat-chip group relative flex items-center justify-center"
               class:is-main={roll.matchesMain}
-              style={roll.matchesMain
-                ? `border-color: ${elColor}`
-                : undefined}
+              style={roll.matchesMain ? `border-color: ${elColor}` : undefined}
               aria-label={translateStatKey(roll.key)}
             >
               {#if icon}
@@ -376,10 +372,7 @@
                   {translateStatKey(roll.key)}
                 </span>
               {/if}
-              <HoverTooltip
-                class="max-w-56"
-                label={translateStatKey(roll.key)}
-              >
+              <HoverTooltip class="max-w-56" label={translateStatKey(roll.key)}>
                 <div class="tip-detail-text font-medium">
                   {translateStatKey(roll.key)}
                 </div>
@@ -396,7 +389,8 @@
                     class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
                   >
                     {roll.mean.toFixed(1)}
-                    {recommendedSubstatSourceLabel(roll.source)} · {teams} team{teams === 1
+                    {recommendedSubstatSourceLabel(roll.source)} · {teams} team{teams ===
+                    1
                       ? ""
                       : "s"}
                   </div>
@@ -632,10 +626,7 @@
                             exampleTeamKeys(example),
                             goodKey,
                           )}
-                          <li
-                            class="example-picker-alt-wrap"
-                            style="--i: {ti}"
-                          >
+                          <li class="example-picker-alt-wrap" style="--i: {ti}">
                             <button
                               type="button"
                               class="example-picker-alt"

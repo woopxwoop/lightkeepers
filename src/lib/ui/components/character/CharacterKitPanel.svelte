@@ -7,10 +7,7 @@
     availableTravelerElements,
     defaultTravelerElement,
   } from "$lib/traveler-kits";
-  import {
-    enhanceExtra,
-    type EnhanceExtra,
-  } from "$lib/character-kit-text";
+  import { enhanceExtra, type EnhanceExtra } from "$lib/character-kit-text";
   import { getUiAssetUrl } from "$lib/utils";
   import { skillIconUrl, talentIconUrl } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
@@ -108,8 +105,10 @@
   });
 
   let kitIndexGroups = $derived.by(() => {
-    const groups: { group: KitIndexEntry["group"]; entries: KitIndexEntry[] }[] =
-      [];
+    const groups: {
+      group: KitIndexEntry["group"];
+      entries: KitIndexEntry[];
+    }[] = [];
     for (const entry of kitIndex) {
       const last = groups.at(-1);
       if (last?.group === entry.group) last.entries.push(entry);
@@ -303,12 +302,7 @@
             class:kit-row-flash={flashId === `kit-S${skill.id}`}
           >
             {#if icon}
-              <img
-                src={icon}
-                alt=""
-                class="kit-icon shrink-0"
-                loading="lazy"
-              />
+              <img src={icon} alt="" class="kit-icon shrink-0" loading="lazy" />
             {/if}
             <div class="kit-copy">
               <div class="kit-heading">
@@ -340,12 +334,7 @@
             class:kit-row-flash={flashId === `kit-P${passive.id}`}
           >
             {#if icon}
-              <img
-                src={icon}
-                alt=""
-                class="kit-icon shrink-0"
-                loading="lazy"
-              />
+              <img src={icon} alt="" class="kit-icon shrink-0" loading="lazy" />
             {/if}
             <div class="kit-copy">
               <div class="kit-heading">
@@ -374,12 +363,7 @@
             class:kit-row-flash={flashId === `kit-T${c.id}`}
           >
             {#if icon}
-              <img
-                src={icon}
-                alt=""
-                class="kit-icon shrink-0"
-                loading="lazy"
-              />
+              <img src={icon} alt="" class="kit-icon shrink-0" loading="lazy" />
             {/if}
             <div class="kit-copy">
               <div class="kit-heading">

@@ -192,8 +192,7 @@
                       <div class="team-hand-footer">
                         <span class="team-hand-meta">
                           <span class="team-hand-rank">#{i + 1}</span>
-                          <span
-                            >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                          <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span
                           >
                         </span>
                       </div>

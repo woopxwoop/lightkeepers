@@ -122,11 +122,7 @@ function passesUsageFloorsForMainDps(
   minUsageIndex: number,
   fourStarNameIds: ReadonlySet<string>,
 ): boolean {
-  const floors = usageFloorsForMainDps(
-    mainDps,
-    minUsageIndex,
-    fourStarNameIds,
-  );
+  const floors = usageFloorsForMainDps(mainDps, minUsageIndex, fourStarNameIds);
   // Strict greater-than (0.1% overall is noise for 5★ sheets).
   return (
     teamUsageRate(team) > floors.minUsageRate &&
@@ -210,9 +206,7 @@ export function pickTopMainDpsGroups<T extends InfographicTeam>(
   const candidates = teams
     .filter((t) => isEligibleTeam(t, requireAbyssUsageTotal))
     .filter((t) => teamSlotFieldRate(t, slot) >= minSlotRate)
-    .filter(
-      (t) => !isWheelchairDualDpsTeam(t.members ?? [], onFieldDpsIds),
-    );
+    .filter((t) => !isWheelchairDualDpsTeam(t.members ?? [], onFieldDpsIds));
 
   const byMain = new Map<string, T[]>();
   for (const team of candidates) {
