@@ -5,7 +5,10 @@
  */
 import { MIN_USAGE_RATE } from "$lib/solver";
 import { teamSlotFieldRate } from "$lib/slot-fields";
-import { ON_FIELD_DPS_NAME_IDS } from "$lib/on-field-dps";
+import {
+  ON_FIELD_DPS_NAME_IDS,
+  onFieldMembers,
+} from "$lib/on-field-dps";
 
 export type InfographicSlot = "top" | "middle" | "bottom";
 
@@ -81,14 +84,6 @@ export function teamUsageIndex(
   return (teamSlotFieldRate(team, slot) / 100) * teamUsageRate(team);
 }
 
-/** @deprecated Prefer `teamUsageIndex` — same value. */
-export function teamRankScore(
-  team: InfographicTeam,
-  slot: InfographicSlot,
-): number {
-  return teamUsageIndex(team, slot);
-}
-
 function isEligibleTeam(
   team: InfographicTeam,
   requireAbyssUsageTotal: boolean,
@@ -130,20 +125,6 @@ function passesUsageFloorsForMainDps(
   );
 }
 
-function onFieldOnTeam(
-  members: string[],
-  onFieldDpsIds: ReadonlySet<string>,
-): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const id of members) {
-    if (!onFieldDpsIds.has(id) || seen.has(id)) continue;
-    seen.add(id);
-    out.push(id);
-  }
-  return out;
-}
-
 /**
  * True when 2+ allowlisted On-Field DPS share a team and none is Mavuika
  * (wheelchair / dual-carry noise). Mavuika dual-role comps are allowed.
@@ -152,7 +133,7 @@ export function isWheelchairDualDpsTeam(
   members: readonly string[],
   onFieldDpsIds: ReadonlySet<string> = ON_FIELD_DPS_NAME_IDS,
 ): boolean {
-  const carries = onFieldOnTeam([...members], onFieldDpsIds);
+  const carries = onFieldMembers(members, onFieldDpsIds);
   if (carries.length < 2) return false;
   return !carries.includes(MAVUIKA_NAME_ID);
 }
@@ -210,7 +191,7 @@ export function pickTopMainDpsGroups<T extends InfographicTeam>(
 
   const byMain = new Map<string, T[]>();
   for (const team of candidates) {
-    const carries = onFieldOnTeam(team.members ?? [], onFieldDpsIds);
+    const carries = onFieldMembers(team.members ?? [], onFieldDpsIds);
     for (const mainDps of carries) {
       if (
         !passesUsageFloorsForMainDps(

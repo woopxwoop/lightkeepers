@@ -149,12 +149,12 @@
   --scrollbar-size: 0.55rem;
   --scrollbar-thumb: color-mix(
     in srgb,
-    var(--foreground-color) 22%,
+    var(--foreground-color) 40%,
     transparent
   );
   --scrollbar-thumb-hover: color-mix(
     in srgb,
-    var(--foreground-color) 36%,
+    var(--foreground-color) 58%,
     transparent
   );
 }
@@ -188,7 +188,7 @@ body {
 *::-webkit-scrollbar-thumb {
   border-radius: var(--radius-pill);
   background: var(--scrollbar-thumb);
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   background-clip: padding-box;
 }
 

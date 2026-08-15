@@ -3,6 +3,7 @@
  * GET /api/asset-proxy?u=https://api.lightkeepers.moe/...
  */
 import { error } from "@sveltejs/kit";
+import { fetchWithTimeout } from "$lib/cdn-fetch";
 import type { RequestHandler } from "./$types";
 
 const ALLOWED_HOSTS = new Set(["api.lightkeepers.moe"]);
@@ -22,20 +23,27 @@ export const GET: RequestHandler = async ({ url }) => {
     error(400, "Host not allowed");
   }
 
-  const upstream = await fetch(target.href, {
+  const upstream = await fetchWithTimeout(target.href, {
     headers: { Accept: "image/*,*/*" },
+    redirect: "manual",
   });
   if (!upstream.ok) {
     error(upstream.status === 404 ? 404 : 502, "Upstream fetch failed");
   }
 
-  const contentType = upstream.headers.get("content-type") ?? "image/webp";
-  const body = await upstream.arrayBuffer();
+  const contentType = upstream.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().startsWith("image/")) {
+    error(502, "Upstream is not an image");
+  }
+  if (!upstream.body) {
+    error(502, "Upstream fetch failed");
+  }
 
-  return new Response(body, {
+  return new Response(upstream.body, {
     headers: {
       "Content-Type": contentType,
       "Cache-Control": "public, max-age=86400",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 };

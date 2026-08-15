@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { orderMembersMainDpsFirst } from "./on-field-dps.ts";
+import characterBases from "./data/character-bases.json" with { type: "json" };
+import {
+  ON_FIELD_DPS_NAME_IDS,
+  onFieldMembers,
+  orderMembersMainDpsFirst,
+} from "./on-field-dps.ts";
 
 describe("orderMembersMainDpsFirst", () => {
   const onField = new Set(["carry", "carry2"]);
@@ -25,6 +30,34 @@ describe("orderMembersMainDpsFirst", () => {
     assert.deepEqual(
       orderMembersMainDpsFirst(["a", "carry2", "b", "carry"], onField),
       ["carry2", "carry", "a", "b"],
+    );
+  });
+});
+
+describe("ON_FIELD_DPS_NAME_IDS", () => {
+  it("every allowlisted name_id exists in character-bases", () => {
+    const catalogIds = new Set(
+      Object.values(characterBases).map(
+        (row) => (row as { name_id: string }).name_id,
+      ),
+    );
+    const missing = [...ON_FIELD_DPS_NAME_IDS]
+      .filter((id) => !catalogIds.has(id))
+      .sort();
+    assert.deepEqual(
+      missing,
+      [],
+      `allowlist ids missing from character-bases: ${missing.join(", ")}`,
+    );
+  });
+});
+
+describe("onFieldMembers", () => {
+  it("preserves order, dedupes, and respects an injectable set", () => {
+    const onField = new Set(["carry", "carry2"]);
+    assert.deepEqual(
+      onFieldMembers(["a", "carry", "b", "carry", "carry2"], onField),
+      ["carry", "carry2"],
     );
   });
 });

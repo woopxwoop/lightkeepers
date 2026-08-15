@@ -573,11 +573,6 @@
         <div class="panel-empty">
           <p>No team available for this field</p>
         </div>
-      {:else if showRosterSetup}
-        <div class="panel-empty">
-          <p>Set up your roster in Settings</p>
-          <a class="panel-roster-cta" href={settingsPath}>Configure roster</a>
-        </div>
       {:else}
         <div class="panel-empty">
           <p>No team available for this field</p>
@@ -1040,16 +1035,6 @@
     padding: 2rem 0;
     font-size: var(--text-xs);
     color: var(--foreground-mid);
-  }
-
-  .panel-roster-cta {
-    color: var(--foreground-mid);
-    text-decoration: none;
-  }
-
-  .panel-roster-cta:hover {
-    color: var(--accent-1);
-    text-decoration: underline;
   }
 
   .fallback-note {

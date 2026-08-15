@@ -27,11 +27,11 @@
       <p class="page-meta">
         Stygian board with YSHelper / video-clear seating modes and a cost cap
         for Fearless clears.
-        <span class="page-meta-sep">·</span>
+        <span class="page-meta-sep" aria-hidden="true">·</span>
         <a class="dev-link" href={resolve("/tools/abyss/summary")}
           >Abyss summary</a
         >
-        <span class="page-meta-sep">·</span>
+        <span class="page-meta-sep" aria-hidden="true">·</span>
         <a class="dev-link" href={resolve("/tools/stygian/summary")}
           >Stygian summary</a
         >

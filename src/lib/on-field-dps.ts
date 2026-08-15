@@ -73,11 +73,14 @@ export function isOnFieldDps(nameId: string): boolean {
 }
 
 /** On-field DPS members present on a team (order preserved, unique). */
-export function onFieldMembers(members: readonly string[]): string[] {
+export function onFieldMembers(
+  members: readonly string[],
+  onFieldDpsIds: ReadonlySet<string> = ON_FIELD_DPS_NAME_IDS,
+): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const id of members) {
-    if (!isOnFieldDps(id) || seen.has(id)) continue;
+    if (!onFieldDpsIds.has(id) || seen.has(id)) continue;
     seen.add(id);
     out.push(id);
   }

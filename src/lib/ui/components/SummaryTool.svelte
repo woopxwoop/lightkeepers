@@ -35,6 +35,7 @@
   import IconX from "$lib/ui/icons/IconX.svelte";
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
   import { trapTabKey } from "$lib/ui/focus-trap";
+  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { isOwnedNameId, ownedNameIds } from "$lib/utils";
@@ -338,6 +339,7 @@
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+    const releaseScrollLock = acquireBodyScrollLock();
     let active = true;
     void tick().then(() => {
       if (!active || !altsModal) return;
@@ -356,6 +358,7 @@
     return () => {
       active = false;
       window.removeEventListener("keydown", onKey, true);
+      releaseScrollLock();
       if (previous?.isConnected) previous.focus();
     };
   });
@@ -414,14 +417,17 @@
     await waitForImages(root);
     const imgs = [...root.querySelectorAll("img")];
     const restore: { img: HTMLImageElement; src: string }[] = [];
-    for (const img of imgs) {
+    const concurrency = Math.min(6, imgs.length);
+    let next = 0;
+
+    async function inlineOne(img: HTMLImageElement): Promise<void> {
       const original = img.getAttribute("src") ?? img.src;
       const current = img.currentSrc || img.src;
-      if (!current || current.startsWith("data:")) continue;
+      if (!current || current.startsWith("data:")) return;
       const fetchUrl = proxiedAssetSrc(current) ?? current;
       try {
         const res = await fetch(fetchUrl);
-        if (!res.ok) continue;
+        if (!res.ok) return;
         const dataUrl = await blobToDataUrl(await res.blob());
         restore.push({ img, src: original });
         img.src = dataUrl;
@@ -430,6 +436,20 @@
         /* leave original src; export may skip this pixel */
       }
     }
+
+    async function worker(): Promise<void> {
+      while (next < imgs.length) {
+        const img = imgs[next++]!;
+        await inlineOne(img);
+      }
+    }
+
+    if (concurrency > 0) {
+      await Promise.all(
+        Array.from({ length: concurrency }, () => worker()),
+      );
+    }
+
     try {
       return await run();
     } finally {
@@ -441,24 +461,25 @@
     manageExporting?: boolean;
   }): Promise<string | null> {
     if (!exportRoot) return null;
+    const root = exportRoot;
     const manageExporting = opts?.manageExporting !== false;
     closeAltsModal();
     if (manageExporting) {
       exportMessage = null;
       exporting = true;
     }
-    const prevWidth = exportRoot.style.width;
-    const prevMinWidth = exportRoot.style.minWidth;
+    const prevWidth = root.style.width;
+    const prevMinWidth = root.style.minWidth;
     try {
       // Preview is fluid; lock export canvas to a shareable fixed width.
-      exportRoot.style.width = `${EXPORT_WIDTH}px`;
-      exportRoot.style.minWidth = `${EXPORT_WIDTH}px`;
+      root.style.width = `${EXPORT_WIDTH}px`;
+      root.style.minWidth = `${EXPORT_WIDTH}px`;
       await tick();
       await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await waitForImages(exportRoot);
-      return await withInlinedImages(exportRoot, async () => {
+      await waitForImages(root);
+      return await withInlinedImages(root, async () => {
         await new Promise((r) => requestAnimationFrame(() => r(null)));
-        return await toPng(exportRoot, {
+        return await toPng(root, {
           width: EXPORT_WIDTH,
           pixelRatio: 2,
           cacheBust: true,
@@ -477,8 +498,8 @@
         err instanceof Error ? err.message : "Failed to render image";
       return null;
     } finally {
-      exportRoot.style.width = prevWidth;
-      exportRoot.style.minWidth = prevMinWidth;
+      root.style.width = prevWidth;
+      root.style.minWidth = prevMinWidth;
       if (manageExporting) exporting = false;
     }
   }
@@ -566,7 +587,7 @@
       </div>
     </div>
     <div class="featured-supports">
-      {#each supports as member (member)}
+      {#each supports as member, i (i)}
         <div
           class="featured-slot featured-support"
           class:featured-slot-compact={$isIconCompact}
