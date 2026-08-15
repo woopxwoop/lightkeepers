@@ -65,6 +65,14 @@
     });
   });
 
+  function drawerFocusables(root: HTMLElement): HTMLElement[] {
+    return Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((el) => !el.closest("[inert]"));
+  }
+
   $effect(() => {
     if (open) {
       drawerWasOpen = true;
@@ -78,7 +86,7 @@
       const releaseScrollLock = acquireBodyScrollLock();
 
       tick().then(() => {
-        drawerEl?.querySelector<HTMLElement>("a[href]")?.focus();
+        if (drawerEl) drawerFocusables(drawerEl)[0]?.focus();
       });
 
       function onKeydown(e: KeyboardEvent) {
@@ -90,11 +98,7 @@
         }
         if (e.key !== "Tab" || !drawerEl) return;
 
-        const focusable = Array.from(
-          drawerEl.querySelectorAll<HTMLElement>(
-            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-          ),
-        ).filter((el) => !el.closest("[inert]"));
+        const focusable = drawerFocusables(drawerEl);
         if (focusable.length < 2) return;
 
         const first = focusable[0];
@@ -277,8 +281,11 @@
       <a
         class="drawer-item"
         href={patchNotesPath}
-        class:is-active={page.url.pathname === patchNotesPath ||
-          page.url.pathname.startsWith(`${patchNotesPath}/`)}
+        class:is-active={isPathActive(
+          page.url.pathname,
+          patchNotesPath,
+          "prefix",
+        )}
       >
         <span class="drawer-item-label">Patch notes</span>
       </a>

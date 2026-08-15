@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { resolve } from "$app/paths";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import WeaponIcon from "$lib/ui/components/WeaponIcon.svelte";
@@ -67,7 +68,7 @@
   const equipment = useEquipmentData();
 
   onMount(() => {
-    void ensureEquipmentData();
+    void ensureEquipmentData().catch(() => {});
     void loadRosterArtifacts().catch(() => {});
   });
 
@@ -389,12 +390,17 @@
                   </div>
                 {/if}
                 {#if roll.mean > 0}
+                  {@const teams = roll.fromHigh
+                    ? (builds.high_substat_rolls_liquid?.teams ??
+                      builds.substat_rolls_liquid.teams)
+                    : builds.substat_rolls_liquid.teams}
                   <div
                     class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
                   >
-                    {roll.mean.toFixed(1)} avg liquid rolls · {builds
-                      .substat_rolls_liquid.teams} team{builds
-                      .substat_rolls_liquid.teams === 1
+                    {roll.mean.toFixed(1)}
+                    {roll.fromHigh
+                      ? "avg high liquid"
+                      : "avg liquid rolls"} · {teams} team{teams === 1
                       ? ""
                       : "s"}
                   </div>
@@ -677,7 +683,7 @@
               <div class="example-picker-actions">
                 <a
                   class="example-picker-action"
-                  href="/teams/{activeExample.team_key}"
+                  href={resolve(`/teams/${activeExample.team_key}`)}
                   aria-label="View team details"
                   title="View team details"
                 >

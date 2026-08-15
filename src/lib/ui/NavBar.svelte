@@ -81,7 +81,7 @@
       </a>
     </div>
 
-    <NavDesktopLinks bind:subOpen={navSubOpen} />
+    <NavDesktopLinks onSubOpenChange={(open) => (navSubOpen = open)} />
 
     <div class="nav-end flex items-center gap-1">
       <NavAppsLauncher items={appItems} />

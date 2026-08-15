@@ -44,7 +44,100 @@ function builds(
 }
 
 describe("recommendedSubstatsFromBuilds", () => {
-  it("keeps liquid ranks above 0.5 and mains that can roll as subs", () => {
+  it("uses high OptimFull liquid allocations plus mains that can roll as subs", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "eleMas", teams: 3 }],
+          goblet: [{ key: "hydro_dmg_", teams: 3 }],
+          circlet: [{ key: "critRate_", teams: 3 }],
+        },
+        substat_rolls_liquid: {
+          teams: 2,
+          configs: 2,
+          mean: {},
+          ranked: [
+            { key: "atk_", mean: 8 },
+            { key: "critDMG_", mean: 2 },
+          ],
+        },
+        high_substat_rolls_liquid: {
+          teams: 2,
+          configs: 2,
+          mean: {},
+          ranked: [
+            { key: "critDMG_", mean: 12.4 },
+            { key: "eleMas", mean: 9.2 },
+            { key: "atk_", mean: 0.3 },
+          ],
+        },
+        stat_recommendations: {
+          mode: "delta",
+          delta_stats: [
+            { key: "critDMG_", mean_delta: 4.2, teams_positive: 2 },
+          ],
+          enerRech_if_burst: true,
+          critRate_if_fav: false,
+          teams: 2,
+          burst_teams: 2,
+          fav_teams: 0,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => [r.key, r.matchesMain, r.mean, r.fromHigh]),
+      [
+        ["eleMas", true, 9.2, true],
+        ["critRate_", true, 0, false],
+        ["critDMG_", false, 12.4, true],
+      ],
+    );
+  });
+
+  it("checklist mode keeps mains only (no mid leftover liquids)", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "enerRech_", teams: 3 }],
+          goblet: [{ key: "hydro_dmg_", teams: 3 }],
+          circlet: [{ key: "critRate_", teams: 3 }],
+        },
+        substat_rolls_liquid: {
+          teams: 3,
+          configs: 3,
+          mean: {},
+          ranked: [
+            { key: "critDMG_", mean: 4 },
+            { key: "atk_", mean: 3 },
+          ],
+        },
+        high_substat_rolls_liquid: {
+          teams: 3,
+          configs: 3,
+          mean: {},
+          ranked: [
+            { key: "critDMG_", mean: 10 },
+            { key: "atk_", mean: 8 },
+          ],
+        },
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [],
+          enerRech_if_burst: true,
+          critRate_if_fav: true,
+          teams: 3,
+          burst_teams: 3,
+          fav_teams: 2,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => r.key),
+      ["critRate_", "enerRech_"],
+    );
+  });
+
+  it("falls back to mid liquid ranks when high_substat_rolls_liquid is missing", () => {
     const result = recommendedSubstatsFromBuilds(
       builds({
         main_stats: {
@@ -93,6 +186,21 @@ describe("recommendedSubstatsFromBuilds", () => {
             { key: "enerRech_", mean: 0 },
             { key: "eleMas", mean: 0 },
           ],
+        },
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [],
+          enerRech_if_burst: false,
+          critRate_if_fav: false,
+          teams: 0,
+          burst_teams: 0,
+          fav_teams: 0,
+        },
+        high_substat_rolls_liquid: {
+          teams: 0,
+          configs: 0,
+          mean: {},
+          ranked: [],
         },
       }),
     );
@@ -763,7 +871,7 @@ describe("exampleRelevantGoodKeys display rules", () => {
     ]);
   });
 
-  it("high invest → mains + high liquids (not mid leftovers)", () => {
+  it("high invest → mains + pipeline goal_substats", () => {
     const example: CharacterBuildExample = {
       ...base,
       key: "RaidenShogun",
@@ -773,15 +881,41 @@ describe("exampleRelevantGoodKeys display rules", () => {
         goblet: "eleMas",
         circlet: "eleMas",
       },
-      substat_rolls_liquid: { atk_: 10, critDMG_: 2 },
-      high_substat_rolls: { eleMas: 16, enerRech_: 16 },
-      high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
+      substat_rolls_liquid: { atk_: 10, critDMG_: 2, enerRech_: 15 },
+      high_substat_rolls: { eleMas: 16, enerRech_: 16, critDMG_: 2 },
+      high_substat_rolls_liquid: {
+        eleMas: 15,
+        enerRech_: 15,
+        critDMG_: 2,
+      },
+      // Pipeline already dropped flat/leftover mid liquids for this team.
+      goal_substats: ["eleMas"],
     };
     const keys = exampleRelevantGoodKeys(example, "high");
-    assert.equal(keys.has("eleMas"), true);
-    assert.equal(keys.has("enerRech_"), true);
-    assert.equal(keys.has("atk_"), false);
+    assert.equal(keys.has("eleMas"), true); // main + gainer
+    assert.equal(keys.has("enerRech_"), false); // flat mid→high, not stamped
     assert.equal(keys.has("critDMG_"), false);
+    assert.equal(keys.has("atk_"), false);
+  });
+
+  it("high invest without goal_substats falls back to high liquids", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      key: "RaidenShogun",
+      invest: "high",
+      main_stats: {
+        sands: "atk_",
+        goblet: "electro_dmg_",
+        circlet: "critRate_",
+      },
+      high_substat_rolls: { critDMG_: 12, critRate_: 10 },
+      high_substat_rolls_liquid: { critDMG_: 11, critRate_: 9 },
+    };
+    const keys = exampleRelevantGoodKeys(example, "high");
+    assert.equal(keys.has("atk_"), true);
+    assert.equal(keys.has("electro_dmg_"), true);
+    assert.equal(keys.has("critRate_"), true);
+    assert.equal(keys.has("critDMG_"), true);
   });
 
   it("mid invest keeps mid sheet even when high_substat_rolls is present", () => {

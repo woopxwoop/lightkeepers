@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import {
     allTeamsAbyss,
     allTeamsStygian,
@@ -209,7 +210,10 @@
                     >{CHARACTER_SIM_COST} cost · {formatDps(row.dps)} DPS</span
                   >
                 </span>
-                <a href="/teams/{row.team.team_key}" class="team-hand-link">
+                <a
+                  href={resolve(`/teams/${row.team.team_key}`)}
+                  class="team-hand-link"
+                >
                   View team details →
                 </a>
               </div>

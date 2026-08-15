@@ -35,19 +35,19 @@ export const toolsLinks = [
 export const settingsLinks = [
   {
     label: "Roster",
-    path: resolve("/settings"),
+    path: settingsPath,
     tab: "roster",
     icon: "users" as const,
   },
   {
     label: "Account",
-    path: `${resolve("/settings")}?tab=account`,
+    path: resolve(`/settings?tab=account`),
     tab: "account",
     icon: "cloud" as const,
   },
   {
     label: "Display",
-    path: `${resolve("/settings")}?tab=display`,
+    path: resolve(`/settings?tab=display`),
     tab: "display",
     icon: "monitor" as const,
   },

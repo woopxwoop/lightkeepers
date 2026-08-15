@@ -111,7 +111,13 @@
   );
 
   onMount(() => {
-    if (window.location.hash.startsWith("#kit-")) selectTab("skills");
+    let hash = window.location.hash;
+    try {
+      hash = decodeURIComponent(hash);
+    } catch {
+      // Keep the raw hash when it is not valid URI encoding.
+    }
+    if (hash.startsWith("#kit-")) selectTab("skills");
   });
 </script>
 

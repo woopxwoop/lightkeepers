@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import GameText from "$lib/ui/components/GameText.svelte";
   import Select from "$lib/ui/components/Select.svelte";
   import { elementColor } from "$lib/element-colors";
@@ -59,12 +59,17 @@
     elementColor(skillsKit.element, "var(--foreground-color)"),
   );
 
-  function flashKitTarget(hash: string) {
+  async function flashKitTarget(hash: string) {
     if (!hash.startsWith("#kit-")) return;
     onNeedSkillsTab();
     const id = hash.slice(1);
     // Clear first so re-clicking the same link restarts the animation.
     flashId = null;
+    await tick();
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
     requestAnimationFrame(() => {
       flashId = id;
       if (flashTimer) clearTimeout(flashTimer);

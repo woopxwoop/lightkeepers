@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { page } from "$app/state";
   import {
     abyssPath,
@@ -7,11 +8,16 @@
     settingsLinks,
     settingsPath,
     toolsLinks,
+    toolsPrefixPath,
     type MainLink,
     type ToolsLink,
   } from "$lib/ui/nav-links";
 
-  let { subOpen = $bindable(false) }: { subOpen?: boolean } = $props();
+  let {
+    onSubOpenChange,
+  }: {
+    onSubOpenChange?: (open: boolean) => void;
+  } = $props();
 
   let toolsHovered = $state(false);
   let settingsHovered = $state(false);
@@ -19,7 +25,12 @@
   let settingsLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   $effect(() => {
-    subOpen = toolsHovered || settingsHovered;
+    onSubOpenChange?.(toolsHovered || settingsHovered);
+  });
+
+  onDestroy(() => {
+    if (toolsLeaveTimeout) clearTimeout(toolsLeaveTimeout);
+    if (settingsLeaveTimeout) clearTimeout(settingsLeaveTimeout);
   });
 
   function onToolsEnter() {
@@ -68,6 +79,10 @@
     return isPathActive(page.url.pathname, link.path, link.match);
   }
 
+  const onToolsPage = $derived(
+    isPathActive(page.url.pathname, toolsPrefixPath, "prefix"),
+  );
+
   const onSettingsPage = $derived(
     page.url.pathname.startsWith(settingsPath),
   );
@@ -78,6 +93,8 @@
     <a
       href={abyssPath}
       class="nav-link"
+      aria-expanded={toolsHovered}
+      aria-current={onToolsPage ? "page" : undefined}
       onmouseenter={onToolsEnter}
       onmouseleave={onToolsLeave}
       onfocus={onToolsEnter}
@@ -123,6 +140,7 @@
     <a
       href={settingsPath}
       class="nav-link"
+      aria-expanded={settingsHovered}
       aria-current={onSettingsPage ? "page" : undefined}
       onmouseenter={onSettingsEnter}
       onmouseleave={onSettingsLeave}

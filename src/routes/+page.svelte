@@ -80,7 +80,7 @@
     >
       <IconDiscord size={18} />
       <span>Join the Discord</span>
-      <span class="discord-cta-hint">feedback & updates</span>
+      <span class="discord-cta-hint">support, feedback, & updates</span>
     </a>
   </header>
 
