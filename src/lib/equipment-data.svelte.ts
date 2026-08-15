@@ -15,8 +15,11 @@ import {
   equipmentVersion,
   weaponByKey,
   weaponIconSrc,
+  artifactSetByKey,
   type WeaponData,
+  type ArtifactSetData,
 } from "$lib/equipment-data";
+import { artifactIconUrl } from "$lib/asset-urls";
 
 export type EquipmentData = {
   /** Bumps when the tables finish loading. Read it to take a dependency. */
@@ -67,6 +70,36 @@ export function useWeapon(weaponKey: () => string): WeaponLookup {
     get icon() {
       void equipment.version;
       return weaponIconSrc(weaponKey());
+    },
+  };
+}
+
+export type ArtifactSetLookup = {
+  /** Null until the tables load, and for unknown keys. */
+  readonly set: ArtifactSetData | null;
+  /** Null unless an icon is actually displayable. */
+  readonly icon: string | null;
+};
+
+/**
+ * Resolve an artifact set from a GOOD key, re-reading after the lazy load.
+ * `setKey` is a getter so prop changes stay reactive.
+ */
+export function useArtifactSet(setKey: () => string): ArtifactSetLookup {
+  const equipment = useEquipmentData();
+
+  return {
+    get set() {
+      void equipment.version;
+      const key = setKey();
+      return key ? (artifactSetByKey.get(key) ?? null) : null;
+    },
+    get icon() {
+      void equipment.version;
+      const key = setKey();
+      if (!key) return null;
+      const set = artifactSetByKey.get(key);
+      return set ? artifactIconUrl(set.icon) : null;
     },
   };
 }

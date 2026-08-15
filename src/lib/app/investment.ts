@@ -2,7 +2,7 @@
  * Shared client fetch for `/api/investment`.
  *
  * `/teams`, `/teams/[slug]`, and character sim tabs call `loadInvestment()`.
- * Optional `prefetchInvestment()` is for those routes only — not global bootstrap.
+ * Not part of global bootstrap.
  */
 
 import type { InvestmentFile } from "$lib/types/investment";
@@ -36,11 +36,4 @@ export function loadInvestment(): Promise<InvestmentFile> {
   });
 
   return pending;
-}
-
-/** Fire-and-forget warm-up — swallows errors (page will retry on demand). */
-export function prefetchInvestment(): void {
-  loadInvestment().catch(() => {
-    /* ignore — next loadInvestment() will retry */
-  });
 }

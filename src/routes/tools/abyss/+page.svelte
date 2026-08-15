@@ -19,6 +19,9 @@
     clampSolutionIndex,
     stepSolutionIndex,
     assignmentKeyFor,
+    createMemo,
+    rosterFingerprint,
+    teamsFingerprint,
   } from "$lib/board-solutions";
   import { ownedNameIds } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
@@ -35,6 +38,7 @@
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
+  const memoSolutions = createMemo<ReturnType<typeof solveAbyssWithFallback>>();
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -48,7 +52,7 @@
 
   async function retryStaticBoards() {
     try {
-      await ensureStaticBoards();
+      await ensureStaticBoards({ force: true });
     } catch {
       // staticBoardsError already set
     }
@@ -69,12 +73,17 @@
 
   let solutions = $derived.by(() => {
     if (hasOwnedCharacters && !$teamsOwnedLoaded) return [];
-    void SOLVER_REVISION;
-    return solveAbyssWithFallback(
-      $teamsOwned,
-      $allTeamsAbyss,
-      ownedNameIds($charactersOwned),
-      SOLUTIONS_COUNT,
+    const owned = $charactersOwned;
+    const teams = $teamsOwned;
+    const all = $allTeamsAbyss;
+    const key = [
+      SOLVER_REVISION,
+      rosterFingerprint(owned),
+      teamsFingerprint(teams),
+      teamsFingerprint(all),
+    ].join("|");
+    return memoSolutions(key, () =>
+      solveAbyssWithFallback(teams, all, ownedNameIds(owned), SOLUTIONS_COUNT),
     );
   });
 

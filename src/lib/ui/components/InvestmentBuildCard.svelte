@@ -5,11 +5,7 @@
    */
   import { displayPreferences } from "$lib/stores";
   import { translateStatKey, statIconUrl } from "$lib/utils";
-  import {
-    artifactSetByKey,
-    weaponByKey,
-    equipmentVersion,
-  } from "$lib/equipment-data";
+  import { useWeapon, useArtifactSet } from "$lib/equipment-data.svelte";
   import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
@@ -46,18 +42,13 @@
 
   let iconStyle = $derived($displayPreferences.iconStyle);
 
-  let weapon = $derived.by(() => {
-    $equipmentVersion;
-    return weaponByKey.get(build.weapon.key) ?? null;
-  });
-  let set = $derived.by(() => {
-    $equipmentVersion;
-    return artifactSetByKey.get(build.set.key) ?? null;
-  });
-  let set2 = $derived.by(() => {
-    $equipmentVersion;
-    return build.set2 ? (artifactSetByKey.get(build.set2) ?? null) : null;
-  });
+  const weaponLookup = useWeapon(() => build.weapon.key);
+  const setLookup = useArtifactSet(() => build.set.key);
+  const set2Lookup = useArtifactSet(() => build.set2 ?? "");
+
+  let weapon = $derived(weaponLookup.weapon);
+  let set = $derived(setLookup.set);
+  let set2 = $derived(build.set2 ? set2Lookup.set : null);
   let setCount = $derived(normalizeSetPieceCount(build.set.count) ?? 4);
   let set2Count = $derived(
     build.set2 ? normalizeSetPieceCount(build.set2_count ?? 2) : null,

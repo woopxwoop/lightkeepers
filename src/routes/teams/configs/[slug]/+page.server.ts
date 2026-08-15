@@ -31,7 +31,15 @@ export const load: PageServerLoad = async ({ params }) => {
   if (!match) error(404, `Config "${slug}" not found`);
 
   const { team, sim } = match;
-  const configText = await getSimConfigText(sim.state_key);
+  let configText: string | null = null;
+  try {
+    configText = await getSimConfigText(sim.state_key);
+  } catch (err) {
+    console.warn(
+      `[team-configs] sim config ${sim.state_key} unavailable:`,
+      err,
+    );
+  }
 
   const kitsByKey: Record<string, TeamConfigKitIcons> = {};
   await Promise.all(

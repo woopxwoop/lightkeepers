@@ -76,17 +76,16 @@ async function fetchStaticData(): Promise<StaticPayload> {
     throw error(500, "Failed to fetch Stygian version");
   }
 
-  const latestAbyssVersion: Version = abyssVerRes.data?.[0] ?? {
-    created_at: "",
-    version_name: null,
-    version_number: -1,
-  };
-
-  const latestStygianVersion: StygianVersion = stygianVerRes.data?.[0] ?? {
-    created_at: "",
-    version_name: null,
-    version_number: -1,
-  };
+  const latestAbyssVersion = abyssVerRes.data?.[0];
+  const latestStygianVersion = stygianVerRes.data?.[0];
+  // Empty tables must not become version_number: -1 — that yields empty team
+  // payloads which getOrSet would cache in L1/L2 for 15m.
+  if (!latestAbyssVersion) {
+    throw error(500, "Failed to fetch Abyss version");
+  }
+  if (!latestStygianVersion) {
+    throw error(500, "Failed to fetch Stygian version");
+  }
 
   // Fetch all teams + version enemies in parallel
   const [

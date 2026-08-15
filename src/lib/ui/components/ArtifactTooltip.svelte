@@ -1,11 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import {
-    artifactSetByKey,
-    equipmentVersion,
-    ensureEquipmentData,
-    type ArtifactSetData,
-  } from "$lib/equipment-data";
+  import { useArtifactSet } from "$lib/equipment-data.svelte";
+  import type { ArtifactSetData } from "$lib/equipment-data";
   import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
 
@@ -14,21 +9,16 @@
     set = null,
     pieceCount = null,
   }: {
-    /** GOOD artifact set key — looked up in `artifactSetByKey` when `set` is omitted. */
+    /** GOOD artifact set key — looked up when `set` is omitted. */
     setKey?: string;
     set?: ArtifactSetData | null;
     /** When set, label which piece bonus this recommendation uses (2 or 4). */
     pieceCount?: number | null;
   } = $props();
 
-  onMount(() => {
-    void ensureEquipmentData();
-  });
+  const lookup = useArtifactSet(() => setKey ?? "");
 
-  let resolved = $derived.by(() => {
-    $equipmentVersion;
-    return set ?? (setKey ? (artifactSetByKey.get(setKey) ?? null) : null);
-  });
+  let resolved = $derived(set ?? lookup.set);
 
   let title = $derived(
     resolved

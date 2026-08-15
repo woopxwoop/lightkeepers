@@ -66,20 +66,38 @@ export function pickBaselineSim(team: InvestmentTeam): InvestmentSim | null {
   return [...team.results].sort((a, b) => a.cost - b.cost || b.dps - a.dps)[0];
 }
 
+/**
+ * Concurrent misses share one request. 404/410 cache as null; transport / 5xx
+ * stay uncached (getOrSet would poison L1 on thrown errors — use inflight map).
+ */
+const configInflight = new Map<string, Promise<string | null>>();
+
 export async function getSimConfigText(
   stateKey: string,
 ): Promise<string | null> {
-  return configCache.getOrSet(stateKey, async () => {
-    try {
-      const res = await fetchWithTimeout(getSimConfigUrl(stateKey));
-      if (!res.ok) {
-        configCache.set(stateKey, null);
-        return null;
-      }
-      return await res.text();
-    } catch {
-      configCache.set(stateKey, null);
-      return null;
-    }
+  const cached = configCache.get(stateKey);
+  if (cached !== undefined) return cached;
+
+  const inflight = configInflight.get(stateKey);
+  if (inflight) return inflight;
+
+  const pending = loadSimConfigFromCdn(stateKey).finally(() => {
+    configInflight.delete(stateKey);
   });
+  configInflight.set(stateKey, pending);
+  return pending;
+}
+
+async function loadSimConfigFromCdn(stateKey: string): Promise<string | null> {
+  const res = await fetchWithTimeout(getSimConfigUrl(stateKey));
+  if (res.status === 404 || res.status === 410) {
+    configCache.set(stateKey, null);
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`sim config ${stateKey} unavailable: HTTP ${res.status}`);
+  }
+  const text = await res.text();
+  configCache.set(stateKey, text);
+  return text;
 }

@@ -143,7 +143,9 @@ describe("roster snapshot", () => {
   });
 
   it("diffRostersForSync orders ownership, mixed, then progress with name ties", () => {
-    const progress = (level: number): NonNullable<CharacterOwned["progress"]> => ({
+    const progress = (
+      level: number,
+    ): NonNullable<CharacterOwned["progress"]> => ({
       level,
       ascension: 6,
       constellation: 0,

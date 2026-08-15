@@ -16,6 +16,7 @@
   import WeaponIcon from "$lib/ui/components/WeaponIcon.svelte";
   import WeaponName from "$lib/ui/components/WeaponName.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
+  import ArtifactIcon from "$lib/ui/components/ArtifactIcon.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import PageTrail from "$lib/ui/components/PageTrail.svelte";
@@ -63,12 +64,8 @@
     defaultTravelerElement,
     travelerElementKitId,
   } from "$lib/traveler-kits";
-  import {
-    artifactSetByKey,
-    weaponByKey,
-    equipmentVersion,
-    ensureEquipmentData,
-  } from "$lib/equipment-data";
+  import { weaponByKey, ensureEquipmentData } from "$lib/equipment-data";
+  import { useEquipmentData } from "$lib/equipment-data.svelte";
   import {
     MAIN_STAT_SLOTS,
     buildExamples,
@@ -89,11 +86,7 @@
   import InvestmentBuildCard from "$lib/ui/components/InvestmentBuildCard.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import IconFileSearch from "$lib/ui/icons/IconFileSearch.svelte";
-  import {
-    artifactIconUrl,
-    skillIconUrl,
-    talentIconUrl,
-  } from "$lib/asset-urls";
+  import { skillIconUrl, talentIconUrl } from "$lib/asset-urls";
   import type { CharacterKit } from "$lib/types/character-kit";
   import type { CharacterIndex, InvestmentFile } from "$lib/types/investment";
   import type {
@@ -105,6 +98,7 @@
   import { isStaleBuildSummary } from "$lib/stale-build-summary";
 
   let { data } = $props();
+  const equipment = useEquipmentData();
   let kit = $derived(data.kit as CharacterKit);
   let kitChannel = $derived((data.kitChannel ?? "live") as "live" | "beta");
   let rawBuilds = $derived((data.builds ?? null) as CharacterIndex | null);
@@ -377,7 +371,7 @@
       return;
     }
     try {
-      await ensureStaticBoards();
+      await ensureStaticBoards({ force: true });
     } catch {
       /* staticBoardsError store already set */
     }
@@ -534,7 +528,7 @@
 
   /** Weapons: rarity → BT strength → teams → measured sigs → name. */
   let rankedWeapons = $derived.by(() => {
-    $equipmentVersion;
+    void equipment.version;
     return rankWeaponsByRarityAndTeams(
       builds?.weapons,
       (key) => weaponByKey.get(key)?.stars ?? 0,
@@ -1262,40 +1256,24 @@
                 {#if !builds.sets?.length}
                   <p class="muted-note">No set data yet.</p>
                 {:else}
-                  {#key $equipmentVersion}
-                    <div class="equip-grid">
-                      {#each builds.sets as s}
-                        {@const set = artifactSetByKey.get(s.key)}
-                        {@const icon = set ? artifactIconUrl(set.icon) : null}
-                        <div class="equip-tile relative group">
-                          <div class="equip-icon-wrap">
-                            {#if icon}
-                              <img
-                                src={icon}
-                                alt={set?.name ?? s.key}
-                                class="equip-icon"
-                                loading="lazy"
-                              />
-                            {:else}
-                              <div class="equip-fallback">{s.key}</div>
-                            {/if}
-                            {#if s.count}
-                              <div class="piece-badge">
-                                <span style="color: {elColor};"
-                                  >{s.count}pc</span
-                                >
-                              </div>
-                            {/if}
-                          </div>
-                          <ArtifactTooltip
-                            {set}
-                            setKey={s.key}
-                            pieceCount={s.count ?? null}
-                          />
+                  <div class="equip-grid">
+                    {#each builds.sets as s}
+                      <div class="equip-tile relative group">
+                        <div class="equip-icon-wrap">
+                          <ArtifactIcon setKey={s.key} class="equip-icon" />
+                          {#if s.count}
+                            <div class="piece-badge">
+                              <span style="color: {elColor};">{s.count}pc</span>
+                            </div>
+                          {/if}
                         </div>
-                      {/each}
-                    </div>
-                  {/key}
+                        <ArtifactTooltip
+                          setKey={s.key}
+                          pieceCount={s.count ?? null}
+                        />
+                      </div>
+                    {/each}
+                  </div>
                 {/if}
               </section>
 
@@ -2581,23 +2559,11 @@
     position: relative;
   }
 
-  .equip-icon {
+  .equip-icon-wrap :global(.equip-icon) {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  .equip-fallback {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    padding: 0.25rem;
-    text-align: center;
-    font-size: 0.65rem;
-    color: var(--foreground-mid);
   }
 
   .piece-badge {

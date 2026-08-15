@@ -30,6 +30,9 @@
     clampSolutionIndex,
     stepSolutionIndex,
     assignmentKeyFor,
+    createMemo,
+    rosterFingerprint,
+    teamsFingerprint,
   } from "$lib/board-solutions";
   import { ownedNameIds, getEnemyAsset } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
@@ -76,6 +79,11 @@
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
   const CLEAR_VIDEOS_PAGE = 5;
+  type SolutionsResult = {
+    solutions: ReturnType<typeof solveStygianWithFallback>;
+    mode: StygianSolverMode | "hybrid" | "yshelper";
+  };
+  const memoSolutions = createMemo<SolutionsResult>();
 
   let {
     mapping,
@@ -129,7 +137,7 @@
 
   async function retryStaticBoards() {
     try {
-      await ensureStaticBoards();
+      await ensureStaticBoards({ force: true });
     } catch {
       // staticBoardsError already set
     }
@@ -211,8 +219,10 @@
     if (needsOwnedTeams && hasOwnedCharacters && !$teamsOwnedLoaded) {
       return { solutions: [], mode: solverMode };
     }
-    void SOLVER_REVISION;
 
+    const owned = $charactersOwned;
+    const teams = $teamsOwnedStygian;
+    const all = $allTeamsStygian;
     const topId = enemies?.top?.id;
     const middleId = enemies?.middle?.id;
     const bottomId = enemies?.bottom?.id;
@@ -221,52 +231,78 @@
         ? { top: topId, middle: middleId, bottom: bottomId }
         : null;
 
-    if (solverMode === "hybrid") {
-      if (!slotEnemies || cheapClearsRows === null) {
-        return { solutions: [], mode: "hybrid" as const };
+    const cheapKey =
+      cheapClearsRows === null
+        ? "null"
+        : `${cheapClearsRows.length}:${hashCheapClears(cheapClearsRows)}`;
+    const key = [
+      SOLVER_REVISION,
+      solverMode,
+      String(maxCost),
+      rosterFingerprint(owned),
+      teamsFingerprint(teams),
+      teamsFingerprint(all),
+      slotEnemies
+        ? `${slotEnemies.top}:${slotEnemies.middle}:${slotEnemies.bottom}`
+        : "none",
+      cheapKey,
+    ].join("|");
+
+    return memoSolutions(key, () => {
+      if (solverMode === "hybrid") {
+        if (!slotEnemies || cheapClearsRows === null) {
+          return { solutions: [], mode: "hybrid" as const };
+        }
+        const c0r0Pairs = c0r0ClearPairKeys(cheapClearsRows, mapping);
+        return {
+          solutions: solveStygianHybrid(
+            teams,
+            all,
+            ownedNameIds(owned),
+            slotEnemies,
+            c0r0Pairs,
+            SOLUTIONS_COUNT,
+          ),
+          mode: "hybrid" as const,
+        };
       }
-      const c0r0Pairs = c0r0ClearPairKeys(cheapClearsRows, mapping);
+
+      if (videoClearsMode && cheapClearsRows && slotEnemies) {
+        return {
+          solutions: solveStygianCheapClears(
+            cheapClearsRows,
+            slotEnemies,
+            SOLUTIONS_COUNT,
+            mapping,
+            solverMode === "video-c0r0",
+            maxCost,
+          ),
+          mode: solverMode,
+        };
+      }
+
+      if (videoClearsMode) {
+        return { solutions: [], mode: solverMode };
+      }
+
       return {
-        solutions: solveStygianHybrid(
-          $teamsOwnedStygian,
-          $allTeamsStygian,
-          ownedNameIds($charactersOwned),
-          slotEnemies,
-          c0r0Pairs,
+        solutions: solveStygianWithFallback(
+          teams,
+          all,
+          ownedNameIds(owned),
           SOLUTIONS_COUNT,
         ),
-        mode: "hybrid" as const,
+        mode: "yshelper" as const,
       };
-    }
-
-    if (videoClearsMode && cheapClearsRows && slotEnemies) {
-      return {
-        solutions: solveStygianCheapClears(
-          cheapClearsRows,
-          slotEnemies,
-          SOLUTIONS_COUNT,
-          mapping,
-          solverMode === "video-c0r0",
-          maxCost,
-        ),
-        mode: solverMode,
-      };
-    }
-
-    if (videoClearsMode) {
-      return { solutions: [], mode: solverMode };
-    }
-
-    return {
-      solutions: solveStygianWithFallback(
-        $teamsOwnedStygian,
-        $allTeamsStygian,
-        ownedNameIds($charactersOwned),
-        SOLUTIONS_COUNT,
-      ),
-      mode: "yshelper" as const,
-    };
+    });
   });
+
+  function hashCheapClears(rows: StygianCheapClearRow[]): string {
+    if (rows.length === 0) return "0";
+    const first = rows[0]?.team_key ?? "";
+    const last = rows[rows.length - 1]?.team_key ?? "";
+    return `${first}:${last}`;
+  }
 
   let solutions = $derived(solutionsResult.solutions);
   let showingVideoClears = $derived(videoClearsMode);

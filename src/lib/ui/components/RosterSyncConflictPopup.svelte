@@ -132,10 +132,7 @@
     (bits?.weapon?.refinement ?? null) !== (other?.weapon?.refinement ?? null)}
   <div class="diff-cell-stack">
     {#if args.ownedChanged}
-      <span
-        class="own-chip own-chip-changed"
-        class:own-chip-yes={args.owned}
-      >
+      <span class="own-chip own-chip-changed" class:own-chip-yes={args.owned}>
         {args.owned ? "Owned" : "Not owned"}
       </span>
     {/if}

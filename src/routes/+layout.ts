@@ -1,9 +1,9 @@
 /**
  * +layout.ts
  *
- * Thin pass-through — the heavy lifting moved to +layout.server.ts.
- * This file keeps the `mapping` serialization that the client needs
- * (Maps don't survive JSON serialization, so we rebuild it here).
+ * Rebuilds the name_id → character Map from the characters array (Maps do not
+ * survive JSON serialization). Server ships characters once — no duplicate
+ * `mapping` payload.
  */
 
 import type { LayoutLoad } from "./$types";
@@ -12,17 +12,15 @@ import type { Tables } from "$lib/types/database.types";
 type Character = Tables<"characters">;
 
 export const load: LayoutLoad = ({ data }) => {
-  // Rebuild the Map from the plain object the server sends.
-  // SvelteKit serializes Map → plain object on the wire; we restore it here.
-  const mapping = new Map<string, Character>(
-    data.mapping instanceof Map
-      ? data.mapping
-      : Object.entries(data.mapping ?? {}),
-  );
+  const characters = data.characters as Character[];
+  const mapping = new Map<string, Character>();
+  for (const c of characters) {
+    mapping.set(c.name_id, c);
+  }
 
   return {
     mapping,
-    characters: data.characters as Character[],
+    characters,
     abyssVersionNumber: data.abyssVersionNumber as number,
     stygianVersionNumber: data.stygianVersionNumber as number,
     latestPatchNote: data.latestPatchNote,

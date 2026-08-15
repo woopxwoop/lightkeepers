@@ -11,8 +11,8 @@
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
-    equipmentVersion,
   } from "$lib/equipment-data";
+  import { useEquipmentData } from "$lib/equipment-data.svelte";
   import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
   import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
   import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
@@ -41,6 +41,7 @@
   } from "$lib/types/investment";
 
   let { data: layoutData } = $props();
+  const equipment = useEquipmentData();
 
   let investment = $state<InvestmentFile | null>(getInvestmentCached());
   let loading = $derived(investment === null);
@@ -97,7 +98,7 @@
   }
 
   let simDiffLabel = $derived.by(() => {
-    $equipmentVersion;
+    void equipment.version;
     const names = characterNames;
     return (sim: InvestmentSim): string => {
       if (sim.kind === "baseline") return "Baseline";

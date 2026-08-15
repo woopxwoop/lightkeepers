@@ -41,6 +41,11 @@ function createVersionDomain(
       const versions = await load();
       return versions.includes(version);
     },
+    async latest(): Promise<number | null> {
+      const versions = await load();
+      if (versions.length === 0) return null;
+      return Math.max(...versions);
+    },
   };
 }
 
@@ -64,6 +69,16 @@ export async function isSupportedStygianVersion(
   version: number,
 ): Promise<boolean> {
   return stygianVersions.isSupported(version);
+}
+
+/** Latest Abyss version_number, or null when the table is empty. */
+export async function getLatestAbyssVersionNumber(): Promise<number | null> {
+  return abyssVersions.latest();
+}
+
+/** Latest Stygian version_number, or null when the table is empty. */
+export async function getLatestStygianVersionNumber(): Promise<number | null> {
+  return stygianVersions.latest();
 }
 
 /**
