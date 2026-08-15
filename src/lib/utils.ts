@@ -448,15 +448,15 @@ export function translateStatKey(key: string): string {
 }
 
 /**
- * Lunaris attribute / element icon stems (mirrored to `genshin/ui/{stem}.webp`
- * by `scripts/sync/stat-icons-r2.ts`). GOOD percent variants share the flat glyph.
+ * Lunaris attribute / element icon stems (mirrored to `genshin/ui/{stem}.webp`).
+ * Flat HP/ATK/DEF use `*_base`; percent variants use the bare stem (glyph with %).
  */
 const STAT_ICON_STEM: Record<string, string> = {
-  hp: "hp",
+  hp: "hp_base",
   hp_: "hp",
-  atk: "atk",
+  atk: "atk_base",
   atk_: "atk",
-  def: "def",
+  def: "def_base",
   def_: "def",
   critRate_: "critrate",
   critDMG_: "critdmg",

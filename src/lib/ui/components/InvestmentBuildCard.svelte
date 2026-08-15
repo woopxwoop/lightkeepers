@@ -4,7 +4,7 @@
    * Shared by team-config pages and character build examples.
    */
   import { displayPreferences } from "$lib/stores";
-  import { translateStatKey, statIconUrl } from "$lib/utils";
+  import { translateStatKey, statIconUrl, artifactSlotIconUrl } from "$lib/utils";
   import { useWeapon, useArtifactSet } from "$lib/equipment-data.svelte";
   import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
@@ -17,7 +17,7 @@
     formatSheetStat,
     type SheetStatBag,
   } from "$lib/build-stats";
-  import { normalizeSetPieceCount } from "$lib/character-builds";
+  import { MAIN_STAT_SLOTS, normalizeSetPieceCount } from "$lib/character-builds";
   import type { CharacterBuild } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
   import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
@@ -117,6 +117,25 @@
       return rows.filter((row) => row.key !== "heal");
     }
     return rows.filter((row) => sheetRowIsRelevant(row.key, rel));
+  });
+
+  let mainStatRows = $derived.by(() => {
+    const mains = build.main_stats;
+    if (!mains) return [];
+    return MAIN_STAT_SLOTS.flatMap((slot) => {
+      const key = mains[slot.key];
+      if (typeof key !== "string" || !key) return [];
+      return [
+        {
+          slot: slot.key,
+          slotLabel: slot.label,
+          key,
+          label: translateStatKey(key),
+          slotIcon: artifactSlotIconUrl(slot.key),
+          statIcon: statIconUrl(key),
+        },
+      ];
+    });
   });
 
   type TalentRow = {
@@ -251,6 +270,30 @@
           />
         </div>
       </div>
+
+      {#if mainStatRows.length > 0}
+        <ul class="main-stats" aria-label="Artifact main stats">
+          {#each mainStatRows as row (row.slot)}
+            <li class="main-stat">
+              <img
+                src={row.slotIcon}
+                alt=""
+                class="main-stat-slot"
+                loading="lazy"
+              />
+              {#if row.statIcon}
+                <img
+                  src={row.statIcon}
+                  alt=""
+                  class="main-stat-icon"
+                  loading="lazy"
+                />
+              {/if}
+              <span class="main-stat-label">{row.label}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
 
       {#if sheet}
         <div class="stat-list">
@@ -450,6 +493,39 @@
     position: relative;
     padding-bottom: 0.5rem;
     border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .main-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .main-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    font-size: 0.72rem;
+    color: var(--foreground-mid);
+  }
+
+  .main-stat-slot,
+  .main-stat-icon {
+    width: 1rem;
+    height: 1rem;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .main-stat-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .equip-trigger {

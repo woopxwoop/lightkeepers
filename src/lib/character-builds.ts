@@ -113,7 +113,9 @@ export function recommendedSubstatsFromBuilds(
   const high = builds.high_substat_rolls_liquid;
   const liquid = builds.substat_rolls_liquid;
   const ranked = liquid?.ranked ?? [];
-  const guideAuthoredSubs = (liquid?.teams ?? 0) <= 0;
+  // Guide merges stamp mid ranks with teams=0; only take that path when ranks exist.
+  // Empty/missing liquid must not block checklist delta_stats.
+  const guideAuthoredSubs = (liquid?.teams ?? 0) <= 0 && ranked.length > 0;
   const negligible = rec?.mode === "checklist";
 
   if (guideAuthoredSubs) {

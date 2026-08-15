@@ -403,7 +403,7 @@
                     {roll.mean.toFixed(1)}
                     {roll.isDelta
                       ? "avg mid→high liquid"
-                      : builds.high_substat_rolls_liquid?.teams
+                      : builds.high_substat_rolls_liquid?.teams != null
                         ? "avg high liquid"
                         : "avg liquid rolls"} · {teams} team{teams === 1
                       ? ""

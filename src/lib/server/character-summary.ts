@@ -34,7 +34,33 @@ export function isSummaryTombstone(
 }
 
 function asStatRanks(value: unknown): CharacterStatRank[] {
-  return Array.isArray(value) ? (value as CharacterStatRank[]) : [];
+  if (!Array.isArray(value)) return [];
+  const out: CharacterStatRank[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") continue;
+    const key = (entry as { key?: unknown }).key;
+    const teams = (entry as { teams?: unknown }).teams;
+    if (typeof key !== "string" || !key) continue;
+    if (typeof teams !== "number" || !Number.isFinite(teams)) continue;
+    out.push({ key, teams });
+  }
+  return out;
+}
+
+function asLiquidRanks(
+  value: unknown,
+): CharacterLiquidSubstats["ranked"] {
+  if (!Array.isArray(value)) return [];
+  const out: CharacterLiquidSubstats["ranked"] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") continue;
+    const key = (entry as { key?: unknown }).key;
+    const mean = (entry as { mean?: unknown }).mean;
+    if (typeof key !== "string" || !key) continue;
+    if (typeof mean !== "number" || !Number.isFinite(mean)) continue;
+    out.push({ key, mean });
+  }
+  return out;
 }
 
 /** Fill missing legacy main_stats / liquid shapes so Builds UI can iterate safely. */
@@ -70,7 +96,7 @@ export function normalizeCharacterSummary(
           : 0,
       mean:
         liquid.mean && typeof liquid.mean === "object" ? liquid.mean : {},
-      ranked: Array.isArray(liquid.ranked) ? liquid.ranked : [],
+      ranked: asLiquidRanks(liquid.ranked),
     };
   }
 

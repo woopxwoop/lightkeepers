@@ -210,6 +210,75 @@ describe("recommendedSubstatsFromBuilds", () => {
       ["critDMG_", "critRate_", "def_", "eleMas", "enerRech_"],
     );
   });
+
+  it("uses checklist deltas when liquid is absent", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "enerRech_", teams: 1 }],
+          goblet: [{ key: "hydro_dmg_", teams: 1 }],
+          circlet: [{ key: "critRate_", teams: 1 }],
+        },
+        substat_rolls_liquid: undefined as unknown as CharacterIndex["substat_rolls_liquid"],
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [
+            { key: "enerRech_", mean_delta: 2.5, teams_positive: 1 },
+            { key: "critRate_", mean_delta: 1.5, teams_positive: 1 },
+          ],
+          enerRech_if_burst: true,
+          critRate_if_fav: true,
+          teams: 1,
+          burst_teams: 1,
+          fav_teams: 1,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => [r.key, r.mean, r.isDelta]),
+      [
+        ["enerRech_", 2.5, true],
+        ["critRate_", 1.5, true],
+      ],
+    );
+  });
+
+  it("uses checklist deltas when liquid ranked is empty", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "enerRech_", teams: 1 }],
+          goblet: [{ key: "hydro_dmg_", teams: 1 }],
+          circlet: [{ key: "critRate_", teams: 1 }],
+        },
+        substat_rolls_liquid: {
+          teams: 0,
+          configs: 0,
+          mean: {},
+          ranked: [],
+        },
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [
+            { key: "enerRech_", mean_delta: 4, teams_positive: 2 },
+            { key: "atk_", mean_delta: 0, teams_positive: 0 },
+          ],
+          enerRech_if_burst: true,
+          critRate_if_fav: false,
+          teams: 2,
+          burst_teams: 2,
+          fav_teams: 0,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => [r.key, r.mean, r.isDelta]),
+      [
+        ["enerRech_", 4, true],
+        ["critRate_", 0, false],
+      ],
+    );
+  });
 });
 
 describe("rankWeaponsByRarityAndTeams", () => {

@@ -70,4 +70,42 @@ describe("liveCharacterSummary", () => {
     assert.deepEqual(live.main_stats.goblet, []);
     assert.deepEqual(live.main_stats.circlet, []);
   });
+
+  it("drops null and malformed main_stats / liquid ranked entries", () => {
+    const dirty = summary({
+      main_stats: {
+        sands: [
+          null,
+          { key: "hp_", teams: 2 },
+          { key: "", teams: 1 },
+          { key: "atk_", teams: Number.NaN },
+          { teams: 3 },
+          "junk",
+        ],
+        goblet: [{ key: "hydro_dmg_", teams: 1 }],
+        circlet: [],
+      } as unknown as CharacterIndex["main_stats"],
+      substat_rolls_liquid: {
+        teams: 1,
+        configs: 1,
+        mean: {},
+        ranked: [
+          null,
+          { key: "critDMG_", mean: 4 },
+          { key: "atk_", mean: Number.POSITIVE_INFINITY },
+          { key: "", mean: 1 },
+          { mean: 2 },
+        ],
+      } as unknown as CharacterIndex["substat_rolls_liquid"],
+    });
+    const live = liveCharacterSummary(dirty);
+    assert.ok(live);
+    assert.deepEqual(live.main_stats.sands, [{ key: "hp_", teams: 2 }]);
+    assert.deepEqual(live.main_stats.goblet, [
+      { key: "hydro_dmg_", teams: 1 },
+    ]);
+    assert.deepEqual(live.substat_rolls_liquid.ranked, [
+      { key: "critDMG_", mean: 4 },
+    ]);
+  });
 });
