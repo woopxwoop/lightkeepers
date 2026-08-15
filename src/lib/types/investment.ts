@@ -339,7 +339,8 @@ export interface CharacterArtifactImportance {
 
 /**
  * Derived farm targets: mid→high liquid movers, plus conditional ER/Fav overlays.
- * `checklist` mode (negligible artifact impact) omits delta_stats.
+ * ``checklist`` mode (negligible artifact impact) still stamps ``delta_stats``
+ * for Recommended substats; report tables only show the ER/Fav overlays.
  */
 export interface CharacterStatRecommendations {
   mode: "delta" | "checklist";

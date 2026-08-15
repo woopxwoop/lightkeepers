@@ -49,7 +49,7 @@
   );
 
   const onSettingsPage = $derived(
-    page.url.pathname.startsWith(settingsPath),
+    isPathActive(page.url.pathname, settingsPath, "prefix"),
   );
 
   $effect(() => {

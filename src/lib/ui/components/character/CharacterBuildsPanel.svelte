@@ -324,11 +324,11 @@
               />
               {slot.label}
             </h3>
-            {#if builds.main_stats[slot.key].length === 0}
+            {#if (builds.main_stats?.[slot.key] ?? []).length === 0}
               <p class="muted-note">—</p>
             {:else}
               <ul class="stat-list">
-                {#each builds.main_stats[slot.key] as stat}
+                {#each builds.main_stats?.[slot.key] ?? [] as stat}
                   {@const icon = statIconUrl(stat.key)}
                   <li class="main-stat-item">
                     <span class="flex items-center gap-1.5 min-w-0">
@@ -390,17 +390,22 @@
                   </div>
                 {/if}
                 {#if roll.mean > 0}
-                  {@const teams = roll.fromHigh
-                    ? (builds.high_substat_rolls_liquid?.teams ??
-                      builds.substat_rolls_liquid.teams)
-                    : builds.substat_rolls_liquid.teams}
+                  {@const teams = roll.isDelta
+                    ? (builds.stat_recommendations?.teams ??
+                      builds.substat_rolls_liquid?.teams ??
+                      0)
+                    : (builds.high_substat_rolls_liquid?.teams ??
+                      builds.substat_rolls_liquid?.teams ??
+                      0)}
                   <div
                     class="tip-detail-text tip-detail-text--small mt-1 opacity-85"
                   >
                     {roll.mean.toFixed(1)}
-                    {roll.fromHigh
-                      ? "avg high liquid"
-                      : "avg liquid rolls"} · {teams} team{teams === 1
+                    {roll.isDelta
+                      ? "avg mid→high liquid"
+                      : builds.high_substat_rolls_liquid?.teams
+                        ? "avg high liquid"
+                        : "avg liquid rolls"} · {teams} team{teams === 1
                       ? ""
                       : "s"}
                   </div>

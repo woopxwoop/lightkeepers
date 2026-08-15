@@ -57,12 +57,12 @@ export const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
 
 export type RecommendedSubstat = {
   key: string;
-  /** Mean high OptimFull liquid (or mid/guide fallback); 0 for main-only chips. */
+  /** High liquid mean, mid→high delta, or 0 for main-only chips. */
   mean: number;
   matchesMain: boolean;
   mainSlots: string[];
-  /** True when ``mean`` is from high OptimFull liquid allocations. */
-  fromHigh: boolean;
+  /** True when ``mean`` is a mid→high OptimFull allocation delta. */
+  isDelta: boolean;
 };
 
 function mainSlotsBySubstatKey(
@@ -70,7 +70,7 @@ function mainSlotsBySubstatKey(
 ): Map<string, string[]> {
   const mainSlots = new Map<string, string[]>();
   for (const slot of MAIN_STAT_SLOTS) {
-    for (const s of builds.main_stats[slot.key]) {
+    for (const s of builds.main_stats?.[slot.key] ?? []) {
       if (!isArtifactSubstatKey(s.key)) continue;
       const list = mainSlots.get(s.key) ?? [];
       list.push(slot.label);
@@ -91,12 +91,14 @@ function sortRecommendedSubstats(
 }
 
 /**
- * Recommended substats from pipeline high OptimFull liquid allocations
- * (``high_substat_rolls_liquid``), plus any recommended main that can also
- * roll as a substat. Main-only keys (elemental DMG, heal, etc.) stay excluded.
+ * Recommended substats:
+ * - Non-negligible: absolute high OptimFull liquids
+ *   (``high_substat_rolls_liquid``)
+ * - Negligible (``stat_recommendations.mode === "checklist"``): mid→high
+ *   liquid movers only (``delta_stats`` — same rule as Stat-goal
+ *   ``goal_substats``)
+ * - Plus mains that can also roll as substats
  *
- * Negligible artifact impact (``stat_recommendations.mode === "checklist"``)
- * keeps mains only — high leftovers on supports are not farm targets.
  * Guide merges may fill mid ``ranked`` with mean 0 when there are no measured
  * teams — keep those editorial ranks. Older CDN rows fall back to mid liquid
  * ranks above the 0.5 noise floor.
@@ -109,42 +111,77 @@ export function recommendedSubstatsFromBuilds(
   const byKey = new Map<string, RecommendedSubstat>();
   const rec = builds.stat_recommendations;
   const high = builds.high_substat_rolls_liquid;
-  const guideAuthoredSubs = builds.substat_rolls_liquid.teams <= 0;
-  const checklistOnly = rec?.mode === "checklist";
+  const liquid = builds.substat_rolls_liquid;
+  const ranked = liquid?.ranked ?? [];
+  const guideAuthoredSubs = (liquid?.teams ?? 0) <= 0;
+  const negligible = rec?.mode === "checklist";
 
-  const pushRanked = (
-    ranked: ReadonlyArray<{ key: string; mean: number }>,
-    opts: { fromHigh: boolean; keepZero: boolean },
-  ) => {
+  if (guideAuthoredSubs) {
     for (const r of ranked) {
       if (!isArtifactSubstatKey(r.key)) continue;
-      if (!opts.keepZero && r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
       const slots = mainSlots.get(r.key) ?? [];
       byKey.set(r.key, {
         key: r.key,
         mean: r.mean,
         matchesMain: slots.length > 0,
         mainSlots: slots,
-        fromHigh: opts.fromHigh,
+        isDelta: false,
       });
     }
-  };
-
-  if (guideAuthoredSubs) {
-    pushRanked(builds.substat_rolls_liquid.ranked, {
-      fromHigh: false,
-      keepZero: true,
-    });
-  } else if (!checklistOnly && high && high.teams > 0) {
-    pushRanked(high.ranked, { fromHigh: true, keepZero: false });
-  } else if (!checklistOnly) {
-    // Pre-high-liquid CDN, or high stub missing: mid OptimFull ranks.
-    pushRanked(builds.substat_rolls_liquid.ranked, {
-      fromHigh: false,
-      keepZero: false,
-    });
+  } else if (negligible && rec) {
+    for (const row of rec.delta_stats) {
+      if (!isArtifactSubstatKey(row.key)) continue;
+      if (!(row.mean_delta > 0)) continue;
+      const slots = mainSlots.get(row.key) ?? [];
+      byKey.set(row.key, {
+        key: row.key,
+        mean: row.mean_delta,
+        matchesMain: slots.length > 0,
+        mainSlots: slots,
+        isDelta: true,
+      });
+    }
+  } else if (high && high.teams > 0) {
+    for (const r of high.ranked) {
+      if (!isArtifactSubstatKey(r.key)) continue;
+      if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
+      const slots = mainSlots.get(r.key) ?? [];
+      byKey.set(r.key, {
+        key: r.key,
+        mean: r.mean,
+        matchesMain: slots.length > 0,
+        mainSlots: slots,
+        isDelta: false,
+      });
+    }
+  } else if (rec?.mode === "delta") {
+    // High liquid missing (older CDN): fall back to stamped deltas.
+    for (const row of rec.delta_stats) {
+      if (!isArtifactSubstatKey(row.key)) continue;
+      if (!(row.mean_delta > 0)) continue;
+      const slots = mainSlots.get(row.key) ?? [];
+      byKey.set(row.key, {
+        key: row.key,
+        mean: row.mean_delta,
+        matchesMain: slots.length > 0,
+        mainSlots: slots,
+        isDelta: true,
+      });
+    }
+  } else {
+    for (const r of ranked) {
+      if (!isArtifactSubstatKey(r.key)) continue;
+      if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
+      const slots = mainSlots.get(r.key) ?? [];
+      byKey.set(r.key, {
+        key: r.key,
+        mean: r.mean,
+        matchesMain: slots.length > 0,
+        mainSlots: slots,
+        isDelta: false,
+      });
+    }
   }
-  // checklist (measured negligible): mains only.
 
   for (const [key, slots] of mainSlots) {
     if (byKey.has(key)) continue;
@@ -153,7 +190,7 @@ export function recommendedSubstatsFromBuilds(
       mean: 0,
       matchesMain: true,
       mainSlots: slots,
-      fromHigh: false,
+      isDelta: false,
     });
   }
 

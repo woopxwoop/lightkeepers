@@ -44,7 +44,7 @@ function builds(
 }
 
 describe("recommendedSubstatsFromBuilds", () => {
-  it("uses high OptimFull liquid allocations plus mains that can roll as subs", () => {
+  it("non-negligible uses absolute high OptimFull liquids plus mains", () => {
     const result = recommendedSubstatsFromBuilds(
       builds({
         main_stats: {
@@ -85,16 +85,16 @@ describe("recommendedSubstatsFromBuilds", () => {
       }),
     );
     assert.deepEqual(
-      result.map((r) => [r.key, r.matchesMain, r.mean, r.fromHigh]),
+      result.map((r) => [r.key, r.matchesMain, r.mean, r.isDelta]),
       [
-        ["eleMas", true, 9.2, true],
+        ["eleMas", true, 9.2, false],
         ["critRate_", true, 0, false],
-        ["critDMG_", false, 12.4, true],
+        ["critDMG_", false, 12.4, false],
       ],
     );
   });
 
-  it("checklist mode keeps mains only (no mid leftover liquids)", () => {
+  it("negligible uses mid→high deltas plus mains (not flat high leftovers)", () => {
     const result = recommendedSubstatsFromBuilds(
       builds({
         main_stats: {
@@ -116,13 +116,17 @@ describe("recommendedSubstatsFromBuilds", () => {
           configs: 3,
           mean: {},
           ranked: [
-            { key: "critDMG_", mean: 10 },
+            { key: "enerRech_", mean: 11 },
+            { key: "critRate_", mean: 6 },
             { key: "atk_", mean: 8 },
           ],
         },
         stat_recommendations: {
           mode: "checklist",
-          delta_stats: [],
+          delta_stats: [
+            { key: "enerRech_", mean_delta: 3.5, teams_positive: 2 },
+            { key: "critRate_", mean_delta: 2.0, teams_positive: 2 },
+          ],
           enerRech_if_burst: true,
           critRate_if_fav: true,
           teams: 3,
@@ -132,12 +136,15 @@ describe("recommendedSubstatsFromBuilds", () => {
       }),
     );
     assert.deepEqual(
-      result.map((r) => r.key),
-      ["critRate_", "enerRech_"],
+      result.map((r) => [r.key, r.mean, r.isDelta]),
+      [
+        ["enerRech_", 3.5, true],
+        ["critRate_", 2.0, true],
+      ],
     );
   });
 
-  it("falls back to mid liquid ranks when high_substat_rolls_liquid is missing", () => {
+  it("falls back to mid liquid ranks when high and recommendations are missing", () => {
     const result = recommendedSubstatsFromBuilds(
       builds({
         main_stats: {
@@ -195,12 +202,6 @@ describe("recommendedSubstatsFromBuilds", () => {
           teams: 0,
           burst_teams: 0,
           fav_teams: 0,
-        },
-        high_substat_rolls_liquid: {
-          teams: 0,
-          configs: 0,
-          mean: {},
-          ranked: [],
         },
       }),
     );
