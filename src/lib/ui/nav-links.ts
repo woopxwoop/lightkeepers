@@ -15,7 +15,7 @@ export const toolsLinks = [
   {
     label: "Abyss",
     path: abyssPath,
-    match: "exact" as const,
+    match: "prefix" as const,
     preload: "hover" as const,
   },
   {

@@ -15,6 +15,7 @@
     setDisplayPreferences,
     stygianVersionNumber,
     abyssVersionNumber,
+    hasSavedRoster,
   } from "$lib/stores";
   import { stygianSlotLabel } from "$lib/slotLabels";
   import {
@@ -70,6 +71,8 @@
     floorTeamCost,
   } from "$lib/team-cost";
   import { resolve } from "$app/paths";
+  import { settingsPath } from "$lib/ui/nav-links";
+  import { authClient } from "$lib/auth-client";
   import {
     ensureClearVideos,
     getClearVideosCached,
@@ -154,6 +157,10 @@
   let hasOwnedCharacters = $derived(
     $charactersOwned.some((character) => character.isOwned),
   );
+
+  const session = authClient.useSession();
+  /** Same gate as the home-page “configure roster first” card. */
+  let showRosterSetup = $derived(!$hasSavedRoster && !$session.data);
 
   $effect(() => {
     if (!needsCheapClears) {
@@ -566,9 +573,14 @@
         <div class="panel-empty">
           <p>No team available for this field</p>
         </div>
-      {:else}
+      {:else if showRosterSetup}
         <div class="panel-empty">
           <p>Set up your roster in Settings</p>
+          <a class="panel-roster-cta" href={settingsPath}>Configure roster</a>
+        </div>
+      {:else}
+        <div class="panel-empty">
+          <p>No team available for this field</p>
         </div>
       {/if}
     </div>
@@ -581,6 +593,14 @@
   <EmptyState message="Could not load Stygian teams right now.">
     {#snippet action()}
       <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+    {/snippet}
+  </EmptyState>
+{:else if showRosterSetup}
+  <EmptyState
+    message="Set up your roster to find Stygian clears that match what you own."
+  >
+    {#snippet action()}
+      <a class="pulls-cta" href={settingsPath}>Configure roster</a>
     {/snippet}
   </EmptyState>
 {:else}
@@ -1013,11 +1033,23 @@
 
   .panel-empty {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.45rem;
     padding: 2rem 0;
     font-size: var(--text-xs);
     color: var(--foreground-mid);
+  }
+
+  .panel-roster-cta {
+    color: var(--foreground-mid);
+    text-decoration: none;
+  }
+
+  .panel-roster-cta:hover {
+    color: var(--accent-1);
+    text-decoration: underline;
   }
 
   .fallback-note {

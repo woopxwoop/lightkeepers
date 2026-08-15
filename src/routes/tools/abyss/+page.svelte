@@ -10,6 +10,7 @@
     teamsOwnedLoaded,
     ensureTeamsOwned,
     ensureStaticBoards,
+    hasSavedRoster,
   } from "$lib/stores";
   import { solveAbyssWithFallback, SOLVER_REVISION } from "$lib/solver";
   import {
@@ -35,6 +36,8 @@
   import { getEnemyAsset } from "$lib/utils";
   import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
   import { resolve } from "$app/paths";
+  import { settingsPath } from "$lib/ui/nav-links";
+  import { authClient } from "$lib/auth-client";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -43,6 +46,10 @@
   let { data } = $props();
   let mapping = $derived(data.mapping);
   let abyssEnemies = $derived($abyssEnemiesBoard);
+  const session = authClient.useSession();
+
+  /** Same gate as the home-page “configure roster first” card. */
+  let showRosterSetup = $derived(!$hasSavedRoster && !$session.data);
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
   $effect(() => {
@@ -203,9 +210,14 @@
         <div class="panel-empty">
           <p>No team available for this side</p>
         </div>
-      {:else}
+      {:else if showRosterSetup}
         <div class="panel-empty">
           <p>Set up your roster in Settings</p>
+          <a class="panel-roster-cta" href={settingsPath}>Configure roster</a>
+        </div>
+      {:else}
+        <div class="panel-empty">
+          <p>No team available for this side</p>
         </div>
       {/if}
     </div>
@@ -216,16 +228,18 @@
   <header class="page-head">
     <div class="page-head-text">
       <h1 class="page-title">Spiral Abyss</h1>
-      {#if metaParts.length > 0}
-        <p class="page-meta">
-          {#each metaParts as part, index (part.text)}
-            {#if index > 0}
-              <span class="page-meta-sep" aria-hidden="true">·</span>
-            {/if}
-            <span title={part.title}>{part.text}</span>
-          {/each}
-        </p>
-      {/if}
+      <p class="page-meta">
+        {#each metaParts as part, index (part.text)}
+          {#if index > 0}
+            <span class="page-meta-sep" aria-hidden="true">·</span>
+          {/if}
+          <span title={part.title}>{part.text}</span>
+        {/each}
+        {#if metaParts.length > 0}
+          <span class="page-meta-sep" aria-hidden="true">·</span>
+        {/if}
+        <a class="back-link" href={resolve("/tools/abyss/summary")}>Summary</a>
+      </p>
     </div>
   </header>
 
@@ -241,6 +255,14 @@
     </EmptyState>
   {:else if waitingForOwned}
     <LoadingState variant="pulse" message="Matching your roster…" />
+  {:else if showRosterSetup}
+    <EmptyState
+      message="Set up your roster to find Abyss clears that match what you own."
+    >
+      {#snippet action()}
+        <a class="pulls-cta" href={settingsPath}>Configure roster</a>
+      {/snippet}
+    </EmptyState>
   {:else if displaySolutions.length === 0}
     <EmptyState
       message="No viable clears for your roster. Pull for characters that unlock better teams."
@@ -336,10 +358,8 @@
 <style>
   .page-head {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-4);
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: var(--space-2);
   }
 
   .page-meta {
@@ -589,11 +609,23 @@
 
   .panel-empty {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.45rem;
     padding: 2rem 0;
     font-size: var(--text-xs);
     color: var(--foreground-mid);
+  }
+
+  .panel-roster-cta {
+    color: var(--foreground-mid);
+    text-decoration: none;
+  }
+
+  .panel-roster-cta:hover {
+    color: var(--accent-1);
+    text-decoration: underline;
   }
 
   .fallback-note {

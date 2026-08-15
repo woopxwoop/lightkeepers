@@ -43,9 +43,11 @@
   let suggestions = $derived.by(() => {
     const q = inputText.trim().toLowerCase();
     if (!q) return [] as string[];
-    return options.filter(
-      (k) => !tags.includes(k) && k.toLowerCase().includes(q),
-    );
+    return options.filter((k) => {
+      if (tags.includes(k)) return false;
+      if (k.toLowerCase().includes(q)) return true;
+      return getLabel(k).toLowerCase().includes(q);
+    });
   });
 
   let showSuggestions = $derived(focused && suggestions.length > 0);

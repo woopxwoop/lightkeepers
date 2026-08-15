@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST } from "$lib/definitions";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import StygianSolutionBoard from "$lib/ui/components/StygianSolutionBoard.svelte";
@@ -26,6 +27,14 @@
       <p class="page-meta">
         Stygian board with YSHelper / video-clear seating modes and a cost cap
         for Fearless clears.
+        <span class="page-meta-sep">·</span>
+        <a class="dev-link" href={resolve("/tools/abyss/summary")}
+          >Abyss summary</a
+        >
+        <span class="page-meta-sep">·</span>
+        <a class="dev-link" href={resolve("/tools/stygian/summary")}
+          >Stygian summary</a
+        >
       </p>
     </div>
     <label class="cost-cap">
@@ -51,6 +60,16 @@
     justify-content: space-between;
     gap: var(--space-4);
     flex-wrap: wrap;
+  }
+
+  .dev-link {
+    color: var(--foreground-color);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .dev-link:hover {
+    color: var(--foreground-mid);
   }
 
   .cost-cap {

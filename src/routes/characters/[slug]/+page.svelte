@@ -406,11 +406,11 @@
     color: var(--foreground-mid);
   }
 
-  /* Outlined open frame — hairlines imply a board; complete it without a fill. */
+  /* Outlined open frame — hairlines imply a board; complete it without a fill.
+     Keep overflow visible so the kit side index can stick while the page scrolls. */
   .character-content-shell {
     display: grid;
     grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
-    overflow: hidden;
     border: var(--border-width) solid rgba(255, 255, 255, 0.14);
     border-radius: var(--radius-lg);
   }
@@ -423,6 +423,7 @@
     display: flex;
     flex-direction: column;
     border-right: var(--border-width) solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
   }
 
   .ledger-rail button {
@@ -437,6 +438,14 @@
     font-size: var(--text-xs);
     text-align: left;
     transition: var(--control-transition);
+  }
+
+  .ledger-rail button:first-child {
+    border-top-left-radius: var(--radius-lg);
+  }
+
+  .ledger-rail button:last-child {
+    border-bottom-left-radius: var(--radius-lg);
   }
 
   .ledger-rail button::before {
@@ -466,6 +475,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
   }
 
   /* Panels are focus targets (tabindex="0"), and the global ring only covers
@@ -503,6 +513,7 @@
       min-height: 3.6rem;
       padding: 0.65rem var(--space-4);
       border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       color: var(--foreground-color);
       text-align: left;
       background: var(--surface-selected);
@@ -563,6 +574,7 @@
       max-height: 0;
       overflow: hidden;
       border-right: 0;
+      border-radius: 0;
       border-bottom: var(--border-width) solid transparent;
       opacity: 0;
       visibility: hidden;
@@ -573,6 +585,15 @@
         transform 260ms var(--control-ease),
         border-color 180ms var(--control-ease),
         visibility 0s linear 260ms;
+    }
+
+    .ledger-rail button:first-child,
+    .ledger-rail button:last-child {
+      border-radius: 0;
+    }
+
+    .board-body {
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     }
 
     .character-content-shell.mobile-open .ledger-rail {
