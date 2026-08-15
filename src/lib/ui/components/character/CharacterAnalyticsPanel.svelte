@@ -1,0 +1,338 @@
+<script lang="ts">
+  import { untrack } from "svelte";
+  import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  import Button from "$lib/ui/components/Button.svelte";
+  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
+  import Select from "$lib/ui/components/Select.svelte";
+  import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
+  import {
+    fetchCharacterAnalytics,
+    isAbortError,
+    isTimeoutError,
+  } from "$lib/app/character-analytics";
+  import type {
+    Character,
+    CharacterAnalyticsMode,
+    CharacterAnalyticsPayload,
+  } from "$lib/definitions";
+
+  let {
+    nameId,
+    characterName,
+    mapping,
+    ownedNameIdsSet,
+  }: {
+    nameId: string;
+    characterName: string;
+    mapping: Map<string, Character>;
+    ownedNameIdsSet: Set<string>;
+  } = $props();
+
+  const ANALYTICS_MODE_OPTIONS = [
+    { value: "stygian" as const, label: "Stygian" },
+    { value: "abyss" as const, label: "Abyss" },
+  ];
+
+  let analyticsMode = $state<CharacterAnalyticsMode>("stygian");
+  let analyticsPayload = $state<CharacterAnalyticsPayload | null>(null);
+  let analyticsError = $state<string | null>(null);
+  let analyticsLoading = $state(false);
+  let analyticsKey = $state<string | null>(null);
+  let analyticsAbort: AbortController | null = null;
+
+  $effect(() => {
+    const id = nameId;
+    const mode = analyticsMode;
+    const key = `${mode}:${id}`;
+    const cached = untrack(
+      () => analyticsKey === key && analyticsPayload !== null,
+    );
+    if (cached) return;
+
+    void loadAnalytics(id, mode, key);
+    return () => {
+      analyticsAbort?.abort();
+    };
+  });
+
+  function loadAnalytics(
+    id: string,
+    mode: CharacterAnalyticsMode,
+    key: string,
+  ) {
+    analyticsAbort?.abort();
+    const controller = new AbortController();
+    analyticsAbort = controller;
+
+    analyticsLoading = true;
+    analyticsError = null;
+    analyticsPayload = null;
+
+    return fetchCharacterAnalytics(id, mode, controller.signal)
+      .then((payload) => {
+        if (analyticsAbort !== controller) return;
+        if (controller.signal.aborted) {
+          analyticsLoading = false;
+          return;
+        }
+        analyticsPayload = payload;
+        analyticsKey = key;
+        analyticsLoading = false;
+      })
+      .catch((err) => {
+        if (analyticsAbort !== controller) return;
+        if (controller.signal.aborted || isAbortError(err)) {
+          analyticsLoading = false;
+          return;
+        }
+        analyticsPayload = null;
+        analyticsKey = null;
+        analyticsLoading = false;
+        analyticsError = isTimeoutError(err)
+          ? "Request timed out"
+          : err instanceof Error
+            ? err.message
+            : "Failed to load analytics";
+      });
+  }
+
+  let analyticsTeamsByVersion = $derived.by(() => {
+    const payload = analyticsPayload;
+    if (!payload) return [];
+    const nameByVersion = new Map(
+      payload.usage.map((p) => [p.version_number, p.version_name]),
+    );
+    const groups = new Map<number, typeof payload.teams>();
+    for (const team of payload.teams) {
+      const list = groups.get(team.version_number) ?? [];
+      list.push(team);
+      groups.set(team.version_number, list);
+    }
+    return [...groups.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([version_number, teams]) => {
+        const version_name =
+          nameByVersion.get(version_number)?.trim() || `v${version_number}`;
+        return {
+          version_number,
+          version_name,
+          teams: teams
+            .slice()
+            .sort((a, b) => (b.usage_rate ?? 0) - (a.usage_rate ?? 0)),
+        };
+      });
+  });
+
+  async function retryAnalytics() {
+    const key = `${analyticsMode}:${nameId}`;
+    await loadAnalytics(nameId, analyticsMode, key);
+  }
+
+  function handCharactersFromMembers(members: string[]) {
+    return members.map((id) => mapping.get(id));
+  }
+
+  function dimmedKeysFromMembers(members: string[]): Set<string> {
+    return new Set(members.filter((id) => !ownedNameIdsSet.has(id)));
+  }
+</script>
+
+<div
+  role="tabpanel"
+  id="tabpanel-analytics"
+  aria-labelledby="tab-analytics"
+  tabindex="0"
+>
+  <section class="board-section">
+    <div class="teams-head">
+      <div class="teams-label">
+        <span class="teams-label-text" id="analytics-mode-label">Usage:</span>
+        <Select
+          id="analytics-mode-trigger"
+          options={ANALYTICS_MODE_OPTIONS}
+          bind:value={analyticsMode}
+          bare
+          aria-labelledby="analytics-mode-label analytics-mode-trigger"
+        />
+      </div>
+    </div>
+
+    {#if analyticsError && !analyticsPayload}
+      <EmptyState message="Could not load usage history right now.">
+        {#snippet action()}
+          <Button variant="secondary" onclick={retryAnalytics}>Try again</Button
+          >
+        {/snippet}
+      </EmptyState>
+    {:else if analyticsPayload && analyticsKey === `${analyticsMode}:${nameId}`}
+      {#if analyticsPayload.usage.length === 0}
+        <EmptyState message="No usage history for {characterName} yet." />
+      {:else}
+        <div class="analytics-chart">
+          <UsageSeriesChart points={analyticsPayload.usage} />
+        </div>
+        {#if analyticsTeamsByVersion.length > 0}
+          <div class="analytics-teams">
+            <h2 class="section-title">Top teams by version</h2>
+            {#each analyticsTeamsByVersion as group (group.version_number)}
+              <section class="analytics-version">
+                <h3 class="meta-name">{group.version_name}</h3>
+                <ol class="team-hands">
+                  {#each group.teams as team, i (team.team_key ?? `${group.version_number}-${i}`)}
+                    <li class="team-hand-row">
+                      <TeamCardHand
+                        characters={handCharactersFromMembers(
+                          team.members ?? [],
+                        )}
+                        dimmedKeys={dimmedKeysFromMembers(team.members ?? [])}
+                        spread="flat"
+                      />
+                      <div class="team-hand-footer">
+                        <span class="team-hand-meta">
+                          <span class="team-hand-rank">#{i + 1}</span>
+                          <span
+                            >{(team.usage_rate ?? 0).toFixed(1)}% usage</span
+                          >
+                        </span>
+                      </div>
+                    </li>
+                  {/each}
+                </ol>
+              </section>
+            {/each}
+          </div>
+        {/if}
+      {/if}
+    {:else}
+      <LoadingState variant="pulse" message="Loading usage history…" />
+    {/if}
+  </section>
+</div>
+
+<style>
+  .section-title {
+    margin-bottom: var(--space-3);
+  }
+
+  .board-section {
+    padding: var(--space-4);
+  }
+
+  .teams-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .teams-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .teams-label-text {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+
+  .analytics-chart {
+    margin-top: var(--space-2);
+  }
+
+  .analytics-teams {
+    margin-top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .analytics-version {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .team-hands {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 1024px) {
+    .team-hands {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--space-6);
+      row-gap: var(--space-5);
+    }
+  }
+
+  .team-hand-row {
+    position: relative;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .team-hand-row:hover,
+  .team-hand-row:focus-within {
+    z-index: 5;
+  }
+
+  .team-hand-row :global(.hand) {
+    --card-width: min(7.25rem, 25%);
+    width: 100%;
+  }
+
+  .team-hand-row :global(.hand-flat) {
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding: 0.35rem 0 0;
+    overflow: hidden;
+  }
+
+  @media (min-width: 1024px) {
+    .team-hand-row :global(.hand) {
+      --card-width: min(6.5rem, 25%);
+    }
+  }
+
+  .team-hand-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: var(--space-2) var(--space-3);
+    min-height: 1.25rem;
+    padding: 0;
+  }
+
+  .team-hand-meta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground-mid);
+  }
+
+  .team-hand-rank {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--foreground-mid);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
