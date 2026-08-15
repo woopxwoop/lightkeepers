@@ -76,7 +76,7 @@
     return kind === "skill" ? skillIconUrl(icon) : talentIconUrl(icon);
   }
 
-  /** Weapons: rarity → BT strength → teams → measured sigs → name. */
+  /** Weapons: BT strength → teams → measured sigs → rarity → name. */
   let rankedWeapons = $derived.by(() => {
     void equipment.version;
     return rankWeaponsByRarityAndTeams(

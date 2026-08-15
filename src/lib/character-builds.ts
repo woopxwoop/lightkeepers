@@ -197,7 +197,7 @@ export function recommendedSubstatsFromBuilds(
   return sortRecommendedSubstats(byKey.values());
 }
 
-/** Weapons: rarity → BT strength → teams → measured sigs → name. */
+/** Weapons: BT strength → teams → measured sigs → rarity → name. */
 export function rankWeaponsByRarityAndTeams(
   weapons: CharacterWeaponRank[] | null | undefined,
   getStars: (key: string) => number,
@@ -207,9 +207,6 @@ export function rankWeaponsByRarityAndTeams(
   const preferred =
     preferredKeys instanceof Set ? preferredKeys : new Set(preferredKeys ?? []);
   return [...weapons].sort((a, b) => {
-    const ra = getStars(a.key);
-    const rb = getStars(b.key);
-    if (ra !== rb) return rb - ra;
     const sa = a.strength;
     const sb = b.strength;
     const aHasStrength = sa != null;
@@ -220,6 +217,9 @@ export function rankWeaponsByRarityAndTeams(
     const pa = preferred.has(a.key) ? 0 : 1;
     const pb = preferred.has(b.key) ? 0 : 1;
     if (pa !== pb) return pa - pb;
+    const ra = getStars(a.key);
+    const rb = getStars(b.key);
+    if (ra !== rb) return rb - ra;
     return a.key.localeCompare(b.key);
   });
 }

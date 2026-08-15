@@ -213,7 +213,7 @@ describe("recommendedSubstatsFromBuilds", () => {
 });
 
 describe("rankWeaponsByRarityAndTeams", () => {
-  it("sorts by rarity then team count", () => {
+  it("sorts by team count then rarity when strength is missing", () => {
     const ranked = rankWeaponsByRarityAndTeams(
       [
         { key: "fourA", teams: 9 },
@@ -224,11 +224,26 @@ describe("rankWeaponsByRarityAndTeams", () => {
     );
     assert.deepEqual(
       ranked.map((w) => w.key),
+      ["fourA", "fiveA", "fiveB"],
+    );
+  });
+
+  it("uses rarity as a fallback when teams also tie", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "fourA", teams: 5 },
+        { key: "fiveB", teams: 5 },
+        { key: "fiveA", teams: 5 },
+      ],
+      (key) => (key.startsWith("five") ? 5 : 4),
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
       ["fiveA", "fiveB", "fourA"],
     );
   });
 
-  it("prefers measured sigs when rarity and teams tie", () => {
+  it("prefers measured sigs when strength and teams tie", () => {
     const ranked = rankWeaponsByRarityAndTeams(
       [
         { key: "SurfsUp", teams: 5 },
@@ -244,18 +259,24 @@ describe("rankWeaponsByRarityAndTeams", () => {
     );
   });
 
-  it("sorts by Bradley-Terry strength before team count", () => {
+  it("sorts by Bradley-Terry strength before team count and rarity", () => {
     const ranked = rankWeaponsByRarityAndTeams(
       [
         { key: "SurfsUp", teams: 5, strength: 0.9 },
         { key: "TomeOfTheEternalFlow", teams: 5, strength: 1.2 },
         { key: "PrototypeAmber", teams: 8, strength: 0.7 },
+        { key: "SacrificialFragments", teams: 12, strength: 1.0 },
       ],
-      () => 5,
+      (key) => (key === "SacrificialFragments" ? 4 : 5),
     );
     assert.deepEqual(
       ranked.map((w) => w.key),
-      ["TomeOfTheEternalFlow", "SurfsUp", "PrototypeAmber"],
+      [
+        "TomeOfTheEternalFlow",
+        "SacrificialFragments",
+        "SurfsUp",
+        "PrototypeAmber",
+      ],
     );
   });
 
