@@ -10,6 +10,7 @@ import {
   farmPlacesOfKind,
   farmTodayColumn,
   farmWeekDays,
+  faceMaterialOnPlaces,
   todayWeekday,
   uniqueGoalsOnPlaces,
   type FarmGoalRef,
@@ -222,6 +223,18 @@ describe("farmPlacesFromMaterials", () => {
       uniqueGoalsOnPlaces(places, contributors).map((g) => g.id),
       ["a"],
     );
+  });
+
+  it("picks the highest-rank material for a face on a day", () => {
+    const places = farmPlacesFromMaterials({ "11": 2, "12": 5 }, catalog);
+    const hu: FarmGoalRef = { id: "a", name: "Hu Tao", icon: null };
+    const contributors = new Map<string, FarmGoalRef[]>([
+      ["11", [hu]],
+      ["12", [hu]],
+    ]);
+    const mat = faceMaterialOnPlaces(hu, places, contributors);
+    assert.equal(mat?.id, "11");
+    assert.equal(mat?.name, "Philosophies of Freedom");
   });
 
   it("keeps the same domain as separate places when rotations differ", () => {

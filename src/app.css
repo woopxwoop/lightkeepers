@@ -58,9 +58,9 @@
   that mixes to olive. Selected backgrounds use --surface-selected (neutral).
   Never put yellow/gold (--accent-1) text on black (--background-color) — murky;
   use cream foreground on black. Patch-notes popup uses black page base for this.
-  Control borders: enabled = solid --accent-1; disabled = silver/cream
-  (e.g. rgba white / cool gray), never low-opacity accent-3 or washed gold —
-  those read murky on dark surfaces.
+  Control borders: enabled = solid --accent-1; disabled = quiet cream from
+  --foreground-color (never fixed cool gray, never low-opacity accent-3 /
+  washed gold — those read murky on dark surfaces).
 */
 :root {
   /* ── Paint (Display theme templates override these) ─────────────────── */
@@ -111,8 +111,12 @@
   --border-default: color-mix(in srgb, var(--accent-1) 22%, transparent);
   --border-strong: color-mix(in srgb, var(--accent-1) 45%, transparent);
   --border-width: 0.5px;
-  /* Quiet silver for muted control chrome (disabled inputs, soft toggles). */
-  --border-control-quiet: rgba(220, 224, 230, 0.35);
+  /* Quiet cream for muted control chrome — tracks Display foreground. */
+  --border-control-quiet: color-mix(
+    in srgb,
+    var(--foreground-color) 35%,
+    transparent
+  );
 
   /* ── Radii ──────────────────────────────────────────────────────────── */
   --radius-sm: 0.25rem;
@@ -142,8 +146,12 @@
     border-color var(--control-duration) var(--control-ease);
   --focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-1) 55%, transparent);
 
-  /* Toggle knob when on — soft near-black, not pure page bg / not orange */
-  --control-knob-on: color-mix(in srgb, var(--accent-1) 6%, #16130e);
+  /* Toggle knob / on-accent text — soft near-bg, tracks Display paints */
+  --control-knob-on: color-mix(
+    in srgb,
+    var(--accent-1) 6%,
+    var(--background-color)
+  );
 
   /* ── Scrollbars (cream thumb, transparent track) ─────────────────────── */
   --scrollbar-size: 0.55rem;

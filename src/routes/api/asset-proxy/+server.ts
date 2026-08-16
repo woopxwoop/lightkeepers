@@ -10,9 +10,11 @@ const ALLOWED_HOSTS = new Set(["api.lightkeepers.moe"]);
 
 function cancelUpstreamBody(res: Response): void {
   try {
-    void res.body?.cancel();
+    void res.body?.cancel()?.catch(() => {
+      /* ignore async cancel failures; preserve original error path */
+    });
   } catch {
-    /* ignore cancel failures; preserve original error path */
+    /* ignore sync cancel failures; preserve original error path */
   }
 }
 

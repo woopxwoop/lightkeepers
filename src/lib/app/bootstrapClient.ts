@@ -18,6 +18,7 @@ import {
   charactersOwned,
   charactersHydrated,
   initHasSavedRoster,
+  setHasSavedRoster,
   setVersionNumbers,
   invalidateTeamsOwned,
   invalidateNearMissTeams,
@@ -168,6 +169,7 @@ async function fetchCloudRoster(
 function applyCloudRoster(roster: CharacterOwned[]): void {
   charactersOwned.set(roster);
   writeRosterLocal(JSON.stringify(roster));
+  setHasSavedRoster();
   invalidateTeamsOwned();
   invalidateNearMissTeams();
 }
@@ -281,7 +283,10 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
 
   if (cloud.status === "missing") {
     const result = await uploadLocalRoster(localRoster);
-    if (result.ok) return;
+    if (result.ok) {
+      setHasSavedRoster();
+      return;
+    }
     await resolveRosterConflict({
       userId: cloud.userId,
       local: localRoster,

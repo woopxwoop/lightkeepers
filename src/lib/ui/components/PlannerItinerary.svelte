@@ -50,10 +50,12 @@
     farmPlacesOfKind,
     farmTodayColumn,
     farmWeekDays,
+    faceMaterialOnPlaces,
     todayWeekday,
     uniqueGoalsOnPlaces,
     type FarmGoalRef,
     type FarmPlace,
+    type FarmPlaceMaterial,
   } from "$lib/planner-itinerary";
   import { assetUrl } from "$lib/asset-urls";
   import { charactersOwned } from "$lib/stores";
@@ -550,7 +552,12 @@
                   <p class="eyebrow farm-day-head">{col.day}</p>
                   <ul class="farm-day-places">
                     {#each who as g (g.id)}
-                      <li>{@render goalFace(g)}</li>
+                      {@const mat = faceMaterialOnPlaces(
+                        g,
+                        col.places,
+                        contributors,
+                      )}
+                      <li>{@render goalFace(g, mat)}</li>
                     {/each}
                   </ul>
                 </div>
@@ -599,7 +606,8 @@
           {/if}
           <div class="place-faces">
             {#each who as g (g.id)}
-              {@render goalFace(g)}
+              {@const mat = faceMaterialOnPlaces(g, [place], contributors)}
+              {@render goalFace(g, mat)}
             {/each}
           </div>
         </div>
@@ -608,9 +616,26 @@
   </ul>
 {/snippet}
 
-{#snippet goalFace(g: FarmGoalRef)}
+{#snippet goalFace(g: FarmGoalRef, mat: FarmPlaceMaterial | null = null)}
   {@const character = characterFor(g)}
-  <div class="farm-face" title={g.name}>
+  {@const matSrc = mat ? assetUrl(mat.icon) : null}
+  <div
+    class="farm-face"
+    title={mat ? `${g.name} · ${mat.name} ×${mat.count}` : g.name}
+  >
+    {#if matSrc}
+      <img
+        class="farm-face-mat"
+        src={matSrc}
+        alt=""
+        width="22"
+        height="22"
+        loading="lazy"
+        onerror={(e) => {
+          e.currentTarget.style.display = "none";
+        }}
+      />
+    {/if}
     {#if character}
       <CharacterIcon {character} loading="lazy" />
     {:else if g.icon}
@@ -929,6 +954,7 @@
   }
 
   .farm-face {
+    position: relative;
     width: var(--farm-face);
     overflow: hidden;
     border-radius: var(--radius-md);
@@ -938,6 +964,24 @@
       color-mix(in srgb, var(--foreground-color) 18%, transparent);
     outline-offset: -1px;
     line-height: 0;
+  }
+
+  .farm-face-mat {
+    position: absolute;
+    right: 0.15rem;
+    bottom: 0.15rem;
+    top: auto;
+    left: auto;
+    z-index: 1;
+    width: calc(var(--farm-face) * 0.38);
+    height: calc(var(--farm-face) * 0.38);
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: color-mix(in srgb, var(--background-color) 72%, transparent);
+    outline: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 28%, transparent);
+    outline-offset: -1px;
+    pointer-events: none;
   }
 
   .farm-face :global(.icon-root) {
