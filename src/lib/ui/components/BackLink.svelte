@@ -39,10 +39,10 @@
 </a>
 
 <style>
+  /* Color comes from global `.back-link` (cream on page base — never gold on black). */
   .back-link {
     width: fit-content;
     font-size: var(--text-xs);
-    color: var(--accent-1);
     text-decoration: none;
   }
 

@@ -18,9 +18,12 @@ function createAuth() {
     console.error("[auth] idle pg client error:", err);
   });
 
+  const baseURL = required("BETTER_AUTH_URL");
   return betterAuth({
     database: pool,
     secret: required("BETTER_AUTH_SECRET"),
+    baseURL,
+    trustedOrigins: [baseURL],
     socialProviders: {
       google: {
         clientId: required("GOOGLE_CLIENT_ID"),

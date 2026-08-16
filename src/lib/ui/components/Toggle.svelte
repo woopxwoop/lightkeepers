@@ -39,8 +39,7 @@
     width: 2.75rem;
     height: 1.5rem;
     border-radius: var(--radius-pill);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--accent-1) 30%, transparent);
+    border: var(--border-width) solid var(--border-control-quiet);
     background: color-mix(in srgb, var(--foreground-mid) 12%, transparent);
     padding: 0.15rem;
     display: flex;

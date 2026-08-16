@@ -25,8 +25,7 @@
     font-size: var(--text-xs);
     padding: 0.2rem 0.55rem;
     border-radius: var(--radius-pill);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--accent-1) 25%, transparent);
+    border: var(--border-width) solid var(--border-control-quiet);
     color: var(--foreground-mid);
     background: transparent;
     transition: var(--control-transition);
@@ -34,7 +33,7 @@
 
   .chip-active {
     color: var(--accent-1);
-    border-color: color-mix(in srgb, var(--accent-1) 55%, transparent);
+    border-color: var(--accent-1);
     background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
   }
 </style>

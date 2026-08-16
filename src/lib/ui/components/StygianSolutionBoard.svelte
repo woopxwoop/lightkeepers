@@ -15,6 +15,7 @@
     setDisplayPreferences,
     stygianVersionNumber,
     abyssVersionNumber,
+    hasSavedRoster,
   } from "$lib/stores";
   import { stygianSlotLabel } from "$lib/slotLabels";
   import {
@@ -30,6 +31,11 @@
     clampSolutionIndex,
     stepSolutionIndex,
     assignmentKeyFor,
+    createMemo,
+    rosterFingerprint,
+    teamsFingerprint,
+    characterMetaFingerprint,
+    cheapClearsFingerprint,
   } from "$lib/board-solutions";
   import { ownedNameIds, getEnemyAsset } from "$lib/utils";
   import Team from "$lib/ui/components/Team.svelte";
@@ -65,6 +71,8 @@
     floorTeamCost,
   } from "$lib/team-cost";
   import { resolve } from "$app/paths";
+  import { settingsPath } from "$lib/ui/nav-links";
+  import { authClient } from "$lib/auth-client";
   import {
     ensureClearVideos,
     getClearVideosCached,
@@ -76,6 +84,11 @@
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
   const CLEAR_VIDEOS_PAGE = 5;
+  type SolutionsResult = {
+    solutions: ReturnType<typeof solveStygianWithFallback>;
+    mode: StygianSolverMode | "hybrid" | "yshelper";
+  };
+  const memoSolutions = createMemo<SolutionsResult>();
 
   let {
     mapping,
@@ -129,7 +142,7 @@
 
   async function retryStaticBoards() {
     try {
-      await ensureStaticBoards();
+      await ensureStaticBoards({ force: true });
     } catch {
       // staticBoardsError already set
     }
@@ -143,6 +156,12 @@
 
   let hasOwnedCharacters = $derived(
     $charactersOwned.some((character) => character.isOwned),
+  );
+
+  const session = authClient.useSession();
+  /** Same gate as the home-page “configure roster first” card. */
+  let showRosterSetup = $derived(
+    !$session.isPending && !$hasSavedRoster && !$session.data,
   );
 
   $effect(() => {
@@ -211,8 +230,10 @@
     if (needsOwnedTeams && hasOwnedCharacters && !$teamsOwnedLoaded) {
       return { solutions: [], mode: solverMode };
     }
-    void SOLVER_REVISION;
 
+    const owned = $charactersOwned;
+    const teams = $teamsOwnedStygian;
+    const all = $allTeamsStygian;
     const topId = enemies?.top?.id;
     const middleId = enemies?.middle?.id;
     const bottomId = enemies?.bottom?.id;
@@ -221,51 +242,71 @@
         ? { top: topId, middle: middleId, bottom: bottomId }
         : null;
 
-    if (solverMode === "hybrid") {
-      if (!slotEnemies || cheapClearsRows === null) {
-        return { solutions: [], mode: "hybrid" as const };
+    const cheapKey =
+      cheapClearsRows === null
+        ? "null"
+        : cheapClearsFingerprint(cheapClearsRows);
+    const key = [
+      SOLVER_REVISION,
+      solverMode,
+      String(maxCost),
+      rosterFingerprint(owned),
+      teamsFingerprint(teams),
+      teamsFingerprint(all),
+      characterMetaFingerprint(mapping),
+      slotEnemies
+        ? `${slotEnemies.top}:${slotEnemies.middle}:${slotEnemies.bottom}`
+        : "none",
+      cheapKey,
+    ].join("|");
+
+    return memoSolutions(key, () => {
+      if (solverMode === "hybrid") {
+        if (!slotEnemies || cheapClearsRows === null) {
+          return { solutions: [], mode: "hybrid" as const };
+        }
+        const c0r0Pairs = c0r0ClearPairKeys(cheapClearsRows, mapping);
+        return {
+          solutions: solveStygianHybrid(
+            teams,
+            all,
+            ownedNameIds(owned),
+            slotEnemies,
+            c0r0Pairs,
+            SOLUTIONS_COUNT,
+          ),
+          mode: "hybrid" as const,
+        };
       }
-      const c0r0Pairs = c0r0ClearPairKeys(cheapClearsRows, mapping);
+
+      if (videoClearsMode && cheapClearsRows && slotEnemies) {
+        return {
+          solutions: solveStygianCheapClears(
+            cheapClearsRows,
+            slotEnemies,
+            SOLUTIONS_COUNT,
+            mapping,
+            solverMode === "video-c0r0",
+            maxCost,
+          ),
+          mode: solverMode,
+        };
+      }
+
+      if (videoClearsMode) {
+        return { solutions: [], mode: solverMode };
+      }
+
       return {
-        solutions: solveStygianHybrid(
-          $teamsOwnedStygian,
-          $allTeamsStygian,
-          ownedNameIds($charactersOwned),
-          slotEnemies,
-          c0r0Pairs,
+        solutions: solveStygianWithFallback(
+          teams,
+          all,
+          ownedNameIds(owned),
           SOLUTIONS_COUNT,
         ),
-        mode: "hybrid" as const,
+        mode: "yshelper" as const,
       };
-    }
-
-    if (videoClearsMode && cheapClearsRows && slotEnemies) {
-      return {
-        solutions: solveStygianCheapClears(
-          cheapClearsRows,
-          slotEnemies,
-          SOLUTIONS_COUNT,
-          mapping,
-          solverMode === "video-c0r0",
-          maxCost,
-        ),
-        mode: solverMode,
-      };
-    }
-
-    if (videoClearsMode) {
-      return { solutions: [], mode: solverMode };
-    }
-
-    return {
-      solutions: solveStygianWithFallback(
-        $teamsOwnedStygian,
-        $allTeamsStygian,
-        ownedNameIds($charactersOwned),
-        SOLUTIONS_COUNT,
-      ),
-      mode: "yshelper" as const,
-    };
+    });
   });
 
   let solutions = $derived(solutionsResult.solutions);
@@ -530,13 +571,9 @@
             </InfoPopover>
           </div>
         {/if}
-      {:else if solution}
-        <div class="panel-empty">
-          <p>No team available for this field</p>
-        </div>
       {:else}
         <div class="panel-empty">
-          <p>Set up your roster in Settings</p>
+          <p>No team available for this field</p>
         </div>
       {/if}
     </div>
@@ -549,6 +586,14 @@
   <EmptyState message="Could not load Stygian teams right now.">
     {#snippet action()}
       <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+    {/snippet}
+  </EmptyState>
+{:else if showRosterSetup}
+  <EmptyState
+    message="Set up your roster to find Stygian clears that match what you own."
+  >
+    {#snippet action()}
+      <a class="pulls-cta" href={settingsPath}>Configure roster</a>
     {/snippet}
   </EmptyState>
 {:else}
@@ -981,8 +1026,10 @@
 
   .panel-empty {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.45rem;
     padding: 2rem 0;
     font-size: var(--text-xs);
     color: var(--foreground-mid);

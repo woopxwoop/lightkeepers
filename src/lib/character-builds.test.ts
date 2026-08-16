@@ -19,6 +19,7 @@ import {
   levelPrioritySection,
   rankSigWeaponsByGain,
   rankWeaponsByRarityAndTeams,
+  recommendedSubstatSourceLabel,
   recommendedSubstatsFromBuilds,
   sigWeaponPrioritySection,
   talentImportanceRows,
@@ -44,7 +45,107 @@ function builds(
 }
 
 describe("recommendedSubstatsFromBuilds", () => {
-  it("keeps liquid ranks above 0.5 and mains that can roll as subs", () => {
+  it("non-negligible uses absolute high OptimFull liquids plus mains", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "eleMas", teams: 3 }],
+          goblet: [{ key: "hydro_dmg_", teams: 3 }],
+          circlet: [{ key: "critRate_", teams: 3 }],
+        },
+        substat_rolls_liquid: {
+          teams: 2,
+          configs: 2,
+          mean: {},
+          ranked: [
+            { key: "atk_", mean: 8 },
+            { key: "critDMG_", mean: 2 },
+          ],
+        },
+        high_substat_rolls_liquid: {
+          teams: 2,
+          configs: 2,
+          mean: {},
+          ranked: [
+            { key: "critDMG_", mean: 12.4 },
+            { key: "eleMas", mean: 9.2 },
+            { key: "atk_", mean: 0.3 },
+          ],
+        },
+        stat_recommendations: {
+          mode: "delta",
+          delta_stats: [
+            { key: "critDMG_", mean_delta: 4.2, teams_positive: 2 },
+          ],
+          enerRech_if_burst: true,
+          critRate_if_fav: false,
+          teams: 2,
+          burst_teams: 2,
+          fav_teams: 0,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => [r.key, r.matchesMain, r.mean, r.isDelta]),
+      [
+        ["eleMas", true, 9.2, false],
+        ["critRate_", true, 0, false],
+        ["critDMG_", false, 12.4, false],
+      ],
+    );
+  });
+
+  it("negligible uses mid→high deltas plus mains (not flat high leftovers)", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "enerRech_", teams: 3 }],
+          goblet: [{ key: "hydro_dmg_", teams: 3 }],
+          circlet: [{ key: "critRate_", teams: 3 }],
+        },
+        substat_rolls_liquid: {
+          teams: 3,
+          configs: 3,
+          mean: {},
+          ranked: [
+            { key: "critDMG_", mean: 4 },
+            { key: "atk_", mean: 3 },
+          ],
+        },
+        high_substat_rolls_liquid: {
+          teams: 3,
+          configs: 3,
+          mean: {},
+          ranked: [
+            { key: "enerRech_", mean: 11 },
+            { key: "critRate_", mean: 6 },
+            { key: "atk_", mean: 8 },
+          ],
+        },
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [
+            { key: "enerRech_", mean_delta: 3.5, teams_positive: 2 },
+            { key: "critRate_", mean_delta: 2.0, teams_positive: 2 },
+          ],
+          enerRech_if_burst: true,
+          critRate_if_fav: true,
+          teams: 3,
+          burst_teams: 3,
+          fav_teams: 2,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => [r.key, r.mean, r.isDelta]),
+      [
+        ["enerRech_", 3.5, true],
+        ["critRate_", 2.0, true],
+      ],
+    );
+  });
+
+  it("falls back to mid liquid ranks when high and recommendations are missing", () => {
     const result = recommendedSubstatsFromBuilds(
       builds({
         main_stats: {
@@ -94,6 +195,15 @@ describe("recommendedSubstatsFromBuilds", () => {
             { key: "eleMas", mean: 0 },
           ],
         },
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [],
+          enerRech_if_burst: false,
+          critRate_if_fav: false,
+          teams: 0,
+          burst_teams: 0,
+          fav_teams: 0,
+        },
       }),
     );
     assert.deepEqual(
@@ -101,10 +211,120 @@ describe("recommendedSubstatsFromBuilds", () => {
       ["critDMG_", "critRate_", "def_", "eleMas", "enerRech_"],
     );
   });
+
+  it("uses checklist deltas when liquid is absent", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "enerRech_", teams: 1 }],
+          goblet: [{ key: "hydro_dmg_", teams: 1 }],
+          circlet: [{ key: "critRate_", teams: 1 }],
+        },
+        substat_rolls_liquid:
+          undefined as unknown as CharacterIndex["substat_rolls_liquid"],
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [
+            { key: "enerRech_", mean_delta: 2.5, teams_positive: 1 },
+            { key: "critRate_", mean_delta: 1.5, teams_positive: 1 },
+          ],
+          enerRech_if_burst: true,
+          critRate_if_fav: true,
+          teams: 1,
+          burst_teams: 1,
+          fav_teams: 1,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => [r.key, r.mean, r.isDelta]),
+      [
+        ["enerRech_", 2.5, true],
+        ["critRate_", 1.5, true],
+      ],
+    );
+  });
+
+  it("uses checklist deltas when liquid ranked is empty", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "enerRech_", teams: 1 }],
+          goblet: [{ key: "hydro_dmg_", teams: 1 }],
+          circlet: [{ key: "critRate_", teams: 1 }],
+        },
+        substat_rolls_liquid: {
+          teams: 0,
+          configs: 0,
+          mean: {},
+          ranked: [],
+        },
+        stat_recommendations: {
+          mode: "checklist",
+          delta_stats: [
+            { key: "enerRech_", mean_delta: 4, teams_positive: 2 },
+            { key: "atk_", mean_delta: 0, teams_positive: 0 },
+          ],
+          enerRech_if_burst: true,
+          critRate_if_fav: false,
+          teams: 2,
+          burst_teams: 2,
+          fav_teams: 0,
+        },
+      }),
+    );
+    assert.deepEqual(
+      result.map((r) => [r.key, r.mean, r.isDelta]),
+      [
+        ["enerRech_", 4, true],
+        ["critRate_", 0, false],
+      ],
+    );
+  });
+
+  it("falls back to mid liquid when high liquid exists but teams is 0", () => {
+    const result = recommendedSubstatsFromBuilds(
+      builds({
+        main_stats: {
+          sands: [{ key: "eleMas", teams: 2 }],
+          goblet: [{ key: "hydro_dmg_", teams: 2 }],
+          circlet: [{ key: "critRate_", teams: 2 }],
+        },
+        substat_rolls_liquid: {
+          teams: 2,
+          configs: 2,
+          mean: {},
+          ranked: [
+            { key: "critDMG_", mean: 3.5 },
+            { key: "atk_", mean: 0.2 },
+          ],
+        },
+        high_substat_rolls_liquid: {
+          teams: 0,
+          configs: 0,
+          mean: {},
+          ranked: [{ key: "enerRech_", mean: 99 }],
+        },
+      }),
+    );
+    const crit = result.find((r) => r.key === "critDMG_");
+    assert.ok(crit);
+    assert.equal(crit.source, "mid");
+    assert.equal(crit.teams, 2);
+    assert.equal(crit.mean, 3.5);
+    assert.equal(
+      recommendedSubstatSourceLabel(crit.source),
+      "avg liquid rolls",
+    );
+    assert.equal(
+      result.some((r) => r.key === "enerRech_" && r.mean === 99),
+      false,
+    );
+  });
 });
 
 describe("rankWeaponsByRarityAndTeams", () => {
-  it("sorts by rarity then team count", () => {
+  it("sorts by team count then rarity when strength is missing", () => {
     const ranked = rankWeaponsByRarityAndTeams(
       [
         { key: "fourA", teams: 9 },
@@ -115,11 +335,26 @@ describe("rankWeaponsByRarityAndTeams", () => {
     );
     assert.deepEqual(
       ranked.map((w) => w.key),
+      ["fourA", "fiveA", "fiveB"],
+    );
+  });
+
+  it("uses rarity as a fallback when teams also tie", () => {
+    const ranked = rankWeaponsByRarityAndTeams(
+      [
+        { key: "fourA", teams: 5 },
+        { key: "fiveB", teams: 5 },
+        { key: "fiveA", teams: 5 },
+      ],
+      (key) => (key.startsWith("five") ? 5 : 4),
+    );
+    assert.deepEqual(
+      ranked.map((w) => w.key),
       ["fiveA", "fiveB", "fourA"],
     );
   });
 
-  it("prefers measured sigs when rarity and teams tie", () => {
+  it("prefers measured sigs when strength and teams tie", () => {
     const ranked = rankWeaponsByRarityAndTeams(
       [
         { key: "SurfsUp", teams: 5 },
@@ -135,18 +370,24 @@ describe("rankWeaponsByRarityAndTeams", () => {
     );
   });
 
-  it("sorts by Bradley-Terry strength before team count", () => {
+  it("sorts by Bradley-Terry strength before team count and rarity", () => {
     const ranked = rankWeaponsByRarityAndTeams(
       [
         { key: "SurfsUp", teams: 5, strength: 0.9 },
         { key: "TomeOfTheEternalFlow", teams: 5, strength: 1.2 },
         { key: "PrototypeAmber", teams: 8, strength: 0.7 },
+        { key: "SacrificialFragments", teams: 12, strength: 1.0 },
       ],
-      () => 5,
+      (key) => (key === "SacrificialFragments" ? 4 : 5),
     );
     assert.deepEqual(
       ranked.map((w) => w.key),
-      ["TomeOfTheEternalFlow", "SurfsUp", "PrototypeAmber"],
+      [
+        "TomeOfTheEternalFlow",
+        "SacrificialFragments",
+        "SurfsUp",
+        "PrototypeAmber",
+      ],
     );
   });
 
@@ -763,7 +1004,7 @@ describe("exampleRelevantGoodKeys display rules", () => {
     ]);
   });
 
-  it("high invest → mains + high liquids (not mid leftovers)", () => {
+  it("high invest → mains + pipeline goal_substats", () => {
     const example: CharacterBuildExample = {
       ...base,
       key: "RaidenShogun",
@@ -773,15 +1014,41 @@ describe("exampleRelevantGoodKeys display rules", () => {
         goblet: "eleMas",
         circlet: "eleMas",
       },
-      substat_rolls_liquid: { atk_: 10, critDMG_: 2 },
-      high_substat_rolls: { eleMas: 16, enerRech_: 16 },
-      high_substat_rolls_liquid: { eleMas: 15, enerRech_: 15 },
+      substat_rolls_liquid: { atk_: 10, critDMG_: 2, enerRech_: 15 },
+      high_substat_rolls: { eleMas: 16, enerRech_: 16, critDMG_: 2 },
+      high_substat_rolls_liquid: {
+        eleMas: 15,
+        enerRech_: 15,
+        critDMG_: 2,
+      },
+      // Pipeline already dropped flat/leftover mid liquids for this team.
+      goal_substats: ["eleMas"],
     };
     const keys = exampleRelevantGoodKeys(example, "high");
-    assert.equal(keys.has("eleMas"), true);
-    assert.equal(keys.has("enerRech_"), true);
-    assert.equal(keys.has("atk_"), false);
+    assert.equal(keys.has("eleMas"), true); // main + gainer
+    assert.equal(keys.has("enerRech_"), false); // flat mid→high, not stamped
     assert.equal(keys.has("critDMG_"), false);
+    assert.equal(keys.has("atk_"), false);
+  });
+
+  it("high invest without goal_substats falls back to high liquids", () => {
+    const example: CharacterBuildExample = {
+      ...base,
+      key: "RaidenShogun",
+      invest: "high",
+      main_stats: {
+        sands: "atk_",
+        goblet: "electro_dmg_",
+        circlet: "critRate_",
+      },
+      high_substat_rolls: { critDMG_: 12, critRate_: 10 },
+      high_substat_rolls_liquid: { critDMG_: 11, critRate_: 9 },
+    };
+    const keys = exampleRelevantGoodKeys(example, "high");
+    assert.equal(keys.has("atk_"), true);
+    assert.equal(keys.has("electro_dmg_"), true);
+    assert.equal(keys.has("critRate_"), true);
+    assert.equal(keys.has("critDMG_"), true);
   });
 
   it("mid invest keeps mid sheet even when high_substat_rolls is present", () => {

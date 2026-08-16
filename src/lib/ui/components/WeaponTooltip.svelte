@@ -1,11 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import {
-    weaponByKey,
-    equipmentVersion,
-    ensureEquipmentData,
-    type WeaponData,
-  } from "$lib/equipment-data";
+  import { useWeapon } from "$lib/equipment-data.svelte";
+  import type { WeaponData } from "$lib/equipment-data";
   import { weaponTypeLabel } from "$lib/utils";
   import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
@@ -15,21 +10,16 @@
     weapon = null,
     refinement = null,
   }: {
-    /** GOOD weapon key — looked up in `weaponByKey` when `weapon` is omitted. */
+    /** GOOD weapon key — looked up when `weapon` is omitted. */
     weaponKey?: string;
     weapon?: WeaponData | null;
     /** When set, show that rank's passive text (defaults to R1). */
     refinement?: number | null;
   } = $props();
 
-  onMount(() => {
-    void ensureEquipmentData();
-  });
+  const lookup = useWeapon(() => weaponKey ?? "");
 
-  let resolved = $derived.by(() => {
-    $equipmentVersion; // re-resolve after lazy JSON load
-    return weapon ?? (weaponKey ? (weaponByKey.get(weaponKey) ?? null) : null);
-  });
+  let resolved = $derived(weapon ?? lookup.weapon);
 
   let passive = $derived.by(() => {
     if (!resolved?.refinements.length) return null;

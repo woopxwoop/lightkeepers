@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
 
   let {
     message,
@@ -15,7 +14,7 @@
   } = $props();
 </script>
 
-<Surface class="empty-state text-center {className}">
+<div class="empty-state text-center {className}">
   {#if children}
     {@render children()}
   {:else if message}
@@ -26,10 +25,15 @@
       {@render action()}
     </div>
   {/if}
-</Surface>
+</div>
 
 <style>
-  :global(.empty-state) {
+  .empty-state {
+    background: var(--surface-raised);
+    /* Cream hairline on mid — never washed gold (--border-default). */
+    border: var(--border-width) solid
+      color-mix(in srgb, var(--foreground-color) 18%, transparent);
+    border-radius: var(--radius-lg);
     padding: var(--space-8) var(--space-4);
   }
 

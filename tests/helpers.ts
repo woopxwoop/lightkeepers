@@ -81,6 +81,12 @@ export async function installApiMocks(
   const nearMissPairs = options.nearMissPairs ?? [];
   const tierList = options.tierList ?? e2eTierListPayload();
 
+  // Abyss/Stygian hide the board behind "Configure roster" when hasSavedRoster
+  // is unset (same gate as the home nudge). E2E fixtures already own characters.
+  await page.addInitScript(() => {
+    localStorage.setItem("hasSavedRoster", "true");
+  });
+
   await page.route("**/api/roster/weapons", async (route: Route) => {
     await route.fulfill({ json: { weapons: [] } });
   });

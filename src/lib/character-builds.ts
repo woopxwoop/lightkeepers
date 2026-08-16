@@ -55,70 +55,181 @@ export const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
   burst: "burst",
 };
 
+export type RecommendedSubstatSource =
+  "guide" | "checklist" | "high" | "delta" | "mid" | "main";
+
 export type RecommendedSubstat = {
   key: string;
+  /** High liquid mean, mid→high delta, or 0 for main-only chips. */
   mean: number;
   matchesMain: boolean;
   mainSlots: string[];
+  /** True when ``mean`` is a mid→high OptimFull allocation delta. */
+  isDelta: boolean;
+  /** Which Builds payload branch produced this chip. */
+  source: RecommendedSubstatSource;
+  /** Team count stamped with that source (for tooltips). */
+  teams: number;
 };
 
-/**
- * Recommended substats from OptimFull liquid ranks, plus any recommended
- * main that can also roll as a substat (e.g. EM sands → also recommend EM
- * subs). Main-only keys (elemental DMG, heal, etc.) stay excluded.
- *
- * Guide merges may fill `ranked` with mean 0 when there are no measured
- * teams — keep those editorial ranks (the 0.5 floor is for noisy sim data).
- */
-export function recommendedSubstatsFromBuilds(
-  builds: CharacterIndex | null | undefined,
-): RecommendedSubstat[] {
-  if (!builds) return [];
+/** Tooltip phrase for a recommended-substat source. */
+export function recommendedSubstatSourceLabel(
+  source: RecommendedSubstatSource,
+): string {
+  if (source === "checklist" || source === "delta") {
+    return "avg mid→high liquid";
+  }
+  if (source === "high") return "avg high liquid";
+  return "avg liquid rolls";
+}
+
+function mainSlotsBySubstatKey(builds: CharacterIndex): Map<string, string[]> {
   const mainSlots = new Map<string, string[]>();
   for (const slot of MAIN_STAT_SLOTS) {
-    for (const s of builds.main_stats[slot.key]) {
+    for (const s of builds.main_stats?.[slot.key] ?? []) {
       if (!isArtifactSubstatKey(s.key)) continue;
       const list = mainSlots.get(s.key) ?? [];
       list.push(slot.label);
       mainSlots.set(s.key, list);
     }
   }
+  return mainSlots;
+}
 
-  const byKey = new Map<string, RecommendedSubstat>();
-  const guideAuthoredSubs = builds.substat_rolls_liquid.teams <= 0;
-
-  for (const r of builds.substat_rolls_liquid.ranked) {
-    if (!isArtifactSubstatKey(r.key)) continue;
-    if (!guideAuthoredSubs && r.mean <= 0.5 && !mainSlots.has(r.key)) {
-      continue;
-    }
-    const slots = mainSlots.get(r.key) ?? [];
-    byKey.set(r.key, {
-      key: r.key,
-      mean: r.mean,
-      matchesMain: slots.length > 0,
-      mainSlots: slots,
-    });
-  }
-
-  for (const [key, slots] of mainSlots) {
-    if (byKey.has(key)) continue;
-    byKey.set(key, {
-      key,
-      mean: 0,
-      matchesMain: true,
-      mainSlots: slots,
-    });
-  }
-
-  return [...byKey.values()].sort((a, b) => {
+function sortRecommendedSubstats(
+  rows: Iterable<RecommendedSubstat>,
+): RecommendedSubstat[] {
+  return [...rows].sort((a, b) => {
     if (a.matchesMain !== b.matchesMain) return a.matchesMain ? -1 : 1;
     if (a.mean !== b.mean) return b.mean - a.mean;
     return a.key.localeCompare(b.key);
   });
 }
 
-/** Weapons: rarity → BT strength → teams → measured sigs → name. */
+function putRecommended(
+  byKey: Map<string, RecommendedSubstat>,
+  key: string,
+  mean: number,
+  slots: string[],
+  source: RecommendedSubstatSource,
+  teams: number,
+) {
+  byKey.set(key, {
+    key,
+    mean,
+    matchesMain: slots.length > 0,
+    mainSlots: slots,
+    isDelta: source === "checklist" || source === "delta",
+    source,
+    teams,
+  });
+}
+
+/**
+ * Recommended substats:
+ * - Non-negligible: absolute high OptimFull liquids
+ *   (``high_substat_rolls_liquid``)
+ * - Negligible (``stat_recommendations.mode === "checklist"``): mid→high
+ *   liquid movers only (``delta_stats`` — same rule as Stat-goal
+ *   ``goal_substats``)
+ * - Plus mains that can also roll as substats
+ *
+ * Guide merges may fill mid ``ranked`` with mean 0 when there are no measured
+ * teams — keep those editorial ranks. Older CDN rows fall back to mid liquid
+ * ranks above the 0.5 noise floor.
+ */
+export function recommendedSubstatsFromBuilds(
+  builds: CharacterIndex | null | undefined,
+): RecommendedSubstat[] {
+  if (!builds) return [];
+  const mainSlots = mainSlotsBySubstatKey(builds);
+  const byKey = new Map<string, RecommendedSubstat>();
+  const rec = builds.stat_recommendations;
+  const high = builds.high_substat_rolls_liquid;
+  const liquid = builds.substat_rolls_liquid;
+  const ranked = liquid?.ranked ?? [];
+  const midTeams = liquid?.teams ?? 0;
+  // Guide merges stamp mid ranks with teams=0; only take that path when ranks exist.
+  // Empty/missing liquid must not block checklist delta_stats.
+  const guideAuthoredSubs = midTeams <= 0 && ranked.length > 0;
+  const negligible = rec?.mode === "checklist";
+
+  if (guideAuthoredSubs) {
+    for (const r of ranked) {
+      if (!isArtifactSubstatKey(r.key)) continue;
+      putRecommended(
+        byKey,
+        r.key,
+        r.mean,
+        mainSlots.get(r.key) ?? [],
+        "guide",
+        midTeams,
+      );
+    }
+  } else if (negligible && rec) {
+    for (const row of rec.delta_stats) {
+      if (!isArtifactSubstatKey(row.key)) continue;
+      if (!(row.mean_delta > 0)) continue;
+      putRecommended(
+        byKey,
+        row.key,
+        row.mean_delta,
+        mainSlots.get(row.key) ?? [],
+        "checklist",
+        rec.teams,
+      );
+    }
+  } else if (high && high.teams > 0) {
+    for (const r of high.ranked) {
+      if (!isArtifactSubstatKey(r.key)) continue;
+      if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
+      putRecommended(
+        byKey,
+        r.key,
+        r.mean,
+        mainSlots.get(r.key) ?? [],
+        "high",
+        high.teams,
+      );
+    }
+  } else if (rec?.mode === "delta") {
+    // High liquid missing (older CDN): fall back to stamped deltas.
+    for (const row of rec.delta_stats) {
+      if (!isArtifactSubstatKey(row.key)) continue;
+      if (!(row.mean_delta > 0)) continue;
+      putRecommended(
+        byKey,
+        row.key,
+        row.mean_delta,
+        mainSlots.get(row.key) ?? [],
+        "delta",
+        rec.teams,
+      );
+    }
+  } else {
+    for (const r of ranked) {
+      if (!isArtifactSubstatKey(r.key)) continue;
+      if (r.mean <= 0.5 && !mainSlots.has(r.key)) continue;
+      putRecommended(
+        byKey,
+        r.key,
+        r.mean,
+        mainSlots.get(r.key) ?? [],
+        "mid",
+        midTeams,
+      );
+    }
+  }
+
+  for (const [key, slots] of mainSlots) {
+    if (byKey.has(key)) continue;
+    putRecommended(byKey, key, 0, slots, "main", 0);
+  }
+
+  return sortRecommendedSubstats(byKey.values());
+}
+
+/** Weapons: BT strength → teams → measured sigs → rarity → name. */
 export function rankWeaponsByRarityAndTeams(
   weapons: CharacterWeaponRank[] | null | undefined,
   getStars: (key: string) => number,
@@ -128,9 +239,6 @@ export function rankWeaponsByRarityAndTeams(
   const preferred =
     preferredKeys instanceof Set ? preferredKeys : new Set(preferredKeys ?? []);
   return [...weapons].sort((a, b) => {
-    const ra = getStars(a.key);
-    const rb = getStars(b.key);
-    if (ra !== rb) return rb - ra;
     const sa = a.strength;
     const sb = b.strength;
     const aHasStrength = sa != null;
@@ -141,6 +249,9 @@ export function rankWeaponsByRarityAndTeams(
     const pa = preferred.has(a.key) ? 0 : 1;
     const pb = preferred.has(b.key) ? 0 : 1;
     if (pa !== pb) return pa - pb;
+    const ra = getStars(a.key);
+    const rb = getStars(b.key);
+    if (ra !== rb) return rb - ra;
     return a.key.localeCompare(b.key);
   });
 }
@@ -597,8 +708,9 @@ export function exampleUsesFavonius(example: CharacterBuildExample): boolean {
  * - Mid / negligible: baseline **ER**, plus **CR** only when that team's
  *   baseline weapon is Fav; if sands / goblet / circlet share one main,
  *   include that main too
- * - High invest (`tier === "high"` with high rolls): **mains + high OptimFull
- *   liquids** (not mid leftover rolls)
+ * - High invest: **mains + pipeline ``goal_substats``** (team-specific
+ *   mid→high liquid gainers). Older CDN rows without ``goal_substats`` fall
+ *   back to clamped high liquids > 0.
  */
 export function exampleRelevantGoodKeys(
   example: CharacterBuildExample,
@@ -616,6 +728,13 @@ export function exampleRelevantGoodKeys(
     const k = example.main_stats?.[slot.key];
     if (typeof k === "string" && k) keys.add(k);
   }
+  if (Array.isArray(example.goal_substats)) {
+    for (const k of example.goal_substats) {
+      if (typeof k === "string" && k) keys.add(k);
+    }
+    return keys;
+  }
+  // Legacy CDN: no stamped gainers — show any positive high liquid.
   const highLiquid = clampSubstatRolls(
     example.high_substat_rolls_liquid,
     example.main_stats,

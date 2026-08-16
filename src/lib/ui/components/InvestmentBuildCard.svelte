@@ -4,12 +4,12 @@
    * Shared by team-config pages and character build examples.
    */
   import { displayPreferences } from "$lib/stores";
-  import { translateStatKey, statIconUrl } from "$lib/utils";
   import {
-    artifactSetByKey,
-    weaponByKey,
-    equipmentVersion,
-  } from "$lib/equipment-data";
+    translateStatKey,
+    statIconUrl,
+    artifactSlotIconUrl,
+  } from "$lib/utils";
+  import { useWeapon, useArtifactSet } from "$lib/equipment-data.svelte";
   import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
   import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
@@ -21,7 +21,10 @@
     formatSheetStat,
     type SheetStatBag,
   } from "$lib/build-stats";
-  import { normalizeSetPieceCount } from "$lib/character-builds";
+  import {
+    MAIN_STAT_SLOTS,
+    normalizeSetPieceCount,
+  } from "$lib/character-builds";
   import type { CharacterBuild } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
   import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
@@ -46,18 +49,13 @@
 
   let iconStyle = $derived($displayPreferences.iconStyle);
 
-  let weapon = $derived.by(() => {
-    $equipmentVersion;
-    return weaponByKey.get(build.weapon.key) ?? null;
-  });
-  let set = $derived.by(() => {
-    $equipmentVersion;
-    return artifactSetByKey.get(build.set.key) ?? null;
-  });
-  let set2 = $derived.by(() => {
-    $equipmentVersion;
-    return build.set2 ? (artifactSetByKey.get(build.set2) ?? null) : null;
-  });
+  const weaponLookup = useWeapon(() => build.weapon.key);
+  const setLookup = useArtifactSet(() => build.set.key);
+  const set2Lookup = useArtifactSet(() => build.set2 ?? "");
+
+  let weapon = $derived(weaponLookup.weapon);
+  let set = $derived(setLookup.set);
+  let set2 = $derived(build.set2 ? set2Lookup.set : null);
   let setCount = $derived(normalizeSetPieceCount(build.set.count) ?? 4);
   let set2Count = $derived(
     build.set2 ? normalizeSetPieceCount(build.set2_count ?? 2) : null,
@@ -126,6 +124,25 @@
       return rows.filter((row) => row.key !== "heal");
     }
     return rows.filter((row) => sheetRowIsRelevant(row.key, rel));
+  });
+
+  let mainStatRows = $derived.by(() => {
+    const mains = build.main_stats;
+    if (!mains) return [];
+    return MAIN_STAT_SLOTS.flatMap((slot) => {
+      const key = mains[slot.key];
+      if (typeof key !== "string" || !key) return [];
+      return [
+        {
+          slot: slot.key,
+          slotLabel: slot.label,
+          key,
+          label: translateStatKey(key),
+          slotIcon: artifactSlotIconUrl(slot.key),
+          statIcon: statIconUrl(key),
+        },
+      ];
+    });
   });
 
   type TalentRow = {
@@ -313,6 +330,33 @@
           </div>
         {/if}
       </div>
+
+      {#if mainStatRows.length > 0}
+        <ul class="main-stats" aria-label="Artifact main stats">
+          {#each mainStatRows as row (row.slot)}
+            <li class="main-stat" aria-label="{row.slotLabel}: {row.label}">
+              <img
+                src={row.slotIcon}
+                alt=""
+                class="stat-icon main-stat-slot"
+                loading="lazy"
+              />
+              {#if row.statIcon}
+                <img
+                  src={row.statIcon}
+                  alt=""
+                  class="stat-icon main-stat-icon"
+                  loading="lazy"
+                />
+              {:else}
+                <span class="main-stat-fallback" aria-hidden="true"
+                  >{row.label}</span
+                >
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
     </div>
   </div>
 </Surface>
@@ -461,6 +505,66 @@
     border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
+  .main-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.65rem;
+    color: var(--foreground-mid);
+  }
+
+  .main-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .main-stat + .main-stat {
+    padding-left: 0.55rem;
+    border-left: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .main-stat-slot,
+  .main-stat-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .main-stat-fallback {
+    font-weight: 600;
+  }
+
+  .talent-row {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.65rem;
+    color: var(--foreground-mid);
+  }
+
+  .talent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .talent-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    object-fit: contain;
+    border-radius: 999px;
+  }
+
+  .talent-fallback {
+    font-weight: 600;
+  }
+
+  .talent-level {
+    color: var(--foreground-color);
+  }
+
   .equip-trigger {
     position: relative;
     display: flex;
@@ -576,34 +680,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-  }
-
-  .talent-row {
-    display: flex;
-    gap: 0.75rem;
-    font-size: 0.65rem;
-    color: var(--foreground-mid);
-  }
-
-  .talent-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-
-  .talent-icon {
-    width: 1.15rem;
-    height: 1.15rem;
-    object-fit: contain;
-    border-radius: 999px;
-  }
-
-  .talent-fallback {
-    font-weight: 600;
-  }
-
-  .talent-level {
-    color: var(--foreground-color);
   }
 
   .muted {

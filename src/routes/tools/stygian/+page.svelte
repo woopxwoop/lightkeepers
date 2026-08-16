@@ -2,7 +2,6 @@
   import { stygianScheduleBoard } from "$lib/stores";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import StygianSolutionBoard from "$lib/ui/components/StygianSolutionBoard.svelte";
-  import IconDatabase from "$lib/ui/icons/IconDatabase.svelte";
   import { resolve } from "$app/paths";
 
   let { data } = $props();
@@ -30,21 +29,24 @@
   <header class="page-head">
     <div class="page-head-text">
       <h1 class="page-title">Stygian Onslaught</h1>
-      {#if metaParts.length > 0}
-        <p class="page-meta">
-          {#each metaParts as part, index (part)}
-            {#if index > 0}
-              <span class="page-meta-sep" aria-hidden="true">·</span>
-            {/if}
-            <span>{part}</span>
-          {/each}
-        </p>
-      {/if}
+      <p class="page-meta">
+        {#each metaParts as part, index (part)}
+          {#if index > 0}
+            <span class="page-meta-sep" aria-hidden="true">·</span>
+          {/if}
+          <span>{part}</span>
+        {/each}
+        {#if metaParts.length > 0}
+          <span class="page-meta-sep" aria-hidden="true">·</span>
+        {/if}
+        <a class="back-link" href={resolve("/tools/stygian/summary")}>Summary</a
+        >
+        <span class="page-meta-sep" aria-hidden="true">·</span>
+        <a class="back-link" href={resolve("/tools/stygian/enemies")}
+          >Enemy Database</a
+        >
+      </p>
     </div>
-    <a class="enemies-index-link" href={resolve("/tools/stygian/enemies")}>
-      <IconDatabase size={14} />
-      Enemy Database
-    </a>
   </header>
 
   <StygianSolutionBoard {mapping} />
@@ -53,10 +55,8 @@
 <style>
   .page-head {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-4);
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: var(--space-2);
   }
 
   .page-meta {
@@ -64,20 +64,5 @@
     align-items: baseline;
     gap: 0.4rem;
     flex-wrap: wrap;
-  }
-
-  .enemies-index-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    width: fit-content;
-    font-size: var(--text-xs);
-    font-weight: 500;
-    color: var(--accent-1);
-    text-decoration: none;
-  }
-
-  .enemies-index-link:hover {
-    text-decoration: underline;
   }
 </style>

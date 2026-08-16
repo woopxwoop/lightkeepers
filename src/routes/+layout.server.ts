@@ -5,6 +5,8 @@
  * Version numbers come from tiny table lookups — not /api/static — so home
  * SSR is not blocked on the heavy all-teams RPCs. Full boards warm client-side
  * via ensureStaticBoards().
+ *
+ * Ships `characters` once; `+layout.ts` rebuilds the name_id Map for the client.
  */
 
 import { error } from "@sveltejs/kit";
@@ -14,9 +16,10 @@ import { charactersCache } from "$lib/server/cache";
 import { isPlaywrightE2e } from "$lib/server/e2e";
 import { e2eCharacters, e2eStaticPayload } from "$lib/e2e/fixtures";
 import { listPatchNotes } from "$lib/patch-notes-catalog";
-import type { Tables } from "$lib/types/database.types";
-
-type Character = Tables<"characters">;
+import {
+  getLatestAbyssVersionNumber,
+  getLatestStygianVersionNumber,
+} from "$lib/server/version-validation";
 
 export const load: LayoutServerLoad = async () => {
   const [versions, characters] = await Promise.all([
@@ -29,30 +32,21 @@ export const load: LayoutServerLoad = async () => {
         };
       }
 
-      const [abyssVerRes, stygianVerRes] = await Promise.all([
-        serverDb
-          .from("abyss_versions")
-          .select("version_number")
-          .order("version_number", { ascending: false })
-          .limit(1),
-        serverDb
-          .from("stygian_versions")
-          .select("version_number")
-          .order("version_number", { ascending: false })
-          .limit(1),
+      const [abyssVersionNumber, stygianVersionNumber] = await Promise.all([
+        getLatestAbyssVersionNumber(),
+        getLatestStygianVersionNumber(),
       ]);
 
-      if (abyssVerRes.error) {
-        console.error("layout: abyss_versions error", abyssVerRes.error);
-      }
-      if (stygianVerRes.error) {
-        console.error("layout: stygian_versions error", stygianVerRes.error);
+      // Fail closed — never stamp -1 into client stores from an empty table.
+      if (abyssVersionNumber == null || stygianVersionNumber == null) {
+        console.error("layout: missing latest abyss/stygian version", {
+          abyssVersionNumber,
+          stygianVersionNumber,
+        });
+        throw error(500, "Failed to load version numbers.");
       }
 
-      return {
-        abyssVersionNumber: abyssVerRes.data?.[0]?.version_number ?? -1,
-        stygianVersionNumber: stygianVerRes.data?.[0]?.version_number ?? -1,
-      };
+      return { abyssVersionNumber, stygianVersionNumber };
     })(),
     charactersCache.getOrSet("characters", async () => {
       if (isPlaywrightE2e()) return e2eCharacters();
@@ -70,9 +64,6 @@ export const load: LayoutServerLoad = async () => {
     }),
   ]);
 
-  const mapping = new Map<string, Character>();
-  characters.forEach((c) => mapping.set(c.name_id, c));
-
   // Skip in Playwright so the popup never blocks e2e flows.
   const latest = isPlaywrightE2e() ? undefined : listPatchNotes()[0];
   const latestPatchNote = latest
@@ -85,7 +76,6 @@ export const load: LayoutServerLoad = async () => {
     : null;
 
   return {
-    mapping,
     characters,
     abyssVersionNumber: versions.abyssVersionNumber,
     stygianVersionNumber: versions.stygianVersionNumber,

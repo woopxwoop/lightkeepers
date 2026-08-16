@@ -164,6 +164,11 @@ export interface CharacterIndex {
    */
   substat_rolls_liquid: CharacterLiquidSubstats;
   /**
+   * Mean high OptimFull (30/18/1) liquid allocations across artifact-importance
+   * teams. Preferred source for Recommended substats (rebalance signal).
+   */
+  high_substat_rolls_liquid?: CharacterLiquidSubstats;
+  /**
    * How much DPS drops when each talent is lowered to 1 (others stay baseline),
    * aggregated across teams. Character level is tracked separately.
    */
@@ -200,7 +205,7 @@ export interface CharacterIndex {
   /**
    * One example per reaction fingerprint (highest baseline DPS), capped.
    * `invest: mid` (negligible) → baseline ER (+ CR if that example uses Fav);
-   * `high` → high config + mains.
+   * `high` → mains + pipeline ``goal_substats`` (team mid→high gainers).
    * Shown on the character Builds tab.
    */
   build_examples?: CharacterBuildExample[];
@@ -334,7 +339,8 @@ export interface CharacterArtifactImportance {
 
 /**
  * Derived farm targets: mid→high liquid movers, plus conditional ER/Fav overlays.
- * `checklist` mode (negligible artifact impact) omits delta_stats.
+ * ``checklist`` mode (negligible artifact impact) still stamps ``delta_stats``
+ * for Recommended substats; report tables only show the ER/Fav overlays.
  */
 export interface CharacterStatRecommendations {
   mode: "delta" | "checklist";
@@ -360,7 +366,8 @@ export interface CharacterBuildExample {
   reactions: TeamReactionProfile;
   /**
    * ``mid`` = negligible artifact impact → UI shows baseline ER (+ CR if Fav).
-   * ``high`` = otherwise → UI shows high OptimFull sheet from mains + high rolls.
+   * ``high`` = otherwise → UI shows high OptimFull sheet from mains +
+   * ``goal_substats`` (team mid→high liquid gainers).
    */
   invest: "mid" | "high";
   artifact_pct_gain: number;
@@ -380,6 +387,11 @@ export interface CharacterBuildExample {
   /** High-invest OptimFull totals when ``invest === "high"``. */
   high_substat_rolls?: Record<string, number>;
   high_substat_rolls_liquid?: Record<string, number>;
+  /**
+   * Substat keys that gained liquid rolls mid→high on this team (pipeline).
+   * Stat goals show mains + these; full high rolls stay for sheet math.
+   */
+  goal_substats?: string[];
 }
 
 /** @deprecated Use {@link ImportanceImpactTier}. */

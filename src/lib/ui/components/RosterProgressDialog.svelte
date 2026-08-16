@@ -96,6 +96,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="roster-progress-title"
+      aria-describedby="roster-progress-lede"
       tabindex="-1"
       bind:this={panelEl}
       transition:scale={{ duration: reduced ? 0 : 160, start: 0.98 }}
@@ -112,6 +113,11 @@
           <IconX size={16} />
         </button>
       </header>
+
+      <p id="roster-progress-lede" class="section-lede">
+        Optional — you can skip this and still use Abyss, Stygian, Pulls, and
+        the rest of the site.
+      </p>
 
       <div class="progress-fields">
         <NumberSliderField
@@ -213,6 +219,10 @@
   }
 
   .progress-head .section-title {
+    margin: 0;
+  }
+
+  .progress-panel > .section-lede {
     margin: 0;
   }
 

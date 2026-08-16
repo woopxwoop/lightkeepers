@@ -5,7 +5,7 @@
  * (same pattern as `/api/investment`). Merges live + beta catalogs so CB chars
  * (Odette / Alyosha) appear alongside live Dimbreath rows — live wins on id.
  */
-import { json, error } from "@sveltejs/kit";
+import { json, error, isHttpError } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
@@ -19,7 +19,10 @@ import type {
   WeaponUpgradeCosts,
 } from "$lib/types/upgrade-costs";
 
-const cache = new LRUCache<UpgradeCostsCatalog>(1, 15 * 60 * 1000);
+const cache = new LRUCache<UpgradeCostsCatalog>(1, 15 * 60 * 1000, {
+  redisNamespace: "upgrade-costs",
+  staleWhileRevalidate: true,
+});
 const CACHE_KEY = "upgrade-costs";
 
 async function fetchJson<T>(
@@ -97,6 +100,7 @@ export const GET: RequestHandler = async () => {
       },
     });
   } catch (err) {
+    if (isHttpError(err)) throw err;
     console.error("/api/upgrade-costs:", err);
     throw error(502, "Failed to fetch upgrade costs from CDN");
   }

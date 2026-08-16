@@ -7,9 +7,9 @@
   } from "$lib/utils";
   import {
     humanizeInvestmentLabel,
-    equipmentVersion,
     ensureEquipmentData,
   } from "$lib/equipment-data";
+  import { useEquipmentData } from "$lib/equipment-data.svelte";
   import { onMount } from "svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import PageTrail from "$lib/ui/components/PageTrail.svelte";
@@ -18,6 +18,7 @@
   import InvestmentBuildCard from "$lib/ui/components/InvestmentBuildCard.svelte";
 
   let { data } = $props();
+  const equipment = useEquipmentData();
   let team = $derived(data.team);
   let sim = $derived(data.sim);
   let configText = $derived(data.configText);
@@ -28,7 +29,7 @@
   let characterNames = $derived(namesFromGoodKeyMap(goodKeyMap));
   let teamTitle = $derived(humanizeTeamName(team.characters, characterNames));
   let simLabel = $derived.by(() => {
-    $equipmentVersion;
+    void equipment.version;
     return sim.kind === "baseline"
       ? "Baseline"
       : sim.label

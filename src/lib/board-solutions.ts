@@ -79,6 +79,57 @@ export function teamsFingerprint(teams: { team_key: string | null }[]): string {
   return `${keys.length}:${keys[0]}:${keys[keys.length - 1]}:${hashString(keys.join("|"))}`;
 }
 
+/**
+ * Fingerprint character meta used by floorTeamCost / C0R0 seating
+ * (name_id + rarity → limited-5★ cost).
+ */
+export function characterMetaFingerprint(
+  mapping: ReadonlyMap<
+    string,
+    { name_id: string; rarity: number | null | undefined }
+  >,
+): string {
+  if (mapping.size === 0) return "0";
+  const parts = [...mapping.values()]
+    .map((c) => `${c.name_id}:${c.rarity ?? ""}`)
+    .sort();
+  return `${parts.length}:${hashString(parts.join("|"))}`;
+}
+
+type CheapClearFingerprintRow = {
+  team_key: string | null;
+  enemy_id: number;
+  members?: string[] | null;
+  min_cost?: number | null;
+  frontier?: unknown;
+  usage_rate?: number | null;
+  field_1_rate?: number | null;
+  field_2_rate?: number | null;
+  field_3_rate?: number | null;
+};
+
+/** Fingerprint every solver-relevant field of cheap-clear rows. */
+export function cheapClearsFingerprint(
+  rows: readonly CheapClearFingerprintRow[],
+): string {
+  if (rows.length === 0) return "0";
+  const parts = rows.map((row) =>
+    [
+      row.team_key ?? "",
+      String(row.enemy_id),
+      (row.members ?? []).join(","),
+      row.min_cost == null ? "" : String(row.min_cost),
+      JSON.stringify(row.frontier ?? null),
+      row.usage_rate == null ? "" : String(row.usage_rate),
+      row.field_1_rate == null ? "" : String(row.field_1_rate),
+      row.field_2_rate == null ? "" : String(row.field_2_rate),
+      row.field_3_rate == null ? "" : String(row.field_3_rate),
+    ].join(":"),
+  );
+  parts.sort();
+  return `${parts.length}:${hashString(parts.join("|"))}`;
+}
+
 function hashString(s: string): string {
   // FNV-1a 32-bit — fast content stamp for memo keys (not cryptographic).
   let h = 0x811c9dc5;

@@ -265,12 +265,23 @@
     margin-top: 0.35rem;
   }
 
+  /* Ghost on black page base — silver/cream control border, not washed gold. */
+  .popup-actions :global(.btn-ghost) {
+    border-color: var(--border-control-quiet);
+  }
+
+  .popup-actions :global(.btn-ghost:hover) {
+    border-color: color-mix(in srgb, var(--foreground-color) 42%, transparent);
+    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+  }
+
   .popup-read {
     display: inline-flex;
     align-items: center;
     padding: 0.35rem 0.75rem;
     border-radius: var(--radius-md);
-    border: var(--border-width) solid var(--accent-1);
+    /* No gold outline on black — fill alone; gold-on-black borders read murky. */
+    border: var(--border-width) solid transparent;
     background: var(--accent-1);
     color: var(--control-knob-on);
     font-size: var(--text-sm);
@@ -281,6 +292,5 @@
 
   .popup-read:hover {
     background: color-mix(in srgb, var(--accent-1) 88%, white);
-    border-color: color-mix(in srgb, var(--accent-1) 88%, white);
   }
 </style>

@@ -437,9 +437,20 @@ function scheduleStaticBoardsRetry(): void {
  * If CDN/L1 is still on the previous cycle after one cache-bust, seeds with
  * the payload's own version stamps (never pretends layout versions matched)
  * and retries on a backoff until current. While a retry is scheduled,
- * further callers return early until the backoff elapses.
+ * further callers return early until the backoff elapses — pass `{ force: true }`
+ * (Retry UI) to clear backoff and fetch immediately.
  */
-export async function ensureStaticBoards(): Promise<void> {
+export async function ensureStaticBoards(opts?: {
+  force?: boolean;
+}): Promise<void> {
+  if (opts?.force) {
+    if (staticBoardsRetryTimer) {
+      clearTimeout(staticBoardsRetryTimer);
+      staticBoardsRetryTimer = null;
+    }
+    staticBoardsRetryAfterMs = 0;
+    staticBoardsRetryAttempt = 0;
+  }
   if (staticBoardsMatchCurrentVersions()) return;
   // Backoff after a stale/failed fetch — skip whether boards loaded or not.
   if (Date.now() < staticBoardsRetryAfterMs) return;

@@ -144,6 +144,19 @@
 
   /* Toggle knob when on — soft near-black, not pure page bg / not orange */
   --control-knob-on: color-mix(in srgb, var(--accent-1) 6%, #16130e);
+
+  /* ── Scrollbars (cream thumb, transparent track) ─────────────────────── */
+  --scrollbar-size: 0.55rem;
+  --scrollbar-thumb: color-mix(
+    in srgb,
+    var(--foreground-color) 40%,
+    transparent
+  );
+  --scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--foreground-color) 58%,
+    transparent
+  );
 }
 
 body {
@@ -155,6 +168,33 @@ body {
   font-family: var(--font-body);
   /* Prefer a real range — previous max was 1rem (=16px), same as min, so vw never applied. */
   font-size: clamp(15px, 0.35vw + 0.875rem, 1.0625rem);
+}
+
+/* Thin cream scrollbars site-wide (Firefox + WebKit). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  background: var(--scrollbar-thumb);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
 }
 
 @keyframes flip-in {

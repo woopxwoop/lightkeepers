@@ -17,7 +17,13 @@ export const GET: RequestHandler = async ({
   const key = params.key?.trim();
   if (!key) throw error(400, "Missing character key");
 
-  const summary = await getCharacterSummary(key);
+  let summary;
+  try {
+    summary = await getCharacterSummary(key);
+  } catch (err) {
+    console.error(`/api/character-summary/${key}:`, err);
+    throw error(502, "Failed to fetch character summary from CDN");
+  }
   if (!summary) throw error(404, `No Builds summary for ${key}`);
 
   return json(summary, {

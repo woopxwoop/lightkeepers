@@ -26,7 +26,11 @@ export const load: PageServerLoad = async ({ params }) => {
   const { kit, channel: kitChannel } = result;
 
   const [builds, travelerKits] = await Promise.all([
-    getCharacterSummary(simCharacterKey(kit)),
+    getCharacterSummary(simCharacterKey(kit)).catch((err) => {
+      // Kit page still works without Builds; transport stays uncached in the helper.
+      console.warn(`[characters] summary load failed for ${params.slug}:`, err);
+      return null;
+    }),
     kit.is_traveler ? getTravelerElementKits(kit) : Promise.resolve({}),
   ]);
 

@@ -22,7 +22,6 @@
     animationsEnabled,
   } from "$lib/stores";
   import { ownedNameIds } from "$lib/utils";
-  import { loadRosterWeapons } from "$lib/app/roster-inventory";
   import {
     computePullSuggestions,
     computePairSuggestions,
@@ -156,8 +155,6 @@
     ensureTeamsOwned($charactersOwned).catch(() => {
       pageState = "error";
     });
-    // Prefetch weapons into the shared cache for planner surfaces.
-    loadRosterWeapons().catch(() => {});
     if (!nearMissReady) {
       ensureNearMissTeams($charactersOwned).catch(() => {
         pageState = "error";
