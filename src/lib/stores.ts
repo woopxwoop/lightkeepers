@@ -289,8 +289,17 @@ export const hasSavedRoster = writable<boolean>(false);
 
 export function initHasSavedRoster(): void {
   try {
-    const val = localStorage.getItem("hasSavedRoster");
-    hasSavedRoster.set(val === "true");
+    if (localStorage.getItem("hasSavedRoster") === "true") {
+      hasSavedRoster.set(true);
+      return;
+    }
+    // Persisted roster without the flag (cloud apply, older clients).
+    // Presence of `charactersOwned` means the user already configured ownership.
+    if (localStorage.getItem("charactersOwned")) {
+      setHasSavedRoster();
+      return;
+    }
+    hasSavedRoster.set(false);
   } catch {
     // localStorage unavailable — assume not saved
   }
