@@ -465,7 +465,7 @@
     left: 2px;
     width: 14px;
     height: 14px;
-    background: color-mix(in srgb, var(--accent-1) 6%, #16130e);
+    background: var(--control-knob-on);
     border-radius: 50%;
     transition:
       transform 0.2s,

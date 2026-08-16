@@ -176,6 +176,34 @@ export function uniqueGoalsOnPlaces(
   return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * One material badge for a face on these places — highest rank when a goal
+ * needs several ranks of the same farm (e.g. Guide + Philosophies).
+ */
+export function faceMaterialOnPlaces(
+  goal: FarmGoalRef,
+  places: FarmPlace[],
+  contributors: Map<string, FarmGoalRef[]>,
+): FarmPlaceMaterial | null {
+  const faceKey = farmGoalFaceKey(goal);
+  let best: FarmPlaceMaterial | null = null;
+  for (const place of places) {
+    for (const mat of place.materials) {
+      const goals = contributors.get(mat.id) ?? [];
+      if (!goals.some((g) => farmGoalFaceKey(g) === faceKey)) continue;
+      if (
+        !best ||
+        mat.rankLevel > best.rankLevel ||
+        (mat.rankLevel === best.rankLevel &&
+          mat.name.localeCompare(best.name) < 0)
+      ) {
+        best = mat;
+      }
+    }
+  }
+  return best;
+}
+
 function farmPlaceKind(
   source: UpgradeMaterialSource,
   meta: UpgradeMaterialMeta | undefined,
