@@ -8,6 +8,14 @@ import type { RequestHandler } from "./$types";
 
 const ALLOWED_HOSTS = new Set(["api.lightkeepers.moe"]);
 
+function cancelUpstreamBody(res: Response): void {
+  try {
+    void res.body?.cancel();
+  } catch {
+    /* ignore cancel failures; preserve original error path */
+  }
+}
+
 export const GET: RequestHandler = async ({ url }) => {
   const raw = url.searchParams.get("u");
   if (!raw) error(400, "Missing u");
@@ -34,11 +42,13 @@ export const GET: RequestHandler = async ({ url }) => {
   }
 
   if (!upstream.ok) {
+    cancelUpstreamBody(upstream);
     error(upstream.status === 404 ? 404 : 502, "Upstream fetch failed");
   }
 
   const contentType = upstream.headers.get("content-type") ?? "";
   if (!contentType.toLowerCase().startsWith("image/")) {
+    cancelUpstreamBody(upstream);
     error(502, "Upstream is not an image");
   }
   if (!upstream.body) {
@@ -46,6 +56,7 @@ export const GET: RequestHandler = async ({ url }) => {
   }
 
   return new Response(upstream.body, {
+    status: upstream.status,
     headers: {
       "Content-Type": contentType,
       "Cache-Control": "public, max-age=86400",
