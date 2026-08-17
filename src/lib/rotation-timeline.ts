@@ -2,7 +2,7 @@
  * Client helpers for the rotation sample swimlane UI.
  * CDN events stay raw; collapse/abbrev happen at display time.
  */
-import { matchScriptLoops } from "$lib/rotation-script";
+import { matchScriptLoops, type ScriptLoopMatch } from "$lib/rotation-script";
 import type {
   RotationAction,
   RotationSampleEvent,
@@ -265,6 +265,8 @@ export const DEFAULT_ROTATION_WINDOW_S = 20;
 /** Soft bounds for a detected cycle length (seconds). */
 const MIN_DETECTED_WINDOW_S = 4;
 const MAX_DETECTED_WINDOW_S = 45;
+/** Swaps after this time cannot end the first glance loop. */
+const MAX_GLANCE_LOOP_END_S = 60;
 
 function swapTargetId(e: RotationSampleEvent): string {
   const raw = (e.label || e.char || "").trim().toLowerCase();
@@ -422,16 +424,26 @@ export type RotationWindowOpts = {
   script?: string | null;
   /** Party keys used to resolve script aliases (`bina` → Columbina). */
   characters?: readonly string[];
+  /**
+   * When provided, skips {@link matchScriptLoops} (reuse one alignment pass).
+   * Pass `null` when alignment already ran and found no script loop.
+   */
+  scriptMatch?: ScriptLoopMatch | null;
 };
 
 function windowFromScript(
   events: readonly RotationSampleEvent[],
   opts: RotationWindowOpts | undefined,
 ): RotationWindow | null {
-  const script = opts?.script?.trim();
-  const party = opts?.characters;
-  if (!script || !party?.length) return null;
-  const match = matchScriptLoops(events, script, party);
+  const match =
+    opts && "scriptMatch" in opts
+      ? opts.scriptMatch
+      : (() => {
+          const script = opts?.script?.trim();
+          const party = opts?.characters;
+          if (!script || !party?.length) return null;
+          return matchScriptLoops(events, script, party);
+        })();
   if (!match) return null;
   const loopStart = match.starts[0];
   const nextStart = match.starts[1];
@@ -440,7 +452,7 @@ function windowFromScript(
   if (
     cycleLen < MIN_DETECTED_WINDOW_S ||
     cycleLen > MAX_DETECTED_WINDOW_S ||
-    nextStart > 60
+    nextStart > MAX_GLANCE_LOOP_END_S
   ) {
     return null;
   }
@@ -469,7 +481,7 @@ export function detectRotationWindow(
   if (fromScript) return fromScript;
 
   const swaps = events
-    .filter((e) => e.action === "swap")
+    .filter((e) => e.action === "swap" && e.t <= MAX_GLANCE_LOOP_END_S)
     .slice()
     .sort((a, b) => a.t - b.t || 0);
 
@@ -497,7 +509,7 @@ export function detectRotationWindow(
     cycleLen < MIN_DETECTED_WINDOW_S ||
     cycleLen > MAX_DETECTED_WINDOW_S ||
     loopEndS < MIN_DETECTED_WINDOW_S ||
-    loopEndS > 60
+    loopEndS > MAX_GLANCE_LOOP_END_S
   ) {
     return fallbackWindow(fallbackEndS);
   }

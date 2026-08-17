@@ -16,6 +16,10 @@ import type {
 } from "$lib/types/investment";
 
 const gunzipAsync = promisify(gunzip);
+/** Max compressed rotation payload from CDN (512 KiB). */
+const MAX_ROTATION_GZIP_BYTES = 512 * 1024;
+/** Max decompressed rotation JSON (4 MiB). */
+const MAX_ROTATION_JSON_BYTES = 4 * 1024 * 1024;
 const CDN_INVESTMENT = "https://api.lightkeepers.moe/sim/investment.json.gz";
 const investmentCache = new LRUCache<InvestmentFile>(1, 15 * 60 * 1000, {
   redisNamespace: "investment",
@@ -190,6 +194,7 @@ function parseRotationSample(raw: unknown): RotationSample | null {
     if (typeof e.label === "string" && e.label) event.label = e.label;
     events.push(event);
   }
+  events.sort((a, b) => a.t - b.t);
 
   const sample: RotationSample = {
     seed: o.seed,
@@ -221,9 +226,27 @@ async function loadSimRotationFromCdn(
     );
   }
   const buf = Buffer.from(await res.arrayBuffer());
-  const text = isGzipped(buf)
-    ? (await gunzipAsync(buf)).toString("utf-8")
-    : buf.toString("utf-8");
+  if (buf.length > MAX_ROTATION_GZIP_BYTES) {
+    rotationCache.set(stateKey, null);
+    return null;
+  }
+  let text: string;
+  try {
+    text = isGzipped(buf)
+      ? (
+          await gunzipAsync(buf, { maxOutputLength: MAX_ROTATION_JSON_BYTES })
+        ).toString("utf-8")
+      : buf.length <= MAX_ROTATION_JSON_BYTES
+        ? buf.toString("utf-8")
+        : "";
+  } catch {
+    rotationCache.set(stateKey, null);
+    return null;
+  }
+  if (!text) {
+    rotationCache.set(stateKey, null);
+    return null;
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);

@@ -630,6 +630,52 @@ type ScriptAlign = {
   overlay: ActionOverlay;
 };
 
+export type ScriptSampleAlignment = {
+  events: readonly RotationSampleEvent[];
+  loopMatch: ScriptLoopMatch | null;
+};
+
+function annotateEventsFromAlign(
+  events: readonly RotationSampleEvent[],
+  aligned: ScriptAlign,
+): readonly RotationSampleEvent[] {
+  const byEvent = new Map<number, RotationAction>();
+  aligned.toks.forEach((tok, i) => {
+    const action = aligned.overlay[i];
+    if (action) byEvent.set(tok.eventIndex, action);
+  });
+  if (byEvent.size === 0) return events;
+  let changed = false;
+  const next = events.map((event, i) => {
+    const action = byEvent.get(i);
+    if (!action || action === event.action) return event;
+    changed = true;
+    return { ...event, action };
+  });
+  return changed ? next : events;
+}
+
+/** One script lex/parse/match pass for display annotations and loop detection. */
+export function resolveScriptSampleAlignment(
+  events: readonly RotationSampleEvent[],
+  script: string | null | undefined,
+  party: readonly string[],
+): ScriptSampleAlignment {
+  if (!script?.trim() || party.length === 0) {
+    return { events, loopMatch: null };
+  }
+  const aligned = alignScript(events, script, party);
+  if (!aligned) return { events, loopMatch: null };
+  const loopMatch: ScriptLoopMatch | null =
+    aligned.starts.length >= 2
+      ? { starts: aligned.starts, hasSetup: aligned.hasSetup }
+      : null;
+  return {
+    events: annotateEventsFromAlign(events, aligned),
+    loopMatch,
+  };
+}
+
 function alignScript(
   events: readonly RotationSampleEvent[],
   script: string,
@@ -679,9 +725,7 @@ export function matchScriptLoops(
   script: string,
   party: readonly string[],
 ): ScriptLoopMatch | null {
-  const aligned = alignScript(events, script, party);
-  if (!aligned || aligned.starts.length < 2) return null;
-  return { starts: aligned.starts, hasSetup: aligned.hasSetup };
+  return resolveScriptSampleAlignment(events, script, party).loopMatch;
 }
 
 /**
@@ -692,22 +736,6 @@ export function applyScriptEventActions(
   events: readonly RotationSampleEvent[],
   script: string | null | undefined,
   party: readonly string[],
-): RotationSampleEvent[] {
-  if (!script?.trim() || party.length === 0) return events as RotationSampleEvent[];
-  const aligned = alignScript(events, script, party);
-  if (!aligned) return events as RotationSampleEvent[];
-  const byEvent = new Map<number, RotationAction>();
-  aligned.toks.forEach((tok, i) => {
-    const action = aligned.overlay[i];
-    if (action) byEvent.set(tok.eventIndex, action);
-  });
-  if (byEvent.size === 0) return events as RotationSampleEvent[];
-  let changed = false;
-  const next = events.map((event, i) => {
-    const action = byEvent.get(i);
-    if (!action || action === event.action) return event;
-    changed = true;
-    return { ...event, action };
-  });
-  return changed ? next : (events as RotationSampleEvent[]);
+): readonly RotationSampleEvent[] {
+  return resolveScriptSampleAlignment(events, script, party).events;
 }

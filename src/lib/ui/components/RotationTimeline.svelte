@@ -15,7 +15,7 @@
     rotationSegmentLabel,
     spansForCharacter,
   } from "$lib/rotation-timeline";
-  import { applyScriptEventActions } from "$lib/rotation-script";
+  import { resolveScriptSampleAlignment } from "$lib/rotation-script";
   import type { RotationSample } from "$lib/types/investment";
   import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
   import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
@@ -39,13 +39,19 @@
   let viewMode = $state<ViewMode>("timeline");
   let viewportWidthPx = $state(0);
 
-  let annotatedEvents = $derived(
-    applyScriptEventActions(sample.events, script, sample.characters),
+  let scriptAlignment = $derived(
+    resolveScriptSampleAlignment(sample.events, script, sample.characters),
   );
+  let annotatedEvents = $derived(scriptAlignment.events);
   let rotationWindow = $derived(
     detectRotationWindow(annotatedEvents, DEFAULT_ROTATION_WINDOW_S, {
-      script,
-      characters: sample.characters,
+      ...(script?.trim()
+        ? {
+            script,
+            characters: sample.characters,
+            scriptMatch: scriptAlignment.loopMatch,
+          }
+        : {}),
     }),
   );
   let collapsed = $derived(collapseRotationEvents(annotatedEvents));
@@ -111,15 +117,35 @@
     rotationAxisBands(boundaryLeftPxs, layout.trackWidthPx, hasSetup),
   );
 
+  function cssLengthPx(value: string, fallbackPx: number): number {
+    const trimmed = value.trim();
+    if (!trimmed) return fallbackPx;
+    if (trimmed.endsWith("px")) {
+      const n = Number.parseFloat(trimmed);
+      return Number.isFinite(n) ? n : fallbackPx;
+    }
+    if (trimmed.endsWith("rem")) {
+      const n = Number.parseFloat(trimmed);
+      const root = Number.parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+      );
+      return Number.isFinite(n) && Number.isFinite(root) ? n * root : fallbackPx;
+    }
+    return fallbackPx;
+  }
+
   const measureViewport = (node: HTMLDivElement) => {
     const apply = () => {
-      const head = node.querySelector(".lane-head");
-      const headW =
-        head instanceof HTMLElement
-          ? head.getBoundingClientRect().width
-          : 120;
-      // Track column is what we fit the glance window into.
-      const w = Math.floor(node.clientWidth - headW - 8);
+      const root = node.closest(".rotation");
+      const style =
+        root instanceof HTMLElement ? getComputedStyle(root) : null;
+      const headW = style
+        ? cssLengthPx(style.getPropertyValue("--lane-head-w"), 144)
+        : 144;
+      const gap = style
+        ? cssLengthPx(style.getPropertyValue("--lane-track-measure-gap"), 8)
+        : 8;
+      const w = Math.floor(node.clientWidth - headW - gap);
       if (w > 0) viewportWidthPx = w;
     };
     const ro = new ResizeObserver(apply);
@@ -140,14 +166,19 @@
   </div>
 
   {#if viewMode === "timeline"}
-    <div class="lanes-panel" aria-label="Rotation sample (Test)">
-      <div class="lanes-scroll" {@attach measureViewport}>
+    <div class="lanes-panel">
+      <div
+        class="lanes-scroll"
+        tabindex="0"
+        aria-label="Rotation sample (Test)"
+        {@attach measureViewport}
+      >
         <div
           class="lane axis-lane"
           style:--track-w="{layout.trackWidthPx}px"
         >
           <div class="lane-head axis-head"></div>
-          <div class="lane-track axis-track" aria-label="Rotation periods">
+          <div class="lane-track axis-track">
             {#each axisBands as band, i (`ax${i}:${band.label}:${band.leftPx}`)}
               <span
                 class="axis-band"
@@ -261,6 +292,10 @@
 
 <style>
   .rotation {
+    --lane-head-w: 9rem;
+    --lane-grid-gap: var(--space-2);
+    --lane-scroll-pad: var(--space-2);
+    --lane-track-measure-gap: 8px;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
@@ -291,7 +326,7 @@
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
-    padding: 0 var(--space-2);
+    padding: 0 var(--lane-scroll-pad);
   }
 
   .char-lanes {
@@ -303,8 +338,8 @@
 
   .lane {
     display: grid;
-    grid-template-columns: 9rem var(--track-w, max-content);
-    gap: var(--space-2);
+    grid-template-columns: var(--lane-head-w) var(--track-w, max-content);
+    gap: var(--lane-grid-gap);
     align-items: center;
     min-height: 2.5rem;
     padding: 0.3rem 0;
@@ -367,8 +402,8 @@
     align-items: center;
     gap: 0.35rem;
     min-width: 0;
-    margin-left: calc(-1 * var(--space-2));
-    padding-left: var(--space-2);
+    margin-left: calc(-1 * var(--lane-scroll-pad));
+    padding-left: var(--lane-scroll-pad);
     padding-right: 0.35rem;
     background: linear-gradient(
       to right,
@@ -424,7 +459,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(9rem + var(--space-2));
+    left: calc(var(--lane-head-w) + var(--lane-grid-gap));
     z-index: 4;
     width: var(--track-w);
     overflow: visible;
@@ -510,13 +545,9 @@
   }
 
   @media (max-width: 640px) {
-    .lane {
-      grid-template-columns: 7rem var(--track-w, max-content);
-      gap: var(--space-1);
-    }
-
-    .swap-links {
-      left: calc(7rem + var(--space-1));
+    .rotation {
+      --lane-head-w: 7rem;
+      --lane-grid-gap: var(--space-1);
     }
   }
 </style>
