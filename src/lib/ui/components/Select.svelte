@@ -268,13 +268,13 @@
   .select {
     position: relative;
     display: inline-flex;
+    min-width: 0;
   }
 
   .select-trigger {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    min-width: 0;
     max-width: 100%;
     padding: 0.4rem 0.7rem;
     border-radius: var(--radius-md);

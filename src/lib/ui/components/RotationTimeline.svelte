@@ -140,7 +140,7 @@
   </div>
 
   {#if viewMode === "timeline"}
-    <div class="lanes-panel" aria-label="Rotation sample">
+    <div class="lanes-panel" aria-label="Rotation sample (Test)">
       <div class="lanes-scroll" {@attach measureViewport}>
         <div
           class="lane axis-lane"
@@ -222,6 +222,7 @@
                   style:left="{marker.leftPx}px"
                   style:width="{marker.widthPx}px"
                   title="{who} {marker.label} · {marker.event.t.toFixed(1)}s"
+                  aria-label="{who} {marker.label} · {marker.event.t.toFixed(1)}s"
                 >
                   {marker.label}
                 </span>
@@ -246,7 +247,7 @@
       </div>
     </div>
   {:else}
-    <div class="plaintext" aria-label="Rotation sample text">
+    <div class="plaintext" aria-label="Rotation sample text (Test)">
       {#each plaintext as line, i (`t${i}`)}
         {#if i > 0}
           <hr class="rotation-split" />
@@ -465,7 +466,6 @@
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
-    pointer-events: none;
   }
 
   .marker-skill {
