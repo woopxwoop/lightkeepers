@@ -11,15 +11,14 @@ let lockDepth = 0;
 let savedOverflow = "";
 
 function takeOwnership(): void {
-  // Stale marker (e.g. HMR) means we already own the inline style — don't
-  // treat the current "hidden" as a foreign restore value.
+  // Stale marker (e.g. HMR) still holds the original inline overflow.
   if (document.body.hasAttribute(OWNER_ATTR)) {
-    savedOverflow = "";
+    savedOverflow = document.body.getAttribute(OWNER_ATTR) ?? "";
   } else {
     savedOverflow = document.body.style.overflow;
+    document.body.setAttribute(OWNER_ATTR, savedOverflow);
   }
   document.body.style.overflow = "hidden";
-  document.body.setAttribute(OWNER_ATTR, "");
 }
 
 function releaseOwnership(): void {
@@ -56,7 +55,8 @@ export function clearOrphanBodyScrollLock(): void {
   if (typeof document === "undefined") return;
   if (lockDepth !== 0) return;
   if (!document.body.hasAttribute(OWNER_ATTR)) return;
-  document.body.style.overflow = "";
+  const restore = document.body.getAttribute(OWNER_ATTR) ?? "";
+  document.body.style.overflow = restore;
   document.body.removeAttribute(OWNER_ATTR);
   savedOverflow = "";
 }

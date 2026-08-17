@@ -564,6 +564,14 @@ export function getSimConfigUrl(stateKey: string): string {
 }
 
 /**
+ * Near-mean rotation timeline for a sim state key.
+ * Synced as `sim-configs/{state_key}/rotation.json.gz`.
+ */
+export function getSimRotationUrl(stateKey: string): string {
+  return `${SIM_CONFIGS_BASE}/${encodeURIComponent(stateKey)}/rotation.json.gz`;
+}
+
+/**
  * Aggregate character config summaries (`sim/characters.json.gz`).
  * Synced by `scripts/sync/gcsim-r2.ts` from `output/characters.json`.
  */
