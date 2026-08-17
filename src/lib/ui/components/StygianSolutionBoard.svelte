@@ -627,6 +627,7 @@
         <Select
           class="solver-mode-select"
           aria-label="Stygian solution source"
+          fit="value"
           options={[...solverModeOptions]}
           bind:value={
             () => solverMode,
@@ -739,6 +740,13 @@
     background: var(--surface-inset);
   }
 
+  @media (max-width: 640px) {
+    .board-head {
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+  }
+
   .board-head-left {
     display: flex;
     align-items: baseline;
@@ -761,11 +769,28 @@
   .pager {
     display: flex;
     align-items: center;
-    flex-shrink: 0;
   }
 
   .board-actions {
     gap: var(--space-2);
+    flex-shrink: 0;
+    min-width: 0;
+  }
+
+  @media (max-width: 640px) {
+    .board-actions {
+      flex: 1 1 auto;
+      justify-content: flex-end;
+    }
+
+    .board-actions :global(.solver-mode-select) {
+      min-width: 0;
+      max-width: min(10.5rem, 46vw);
+    }
+
+    .board-actions :global(.solver-mode-select .select-trigger) {
+      max-width: 100%;
+    }
   }
 
   .board-actions :global(.clear-difficulty .segment) {

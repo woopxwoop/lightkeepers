@@ -661,7 +661,9 @@
     color: var(--foreground-color);
     border: var(--border-width) solid
       color-mix(in srgb, var(--foreground-color) 12%, transparent);
-    overflow: hidden;
+    /* clip (not hidden): avoid creating a scrollport that traps page scroll on
+       tall summaries when scrollHeight === clientHeight (esp. touch / trackpad). */
+    overflow: clip;
     container-type: inline-size;
     container-name: info;
   }
@@ -808,7 +810,7 @@
 
   .column-solo {
     min-width: 0;
-    overflow: hidden;
+    overflow: clip;
     width: 100%;
   }
 

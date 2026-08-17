@@ -11,7 +11,10 @@ export function acquireBodyScrollLock(): () => void {
   if (typeof document === "undefined") return () => {};
 
   if (lockDepth === 0) {
-    previousOverflow = document.body.style.overflow;
+    // Never treat a leftover `hidden` as the restore target — that sticks
+    // the page unscrollable after release (HMR, or a non-shared lock).
+    const current = document.body.style.overflow;
+    previousOverflow = current === "hidden" ? "" : current;
     document.body.style.overflow = "hidden";
   }
   lockDepth += 1;
@@ -26,4 +29,15 @@ export function acquireBodyScrollLock(): () => void {
       previousOverflow = "";
     }
   };
+}
+
+/**
+ * Clear `overflow: hidden` left on body when no shared lock is held
+ * (e.g. after HMR or a raw body.style write that never restored).
+ */
+export function clearOrphanBodyScrollLock(): void {
+  if (typeof document === "undefined") return;
+  if (lockDepth === 0 && document.body.style.overflow === "hidden") {
+    document.body.style.overflow = "";
+  }
 }
