@@ -8,12 +8,16 @@
  *   import { metrics } from '$lib/server/metrics';
  *   metrics.recordRequest({ path, method, status, durationMs });
  *   metrics.log('info', 'something happened', { key: 'value' });
+ *
+ * HTTP `path` labels must be bounded route templates (`event.route.id`),
+ * never raw URLs — slugs and 404 scans explode Grafana Cloud series.
  */
 
 import client from "prom-client";
 
 const SERVICE = "lightkeepers";
 const SLOW_REQUEST_MS = 2_000;
+const UNMATCHED_ROUTE = "unmatched";
 
 // ── Registry ───────────────────────────────────────────────────────────────
 // Use a custom registry so we don't accidentally share state with other libs.
@@ -36,11 +40,28 @@ const httpRequestsTotal = new client.Counter({
 const httpRequestDurationMs = new client.Histogram({
   name: "http_request_duration_ms",
   help: "HTTP request duration in milliseconds",
-  labelNames: ["method", "path", "status"],
+  labelNames: ["method", "path"],
   // Buckets tuned for a web app: fast API responses up to slow DB queries
   buckets: [10, 25, 50, 100, 250, 500, 1000, 2500, 5000],
   registers: [registry],
 });
+
+/** Skip self-scrape and hashed/static assets — those paths are unbounded. */
+export function shouldRecordHttpMetric(pathname: string): boolean {
+  return (
+    pathname !== "/metrics" &&
+    !pathname.startsWith("/_app/") &&
+    !pathname.startsWith("/favicon")
+  );
+}
+
+/**
+ * Bounded Prometheus path label: SvelteKit route id, or a single unmatched bucket.
+ * Never fall back to the request pathname.
+ */
+export function metricRouteLabel(routeId: string | null | undefined): string {
+  return routeId || UNMATCHED_ROUTE;
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -67,7 +88,7 @@ export const metrics = {
     });
 
     httpRequestDurationMs.observe(
-      { method: rec.method, path: rec.path, status: String(rec.status) },
+      { method: rec.method, path: rec.path },
       rec.durationMs,
     );
 

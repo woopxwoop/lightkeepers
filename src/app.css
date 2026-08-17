@@ -146,10 +146,10 @@
     border-color var(--control-duration) var(--control-ease);
   --focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-1) 55%, transparent);
 
-  /* Toggle knob / on-accent text — soft near-bg, tracks Display paints */
+  /* Toggle knob / on-accent text — near-bg with enough accent to read on page base */
   --control-knob-on: color-mix(
     in srgb,
-    var(--accent-1) 6%,
+    var(--accent-1) 22%,
     var(--background-color)
   );
 

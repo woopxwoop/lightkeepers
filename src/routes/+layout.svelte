@@ -16,6 +16,7 @@
   import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
   import { installDebugHitTest } from "$lib/app/debugHitTest";
   import { rememberNavigation } from "$lib/nav-history";
+  import { clearOrphanBodyScrollLock } from "$lib/ui/body-scroll-lock";
   import {
     displayPreferences,
     initDisplayPreferences,
@@ -41,6 +42,7 @@
 
   afterNavigate(({ from }) => {
     rememberNavigation(from?.url);
+    clearOrphanBodyScrollLock();
   });
 
   let { data, children } = $props();

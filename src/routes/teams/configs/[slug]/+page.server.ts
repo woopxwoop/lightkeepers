@@ -4,6 +4,7 @@ import {
   findInvestmentSim,
   getInvestmentFile,
   getSimConfigText,
+  getSimRotationSample,
 } from "$lib/server/team-config";
 import { getCharacterKit } from "$lib/server/character-kit";
 import { characterBaseByKey } from "$lib/build-stats";
@@ -31,15 +32,22 @@ export const load: PageServerLoad = async ({ params }) => {
   if (!match) error(404, `Config "${slug}" not found`);
 
   const { team, sim } = match;
-  let configText: string | null = null;
-  try {
-    configText = await getSimConfigText(sim.state_key);
-  } catch (err) {
-    console.warn(
-      `[team-configs] sim config ${sim.state_key} unavailable:`,
-      err,
-    );
-  }
+  const [configText, rotation] = await Promise.all([
+    getSimConfigText(sim.state_key).catch((err) => {
+      console.warn(
+        `[team-configs] sim config ${sim.state_key} unavailable:`,
+        err,
+      );
+      return null;
+    }),
+    getSimRotationSample(sim.state_key).catch((err) => {
+      console.warn(
+        `[team-configs] sim rotation ${sim.state_key} unavailable:`,
+        err,
+      );
+      return null;
+    }),
+  ]);
 
   const kitsByKey: Record<string, TeamConfigKitIcons> = {};
   await Promise.all(
@@ -62,6 +70,7 @@ export const load: PageServerLoad = async ({ params }) => {
     team,
     sim,
     configText,
+    rotation,
     configUrl: getSimConfigUrl(sim.state_key),
     kitsByKey,
   };

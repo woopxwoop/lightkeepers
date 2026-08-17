@@ -238,6 +238,50 @@ export interface TeamReactionEntry {
   share: number;
 }
 
+/** Condensed near-mean gcsim action timeline (CDN rotation.json.gz). */
+export type RotationAction =
+  | "swap"
+  | "skill"
+  | "hold_skill"
+  | "burst"
+  | "attack"
+  | "charge"
+  | "aim"
+  | "dash"
+  | "jump"
+  | "walk"
+  | "low_plunge"
+  | "high_plunge"
+  | "wait"
+  | "delay"
+  | "other";
+
+export interface RotationSampleEvent {
+  /** Seconds from sim start. */
+  t: number;
+  /** GOOD key when known, else gcsim alias. */
+  char: string;
+  action: RotationAction;
+  /** Swap target alias when action is swap. */
+  label?: string;
+}
+
+export interface RotationSample {
+  seed: string;
+  sample_dps: number;
+  /** Saved summary mean DPS used as search target. */
+  target_dps: number;
+  /** |sample_dps - target_dps| / target_dps */
+  rel_err: number;
+  attempts: number;
+  duration_s: number;
+  /** Party order from the sample (GOOD keys when mapped). */
+  characters: string[];
+  events: RotationSampleEvent[];
+  /** `# generated:` hash from config.txt when present. */
+  config_hash?: string;
+}
+
 export type TalentSlot = "auto" | "skill" | "burst";
 
 /**

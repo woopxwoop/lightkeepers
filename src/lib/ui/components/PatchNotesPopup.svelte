@@ -10,6 +10,7 @@
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import Button from "$lib/ui/components/Button.svelte";
+  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
   import {
     readSeenPatchNoteSlug,
     shouldShowPatchNotesPopup,
@@ -88,7 +89,7 @@
   });
 
   $effect(() => {
-    if (!open) return;
+    if (!open || !note) return;
 
     const previouslyFocused =
       browser && document.activeElement instanceof HTMLElement
@@ -129,11 +130,7 @@
     };
     window.addEventListener("keydown", onKey);
 
-    let prevOverflow = "";
-    if (browser) {
-      prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-    }
+    const releaseScrollLock = browser ? acquireBodyScrollLock() : () => {};
 
     void tick().then(() => {
       const first = dialogEl?.querySelector<HTMLElement>(focusableSelector);
@@ -142,7 +139,7 @@
 
     return () => {
       window.removeEventListener("keydown", onKey);
-      if (browser) document.body.style.overflow = prevOverflow;
+      releaseScrollLock();
       if (previouslyFocused?.isConnected) {
         previouslyFocused.focus();
       }

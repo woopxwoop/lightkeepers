@@ -16,6 +16,7 @@
   import Surface from "$lib/ui/components/Surface.svelte";
   import CostPopover from "$lib/ui/components/CostPopover.svelte";
   import InvestmentBuildCard from "$lib/ui/components/InvestmentBuildCard.svelte";
+  import RotationTimeline from "$lib/ui/components/RotationTimeline.svelte";
 
   let { data } = $props();
   const equipment = useEquipmentData();
@@ -23,6 +24,7 @@
   let sim = $derived(data.sim);
   let configText = $derived(data.configText);
   let configUrl = $derived(data.configUrl);
+  let rotation = $derived(data.rotation);
   let kitsByKey = $derived(data.kitsByKey);
 
   let goodKeyMap = $derived(buildGoodKeyMap($charactersOwned));
@@ -79,6 +81,22 @@
       Sheet totals exclude artifact set bonuses and weapon passives.
     </p>
   </section>
+
+  {#if rotation && rotation.events.length > 0}
+    <section class="section">
+      <h2 class="section-title">Rotation sample (Test)</h2>
+      <RotationTimeline
+        sample={rotation}
+        characterByKey={goodKeyMap}
+        script={configText}
+      />
+    </section>
+  {:else if sim.kind === "baseline"}
+    <section class="section">
+      <h2 class="section-title">Rotation sample (Test)</h2>
+      <p class="muted">Rotation sample not available for this config.</p>
+    </section>
+  {/if}
 
   <section class="section">
     <div class="section-head">

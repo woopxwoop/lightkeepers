@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import type { Snippet } from "svelte";
+  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
   import IconX from "../icons/IconX.svelte";
 
   let {
@@ -288,11 +289,7 @@
 
   $effect(() => {
     if (!detailOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return acquireBodyScrollLock();
   });
 </script>
 

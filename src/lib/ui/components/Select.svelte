@@ -15,6 +15,11 @@
     options = [],
     /** Fixed trigger text (e.g. "Sort"). Defaults to the selected option label. */
     trigger,
+    /**
+     * `longest` (default): reserve width for the longest option (no layout jump).
+     * `value`: size to the active label only — better in tight toolbars / mobile.
+     */
+    fit = "longest",
     /** Text-only trigger; the portaled menu keeps its normal border. */
     bare = false,
     class: className = "",
@@ -23,6 +28,7 @@
     value?: Value;
     options?: SelectOption<Value>[];
     trigger?: string;
+    fit?: "longest" | "value";
     bare?: boolean;
     class?: string;
   } & Omit<
@@ -213,8 +219,8 @@
     onclick={toggle}
     {...rest}
   >
-    <span class="trigger-label">
-      {#if trigger}
+    <span class="trigger-label" class:fit-value={fit === "value"}>
+      {#if trigger || fit === "value"}
         {triggerText}
       {:else}
         {#each options as opt (opt.value)}
@@ -262,12 +268,14 @@
   .select {
     position: relative;
     display: inline-flex;
+    min-width: 0;
   }
 
   .select-trigger {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    max-width: 100%;
     padding: 0.4rem 0.7rem;
     border-radius: var(--radius-md);
     font-size: var(--text-xs);
@@ -305,6 +313,14 @@
     display: inline-grid;
     justify-items: start;
     text-align: left;
+  }
+
+  .trigger-label.fit-value {
+    display: inline;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .trigger-option {
