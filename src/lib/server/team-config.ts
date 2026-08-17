@@ -53,6 +53,48 @@ function isGzipped(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b;
 }
 
+/** Read a fetch body in bounded chunks; null when over maxBytes. */
+export async function readBoundedResponseBody(
+  res: Response,
+  maxBytes: number,
+): Promise<Buffer | null> {
+  const lenHeader = res.headers.get("content-length");
+  if (lenHeader) {
+    const len = Number.parseInt(lenHeader, 10);
+    if (Number.isFinite(len) && len > maxBytes) return null;
+  }
+
+  if (!res.body) {
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length > maxBytes ? null : buf;
+  }
+
+  const reader = res.body.getReader();
+  const parts: Buffer[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value?.byteLength) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      parts.push(Buffer.from(value));
+    }
+    return parts.length === 0 ? Buffer.alloc(0) : Buffer.concat(parts);
+  } catch {
+    try {
+      await reader.cancel();
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+}
+
 async function fetchInvestment(): Promise<InvestmentFile> {
   const res = await fetchWithTimeout(CDN_INVESTMENT);
   if (!res.ok) throw new Error(`investment CDN HTTP ${res.status}`);
@@ -225,8 +267,8 @@ async function loadSimRotationFromCdn(
       `sim rotation ${stateKey} unavailable: HTTP ${res.status}`,
     );
   }
-  const buf = Buffer.from(await res.arrayBuffer());
-  if (buf.length > MAX_ROTATION_GZIP_BYTES) {
+  const buf = await readBoundedResponseBody(res, MAX_ROTATION_GZIP_BYTES);
+  if (!buf) {
     rotationCache.set(stateKey, null);
     return null;
   }

@@ -142,10 +142,15 @@
       const headW = style
         ? cssLengthPx(style.getPropertyValue("--lane-head-w"), 144)
         : 144;
-      const gap = style
-        ? cssLengthPx(style.getPropertyValue("--lane-track-measure-gap"), 8)
+      const scrollPad = style
+        ? cssLengthPx(style.getPropertyValue("--lane-scroll-pad"), 8)
         : 8;
-      const w = Math.floor(node.clientWidth - headW - gap);
+      const gridGap = style
+        ? cssLengthPx(style.getPropertyValue("--lane-grid-gap"), 8)
+        : 8;
+      const w = Math.floor(
+        node.clientWidth - scrollPad * 2 - headW - gridGap,
+      );
       if (w > 0) viewportWidthPx = w;
     };
     const ro = new ResizeObserver(apply);
@@ -169,8 +174,9 @@
     <div class="lanes-panel">
       <div
         class="lanes-scroll"
+        role="region"
         tabindex="0"
-        aria-label="Rotation sample (Test)"
+        aria-label="Rotation sample"
         {@attach measureViewport}
       >
         <div
@@ -245,6 +251,7 @@
               {#each lane.markers as marker, i (`${i}:${marker.event.t}:${marker.event.action}:${marker.event.count}`)}
                 <span
                   class="marker"
+                  role="img"
                   class:marker-skill={
                     marker.event.action === "skill" ||
                     marker.event.action === "hold_skill"
@@ -293,9 +300,8 @@
 <style>
   .rotation {
     --lane-head-w: 9rem;
-    --lane-grid-gap: var(--space-2);
-    --lane-scroll-pad: var(--space-2);
-    --lane-track-measure-gap: 8px;
+    --lane-grid-gap: 0.5rem;
+    --lane-scroll-pad: 0.5rem;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
@@ -547,7 +553,7 @@
   @media (max-width: 640px) {
     .rotation {
       --lane-head-w: 7rem;
-      --lane-grid-gap: var(--space-1);
+      --lane-grid-gap: 0.25rem;
     }
   }
 </style>
