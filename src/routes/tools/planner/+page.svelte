@@ -730,7 +730,8 @@
                             height="16"
                             loading="lazy"
                             onerror={(e) => {
-                              e.currentTarget.style.display = "none";
+                              (e.currentTarget as HTMLImageElement).style.display =
+                                "none";
                             }}
                           />
                         {/if}

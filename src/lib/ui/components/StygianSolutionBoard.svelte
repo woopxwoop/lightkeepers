@@ -467,8 +467,9 @@
 {#snippet fieldColumn(slot: Slot)}
   {@const enemy = enemies?.[slot]}
   {@const assignment = solution?.assignments.find((a) => a.slot === slot)}
+  {@const fieldName = enemy?.enemy_name ?? stygianSlotLabel[slot]}
 
-  <section class="field-hero">
+  <section class="field-hero" aria-label={fieldName}>
     {#if enemy?.asset}
       <img
         src={getEnemyAsset(enemy.asset)}
@@ -494,83 +495,78 @@
         />
 
         <div class="rate-row">
-          <span>
-            {#if showingVideoClears && time != null}
-              {time}s
-            {:else}
-              {(assignment.team.usage_rate ?? 0).toFixed(1)}% usage
-            {/if}
-          </span>
+          {#if showingVideoClears && time != null}
+            <span>{time}s</span>
+          {/if}
+          {#if clears.length > 0}
+            {@const shown = Math.min(clears.length, clearsShownLimit(slot))}
+            <div class="clear-videos">
+              <InfoPopover
+                label={clears.length === 1
+                  ? "1 video"
+                  : `${clears.length} videos`}
+                align="start"
+                class="clear-videos-trigger"
+                panelClass="clear-videos-panel"
+                anchorSelector=".field-hero"
+              >
+                {#snippet icon()}
+                  <IconPlay size={12} />
+                {/snippet}
+                <ul class="clear-videos-panel-list">
+                  {#each clears.slice(0, shown) as clear (clear.clear_key)}
+                    {@const thumb = youtubeThumbnailUrl(clear.video_url)}
+                    <li>
+                      <a
+                        class="clear-video-link"
+                        href={clear.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {#if thumb}
+                          <img
+                            class="clear-video-thumb"
+                            src={thumb}
+                            alt=""
+                            width="320"
+                            height="180"
+                            loading="lazy"
+                            decoding="async"
+                            onerror={(event) => {
+                              const img = event.currentTarget as HTMLImageElement;
+                              if (img.dataset.ytFallback === "1") return;
+                              const fallback = youtubeThumbnailFallbackUrl(
+                                clear.video_url,
+                              );
+                              if (!fallback) return;
+                              img.dataset.ytFallback = "1";
+                              img.src = fallback;
+                            }}
+                          />
+                        {/if}
+                        <span class="clear-video-meta"
+                          >{clearVideoLabel(clear)}</span
+                        >
+                      </a>
+                    </li>
+                  {/each}
+                </ul>
+                {#if shown < clears.length}
+                  <button
+                    type="button"
+                    class="clear-videos-more"
+                    onclick={() => showMoreClears(slot)}
+                  >
+                    Show more · {clears.length - shown} left
+                  </button>
+                {/if}
+              </InfoPopover>
+            </div>
+          {/if}
           <span class="rate-slot"
-            >{slotRate(assignment.team, slot).toFixed(0)}% in this field</span
+            >{slotRate(assignment.team, slot).toFixed(0)}% usage in this field</span
           >
         </div>
-
-        {#if clears.length > 0}
-          {@const shown = Math.min(clears.length, clearsShownLimit(slot))}
-          <div class="clear-videos">
-            <InfoPopover
-              label={clears.length === 1
-                ? "1 video"
-                : `${clears.length} videos`}
-              align="start"
-              class="clear-videos-trigger"
-              panelClass="clear-videos-panel"
-              anchorSelector=".field-hero"
-            >
-              {#snippet icon()}
-                <IconPlay size={12} />
-              {/snippet}
-              <ul class="clear-videos-panel-list">
-                {#each clears.slice(0, shown) as clear (clear.clear_key)}
-                  {@const thumb = youtubeThumbnailUrl(clear.video_url)}
-                  <li>
-                    <a
-                      class="clear-video-link"
-                      href={clear.video_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {#if thumb}
-                        <img
-                          class="clear-video-thumb"
-                          src={thumb}
-                          alt=""
-                          width="320"
-                          height="180"
-                          loading="lazy"
-                          decoding="async"
-                          onerror={(event) => {
-                            const img = event.currentTarget as HTMLImageElement;
-                            if (img.dataset.ytFallback === "1") return;
-                            const fallback = youtubeThumbnailFallbackUrl(
-                              clear.video_url,
-                            );
-                            if (!fallback) return;
-                            img.dataset.ytFallback = "1";
-                            img.src = fallback;
-                          }}
-                        />
-                      {/if}
-                      <span class="clear-video-meta"
-                        >{clearVideoLabel(clear)}</span
-                      >
-                    </a>
-                  </li>
-                {/each}
-              </ul>
-              {#if shown < clears.length}
-                <button
-                  type="button"
-                  class="clear-videos-more"
-                  onclick={() => showMoreClears(slot)}
-                >
-                  Show more · {clears.length - shown} left
-                </button>
-              {/if}
-            </InfoPopover>
-          </div>
-        {/if}
       {:else}
         <div class="panel-empty">
           <p>No team available for this field</p>
@@ -844,7 +840,9 @@
 
   .board-cell {
     min-width: 0;
-    padding: var(--space-4);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .board-cell + .board-cell {
@@ -867,24 +865,21 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    width: 100%;
+    aspect-ratio: 10 / 9;
     overflow: hidden;
-    border-radius: var(--radius-md);
-    background: color-mix(
-      in srgb,
-      var(--foreground-color) 4%,
-      var(--background-color)
-    );
+    background: var(--background-color);
   }
 
   .hero-img {
     position: absolute;
-    top: 0;
     left: 0;
+    right: 0;
+    top: -10%;
     width: 100%;
-    aspect-ratio: 3 / 2;
-    object-fit: contain;
-    transform: scale(1.35);
-    transform-origin: 50% 25%;
+    height: 110%;
+    object-fit: cover;
+    object-position: 50% 0;
     pointer-events: none;
   }
 
@@ -893,19 +888,23 @@
     inset: 0;
     background: linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--background-color) 35%, transparent) 0%,
-      transparent 22%,
-      transparent 40%,
-      color-mix(in srgb, var(--background-color) 88%, transparent) 72%,
+      color-mix(in srgb, var(--background-color) 25%, transparent) 0%,
+      transparent 28%,
+      color-mix(in srgb, var(--background-color) 55%, transparent) 58%,
+      color-mix(in srgb, var(--background-color) 92%, transparent) 82%,
       var(--background-color) 100%
     );
     pointer-events: none;
   }
 
   .field-heading {
-    position: relative;
-    z-index: 1;
-    padding: var(--space-3) var(--space-3) 34%;
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    z-index: 2;
+    margin: 0;
+    padding: var(--space-3) 0;
     font-family: var(--font-display);
     font-size: var(--text-sm);
     font-weight: 600;
@@ -913,6 +912,30 @@
     text-transform: uppercase;
     color: var(--foreground-color);
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    transition:
+      opacity var(--control-duration) var(--control-ease),
+      transform var(--control-duration) var(--control-ease);
+  }
+
+  /* Fine pointer: name is an overlay reveal, not layout. */
+  @media (hover: hover) and (pointer: fine) {
+    .field-heading {
+      opacity: 0;
+      transform: translateY(-0.15rem);
+      pointer-events: none;
+    }
+
+    .field-hero:hover .field-heading,
+    .field-hero:focus-within .field-heading {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
   }
 
   .field-heading-link {
@@ -931,26 +954,30 @@
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
+    width: 80%;
     margin-top: auto;
-    padding: var(--space-5) var(--space-3) var(--space-3);
+    margin-inline: auto;
+    padding: var(--space-5) 0 var(--space-3);
   }
 
   .rate-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.55rem;
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
     color: var(--foreground-mid);
   }
 
-  .rate-slot {
-    color: var(--accent-1);
+  .rate-row .rate-slot {
+    margin-left: auto;
+    color: var(--foreground-mid);
   }
 
   .clear-videos {
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    min-width: 0;
   }
 
   :global(.clear-videos-trigger) {

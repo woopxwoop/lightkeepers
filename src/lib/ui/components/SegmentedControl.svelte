@@ -51,8 +51,21 @@
     touch-action: manipulation;
   }
 
+  .segment:hover:not(.segment-active) {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
+  }
+
+  .segment:active:not(.segment-active) {
+    background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
+  }
+
   .segment-active {
     background: var(--surface-selected);
     color: var(--accent-1);
+  }
+
+  .segment-active:active {
+    background: color-mix(in srgb, var(--foreground-color) 14%, transparent);
   }
 </style>

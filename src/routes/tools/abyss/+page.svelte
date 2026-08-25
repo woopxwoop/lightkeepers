@@ -203,9 +203,8 @@
         />
 
         <div class="rate-row">
-          <span>{(assignment.team.usage_rate ?? 0).toFixed(1)}% usage</span>
           <span class="rate-slot"
-            >{slotRate(assignment.team, slot).toFixed(0)}% in this half</span
+            >{slotRate(assignment.team, slot).toFixed(0)}% usage in this half</span
           >
         </div>
       {:else}
@@ -590,14 +589,15 @@
   .rate-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.55rem;
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
     color: var(--foreground-mid);
   }
 
-  .rate-slot {
-    color: var(--accent-1);
+  .rate-row .rate-slot {
+    margin-left: auto;
+    color: var(--foreground-mid);
   }
 
   .panel-empty {

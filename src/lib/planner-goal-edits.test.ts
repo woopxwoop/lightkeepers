@@ -13,6 +13,7 @@ import {
   plannerWeaponOptions,
   resolveCatalogCharacterId,
 } from "./planner-goal-edits.ts";
+import type { CharacterOwned } from "./definitions.ts";
 import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
 
 function catalogWith(ids: string[]): UpgradeCostsCatalog {
@@ -114,7 +115,7 @@ describe("planner goal edits", () => {
               talents: { normal: 6, skill: 8, burst: 8 },
               weapon: null,
             },
-          },
+          } as CharacterOwned,
         ],
         weapons: null,
       },

@@ -46,7 +46,27 @@
     align-items: center;
     transition:
       background-color 180ms var(--control-ease),
-      border-color 180ms var(--control-ease);
+      border-color 180ms var(--control-ease),
+      opacity 180ms var(--control-ease);
+  }
+
+  .toggle:hover:not(:disabled):not(.is-on) {
+    border-color: color-mix(in srgb, var(--foreground-color) 40%, transparent);
+    background: color-mix(in srgb, var(--foreground-mid) 18%, transparent);
+  }
+
+  .toggle:hover:not(:disabled).is-on {
+    background: color-mix(in srgb, var(--accent-1) 88%, white);
+    border-color: color-mix(in srgb, var(--accent-1) 88%, white);
+  }
+
+  .toggle:active:not(:disabled):not(.is-on) {
+    background: color-mix(in srgb, var(--foreground-mid) 22%, transparent);
+  }
+
+  .toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .toggle span {

@@ -143,6 +143,15 @@
   --control-transition:
     color var(--control-duration) var(--control-ease),
     background-color var(--control-duration) var(--control-ease),
+    border-color var(--control-duration) var(--control-ease),
+    opacity var(--control-duration) var(--control-ease),
+    transform var(--control-duration) var(--control-ease);
+  /* Press recipe for leaves that already tween transform (portraits, dots). */
+  --control-press-transition:
+    transform var(--control-duration) var(--control-ease),
+    opacity var(--control-duration) var(--control-ease),
+    outline-color var(--control-duration) var(--control-ease),
+    background-color var(--control-duration) var(--control-ease),
     border-color var(--control-duration) var(--control-ease);
   --focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-1) 55%, transparent);
 

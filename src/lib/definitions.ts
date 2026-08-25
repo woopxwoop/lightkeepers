@@ -290,7 +290,7 @@ export const STYGIAN_SOLVER_MODE_OPTIONS_RELEASE: ReadonlyArray<{
 
 /** Default seating mode on `/tools/stygian`. */
 export const STYGIAN_SOLVER_MODE_DEFAULT =
-  "hybrid" as const satisfies StygianSolverModeRelease;
+  "yshelper" as const satisfies StygianSolverModeRelease;
 
 export function isStygianSolverMode(
   value: unknown,
