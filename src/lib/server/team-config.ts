@@ -61,7 +61,14 @@ export async function readBoundedResponseBody(
   const lenHeader = res.headers.get("content-length");
   if (lenHeader) {
     const len = Number.parseInt(lenHeader, 10);
-    if (Number.isFinite(len) && len > maxBytes) return null;
+    if (Number.isFinite(len) && len > maxBytes) {
+      try {
+        await res.body?.cancel();
+      } catch {
+        /* ignore cancel failures; rejection path still returns null */
+      }
+      return null;
+    }
   }
 
   if (!res.body) {

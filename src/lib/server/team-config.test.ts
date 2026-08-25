@@ -31,11 +31,21 @@ describe("readBoundedResponseBody", () => {
   });
 
   it("rejects Content-Length over the limit without reading the body", async () => {
-    const res = new Response(streamBody([new Uint8Array(8)]), {
+    let cancelCalls = 0;
+    const body = new ReadableStream<Uint8Array>({
+      start() {
+        /* unused — rejected via Content-Length before read */
+      },
+      cancel() {
+        cancelCalls += 1;
+      },
+    });
+    const res = new Response(body, {
       headers: { "content-length": String(MAX + 1) },
     });
     const buf = await readBoundedResponseBody(res, MAX);
     assert.equal(buf, null);
+    assert.equal(cancelCalls, 1);
   });
 
   it("stops a streamed response once accumulated bytes exceed the limit", async () => {
