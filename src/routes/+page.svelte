@@ -39,7 +39,7 @@
     banner: siteAssetUrl("team"),
   };
 
-  const features = $derived.by((): FeatureCard[] => [
+  let features = $derived.by((): FeatureCard[] => [
     ...(showNudge ? [{ ...rosterCard, spotlight: true }] : []),
     {
       href: abyssPath,
@@ -78,7 +78,16 @@
     },
     ...(showNudge ? [] : [rosterCard]),
   ]);
+
+  /** First card banner — preload for LCP when the grid is above the fold. */
+  let preloadBanner = $derived(features[0]?.banner ?? "");
 </script>
+
+<svelte:head>
+  {#if preloadBanner}
+    <link rel="preload" as="image" href={preloadBanner} />
+  {/if}
+</svelte:head>
 
 <PageShell class="home-page gap-10">
   <header class="hero">
@@ -215,6 +224,7 @@
     position: relative;
     display: block;
     min-height: 11rem;
+    aspect-ratio: 16 / 10;
     overflow: hidden;
     border-radius: var(--radius-lg);
     background: var(--surface-raised);
@@ -222,9 +232,9 @@
     border: var(--border-width) solid rgba(255, 255, 255, 0.14);
     text-decoration: none;
     transition:
-      border-color var(--control-duration) var(--control-ease),
-      opacity var(--control-duration) var(--control-ease),
-      transform 0.2s ease;
+      border-color var(--motion-duration) var(--motion-ease),
+      opacity var(--motion-duration) var(--motion-ease),
+      transform var(--motion-duration) var(--motion-ease);
   }
 
   .feature-card:hover {
@@ -246,6 +256,8 @@
   @media (min-width: 640px) {
     .feature-card--spotlight {
       grid-column: 1 / -1;
+      aspect-ratio: 21 / 9;
+      min-height: 12rem;
     }
   }
 
@@ -256,9 +268,9 @@
     background-position: center;
     opacity: 0.72;
     transition:
-      opacity 0.25s ease,
-      transform 0.4s ease,
-      filter 0.25s ease;
+      opacity var(--motion-duration-slow) var(--motion-ease),
+      transform var(--motion-duration-slow) var(--motion-ease-out),
+      filter var(--motion-duration-slow) var(--motion-ease);
   }
 
   .feature-card:hover .feature-art {

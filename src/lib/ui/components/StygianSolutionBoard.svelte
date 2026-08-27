@@ -669,7 +669,7 @@
       </div>
     {:else}
       {#key safeIndex}
-        <div class="board-body board-body-swap">
+        <div class="board-body motion-board-swap">
           {#each SLOTS as slot (slot)}
             <div class="board-cell" data-panel-slot={slot}>
               {#key assignmentKey(slot)}
@@ -825,27 +825,6 @@
   .board-body {
     display: grid;
     grid-template-columns: 1fr;
-  }
-
-  .board-body-swap {
-    animation: board-swap var(--control-duration) var(--control-ease);
-  }
-
-  @keyframes board-swap {
-    from {
-      opacity: 0;
-      transform: translateY(0.2rem);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .board-body-swap {
-      animation: none;
-    }
   }
 
   .board-cell {

@@ -138,8 +138,14 @@
   --page-gutter: 7.5%; /* navbar pl/pr — keeps logo aligned with content */
 
   /* ── Controls / motion ──────────────────────────────────────────────── */
-  --control-duration: 160ms;
-  --control-ease: ease;
+  /* Durations: fast = micro feedback; default = controls; slow = board/page enter */
+  --motion-duration-fast: 120ms;
+  --motion-duration: 160ms;
+  --motion-duration-slow: 280ms;
+  --motion-ease: ease;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --control-duration: var(--motion-duration);
+  --control-ease: var(--motion-ease);
   --control-transition:
     color var(--control-duration) var(--control-ease),
     background-color var(--control-duration) var(--control-ease),
@@ -234,6 +240,26 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes board-swap {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Signature board/page enter — prefer tokens over one-off timings */
+.motion-board-swap {
+  animation: board-swap var(--motion-duration-slow) var(--motion-ease-out);
+}
+
+.motion-enter {
+  animation: slide-up var(--motion-duration-slow) var(--motion-ease-out) both;
 }
 
 h1,
@@ -386,5 +412,10 @@ a:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .motion-board-swap,
+  .motion-enter {
+    animation: none !important;
   }
 }
