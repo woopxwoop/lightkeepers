@@ -31,9 +31,31 @@
     transition: var(--control-transition);
   }
 
+  .chip:hover:not(:disabled):not(.chip-active) {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
+    border-color: color-mix(in srgb, var(--foreground-color) 32%, transparent);
+  }
+
+  .chip:active:not(:disabled) {
+    background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--foreground-color) 40%, transparent);
+  }
+
+  .chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .chip-active {
     color: var(--accent-1);
     border-color: var(--accent-1);
     background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
+  }
+
+  .chip-active:hover:not(:disabled) {
+    color: var(--accent-1);
+    border-color: var(--accent-1);
+    background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
   }
 </style>

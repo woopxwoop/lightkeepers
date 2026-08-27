@@ -600,7 +600,7 @@
               height="80"
               loading="lazy"
               onerror={(e) => {
-                e.currentTarget.style.display = "none";
+                (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
           {/if}
@@ -632,7 +632,7 @@
         height="22"
         loading="lazy"
         onerror={(e) => {
-          e.currentTarget.style.display = "none";
+          (e.currentTarget as HTMLImageElement).style.display = "none";
         }}
       />
     {/if}
@@ -646,7 +646,8 @@
         width="64"
         height="86"
         loading="lazy"
-        onerror={(e) => onGoalArtError(e.currentTarget, g.fallbackIcon)}
+        onerror={(e) =>
+          onGoalArtError(e.currentTarget as HTMLImageElement, g.fallbackIcon)}
       />
     {:else}
       <span class="farm-face-fallback"></span>

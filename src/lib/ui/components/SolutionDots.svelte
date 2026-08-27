@@ -33,6 +33,25 @@
 {/if}
 
 <style>
+  .hit {
+    transition: var(--control-press-transition);
+  }
+
+  .hit:hover .dot:not(.dot-active) {
+    opacity: 0.75;
+  }
+
+  .hit:active .dot:not(.dot-active) {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
+
+  .hit:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--radius-sm);
+  }
+
   .dot {
     width: 5px;
     height: 5px;
@@ -42,7 +61,8 @@
       width 150ms ease,
       height 150ms ease,
       opacity 150ms ease,
-      background-color 150ms ease;
+      background-color 150ms ease,
+      transform var(--control-duration) var(--control-ease);
   }
 
   .dot-active {

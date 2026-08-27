@@ -217,10 +217,9 @@
               <div class="team-hand-footer">
                 <span class="team-hand-meta">
                   <span class="team-hand-rank">#{i + 1}</span>
-                  <span>{(team.field_rate ?? 0).toFixed(0)}% in this field</span
+                  <span
+                    >{(team.field_rate ?? 0).toFixed(0)}% usage in this field</span
                   >
-                  <span class="team-hand-sep" aria-hidden="true">·</span>
-                  <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span>
                 </span>
               </div>
             </li>
@@ -363,9 +362,5 @@
   .team-hand-rank {
     color: var(--foreground-color);
     font-weight: 600;
-  }
-
-  .team-hand-sep {
-    opacity: 0.5;
   }
 </style>

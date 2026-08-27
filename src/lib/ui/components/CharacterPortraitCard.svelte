@@ -123,9 +123,7 @@
     text-align: left;
     cursor: inherit;
     /* Transform + opacity only — don't tween box-shadow (paint). */
-    transition:
-      transform 0.2s ease,
-      outline-color var(--control-duration) var(--control-ease);
+    transition: var(--control-press-transition);
   }
 
   a.char-card,
@@ -135,6 +133,18 @@
 
   .char-card.is-pressed {
     outline: var(--border-width) solid rgba(255, 255, 255, 0.4);
+    outline-offset: -1px;
+  }
+
+  a.char-card:active,
+  .char-card.is-interactive:has(.char-card-hit:active) {
+    transform: scale(0.97);
+  }
+
+  a.char-card:active,
+  .char-card.is-interactive:has(.char-card-hit:active),
+  .char-card.is-interactive:has(.char-card-hit:active).is-pressed {
+    outline: var(--border-width) solid rgba(255, 255, 255, 0.55);
     outline-offset: -1px;
   }
 

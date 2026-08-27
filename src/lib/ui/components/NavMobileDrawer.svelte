@@ -155,8 +155,6 @@
       duration: prefersReducedMotion.current ? 0 : 280,
     }}
   >
-    <div class="drawer-glow" aria-hidden="true"></div>
-
     <nav class="drawer-nav" aria-label="Primary">
       <p class="eyebrow drawer-section-label">Navigate</p>
 
@@ -329,25 +327,9 @@
     padding: 4.75rem 0 1rem;
     overflow: hidden;
     background: var(--surface-raised);
-    /* Cream hairline on mid surface — avoid muddy low-opacity gold */
-    border-left: var(--border-width) solid
-      color-mix(in srgb, var(--accent-3) 22%, transparent);
+    /* Cream hairline on mid surface — never washed gold */
+    border-left: var(--border-width) solid var(--border-control-quiet);
     box-shadow: -16px 0 48px color-mix(in srgb, black 50%, transparent);
-  }
-
-  .drawer-glow {
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 1px;
-    pointer-events: none;
-    background: linear-gradient(
-      180deg,
-      transparent 8%,
-      color-mix(in srgb, var(--accent-1) 55%, transparent) 42%,
-      color-mix(in srgb, var(--accent-2) 35%, transparent) 58%,
-      transparent 92%
-    );
-    opacity: 0.85;
   }
 
   .drawer-nav {
@@ -378,8 +360,7 @@
   .drawer-group .drawer-section-label {
     margin-top: 1rem;
     padding-top: 0.85rem;
-    border-top: var(--border-width) solid
-      color-mix(in srgb, var(--accent-3) 16%, transparent);
+    border-top: var(--border-width) solid var(--border-control-quiet);
   }
 
   .drawer-item {
@@ -485,8 +466,7 @@
     align-items: stretch;
     gap: 0.15rem;
     padding: 0.85rem 0.75rem 0.85rem;
-    border-top: var(--border-width) solid
-      color-mix(in srgb, var(--accent-3) 16%, transparent);
+    border-top: var(--border-width) solid var(--border-control-quiet);
   }
 
   .drawer-guoba {

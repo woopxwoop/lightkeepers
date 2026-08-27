@@ -32,6 +32,11 @@
     transition: var(--control-transition);
   }
 
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .btn-primary {
     color: var(--control-knob-on);
     background: var(--accent-1);
@@ -39,14 +44,14 @@
     font-weight: 600;
   }
 
-  .btn-primary:hover {
+  .btn-primary:hover:not(:disabled) {
     background: color-mix(in srgb, var(--accent-1) 88%, white);
     border-color: color-mix(in srgb, var(--accent-1) 88%, white);
   }
 
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .btn-primary:active:not(:disabled) {
+    background: color-mix(in srgb, var(--accent-1) 78%, black);
+    border-color: color-mix(in srgb, var(--accent-1) 78%, black);
   }
 
   .btn-secondary {
@@ -54,9 +59,14 @@
     background: var(--surface-quiet);
   }
 
-  .btn-secondary:hover {
+  .btn-secondary:hover:not(:disabled) {
     background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
     border-color: color-mix(in srgb, var(--foreground-color) 32%, transparent);
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    background: color-mix(in srgb, var(--foreground-color) 16%, transparent);
+    border-color: color-mix(in srgb, var(--foreground-color) 40%, transparent);
   }
 
   .btn-ghost,
@@ -68,11 +78,18 @@
     gap: 0.35rem;
   }
 
-  .btn-ghost:hover,
-  .btn-icon:hover {
+  .btn-ghost:hover:not(:disabled),
+  .btn-icon:hover:not(:disabled) {
     color: var(--foreground-color);
     border-color: color-mix(in srgb, var(--foreground-color) 32%, transparent);
     background: var(--surface-quiet);
+  }
+
+  .btn-ghost:active:not(:disabled),
+  .btn-icon:active:not(:disabled) {
+    color: var(--foreground-color);
+    background: color-mix(in srgb, var(--foreground-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--foreground-color) 40%, transparent);
   }
 
   .btn-icon {

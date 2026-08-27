@@ -141,7 +141,7 @@ function e2eEnemy(id: number, name: string): Enemy {
   };
 }
 
-/** Board bosses so hybrid (default) seating has slot enemy ids. */
+/** Board bosses so YSHelper / hybrid seating has slot enemy ids. */
 export const E2E_STYGIAN_ENEMIES: StygianEnemies = {
   top: e2eEnemy(101, "E2E Top Boss"),
   middle: e2eEnemy(102, "E2E Middle Boss"),
