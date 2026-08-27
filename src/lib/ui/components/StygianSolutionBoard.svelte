@@ -44,7 +44,6 @@
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import Select from "$lib/ui/components/Select.svelte";
-  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import InfoPopover from "$lib/ui/components/InfoPopover.svelte";
   import IconPlay from "$lib/ui/icons/IconPlay.svelte";
@@ -52,15 +51,12 @@
   import {
     STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST,
     STYGIAN_CHEAP_CLEARS_DIFFICULTY,
-    STYGIAN_CLEAR_DIFFICULTY_OPTIONS,
-    STYGIAN_SOLVER_MODE_OPTIONS,
     STYGIAN_SOLVER_MODE_OPTIONS_RELEASE,
     toStygianSolverModeRelease,
     type Character,
     type StygianTeam,
     type StygianClearVideo,
     type StygianCheapClearRow,
-    type StygianClearDifficulty,
     type StygianSolverMode,
   } from "$lib/definitions";
   import {
@@ -84,52 +80,30 @@
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
   const CLEAR_VIDEOS_PAGE = 5;
+  /** Inclusive Fearless clear cost cap before ranking by time. */
+  const maxCost = STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST;
+  const clearDifficulty = STYGIAN_CHEAP_CLEARS_DIFFICULTY;
+  /**
+   * Fetch at least a full baseline span (4 limited 5★s); raise p_max_cost when
+   * the ranking cap is higher so the frontier covers that ceiling.
+   */
+  const cheapClearsFetchMaxCost = Math.max(
+    STYGIAN_C0R0_CLEAR_MAX_COST,
+    Math.ceil(maxCost),
+  );
   type SolutionsResult = {
     solutions: ReturnType<typeof solveStygianWithFallback>;
     mode: StygianSolverMode | "hybrid" | "yshelper";
   };
   const memoSolutions = createMemo<SolutionsResult>();
 
-  let {
-    mapping,
-    maxCost = STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST,
-    /** Dev keeps Dire + all seating modes; release is Fearless-only trio. */
-    variant = "release",
-  }: {
-    mapping: Map<string, Character>;
-    /** Inclusive Fearless clear cost cap before ranking by time. */
-    maxCost?: number;
-    variant?: "release" | "dev";
-  } = $props();
+  let { mapping }: { mapping: Map<string, Character> } = $props();
 
   let enemies = $derived($stygianEnemiesBoard);
   let storedSolverMode = $derived($displayPreferences.stygianSolverMode);
-  let solverMode = $derived(
-    variant === "release"
-      ? toStygianSolverModeRelease(storedSolverMode)
-      : storedSolverMode,
-  );
-  let clearDifficulty = $derived(
-    variant === "release"
-      ? STYGIAN_CHEAP_CLEARS_DIFFICULTY
-      : $displayPreferences.stygianClearDifficulty,
-  );
-  let solverModeOptions = $derived(
-    variant === "release"
-      ? STYGIAN_SOLVER_MODE_OPTIONS_RELEASE
-      : STYGIAN_SOLVER_MODE_OPTIONS,
-  );
-  let videoClearsMode = $derived(
-    solverMode === "video" || solverMode === "video-c0r0",
-  );
+  let solverMode = $derived(toStygianSolverModeRelease(storedSolverMode));
+  let videoClearsMode = $derived(solverMode === "video-c0r0");
   let needsCheapClears = $derived(videoClearsMode || solverMode === "hybrid");
-  /**
-   * Fetch at least a full baseline span (4 limited 5★s); raise p_max_cost when
-   * video mode asks for a higher cap so the frontier covers that ceiling.
-   */
-  let cheapClearsFetchMaxCost = $derived(
-    Math.max(STYGIAN_C0R0_CLEAR_MAX_COST, Math.ceil(maxCost)),
-  );
 
   $effect(() => {
     ensureStaticBoards().catch(() => {});
@@ -608,23 +582,11 @@
       </div>
 
       <div class="board-actions">
-        {#if variant === "dev" && needsCheapClears}
-          <SegmentedControl
-            class="clear-difficulty"
-            aria-label="Clear difficulty"
-            options={[...STYGIAN_CLEAR_DIFFICULTY_OPTIONS]}
-            bind:value={
-              () => clearDifficulty,
-              (value: StygianClearDifficulty) =>
-                setDisplayPreferences({ stygianClearDifficulty: value })
-            }
-          />
-        {/if}
         <Select
           class="solver-mode-select"
           aria-label="Stygian solution source"
           fit="value"
-          options={[...solverModeOptions]}
+          options={[...STYGIAN_SOLVER_MODE_OPTIONS_RELEASE]}
           bind:value={
             () => solverMode,
             (value: StygianSolverMode) =>
@@ -787,11 +749,6 @@
     .board-actions :global(.solver-mode-select .select-trigger) {
       max-width: 100%;
     }
-  }
-
-  .board-actions :global(.clear-difficulty .segment) {
-    padding: 0.3rem 0.55rem;
-    font-size: var(--text-xs);
   }
 
   .board-status {

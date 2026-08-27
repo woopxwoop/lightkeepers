@@ -260,14 +260,15 @@ export const STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST = 0;
  * Stygian board seating source.
  * - yshelper: usage × affinity solver
  * - hybrid: YSHelper boards, prefer those with more C0R0 clear seats
- * - video: clear videos under the cost cap (scrape cost as labeled; dev)
- * - video-c0r0: same, but only baseline (character floor + 0.5)
+ * - video: clear videos under an arbitrary cost cap (stored prefs only; not in UI)
+ * - video-c0r0: clear videos at baseline (character floor + 0.5)
  */
 export type StygianSolverMode = "yshelper" | "hybrid" | "video" | "video-c0r0";
 
 /** Modes shown on `/tools/stygian` (Fearless only). */
 export type StygianSolverModeRelease = Exclude<StygianSolverMode, "video">;
 
+/** Full mode set for prefs validation (`video` maps to release default). */
 export const STYGIAN_SOLVER_MODE_OPTIONS: ReadonlyArray<{
   value: StygianSolverMode;
   label: string;
