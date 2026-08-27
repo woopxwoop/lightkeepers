@@ -31,6 +31,7 @@
     writeRosterLocal,
     type RosterCapture,
   } from "$lib/roster-snapshot";
+  import { resolve } from "$app/paths";
 
   const session = authClient.useSession();
 
@@ -211,6 +212,11 @@
       <p class="lede">
         Select who you own. Use the gear to set constellation, level, talents,
         and weapon.
+      </p>
+      <p class="section-lede">
+        Have a GOOD export? Upload it under
+        <a class="back-link" href={resolve("/settings?tab=account")}>Account</a
+        >.
       </p>
     </header>
 

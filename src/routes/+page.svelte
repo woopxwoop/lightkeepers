@@ -22,34 +22,47 @@
     !$session.isPending && !$hasSavedRoster && !$session.data,
   );
 
-  const rosterCard = {
+  type FeatureCard = {
+    href: string;
+    label: string;
+    description: string;
+    banner: string;
+    preload?: "hover";
+    spotlight?: boolean;
+    gated?: boolean;
+  };
+
+  const rosterCard: FeatureCard = {
     href: rosterPath,
     label: "Configure your roster",
     description: "Mark the characters you own for tailored recommendations.",
     banner: siteAssetUrl("team"),
   };
 
-  const features = $derived([
-    ...(showNudge ? [rosterCard] : []),
+  const features = $derived.by((): FeatureCard[] => [
+    ...(showNudge ? [{ ...rosterCard, spotlight: true }] : []),
     {
       href: abyssPath,
       label: "Spiral Abyss",
       description: "Find your best teams for the current abyss cycle.",
       banner: siteAssetUrl("abyss_banner"),
-      preload: "hover" as const,
+      preload: "hover",
+      gated: showNudge,
     },
     {
       href: stygianPath,
       label: "Stygian Onslaught",
       description: "Find your best teams for the current stygian cycle.",
       banner: siteAssetUrl("stygian_banner"),
-      preload: "hover" as const,
+      preload: "hover",
+      gated: showNudge,
     },
     {
       href: pullsPath,
       label: "Pull Suggestions",
       description: "See which characters would improve your teams.",
       banner: siteAssetUrl("heizou"),
+      gated: showNudge,
     },
     {
       href: teamsPath,
@@ -87,13 +100,15 @@
   </header>
 
   <div class="feature-grid">
-    {#each features as feature}
+    {#each features as feature (feature.href)}
       <a
         href={feature.href}
-        class="feature-card group"
-        data-sveltekit-preload-data={"preload" in feature
-          ? feature.preload
-          : undefined}
+        class={[
+          "feature-card group",
+          feature.spotlight && "feature-card--spotlight",
+          feature.gated && "feature-card--gated",
+        ]}
+        data-sveltekit-preload-data={feature.preload}
       >
         {#if feature.banner}
           <div
@@ -104,6 +119,11 @@
         <div class="feature-scrim"></div>
 
         <div class="feature-body">
+          {#if feature.spotlight}
+            <span class="eyebrow feature-gate-cue">New? Start here</span>
+          {:else if feature.gated}
+            <span class="eyebrow feature-gate-cue">Needs roster</span>
+          {/if}
           <span class="feature-label">
             {feature.label}
             <span class="feature-arrow" aria-hidden="true">→</span>
@@ -203,6 +223,7 @@
     text-decoration: none;
     transition:
       border-color var(--control-duration) var(--control-ease),
+      opacity var(--control-duration) var(--control-ease),
       transform 0.2s ease;
   }
 
@@ -211,20 +232,52 @@
     transform: translateY(-2px);
   }
 
+  .feature-card--spotlight {
+    border-color: var(--accent-1);
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, 0.35),
+      0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .feature-card--spotlight:hover {
+    border-color: var(--accent-1);
+  }
+
+  @media (min-width: 640px) {
+    .feature-card--spotlight {
+      grid-column: 1 / -1;
+    }
+  }
+
   .feature-art {
     position: absolute;
     inset: 0;
     background-size: cover;
     background-position: center;
-    opacity: 0.55;
+    opacity: 0.72;
     transition:
       opacity 0.25s ease,
-      transform 0.4s ease;
+      transform 0.4s ease,
+      filter 0.25s ease;
   }
 
   .feature-card:hover .feature-art {
-    opacity: 0.7;
+    opacity: 0.85;
     transform: scale(1.03);
+  }
+
+  .feature-card--gated .feature-art {
+    opacity: 0.42;
+    filter: grayscale(0.25);
+  }
+
+  .feature-card--gated:hover .feature-art {
+    opacity: 0.55;
+    filter: grayscale(0.15);
+  }
+
+  .feature-card--gated .feature-desc {
+    color: color-mix(in srgb, var(--foreground-mid) 70%, transparent);
   }
 
   .feature-scrim {
@@ -232,9 +285,10 @@
     inset: 0;
     background: linear-gradient(
       to top,
-      color-mix(in srgb, var(--background-color) 92%, transparent) 0%,
-      color-mix(in srgb, var(--background-color) 55%, transparent) 45%,
-      color-mix(in srgb, var(--background-color) 15%, transparent) 100%
+      color-mix(in srgb, var(--background-color) 85%, transparent) 0%,
+      color-mix(in srgb, var(--background-color) 40%, transparent) 42%,
+      color-mix(in srgb, var(--background-color) 8%, transparent) 72%,
+      transparent 100%
     );
   }
 
@@ -257,7 +311,13 @@
     color: var(--foreground-color);
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.4rem;
+  }
+
+  .feature-gate-cue {
+    align-self: flex-start;
+    color: var(--accent-1);
   }
 
   .feature-arrow {
@@ -279,5 +339,25 @@
     font-size: var(--text-sm);
     line-height: 1.45;
     color: var(--foreground-mid);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feature-card,
+    .feature-art,
+    .feature-arrow {
+      transition: none;
+    }
+
+    .feature-card:hover {
+      transform: none;
+    }
+
+    .feature-card:hover .feature-art {
+      transform: none;
+    }
+
+    .feature-card:hover .feature-arrow {
+      transform: none;
+    }
   }
 </style>
