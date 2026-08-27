@@ -64,6 +64,11 @@
     background: color-mix(in srgb, var(--foreground-mid) 22%, transparent);
   }
 
+  .toggle:active:not(:disabled).is-on {
+    background: color-mix(in srgb, var(--accent-1) 78%, black);
+    border-color: color-mix(in srgb, var(--accent-1) 78%, black);
+  }
+
   .toggle:disabled {
     opacity: 0.5;
     cursor: not-allowed;
