@@ -273,10 +273,10 @@ export const STYGIAN_SOLVER_MODE_OPTIONS: ReadonlyArray<{
   value: StygianSolverMode;
   label: string;
 }> = [
-  { value: "yshelper", label: "YSHelper" },
-  { value: "hybrid", label: "Hybrid" },
+  { value: "yshelper", label: "Usage rate" },
+  { value: "hybrid", label: "Balanced" },
   { value: "video", label: "Video clears" },
-  { value: "video-c0r0", label: "Video clears C0R0" },
+  { value: "video-c0r0", label: "Video clears" },
 ];
 
 /** Production Stygian board dropdown. */
@@ -284,10 +284,21 @@ export const STYGIAN_SOLVER_MODE_OPTIONS_RELEASE: ReadonlyArray<{
   value: StygianSolverModeRelease;
   label: string;
 }> = [
-  { value: "hybrid", label: "Hybrid (New)" },
-  { value: "yshelper", label: "Usage Rate" },
-  { value: "video-c0r0", label: "Video Clears C0R0" },
+  { value: "hybrid", label: "Balanced" },
+  { value: "yshelper", label: "Usage rate" },
+  { value: "video-c0r0", label: "Video clears" },
 ];
+
+/** One-line player help for each production Stygian seating mode. */
+export const STYGIAN_SOLVER_MODE_HELP: Record<StygianSolverModeRelease, string> =
+  {
+    hybrid:
+      "Prefer popular teams that also have Fearless clears at low investment.",
+    yshelper:
+      "Rank by how often teams are used and how well they fit each field.",
+    "video-c0r0":
+      "Seat teams from real Fearless clear videos at baseline investment.",
+  };
 
 /** Default seating mode on `/tools/stygian`. */
 export const STYGIAN_SOLVER_MODE_DEFAULT =

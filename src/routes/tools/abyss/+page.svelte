@@ -257,7 +257,7 @@
     </EmptyState>
   {:else if displaySolutions.length === 0}
     <EmptyState
-      message="No viable clears for your roster. Pull for characters that unlock better teams."
+      message="No viable clears for your roster right now."
     >
       {#snippet action()}
         <a class="pulls-cta" href={resolve("/tools/pulls")}

@@ -10,7 +10,6 @@
   import CharacterTeamsPanel from "$lib/ui/components/character/CharacterTeamsPanel.svelte";
   import CharacterAnalyticsPanel from "$lib/ui/components/character/CharacterAnalyticsPanel.svelte";
   import CharacterBuildsPanel from "$lib/ui/components/character/CharacterBuildsPanel.svelte";
-  import CharacterUsefulLinks from "$lib/ui/components/character/CharacterUsefulLinks.svelte";
   import { elementColor } from "$lib/element-colors";
   import {
     buildGoodKeyMap,
@@ -25,6 +24,7 @@
   import type { CharacterIndex } from "$lib/types/investment";
   import type { Character } from "$lib/definitions";
   import { isStaleBuildSummary } from "$lib/stale-build-summary";
+  import type { ActionMenuItem } from "$lib/ui/components/ActionMenu.svelte";
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
@@ -39,14 +39,13 @@
   );
   let mapping = $derived(data.mapping as Map<string, Character>);
 
-  type PageTab = "skills" | "builds" | "teams" | "analytics" | "links";
+  type PageTab = "skills" | "builds" | "teams" | "analytics";
 
   const TAB_OPTIONS = [
     { value: "builds" as const, label: "Builds" },
     { value: "teams" as const, label: "Teams" },
     { value: "analytics" as const, label: "Analytics" },
     { value: "skills" as const, label: "Kit" },
-    { value: "links" as const, label: "Useful Links" },
   ];
 
   let activeTab = $state<PageTab>("builds");
@@ -110,6 +109,28 @@
     )}`,
   );
 
+  let heroMenuItems = $derived.by((): ActionMenuItem[] => {
+    const items: ActionMenuItem[] = [
+      {
+        id: "planner",
+        label: "Add to planner",
+        href: plannerAddHref,
+      },
+    ];
+    for (const [index, link] of crimsonWitchLinks.entries()) {
+      items.push({
+        id: `crimson-witch-${link.element ?? index}`,
+        label:
+          crimsonWitchLinks.length === 1
+            ? "Crimson Witch guide"
+            : `Crimson Witch · ${link.label}`,
+        href: link.url,
+        external: true,
+      });
+    }
+    return items;
+  });
+
   onMount(() => {
     let hash = window.location.hash;
     try {
@@ -161,16 +182,7 @@
         </div>
       </div>
       <div class="hero-menu">
-        <ActionMenu
-          label="Character actions"
-          items={[
-            {
-              id: "planner",
-              label: "Add to planner",
-              href: plannerAddHref,
-            },
-          ]}
-        />
+        <ActionMenu label="Character actions" items={heroMenuItems} />
       </div>
     </section>
 
@@ -240,22 +252,6 @@
             {mapping}
             {ownedNameIdsSet}
           />
-        {:else if activeTab === "links"}
-          <div
-            role="tabpanel"
-            id="tabpanel-links"
-            aria-labelledby="tab-links"
-            tabindex="0"
-          >
-            <section class="board-section">
-              <h2 class="section-title">Useful links</h2>
-              {#if crimsonWitchLinks.length === 0}
-                <p class="muted-note">No external guides yet.</p>
-              {:else}
-                <CharacterUsefulLinks links={crimsonWitchLinks} />
-              {/if}
-            </section>
-          </div>
         {:else}
           <CharacterBuildsPanel
             {kit}
@@ -394,15 +390,6 @@
       color-mix(in srgb, var(--foreground-color) 32%, transparent);
   }
 
-  .section-title {
-    margin-bottom: var(--space-3);
-  }
-
-  .muted-note {
-    font-size: var(--text-xs);
-    color: var(--foreground-mid);
-  }
-
   /* Outlined open frame — hairlines imply a board; complete it without a fill.
      Keep overflow visible so the kit side index can stick while the page scrolls. */
   .character-content-shell {
@@ -480,10 +467,6 @@
   .board-body :global([role="tabpanel"]:focus-visible) {
     outline: none;
     box-shadow: var(--focus-ring);
-  }
-
-  .board-section {
-    padding: var(--space-4);
   }
 
   :global(.char-detail) {

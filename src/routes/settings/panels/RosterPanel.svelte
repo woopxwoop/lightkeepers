@@ -307,7 +307,7 @@
             {#snippet badge()}
               <button
                 type="button"
-                class="roster-gear absolute top-1.5 left-1.5 z-20"
+                class="roster-gear absolute top-1.5 left-1.5"
                 aria-label="Edit {character.name ?? 'character'}"
                 onclick={(event) => {
                   event.stopPropagation();
@@ -318,7 +318,7 @@
                 <IconCog size={14} />
               </button>
               {#if showNew}
-                <span class="new-badge absolute top-1.5 right-1.5 z-20"
+                <span class="new-badge absolute top-1.5 right-1.5"
                   >NEW</span
                 >
               {/if}
@@ -418,6 +418,7 @@
     border-radius: var(--radius-sm);
     background: var(--accent-1);
     color: var(--background-color);
+    z-index: 1;
   }
 
   .roster-gear {
@@ -430,6 +431,7 @@
     background: color-mix(in srgb, var(--background-color) 62%, transparent);
     color: var(--foreground-color);
     cursor: pointer;
+    z-index: 1;
   }
 
   .roster-gear:hover {
@@ -441,7 +443,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 20;
+    z-index: 40;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

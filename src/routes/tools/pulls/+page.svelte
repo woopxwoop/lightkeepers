@@ -556,7 +556,8 @@
   <header class="page-head">
     <h1 class="page-title">Pull Suggestions</h1>
     <p class="page-meta">
-      Based on your {ownedCount} characters · Stygian Onslaught usage
+      Based on your {ownedCount} characters · Stygian usage for long-term roster
+      strength
     </p>
   </header>
 
@@ -594,7 +595,7 @@
             <div class="panel-head-text">
               <h2 class="panel-title">Best next pulls</h2>
               <p class="panel-lede">
-                Ranked by high-usage teams a character unlocks for your roster
+                Characters that unlock high-usage teams for your roster long-term
               </p>
             </div>
           </header>
@@ -642,7 +643,9 @@
           <header class="panel-head">
             <div class="panel-head-text">
               <h2 class="panel-title">Pair Pulls</h2>
-              <p class="panel-lede">Two characters that form a strong core</p>
+              <p class="panel-lede">
+                Two characters that form a strong core for your roster
+              </p>
             </div>
           </header>
 
