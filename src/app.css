@@ -117,6 +117,22 @@
     var(--foreground-color) 35%,
     transparent
   );
+  /* Board hairlines on mid surfaces — cream/neutral, not gold (mud) or icy white. */
+  --board-border-subtle: color-mix(
+    in srgb,
+    var(--foreground-color) 14%,
+    transparent
+  );
+  --board-border-default: color-mix(
+    in srgb,
+    var(--foreground-color) 24%,
+    transparent
+  );
+  --board-border-strong: color-mix(
+    in srgb,
+    var(--foreground-color) 45%,
+    transparent
+  );
 
   /* ── Radii ──────────────────────────────────────────────────────────── */
   --radius-sm: 0.25rem;
