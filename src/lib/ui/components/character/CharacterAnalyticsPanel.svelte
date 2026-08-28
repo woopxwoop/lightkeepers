@@ -8,10 +8,16 @@
   import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
   import TeamHandList from "$lib/ui/components/character/TeamHandList.svelte";
   import {
+    analyticsCacheKey,
     fetchCharacterAnalytics,
+    getCharacterAnalyticsCached,
     isAbortError,
     isTimeoutError,
   } from "$lib/app/character-analytics";
+  import {
+    dimmedKeysFromMembers,
+    handCharactersFromMembers,
+  } from "$lib/character-teams";
   import type {
     Character,
     CharacterAnalyticsMode,
@@ -36,16 +42,26 @@
   ];
 
   let analyticsMode = $state<CharacterAnalyticsMode>("stygian");
-  let analyticsPayload = $state<CharacterAnalyticsPayload | null>(null);
+  const seedKey = analyticsCacheKey("stygian", nameId);
+  const seedPayload = getCharacterAnalyticsCached(seedKey);
+  let analyticsPayload = $state<CharacterAnalyticsPayload | null>(seedPayload);
   let analyticsError = $state<string | null>(null);
   let analyticsLoading = $state(false);
-  let analyticsKey = $state<string | null>(null);
+  let analyticsKey = $state<string | null>(seedPayload ? seedKey : null);
   let analyticsAbort: AbortController | null = null;
 
   $effect(() => {
     const id = nameId;
     const mode = analyticsMode;
-    const key = `${mode}:${id}`;
+    const key = analyticsCacheKey(mode, id);
+    const fromModule = getCharacterAnalyticsCached(key);
+    if (fromModule) {
+      analyticsPayload = fromModule;
+      analyticsKey = key;
+      analyticsError = null;
+      analyticsLoading = false;
+      return;
+    }
     const cached = untrack(
       () => analyticsKey === key && analyticsPayload !== null,
     );
@@ -126,16 +142,8 @@
   });
 
   async function retryAnalytics() {
-    const key = `${analyticsMode}:${nameId}`;
+    const key = analyticsCacheKey(analyticsMode, nameId);
     await loadAnalytics(nameId, analyticsMode, key);
-  }
-
-  function handCharactersFromMembers(members: string[]) {
-    return members.map((id) => mapping.get(id));
-  }
-
-  function dimmedKeysFromMembers(members: string[]): Set<string> {
-    return new Set(members.filter((id) => !ownedNameIdsSet.has(id)));
   }
 </script>
 
@@ -185,8 +193,12 @@
                       <TeamCardHand
                         characters={handCharactersFromMembers(
                           team.members ?? [],
+                          mapping,
                         )}
-                        dimmedKeys={dimmedKeysFromMembers(team.members ?? [])}
+                        dimmedKeys={dimmedKeysFromMembers(
+                          team.members ?? [],
+                          ownedNameIdsSet,
+                        )}
                         spread="flat"
                       />
                       <div class="team-hand-footer">

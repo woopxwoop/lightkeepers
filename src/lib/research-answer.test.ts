@@ -77,6 +77,35 @@ describe("research answer embeddings", () => {
     assert.doesNotMatch(html, /\[\[cite:/);
   });
 
+  it("renderEntityChip escapes label and description HTML", () => {
+    const nasty: ResearchEntity = {
+      key: "char:X",
+      type: "character",
+      label: `Foo<"bar">`,
+      name_id: "Xingqiu",
+      description: `desc <script>alert(1)</script> "x"`,
+    };
+    const html = renderEntityChip(nasty);
+    assert.doesNotMatch(html, /<script/);
+    assert.match(html, /Foo&lt;"bar"&gt;/);
+    assert.match(
+      html,
+      /title="desc &lt;script&gt;alert\(1\)&lt;\/script&gt; &quot;x&quot;"/,
+    );
+  });
+
+  it("renderResearchAnswer strips unknown cite tokens", () => {
+    const html = renderResearchAnswer(
+      "Before [[cite:999]] after.",
+      [],
+      [cite2297],
+    );
+    assert.match(html, /Before/);
+    assert.match(html, /after/);
+    assert.doesNotMatch(html, /cite:999/);
+    assert.doesNotMatch(html, /\[\[/);
+  });
+
   it("orderCitationsForDisplay follows markdown appearance", () => {
     const c2 = { ...cite2297, id: 2300 };
     const ordered = orderCitationsForDisplay(

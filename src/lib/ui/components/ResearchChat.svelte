@@ -69,24 +69,32 @@
   let threadEl: HTMLDivElement | null = $state(null);
   let composerEl: HTMLTextAreaElement | null = $state(null);
 
+  let healthRefreshing = $state(false);
+
+  async function refreshHealth() {
+    healthRefreshing = true;
+    try {
+      const h = await fetchResearchProxyHealth();
+      proxyHealth = h;
+      if (h.agent.defaultLlmProvider) {
+        llmProvider = h.agent.defaultLlmProvider;
+      }
+    } catch (err: unknown) {
+      proxyHealth = {
+        configured: false,
+        agentUrl: null,
+        agent: {
+          ok: false,
+          error: err instanceof Error ? err.message : "Health check failed",
+        },
+      };
+    } finally {
+      healthRefreshing = false;
+    }
+  }
+
   $effect(() => {
-    void fetchResearchProxyHealth()
-      .then((h) => {
-        proxyHealth = h;
-        if (h.agent.defaultLlmProvider) {
-          llmProvider = h.agent.defaultLlmProvider;
-        }
-      })
-      .catch((err: unknown) => {
-        proxyHealth = {
-          configured: false,
-          agentUrl: null,
-          agent: {
-            ok: false,
-            error: err instanceof Error ? err.message : "Health check failed",
-          },
-        };
-      });
+    void refreshHealth();
   });
 
   let characterOptions = $derived<SelectOption[]>(
@@ -192,6 +200,16 @@
   >
     <span class="health-dot" aria-hidden="true"></span>
     {healthLabel}
+    {#if proxyHealth !== null && !agentOk}
+      <button
+        type="button"
+        class="health-retry"
+        disabled={healthRefreshing}
+        onclick={() => void refreshHealth()}
+      >
+        {healthRefreshing ? "Retrying…" : "Retry"}
+      </button>
+    {/if}
   </p>
 {/snippet}
 
@@ -435,6 +453,24 @@
 
   .health-bad .health-dot {
     background: #e67e22;
+  }
+
+  .health-retry {
+    margin: 0;
+    margin-left: 0.15rem;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: inherit;
+    color: var(--foreground-color);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .health-retry:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .chat-body {

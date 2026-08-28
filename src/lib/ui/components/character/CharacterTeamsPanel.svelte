@@ -22,6 +22,8 @@
     handCharactersFromGoodKeys,
     handBuilds,
     dimmedKeysFromGoodKeys,
+    handCharactersFromMembers,
+    dimmedKeysFromMembers,
   } from "$lib/character-teams";
   import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
   import type { Character, CharacterOwned } from "$lib/definitions";
@@ -136,14 +138,6 @@
   function formatDps(dps: number): string {
     return `${(dps / 1000).toFixed(0)}K`;
   }
-
-  function handCharactersFromMembers(members: string[]) {
-    return members.map((id) => mapping.get(id));
-  }
-
-  function dimmedKeysFromMembers(members: string[]): Set<string> {
-    return new Set(members.filter((id) => !ownedNameIdsSet.has(id)));
-  }
 </script>
 
 <div
@@ -236,8 +230,8 @@
         {#each popularTeams as team, i (team.team_key ?? i)}
           <li class="team-hand-row">
             <TeamCardHand
-              characters={handCharactersFromMembers(team.members)}
-              dimmedKeys={dimmedKeysFromMembers(team.members)}
+              characters={handCharactersFromMembers(team.members, mapping)}
+              dimmedKeys={dimmedKeysFromMembers(team.members, ownedNameIdsSet)}
               spread="flat"
             />
             <div class="team-hand-footer">

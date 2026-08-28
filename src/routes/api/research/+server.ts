@@ -87,12 +87,16 @@ export const POST: RequestHandler = async ({
 
   await enforceApiRateLimit({ request, getClientAddress });
 
-  let body: ResearchRequest;
+  let raw: unknown;
   try {
-    body = (await request.json()) as ResearchRequest;
+    raw = await request.json();
   } catch {
     error(400, "Invalid JSON body");
   }
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    error(400, "Request body must be a JSON object");
+  }
+  const body = raw as ResearchRequest;
 
   const question = body.question?.trim();
   if (!question) error(400, "question is required");

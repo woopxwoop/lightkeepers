@@ -6,6 +6,7 @@
   import {
     citationShortLabel,
     orderCitationsForDisplay,
+    preloadEntityIconData,
     renderResearchAnswer,
   } from "$lib/research-answer";
   import type {
@@ -27,6 +28,10 @@
     disagreements?: { summary: string; citation_ids?: number[] }[];
     comparison?: ResearchComparison | null;
   } = $props();
+
+  $effect(() => {
+    void preloadEntityIconData();
+  });
 
   let html = $derived.by(() => {
     void $equipmentVersion;
@@ -58,7 +63,7 @@
 <div class="research-answer">
   {#if disagreements.length > 0}
     <aside class="research-disagreements" aria-label="Source disagreements">
-      {#each disagreements as d (d.summary)}
+      {#each disagreements as d, i (i)}
         <p class="research-disagreement">{d.summary}</p>
       {/each}
     </aside>
@@ -77,7 +82,7 @@
             <p class="research-comparison-summary">{side.summary}</p>
             {#if side.bullets && side.bullets.length > 0}
               <ul class="research-comparison-bullets">
-                {#each side.bullets as bullet (bullet)}
+                {#each side.bullets as bullet, i (i)}
                   <li>{bullet}</li>
                 {/each}
               </ul>

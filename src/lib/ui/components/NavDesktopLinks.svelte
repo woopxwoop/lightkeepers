@@ -71,6 +71,31 @@
     }, 120);
   }
 
+  function onToolsClick(event: MouseEvent) {
+    if (!isTouchLikeActivation()) return;
+    if (!toolsHovered) {
+      event.preventDefault();
+      onToolsEnter();
+    }
+  }
+
+  function onSettingsClick(event: MouseEvent) {
+    if (!isTouchLikeActivation()) return;
+    if (!settingsHovered) {
+      event.preventDefault();
+      onSettingsEnter();
+    }
+  }
+
+  /** Coarse / no-hover pointers at md+ — first tap opens submenu. */
+  function isTouchLikeActivation(): boolean {
+    if (typeof window === "undefined") return false;
+    return (
+      window.matchMedia("(hover: none)").matches ||
+      window.matchMedia("(pointer: coarse)").matches
+    );
+  }
+
   function isMainActive(link: MainLink): boolean {
     return isPathActive(page.url.pathname, link.path, link.match);
   }
@@ -98,7 +123,8 @@
       onmouseenter={onToolsEnter}
       onmouseleave={onToolsLeave}
       onfocus={onToolsEnter}
-      onblur={onToolsLeave}>Tools</a
+      onblur={onToolsLeave}
+      onclick={onToolsClick}>Tools</a
     >
 
     <div
@@ -142,7 +168,8 @@
       onmouseenter={onSettingsEnter}
       onmouseleave={onSettingsLeave}
       onfocus={onSettingsEnter}
-      onblur={onSettingsLeave}>Settings</a
+      onblur={onSettingsLeave}
+      onclick={onSettingsClick}>Settings</a
     >
 
     <div

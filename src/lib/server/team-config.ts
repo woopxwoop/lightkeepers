@@ -92,13 +92,13 @@ export async function readBoundedResponseBody(
       parts.push(Buffer.from(value));
     }
     return parts.length === 0 ? Buffer.alloc(0) : Buffer.concat(parts);
-  } catch {
+  } catch (err) {
     try {
       await reader.cancel();
     } catch {
       /* ignore */
     }
-    return null;
+    throw err;
   }
 }
 

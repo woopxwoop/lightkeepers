@@ -21,9 +21,12 @@ const ENTITY_PLACEHOLDER_RE = /\uE000(\d+)\uE001/g;
 const CITE_PLACEHOLDER = (i: number) => `\uE010${i}\uE011`;
 const CITE_PLACEHOLDER_RE = /\uE010(\d+)\uE011/g;
 
-void ensureEquipmentData().catch(() => {
-  /* chip icons retry when equipmentVersion bumps */
-});
+/** Load weapon/artifact tables for entity chip icons (call from UI `$effect`). */
+export function preloadEntityIconData(): Promise<void> {
+  return ensureEquipmentData().catch(() => {
+    /* chip icons retry when equipmentVersion bumps */
+  });
+}
 
 export function citationShortLabel(cite: ResearchCitation): string {
   const parts = [cite.publisher];
@@ -140,12 +143,15 @@ function normalizeLegacyCiteTokens(
   md: string,
   allowed: Set<number>,
 ): string {
-  return md.replace(LEGACY_CITE_RE, (_full, body: string) =>
+  return md.replace(LEGACY_CITE_RE, (full, body: string) =>
     body
       .split(",")
       .map((part: string) => {
-        const id = Number(part.trim());
-        if (!Number.isFinite(id) || !allowed.has(id)) return part.trim();
+        const trimmed = part.trim();
+        const id = Number(trimmed);
+        if (!Number.isFinite(id) || !allowed.has(id)) {
+          return trimmed ? `[${trimmed}]` : full;
+        }
         return `[[cite:${id}]]`;
       })
       .join(""),

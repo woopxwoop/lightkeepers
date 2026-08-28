@@ -30,6 +30,7 @@
   let kit = $derived(data.kit as CharacterKit);
   let kitChannel = $derived((data.kitChannel ?? "live") as "live" | "beta");
   let rawBuilds = $derived((data.builds ?? null) as CharacterIndex | null);
+  let buildsUnavailable = $derived(Boolean(data.buildsUnavailable));
   let summaryStale = $derived(
     isStaleBuildSummary(kit.name_id) || rawBuilds?.upToDate === false,
   );
@@ -257,6 +258,7 @@
             {kit}
             {builds}
             {summaryStale}
+            {buildsUnavailable}
             {elColor}
             {goodKey}
             {goodKeyMap}

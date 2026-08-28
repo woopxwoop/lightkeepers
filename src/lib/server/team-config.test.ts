@@ -49,9 +49,25 @@ describe("readBoundedResponseBody", () => {
   });
 
   it("stops a streamed response once accumulated bytes exceed the limit", async () => {
+    let cancelCalls = 0;
     const chunk = new Uint8Array(256 * 1024);
-    const res = new Response(streamBody([chunk, chunk, chunk]));
+    let i = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (i >= 3) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(chunk);
+        i += 1;
+      },
+      cancel() {
+        cancelCalls += 1;
+      },
+    });
+    const res = new Response(body);
     const buf = await readBoundedResponseBody(res, MAX);
     assert.equal(buf, null);
+    assert.equal(cancelCalls, 1);
   });
 });

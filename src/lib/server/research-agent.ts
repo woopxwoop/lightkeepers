@@ -6,9 +6,12 @@
 import { env } from "$env/dynamic/private";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 import type { ResearchRequest, ResearchResponse } from "$lib/research-types";
+import { readBoundedResponseBody } from "$lib/server/team-config";
 
 /** Gemini + retrieval can be slow over a tunnel. */
 const RESEARCH_TIMEOUT_MS = 120_000;
+/** Cap agent JSON so a runaway payload cannot blow the proxy. */
+const MAX_RESEARCH_BODY_BYTES = 2 * 1024 * 1024;
 
 export class ResearchAgentError extends Error {
   status: number;
@@ -54,8 +57,17 @@ export async function fetchResearch(
     throw new ResearchAgentError(502, msg);
   }
 
+  const buf = await readBoundedResponseBody(res, MAX_RESEARCH_BODY_BYTES);
+  if (!buf) {
+    throw new ResearchAgentError(
+      502,
+      "Research agent response was too large.",
+    );
+  }
+  const text = buf.toString("utf-8").trim();
+
   if (!res.ok) {
-    let detail = (await res.text()).trim();
+    let detail = text;
     try {
       const payload = JSON.parse(detail) as { detail?: string };
       if (typeof payload.detail === "string" && payload.detail) {
@@ -70,5 +82,12 @@ export async function fetchResearch(
     );
   }
 
-  return (await res.json()) as ResearchResponse;
+  try {
+    return JSON.parse(text) as ResearchResponse;
+  } catch {
+    throw new ResearchAgentError(
+      502,
+      "Research agent returned invalid JSON.",
+    );
+  }
 }
