@@ -3,6 +3,8 @@
     id: string;
     label: string;
     href?: string;
+    /** Open in a new tab (external guides). */
+    external?: boolean;
     onclick?: () => void;
   };
 </script>
@@ -210,6 +212,8 @@
             class="action-item"
             role="menuitem"
             href={item.href}
+            target={item.external ? "_blank" : undefined}
+            rel={item.external ? "noopener noreferrer" : undefined}
             onclick={close}
           >
             {item.label}

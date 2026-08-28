@@ -257,7 +257,7 @@
     </EmptyState>
   {:else if displaySolutions.length === 0}
     <EmptyState
-      message="No viable clears for your roster. Pull for characters that unlock better teams."
+      message="No viable clears for your roster right now."
     >
       {#snippet action()}
         <a class="pulls-cta" href={resolve("/tools/pulls")}
@@ -327,15 +327,17 @@
         </div>
       </div>
 
-      <div class="board-body">
-        {#each SLOTS as slot (slot)}
-          <div class="board-cell" data-panel-slot={slot}>
-            {#key assignmentKey(slot)}
-              {@render halfColumn(slot)}
-            {/key}
-          </div>
-        {/each}
-      </div>
+      {#key safeIndex}
+        <div class="board-body motion-board-swap">
+          {#each SLOTS as slot (slot)}
+            <div class="board-cell" data-panel-slot={slot}>
+              {#key assignmentKey(slot)}
+                {@render halfColumn(slot)}
+              {/key}
+            </div>
+          {/each}
+        </div>
+      {/key}
     </Surface>
 
     {#if solution?.isFallback && solution.neededCharacters.length > 0}

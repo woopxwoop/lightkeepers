@@ -37,6 +37,7 @@
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import IconEye from "$lib/ui/icons/IconEye.svelte";
   import IconEyeOff from "$lib/ui/icons/IconEyeOff.svelte";
+  import { settingsPath } from "$lib/ui/nav-links";
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -555,7 +556,8 @@
   <header class="page-head">
     <h1 class="page-title">Pull Suggestions</h1>
     <p class="page-meta">
-      Based on your {ownedCount} characters · Stygian Onslaught usage
+      Based on your {ownedCount} characters · Stygian usage for long-term roster
+      strength
     </p>
   </header>
 
@@ -574,7 +576,11 @@
     {#if ownedCount === 0}
       <EmptyState
         message="Set up your roster in Settings to get pull suggestions."
-      />
+      >
+        {#snippet action()}
+          <a class="pulls-cta" href={settingsPath}>Configure roster</a>
+        {/snippet}
+      </EmptyState>
     {:else}
       <EmptyState
         message="No high-usage singles or pairs to suggest for this roster."
@@ -589,7 +595,7 @@
             <div class="panel-head-text">
               <h2 class="panel-title">Best next pulls</h2>
               <p class="panel-lede">
-                Ranked by high-usage teams a character unlocks for your roster
+                Characters that unlock high-usage teams for your roster long-term
               </p>
             </div>
           </header>
@@ -637,7 +643,9 @@
           <header class="panel-head">
             <div class="panel-head-text">
               <h2 class="panel-title">Pair Pulls</h2>
-              <p class="panel-lede">Two characters that form a strong core</p>
+              <p class="panel-lede">
+                Two characters that form a strong core for your roster
+              </p>
             </div>
           </header>
 
@@ -1263,5 +1271,24 @@
     font-size: var(--text-xs);
     line-height: 1.55;
     color: var(--accent-2);
+  }
+
+  .pulls-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid var(--accent-1);
+    background: var(--accent-1);
+    color: var(--control-knob-on);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .pulls-cta:hover {
+    background: color-mix(in srgb, var(--accent-1) 88%, white);
+    border-color: color-mix(in srgb, var(--accent-1) 88%, white);
   }
 </style>

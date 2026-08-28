@@ -51,6 +51,7 @@
   import {
     STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST,
     STYGIAN_CHEAP_CLEARS_DIFFICULTY,
+    STYGIAN_SOLVER_MODE_HELP,
     STYGIAN_SOLVER_MODE_OPTIONS_RELEASE,
     toStygianSolverModeRelease,
     type Character,
@@ -104,6 +105,7 @@
   let solverMode = $derived(toStygianSolverModeRelease(storedSolverMode));
   let videoClearsMode = $derived(solverMode === "video-c0r0");
   let needsCheapClears = $derived(videoClearsMode || solverMode === "hybrid");
+  let modeHint = $derived(STYGIAN_SOLVER_MODE_HELP[solverMode]);
 
   $effect(() => {
     ensureStaticBoards().catch(() => {});
@@ -579,6 +581,7 @@
         {:else}
           <span class="eyebrow board-eyebrow">Solutions</span>
         {/if}
+        <p class="mode-hint">{modeHint}</p>
       </div>
 
       <div class="board-actions">
@@ -636,15 +639,25 @@
       <div class="board-status">
         {#if videoClearsMode}
           <EmptyState
-            message={`No ${clearDifficulty} clears within the cost cap for your roster.`}
-          />
+            message="No video-backed clears for this roster at baseline."
+          >
+            {#snippet action()}
+              <a class="pulls-cta" href={resolve("/tools/pulls")}
+                >See pull suggestions</a
+              >
+            {/snippet}
+          </EmptyState>
         {:else if solverMode === "hybrid"}
-          <EmptyState
-            message={`No viable ${clearDifficulty} hybrid board for your roster.`}
-          />
+          <EmptyState message="No balanced board for this roster.">
+            {#snippet action()}
+              <a class="pulls-cta" href={resolve("/tools/pulls")}
+                >See pull suggestions</a
+              >
+            {/snippet}
+          </EmptyState>
         {:else}
           <EmptyState
-            message="No viable field clears for your roster. Pull for characters that unlock better teams."
+            message="No viable field clears for your roster right now."
           >
             {#snippet action()}
               <a class="pulls-cta" href={resolve("/tools/pulls")}
@@ -655,15 +668,17 @@
         {/if}
       </div>
     {:else}
-      <div class="board-body">
-        {#each SLOTS as slot (slot)}
-          <div class="board-cell" data-panel-slot={slot}>
-            {#key assignmentKey(slot)}
-              {@render fieldColumn(slot)}
-            {/key}
-          </div>
-        {/each}
-      </div>
+      {#key safeIndex}
+        <div class="board-body motion-board-swap">
+          {#each SLOTS as slot (slot)}
+            <div class="board-cell" data-panel-slot={slot}>
+              {#key assignmentKey(slot)}
+                {@render fieldColumn(slot)}
+              {/key}
+            </div>
+          {/each}
+        </div>
+      {/key}
     {/if}
   </Surface>
 
@@ -701,16 +716,19 @@
   @media (max-width: 640px) {
     .board-head {
       flex-wrap: wrap;
+      align-items: flex-start;
       gap: var(--space-2);
+      padding: var(--space-3) var(--space-3);
     }
   }
 
   .board-head-left {
     display: flex;
-    align-items: baseline;
-    gap: var(--space-3);
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
     min-width: 0;
+    flex: 1 1 auto;
   }
 
   .board-eyebrow {
@@ -721,6 +739,14 @@
   .board-eyebrow-total {
     color: var(--foreground-mid);
     font-weight: 500;
+  }
+
+  .mode-hint {
+    margin: 0;
+    max-width: 28rem;
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    color: var(--foreground-mid);
   }
 
   .board-actions,
@@ -753,6 +779,12 @@
 
   .board-status {
     padding: var(--space-6) var(--space-4);
+  }
+
+  @media (max-width: 640px) {
+    .board-status {
+      padding: var(--space-5) var(--space-3);
+    }
   }
 
   .pager {
@@ -915,6 +947,13 @@
     margin-top: auto;
     margin-inline: auto;
     padding: var(--space-5) 0 var(--space-3);
+  }
+
+  @media (max-width: 640px) {
+    .hero-body {
+      gap: 0.7rem;
+      padding: var(--space-4) 0 var(--space-4);
+    }
   }
 
   .rate-row {
