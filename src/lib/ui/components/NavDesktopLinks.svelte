@@ -12,6 +12,7 @@
     type MainLink,
     type ToolsLink,
   } from "$lib/ui/nav-links";
+  import { shouldArmSubmenuFirstActivation } from "$lib/ui/nav-submenu-arm";
 
   let {
     onSubOpenChange,
@@ -35,6 +36,8 @@
 
   let toolsTouchArmed = $state(false);
   let settingsTouchArmed = $state(false);
+  /** Last pointerdown type on Tools/Settings — click alone has no pointerType. */
+  let lastPointerType: string | null = null;
 
   function onToolsEnter() {
     if (toolsLeaveTimeout) {
@@ -76,34 +79,45 @@
     }, 120);
   }
 
+  function onMenuPointerDown(event: PointerEvent) {
+    lastPointerType = event.pointerType;
+  }
+
   function onToolsClick(event: MouseEvent) {
-    if (!isTouchLikeActivation()) return;
-    // First touch opens (even if a compatibility mouseenter already hovered).
-    if (!toolsTouchArmed) {
-      event.preventDefault();
-      onToolsEnter();
-      toolsTouchArmed = true;
-      settingsTouchArmed = false;
+    const pointerType = lastPointerType;
+    lastPointerType = null;
+    if (
+      !shouldArmSubmenuFirstActivation({
+        pointerType,
+        clickDetail: event.detail,
+        alreadyArmed: toolsTouchArmed,
+      })
+    ) {
+      return;
     }
+    // First touch opens (even if a compatibility mouseenter already hovered).
+    event.preventDefault();
+    onToolsEnter();
+    toolsTouchArmed = true;
+    settingsTouchArmed = false;
   }
 
   function onSettingsClick(event: MouseEvent) {
-    if (!isTouchLikeActivation()) return;
-    if (!settingsTouchArmed) {
-      event.preventDefault();
-      onSettingsEnter();
-      settingsTouchArmed = true;
-      toolsTouchArmed = false;
+    const pointerType = lastPointerType;
+    lastPointerType = null;
+    if (
+      !shouldArmSubmenuFirstActivation({
+        pointerType,
+        clickDetail: event.detail,
+        alreadyArmed: settingsTouchArmed,
+      })
+    ) {
+      return;
     }
-  }
-
-  /** Coarse / no-hover pointers at md+ — first tap opens submenu. */
-  function isTouchLikeActivation(): boolean {
-    if (typeof window === "undefined") return false;
-    return (
-      window.matchMedia("(hover: none)").matches ||
-      window.matchMedia("(pointer: coarse)").matches
-    );
+    event.preventDefault();
+    onSettingsEnter();
+    settingsTouchArmed = true;
+    toolsTouchArmed = false;
   }
 
   function isMainActive(link: MainLink): boolean {
@@ -134,6 +148,7 @@
       onmouseleave={onToolsLeave}
       onfocus={onToolsEnter}
       onblur={onToolsLeave}
+      onpointerdown={onMenuPointerDown}
       onclick={onToolsClick}>Tools</a
     >
 
@@ -179,6 +194,7 @@
       onmouseleave={onSettingsLeave}
       onfocus={onSettingsEnter}
       onblur={onSettingsLeave}
+      onpointerdown={onMenuPointerDown}
       onclick={onSettingsClick}>Settings</a
     >
 

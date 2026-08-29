@@ -6,6 +6,7 @@ import {
   orderCitationsForDisplay,
   renderEntityChip,
   renderResearchAnswer,
+  renderResearchInline,
   safeExternalHref,
 } from "./research-answer.ts";
 import type { ResearchCitation, ResearchEntity } from "./research-types.ts";
@@ -45,12 +46,13 @@ describe("research answer embeddings", () => {
     assert.equal(entityHref(homa), null);
   });
 
-  it("renderEntityChip includes icon and label", () => {
+  it("renderEntityChip emits a hydrate slot marker", () => {
     const html = renderEntityChip(xqC6);
-    assert.match(html, /research-entity-constellation/);
-    assert.match(html, /Xingqiu C6/);
-    assert.match(html, /UI_Talent_S_Xingqiu_04/);
-    assert.match(html, /#kit-T256/);
+    assert.match(html, /research-entity-slot/);
+    assert.match(html, /data-research-entity-key="c:Xingqiu:6"/);
+    assert.doesNotMatch(html, /research-entity-constellation/);
+    assert.doesNotMatch(html, /Xingqiu C6/);
+    assert.doesNotMatch(html, /title=/);
   });
 
   it("renderResearchAnswer hydrates entity tokens and strips unknowns", () => {
@@ -59,8 +61,8 @@ describe("research answer embeddings", () => {
       [xqC6],
       [],
     );
-    assert.match(html, /research-entity-constellation/);
-    assert.match(html, /Xingqiu C6/);
+    assert.match(html, /data-research-entity-key="c:Xingqiu:6"/);
+    assert.match(html, /research-entity-slot/);
     assert.match(html, /NotReal/);
     assert.doesNotMatch(html, /\[\[/);
     assert.match(html, /<strong>bold<\/strong>/);
@@ -76,6 +78,44 @@ describe("research answer embeddings", () => {
     assert.match(html, /#research-cite-2297/);
     assert.match(html, />1</);
     assert.doesNotMatch(html, /\[\[cite:/);
+  });
+
+  it("renderResearchInline unwraps paragraph and hydrates cites", () => {
+    const html = renderResearchInline(
+      "~20% damage [[cite:2297]]",
+      [],
+      [cite2297],
+    );
+    assert.doesNotMatch(html, /<p>/);
+    assert.match(html, /research-cite/);
+    assert.doesNotMatch(html, /\[\[cite:/);
+  });
+
+  it("renderResearchInline splits cite clusters", () => {
+    const cite2300: ResearchCitation = {
+      ...cite2297,
+      id: 2300,
+      heading_path: "Combos",
+    };
+    const html = renderResearchInline(
+      "Adds i-frames [[cite:2297, 2300]]",
+      [],
+      [cite2297, cite2300],
+    );
+    assert.doesNotMatch(html, /\[\[cite:/);
+    assert.match(html, /research-cite/);
+    assert.match(html, /#research-cite-2297/);
+    assert.match(html, /#research-cite-2300/);
+  });
+
+  it("orderCitationsForDisplay includes comparison text", () => {
+    const ordered = orderCitationsForDisplay(
+      [cite2297],
+      "Short verdict.",
+      ["~20% [[cite:2297]]"],
+    );
+    assert.equal(ordered.length, 1);
+    assert.equal(ordered[0]?.id, 2297);
   });
 
   it("renderResearchAnswer namespaces cite anchors per answer prefix", () => {
@@ -106,9 +146,9 @@ describe("research answer embeddings", () => {
     assert.equal(safeExternalHref("data:text/html,hi"), null);
   });
 
-  it("renderEntityChip escapes label and description HTML", () => {
+  it("renderEntityChip escapes entity key HTML", () => {
     const nasty: ResearchEntity = {
-      key: "char:X",
+      key: `char:X<"y">`,
       type: "character",
       label: `Foo<"bar">`,
       name_id: "Xingqiu",
@@ -116,11 +156,8 @@ describe("research answer embeddings", () => {
     };
     const html = renderEntityChip(nasty);
     assert.doesNotMatch(html, /<script/);
-    assert.match(html, /Foo&lt;"bar"&gt;/);
-    assert.match(
-      html,
-      /title="desc &lt;script&gt;alert\(1\)&lt;\/script&gt; &quot;x&quot;"/,
-    );
+    assert.match(html, /data-research-entity-key="char:X&lt;&quot;y&quot;&gt;"/);
+    assert.doesNotMatch(html, /title=/);
   });
 
   it("renderResearchAnswer strips unknown cite tokens", () => {

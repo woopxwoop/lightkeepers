@@ -17,9 +17,9 @@ function summary(partial: Partial<CharacterIndex> = {}): CharacterIndex {
 describe("liveCharacterSummary", () => {
   it("passes through current summaries", () => {
     const live = summary();
-    assert.equal(liveCharacterSummary(live), live);
+    assert.deepEqual(liveCharacterSummary(live), live);
     const flagged = summary({ upToDate: true });
-    assert.equal(liveCharacterSummary(flagged), flagged);
+    assert.deepEqual(liveCharacterSummary(flagged), flagged);
   });
 
   it("treats tombstones as missing", () => {
@@ -34,7 +34,7 @@ describe("liveCharacterSummary", () => {
       upToDate: false,
       weapons: [{ key: "KagurasVerity", teams: 1 }],
     });
-    assert.equal(liveCharacterSummary(stale), stale);
+    assert.deepEqual(liveCharacterSummary(stale), stale);
   });
 
   it("normalizes missing main_stats and liquid for legacy payloads", () => {

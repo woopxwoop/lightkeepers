@@ -70,4 +70,40 @@ describe("readBoundedResponseBody", () => {
     assert.equal(buf, null);
     assert.equal(cancelCalls, 1);
   });
+
+  it("raises AbortError when abort resolves a pending read as done", async () => {
+    const ac = new AbortController();
+    let releaseSecondRead!: () => void;
+    const secondReadGate = new Promise<void>((resolve) => {
+      releaseSecondRead = resolve;
+    });
+    let pulls = 0;
+    const body = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        pulls += 1;
+        if (pulls === 1) {
+          controller.enqueue(new Uint8Array([1, 2, 3]));
+          return;
+        }
+        await secondReadGate;
+        controller.close();
+      },
+    });
+    const pending = readBoundedResponseBody(new Response(body), MAX, ac.signal);
+    // Wait until the second read is pending inside readBoundedResponseBody.
+    await new Promise<void>((resolve) => {
+      const tick = () => {
+        if (pulls >= 2) resolve();
+        else setTimeout(tick, 0);
+      };
+      tick();
+    });
+    ac.abort();
+    releaseSecondRead();
+    await assert.rejects(pending, (err: unknown) => {
+      assert.ok(err instanceof DOMException);
+      assert.equal(err.name, "AbortError");
+      return true;
+    });
+  });
 });

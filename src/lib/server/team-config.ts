@@ -95,6 +95,11 @@ export async function readBoundedResponseBody(
         throw new DOMException("The operation was aborted.", "AbortError");
       }
       const { done, value } = await reader.read();
+      // Cancel often resolves the pending read with done:true — don't treat
+      // that as a successful end-of-stream after abort.
+      if (signal?.aborted) {
+        throw new DOMException("The operation was aborted.", "AbortError");
+      }
       if (done) break;
       if (!value?.byteLength) continue;
       total += value.byteLength;

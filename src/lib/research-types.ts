@@ -51,6 +51,26 @@ export type ResearchLlmProvider = "gemini" | "deepseek";
 
 export type ResearchAnswerStyle = "concise" | "normal" | "verbose";
 
+/** Player-owned weapon (GOOD key) for research personalization. */
+export type ResearchOwnedWeapon = {
+  key: string;
+  refinement?: number;
+  level?: number | null;
+  ascension?: number | null;
+  /** Copies of this GOOD key owned (set when inventory is deduped). */
+  copies?: number;
+};
+
+/** Player-owned character with optional investment for research personalization. */
+export type ResearchOwnedCharacter = {
+  name_id: string;
+  constellation?: number;
+  level?: number | null;
+  ascension?: number | null;
+  talents?: { normal?: number; skill?: number; burst?: number } | null;
+  weapon?: ResearchOwnedWeapon | null;
+};
+
 export type ResearchRequest = {
   question_kind?: ResearchQuestionKind;
   question: string;
@@ -58,6 +78,12 @@ export type ResearchRequest = {
   llm_provider?: ResearchLlmProvider;
   mode?: "abyss" | "stygian";
   roster_name_ids?: string[];
+  /** Owned roster with progress — enables personalized teams/weapons advice. */
+  owned_characters?: ResearchOwnedCharacter[];
+  /** Extra inventory weapons (GOOD keys) not attached to a character. */
+  owned_weapons?: ResearchOwnedWeapon[];
+  /** Prefer owned teammates/weapons when inventory is present (default true). */
+  personalize?: boolean;
   /** Chat-friendly length. Agent defaults to concise if omitted. */
   answer_style?: ResearchAnswerStyle;
 };
@@ -89,6 +115,45 @@ export type ResearchComparison = {
   verdict: string;
   option_a: ResearchComparisonSide;
   option_b: ResearchComparisonSide;
+};
+
+/** One 4-character lineup for team/build answers. */
+export type ResearchTeamLineup = {
+  label: string;
+  /** Catalog name_ids (prefer exactly 4). */
+  members: string[];
+  weapon?: string | null;
+  artifact_set?: string | null;
+  /** Resolved GOOD weapon key when known. */
+  weapon_key?: string | null;
+  /** Resolved GOOD artifact-set key when known. */
+  set_key?: string | null;
+  notes?: string | null;
+  citation_ids?: number[];
+};
+
+/** Ranked weapon or artifact-set row for build answers. */
+export type ResearchRankItem = {
+  rank: number;
+  key: string;
+  note?: string | null;
+  citation_ids?: number[];
+};
+
+/** ER requirement for a character. */
+export type ResearchErTarget = {
+  name_id: string;
+  min_er?: number | null;
+  max_er?: number | null;
+  context?: string | null;
+  citation_ids?: number[];
+};
+
+/** Ordered rotation / how-to-play steps. */
+export type ResearchRotation = {
+  steps: string[];
+  notes?: string | null;
+  citation_ids?: number[];
 };
 
 export type ResearchTracePhase =
@@ -181,4 +246,14 @@ export type ResearchResponse = {
   trace?: ResearchTrace | null;
   /** Optional A/B panel for vs/worth-it questions. */
   comparison?: ResearchComparison | null;
+  /** Optional 4-character lineups for team/build questions. */
+  teams?: ResearchTeamLineup[] | null;
+  /** Optional ranked weapons for build questions. */
+  weapon_ranks?: ResearchRankItem[] | null;
+  /** Optional ranked artifact sets for build questions. */
+  artifact_ranks?: ResearchRankItem[] | null;
+  /** Optional ER targets for ER questions. */
+  er_targets?: ResearchErTarget[] | null;
+  /** Optional rotation steps for how-to-play questions. */
+  rotation?: ResearchRotation | null;
 };

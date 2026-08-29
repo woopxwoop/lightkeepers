@@ -6,13 +6,16 @@
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
   import {
+    buildResearchPersonalization,
     postResearchChat,
     fetchResearchProxyHealth,
     type ResearchProxyHealth,
   } from "$lib/app/research";
+  import { loadRosterWeapons } from "$lib/app/roster-inventory";
   import type {
     ResearchAnswerStyle,
     ResearchLlmProvider,
+    ResearchRequest,
     ResearchResponse,
   } from "$lib/research-types";
   import PageShell from "$lib/ui/components/PageShell.svelte";
@@ -22,7 +25,10 @@
   import ResearchTrace from "$lib/ui/components/ResearchTrace.svelte";
   import Select from "$lib/ui/components/Select.svelte";
   import type { SelectOption } from "$lib/ui/components/Select.svelte";
+  import Toggle from "$lib/ui/components/Toggle.svelte";
   import type { Character } from "$lib/definitions";
+  import { charactersHydrated, charactersOwned } from "$lib/stores";
+  import { get } from "svelte/store";
 
   type ChatTurn =
     | { id: string; role: "user"; text: string }
@@ -62,6 +68,8 @@
   let focusNameId = $state("");
   let llmProvider = $state<ResearchLlmProvider>("gemini");
   let answerStyle = $state<ResearchAnswerStyle>("concise");
+  let personalize = $state(false);
+  let personalizeInited = $state(false);
   let draft = $state("");
   let loading = $state(false);
   let turns = $state<ChatTurn[]>([]);
@@ -70,6 +78,15 @@
   let composerEl: HTMLTextAreaElement | null = $state(null);
 
   let healthRefreshing = $state(false);
+
+  let hasOwnedRoster = $derived($charactersOwned.some((c) => c.isOwned));
+
+  $effect(() => {
+    if (personalizeInited) return;
+    if (!$charactersHydrated) return;
+    personalize = hasOwnedRoster;
+    personalizeInited = true;
+  });
 
   async function refreshHealth() {
     healthRefreshing = true;
@@ -109,17 +126,8 @@
   }
 
   let agentOk = $derived(proxyHealth?.agent.ok === true);
-  let providerReady = $derived.by(() => {
-    if (!proxyHealth?.agent.ok) return false;
-    if (llmProvider === "deepseek") {
-      return proxyHealth.agent.deepseekConfigured !== false;
-    }
-    return proxyHealth.agent.geminiConfigured !== false;
-  });
 
-  let canSend = $derived(
-    !loading && draft.trim().length > 0 && providerReady,
-  );
+  let canSend = $derived(!loading && draft.trim().length > 0);
 
   let healthLabel = $derived.by(() => {
     if (!proxyHealth) return "Checking agent…";
@@ -142,9 +150,37 @@
     threadEl?.scrollTo({ top: threadEl.scrollHeight, behavior: "smooth" });
   }
 
+  async function buildRequest(question: string): Promise<ResearchRequest> {
+    const body: ResearchRequest = {
+      question_kind: "ask",
+      question,
+      focus_name_ids: focusNameId ? [focusNameId] : [],
+      llm_provider: llmProvider,
+      answer_style: answerStyle,
+    };
+
+    if (!personalize) {
+      body.personalize = false;
+      return body;
+    }
+
+    let inventoryWeapons = null;
+    try {
+      inventoryWeapons = await loadRosterWeapons();
+    } catch {
+      // Soft-fail: still send owned characters without inventory extras.
+    }
+
+    const fields = buildResearchPersonalization({
+      characters: get(charactersOwned),
+      inventoryWeapons,
+    });
+    return { ...body, ...fields };
+  }
+
   async function sendQuestion(text: string) {
     const question = text.trim();
-    if (!question || loading || !providerReady) return;
+    if (!question || loading) return;
 
     const userId = crypto.randomUUID();
     turns = [...turns, { id: userId, role: "user", text: question }];
@@ -154,13 +190,7 @@
 
     const assistantId = crypto.randomUUID();
     try {
-      const response = await postResearchChat({
-        question_kind: "ask",
-        question,
-        focus_name_ids: focusNameId ? [focusNameId] : [],
-        llm_provider: llmProvider,
-        answer_style: answerStyle,
-      });
+      const response = await postResearchChat(await buildRequest(question));
       turns = [...turns, { id: assistantId, role: "assistant", response }];
     } catch (err) {
       turns = [
@@ -218,8 +248,8 @@
     <div class="thread" bind:this={threadEl} aria-live="polite">
       {#if turns.length === 0 && !loading}
         <div class="empty">
-          <h2 class="empty-title">Ask a research question</h2>
-          <p class="empty-lede">
+          <h2 class="section-title">Ask a research question</h2>
+          <p class="section-lede">
             Builds, rotations, constellations, ER — grounded in the TC corpus.
           </p>
           <div class="examples">
@@ -227,7 +257,7 @@
               <button
                 type="button"
                 class="example"
-                disabled={loading || !providerReady}
+                disabled={loading}
                 onclick={() => void sendQuestion(example)}
               >
                 {example}
@@ -268,6 +298,11 @@
                     citations={turn.response.citations}
                     disagreements={turn.response.disagreements ?? []}
                     comparison={turn.response.comparison ?? null}
+                    teams={turn.response.teams ?? null}
+                    weapon_ranks={turn.response.weapon_ranks ?? null}
+                    artifact_ranks={turn.response.artifact_ranks ?? null}
+                    er_targets={turn.response.er_targets ?? null}
+                    rotation={turn.response.rotation ?? null}
                   />
                   {#if turn.response.trace}
                     <ResearchTrace trace={turn.response.trace} />
@@ -321,6 +356,14 @@
             fit="value"
             aria-label="Answer style"
             class="style-select"
+          />
+        </div>
+        <div class="composer-provider composer-personalize">
+          <span class="focus-label">Roster</span>
+          <Toggle
+            bind:pressed={personalize}
+            disabled={loading || !hasOwnedRoster}
+            aria-label="Personalize with roster"
           />
         </div>
       </div>
@@ -501,19 +544,13 @@
     text-align: center;
   }
 
-  .empty-title {
+  .empty :global(.section-title) {
     margin: 0;
-    font-size: 1.35rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--foreground-color);
   }
 
-  .empty-lede {
+  .empty :global(.section-lede) {
     margin: 0;
-    font-size: var(--text-sm);
     line-height: 1.45;
-    color: color-mix(in srgb, var(--foreground-color) 62%, transparent);
   }
 
   .examples {

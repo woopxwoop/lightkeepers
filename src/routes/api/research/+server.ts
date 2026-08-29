@@ -8,6 +8,8 @@ import { env } from "$env/dynamic/private";
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
+import { E2E_RESEARCH_RESPONSE } from "$lib/e2e/fixtures";
+import { isPlaywrightE2e } from "$lib/server/e2e";
 import { enforceApiRateLimit } from "$lib/server/rate-limit";
 import {
   ResearchAgentError,
@@ -17,6 +19,19 @@ import type { ResearchRequest } from "$lib/research-types";
 
 export const GET: RequestHandler = async () => {
   if (!dev) error(404, "Not found");
+
+  if (isPlaywrightE2e()) {
+    return json({
+      configured: true,
+      agentUrl: "http://e2e.invalid",
+      agent: {
+        ok: true,
+        geminiConfigured: true,
+        deepseekConfigured: true,
+        defaultLlmProvider: "gemini",
+      },
+    });
+  }
 
   const agentUrl = env.RESEARCH_AGENT_URL?.replace(/\/$/, "") ?? null;
   const tokenSet = Boolean(env.RESEARCH_API_TOKEN);
@@ -85,6 +100,12 @@ export const POST: RequestHandler = async ({
 }) => {
   if (!dev) error(404, "Not found");
 
+  if (isPlaywrightE2e()) {
+    return json(E2E_RESEARCH_RESPONSE, {
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   await enforceApiRateLimit({ request, getClientAddress });
 
   let raw: unknown;
@@ -112,6 +133,9 @@ export const POST: RequestHandler = async ({
       llm_provider: body.llm_provider,
       mode: body.mode,
       roster_name_ids: body.roster_name_ids,
+      owned_characters: body.owned_characters,
+      owned_weapons: body.owned_weapons,
+      personalize: body.personalize,
       answer_style: body.answer_style,
     });
     return json(result, {

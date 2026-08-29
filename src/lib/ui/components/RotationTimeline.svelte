@@ -356,6 +356,8 @@
   }
 
   .char-lanes > .lane {
+    position: relative;
+    z-index: 1;
     height: var(--lane-h);
     min-height: var(--lane-h);
     padding: 0;
@@ -466,7 +468,7 @@
     top: 0;
     bottom: 0;
     left: calc(var(--lane-head-w) + var(--lane-grid-gap));
-    z-index: 1;
+    z-index: 0;
     width: var(--track-w);
     overflow: visible;
     pointer-events: none;

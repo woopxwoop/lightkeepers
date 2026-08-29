@@ -1,6 +1,7 @@
 /**
- * Render research `answer_markdown` with validated entity chips and cite superscripts.
+ * Render research `answer_markdown` with entity slots and cite superscripts.
  * See `$lib/research-types` for token forms and asset helpers.
+ * Entity slots are hydrated to ResearchEntityMention by ResearchAnswer.
  */
 
 import { artifactIconUrl, assetUrl } from "$lib/asset-urls";
@@ -14,7 +15,8 @@ import type { ResearchCitation, ResearchEntity } from "$lib/research-types";
 import { getCharacterPortrait } from "$lib/utils";
 
 const ENTITY_TOKEN_RE = /\[\[(?!cite:)([^\]]+)\]\]/gi;
-const CITE_TOKEN_RE = /\[\[cite:(\d+)\]\]/gi;
+/** Single id or comma cluster: `[[cite:2297]]` / `[[cite:2297, 2300]]`. */
+const CITE_TOKEN_RE = /\[\[cite:(\d+(?:\s*,\s*\d+)*)\]\]/gi;
 const LEGACY_CITE_RE = /\[(?!\[)(\d+(?:\s*,\s*\d+)*)\]/g;
 const ENTITY_PLACEHOLDER = (i: number) => `\uE000${i}\uE001`;
 const ENTITY_PLACEHOLDER_RE = /\uE000(\d+)\uE001/g;
@@ -44,16 +46,17 @@ export function citationShortLabel(cite: ResearchCitation): string {
 export function orderCitationsForDisplay(
   citations: ResearchCitation[],
   markdown: string,
+  extraText: string[] = [],
 ): ResearchCitation[] {
   const byId = new Map(citations.map((c) => [c.id, c]));
   const ordered: ResearchCitation[] = [];
   const seen = new Set<number>();
-  const normalized = normalizeLegacyCiteTokens(
-    markdown,
-    new Set(citations.map((c) => c.id)),
-  );
+  const allowed = new Set(citations.map((c) => c.id));
+  const blob = [markdown, ...extraText].join("\n");
+  let normalized = normalizeLegacyCiteTokens(blob, allowed);
+  normalized = normalizeCiteClusters(normalized, allowed);
 
-  for (const match of normalized.matchAll(CITE_TOKEN_RE)) {
+  for (const match of normalized.matchAll(/\[\[cite:(\d+)\]\]/gi)) {
     const id = Number(match[1]);
     if (seen.has(id)) continue;
     const row = byId.get(id);
@@ -109,30 +112,15 @@ function escapeAttr(s: string): string {
     .replace(/>/g, "&gt;");
 }
 
-function escapeText(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+/** Attribute used by ResearchAnswer to mount ResearchEntityMention. */
+export const RESEARCH_ENTITY_SLOT_ATTR = "data-research-entity-key";
 
-/** Trusted HTML chip for one entity (agent-validated). */
+/**
+ * Empty slot marker for one entity (agent-validated).
+ * ResearchAnswer hydrates these into ResearchEntityMention (tooltips).
+ */
 export function renderEntityChip(entity: ResearchEntity): string {
-  const icon = entityIconUrl(entity);
-  const href = entityHref(entity);
-  const title = entity.description?.trim()
-    ? escapeAttr(entity.description.trim().slice(0, 280))
-    : escapeAttr(entity.label);
-  const img = icon
-    ? `<img class="research-entity-icon" src="${escapeAttr(icon)}" alt="" loading="lazy" decoding="async" />`
-    : "";
-  const label = `<span class="research-entity-label">${escapeText(entity.label)}</span>`;
-  const inner = `${img}${label}`;
-  const cls = `research-entity research-entity-${entity.type}`;
-  if (href) {
-    return `<a class="${cls}" href="${escapeAttr(href)}" title="${title}">${inner}</a>`;
-  }
-  return `<span class="${cls}" title="${title}">${inner}</span>`;
+  return `<span class="research-entity-slot" ${RESEARCH_ENTITY_SLOT_ATTR}="${escapeAttr(entity.key)}"></span>`;
 }
 
 function renderCiteSuperscript(
@@ -160,7 +148,29 @@ export function safeExternalHref(url: string): string | null {
 export type RenderResearchAnswerOptions = {
   /** Prefix for `#…research-cite-{id}` anchors (unique per answer instance). */
   citeAnchorPrefix?: string;
+  /**
+   * Shared cite → footnote number map (so body + comparison panel stay in sync).
+   * When omitted, numbers are assigned in first-seen order within this string.
+   */
+  citeDisplayNum?: Map<number, number>;
 };
+
+function normalizeCiteClusters(
+  md: string,
+  allowed: Set<number>,
+): string {
+  return md.replace(CITE_TOKEN_RE, (full, body: string) => {
+    const tokens = body
+      .split(",")
+      .map((part: string) => {
+        const id = Number(part.trim());
+        if (!Number.isFinite(id) || !allowed.has(id)) return "";
+        return `[[cite:${id}]]`;
+      })
+      .filter(Boolean);
+    return tokens.join("") || "";
+  });
+}
 
 function normalizeLegacyCiteTokens(
   md: string,
@@ -191,16 +201,24 @@ export function renderResearchAnswer(
   options: RenderResearchAnswerOptions = {},
 ): string {
   const citeAnchorPrefix = options.citeAnchorPrefix ?? "";
+  const sharedCiteNums = options.citeDisplayNum;
   const byKey = new Map(entities.map((e) => [e.key, e]));
   const citeIds = new Set(citations.map((c) => c.id));
   const entityChips: string[] = [];
   const citeChips: string[] = [];
-  const citeDisplayNum = new Map<number, number>();
-  let nextCiteNum = 0;
+  const citeDisplayNum = new Map<number, number>(sharedCiteNums ?? []);
+  let nextCiteNum =
+    sharedCiteNums && sharedCiteNums.size > 0
+      ? Math.max(...sharedCiteNums.values())
+      : 0;
 
-  const normalized = normalizeLegacyCiteTokens(md, citeIds);
+  // Match single-id tokens after splitting clusters.
+  const singleCiteRe = /\[\[cite:(\d+)\]\]/gi;
 
-  let withCitePlaceholders = normalized.replace(CITE_TOKEN_RE, (_full, idStr: string) => {
+  let normalized = normalizeLegacyCiteTokens(md, citeIds);
+  normalized = normalizeCiteClusters(normalized, citeIds);
+
+  let withCitePlaceholders = normalized.replace(singleCiteRe, (_full, idStr: string) => {
     const id = Number(idStr);
     if (!citeIds.has(id)) return "";
     if (!citeDisplayNum.has(id)) {
@@ -237,4 +255,21 @@ export function renderResearchAnswer(
     (_full, idx: string) => entityChips[Number(idx)] ?? "",
   );
   return html;
+}
+
+/**
+ * Inline fragment (labels, bullets): same tokens, no wrapping `<p>` blocks.
+ */
+export function renderResearchInline(
+  text: string,
+  entities: ResearchEntity[] = [],
+  citations: ResearchCitation[] = [],
+  options: RenderResearchAnswerOptions = {},
+): string {
+  const html = renderResearchAnswer(text, entities, citations, options).trim();
+  if (!html) return "";
+  return html
+    .replace(/^<p>/i, "")
+    .replace(/<\/p>$/i, "")
+    .replace(/<\/p>\s*<p>/gi, " ");
 }
