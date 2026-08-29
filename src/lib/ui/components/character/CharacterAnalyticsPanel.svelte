@@ -56,16 +56,13 @@
     const key = analyticsCacheKey(mode, id);
     const fromModule = getCharacterAnalyticsCached(key);
     if (fromModule) {
-      analyticsPayload = fromModule;
-      analyticsKey = key;
-      analyticsError = null;
-      analyticsLoading = false;
-      return;
+      // Instant paint from last success; still refetch below.
+      untrack(() => {
+        analyticsPayload = fromModule;
+        analyticsKey = key;
+        analyticsError = null;
+      });
     }
-    const cached = untrack(
-      () => analyticsKey === key && analyticsPayload !== null,
-    );
-    if (cached) return;
 
     void loadAnalytics(id, mode, key);
     return () => {
@@ -84,7 +81,9 @@
 
     analyticsLoading = true;
     analyticsError = null;
-    analyticsPayload = null;
+    if (untrack(() => analyticsKey) !== key) {
+      analyticsPayload = null;
+    }
 
     return fetchCharacterAnalytics(id, mode, controller.signal)
       .then((payload) => {

@@ -154,12 +154,10 @@ async function fetchCloudRoster(
     if (!res.ok) return { status: "error" };
     const body: unknown = await res.json();
     if (body === null || typeof body !== "object" || !("roster" in body)) {
-      return { status: "missing", userId };
+      return { status: "error" };
     }
     const roster = (body as { roster: unknown }).roster;
-    if (roster === null || roster === undefined) {
-      return { status: "missing", userId };
-    }
+    if (roster === null) return { status: "missing", userId };
     if (!Array.isArray(roster)) return { status: "error" };
     if (roster.length === 0) return { status: "missing", userId };
     return {

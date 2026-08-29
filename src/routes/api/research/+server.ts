@@ -98,7 +98,10 @@ export const POST: RequestHandler = async ({
   }
   const body = raw as ResearchRequest;
 
-  const question = body.question?.trim();
+  if (typeof body.question !== "string") {
+    error(400, "question is required");
+  }
+  const question = body.question.trim();
   if (!question) error(400, "question is required");
 
   try {

@@ -135,9 +135,32 @@ export function renderEntityChip(entity: ResearchEntity): string {
   return `<span class="${cls}" title="${title}">${inner}</span>`;
 }
 
-function renderCiteSuperscript(citeId: number, displayNum: number): string {
-  return `<sup class="research-cite"><a href="#research-cite-${citeId}" title="Source ${displayNum}">${displayNum}</a></sup>`;
+function renderCiteSuperscript(
+  citeId: number,
+  displayNum: number,
+  anchorPrefix = "",
+): string {
+  const anchor = `${anchorPrefix}research-cite-${citeId}`;
+  return `<sup class="research-cite"><a href="#${escapeAttr(anchor)}" title="Source ${displayNum}">${displayNum}</a></sup>`;
 }
+
+/** Only allow http(s) citation links from agent-supplied URLs. */
+export function safeExternalHref(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.href;
+    }
+  } catch {
+    /* invalid */
+  }
+  return null;
+}
+
+export type RenderResearchAnswerOptions = {
+  /** Prefix for `#…research-cite-{id}` anchors (unique per answer instance). */
+  citeAnchorPrefix?: string;
+};
 
 function normalizeLegacyCiteTokens(
   md: string,
@@ -165,7 +188,9 @@ export function renderResearchAnswer(
   md: string,
   entities: ResearchEntity[] = [],
   citations: ResearchCitation[] = [],
+  options: RenderResearchAnswerOptions = {},
 ): string {
+  const citeAnchorPrefix = options.citeAnchorPrefix ?? "";
   const byKey = new Map(entities.map((e) => [e.key, e]));
   const citeIds = new Set(citations.map((c) => c.id));
   const entityChips: string[] = [];
@@ -183,7 +208,9 @@ export function renderResearchAnswer(
       citeDisplayNum.set(id, nextCiteNum);
     }
     const i = citeChips.length;
-    citeChips.push(renderCiteSuperscript(id, citeDisplayNum.get(id)!));
+    citeChips.push(
+      renderCiteSuperscript(id, citeDisplayNum.get(id)!, citeAnchorPrefix),
+    );
     return CITE_PLACEHOLDER(i);
   });
 

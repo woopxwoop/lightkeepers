@@ -6,6 +6,7 @@ import {
   orderCitationsForDisplay,
   renderEntityChip,
   renderResearchAnswer,
+  safeExternalHref,
 } from "./research-answer.ts";
 import type { ResearchCitation, ResearchEntity } from "./research-types.ts";
 
@@ -75,6 +76,34 @@ describe("research answer embeddings", () => {
     assert.match(html, /#research-cite-2297/);
     assert.match(html, />1</);
     assert.doesNotMatch(html, /\[\[cite:/);
+  });
+
+  it("renderResearchAnswer namespaces cite anchors per answer prefix", () => {
+    const a = renderResearchAnswer(
+      "A [[cite:2297]].",
+      [],
+      [cite2297],
+      { citeAnchorPrefix: "ra-a-" },
+    );
+    const b = renderResearchAnswer(
+      "B [[cite:2297]].",
+      [],
+      [cite2297],
+      { citeAnchorPrefix: "ra-b-" },
+    );
+    assert.match(a, /#ra-a-research-cite-2297/);
+    assert.match(b, /#ra-b-research-cite-2297/);
+    assert.doesNotMatch(a, /#ra-b-research-cite/);
+    assert.doesNotMatch(b, /#ra-a-research-cite/);
+  });
+
+  it("safeExternalHref allows only http(s)", () => {
+    assert.equal(
+      safeExternalHref("https://keqingmains.com/hu-tao/"),
+      "https://keqingmains.com/hu-tao/",
+    );
+    assert.equal(safeExternalHref("javascript:alert(1)"), null);
+    assert.equal(safeExternalHref("data:text/html,hi"), null);
   });
 
   it("renderEntityChip escapes label and description HTML", () => {

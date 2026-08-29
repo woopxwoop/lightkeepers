@@ -466,7 +466,7 @@
     top: 0;
     bottom: 0;
     left: calc(var(--lane-head-w) + var(--lane-grid-gap));
-    z-index: 2;
+    z-index: 1;
     width: var(--track-w);
     overflow: visible;
     pointer-events: none;

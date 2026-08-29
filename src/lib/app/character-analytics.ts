@@ -9,6 +9,7 @@ import type {
 
 const FETCH_TIMEOUT_MS = 15_000;
 
+/** Last successful payload per mode+id — for instant paint only, not a fetch short-circuit. */
 const analyticsCache = new Map<string, CharacterAnalyticsPayload>();
 
 export function analyticsCacheKey(
@@ -46,15 +47,13 @@ export function isTimeoutError(err: unknown): boolean {
   );
 }
 
+/** Always hits the network; updates the seed cache on success. */
 export async function fetchCharacterAnalytics(
   nameId: string,
   mode: CharacterAnalyticsMode,
   signal?: AbortSignal,
 ): Promise<CharacterAnalyticsPayload> {
   const key = analyticsCacheKey(mode, nameId);
-  const cached = getCharacterAnalyticsCached(key);
-  if (cached) return cached;
-
   const params = new URLSearchParams({ nameId, mode });
   const timeout = AbortSignal.timeout(FETCH_TIMEOUT_MS);
   const combined =

@@ -33,6 +33,9 @@
     if (settingsLeaveTimeout) clearTimeout(settingsLeaveTimeout);
   });
 
+  let toolsTouchArmed = $state(false);
+  let settingsTouchArmed = $state(false);
+
   function onToolsEnter() {
     if (toolsLeaveTimeout) {
       clearTimeout(toolsLeaveTimeout);
@@ -49,6 +52,7 @@
   function onToolsLeave() {
     toolsLeaveTimeout = setTimeout(() => {
       toolsHovered = false;
+      toolsTouchArmed = false;
     }, 120);
   }
 
@@ -68,22 +72,28 @@
   function onSettingsLeave() {
     settingsLeaveTimeout = setTimeout(() => {
       settingsHovered = false;
+      settingsTouchArmed = false;
     }, 120);
   }
 
   function onToolsClick(event: MouseEvent) {
     if (!isTouchLikeActivation()) return;
-    if (!toolsHovered) {
+    // First touch opens (even if a compatibility mouseenter already hovered).
+    if (!toolsTouchArmed) {
       event.preventDefault();
       onToolsEnter();
+      toolsTouchArmed = true;
+      settingsTouchArmed = false;
     }
   }
 
   function onSettingsClick(event: MouseEvent) {
     if (!isTouchLikeActivation()) return;
-    if (!settingsHovered) {
+    if (!settingsTouchArmed) {
       event.preventDefault();
       onSettingsEnter();
+      settingsTouchArmed = true;
+      toolsTouchArmed = false;
     }
   }
 

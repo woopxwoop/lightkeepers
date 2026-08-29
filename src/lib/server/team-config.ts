@@ -57,7 +57,12 @@ function isGzipped(buf: Buffer): boolean {
 export async function readBoundedResponseBody(
   res: Response,
   maxBytes: number,
+  signal?: AbortSignal,
 ): Promise<Buffer | null> {
+  if (signal?.aborted) {
+    throw new DOMException("The operation was aborted.", "AbortError");
+  }
+
   const lenHeader = res.headers.get("content-length");
   if (lenHeader) {
     const len = Number.parseInt(lenHeader, 10);
@@ -77,10 +82,18 @@ export async function readBoundedResponseBody(
   }
 
   const reader = res.body.getReader();
+  const onAbort = () => {
+    void reader.cancel().catch(() => {});
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
+
   const parts: Buffer[] = [];
   let total = 0;
   try {
     for (;;) {
+      if (signal?.aborted) {
+        throw new DOMException("The operation was aborted.", "AbortError");
+      }
       const { done, value } = await reader.read();
       if (done) break;
       if (!value?.byteLength) continue;
@@ -99,6 +112,8 @@ export async function readBoundedResponseBody(
       /* ignore */
     }
     throw err;
+  } finally {
+    signal?.removeEventListener("abort", onAbort);
   }
 }
 

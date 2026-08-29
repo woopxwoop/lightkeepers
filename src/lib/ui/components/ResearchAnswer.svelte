@@ -8,6 +8,7 @@
     orderCitationsForDisplay,
     preloadEntityIconData,
     renderResearchAnswer,
+    safeExternalHref,
   } from "$lib/research-answer";
   import type {
     ResearchCitation,
@@ -29,13 +30,17 @@
     comparison?: ResearchComparison | null;
   } = $props();
 
+  const citeAnchorPrefix = `ra-${$props.id()}-`;
+
   $effect(() => {
     void preloadEntityIconData();
   });
 
   let html = $derived.by(() => {
     void $equipmentVersion;
-    return renderResearchAnswer(markdown, entities, citations);
+    return renderResearchAnswer(markdown, entities, citations, {
+      citeAnchorPrefix,
+    });
   });
 
   let footnotes = $derived(orderCitationsForDisplay(citations, markdown));
@@ -97,17 +102,22 @@
     <ol class="research-footnotes">
       {#each footnotes as cite (cite.id)}
         {@const num = citeNum.get(cite.id) ?? 0}
-        <li id="research-cite-{cite.id}" class="research-footnote">
+        {@const href = safeExternalHref(cite.url)}
+        <li id="{citeAnchorPrefix}research-cite-{cite.id}" class="research-footnote">
           <span class="research-footnote-num" aria-hidden="true">{num}</span>
           <div class="research-footnote-body">
-            <a
-              class="research-footnote-link"
-              href={cite.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {citationShortLabel(cite)}
-            </a>
+            {#if href}
+              <a
+                class="research-footnote-link"
+                {href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {citationShortLabel(cite)}
+              </a>
+            {:else}
+              <span class="research-footnote-link">{citationShortLabel(cite)}</span>
+            {/if}
             <p class="research-footnote-quote">{cite.quote}</p>
           </div>
         </li>

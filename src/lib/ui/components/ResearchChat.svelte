@@ -144,7 +144,7 @@
 
   async function sendQuestion(text: string) {
     const question = text.trim();
-    if (!question || loading) return;
+    if (!question || loading || !providerReady) return;
 
     const userId = crypto.randomUUID();
     turns = [...turns, { id: userId, role: "user", text: question }];
@@ -227,7 +227,7 @@
               <button
                 type="button"
                 class="example"
-                disabled={loading}
+                disabled={loading || !providerReady}
                 onclick={() => void sendQuestion(example)}
               >
                 {example}

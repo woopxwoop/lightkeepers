@@ -172,8 +172,7 @@ async function loadSummaryFromCdn(
   try {
     parsed = JSON.parse(raw);
   } catch {
-    summaryCache.set(goodKey, null);
-    return null;
+    throw new Error(`character summary ${goodKey}: invalid JSON`);
   }
 
   const summary = liveCharacterSummary(parsed as CharacterIndex);
