@@ -21,6 +21,7 @@ import type {
   StygianTeam,
   StygianVersion,
 } from "$lib/definitions";
+import type { ResearchResponse } from "$lib/research-types";
 import type { TierListPayload } from "$lib/tierlist";
 
 export const E2E_ABYSS_TEAM_TOP = {
@@ -409,3 +410,41 @@ export function e2eStygianEnemyTeamsPayload(
     ],
   };
 }
+
+/** Deterministic research answer for PLAYWRIGHT_E2E (entities + citation). */
+export const E2E_RESEARCH_RESPONSE = {
+  answer_markdown:
+    "[[c:Xingqiu:6]] pairs well with [[weapon:StaffOfHoma]] for Hu Tao vaporize lines.[[cite:2297]]",
+  citations: [
+    {
+      id: 2297,
+      title: "Hu Tao Guide",
+      url: "https://keqingmains.com/hu-tao/",
+      source_tier: "guide",
+      publisher: "KeqingMains",
+      heading_path: "FAQ > C1",
+      quote: "C0 with R1 Homa has a similar damage ceiling to C1 with a strong 4-star.",
+    },
+  ],
+  confidence: "high",
+  thin_corpus: false,
+  entities: [
+    {
+      key: "c:Xingqiu:6",
+      type: "constellation",
+      label: "Xingqiu C6",
+      name_id: "Xingqiu",
+      index: 6,
+      kit_ref: "T256",
+      icon: "UI_Talent_S_Xingqiu_04",
+      description: "Energy-related constellation for Xingqiu.",
+    },
+    {
+      key: "weapon:StaffOfHoma",
+      type: "weapon",
+      label: "Staff of Homa",
+      weapon_key: "StaffOfHoma",
+      icon: "UI_EquipIcon_Pole_Homa",
+    },
+  ],
+} satisfies ResearchResponse;

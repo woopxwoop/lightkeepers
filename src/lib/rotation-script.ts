@@ -377,11 +377,8 @@ function actionsMatch(
   sampleAction: RotationAction,
 ): boolean {
   if (scriptAction === sampleAction) return true;
-  // Older samples stored hold E as `skill`.
-  return (
-    (scriptAction === "hold_skill" && sampleAction === "skill") ||
-    (scriptAction === "skill" && sampleAction === "hold_skill")
-  );
+  // Older samples stored hold E as `skill` — script hold_skill may match that.
+  return scriptAction === "hold_skill" && sampleAction === "skill";
 }
 
 function bindPat(pat: ScriptPat, env: Record<string, number>): ScriptPat {
@@ -548,7 +545,11 @@ function matchPat(
         if (!tok || tok.char !== key || !actionsMatch(pat.action, tok.action)) {
           return -1;
         }
-        if (overlay) overlay[pos] = pat.action;
+        if (overlay) {
+          // Never downgrade a sampled hold_skill to script `skill`.
+          overlay[pos] =
+            tok.action === "hold_skill" ? "hold_skill" : pat.action;
+        }
         pos += 1;
       }
       return pos;

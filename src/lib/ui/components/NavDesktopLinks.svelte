@@ -12,6 +12,7 @@
     type MainLink,
     type ToolsLink,
   } from "$lib/ui/nav-links";
+  import { shouldArmSubmenuFirstActivation } from "$lib/ui/nav-submenu-arm";
 
   let {
     onSubOpenChange,
@@ -33,6 +34,11 @@
     if (settingsLeaveTimeout) clearTimeout(settingsLeaveTimeout);
   });
 
+  let toolsTouchArmed = $state(false);
+  let settingsTouchArmed = $state(false);
+  /** Last pointerdown type on Tools/Settings — click alone has no pointerType. */
+  let lastPointerType: string | null = null;
+
   function onToolsEnter() {
     if (toolsLeaveTimeout) {
       clearTimeout(toolsLeaveTimeout);
@@ -49,6 +55,7 @@
   function onToolsLeave() {
     toolsLeaveTimeout = setTimeout(() => {
       toolsHovered = false;
+      toolsTouchArmed = false;
     }, 120);
   }
 
@@ -68,7 +75,49 @@
   function onSettingsLeave() {
     settingsLeaveTimeout = setTimeout(() => {
       settingsHovered = false;
+      settingsTouchArmed = false;
     }, 120);
+  }
+
+  function onMenuPointerDown(event: PointerEvent) {
+    lastPointerType = event.pointerType;
+  }
+
+  function onToolsClick(event: MouseEvent) {
+    const pointerType = lastPointerType;
+    lastPointerType = null;
+    if (
+      !shouldArmSubmenuFirstActivation({
+        pointerType,
+        clickDetail: event.detail,
+        alreadyArmed: toolsTouchArmed,
+      })
+    ) {
+      return;
+    }
+    // First touch opens (even if a compatibility mouseenter already hovered).
+    event.preventDefault();
+    onToolsEnter();
+    toolsTouchArmed = true;
+    settingsTouchArmed = false;
+  }
+
+  function onSettingsClick(event: MouseEvent) {
+    const pointerType = lastPointerType;
+    lastPointerType = null;
+    if (
+      !shouldArmSubmenuFirstActivation({
+        pointerType,
+        clickDetail: event.detail,
+        alreadyArmed: settingsTouchArmed,
+      })
+    ) {
+      return;
+    }
+    event.preventDefault();
+    onSettingsEnter();
+    settingsTouchArmed = true;
+    toolsTouchArmed = false;
   }
 
   function isMainActive(link: MainLink): boolean {
@@ -98,7 +147,9 @@
       onmouseenter={onToolsEnter}
       onmouseleave={onToolsLeave}
       onfocus={onToolsEnter}
-      onblur={onToolsLeave}>Tools</a
+      onblur={onToolsLeave}
+      onpointerdown={onMenuPointerDown}
+      onclick={onToolsClick}>Tools</a
     >
 
     <div
@@ -142,7 +193,9 @@
       onmouseenter={onSettingsEnter}
       onmouseleave={onSettingsLeave}
       onfocus={onSettingsEnter}
-      onblur={onSettingsLeave}>Settings</a
+      onblur={onSettingsLeave}
+      onpointerdown={onMenuPointerDown}
+      onclick={onSettingsClick}>Settings</a
     >
 
     <div

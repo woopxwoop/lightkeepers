@@ -87,29 +87,29 @@ export function normalizeCharacterSummary(
     summary.main_stats && typeof summary.main_stats === "object"
       ? summary.main_stats
       : null;
-  summary.main_stats = {
-    sands: asStatRanks(mains?.sands),
-    goblet: asStatRanks(mains?.goblet),
-    circlet: asStatRanks(mains?.circlet),
-  };
-
   const liquid = summary.substat_rolls_liquid;
-  if (!liquid || typeof liquid !== "object") {
-    summary.substat_rolls_liquid = {
-      ...EMPTY_LIQUID,
-      mean: {},
-      ranked: [],
-    };
-  } else {
-    summary.substat_rolls_liquid = {
-      teams: asNonNegativeSafeInt(liquid.teams) ?? 0,
-      configs: asNonNegativeSafeInt(liquid.configs) ?? 0,
-      mean: asLiquidMean(liquid.mean),
-      ranked: asLiquidRanks(liquid.ranked),
-    };
-  }
 
-  return summary;
+  return {
+    ...summary,
+    main_stats: {
+      sands: asStatRanks(mains?.sands),
+      goblet: asStatRanks(mains?.goblet),
+      circlet: asStatRanks(mains?.circlet),
+    },
+    substat_rolls_liquid:
+      !liquid || typeof liquid !== "object"
+        ? {
+            ...EMPTY_LIQUID,
+            mean: {},
+            ranked: [],
+          }
+        : {
+            teams: asNonNegativeSafeInt(liquid.teams) ?? 0,
+            configs: asNonNegativeSafeInt(liquid.configs) ?? 0,
+            mean: asLiquidMean(liquid.mean),
+            ranked: asLiquidRanks(liquid.ranked),
+          },
+  };
 }
 
 /**
@@ -168,7 +168,14 @@ async function loadSummaryFromCdn(
     return null;
   }
 
-  const summary = liveCharacterSummary(JSON.parse(raw) as CharacterIndex);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(`character summary ${goodKey}: invalid JSON`);
+  }
+
+  const summary = liveCharacterSummary(parsed as CharacterIndex);
   summaryCache.set(goodKey, summary);
   return summary;
 }

@@ -38,6 +38,7 @@
   import { isOwnedNameId, ownedNameIds } from "$lib/utils";
   import { abyssPath, settingsPath, stygianPath } from "$lib/ui/nav-links";
   import { authClient } from "$lib/auth-client";
+  import { needsRosterSetup } from "$lib/roster-setup";
   import type { Tables } from "$lib/types/database.types";
 
   const ABYSS_SLOTS = ["top", "bottom"] as const;
@@ -128,7 +129,11 @@
   const session = authClient.useSession();
   /** Same gate as the home-page “configure roster first” card. */
   let showRosterSetup = $derived(
-    !$session.isPending && !$hasSavedRoster && !$session.data,
+    needsRosterSetup({
+      sessionPending: $session.isPending,
+      hasSavedRoster: $hasSavedRoster,
+      sessionData: $session.data,
+    }),
   );
 
   let trailItems = $derived(

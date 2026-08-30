@@ -86,4 +86,14 @@ describe("patch notes", () => {
     assert.match(html, /<a href="https:\/\/lightkeepers\.moe\/patch-notes"/);
     assert.match(html, /<ul>/);
   });
+
+  it("renderPatchNoteBody supports ordered lists", () => {
+    const html = renderPatchNoteBody(
+      "Do this:\n1. First step\n2. Second step\n\nDone.",
+    );
+    assert.match(html, /<ol>/);
+    assert.match(html, /<li>First step<\/li>/);
+    assert.match(html, /<li>Second step<\/li>/);
+    assert.match(html, /<p>Done\.<\/p>/);
+  });
 });

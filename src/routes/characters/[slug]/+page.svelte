@@ -30,6 +30,7 @@
   let kit = $derived(data.kit as CharacterKit);
   let kitChannel = $derived((data.kitChannel ?? "live") as "live" | "beta");
   let rawBuilds = $derived((data.builds ?? null) as CharacterIndex | null);
+  let buildsUnavailable = $derived(Boolean(data.buildsUnavailable));
   let summaryStale = $derived(
     isStaleBuildSummary(kit.name_id) || rawBuilds?.upToDate === false,
   );
@@ -50,6 +51,7 @@
 
   let activeTab = $state<PageTab>("builds");
   let mobileNavOpen = $state(false);
+  let skillsElement = $state("");
   let activeTabLabel = $derived(
     TAB_OPTIONS.find((option) => option.value === activeTab)?.label ?? "Builds",
   );
@@ -233,6 +235,7 @@
           <CharacterKitPanel
             {kit}
             {travelerKits}
+            bind:skillsElement
             onNeedSkillsTab={() => selectTab("skills")}
           />
         {:else if activeTab === "teams"}
@@ -257,6 +260,7 @@
             {kit}
             {builds}
             {summaryStale}
+            {buildsUnavailable}
             {elColor}
             {goodKey}
             {goodKeyMap}
