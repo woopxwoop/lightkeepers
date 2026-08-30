@@ -70,6 +70,14 @@ describe("enhanceExtra", () => {
     });
   });
 
+  it("matches CRLF separator runs as CR then LF", () => {
+    const enhanced = "Prose before.\r\n\r\nHexerei\r\nBuff text.";
+    assert.deepEqual(enhanceExtra("Base.", enhanced), {
+      mode: "extra",
+      text: "Hexerei\r\nBuff text.",
+    });
+  });
+
   it("replaces fully when enhanced neither prefixes nor has a known tail", () => {
     assert.deepEqual(enhanceExtra("Old text.", "Completely different."), {
       mode: "replace",

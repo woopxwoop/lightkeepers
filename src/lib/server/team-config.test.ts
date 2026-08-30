@@ -3,7 +3,7 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { readBoundedResponseBody } from "./team-config.ts";
+import { parseRotationSample, readBoundedResponseBody } from "./team-config.ts";
 
 const MAX = 512 * 1024;
 
@@ -105,5 +105,48 @@ describe("readBoundedResponseBody", () => {
       assert.equal(err.name, "AbortError");
       return true;
     });
+  });
+});
+
+const validRotation = {
+  seed: "abc",
+  sample_dps: 1000,
+  target_dps: 1000,
+  rel_err: 0,
+  attempts: 1,
+  duration_s: 20,
+  characters: ["HuTao", "Xingqiu"],
+  events: [{ t: 0, char: "HuTao", action: "skill" }],
+};
+
+describe("parseRotationSample", () => {
+  it("keeps original party order for valid character keys", () => {
+    const sample = parseRotationSample(validRotation);
+    assert.ok(sample);
+    assert.deepEqual(sample!.characters, ["HuTao", "Xingqiu"]);
+  });
+
+  it("returns null when characters is empty", () => {
+    assert.equal(
+      parseRotationSample({ ...validRotation, characters: [] }),
+      null,
+    );
+  });
+
+  it("returns null when any character entry is missing or empty", () => {
+    assert.equal(
+      parseRotationSample({
+        ...validRotation,
+        characters: ["HuTao", ""],
+      }),
+      null,
+    );
+    assert.equal(
+      parseRotationSample({
+        ...validRotation,
+        characters: ["HuTao", 1],
+      }),
+      null,
+    );
   });
 });

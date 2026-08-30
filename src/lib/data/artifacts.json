@@ -4907,7 +4907,7 @@
   {
     "id": 23846,
     "name": "Chalice of Your Blood and Sorrow",
-    "stars": 5,
+    "stars": 4,
     "equipType": "Goblet of Eonothem",
     "setId": 15047,
     "setName": "Scarlet Proof",
@@ -4925,7 +4925,7 @@
   {
     "id": 23848,
     "name": "Testament to Your Faith",
-    "stars": 5,
+    "stars": 4,
     "equipType": "Circlet of Logos",
     "setId": 15047,
     "setName": "Scarlet Proof",
@@ -4943,7 +4943,7 @@
   {
     "id": 23850,
     "name": "Time Gifted Unto You",
-    "stars": 5,
+    "stars": 4,
     "equipType": "Sands of Eon",
     "setId": 15047,
     "setName": "Scarlet Proof",
@@ -5015,7 +5015,7 @@
   {
     "id": 23858,
     "name": "Foundryman's Legacy",
-    "stars": 5,
+    "stars": 4,
     "equipType": "Circlet of Logos",
     "setId": 15048,
     "setName": "Heart of the Furnace",
@@ -5023,17 +5023,17 @@
   },
   {
     "id": 23859,
-    "name": "Foundryman's Legacy",
-    "stars": 5,
-    "equipType": "Circlet of Logos",
+    "name": "Foundryman's Conjecture",
+    "stars": 4,
+    "equipType": "Flower of Life",
     "setId": 15048,
     "setName": "Heart of the Furnace",
-    "icon": "UI_RelicIcon_15048_3"
+    "icon": "UI_RelicIcon_15048_4"
   },
   {
     "id": 23860,
     "name": "Foundryman's Calculus",
-    "stars": 5,
+    "stars": 4,
     "equipType": "Sands of Eon",
     "setId": 15048,
     "setName": "Heart of the Furnace",

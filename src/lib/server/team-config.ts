@@ -18,8 +18,10 @@ import type {
 const gunzipAsync = promisify(gunzip);
 /** Max compressed rotation payload from CDN (512 KiB). */
 const MAX_ROTATION_GZIP_BYTES = 512 * 1024;
-/** Max decompressed rotation JSON (4 MiB). */
-const MAX_ROTATION_JSON_BYTES = 4 * 1024 * 1024;
+/** Max decompressed rotation JSON (512 KiB). */
+const MAX_ROTATION_JSON_BYTES = 512 * 1024;
+/** Reject samples with more events than a real rotation needs. */
+const MAX_ROTATION_EVENTS = 4096;
 const CDN_INVESTMENT = "https://api.lightkeepers.moe/sim/investment.json.gz";
 const investmentCache = new LRUCache<InvestmentFile>(1, 15 * 60 * 1000, {
   redisNamespace: "investment",
@@ -27,7 +29,7 @@ const investmentCache = new LRUCache<InvestmentFile>(1, 15 * 60 * 1000, {
 const configCache = new LRUCache<string | null>(200, 15 * 60 * 1000, {
   redisNamespace: "team-config",
 });
-const rotationCache = new LRUCache<RotationSample | null>(200, 15 * 60 * 1000, {
+const rotationCache = new LRUCache<RotationSample | null>(32, 15 * 60 * 1000, {
   redisNamespace: "team-rotation",
 });
 
@@ -227,7 +229,7 @@ function asRotationAction(value: unknown): RotationAction {
   return "other";
 }
 
-function parseRotationSample(raw: unknown): RotationSample | null {
+export function parseRotationSample(raw: unknown): RotationSample | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const o = raw as Record<string, unknown>;
   if (typeof o.seed !== "string") return null;
@@ -245,10 +247,15 @@ function parseRotationSample(raw: unknown): RotationSample | null {
     return null;
   }
   if (!Array.isArray(o.characters) || !Array.isArray(o.events)) return null;
+  if (o.characters.length === 0 || o.events.length > MAX_ROTATION_EVENTS) {
+    return null;
+  }
 
-  const characters = o.characters.filter(
-    (c): c is string => typeof c === "string" && c.length > 0,
-  );
+  const characters: string[] = [];
+  for (const c of o.characters) {
+    if (typeof c !== "string" || c.length === 0) return null;
+    characters.push(c);
+  }
   const events: RotationSampleEvent[] = [];
   for (const entry of o.events) {
     if (!entry || typeof entry !== "object") continue;

@@ -159,6 +159,18 @@ function parseOkJson<T>(status: number, text: string): T {
   }
 }
 
+function rethrowResearchFetchError(err: unknown): never {
+  if (
+    (err instanceof Error && err.name === "AbortError") ||
+    (typeof DOMException !== "undefined" &&
+      err instanceof DOMException &&
+      err.name === "TimeoutError")
+  ) {
+    throw new Error("Research request timed out.");
+  }
+  throw err instanceof Error ? err : new Error("Research request failed");
+}
+
 export async function postResearchChat(
   body: ResearchRequest,
 ): Promise<ResearchResponse> {
@@ -174,15 +186,7 @@ export async function postResearchChat(
       signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
     });
   } catch (err) {
-    if (
-      (err instanceof Error && err.name === "AbortError") ||
-      (typeof DOMException !== "undefined" &&
-        err instanceof DOMException &&
-        err.name === "TimeoutError")
-    ) {
-      throw new Error("Research request timed out.");
-    }
-    throw err instanceof Error ? err : new Error("Research request failed");
+    rethrowResearchFetchError(err);
   }
 
   const text = await res.text();
@@ -207,10 +211,15 @@ export type ResearchProxyHealth = {
 };
 
 export async function fetchResearchProxyHealth(): Promise<ResearchProxyHealth> {
-  const res = await fetch("/api/research", {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(15_000),
-  });
+  let res: Response;
+  try {
+    res = await fetch("/api/research", {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (err) {
+    rethrowResearchFetchError(err);
+  }
   const text = await res.text();
   if (!res.ok) {
     throw new Error(parseApiError(res.status, text));

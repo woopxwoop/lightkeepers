@@ -51,6 +51,7 @@
 
   let activeTab = $state<PageTab>("builds");
   let mobileNavOpen = $state(false);
+  let skillsElement = $state("");
   let activeTabLabel = $derived(
     TAB_OPTIONS.find((option) => option.value === activeTab)?.label ?? "Builds",
   );
@@ -234,6 +235,7 @@
           <CharacterKitPanel
             {kit}
             {travelerKits}
+            bind:skillsElement
             onNeedSkillsTab={() => selectTab("skills")}
           />
         {:else if activeTab === "teams"}

@@ -58,7 +58,6 @@
   let teamsMode = $state<TeamsMode>("stygian");
   let investment = $state<InvestmentFile | null>(getInvestmentCached());
   let investmentError = $state<string | null>(null);
-  let investmentLoading = $state(false);
   let investmentInFlight: Promise<void> | null = null;
 
   $effect(() => {
@@ -73,7 +72,6 @@
     if (investment) return;
     if (investmentInFlight) return investmentInFlight;
 
-    investmentLoading = true;
     investmentError = null;
     const pending = (async () => {
       try {
@@ -81,8 +79,6 @@
       } catch (e) {
         investmentError =
           e instanceof Error ? e.message : "Failed to load simulated teams";
-      } finally {
-        investmentLoading = false;
       }
     })();
     investmentInFlight = pending;
@@ -116,7 +112,7 @@
 
   let teamsLoading = $derived(
     teamsMode === "simulated"
-      ? investmentLoading && !investment
+      ? !investment && !investmentError
       : !$staticBoardsError &&
           !$staticBoardsLoaded &&
           popularTeams.length === 0,

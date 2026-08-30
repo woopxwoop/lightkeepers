@@ -17,6 +17,13 @@ import {
 } from "$lib/server/research-agent";
 import type { ResearchRequest } from "$lib/research-types";
 
+/** SvelteKit `error()` only accepts 400–599. */
+function httpErrorStatus(status: number): number {
+  return Number.isInteger(status) && status >= 400 && status <= 599
+    ? status
+    : 502;
+}
+
 export const GET: RequestHandler = async () => {
   if (!dev) error(404, "Not found");
 
@@ -144,7 +151,7 @@ export const POST: RequestHandler = async ({
   } catch (err) {
     if (err instanceof ResearchAgentError) {
       console.error("[api/research]", err.status, err.message);
-      error(err.status, err.message);
+      error(httpErrorStatus(err.status), err.message);
     }
     console.error("[api/research] unexpected error", err);
     const message =

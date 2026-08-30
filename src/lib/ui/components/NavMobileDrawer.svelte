@@ -8,6 +8,7 @@
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
+  import IconX from "$lib/ui/icons/IconX.svelte";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
   import {
@@ -155,6 +156,14 @@
       duration: prefersReducedMotion.current ? 0 : 280,
     }}
   >
+    <button
+      type="button"
+      class="drawer-close"
+      onclick={closeDrawer}
+      aria-label="Close navigation menu"
+    >
+      <IconX size={18} strokeWidth={2.25} />
+    </button>
     <nav class="drawer-nav" aria-label="Primary">
       <p class="eyebrow drawer-section-label">Navigate</p>
 
@@ -343,6 +352,27 @@
     padding: 0 0.5rem;
     scrollbar-width: none;
     -ms-overflow-style: none;
+  }
+
+  .drawer-close {
+    display: grid;
+    place-items: center;
+    align-self: flex-end;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin: 0 0.5rem 0.35rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--foreground-mid);
+    cursor: pointer;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .drawer-close:hover {
+    color: var(--foreground-color);
+    background: var(--surface-quiet);
   }
 
   .drawer-nav::-webkit-scrollbar {

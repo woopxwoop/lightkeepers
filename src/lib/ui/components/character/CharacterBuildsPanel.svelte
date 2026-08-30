@@ -102,7 +102,7 @@
   let levelSection = $derived(levelPrioritySection(builds));
   let ascensionSection = $derived(ascensionPrioritySection(builds));
   let levelIcon = $derived(getUiAssetUrl("UI_ItemIcon_104003"));
-  let ascensionIcon = $derived(getUiAssetUrl("UI_ItemIcon_104003"));
+  let ascensionIcon = $derived(getUiAssetUrl("UI_ItemIcon_104104"));
 
   let consSection = $derived(constellationPrioritySection(builds));
   let sigSection = $derived(sigWeaponPrioritySection(builds));

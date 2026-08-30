@@ -41,8 +41,9 @@
     { value: "abyss" as const, label: "Abyss" },
   ];
 
-  let analyticsMode = $state<CharacterAnalyticsMode>("stygian");
-  const seedKey = analyticsCacheKey("stygian", nameId);
+  const INITIAL_ANALYTICS_MODE: CharacterAnalyticsMode = "stygian";
+  let analyticsMode = $state<CharacterAnalyticsMode>(INITIAL_ANALYTICS_MODE);
+  const seedKey = analyticsCacheKey(INITIAL_ANALYTICS_MODE, nameId);
   const seedPayload = getCharacterAnalyticsCached(seedKey);
   let analyticsPayload = $state<CharacterAnalyticsPayload | null>(seedPayload);
   let analyticsError = $state<string | null>(null);
@@ -173,7 +174,7 @@
           >
         {/snippet}
       </EmptyState>
-    {:else if analyticsPayload && analyticsKey === `${analyticsMode}:${nameId}`}
+    {:else if analyticsPayload && analyticsKey === analyticsCacheKey(analyticsMode, nameId)}
       {#if analyticsPayload.usage.length === 0}
         <EmptyState message="No usage history for {characterName} yet." />
       {:else}

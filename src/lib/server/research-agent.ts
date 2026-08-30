@@ -135,6 +135,7 @@ export async function fetchResearch(
     ) {
       throw new ResearchAgentError(502, "Research agent request timed out.");
     }
+    console.error("[research-agent] unexpected error", err);
     throw new ResearchAgentError(502, "Could not reach the research agent.");
   } finally {
     clearTimeout(timer);
