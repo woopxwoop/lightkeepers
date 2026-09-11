@@ -3,7 +3,8 @@
      Parent `.truth-locked` = show the lock glyph for the real constellation. -->
 <script lang="ts">
   let { uid = "c" }: { uid?: string } = $props();
-  const fid = $derived(`enka-const-blur-${uid}`);
+  const instanceId = $props.id();
+  const fid = $derived(`enka-const-blur-${uid}-${instanceId}`);
 </script>
 
 <svg
@@ -24,31 +25,6 @@
       <feGaussianBlur stdDeviation=".808"></feGaussianBlur>
     </filter>
   </defs>
-  <style>
-    .locked .blur {
-      fill: black;
-      opacity: 0.2 !important;
-    }
-    .locked .tria1,
-    .locked .tria2,
-    .locked .tria3 {
-      display: none;
-    }
-    .truth-locked .lock {
-      opacity: 1 !important;
-    }
-    .locked .spikes {
-      fill: black;
-      opacity: 0.2 !important;
-    }
-    .locked .c1 {
-      display: none;
-    }
-    .locked .c2 {
-      fill: currentColor;
-      filter: brightness(0.8);
-    }
-  </style>
   <g>
     <path
       fill="currentColor"
@@ -111,3 +87,29 @@
     ></path>
   </g>
 </svg>
+
+<style>
+  :global(.locked) .blur {
+    fill: black;
+    opacity: 0.2 !important;
+  }
+  :global(.locked) .tria1,
+  :global(.locked) .tria2,
+  :global(.locked) .tria3 {
+    display: none;
+  }
+  :global(.truth-locked) .lock {
+    opacity: 1 !important;
+  }
+  :global(.locked) .spikes {
+    fill: black;
+    opacity: 0.2 !important;
+  }
+  :global(.locked) .c1 {
+    display: none;
+  }
+  :global(.locked) .c2 {
+    fill: currentColor;
+    filter: brightness(0.8);
+  }
+</style>

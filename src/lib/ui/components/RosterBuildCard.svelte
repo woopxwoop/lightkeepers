@@ -44,6 +44,7 @@
   } from "$lib/definitions";
   import {
     MAX_ASCENSION,
+    MAX_LEVEL,
     MAX_TALENT,
     levelCapForAscension,
   } from "$lib/upgrade-costs";
@@ -239,8 +240,7 @@
     if (!Number.isFinite(raw)) return;
 
     if (field === "level") {
-      // Allow L95/100 (Stella Fortuna); don't tie to ascension unlock.
-      const level = Math.max(1, Math.min(100, Math.round(raw)));
+      const level = Math.max(1, Math.min(MAX_LEVEL, Math.round(raw)));
       if (level === progress.level) return;
       commitProgress({
         ...progress,
@@ -323,8 +323,9 @@
       return;
     }
     let cancelled = false;
+    const ac = new AbortController();
     const url = resolve(`/api/character-kit/${encodeURIComponent(id)}`);
-    void fetch(url)
+    void fetch(url, { signal: ac.signal })
       .then(async (res) => {
         if (!res.ok) throw new Error(`kit ${res.status}`);
         return (await res.json()) as CharacterKit;
@@ -337,6 +338,7 @@
       });
     return () => {
       cancelled = true;
+      ac.abort();
     };
   });
   let kit = $derived(view.kit ?? fetchedKit);

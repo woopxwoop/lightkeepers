@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import {
@@ -179,12 +179,14 @@
   });
 
   $effect(() => {
-    // Re-read cache after Account import / logout while this tab is open.
+    // After session resolves (and on login/logout), refresh uncached inventory.
+    // Cached slices still win inside loadRosterWeapons / loadRosterArtifacts.
     void $session.data;
     const cachedW = getRosterWeaponsCached();
     const cachedA = getRosterArtifactsCached();
     if (cachedW) weapons = cachedW;
     if (cachedA) artifacts = cachedA;
+    void refreshInventory();
   });
 
   async function refreshInventory() {
@@ -206,10 +208,6 @@
       artifacts = getRosterArtifactsCached() ?? [];
     }
   }
-
-  onMount(() => {
-    void refreshInventory();
-  });
 
   let savedOwnedSet = $derived(ownedNameIds($charactersOwned));
   let savedById = $derived(
@@ -699,8 +697,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    /* Own overlay layer above the config dialog — does not reflow the panel. */
-    z-index: 130;
+    /* Beneath .config-root (120) so the dialog stays on top while open. */
+    z-index: 40;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

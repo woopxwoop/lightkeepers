@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import { describe, it, before } from "node:test";
 import type { InventoryArtifact } from "./definitions.ts";
 import { ensureEquipmentData, weaponByKey } from "./equipment-data.ts";
+import type { CharacterBuild } from "./types/investment.ts";
 import {
+  ARTIFACT_MAIN_STAT_VALUE,
+  SUBSTAT_ROLL_VALUE,
+  clampSubstatRolls,
+  computeBuildSheetStats,
   computeRosterSheetStats,
   formatSheetStat,
   goodInventoryStatToSheet,
   resolveCharacterBaseStats,
+  characterBaseByKey,
 } from "./build-stats.ts";
 
 function piece(
@@ -78,8 +84,10 @@ describe("computeRosterSheetStats", () => {
   it("scales character bases from the AvatarCurve at roster level", () => {
     const l90 = resolveCharacterBaseStats("HuTao", 90, 6);
     const l70 = resolveCharacterBaseStats("HuTao", 70, 5);
+    const homa = weaponByKey.get("StaffOfHoma");
     assert.ok(l90);
     assert.ok(l70);
+    assert.ok(homa?.subStat);
     assert.ok(l70.hp < l90.hp);
     assert.ok(l70.atk < l90.atk);
     assert.ok(l70.def < l90.def);
@@ -95,7 +103,10 @@ describe("computeRosterSheetStats", () => {
     });
     assert.ok(sheet70);
     assert.equal(sheet70.hp, l70.hp);
-    assert.ok(sheet70.critDMG < (l90.baseCritDMG + (l90.ascension.critDMG_ ?? 0) + 0.6615));
+    assert.equal(
+      sheet70.critDMG,
+      l70.baseCritDMG + (l70.ascension.critDMG_ ?? 0) + homa.subStat.value,
+    );
   });
 
   it("adds flower/plume flats only when those pieces are equipped", () => {
@@ -146,6 +157,67 @@ describe("computeRosterSheetStats", () => {
     assert.equal(sheet.dmgBonus.pyro_dmg_, 0.466);
     assert.equal(sheet.hp, base.hp + 4780);
     assert.equal(sheet.atk, base.atk + homa.baseAtk);
+  });
+
+  it("computeBuildSheetStats bakes flower/plume, mains, and clamped subs", () => {
+    const base = characterBaseByKey.get("HuTao");
+    const homa = weaponByKey.get("StaffOfHoma");
+    assert.ok(base);
+    assert.ok(homa);
+
+    const build: CharacterBuild = {
+      key: "HuTao",
+      cons: 0,
+      level: 90,
+      talents: { auto: 9, skill: 9, burst: 9 },
+      weapon: { key: "StaffOfHoma", refinement: 1, level: 90 },
+      set: { key: "CrimsonWitchOfFlames", count: 4 },
+      main_stats: {
+        sands: "hp_",
+        goblet: "pyro_dmg_",
+        circlet: "critRate_",
+      },
+      // 20 CR rolls clamp to 12 (4 eligible pieces × 3).
+      substat_rolls: { critRate_: 20, critDMG_: 4, eleMas: 2 },
+    };
+
+    const sheet = computeBuildSheetStats(build);
+    assert.ok(sheet);
+
+    const clamped = clampSubstatRolls(build.substat_rolls, build.main_stats);
+    assert.equal(clamped.critRate_, 12);
+    assert.equal(clamped.critDMG_, 4);
+    assert.equal(clamped.eleMas, 2);
+
+    assert.equal(sheet.flatHp, 4780);
+    assert.equal(sheet.flatAtk, 311);
+    assert.equal(sheet.hpPct, ARTIFACT_MAIN_STAT_VALUE.hp_);
+    assert.equal(sheet.dmgBonus.pyro_dmg_, ARTIFACT_MAIN_STAT_VALUE.pyro_dmg_);
+    assert.ok(
+      Math.abs(
+        sheet.critRate -
+          (base.baseCritRate +
+            ARTIFACT_MAIN_STAT_VALUE.critRate_! +
+            SUBSTAT_ROLL_VALUE.critRate_! * 12),
+      ) < 1e-9,
+    );
+    assert.ok(
+      Math.abs(
+        sheet.critDMG -
+          (base.baseCritDMG +
+            (base.ascension.critDMG_ ?? 0) +
+            homa.subStat!.value +
+            SUBSTAT_ROLL_VALUE.critDMG_! * 4),
+      ) < 1e-9,
+    );
+    assert.ok(
+      Math.abs(sheet.eleMas - SUBSTAT_ROLL_VALUE.eleMas! * 2) < 1e-9,
+    );
+    assert.equal(sheet.hp, base.hp * (1 + sheet.hpPct) + sheet.flatHp);
+    assert.equal(
+      sheet.atk,
+      (base.atk + homa.baseAtk) * (1 + sheet.atkPct) + sheet.flatAtk,
+    );
   });
 });
 
