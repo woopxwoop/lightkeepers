@@ -1,8 +1,9 @@
 <!-- Enka SvgIcon Circl frame for talent icons (viewBox 0 0 14 14). -->
 <script lang="ts">
   let { uid = "t" }: { uid?: string } = $props();
-  const a = $derived(`enka-circl-a-${uid}`);
-  const b = $derived(`enka-circl-b-${uid}`);
+  const instanceId = $props.id();
+  const a = $derived(`enka-circl-a-${uid}-${instanceId}`);
+  const b = $derived(`enka-circl-b-${uid}-${instanceId}`);
 </script>
 
 <svg

@@ -121,20 +121,20 @@ describe("inventory weapons", () => {
     assert.equal(next[1]?.lock, true);
   });
 
-  it("unequips without adding when index is null or invalid", () => {
+  it("unequips on null; invalid / occupied indexes leave the bag unchanged", () => {
     const unequipped = equipExistingInventoryWeapon([homa, spare], "HuTao", null);
     assert.equal(unequipped.length, 2);
     assert.equal(unequipped.every((w) => w.location === ""), true);
     const noCreate = equipExistingInventoryWeapon([homa], "HuTao", 5);
     assert.equal(noCreate.length, 1);
-    assert.equal(noCreate[0]?.location, "");
+    assert.equal(noCreate[0]?.location, "HuTao");
     const occupied = equipExistingInventoryWeapon(
       [homa, { ...spare, location: "Beidou" }],
       "HuTao",
       1,
     );
     assert.equal(occupied[1]?.location, "Beidou");
-    assert.equal(occupied[0]?.location, "");
+    assert.equal(occupied[0]?.location, "HuTao");
   });
 });
 
@@ -148,7 +148,7 @@ describe("inventory artifacts", () => {
     assert.equal(next[2]?.location, "");
   });
 
-  it("unequips a slot and rejects wrong-slot or occupied indexes", () => {
+  it("unequips on null; wrong-slot or occupied indexes leave the bag unchanged", () => {
     const cleared = equipInventoryArtifact(
       [flowerOnHutao, flowerFree],
       "HuTao",
@@ -162,7 +162,7 @@ describe("inventory artifacts", () => {
       "flower",
       1,
     );
-    assert.equal(wrongSlot[0]?.location, "");
+    assert.equal(wrongSlot[0]?.location, "HuTao");
     assert.equal(wrongSlot[1]?.location, "");
     const occupied = equipInventoryArtifact(
       [flowerFree, { ...flowerOnHutao, location: "Beidou" }],
@@ -170,6 +170,7 @@ describe("inventory artifacts", () => {
       "flower",
       1,
     );
+    assert.equal(occupied[0]?.location, "");
     assert.equal(occupied[1]?.location, "Beidou");
   });
 });

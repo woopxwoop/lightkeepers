@@ -3,7 +3,6 @@
    * Read-only browse of GOOD weapons / artifacts already imported.
    * Adding or editing pieces is out of scope — Roster gear equips from this bag.
    */
-  import { onMount } from "svelte";
   import { resolve } from "$app/paths";
   import { authClient } from "$lib/auth-client";
   import {
@@ -29,17 +28,16 @@
   let loading = $state(true);
   let loadError = $state("");
 
-  onMount(() => {
-    void refresh();
-  });
-
   $effect(() => {
-    // Re-read cache after Account import / logout while this tab is open.
+    // Cache reread + network load after session resolves / auth changes.
     void $session.data;
+    const pending = $session.isPending;
     const cachedW = getRosterWeaponsCached();
     const cachedA = getRosterArtifactsCached();
     if (cachedW) weapons = cachedW;
     if (cachedA) artifacts = cachedA;
+    if (pending) return;
+    void refresh();
   });
 
   async function refresh() {

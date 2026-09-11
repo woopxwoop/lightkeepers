@@ -44,8 +44,8 @@
   } from "$lib/definitions";
   import {
     MAX_ASCENSION,
-    MAX_LEVEL,
     MAX_TALENT,
+    clampLevelToAscension,
     levelCapForAscension,
   } from "$lib/upgrade-costs";
   import {
@@ -173,9 +173,8 @@
   function bumpTalent(slot: "normal" | "skill" | "burst", delta: number) {
     if (!editMode) return;
     const cur = progress.talents[slot];
-    let next = cur + delta;
-    if (next > MAX_TALENT) next = 1;
-    if (next < 1) next = MAX_TALENT;
+    const next = Math.max(1, Math.min(MAX_TALENT, cur + delta));
+    if (next === cur) return;
     commitProgress({
       ...progress,
       talents: { ...progress.talents, [slot]: next },
@@ -240,21 +239,30 @@
     if (!Number.isFinite(raw)) return;
 
     if (field === "level") {
-      const level = Math.max(1, Math.min(MAX_LEVEL, Math.round(raw)));
-      if (level === progress.level) return;
+      const { level, ascension } = clampLevelToAscension(
+        raw,
+        progress.ascension,
+      );
+      if (level === progress.level && ascension === progress.ascension) return;
       commitProgress({
         ...progress,
         level,
+        ascension,
         talents: { ...progress.talents },
         weapon: progress.weapon,
       });
       return;
     }
 
-    const ascension = ascensionForCapInput(raw);
-    if (ascension === progress.ascension) return;
+    const nextAscension = ascensionForCapInput(raw);
+    const { level, ascension } = clampLevelToAscension(
+      progress.level,
+      nextAscension,
+    );
+    if (level === progress.level && ascension === progress.ascension) return;
     commitProgress({
       ...progress,
+      level,
       ascension,
       talents: { ...progress.talents },
       weapon: progress.weapon,
@@ -831,6 +839,37 @@
           </div>
         {/if}
 
+        {#snippet setBlock()}
+          <div class="set">
+            {#if view.setCounts[0] && setIcon(view.setCounts[0].setKey)}
+              <i class="set-glyph" aria-hidden="true">
+                <img
+                  src={setIcon(view.setCounts[0].setKey)}
+                  alt=""
+                  loading="lazy"
+                />
+              </i>
+            {:else}
+              <i class="set-glyph" aria-hidden="true"></i>
+            {/if}
+            <div class="sets">
+              {#if view.setCounts.length === 0}
+                <div>
+                  <div class="desc muted">No set bonus</div>
+                </div>
+              {:else}
+                {#each view.setCounts as s (s.setKey)}
+                  <div class="group">
+                    <div class="desc">{setName(s.setKey)}</div>
+                    <div class="count">{s.count}</div>
+                    <ArtifactTooltip setKey={s.setKey} pieceCount={s.count} />
+                  </div>
+                {/each}
+              {/if}
+            </div>
+          </div>
+        {/snippet}
+
         {#if showStats}
           <div class="StatsTable">
             {#each statRows as row (row.key)}
@@ -851,63 +890,12 @@
             {/each}
 
             {#if showSets}
-              <div class="set">
-                {#if view.setCounts[0] && setIcon(view.setCounts[0].setKey)}
-                  <i class="set-glyph" aria-hidden="true">
-                    <img
-                      src={setIcon(view.setCounts[0].setKey)}
-                      alt=""
-                      loading="lazy"
-                    />
-                  </i>
-                {:else}
-                  <i class="set-glyph" aria-hidden="true"></i>
-                {/if}
-                <div class="sets">
-                  {#if view.setCounts.length === 0}
-                    <div>
-                      <div class="desc muted">No set bonus</div>
-                    </div>
-                  {:else}
-                    {#each view.setCounts as s (s.setKey)}
-                      <div class="group">
-                        <div class="desc">{setName(s.setKey)}</div>
-                        <div class="count">{s.count}</div>
-                        <ArtifactTooltip
-                          setKey={s.setKey}
-                          pieceCount={s.count}
-                        />
-                      </div>
-                    {/each}
-                  {/if}
-                </div>
-              </div>
+              {@render setBlock()}
             {/if}
           </div>
         {:else if showSets}
           <div class="StatsTable">
-            <div class="set">
-              {#if view.setCounts[0] && setIcon(view.setCounts[0].setKey)}
-                <i class="set-glyph" aria-hidden="true">
-                  <img
-                    src={setIcon(view.setCounts[0].setKey)}
-                    alt=""
-                    loading="lazy"
-                  />
-                </i>
-              {:else}
-                <i class="set-glyph" aria-hidden="true"></i>
-              {/if}
-              <div class="sets">
-                {#each view.setCounts as s (s.setKey)}
-                  <div class="group">
-                    <div class="desc">{setName(s.setKey)}</div>
-                    <div class="count">{s.count}</div>
-                    <ArtifactTooltip setKey={s.setKey} pieceCount={s.count} />
-                  </div>
-                {/each}
-              </div>
-            </div>
+            {@render setBlock()}
           </div>
         {/if}
       </div>

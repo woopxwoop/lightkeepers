@@ -10,7 +10,12 @@
     DEFAULT_ROSTER_PROGRESS,
     MAX_CONSTELLATION,
   } from "$lib/roster-progress";
-  import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
+  import {
+    MAX_ASCENSION,
+    MAX_LEVEL,
+    MAX_TALENT,
+    clampLevelToAscension,
+  } from "$lib/upgrade-costs";
 
   let {
     progress = null,
@@ -28,12 +33,18 @@
   );
 
   function patch(partial: Partial<RosterProgress>) {
-    onChange({
+    const merged: RosterProgress = {
       ...draft,
       ...partial,
       talents: { ...draft.talents, ...(partial.talents ?? {}) },
       weapon: partial.weapon !== undefined ? partial.weapon : draft.weapon,
-    });
+    };
+    if (partial.level != null || partial.ascension != null) {
+      const clamped = clampLevelToAscension(merged.level, merged.ascension);
+      merged.level = clamped.level;
+      merged.ascension = clamped.ascension;
+    }
+    onChange(merged);
   }
 
   function patchTalents(slot: "normal" | "skill" | "burst", value: number) {
