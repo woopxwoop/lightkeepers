@@ -1,17 +1,31 @@
 /**
- * Approximate character sheet stats for a gcsim CharacterBuild.
+ * Approximate character sheet stats.
  *
- * Sources:
- * - Character L90 bases + ascension (`character-bases.json`)
- * - Weapon L90 ATK + substat (`weapons.json`)
- * - Artifact flower/plume flats + sands/goblet/circlet mains (gcsim constants)
- * - Substat roll counts × per-roll values (OptimFull defaults)
+ * Shared sources:
+ * - Character bases + AvatarCurve / promote tables (`character-bases.json`,
+ *   `character-stat-curves.json`) — roster uses real level/ascension
+ * - Weapon L90 ATK + substat (`weapons.json`) for now
+ * - Artifact mains (`ARTIFACT_MAIN_STAT_VALUE` / flower+plume flats)
+ *
+ * Two entry points:
+ * - {@link computeBuildSheetStats} — gcsim / investment builds (L90 bake)
+ * - {@link computeRosterSheetStats} — GOOD inventory + roster level curve
  *
  * Does **not** include artifact set bonuses or weapon passives (conditional).
  */
 import characterBasesRaw from "$lib/data/character-bases.json";
+import characterStatCurvesRaw from "$lib/data/character-stat-curves.json";
 import { weaponByKey, type WeaponData } from "$lib/equipment-data";
+import type { InventoryArtifact } from "$lib/definitions";
 import type { CharacterBuild } from "$lib/types/investment";
+
+export type CharacterPromoteStep = {
+  asc: number;
+  hp: number;
+  atk: number;
+  def: number;
+  stats: Record<string, number>;
+};
 
 export interface CharacterBaseStats {
   name_id: string;
@@ -23,11 +37,77 @@ export interface CharacterBaseStats {
   ascension: Record<string, number>;
   baseCritRate: number;
   baseCritDMG: number;
+  /** Pre-curve AvatarExcel flats (present after curve extract). */
+  hpBase?: number;
+  atkBase?: number;
+  defBase?: number;
+  growCurves?: { hp: string; atk: string; def: string };
+  promotes?: CharacterPromoteStep[];
 }
 
 export const characterBaseByKey = new Map(
   Object.entries(characterBasesRaw as Record<string, CharacterBaseStats>),
 );
+
+/** GROW_CURVE_* → level string → multiplier. */
+export const characterStatCurves = characterStatCurvesRaw as Record<
+  string,
+  Record<string, number>
+>;
+
+function roundStat(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+function curveMult(growCurve: string, level: number): number {
+  const bag = characterStatCurves[growCurve];
+  if (!bag) return 1;
+  return bag[String(level)] ?? bag[String(Math.min(90, level))] ?? 1;
+}
+
+/**
+ * Resolve HP/ATK/DEF (+ ascension secondaries) for a roster level / promote.
+ * Falls back to the baked L90 row when curve fields are missing.
+ */
+export function resolveCharacterBaseStats(
+  characterKey: string,
+  level = 90,
+  ascension = 6,
+): CharacterBaseStats | null {
+  const row = characterBaseByKey.get(characterKey);
+  if (!row) return null;
+  if (
+    row.hpBase == null ||
+    row.atkBase == null ||
+    row.defBase == null ||
+    !row.growCurves ||
+    !row.promotes?.length
+  ) {
+    return row;
+  }
+
+  const lv = Math.max(1, Math.min(100, Math.floor(level)));
+  const asc = Math.max(0, Math.min(6, Math.floor(ascension)));
+  const promote =
+    row.promotes.find((p) => p.asc === asc) ??
+    row.promotes[asc] ??
+    row.promotes[row.promotes.length - 1]!;
+
+  return {
+    ...row,
+    level: lv,
+    hp: roundStat(
+      row.hpBase * curveMult(row.growCurves.hp, lv) + promote.hp,
+    ),
+    atk: roundStat(
+      row.atkBase * curveMult(row.growCurves.atk, lv) + promote.atk,
+    ),
+    def: roundStat(
+      row.defBase * curveMult(row.growCurves.def, lv) + promote.def,
+    ),
+    ascension: { ...promote.stats },
+  };
+}
 
 /** L90 artifact main-stat values (GOOD StatKey → number). Percents are fractions. */
 export const ARTIFACT_MAIN_STAT_VALUE: Record<string, number> = {
@@ -133,7 +213,7 @@ export function clampSubstatRolls(
   return out;
 }
 
-const WEAPON_PROP_TO_GOOD: Record<string, string> = {
+export const WEAPON_PROP_TO_GOOD: Record<string, string> = {
   FIGHT_PROP_HP_PERCENT: "hp_",
   FIGHT_PROP_ATTACK_PERCENT: "atk_",
   FIGHT_PROP_DEFENSE_PERCENT: "def_",
@@ -183,6 +263,107 @@ function add(bag: Record<string, number>, key: string, amount: number): void {
 }
 
 /**
+ * GOOD inventory stores percents as display units (10.5 = 10.5%).
+ * Sheet math uses fractions (0.105). Flat keys stay as-is.
+ */
+export function goodInventoryStatToSheet(key: string, value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  if (key.endsWith("_")) return value / 100;
+  return value;
+}
+
+type SheetAccum = {
+  flatHp: number;
+  flatAtk: number;
+  flatDef: number;
+  hpPct: number;
+  atkPct: number;
+  defPct: number;
+  eleMas: number;
+  enerRech: number;
+  critRate: number;
+  critDMG: number;
+  heal: number;
+  dmgBonus: Record<string, number>;
+};
+
+function emptyAccum(base: CharacterBaseStats): SheetAccum {
+  return {
+    flatHp: 0,
+    flatAtk: 0,
+    flatDef: 0,
+    hpPct: 0,
+    atkPct: 0,
+    defPct: 0,
+    eleMas: 0,
+    enerRech: 1,
+    critRate: base.baseCritRate,
+    critDMG: base.baseCritDMG,
+    heal: 0,
+    dmgBonus: {},
+  };
+}
+
+function applySheetStat(acc: SheetAccum, key: string, amount: number): void {
+  if (!amount) return;
+  if (key === "hp") acc.flatHp += amount;
+  else if (key === "atk") acc.flatAtk += amount;
+  else if (key === "def") acc.flatDef += amount;
+  else if (key === "hp_") acc.hpPct += amount;
+  else if (key === "atk_") acc.atkPct += amount;
+  else if (key === "def_") acc.defPct += amount;
+  else if (key === "eleMas") acc.eleMas += amount;
+  else if (key === "enerRech_") acc.enerRech += amount;
+  else if (key === "critRate_") acc.critRate += amount;
+  else if (key === "critDMG_") acc.critDMG += amount;
+  else if (key === "heal_") acc.heal += amount;
+  else if (key.endsWith("_dmg_")) add(acc.dmgBonus, key, amount);
+}
+
+function applyAscension(acc: SheetAccum, base: CharacterBaseStats): void {
+  for (const [k, v] of Object.entries(base.ascension)) {
+    applySheetStat(acc, k, v);
+  }
+}
+
+function applyWeaponSub(acc: SheetAccum, weapon: WeaponData | undefined): void {
+  if (!weapon?.subStat) return;
+  const good = WEAPON_PROP_TO_GOOD[weapon.subStat.propType];
+  if (!good) return;
+  applySheetStat(acc, good, weapon.subStat.value);
+}
+
+function finalizeSheet(
+  acc: SheetAccum,
+  base: CharacterBaseStats,
+  weaponAtk: number,
+): SheetStatBag {
+  const hpBase = base.hp;
+  const atkBase = base.atk + weaponAtk;
+  const defBase = base.def;
+  return {
+    flatHp: acc.flatHp,
+    flatAtk: acc.flatAtk,
+    flatDef: acc.flatDef,
+    hpPct: acc.hpPct,
+    atkPct: acc.atkPct,
+    defPct: acc.defPct,
+    eleMas: acc.eleMas,
+    enerRech: acc.enerRech,
+    critRate: acc.critRate,
+    critDMG: acc.critDMG,
+    dmgBonus: acc.dmgBonus,
+    heal: acc.heal,
+    hpBase,
+    atkBase,
+    defBase,
+    hp: hpBase * (1 + acc.hpPct) + acc.flatHp,
+    atk: atkBase * (1 + acc.atkPct) + acc.flatAtk,
+    def: defBase * (1 + acc.defPct) + acc.flatDef,
+  };
+}
+
+/**
  * Compute approximate total stats for one CharacterBuild.
  * Returns null when the character base row is missing.
  */
@@ -192,58 +373,19 @@ export function computeBuildSheetStats(
   const base = characterBaseByKey.get(build.key);
   if (!base) return null;
   const weapon: WeaponData | undefined = weaponByKey.get(build.weapon.key);
+  const acc = emptyAccum(base);
 
-  let flatHp = FLOWER_HP;
-  let flatAtk = PLUME_ATK;
-  let flatDef = 0;
-  let hpPct = 0;
-  let atkPct = 0;
-  let defPct = 0;
-  let eleMas = 0;
-  let enerRech = 1;
-  let critRate = base.baseCritRate;
-  let critDMG = base.baseCritDMG;
-  let heal = 0;
-  const dmgBonus: Record<string, number> = {};
+  applyAscension(acc, base);
+  applyWeaponSub(acc, weapon);
 
-  for (const [k, v] of Object.entries(base.ascension)) {
-    if (k === "eleMas") eleMas += v;
-    else if (k === "enerRech_") enerRech += v;
-    else if (k === "critRate_") critRate += v;
-    else if (k === "critDMG_") critDMG += v;
-    else if (k === "heal_") heal += v;
-    else if (k === "hp_") hpPct += v;
-    else if (k === "atk_") atkPct += v;
-    else if (k === "def_") defPct += v;
-    else if (k.endsWith("_dmg_")) add(dmgBonus, k, v);
-  }
-
-  if (weapon?.subStat) {
-    const good = WEAPON_PROP_TO_GOOD[weapon.subStat.propType];
-    const v = weapon.subStat.value;
-    if (good === "hp_") hpPct += v;
-    else if (good === "atk_") atkPct += v;
-    else if (good === "def_") defPct += v;
-    else if (good === "eleMas") eleMas += v;
-    else if (good === "enerRech_") enerRech += v;
-    else if (good === "critRate_") critRate += v;
-    else if (good === "critDMG_") critDMG += v;
-    else if (good === "heal_") heal += v;
-    else if (good?.endsWith("_dmg_")) add(dmgBonus, good, v);
-  }
+  // Investment builds always assume a full +20 flower / plume.
+  acc.flatHp += FLOWER_HP;
+  acc.flatAtk += PLUME_ATK;
 
   for (const key of Object.values(build.main_stats)) {
     const v = ARTIFACT_MAIN_STAT_VALUE[key];
     if (v == null) continue;
-    if (key === "hp_") hpPct += v;
-    else if (key === "atk_") atkPct += v;
-    else if (key === "def_") defPct += v;
-    else if (key === "eleMas") eleMas += v;
-    else if (key === "enerRech_") enerRech += v;
-    else if (key === "critRate_") critRate += v;
-    else if (key === "critDMG_") critDMG += v;
-    else if (key === "heal_") heal += v;
-    else if (key.endsWith("_dmg_")) add(dmgBonus, key, v);
+    applySheetStat(acc, key, v);
   }
 
   for (const [key, count] of Object.entries(
@@ -251,47 +393,70 @@ export function computeBuildSheetStats(
   )) {
     const per = SUBSTAT_ROLL_VALUE[key];
     if (per == null || !count) continue;
-    const v = per * count;
-    if (key === "hp") flatHp += v;
-    else if (key === "atk") flatAtk += v;
-    else if (key === "def") flatDef += v;
-    else if (key === "hp_") hpPct += v;
-    else if (key === "atk_") atkPct += v;
-    else if (key === "def_") defPct += v;
-    else if (key === "eleMas") eleMas += v;
-    else if (key === "enerRech_") enerRech += v;
-    else if (key === "critRate_") critRate += v;
-    else if (key === "critDMG_") critDMG += v;
+    applySheetStat(acc, key, per * count);
   }
 
-  const weaponAtk = weapon?.baseAtk ?? 0;
-  const hpBase = base.hp;
-  const atkBase = base.atk + weaponAtk;
-  const defBase = base.def;
-  const hp = hpBase * (1 + hpPct) + flatHp;
-  const atk = atkBase * (1 + atkPct) + flatAtk;
-  const def = defBase * (1 + defPct) + flatDef;
+  return finalizeSheet(acc, base, weapon?.baseAtk ?? 0);
+}
 
-  return {
-    flatHp,
-    flatAtk,
-    flatDef,
-    hpPct,
-    atkPct,
-    defPct,
-    eleMas,
-    enerRech,
-    critRate,
-    critDMG,
-    dmgBonus,
-    heal,
-    hpBase,
-    atkBase,
-    defBase,
-    hp,
-    atk,
-    def,
-  };
+export type RosterSheetInput = {
+  /** GOOD character key (e.g. `HuTao`). */
+  characterKey: string;
+  /** Roster level (1–90+). Defaults to 90 when omitted. */
+  level?: number;
+  /** Roster ascension / promote (0–6). Defaults to 6 when omitted. */
+  ascension?: number;
+  weaponKey?: string | null;
+  pieces: readonly (InventoryArtifact | null | undefined)[];
+};
+
+/**
+ * Sheet totals from roster + GOOD inventory pieces.
+ * Character HP/ATK/DEF follow AvatarCurve at {@link RosterSheetInput.level}
+ * and promote bonuses at {@link RosterSheetInput.ascension}.
+ * Mains use L90 +20 constants (same as card display). Substats use inventory
+ * values (percents ÷ 100). Missing flower/plume → no flat main for that slot.
+ * Weapon ATK/substat still use the L90 weapon table.
+ */
+export function computeRosterSheetStats(
+  input: RosterSheetInput,
+): SheetStatBag | null {
+  const base = resolveCharacterBaseStats(
+    input.characterKey,
+    input.level ?? 90,
+    input.ascension ?? 6,
+  );
+  if (!base) return null;
+  const weaponKey = input.weaponKey ?? "";
+  const weapon: WeaponData | undefined = weaponKey
+    ? weaponByKey.get(weaponKey)
+    : undefined;
+  const acc = emptyAccum(base);
+
+  applyAscension(acc, base);
+  applyWeaponSub(acc, weapon);
+
+  for (const piece of input.pieces) {
+    if (!piece) continue;
+    const mainKey = piece.mainStatKey;
+    if (mainKey === "hp" && piece.slotKey === "flower") {
+      acc.flatHp += FLOWER_HP;
+    } else if (mainKey === "atk" && piece.slotKey === "plume") {
+      acc.flatAtk += PLUME_ATK;
+    } else {
+      const mainVal = ARTIFACT_MAIN_STAT_VALUE[mainKey];
+      if (mainVal != null) applySheetStat(acc, mainKey, mainVal);
+    }
+    for (const sub of piece.substats) {
+      applySheetStat(
+        acc,
+        sub.key,
+        goodInventoryStatToSheet(sub.key, sub.value),
+      );
+    }
+  }
+
+  return finalizeSheet(acc, base, weapon?.baseAtk ?? 0);
 }
 
 export function formatSheetStat(

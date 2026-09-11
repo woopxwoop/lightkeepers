@@ -4,6 +4,7 @@
   import PageShell from "$lib/ui/components/PageShell.svelte";
   import IconUser from "$lib/ui/icons/IconUser.svelte";
   import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
+  import IconAppsGrid from "$lib/ui/icons/IconAppsGrid.svelte";
   import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
 
   const sections = [
@@ -11,6 +12,11 @@
       id: "roster",
       label: "Roster",
       icon: "users",
+    },
+    {
+      id: "inventory",
+      label: "Inventory",
+      icon: "grid",
     },
     {
       id: "account",
@@ -61,6 +67,8 @@
             <span class="settings-nav-icon" aria-hidden="true">
               {#if section.icon === "users"}
                 <IconUser size={18} />
+              {:else if section.icon === "grid"}
+                <IconAppsGrid size={18} />
               {:else if section.icon === "cloud"}
                 <IconCloudUp size={18} />
               {:else}

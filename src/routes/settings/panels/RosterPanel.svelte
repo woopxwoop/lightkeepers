@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { onMount, tick } from "svelte";
+  import { fade, scale } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import {
     charactersOwned,
     charactersHydrated,
@@ -14,9 +17,24 @@
   import Button from "$lib/ui/components/Button.svelte";
   import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import RosterProgressDialog from "$lib/ui/components/RosterProgressDialog.svelte";
-  import type { CharacterOwned, RosterProgress } from "$lib/definitions";
+  import IconX from "$lib/ui/icons/IconX.svelte";
+  import RosterBuildCard from "$lib/ui/components/RosterBuildCard.svelte";
+  import RosterProgressFields from "$lib/ui/components/RosterProgressFields.svelte";
+  import Toggle from "$lib/ui/components/Toggle.svelte";
+  import type {
+    CharacterOwned,
+    InventoryArtifact,
+    InventoryWeapon,
+    RosterProgress,
+  } from "$lib/definitions";
   import { cloneRosterProgress } from "$lib/roster-progress";
+  import { rosterBuildViewFromOwned } from "$lib/roster-build-card";
+  import {
+    getRosterArtifactsCached,
+    getRosterWeaponsCached,
+    loadRosterArtifacts,
+    loadRosterWeapons,
+  } from "$lib/app/roster-inventory";
   import { weaponTypeLabel, ownedNameIds } from "$lib/utils";
   import { isNewCharacter } from "$lib/is-new-character";
   import {
@@ -31,6 +49,7 @@
     writeRosterLocal,
     type RosterCapture,
   } from "$lib/roster-snapshot";
+  import { trapTabKey } from "$lib/ui/focus-trap";
   import { resolve } from "$app/paths";
 
   const session = authClient.useSession();
@@ -53,6 +72,11 @@
   let search = $state("");
   let sortBy = $state<CharacterSortKey>("release_date");
   let sortAsc = $state(false);
+
+  let weapons = $state<InventoryWeapon[]>([]);
+  let artifacts = $state<InventoryArtifact[]>([]);
+  /** Simple slider layout vs Enka build card. */
+  let simpleConfig = $state(false);
 
   let visibleCharacters = $derived(
     filterAndSortCharacters(tempCharactersOwned, {
@@ -154,6 +178,39 @@
     }
   });
 
+  $effect(() => {
+    // Re-read cache after Account import / logout while this tab is open.
+    void $session.data;
+    const cachedW = getRosterWeaponsCached();
+    const cachedA = getRosterArtifactsCached();
+    if (cachedW) weapons = cachedW;
+    if (cachedA) artifacts = cachedA;
+  });
+
+  async function refreshInventory() {
+    try {
+      if ($session.data) {
+        const [nextWeapons, nextArtifacts] = await Promise.all([
+          loadRosterWeapons(),
+          loadRosterArtifacts(),
+        ]);
+        weapons = nextWeapons;
+        artifacts = nextArtifacts;
+      } else {
+        weapons = getRosterWeaponsCached() ?? [];
+        artifacts = getRosterArtifactsCached() ?? [];
+      }
+    } catch (err) {
+      console.error("Roster inventory load failed:", err);
+      weapons = getRosterWeaponsCached() ?? [];
+      artifacts = getRosterArtifactsCached() ?? [];
+    }
+  }
+
+  onMount(() => {
+    void refreshInventory();
+  });
+
   let savedOwnedSet = $derived(ownedNameIds($charactersOwned));
   let savedById = $derived(
     new Map($charactersOwned.map((c) => [c.name_id, c])),
@@ -185,17 +242,69 @@
   let configuring = $derived(
     tempCharactersOwned.find((c) => c.name_id === configuringId) ?? null,
   );
+  let configuringView = $derived(
+    configuring
+      ? rosterBuildViewFromOwned(configuring, weapons, artifacts)
+      : null,
+  );
 
-  function saveProgress(next: RosterProgress) {
-    const id = configuringId;
-    if (!id) return;
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
-      c.name_id === id
-        ? { ...c, isOwned: true, progress: cloneRosterProgress(next) ?? next }
-        : c,
-    );
+  let configPanelEl: HTMLDivElement | null = $state(null);
+  let configCloseEl: HTMLButtonElement | null = $state(null);
+  let reduced = $derived(prefersReducedMotion.current);
+
+  function closeConfig() {
     configuringId = null;
   }
+
+  function openConfig(nameId: string) {
+    const row = tempCharactersOwned.find((c) => c.name_id === nameId);
+    if (!row?.isOwned) return;
+    configuringId = nameId;
+  }
+
+  function applyProgress(next: RosterProgress) {
+    const id = configuringId;
+    if (!id) return;
+    const row = tempCharactersOwned.find((c) => c.name_id === id);
+    if (!row?.isOwned) {
+      closeConfig();
+      return;
+    }
+    tempCharactersOwned = tempCharactersOwned.map((c) =>
+      c.name_id === id
+        ? { ...c, progress: cloneRosterProgress(next) ?? next }
+        : c,
+    );
+  }
+
+  $effect(() => {
+    if (configuring && !configuring.isOwned) {
+      configuringId = null;
+    }
+  });
+
+  $effect(() => {
+    if (!configuringId) return;
+    const previous =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    void tick().then(() => configCloseEl?.focus());
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeConfig();
+        return;
+      }
+      if (configPanelEl) trapTabKey(event, configPanelEl);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (previous?.isConnected) previous.focus();
+    };
+  });
+
   let isFiltered = $derived(
     rarityFilter.size > 0 ||
       elementFilter.size > 0 ||
@@ -210,12 +319,15 @@
     <header class="panel-head">
       <h2 class="section-title">Roster</h2>
       <p class="lede">
-        Select who you own. Use the gear to set constellation, level, talents,
-        and weapon.
+        Select who you own. Owned characters get a gear to edit constellation,
+        level, talents, and review equipped gear on the build card.
       </p>
       <p class="section-lede">
         Have a GOOD export? Upload it under
         <a class="back-link" href={resolve("/settings?tab=account")}>Account</a
+        >, then browse
+        <a class="back-link" href={resolve("/settings?tab=inventory")}
+          >Inventory</a
         >.
       </p>
     </header>
@@ -305,22 +417,22 @@
               : 'not owned'}"
           >
             {#snippet badge()}
-              <button
-                type="button"
-                class="roster-gear absolute top-1.5 left-1.5"
-                aria-label="Edit {character.name ?? 'character'}"
-                onclick={(event) => {
-                  event.stopPropagation();
-                  configuringId = character.name_id;
-                }}
-                onpointerdown={(event) => event.stopPropagation()}
-              >
-                <IconCog size={14} />
-              </button>
-              {#if showNew}
-                <span class="new-badge absolute top-1.5 right-1.5"
-                  >NEW</span
+              {#if character.isOwned}
+                <button
+                  type="button"
+                  class="roster-gear absolute top-1.5 left-1.5"
+                  aria-label="Edit {character.name ?? 'character'}"
+                  onclick={(event) => {
+                    event.stopPropagation();
+                    openConfig(character.name_id);
+                  }}
+                  onpointerdown={(event) => event.stopPropagation()}
                 >
+                  <IconCog size={14} />
+                </button>
+              {/if}
+              {#if showNew}
+                <span class="new-badge absolute top-1.5 right-1.5">NEW</span>
               {/if}
             {/snippet}
             {#snippet meta()}
@@ -338,13 +450,64 @@
       </div>
     {/if}
 
-    <RosterProgressDialog
-      open={configuring != null}
-      name={configuring?.name ?? "Character"}
-      progress={configuring?.progress ?? null}
-      onClose={() => (configuringId = null)}
-      onSave={saveProgress}
-    />
+    {#if configuringView}
+      <div class="config-root">
+        <button
+          type="button"
+          class="config-backdrop"
+          aria-label="Close"
+          onclick={closeConfig}
+          transition:fade={{ duration: reduced ? 0 : 120 }}
+        ></button>
+        <div
+          class="config-panel"
+          class:config-panel--simple={simpleConfig}
+          role="dialog"
+          aria-modal="true"
+          aria-label={configuring?.name ?? "Character"}
+          tabindex="-1"
+          bind:this={configPanelEl}
+          transition:scale={{ duration: reduced ? 0 : 160, start: 0.98 }}
+        >
+          <div class="config-toolbar">
+            <label class="config-layout-toggle">
+              <Toggle
+                bind:pressed={simpleConfig}
+                aria-label="Simple config layout"
+              />
+              <span>Simple</span>
+            </label>
+            <button
+              type="button"
+              class="config-close"
+              aria-label="Close"
+              bind:this={configCloseEl}
+              onclick={closeConfig}
+            >
+              <IconX size={16} />
+            </button>
+          </div>
+          {#if simpleConfig}
+            <RosterProgressFields
+              progress={configuring?.progress ?? null}
+              onChange={applyProgress}
+            />
+          {:else}
+            <div class="config-card-stage">
+              <RosterBuildCard
+                view={configuringView}
+                editing="always"
+                onProgressChange={applyProgress}
+              />
+            </div>
+            <p class="section-lede">
+              Currently can edit constellation, level, and talents. Weapons and
+              Artifacts can only be imported via GOOD for now.
+            </p>
+          {/if}
+        </div>
+      </div>
+    {/if}
   </div>
 {:else}
   <LoadingState message="Loading characters…" />
@@ -438,12 +601,106 @@
     background: color-mix(in srgb, var(--background-color) 82%, transparent);
   }
 
+  .config-root {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: clamp(0.75rem, 2vw, 1.25rem);
+    pointer-events: none;
+  }
+
+  .config-backdrop {
+    position: absolute;
+    inset: 0;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    background: color-mix(in oklab, black 62%, transparent);
+    backdrop-filter: blur(4px);
+    pointer-events: auto;
+  }
+
+  .config-panel {
+    position: relative;
+    z-index: 1;
+    width: min(72rem, 100%);
+    max-height: min(46rem, calc(100vh - 2rem));
+    overflow: auto;
+    padding: 0.25rem 0.75rem 0.5rem;
+    border-radius: var(--radius-lg);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.18);
+    background: var(--background-mid);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .config-panel--simple {
+    width: min(28rem, 100%);
+    max-height: min(40rem, calc(100vh - 2rem));
+    padding: 0.65rem 0.85rem 0.85rem;
+    gap: var(--space-3);
+  }
+
+  .config-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 1.85rem;
+  }
+
+  .config-layout-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--foreground-mid);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .config-panel > .section-lede {
+    margin: 0;
+  }
+
+  .config-close {
+    width: 1.85rem;
+    height: 1.85rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--foreground-mid);
+    cursor: pointer;
+  }
+
+  .config-close:hover {
+    color: var(--foreground-color);
+    background: color-mix(in srgb, var(--foreground-color) 10%, transparent);
+  }
+
+  .config-card-stage {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .save-bar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 40;
+    /* Own overlay layer above the config dialog — does not reflow the panel. */
+    z-index: 130;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
