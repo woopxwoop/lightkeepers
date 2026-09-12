@@ -261,8 +261,12 @@
   @media (min-width: 640px) {
     .feature-card--spotlight {
       grid-column: 1 / -1;
-      aspect-ratio: 21 / 9;
-      min-height: 12rem;
+      aspect-ratio: 3 / 1;
+      min-height: 9rem;
+    }
+
+    .feature-card--spotlight .feature-body {
+      min-height: 0;
     }
   }
 
