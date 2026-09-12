@@ -3,12 +3,14 @@ import { describe, it } from "node:test";
 import {
   bestInventoryWeaponByKey,
   equippedWeaponForLocation,
+  equipExistingInventoryWeapon,
+  equipInventoryArtifact,
   equipInventoryWeapon,
   lowestInventoryWeaponByKey,
   plannerStartFromOwnedWeapon,
 } from "./roster-inventory.ts";
 import { rosterProgressForNameId } from "./roster-progress.ts";
-import type { InventoryWeapon } from "./definitions.ts";
+import type { InventoryArtifact, InventoryWeapon } from "./definitions.ts";
 
 const homa: InventoryWeapon = {
   key: "StaffOfHoma",
@@ -25,6 +27,37 @@ const spare: InventoryWeapon = {
   refinement: 3,
   location: "",
   lock: true,
+};
+
+const flowerOnHutao: InventoryArtifact = {
+  setKey: "CrimsonWitchOfFlames",
+  slotKey: "flower",
+  level: 20,
+  rarity: 5,
+  mainStatKey: "hp",
+  location: "HuTao",
+  lock: false,
+  substats: [{ key: "critRate_", value: 10 }],
+};
+const flowerFree: InventoryArtifact = {
+  setKey: "GladiatorsFinale",
+  slotKey: "flower",
+  level: 16,
+  rarity: 5,
+  mainStatKey: "hp",
+  location: "",
+  lock: false,
+  substats: [],
+};
+const sandsFree: InventoryArtifact = {
+  setKey: "CrimsonWitchOfFlames",
+  slotKey: "sands",
+  level: 20,
+  rarity: 5,
+  mainStatKey: "hp_",
+  location: "",
+  lock: true,
+  substats: [],
 };
 
 describe("inventory weapons", () => {
@@ -77,6 +110,68 @@ describe("inventory weapons", () => {
     assert.equal(equipped?.location, "HuTao");
     assert.equal(equipped?.level, 70);
     assert.equal(equipped?.lock, true);
+  });
+
+  it("equips existing weapon by index without creating rows", () => {
+    const bag = [homa, spare];
+    const next = equipExistingInventoryWeapon(bag, "HuTao", 1);
+    assert.equal(next.length, 2);
+    assert.equal(next[0]?.location, "");
+    assert.equal(next[1]?.location, "HuTao");
+    assert.equal(next[1]?.lock, true);
+  });
+
+  it("unequips on null; invalid / occupied indexes leave the bag unchanged", () => {
+    const unequipped = equipExistingInventoryWeapon([homa, spare], "HuTao", null);
+    assert.equal(unequipped.length, 2);
+    assert.equal(unequipped.every((w) => w.location === ""), true);
+    const noCreate = equipExistingInventoryWeapon([homa], "HuTao", 5);
+    assert.equal(noCreate.length, 1);
+    assert.equal(noCreate[0]?.location, "HuTao");
+    const occupied = equipExistingInventoryWeapon(
+      [homa, { ...spare, location: "Beidou" }],
+      "HuTao",
+      1,
+    );
+    assert.equal(occupied[1]?.location, "Beidou");
+    assert.equal(occupied[0]?.location, "HuTao");
+  });
+});
+
+describe("inventory artifacts", () => {
+  it("swaps a slot onto an existing unequipped piece", () => {
+    const bag = [flowerOnHutao, flowerFree, sandsFree];
+    const next = equipInventoryArtifact(bag, "HuTao", "flower", 1);
+    assert.equal(next.length, 3);
+    assert.equal(next[0]?.location, "");
+    assert.equal(next[1]?.location, "HuTao");
+    assert.equal(next[2]?.location, "");
+  });
+
+  it("unequips on null; wrong-slot or occupied indexes leave the bag unchanged", () => {
+    const cleared = equipInventoryArtifact(
+      [flowerOnHutao, flowerFree],
+      "HuTao",
+      "flower",
+      null,
+    );
+    assert.equal(cleared[0]?.location, "");
+    const wrongSlot = equipInventoryArtifact(
+      [flowerOnHutao, sandsFree],
+      "HuTao",
+      "flower",
+      1,
+    );
+    assert.equal(wrongSlot[0]?.location, "HuTao");
+    assert.equal(wrongSlot[1]?.location, "");
+    const occupied = equipInventoryArtifact(
+      [flowerFree, { ...flowerOnHutao, location: "Beidou" }],
+      "HuTao",
+      "flower",
+      1,
+    );
+    assert.equal(occupied[0]?.location, "");
+    assert.equal(occupied[1]?.location, "Beidou");
   });
 });
 

@@ -19,6 +19,11 @@ export const MAX_LEVEL = 90;
 export const MAX_ASCENSION = 6;
 export const MAX_TALENT = 10;
 
+/** Standard character/weapon level caps by promote (ascension) 0–6. */
+export const LEVEL_CAP_BY_ASCENSION = [
+  20, 40, 50, 60, 70, 80, 90,
+] as const;
+
 function clamp(n: number, min: number, max: number): number {
   if (!Number.isFinite(n)) return min;
   return Math.min(max, Math.max(min, Math.trunc(n)));
@@ -35,13 +40,37 @@ function emptyResult(): UpgradeCostResult {
   return { mora: 0, exp: 0, materials: {} };
 }
 
+/**
+ * Level unlocked at this ascension for UI (Lv X / Y).
+ * Matches the standard Avatar/Weapon promote table (no catalog needed).
+ */
+export function levelCapForAscension(ascension: number): number {
+  const a = clamp(ascension, 0, MAX_ASCENSION);
+  return LEVEL_CAP_BY_ASCENSION[a] ?? MAX_LEVEL;
+}
+
+/**
+ * Clamp a level/ascension pair so level stays within the unlock cap for that
+ * ascension (and within {@link MAX_LEVEL}). Used by roster progress editors.
+ */
+export function clampLevelToAscension(
+  level: number,
+  ascension: number,
+): { level: number; ascension: number } {
+  const a = clamp(Math.round(ascension), 0, MAX_ASCENSION);
+  const cap = levelCapForAscension(a);
+  const lv = clamp(Math.round(level), 1, Math.min(MAX_LEVEL, cap));
+  return { level: lv, ascension: a };
+}
+
 /** Max character/weapon level unlocked at this ascension (from promote table). */
 export function maxLevelForAscension(
   promotes: UpgradePromoteStep[],
   ascension: number,
 ): number {
-  const row = promotes.find((p) => p.promoteLevel === ascension);
-  return row?.unlockMaxLevel ?? MAX_LEVEL;
+  const a = clamp(ascension, 0, MAX_ASCENSION);
+  const row = promotes.find((p) => p.promoteLevel === a);
+  return row?.unlockMaxLevel ?? levelCapForAscension(a);
 }
 
 /**
@@ -55,7 +84,7 @@ export function minLevelForAscension(
   const a = clamp(ascension, 0, MAX_ASCENSION);
   if (a <= 0) return 1;
   const prev = promotes.find((p) => p.promoteLevel === a - 1);
-  return prev?.unlockMaxLevel ?? 1;
+  return prev?.unlockMaxLevel ?? levelCapForAscension(a - 1);
 }
 
 /**

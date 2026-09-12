@@ -10,7 +10,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1000.986,
+    "atkBase": 26.6266,
+    "defBase": 61.0266,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 858.255,
+        "atk": 22.828234,
+        "def": 52.326,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1468.0677,
+        "atk": 39.048294,
+        "def": 89.505,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2281.1514,
+        "atk": 60.67504,
+        "def": 139.077,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2890.964,
+        "atk": 76.8951,
+        "def": 176.256,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3500.7769,
+        "atk": 93.115166,
+        "def": 213.435,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4110.59,
+        "atk": 109.33523,
+        "def": 250.614,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Jean": {
     "name_id": "Qin",
@@ -23,7 +92,76 @@
       "heal_": 0.2215
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1143.984,
+    "atkBase": 18.62,
+    "defBase": 59.83,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 980.86285,
+        "atk": 15.9638,
+        "def": 51.3,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1677.7917,
+        "atk": 27.3065,
+        "def": 87.75,
+        "stats": {
+          "heal_": 0.0554
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2607.0303,
+        "atk": 42.4301,
+        "def": 136.35,
+        "stats": {
+          "heal_": 0.1108
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3303.959,
+        "atk": 53.7728,
+        "def": 172.8,
+        "stats": {
+          "heal_": 0.1108
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4000.888,
+        "atk": 65.1155,
+        "def": 209.25,
+        "stats": {
+          "heal_": 0.1662
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4697.817,
+        "atk": 76.4582,
+        "def": 245.7,
+        "stats": {
+          "heal_": 0.2215
+        }
+      }
+    ]
   },
   "Traveler": {
     "name_id": "PlayerBoy",
@@ -36,85 +174,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
-  },
-  "TravelerAnemo": {
-    "name_id": "PlayerBoy-Anemo",
-    "name": "Traveler",
-    "level": 90,
-    "hp": 10874.9,
-    "atk": 212.4,
-    "def": 682.5,
-    "ascension": {
-      "atk_": 0.24
+    "baseCritDMG": 0.5,
+    "hpBase": 911.791,
+    "atkBase": 17.808,
+    "defBase": 57.225,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
     },
-    "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
-  },
-  "TravelerDendro": {
-    "name_id": "PlayerBoy-Dendro",
-    "name": "Traveler",
-    "level": 90,
-    "hp": 10874.9,
-    "atk": 212.4,
-    "def": 682.5,
-    "ascension": {
-      "atk_": 0.24
-    },
-    "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
-  },
-  "TravelerElectro": {
-    "name_id": "PlayerBoy-Electro",
-    "name": "Traveler",
-    "level": 90,
-    "hp": 10874.9,
-    "atk": 212.4,
-    "def": 682.5,
-    "ascension": {
-      "atk_": 0.24
-    },
-    "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
-  },
-  "TravelerGeo": {
-    "name_id": "PlayerBoy-Geo",
-    "name": "Traveler",
-    "level": 90,
-    "hp": 10874.9,
-    "atk": 212.4,
-    "def": 682.5,
-    "ascension": {
-      "atk_": 0.24
-    },
-    "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
-  },
-  "TravelerHydro": {
-    "name_id": "PlayerBoy-Hydro",
-    "name": "Traveler",
-    "level": 90,
-    "hp": 10874.9,
-    "atk": 212.4,
-    "def": 682.5,
-    "ascension": {
-      "atk_": 0.24
-    },
-    "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
-  },
-  "TravelerPyro": {
-    "name_id": "PlayerBoy-Pyro",
-    "name": "Traveler",
-    "level": 90,
-    "hp": 10874.9,
-    "atk": 212.4,
-    "def": 682.5,
-    "ascension": {
-      "atk_": 0.24
-    },
-    "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 681.15454,
+        "atk": 13.3038,
+        "def": 42.75,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1165.1328,
+        "atk": 22.7565,
+        "def": 73.125,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1810.4371,
+        "atk": 35.3601,
+        "def": 113.625,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2294.4153,
+        "atk": 44.8128,
+        "def": 144,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2778.3936,
+        "atk": 54.2655,
+        "def": 174.375,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3262.3718,
+        "atk": 63.7182,
+        "def": 204.75,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Lisa": {
     "name_id": "Lisa",
@@ -127,7 +256,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 802.3761,
+    "atkBase": 19.41072,
+    "defBase": 48.069,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 599.416,
+        "atk": 14.501142,
+        "def": 35.91,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1025.3169,
+        "atk": 24.804585,
+        "def": 61.425,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1593.1847,
+        "atk": 38.542507,
+        "def": 95.445,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2019.0856,
+        "atk": 48.84595,
+        "def": 120.96,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2444.9863,
+        "atk": 59.149395,
+        "def": 146.475,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2870.8872,
+        "atk": 69.452835,
+        "def": 171.99,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "Barbara": {
     "name_id": "Barbara",
@@ -140,7 +338,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 820.6119,
+    "atkBase": 13.356,
+    "defBase": 56.0805,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 613.0391,
+        "atk": 9.97785,
+        "def": 41.895,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1048.6195,
+        "atk": 17.067375,
+        "def": 71.6625,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1629.3934,
+        "atk": 26.520075,
+        "def": 111.3525,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2064.9739,
+        "atk": 33.6096,
+        "def": 141.12,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2500.5542,
+        "atk": 40.699123,
+        "def": 170.8875,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2936.1348,
+        "atk": 47.78865,
+        "def": 200.655,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Kaeya": {
     "name_id": "Kaeya",
@@ -153,7 +420,76 @@
       "enerRech_": 0.2667
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 975.6164,
+    "atkBase": 18.6984,
+    "defBase": 66.381,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 728.8354,
+        "atk": 13.96899,
+        "def": 49.59,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1246.6921,
+        "atk": 23.894325,
+        "def": 84.825,
+        "stats": {
+          "enerRech_": 0.0667
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1937.1677,
+        "atk": 37.128105,
+        "def": 131.805,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2455.0244,
+        "atk": 47.05344,
+        "def": 167.04,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2972.881,
+        "atk": 56.978775,
+        "def": 202.275,
+        "stats": {
+          "enerRech_": 0.2
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3490.7378,
+        "atk": 66.90411,
+        "def": 237.51,
+        "stats": {
+          "enerRech_": 0.2667
+        }
+      }
+    ]
   },
   "Diluc": {
     "name_id": "Diluc",
@@ -166,7 +502,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1010.5192,
+    "atkBase": 26.068,
+    "defBase": 61.0266,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 866.42883,
+        "atk": 22.34932,
+        "def": 52.326,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1482.0493,
+        "atk": 38.2291,
+        "def": 89.505,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2302.8767,
+        "atk": 59.40214,
+        "def": 139.077,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2918.497,
+        "atk": 75.28192,
+        "def": 176.256,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3534.1177,
+        "atk": 91.1617,
+        "def": 213.435,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4149.7383,
+        "atk": 107.04148,
+        "def": 250.614,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Razor": {
     "name_id": "Razor",
@@ -179,7 +584,76 @@
       "physical_dmg_": 0.3
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1002.9701,
+    "atkBase": 19.5888,
+    "defBase": 62.9475,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 749.27,
+        "atk": 14.63418,
+        "def": 47.025,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1281.6461,
+        "atk": 25.03215,
+        "def": 80.4375,
+        "stats": {
+          "physical_dmg_": 0.075
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1991.4808,
+        "atk": 38.89611,
+        "def": 124.9875,
+        "stats": {
+          "physical_dmg_": 0.15
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2523.857,
+        "atk": 49.29408,
+        "def": 158.4,
+        "stats": {
+          "physical_dmg_": 0.15
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3056.233,
+        "atk": 59.69205,
+        "def": 191.8125,
+        "stats": {
+          "physical_dmg_": 0.225
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3588.6091,
+        "atk": 70.09002,
+        "def": 225.225,
+        "stats": {
+          "physical_dmg_": 0.3
+        }
+      }
+    ]
   },
   "Amber": {
     "name_id": "Ambor",
@@ -192,7 +666,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 793.2582,
+    "atkBase": 18.6984,
+    "defBase": 50.358,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 592.6045,
+        "atk": 13.96899,
+        "def": 37.62,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1013.6655,
+        "atk": 23.894325,
+        "def": 64.35,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1575.0803,
+        "atk": 37.128105,
+        "def": 99.99,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 1996.1414,
+        "atk": 47.05344,
+        "def": 126.72,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2417.2024,
+        "atk": 56.978775,
+        "def": 153.45,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2838.2634,
+        "atk": 66.90411,
+        "def": 180.18,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Venti": {
     "name_id": "Venti",
@@ -205,7 +748,76 @@
       "enerRech_": 0.32
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 819.8552,
+    "atkBase": 20.482,
+    "defBase": 52.0521,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 702.9517,
+        "atk": 17.56018,
+        "def": 44.631,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1202.4174,
+        "atk": 30.03715,
+        "def": 76.3425,
+        "stats": {
+          "enerRech_": 0.08
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1868.3716,
+        "atk": 46.67311,
+        "def": 118.6245,
+        "stats": {
+          "enerRech_": 0.16
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2367.8374,
+        "atk": 59.15008,
+        "def": 150.336,
+        "stats": {
+          "enerRech_": 0.16
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2867.303,
+        "atk": 71.62705,
+        "def": 182.0475,
+        "stats": {
+          "enerRech_": 0.24
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3366.7688,
+        "atk": 84.10402,
+        "def": 213.759,
+        "stats": {
+          "enerRech_": 0.32
+        }
+      }
+    ]
   },
   "Xiangling": {
     "name_id": "Xiangling",
@@ -218,7 +830,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 911.791,
+    "atkBase": 18.87648,
+    "defBase": 56.0805,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 681.15454,
+        "atk": 14.102028,
+        "def": 41.895,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1165.1328,
+        "atk": 24.12189,
+        "def": 71.6625,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1810.4371,
+        "atk": 37.481705,
+        "def": 111.3525,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2294.4153,
+        "atk": 47.501568,
+        "def": 141.12,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2778.3936,
+        "atk": 57.52143,
+        "def": 170.8875,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3262.3718,
+        "atk": 67.54129,
+        "def": 200.655,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "Beidou": {
     "name_id": "Beidou",
@@ -231,7 +912,76 @@
       "electro_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1094.1492,
+    "atkBase": 18.87648,
+    "defBase": 54.36375,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 817.3855,
+        "atk": 14.102028,
+        "def": 40.6125,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1398.1593,
+        "atk": 24.12189,
+        "def": 69.46875,
+        "stats": {
+          "electro_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2172.5247,
+        "atk": 37.481705,
+        "def": 107.94375,
+        "stats": {
+          "electro_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2753.2983,
+        "atk": 47.501568,
+        "def": 136.8,
+        "stats": {
+          "electro_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3334.0723,
+        "atk": 57.52143,
+        "def": 165.65625,
+        "stats": {
+          "electro_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3914.8462,
+        "atk": 67.54129,
+        "def": 194.5125,
+        "stats": {
+          "electro_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Xingqiu": {
     "name_id": "Xingqiu",
@@ -244,7 +994,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 857.08356,
+    "atkBase": 16.9176,
+    "defBase": 63.51975,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 640.2853,
+        "atk": 12.63861,
+        "def": 47.4525,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1095.2249,
+        "atk": 21.618675,
+        "def": 81.16875,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1701.8109,
+        "atk": 33.592094,
+        "def": 126.12375,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2156.7505,
+        "atk": 42.57216,
+        "def": 159.84,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2611.69,
+        "atk": 51.552223,
+        "def": 193.55624,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3066.6296,
+        "atk": 60.53229,
+        "def": 227.2725,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Xiao": {
     "name_id": "Xiao",
@@ -257,7 +1076,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 991.4528,
+    "atkBase": 27.1852,
+    "defBase": 62.2232,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 850.0811,
+        "atk": 23.307148,
+        "def": 53.352,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1454.0862,
+        "atk": 39.86749,
+        "def": 91.26,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2259.4263,
+        "atk": 61.947945,
+        "def": 141.804,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2863.4312,
+        "atk": 78.508286,
+        "def": 179.712,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3467.4363,
+        "atk": 95.06863,
+        "def": 217.62,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4071.4412,
+        "atk": 111.628975,
+        "def": 255.528,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Ningguang": {
     "name_id": "Ningguang",
@@ -270,7 +1158,76 @@
       "geo_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 820.6119,
+    "atkBase": 17.808,
+    "defBase": 48.069,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 613.0391,
+        "atk": 13.3038,
+        "def": 35.91,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1048.6195,
+        "atk": 22.7565,
+        "def": 61.425,
+        "stats": {
+          "geo_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1629.3934,
+        "atk": 35.3601,
+        "def": 95.445,
+        "stats": {
+          "geo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2064.9739,
+        "atk": 44.8128,
+        "def": 120.96,
+        "stats": {
+          "geo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2500.5542,
+        "atk": 54.2655,
+        "def": 146.475,
+        "stats": {
+          "geo_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2936.1348,
+        "atk": 63.7182,
+        "def": 171.99,
+        "stats": {
+          "geo_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Klee": {
     "name_id": "Klee",
@@ -283,7 +1240,76 @@
       "pyro_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 800.7888,
+    "atkBase": 24.206,
+    "defBase": 47.864,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 686.604,
+        "atk": 20.75294,
+        "def": 41.04,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1174.4542,
+        "atk": 35.49845,
+        "def": 70.2,
+        "stats": {
+          "pyro_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1824.9211,
+        "atk": 55.15913,
+        "def": 109.08,
+        "stats": {
+          "pyro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2312.7712,
+        "atk": 69.90464,
+        "def": 138.24,
+        "stats": {
+          "pyro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2800.6216,
+        "atk": 84.65015,
+        "def": 167.4,
+        "stats": {
+          "pyro_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3288.4717,
+        "atk": 99.39566,
+        "def": 196.56,
+        "stats": {
+          "pyro_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Zhongli": {
     "name_id": "Zhongli",
@@ -296,7 +1322,76 @@
       "geo_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1143.984,
+    "atkBase": 19.551,
+    "defBase": 57.4368,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 980.8628,
+        "atk": 16.762,
+        "def": 49.248,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1677.7917,
+        "atk": 28.6718,
+        "def": 84.24,
+        "stats": {
+          "geo_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2607.0303,
+        "atk": 44.5516,
+        "def": 130.896,
+        "stats": {
+          "geo_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3303.959,
+        "atk": 56.4614,
+        "def": 165.888,
+        "stats": {
+          "geo_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4000.888,
+        "atk": 68.3713,
+        "def": 200.88,
+        "stats": {
+          "geo_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4697.817,
+        "atk": 80.2811,
+        "def": 235.872,
+        "stats": {
+          "geo_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Fischl": {
     "name_id": "Fischl",
@@ -309,7 +1404,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 770.4634,
+    "atkBase": 20.4792,
+    "defBase": 49.78575,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 575.5756,
+        "atk": 15.29937,
+        "def": 37.1925,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 984.53723,
+        "atk": 26.169975,
+        "def": 63.61875,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1529.8193,
+        "atk": 40.664116,
+        "def": 98.85375,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 1938.781,
+        "atk": 51.53472,
+        "def": 125.28,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2347.7427,
+        "atk": 62.405327,
+        "def": 151.70625,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2756.704,
+        "atk": 73.27593,
+        "def": 178.1325,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Bennett": {
     "name_id": "Bennett",
@@ -322,7 +1486,76 @@
       "enerRech_": 0.2667
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.4418,
+    "atkBase": 16.0272,
+    "defBase": 64.66425,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 776.5162,
+        "atk": 11.97342,
+        "def": 48.3075,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1328.2513,
+        "atk": 20.48085,
+        "def": 82.63125,
+        "stats": {
+          "enerRech_": 0.0667
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2063.8984,
+        "atk": 31.82409,
+        "def": 128.39626,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2615.6335,
+        "atk": 40.33152,
+        "def": 162.72,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3167.3687,
+        "atk": 48.83895,
+        "def": 197.04375,
+        "stats": {
+          "enerRech_": 0.2
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3719.104,
+        "atk": 57.34638,
+        "def": 231.3675,
+        "stats": {
+          "enerRech_": 0.2667
+        }
+      }
+    ]
   },
   "Tartaglia": {
     "name_id": "Tartaglia",
@@ -335,7 +1568,76 @@
       "hydro_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1020.0524,
+    "atkBase": 23.4612,
+    "defBase": 63.4198,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 874.6027,
+        "atk": 20.114388,
+        "def": 54.378,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1496.0309,
+        "atk": 34.40619,
+        "def": 93.015,
+        "stats": {
+          "hydro_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2324.6018,
+        "atk": 53.461926,
+        "def": 144.531,
+        "stats": {
+          "hydro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2946.03,
+        "atk": 67.75373,
+        "def": 183.168,
+        "stats": {
+          "hydro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3567.4585,
+        "atk": 82.04553,
+        "def": 221.805,
+        "stats": {
+          "hydro_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4188.8867,
+        "atk": 96.33733,
+        "def": 260.442,
+        "stats": {
+          "hydro_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Noelle": {
     "name_id": "Noel",
@@ -348,7 +1650,76 @@
       "def_": 0.3
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1012.088,
+    "atkBase": 16.0272,
+    "defBase": 66.95325,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 756.08154,
+        "atk": 11.97342,
+        "def": 50.0175,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1293.2974,
+        "atk": 20.48085,
+        "def": 85.55625,
+        "stats": {
+          "def_": 0.075
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2009.5852,
+        "atk": 31.82409,
+        "def": 132.94125,
+        "stats": {
+          "def_": 0.15
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2546.801,
+        "atk": 40.33152,
+        "def": 168.48,
+        "stats": {
+          "def_": 0.15
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3084.0168,
+        "atk": 48.83895,
+        "def": 204.01875,
+        "stats": {
+          "def_": 0.225
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3621.2327,
+        "atk": 57.34638,
+        "def": 239.5575,
+        "stats": {
+          "def_": 0.3
+        }
+      }
+    ]
   },
   "Qiqi": {
     "name_id": "Qiqi",
@@ -361,7 +1732,76 @@
       "heal_": 0.2215
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 962.8532,
+    "atkBase": 22.344,
+    "defBase": 71.796,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 825.5596,
+        "atk": 19.15656,
+        "def": 61.56,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1412.1414,
+        "atk": 32.7678,
+        "def": 105.3,
+        "stats": {
+          "heal_": 0.0554
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2194.2505,
+        "atk": 50.91612,
+        "def": 163.62,
+        "stats": {
+          "heal_": 0.1108
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2780.8323,
+        "atk": 64.52736,
+        "def": 207.36,
+        "stats": {
+          "heal_": 0.1108
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3367.414,
+        "atk": 78.1386,
+        "def": 251.1,
+        "stats": {
+          "heal_": 0.1662
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3953.9958,
+        "atk": 91.74984,
+        "def": 294.84,
+        "stats": {
+          "heal_": 0.2215
+        }
+      }
+    ]
   },
   "Chongyun": {
     "name_id": "Chongyun",
@@ -374,7 +1814,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 920.90894,
+    "atkBase": 18.6984,
+    "defBase": 54.36375,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 687.9661,
+        "atk": 13.96899,
+        "def": 40.6125,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1176.7842,
+        "atk": 23.894325,
+        "def": 69.46875,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1828.5415,
+        "atk": 37.128105,
+        "def": 107.94375,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2317.3596,
+        "atk": 47.05344,
+        "def": 136.8,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2806.1775,
+        "atk": 56.978775,
+        "def": 165.65625,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3294.9956,
+        "atk": 66.90411,
+        "def": 194.5125,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Ganyu": {
     "name_id": "Ganyu",
@@ -387,7 +1896,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 762.656,
+    "atkBase": 26.068,
+    "defBase": 49.0606,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 653.90857,
+        "atk": 22.34932,
+        "def": 42.066,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1118.5278,
+        "atk": 38.2291,
+        "def": 71.955,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1738.0201,
+        "atk": 59.40214,
+        "def": 111.807,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2202.6394,
+        "atk": 75.28192,
+        "def": 141.696,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2667.2585,
+        "atk": 91.1617,
+        "def": 171.585,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3131.878,
+        "atk": 107.04148,
+        "def": 201.474,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Albedo": {
     "name_id": "Albedo",
@@ -400,7 +1978,76 @@
       "geo_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1029.5856,
+    "atkBase": 19.551,
+    "defBase": 68.2062,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 882.77655,
+        "atk": 16.76199,
+        "def": 58.482,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1510.0126,
+        "atk": 28.671825,
+        "def": 100.035,
+        "stats": {
+          "geo_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2346.3271,
+        "atk": 44.551605,
+        "def": 155.439,
+        "stats": {
+          "geo_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2973.5632,
+        "atk": 56.46144,
+        "def": 196.992,
+        "stats": {
+          "geo_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3600.799,
+        "atk": 68.37128,
+        "def": 238.545,
+        "stats": {
+          "geo_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4228.035,
+        "atk": 80.28111,
+        "def": 280.098,
+        "stats": {
+          "geo_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Diona": {
     "name_id": "Diona",
@@ -413,7 +2060,76 @@
       "cryo_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 802.3761,
+    "atkBase": 17.808,
+    "defBase": 50.358,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 599.416,
+        "atk": 13.3038,
+        "def": 37.62,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1025.3169,
+        "atk": 22.7565,
+        "def": 64.35,
+        "stats": {
+          "cryo_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1593.1847,
+        "atk": 35.3601,
+        "def": 99.99,
+        "stats": {
+          "cryo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2019.0854,
+        "atk": 44.8128,
+        "def": 126.72,
+        "stats": {
+          "cryo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2444.9863,
+        "atk": 54.2655,
+        "def": 153.45,
+        "stats": {
+          "cryo_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2870.8872,
+        "atk": 63.7182,
+        "def": 180.18,
+        "stats": {
+          "cryo_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Mona": {
     "name_id": "Mona",
@@ -426,7 +2142,76 @@
       "enerRech_": 0.32
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 810.322,
+    "atkBase": 22.344,
+    "defBase": 50.8555,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 694.77783,
+        "atk": 19.15656,
+        "def": 43.605,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1188.4358,
+        "atk": 32.7678,
+        "def": 74.5875,
+        "stats": {
+          "enerRech_": 0.08
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1846.6464,
+        "atk": 50.91612,
+        "def": 115.8975,
+        "stats": {
+          "enerRech_": 0.16
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2340.3042,
+        "atk": 64.52736,
+        "def": 146.88,
+        "stats": {
+          "enerRech_": 0.16
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2833.9622,
+        "atk": 78.1386,
+        "def": 177.8625,
+        "stats": {
+          "enerRech_": 0.24
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3327.62,
+        "atk": 91.74984,
+        "def": 208.845,
+        "stats": {
+          "enerRech_": 0.32
+        }
+      }
+    ]
   },
   "Keqing": {
     "name_id": "Keqing",
@@ -439,7 +2224,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1020.0524,
+    "atkBase": 25.137,
+    "defBase": 62.2232,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 874.6027,
+        "atk": 21.55113,
+        "def": 53.352,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1496.0309,
+        "atk": 36.863773,
+        "def": 91.26,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2324.6018,
+        "atk": 57.280636,
+        "def": 141.804,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2946.03,
+        "atk": 72.59328,
+        "def": 179.712,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3567.4585,
+        "atk": 87.90592,
+        "def": 217.62,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4188.8867,
+        "atk": 103.21857,
+        "def": 255.528,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Sucrose": {
     "name_id": "Sucrose",
@@ -452,7 +2306,76 @@
       "anemo_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 775.02234,
+    "atkBase": 14.2464,
+    "defBase": 58.94175,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 578.9814,
+        "atk": 10.64304,
+        "def": 44.0325,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 990.36285,
+        "atk": 18.2052,
+        "def": 75.31875,
+        "stats": {
+          "anemo_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1538.8716,
+        "atk": 28.28808,
+        "def": 117.03375,
+        "stats": {
+          "anemo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 1950.253,
+        "atk": 35.85024,
+        "def": 148.32,
+        "stats": {
+          "anemo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2361.6345,
+        "atk": 43.4124,
+        "def": 179.60625,
+        "stats": {
+          "anemo_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2773.016,
+        "atk": 50.97456,
+        "def": 210.8925,
+        "stats": {
+          "anemo_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Xinyan": {
     "name_id": "Xinyan",
@@ -465,7 +2388,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 939.1447,
+    "atkBase": 20.83536,
+    "defBase": 66.95325,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 701.5892,
+        "atk": 15.565446,
+        "def": 50.0175,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1200.0868,
+        "atk": 26.625105,
+        "def": 85.55625,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1864.7502,
+        "atk": 41.37132,
+        "def": 132.94125,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2363.2478,
+        "atk": 52.430977,
+        "def": 168.48,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2861.7454,
+        "atk": 63.490635,
+        "def": 204.01875,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3360.243,
+        "atk": 74.55029,
+        "def": 239.5575,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Rosaria": {
     "name_id": "Rosaria",
@@ -478,7 +2470,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1030.3239,
+    "atkBase": 20.12304,
+    "defBase": 59.514,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 769.70465,
+        "atk": 15.033294,
+        "def": 44.46,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1316.6001,
+        "atk": 25.714846,
+        "def": 76.05,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2045.794,
+        "atk": 39.956913,
+        "def": 118.17,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2592.6895,
+        "atk": 50.638466,
+        "def": 149.76,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3139.5847,
+        "atk": 61.320015,
+        "def": 181.35,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3686.4802,
+        "atk": 72.001564,
+        "def": 212.94,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "HuTao": {
     "name_id": "Hutao",
@@ -491,7 +2552,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1210.7164,
+    "atkBase": 8.2859,
+    "defBase": 68.2062,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 1038.0798,
+        "atk": 7.103891,
+        "def": 58.482,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1775.6628,
+        "atk": 12.151393,
+        "def": 100.035,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2759.107,
+        "atk": 18.881393,
+        "def": 155.439,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3496.69,
+        "atk": 23.928896,
+        "def": 196.992,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4234.273,
+        "atk": 28.976398,
+        "def": 238.545,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4971.856,
+        "atk": 34.0239,
+        "def": 280.098,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "KaedeharaKazuha": {
     "name_id": "Kazuha",
@@ -504,7 +2634,76 @@
       "eleMas": 115.2
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.1188,
+    "atkBase": 23.0888,
+    "defBase": 62.8215,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 890.95044,
+        "atk": 19.795113,
+        "def": 53.865,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1523.9941,
+        "atk": 33.86006,
+        "def": 92.1375,
+        "stats": {
+          "eleMas": 28.8
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2368.0525,
+        "atk": 52.613323,
+        "def": 143.1675,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3001.0962,
+        "atk": 66.67827,
+        "def": 181.44,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3634.14,
+        "atk": 80.74322,
+        "def": 219.7125,
+        "stats": {
+          "eleMas": 86.4
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4267.1836,
+        "atk": 94.80817,
+        "def": 257.985,
+        "stats": {
+          "eleMas": 115.2
+        }
+      }
+    ]
   },
   "Yanfei": {
     "name_id": "Feiyan",
@@ -517,7 +2716,76 @@
       "pyro_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 784.14026,
+    "atkBase": 20.12304,
+    "defBase": 49.2135,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 585.7929,
+        "atk": 15.033294,
+        "def": 36.765,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1002.0142,
+        "atk": 25.714846,
+        "def": 62.8875,
+        "stats": {
+          "pyro_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1556.976,
+        "atk": 39.956913,
+        "def": 97.7175,
+        "stats": {
+          "pyro_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 1973.1973,
+        "atk": 50.638466,
+        "def": 123.84,
+        "stats": {
+          "pyro_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2389.4185,
+        "atk": 61.320015,
+        "def": 149.9625,
+        "stats": {
+          "pyro_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2805.64,
+        "atk": 72.001564,
+        "def": 176.085,
+        "stats": {
+          "pyro_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Yoimiya": {
     "name_id": "Yoimiya",
@@ -530,7 +2798,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 791.2556,
+    "atkBase": 25.137,
+    "defBase": 47.864,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 678.4301,
+        "atk": 21.55113,
+        "def": 41.04,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1160.4725,
+        "atk": 36.863773,
+        "def": 70.2,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1803.1959,
+        "atk": 57.280636,
+        "def": 109.08,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2285.2383,
+        "atk": 72.59328,
+        "def": 138.24,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2767.2808,
+        "atk": 87.90592,
+        "def": 167.4,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3249.3232,
+        "atk": 103.21857,
+        "def": 196.56,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Thoma": {
     "name_id": "Tohma",
@@ -543,7 +2880,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 866.2015,
+    "atkBase": 16.9176,
+    "defBase": 62.9475,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 647.0968,
+        "atk": 12.63861,
+        "def": 47.025,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1106.8762,
+        "atk": 21.618675,
+        "def": 80.4375,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1719.9153,
+        "atk": 33.592094,
+        "def": 124.9875,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2179.6946,
+        "atk": 42.57216,
+        "def": 158.4,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2639.4739,
+        "atk": 51.552223,
+        "def": 191.8125,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3099.2532,
+        "atk": 60.53229,
+        "def": 225.225,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Eula": {
     "name_id": "Eula",
@@ -556,7 +2962,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1029.5856,
+    "atkBase": 26.6266,
+    "defBase": 58.45391,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 882.77655,
+        "atk": 22.828234,
+        "def": 50.1201,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1510.0126,
+        "atk": 39.048294,
+        "def": 85.73175,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2346.3271,
+        "atk": 60.67504,
+        "def": 133.21394,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2973.5632,
+        "atk": 76.8951,
+        "def": 168.8256,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3600.799,
+        "atk": 93.115166,
+        "def": 204.43726,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4228.035,
+        "atk": 109.33523,
+        "def": 240.0489,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "RaidenShogun": {
     "name_id": "Shougun",
@@ -569,7 +3044,76 @@
       "enerRech_": 0.32
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1004.79926,
+    "atkBase": 26.2542,
+    "defBase": 61.44541,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 861.52454,
+        "atk": 22.508959,
+        "def": 52.6851,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1473.6604,
+        "atk": 38.502167,
+        "def": 90.11925,
+        "stats": {
+          "enerRech_": 0.08
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2289.8416,
+        "atk": 59.826443,
+        "def": 140.03145,
+        "stats": {
+          "enerRech_": 0.16
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2901.9773,
+        "atk": 75.81965,
+        "def": 177.4656,
+        "stats": {
+          "enerRech_": 0.16
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3514.1133,
+        "atk": 91.81286,
+        "def": 214.89975,
+        "stats": {
+          "enerRech_": 0.24
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4126.249,
+        "atk": 107.80606,
+        "def": 252.3339,
+        "stats": {
+          "enerRech_": 0.32
+        }
+      }
+    ]
   },
   "Sayu": {
     "name_id": "Sayu",
@@ -582,7 +3126,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 993.8522,
+    "atkBase": 20.4792,
+    "defBase": 62.432476,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 742.4585,
+        "atk": 15.29937,
+        "def": 46.64025,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1269.9948,
+        "atk": 26.169975,
+        "def": 79.77937,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1973.3765,
+        "atk": 40.664116,
+        "def": 123.964874,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2500.9128,
+        "atk": 51.53472,
+        "def": 157.104,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3028.449,
+        "atk": 62.405327,
+        "def": 190.24312,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3555.9854,
+        "atk": 73.27593,
+        "def": 223.38225,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "SangonomiyaKokomi": {
     "name_id": "Kokomi",
@@ -595,7 +3208,76 @@
       "hydro_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1048.652,
+    "atkBase": 18.2476,
+    "defBase": 51.15465,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 899.12427,
+        "atk": 15.644524,
+        "def": 43.8615,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1537.9757,
+        "atk": 26.76037,
+        "def": 75.02625,
+        "stats": {
+          "hydro_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2389.7776,
+        "atk": 41.581497,
+        "def": 116.57925,
+        "stats": {
+          "hydro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3028.6292,
+        "atk": 52.697346,
+        "def": 147.744,
+        "stats": {
+          "hydro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3667.4805,
+        "atk": 63.81319,
+        "def": 178.90875,
+        "stats": {
+          "hydro_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4306.332,
+        "atk": 74.92904,
+        "def": 210.0735,
+        "stats": {
+          "hydro_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Gorou": {
     "name_id": "Gorou",
@@ -608,7 +3290,76 @@
       "geo_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 802.3761,
+    "atkBase": 15.31488,
+    "defBase": 54.36375,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 599.416,
+        "atk": 11.441268,
+        "def": 40.6125,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1025.3169,
+        "atk": 19.57059,
+        "def": 69.46875,
+        "stats": {
+          "geo_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1593.1847,
+        "atk": 30.409685,
+        "def": 107.94375,
+        "stats": {
+          "geo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2019.0856,
+        "atk": 38.53901,
+        "def": 136.8,
+        "stats": {
+          "geo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2444.9863,
+        "atk": 46.66833,
+        "def": 165.65625,
+        "stats": {
+          "geo_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2870.8872,
+        "atk": 54.797653,
+        "def": 194.5125,
+        "stats": {
+          "geo_dmg_": 0.24
+        }
+      }
+    ]
   },
   "KujouSara": {
     "name_id": "Sara",
@@ -621,7 +3372,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 802.3761,
+    "atkBase": 16.38336,
+    "defBase": 52.647,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 599.416,
+        "atk": 12.239496,
+        "def": 39.33,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1025.3169,
+        "atk": 20.93598,
+        "def": 67.275,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1593.1847,
+        "atk": 32.531292,
+        "def": 104.535,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2019.0856,
+        "atk": 41.227776,
+        "def": 132.48,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2444.9863,
+        "atk": 49.92426,
+        "def": 160.425,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2870.8872,
+        "atk": 58.620743,
+        "def": 188.37,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "AratakiItto": {
     "name_id": "Itto",
@@ -634,7 +3454,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1000.986,
+    "atkBase": 17.689,
+    "defBase": 74.66784,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 858.255,
+        "atk": 15.16561,
+        "def": 64.0224,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1468.0677,
+        "atk": 25.941175,
+        "def": 109.512,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2281.1514,
+        "atk": 40.308594,
+        "def": 170.1648,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2890.964,
+        "atk": 51.08416,
+        "def": 215.6544,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3500.7769,
+        "atk": 61.859726,
+        "def": 261.144,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4110.59,
+        "atk": 72.63529,
+        "def": 306.6336,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "YaeMiko": {
     "name_id": "Yae",
@@ -647,7 +3536,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 807.46204,
+    "atkBase": 26.4404,
+    "defBase": 44.2742,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 692.3257,
+        "atk": 22.668596,
+        "def": 37.962,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1184.2413,
+        "atk": 38.77523,
+        "def": 64.935,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1840.1288,
+        "atk": 60.250744,
+        "def": 100.899,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2332.0444,
+        "atk": 76.357376,
+        "def": 127.872,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2823.96,
+        "atk": 92.46401,
+        "def": 154.845,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3315.8757,
+        "atk": 108.57064,
+        "def": 181.818,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "ShikanoinHeizou": {
     "name_id": "Heizo",
@@ -660,7 +3618,76 @@
       "anemo_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 893.5552,
+    "atkBase": 18.87648,
+    "defBase": 57.33945,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 667.5315,
+        "atk": 14.102028,
+        "def": 42.8355,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1141.8302,
+        "atk": 24.12189,
+        "def": 73.27125,
+        "stats": {
+          "anemo_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1774.2284,
+        "atk": 37.481705,
+        "def": 113.85225,
+        "stats": {
+          "anemo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2248.527,
+        "atk": 47.501568,
+        "def": 144.288,
+        "stats": {
+          "anemo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2722.8257,
+        "atk": 57.52143,
+        "def": 174.72375,
+        "stats": {
+          "anemo_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3197.1245,
+        "atk": 67.54129,
+        "def": 205.1595,
+        "stats": {
+          "anemo_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Yelan": {
     "name_id": "Yelan",
@@ -673,7 +3700,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1124.9176,
+    "atkBase": 18.9924,
+    "defBase": 42.65879,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 964.51514,
+        "atk": 16.283075,
+        "def": 36.5769,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1649.8285,
+        "atk": 27.85263,
+        "def": 62.56575,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2563.5796,
+        "atk": 43.2787,
+        "def": 97.21755,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3248.893,
+        "atk": 54.848255,
+        "def": 123.2064,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3934.2065,
+        "atk": 66.41781,
+        "def": 149.19525,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4619.52,
+        "atk": 77.987366,
+        "def": 175.1841,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Kirara": {
     "name_id": "Momoka",
@@ -686,7 +3782,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1021.20593,
+    "atkBase": 18.6984,
+    "defBase": 45.78,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 762.8931,
+        "atk": 13.96899,
+        "def": 34.2,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1304.9487,
+        "atk": 23.894325,
+        "def": 58.5,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2027.6896,
+        "atk": 37.128105,
+        "def": 90.9,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2569.745,
+        "atk": 47.05344,
+        "def": 115.2,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3111.8008,
+        "atk": 56.978775,
+        "def": 139.5,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3653.8564,
+        "atk": 66.90411,
+        "def": 163.8,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Aloy": {
     "name_id": "Aloy",
@@ -699,7 +3864,76 @@
       "cryo_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 848.4548,
+    "atkBase": 18.21036,
+    "defBase": 52.6504,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 727.47327,
+        "atk": 15.612596,
+        "def": 45.144,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1244.3622,
+        "atk": 26.705757,
+        "def": 77.22,
+        "stats": {
+          "cryo_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1933.5474,
+        "atk": 41.49664,
+        "def": 119.988,
+        "stats": {
+          "cryo_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2450.4363,
+        "atk": 52.589798,
+        "def": 152.064,
+        "stats": {
+          "cryo_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2967.3252,
+        "atk": 63.68296,
+        "def": 184.14,
+        "stats": {
+          "cryo_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3484.214,
+        "atk": 74.77612,
+        "def": 216.216,
+        "stats": {
+          "cryo_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Shenhe": {
     "name_id": "Shenhe",
@@ -712,7 +3946,76 @@
       "atk_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1011.47253,
+    "atkBase": 23.6474,
+    "defBase": 64.6164,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 867.2462,
+        "atk": 20.274027,
+        "def": 55.404,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1483.4475,
+        "atk": 34.679256,
+        "def": 94.77,
+        "stats": {
+          "atk_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2305.049,
+        "atk": 53.886227,
+        "def": 147.258,
+        "stats": {
+          "atk_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2921.2505,
+        "atk": 68.29146,
+        "def": 186.624,
+        "stats": {
+          "atk_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3537.4517,
+        "atk": 82.696686,
+        "def": 225.99,
+        "stats": {
+          "atk_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4153.653,
+        "atk": 97.10191,
+        "def": 265.356,
+        "stats": {
+          "atk_": 0.288
+        }
+      }
+    ]
   },
   "YunJin": {
     "name_id": "Yunjin",
@@ -725,7 +4028,76 @@
       "enerRech_": 0.2667
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 893.5552,
+    "atkBase": 16.0272,
+    "defBase": 61.5741,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 667.5315,
+        "atk": 11.97342,
+        "def": 45.999,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1141.8302,
+        "atk": 20.48085,
+        "def": 78.6825,
+        "stats": {
+          "enerRech_": 0.0667
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1774.2284,
+        "atk": 31.82409,
+        "def": 122.2605,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2248.527,
+        "atk": 40.33152,
+        "def": 154.944,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2722.8257,
+        "atk": 48.83895,
+        "def": 187.6275,
+        "stats": {
+          "enerRech_": 0.2
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3197.1245,
+        "atk": 57.34638,
+        "def": 220.311,
+        "stats": {
+          "enerRech_": 0.2667
+        }
+      }
+    ]
   },
   "KukiShinobu": {
     "name_id": "Shinobu",
@@ -738,7 +4110,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1030.3239,
+    "atkBase": 17.808,
+    "defBase": 62.9475,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 769.70465,
+        "atk": 13.3038,
+        "def": 47.025,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1316.6001,
+        "atk": 22.7565,
+        "def": 80.4375,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2045.794,
+        "atk": 35.3601,
+        "def": 124.9875,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2592.6895,
+        "atk": 44.8128,
+        "def": 158.4,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3139.5847,
+        "atk": 54.2655,
+        "def": 191.8125,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3686.4802,
+        "atk": 63.7182,
+        "def": 225.225,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "KamisatoAyato": {
     "name_id": "Ayato",
@@ -751,7 +4192,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1067.7184,
+    "atkBase": 23.275,
+    "defBase": 59.83,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 915.472,
+        "atk": 19.95475,
+        "def": 51.3,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1565.939,
+        "atk": 34.133125,
+        "def": 87.75,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2433.2283,
+        "atk": 53.037624,
+        "def": 136.35,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3083.695,
+        "atk": 67.216,
+        "def": 172.8,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3734.162,
+        "atk": 81.39438,
+        "def": 209.25,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4384.629,
+        "atk": 95.57275,
+        "def": 245.7,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Collei": {
     "name_id": "Collei",
@@ -764,7 +4274,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 820.6119,
+    "atkBase": 16.73952,
+    "defBase": 50.358,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 613.0391,
+        "atk": 12.505572,
+        "def": 37.62,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1048.6195,
+        "atk": 21.39111,
+        "def": 64.35,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1629.3934,
+        "atk": 33.238495,
+        "def": 99.99,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2064.9739,
+        "atk": 42.12403,
+        "def": 126.72,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2500.5542,
+        "atk": 51.00957,
+        "def": 153.45,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2936.1348,
+        "atk": 59.895107,
+        "def": 180.18,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Dori": {
     "name_id": "Dori",
@@ -777,7 +4356,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.4418,
+    "atkBase": 18.6984,
+    "defBase": 60.6585,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 776.5162,
+        "atk": 13.96899,
+        "def": 45.315,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1328.2513,
+        "atk": 23.894325,
+        "def": 77.5125,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2063.8984,
+        "atk": 37.128105,
+        "def": 120.4425,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2615.6335,
+        "atk": 47.05344,
+        "def": 152.64,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3167.3687,
+        "atk": 56.978775,
+        "def": 184.8375,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3719.104,
+        "atk": 66.90411,
+        "def": 217.035,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Tighnari": {
     "name_id": "Tighnari",
@@ -790,7 +4438,76 @@
       "dendro_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 844.64154,
+    "atkBase": 20.8544,
+    "defBase": 49.0606,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 724.20374,
+        "atk": 17.879456,
+        "def": 42.066,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1238.7695,
+        "atk": 30.58328,
+        "def": 71.955,
+        "stats": {
+          "dendro_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1924.8573,
+        "atk": 47.521713,
+        "def": 111.807,
+        "stats": {
+          "dendro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2439.423,
+        "atk": 60.225536,
+        "def": 141.696,
+        "stats": {
+          "dendro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2953.989,
+        "atk": 72.92936,
+        "def": 171.585,
+        "stats": {
+          "dendro_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3468.5547,
+        "atk": 85.63319,
+        "def": 201.474,
+        "stats": {
+          "dendro_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Nilou": {
     "name_id": "Nilou",
@@ -803,7 +4520,76 @@
       "hp_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1182.1168,
+    "atkBase": 17.8752,
+    "defBase": 56.71884,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 1013.5583,
+        "atk": 15.325248,
+        "def": 48.6324,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1733.7181,
+        "atk": 26.21424,
+        "def": 83.187,
+        "stats": {
+          "hp_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2693.9312,
+        "atk": 40.732895,
+        "def": 129.2598,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3414.091,
+        "atk": 51.621887,
+        "def": 163.8144,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4134.251,
+        "atk": 62.51088,
+        "def": 198.369,
+        "stats": {
+          "hp_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4854.4106,
+        "atk": 73.39987,
+        "def": 232.9236,
+        "stats": {
+          "hp_": 0.288
+        }
+      }
+    ]
   },
   "Cyno": {
     "name_id": "Cyno",
@@ -816,7 +4602,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 972.3864,
+    "atkBase": 24.7646,
+    "defBase": 66.88994,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 833.7334,
+        "atk": 21.231853,
+        "def": 57.3534,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1426.1229,
+        "atk": 36.317646,
+        "def": 98.1045,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2215.9756,
+        "atk": 56.432034,
+        "def": 152.4393,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2808.3652,
+        "atk": 71.51782,
+        "def": 193.1904,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3400.7546,
+        "atk": 86.603615,
+        "def": 233.9415,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3993.1443,
+        "atk": 101.68941,
+        "def": 274.6926,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Candace": {
     "name_id": "Candace",
@@ -829,7 +4684,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 911.791,
+    "atkBase": 17.808,
+    "defBase": 57.225,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 681.15454,
+        "atk": 13.3038,
+        "def": 42.75,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1165.1328,
+        "atk": 22.7565,
+        "def": 73.125,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1810.4371,
+        "atk": 35.3601,
+        "def": 113.625,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2294.4153,
+        "atk": 44.8128,
+        "def": 144,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2778.3936,
+        "atk": 54.2655,
+        "def": 174.375,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3262.3718,
+        "atk": 63.7182,
+        "def": 204.75,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Nahida": {
     "name_id": "Nahida",
@@ -842,7 +4766,76 @@
       "eleMas": 115.2
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 806.5087,
+    "atkBase": 23.275,
+    "defBase": 49.0606,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 691.5083,
+        "atk": 19.95475,
+        "def": 42.066,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1182.8431,
+        "atk": 34.133125,
+        "def": 71.955,
+        "stats": {
+          "eleMas": 28.8
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1837.9563,
+        "atk": 53.037624,
+        "def": 111.807,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2329.291,
+        "atk": 67.216,
+        "def": 141.696,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2820.626,
+        "atk": 81.39438,
+        "def": 171.585,
+        "stats": {
+          "eleMas": 86.4
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3311.961,
+        "atk": 95.57275,
+        "def": 201.474,
+        "stats": {
+          "eleMas": 115.2
+        }
+      }
+    ]
   },
   "Layla": {
     "name_id": "Layla",
@@ -855,7 +4848,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 930.0268,
+    "atkBase": 18.16416,
+    "defBase": 54.936,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 694.77765,
+        "atk": 13.569876,
+        "def": 41.04,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1188.4354,
+        "atk": 23.21163,
+        "def": 70.2,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1846.6459,
+        "atk": 36.067303,
+        "def": 109.08,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2340.3037,
+        "atk": 45.709057,
+        "def": 138.24,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2833.9614,
+        "atk": 55.35081,
+        "def": 167.4,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3327.6194,
+        "atk": 64.99256,
+        "def": 196.56,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Wanderer": {
     "name_id": "Wanderer",
@@ -868,7 +4930,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 791.2556,
+    "atkBase": 25.5094,
+    "defBase": 47.2657,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 678.4301,
+        "atk": 21.870405,
+        "def": 40.527,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1160.4725,
+        "atk": 37.409904,
+        "def": 69.3225,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1803.1959,
+        "atk": 58.12924,
+        "def": 107.7165,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2285.2383,
+        "atk": 73.66874,
+        "def": 136.512,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2767.2808,
+        "atk": 89.20824,
+        "def": 165.3075,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3249.3232,
+        "atk": 104.747734,
+        "def": 194.103,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Faruzan": {
     "name_id": "Faruzan",
@@ -881,7 +5012,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 802.3761,
+    "atkBase": 16.4724,
+    "defBase": 52.647,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 599.416,
+        "atk": 12.306015,
+        "def": 39.33,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1025.3169,
+        "atk": 21.049763,
+        "def": 67.275,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1593.1847,
+        "atk": 32.70809,
+        "def": 104.535,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2019.0856,
+        "atk": 41.45184,
+        "def": 132.48,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2444.9863,
+        "atk": 50.195587,
+        "def": 160.425,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2870.8872,
+        "atk": 58.939335,
+        "def": 188.37,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Yaoyao": {
     "name_id": "Yaoyao",
@@ -894,7 +5094,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1030.3239,
+    "atkBase": 17.808,
+    "defBase": 62.9475,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 769.70465,
+        "atk": 13.3038,
+        "def": 47.025,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1316.6001,
+        "atk": 22.7565,
+        "def": 80.4375,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2045.794,
+        "atk": 35.3601,
+        "def": 124.9875,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2592.6895,
+        "atk": 44.8128,
+        "def": 158.4,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3139.5847,
+        "atk": 54.2655,
+        "def": 191.8125,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3686.4802,
+        "atk": 63.7182,
+        "def": 225.225,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Alhaitham": {
     "name_id": "Alhatham",
@@ -907,7 +5176,76 @@
       "dendro_dmg_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.1188,
+    "atkBase": 24.3922,
+    "defBase": 60.84711,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 890.95044,
+        "atk": 20.912579,
+        "def": 52.1721,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1523.9941,
+        "atk": 35.771515,
+        "def": 89.24175,
+        "stats": {
+          "dendro_dmg_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2368.0525,
+        "atk": 55.58343,
+        "def": 138.66795,
+        "stats": {
+          "dendro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3001.0962,
+        "atk": 70.44237,
+        "def": 175.7376,
+        "stats": {
+          "dendro_dmg_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3634.14,
+        "atk": 85.30131,
+        "def": 212.80725,
+        "stats": {
+          "dendro_dmg_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4267.1836,
+        "atk": 100.16024,
+        "def": 249.8769,
+        "stats": {
+          "dendro_dmg_": 0.288
+        }
+      }
+    ]
   },
   "Dehya": {
     "name_id": "Dehya",
@@ -920,7 +5258,76 @@
       "hp_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1220.2496,
+    "atkBase": 20.6682,
+    "defBase": 48.88111,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 1046.2537,
+        "atk": 17.719818,
+        "def": 41.9121,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1789.6445,
+        "atk": 30.310215,
+        "def": 71.69175,
+        "stats": {
+          "hp_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2780.8323,
+        "atk": 47.097412,
+        "def": 111.39795,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3524.223,
+        "atk": 59.68781,
+        "def": 141.1776,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4267.614,
+        "atk": 72.278206,
+        "def": 170.95724,
+        "stats": {
+          "hp_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 5011.0044,
+        "atk": 84.8686,
+        "def": 200.7369,
+        "stats": {
+          "hp_": 0.288
+        }
+      }
+    ]
   },
   "Mika": {
     "name_id": "Mika",
@@ -933,7 +5340,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1048.5597,
+    "atkBase": 18.6984,
+    "defBase": 59.800125,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 783.32776,
+        "atk": 13.96899,
+        "def": 44.67375,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1339.9027,
+        "atk": 23.894325,
+        "def": 76.41563,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2082.0027,
+        "atk": 37.128105,
+        "def": 118.73813,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2638.5776,
+        "atk": 47.05344,
+        "def": 150.48,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3195.1526,
+        "atk": 56.978775,
+        "def": 182.22188,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3751.7275,
+        "atk": 66.90411,
+        "def": 213.96375,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Kaveh": {
     "name_id": "Kaveh",
@@ -946,7 +5422,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1002.9701,
+    "atkBase": 19.5888,
+    "defBase": 62.9475,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 749.27,
+        "atk": 14.63418,
+        "def": 47.025,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1281.6461,
+        "atk": 25.03215,
+        "def": 80.4375,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1991.4808,
+        "atk": 38.89611,
+        "def": 124.9875,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2523.857,
+        "atk": 49.29408,
+        "def": 158.4,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3056.233,
+        "atk": 59.69205,
+        "def": 191.8125,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3588.6091,
+        "atk": 70.09002,
+        "def": 225.225,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "Baizhu": {
     "name_id": "Baizhuer",
@@ -959,7 +5504,76 @@
       "hp_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.1188,
+    "atkBase": 14.9891,
+    "defBase": 38.8895,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 890.95044,
+        "atk": 12.850859,
+        "def": 33.345,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1523.9941,
+        "atk": 21.981731,
+        "def": 57.0375,
+        "stats": {
+          "hp_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2368.0525,
+        "atk": 34.15623,
+        "def": 88.6275,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3001.0962,
+        "atk": 43.287106,
+        "def": 112.32,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3634.14,
+        "atk": 52.417976,
+        "def": 136.0125,
+        "stats": {
+          "hp_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4267.1836,
+        "atk": 61.54885,
+        "def": 159.705,
+        "stats": {
+          "hp_": 0.288
+        }
+      }
+    ]
   },
   "Lynette": {
     "name_id": "Linette",
@@ -972,7 +5586,76 @@
       "anemo_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.4418,
+    "atkBase": 19.41072,
+    "defBase": 59.685677,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 776.5162,
+        "atk": 14.501142,
+        "def": 44.58825,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1328.2513,
+        "atk": 24.804585,
+        "def": 76.26938,
+        "stats": {
+          "anemo_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2063.8984,
+        "atk": 38.542507,
+        "def": 118.51087,
+        "stats": {
+          "anemo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2615.6335,
+        "atk": 48.84595,
+        "def": 150.192,
+        "stats": {
+          "anemo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3167.3687,
+        "atk": 59.149395,
+        "def": 181.87312,
+        "stats": {
+          "anemo_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3719.104,
+        "atk": 69.452835,
+        "def": 213.55424,
+        "stats": {
+          "anemo_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Lyney": {
     "name_id": "Liney",
@@ -985,7 +5668,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 857.988,
+    "atkBase": 24.7646,
+    "defBase": 41.881,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 735.64716,
+        "atk": 21.231853,
+        "def": 35.91,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1258.3438,
+        "atk": 36.317646,
+        "def": 61.425,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1955.2726,
+        "atk": 56.432034,
+        "def": 95.445,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2477.9692,
+        "atk": 71.51782,
+        "def": 120.96,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3000.666,
+        "atk": 86.603615,
+        "def": 146.475,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3523.3625,
+        "atk": 101.68941,
+        "def": 171.99,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Freminet": {
     "name_id": "Freminet",
@@ -998,7 +5750,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1012.088,
+    "atkBase": 21.3696,
+    "defBase": 59.39955,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 756.08154,
+        "atk": 15.96456,
+        "def": 44.3745,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1293.2974,
+        "atk": 27.3078,
+        "def": 75.90375,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2009.5852,
+        "atk": 42.43212,
+        "def": 117.94275,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2546.801,
+        "atk": 53.77536,
+        "def": 149.472,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3084.0168,
+        "atk": 65.1186,
+        "def": 181.00125,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3621.2327,
+        "atk": 76.46184,
+        "def": 212.5305,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Wriothesley": {
     "name_id": "Wriothesley",
@@ -1011,7 +5832,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1058.1852,
+    "atkBase": 24.206,
+    "defBase": 59.41119,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 907.29816,
+        "atk": 20.75294,
+        "def": 50.9409,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1551.9573,
+        "atk": 35.49845,
+        "def": 87.13575,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2411.503,
+        "atk": 55.15913,
+        "def": 135.39555,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3056.162,
+        "atk": 69.90464,
+        "def": 171.5904,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3700.8213,
+        "atk": 84.65015,
+        "def": 207.78525,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4345.4805,
+        "atk": 99.39566,
+        "def": 243.9801,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Neuvillette": {
     "name_id": "Neuvillette",
@@ -1024,7 +5914,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1143.984,
+    "atkBase": 16.21802,
+    "defBase": 44.8725,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 980.86285,
+        "atk": 13.90447,
+        "def": 38.475,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1677.7917,
+        "atk": 23.783962,
+        "def": 65.8125,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2607.0303,
+        "atk": 36.956615,
+        "def": 102.2625,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3303.959,
+        "atk": 46.83611,
+        "def": 129.6,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4000.888,
+        "atk": 56.715603,
+        "def": 156.9375,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4697.817,
+        "atk": 66.59509,
+        "def": 184.275,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Charlotte": {
     "name_id": "Charlotte",
@@ -1037,7 +5996,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 902.6731,
+    "atkBase": 14.51352,
+    "defBase": 45.78,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 674.343,
+        "atk": 10.842597,
+        "def": 34.2,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1153.4814,
+        "atk": 18.546547,
+        "def": 58.5,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1792.3328,
+        "atk": 28.818481,
+        "def": 90.9,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2271.4712,
+        "atk": 36.52243,
+        "def": 115.2,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2750.6096,
+        "atk": 44.226383,
+        "def": 139.5,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3229.748,
+        "atk": 51.930332,
+        "def": 163.8,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Furina": {
     "name_id": "Furina",
@@ -1050,7 +6078,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1191.65,
+    "atkBase": 18.9924,
+    "defBase": 54.14615,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 1021.7321,
+        "atk": 16.283075,
+        "def": 46.4265,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1747.6997,
+        "atk": 27.85263,
+        "def": 79.41375,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2715.6565,
+        "atk": 43.2787,
+        "def": 123.39675,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3441.624,
+        "atk": 54.848255,
+        "def": 156.384,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4167.592,
+        "atk": 66.41781,
+        "def": 189.37125,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4893.559,
+        "atk": 77.987366,
+        "def": 222.3585,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Chevreuse": {
     "name_id": "Chevreuse",
@@ -1063,7 +6160,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1002.9701,
+    "atkBase": 16.20528,
+    "defBase": 50.70135,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 749.27,
+        "atk": 12.106458,
+        "def": 37.8765,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1281.6461,
+        "atk": 20.708414,
+        "def": 64.78875,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1991.4808,
+        "atk": 32.177692,
+        "def": 100.67175,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2523.857,
+        "atk": 40.779648,
+        "def": 127.584,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3056.233,
+        "atk": 49.381603,
+        "def": 154.49625,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3588.6091,
+        "atk": 57.983562,
+        "def": 181.4085,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Navia": {
     "name_id": "Navia",
@@ -1076,7 +6242,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 984.77954,
+    "atkBase": 27.3714,
+    "defBase": 61.74456,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 844.35944,
+        "atk": 23.466785,
+        "def": 52.9416,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1444.2991,
+        "atk": 40.140556,
+        "def": 90.558,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2244.2185,
+        "atk": 62.372246,
+        "def": 140.7132,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2844.158,
+        "atk": 79.04601,
+        "def": 178.3296,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3444.0977,
+        "atk": 95.71979,
+        "def": 215.946,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4044.0374,
+        "atk": 112.393555,
+        "def": 253.5624,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Gaming": {
     "name_id": "Gaming",
@@ -1089,7 +6324,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 957.38055,
+    "atkBase": 25.28736,
+    "defBase": 58.94175,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 715.2123,
+        "atk": 18.891396,
+        "def": 44.0325,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1223.3894,
+        "atk": 32.31423,
+        "def": 75.31875,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1900.959,
+        "atk": 50.21134,
+        "def": 117.03375,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2409.1362,
+        "atk": 63.634174,
+        "def": 148.32,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2917.3132,
+        "atk": 77.05701,
+        "def": 179.60625,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3425.4905,
+        "atk": 90.47984,
+        "def": 210.8925,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Xianyun": {
     "name_id": "Liuyun",
@@ -1102,7 +6406,76 @@
       "atk_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 810.322,
+    "atkBase": 26.068,
+    "defBase": 44.57335,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 694.77783,
+        "atk": 22.34932,
+        "def": 38.2185,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1188.4358,
+        "atk": 38.2291,
+        "def": 65.37375,
+        "stats": {
+          "atk_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1846.6464,
+        "atk": 59.40214,
+        "def": 101.58075,
+        "stats": {
+          "atk_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2340.3042,
+        "atk": 75.28192,
+        "def": 128.736,
+        "stats": {
+          "atk_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2833.9622,
+        "atk": 91.1617,
+        "def": 155.89125,
+        "stats": {
+          "atk_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3327.62,
+        "atk": 107.04148,
+        "def": 183.0465,
+        "stats": {
+          "atk_": 0.288
+        }
+      }
+    ]
   },
   "Chiori": {
     "name_id": "Chiori",
@@ -1115,7 +6488,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 890.4009,
+    "atkBase": 25.137,
+    "defBase": 74.1892,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 763.43823,
+        "atk": 21.55113,
+        "def": 63.612,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1305.8812,
+        "atk": 36.863773,
+        "def": 108.81,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2029.1385,
+        "atk": 57.280636,
+        "def": 169.074,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2571.5815,
+        "atk": 72.59328,
+        "def": 214.272,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3114.0244,
+        "atk": 87.90592,
+        "def": 259.47,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3656.4673,
+        "atk": 103.21857,
+        "def": 304.668,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Sigewinne": {
     "name_id": "Sigewinne",
@@ -1128,7 +6570,76 @@
       "hp_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.1188,
+    "atkBase": 14.9891,
+    "defBase": 38.8895,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 890.95044,
+        "atk": 12.850859,
+        "def": 33.345,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1523.9941,
+        "atk": 21.981731,
+        "def": 57.0375,
+        "stats": {
+          "hp_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2368.0525,
+        "atk": 34.15623,
+        "def": 88.6275,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3001.0962,
+        "atk": 43.287106,
+        "def": 112.32,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3634.14,
+        "atk": 52.417976,
+        "def": 136.0125,
+        "stats": {
+          "hp_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4267.1836,
+        "atk": 61.54885,
+        "def": 159.705,
+        "stats": {
+          "hp_": 0.288
+        }
+      }
+    ]
   },
   "Arlecchino": {
     "name_id": "Arlecchino",
@@ -1141,7 +6652,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1020.0524,
+    "atkBase": 26.6266,
+    "defBase": 59.53085,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 874.6027,
+        "atk": 22.828234,
+        "def": 51.0435,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1496.0309,
+        "atk": 39.048294,
+        "def": 87.31125,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2324.6018,
+        "atk": 60.67504,
+        "def": 135.66824,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2946.03,
+        "atk": 76.8951,
+        "def": 171.936,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3567.4585,
+        "atk": 93.115166,
+        "def": 208.20375,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4188.8867,
+        "atk": 109.33523,
+        "def": 244.4715,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Sethos": {
     "name_id": "Sethos",
@@ -1154,7 +6734,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 820.6119,
+    "atkBase": 19.05456,
+    "defBase": 46.9245,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 613.0391,
+        "atk": 14.235066,
+        "def": 35.055,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1048.6195,
+        "atk": 24.349455,
+        "def": 59.9625,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1629.3934,
+        "atk": 37.835308,
+        "def": 93.1725,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2064.9739,
+        "atk": 47.949696,
+        "def": 118.08,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2500.5542,
+        "atk": 58.064083,
+        "def": 142.9875,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2936.1348,
+        "atk": 68.178474,
+        "def": 167.895,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "Clorinde": {
     "name_id": "Clorinde",
@@ -1167,7 +6816,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1008.61255,
+    "atkBase": 26.2542,
+    "defBase": 61.0266,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 864.79407,
+        "atk": 22.508959,
+        "def": 52.326,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1479.253,
+        "atk": 38.502167,
+        "def": 89.505,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2298.5315,
+        "atk": 59.826443,
+        "def": 139.077,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2912.9905,
+        "atk": 75.81965,
+        "def": 176.256,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3527.4495,
+        "atk": 91.81286,
+        "def": 213.435,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4141.908,
+        "atk": 107.80606,
+        "def": 250.614,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Emilie": {
     "name_id": "Emilie",
@@ -1180,7 +6898,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1056.2786,
+    "atkBase": 26.068,
+    "defBase": 56.8385,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 905.6633,
+        "atk": 22.34932,
+        "def": 48.735,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1549.161,
+        "atk": 38.2291,
+        "def": 83.3625,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2407.158,
+        "atk": 59.40214,
+        "def": 129.5325,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3050.6555,
+        "atk": 75.28192,
+        "def": 164.16,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3694.153,
+        "atk": 91.1617,
+        "def": 198.7875,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4337.651,
+        "atk": 107.04148,
+        "def": 233.415,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Kachina": {
     "name_id": "Kachina",
@@ -1193,7 +6980,76 @@
       "geo_dmg_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 989.2932,
+    "atkBase": 18.16416,
+    "defBase": 66.438225,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 739.0527,
+        "atk": 13.569876,
+        "def": 49.63275,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1264.1691,
+        "atk": 23.21163,
+        "def": 84.898125,
+        "stats": {
+          "geo_dmg_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1964.3242,
+        "atk": 36.067303,
+        "def": 131.91862,
+        "stats": {
+          "geo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2489.4407,
+        "atk": 45.709057,
+        "def": 167.184,
+        "stats": {
+          "geo_dmg_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3014.5571,
+        "atk": 55.35081,
+        "def": 202.44937,
+        "stats": {
+          "geo_dmg_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3539.6733,
+        "atk": 64.99256,
+        "def": 237.71475,
+        "stats": {
+          "geo_dmg_": 0.24
+        }
+      }
+    ]
   },
   "Kinich": {
     "name_id": "Kinich",
@@ -1206,7 +7062,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1000.986,
+    "atkBase": 25.8818,
+    "defBase": 62.40269,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 858.255,
+        "atk": 22.189682,
+        "def": 53.5059,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1468.0677,
+        "atk": 37.956036,
+        "def": 91.52325,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2281.1514,
+        "atk": 58.97784,
+        "def": 142.21304,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2890.964,
+        "atk": 74.744194,
+        "def": 180.2304,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3500.7769,
+        "atk": 90.510544,
+        "def": 218.24776,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4110.59,
+        "atk": 106.2769,
+        "def": 256.2651,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Mualani": {
     "name_id": "Mualani",
@@ -1219,7 +7144,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1182.1168,
+    "atkBase": 14.1512,
+    "defBase": 44.39386,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 1013.5583,
+        "atk": 12.132488,
+        "def": 38.0646,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1733.7181,
+        "atk": 20.75294,
+        "def": 65.1105,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2693.9312,
+        "atk": 32.246876,
+        "def": 101.1717,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3414.091,
+        "atk": 40.86733,
+        "def": 128.2176,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4134.251,
+        "atk": 49.48778,
+        "def": 155.2635,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4854.4106,
+        "atk": 58.10823,
+        "def": 182.3094,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Xilonen": {
     "name_id": "Xilonen",
@@ -1232,7 +7226,76 @@
       "def_": 0.36
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 965.71313,
+    "atkBase": 21.413,
+    "defBase": 72.3943,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 828.0117,
+        "atk": 18.35837,
+        "def": 62.073,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1416.3358,
+        "atk": 31.402475,
+        "def": 106.1775,
+        "stats": {
+          "def_": 0.09
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2200.768,
+        "atk": 48.794617,
+        "def": 164.9835,
+        "stats": {
+          "def_": 0.18
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2789.092,
+        "atk": 61.83872,
+        "def": 209.088,
+        "stats": {
+          "def_": 0.18
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3377.4163,
+        "atk": 74.88283,
+        "def": 253.1925,
+        "stats": {
+          "def_": 0.27
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3965.7402,
+        "atk": 87.92693,
+        "def": 297.297,
+        "stats": {
+          "def_": 0.36
+        }
+      }
+    ]
   },
   "Chasca": {
     "name_id": "Chasca",
@@ -1245,7 +7308,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 762.656,
+    "atkBase": 26.999,
+    "defBase": 47.864,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 653.90857,
+        "atk": 23.14751,
+        "def": 41.04,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1118.5278,
+        "atk": 39.594425,
+        "def": 70.2,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1738.0201,
+        "atk": 61.523643,
+        "def": 109.08,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2202.6394,
+        "atk": 77.97056,
+        "def": 138.24,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2667.2585,
+        "atk": 94.41747,
+        "def": 167.4,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3131.878,
+        "atk": 110.86439,
+        "def": 196.56,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Ororon": {
     "name_id": "Olorun",
@@ -1258,7 +7390,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 775.02234,
+    "atkBase": 20.4792,
+    "defBase": 49.2135,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 578.9814,
+        "atk": 15.29937,
+        "def": 36.765,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 990.36285,
+        "atk": 26.169975,
+        "def": 62.8875,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1538.8716,
+        "atk": 40.664116,
+        "def": 97.7175,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 1950.253,
+        "atk": 51.53472,
+        "def": 123.84,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2361.6345,
+        "atk": 62.405327,
+        "def": 149.9625,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2773.016,
+        "atk": 73.27593,
+        "def": 176.085,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Mavuika": {
     "name_id": "Mavuika",
@@ -1271,7 +7472,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 977.153,
+    "atkBase": 27.93,
+    "defBase": 61.6249,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 837.8203,
+        "atk": 23.9457,
+        "def": 52.839,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1433.1138,
+        "atk": 40.95975,
+        "def": 90.3825,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2226.8384,
+        "atk": 63.64515,
+        "def": 140.4405,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2822.1316,
+        "atk": 80.6592,
+        "def": 177.984,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3417.425,
+        "atk": 97.67325,
+        "def": 215.5275,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4012.7185,
+        "atk": 114.6873,
+        "def": 253.071,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Citlali": {
     "name_id": "Citlali",
@@ -1284,7 +7554,76 @@
       "eleMas": 115.2
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 905.654,
+    "atkBase": 9.8686,
+    "defBase": 59.41119,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 776.5164,
+        "atk": 8.460814,
+        "def": 50.9409,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1328.2517,
+        "atk": 14.472445,
+        "def": 87.13575,
+        "stats": {
+          "eleMas": 28.8
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2063.899,
+        "atk": 22.487953,
+        "def": 135.39555,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2615.6343,
+        "atk": 28.499584,
+        "def": 171.5904,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3167.3696,
+        "atk": 34.511215,
+        "def": 207.78525,
+        "stats": {
+          "eleMas": 86.4
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3719.105,
+        "atk": 40.522846,
+        "def": 243.9801,
+        "stats": {
+          "eleMas": 115.2
+        }
+      }
+    ]
   },
   "LanYan": {
     "name_id": "Lanyan",
@@ -1297,7 +7636,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 775.02234,
+    "atkBase": 21.01344,
+    "defBase": 48.64125,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 578.9814,
+        "atk": 15.698484,
+        "def": 36.3375,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 990.36285,
+        "atk": 26.85267,
+        "def": 62.15625,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1538.8716,
+        "atk": 41.72492,
+        "def": 96.58125,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 1950.253,
+        "atk": 52.879105,
+        "def": 122.4,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2361.6345,
+        "atk": 64.03329,
+        "def": 148.21875,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2773.016,
+        "atk": 75.18748,
+        "def": 174.0375,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "YumemizukiMizuki": {
     "name_id": "Mizuki",
@@ -1310,7 +7718,76 @@
       "eleMas": 115.2
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 991.4528,
+    "atkBase": 16.758,
+    "defBase": 58.93255,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 850.0811,
+        "atk": 14.36742,
+        "def": 50.5305,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1454.0862,
+        "atk": 24.57585,
+        "def": 86.43375,
+        "stats": {
+          "eleMas": 28.8
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2259.4263,
+        "atk": 38.18709,
+        "def": 134.30475,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2863.4312,
+        "atk": 48.39552,
+        "def": 170.208,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3467.4363,
+        "atk": 58.60395,
+        "def": 206.11125,
+        "stats": {
+          "eleMas": 86.4
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4071.4412,
+        "atk": 68.81238,
+        "def": 242.0145,
+        "stats": {
+          "eleMas": 115.2
+        }
+      }
+    ]
   },
   "Iansan": {
     "name_id": "Iansan",
@@ -1323,7 +7800,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 893.5552,
+    "atkBase": 21.54768,
+    "defBase": 53.505375,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 667.5315,
+        "atk": 16.097597,
+        "def": 39.97125,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1141.8302,
+        "atk": 27.535364,
+        "def": 68.37187,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1774.2284,
+        "atk": 42.78572,
+        "def": 106.23937,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2248.527,
+        "atk": 54.223488,
+        "def": 134.64,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2722.8257,
+        "atk": 65.661255,
+        "def": 163.04062,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3197.1245,
+        "atk": 77.09902,
+        "def": 191.44125,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Varesa": {
     "name_id": "Varesa",
@@ -1336,7 +7882,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 988.59283,
+    "atkBase": 27.7438,
+    "defBase": 60.84711,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 847.62897,
+        "atk": 23.786062,
+        "def": 52.1721,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1449.8916,
+        "atk": 40.686684,
+        "def": 89.24175,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2252.9087,
+        "atk": 63.220848,
+        "def": 138.66795,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2855.1714,
+        "atk": 80.121475,
+        "def": 175.7376,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3457.434,
+        "atk": 97.022095,
+        "def": 212.80725,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4059.6965,
+        "atk": 113.922714,
+        "def": 249.8769,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Escoffier": {
     "name_id": "Escoffier",
@@ -1349,7 +7964,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1039.1188,
+    "atkBase": 26.999,
+    "defBase": 56.95816,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 890.95044,
+        "atk": 23.14751,
+        "def": 48.8376,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1523.9941,
+        "atk": 39.594425,
+        "def": 83.538,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2368.0525,
+        "atk": 61.523643,
+        "def": 129.8052,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3001.0962,
+        "atk": 77.97056,
+        "def": 164.5056,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3634.14,
+        "atk": 94.41747,
+        "def": 199.206,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4267.1836,
+        "atk": 110.86439,
+        "def": 233.9064,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Ifa": {
     "name_id": "Ifa",
@@ -1362,7 +8046,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 845.2303,
+    "atkBase": 14.95872,
+    "defBase": 50.758575,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 631.4303,
+        "atk": 11.175192,
+        "def": 37.91925,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1080.0781,
+        "atk": 19.11546,
+        "def": 64.86188,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1678.2753,
+        "atk": 29.702484,
+        "def": 100.78538,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2126.923,
+        "atk": 37.642754,
+        "def": 127.728,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2575.5708,
+        "atk": 45.58302,
+        "def": 154.67062,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3024.2188,
+        "atk": 53.52329,
+        "def": 181.61325,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "Skirk": {
     "name_id": "SkirkNew",
@@ -1375,7 +8128,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 966.6665,
+    "atkBase": 27.93,
+    "defBase": 62.76167,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 828.8291,
+        "atk": 23.9457,
+        "def": 53.8137,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1417.734,
+        "atk": 40.95975,
+        "def": 92.04975,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2202.9404,
+        "atk": 63.64515,
+        "def": 143.03114,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2791.8455,
+        "atk": 80.6592,
+        "def": 181.2672,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3380.7502,
+        "atk": 97.67325,
+        "def": 219.50325,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3969.6553,
+        "atk": 114.6873,
+        "def": 257.7393,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Dahlia": {
     "name_id": "Dahlia",
@@ -1388,7 +8210,76 @@
       "hp_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1048.5597,
+    "atkBase": 15.84912,
+    "defBase": 46.9245,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 783.32776,
+        "atk": 11.840382,
+        "def": 35.055,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1339.9027,
+        "atk": 20.253284,
+        "def": 59.9625,
+        "stats": {
+          "hp_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2082.0027,
+        "atk": 31.47049,
+        "def": 93.1725,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2638.5776,
+        "atk": 39.883392,
+        "def": 118.08,
+        "stats": {
+          "hp_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3195.1526,
+        "atk": 48.296295,
+        "def": 142.9875,
+        "stats": {
+          "hp_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3751.7275,
+        "atk": 56.709198,
+        "def": 167.895,
+        "stats": {
+          "hp_": 0.24
+        }
+      }
+    ]
   },
   "Ineffa": {
     "name_id": "Ineffa",
@@ -1401,7 +8292,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 981.9196,
+    "atkBase": 25.6956,
+    "defBase": 64.43691,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 841.9073,
+        "atk": 22.030045,
+        "def": 55.2501,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1440.1045,
+        "atk": 37.68297,
+        "def": 94.50675,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2237.701,
+        "atk": 58.55354,
+        "def": 146.84895,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2835.8982,
+        "atk": 74.20647,
+        "def": 186.1056,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3434.0955,
+        "atk": 89.85939,
+        "def": 225.36224,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4032.2927,
+        "atk": 105.512314,
+        "def": 264.6189,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Lauma": {
     "name_id": "Lauma",
@@ -1414,7 +8374,76 @@
       "eleMas": 115.2
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 829.3884,
+    "atkBase": 19.84892,
+    "defBase": 52.0521,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 711.12555,
+        "atk": 17.01741,
+        "def": 44.631,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1216.3989,
+        "atk": 29.108728,
+        "def": 76.3425,
+        "stats": {
+          "eleMas": 28.8
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1890.0969,
+        "atk": 45.230488,
+        "def": 118.6245,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2395.3704,
+        "atk": 57.321804,
+        "def": 150.336,
+        "stats": {
+          "eleMas": 57.6
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2900.6438,
+        "atk": 69.413124,
+        "def": 182.0475,
+        "stats": {
+          "eleMas": 86.4
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3405.9172,
+        "atk": 81.50444,
+        "def": 213.759,
+        "stats": {
+          "eleMas": 115.2
+        }
+      }
+    ]
   },
   "Flins": {
     "name_id": "Flins",
@@ -1427,7 +8456,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 972.3864,
+    "atkBase": 27.3714,
+    "defBase": 62.94116,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 833.7334,
+        "atk": 23.466785,
+        "def": 53.9676,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1426.1229,
+        "atk": 40.140556,
+        "def": 92.313,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2215.9756,
+        "atk": 62.372246,
+        "def": 143.4402,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2808.3652,
+        "atk": 79.04601,
+        "def": 181.7856,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3400.7546,
+        "atk": 95.71979,
+        "def": 220.131,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3993.1443,
+        "atk": 112.393555,
+        "def": 258.4764,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Aino": {
     "name_id": "Aino",
@@ -1440,7 +8538,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 939.1447,
+    "atkBase": 20.30112,
+    "defBase": 50.93025,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 701.5892,
+        "atk": 15.166332,
+        "def": 38.0475,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1200.0868,
+        "atk": 25.94241,
+        "def": 65.08125,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1864.7502,
+        "atk": 40.310513,
+        "def": 101.12625,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2363.2478,
+        "atk": 51.086594,
+        "def": 128.16,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2861.7454,
+        "atk": 61.86267,
+        "def": 155.19376,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3360.243,
+        "atk": 72.63875,
+        "def": 182.2275,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "Nefer": {
     "name_id": "Nefer",
@@ -1453,7 +8620,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 988.9742,
+    "atkBase": 26.8128,
+    "defBase": 62.2232,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 847.95593,
+        "atk": 22.987871,
+        "def": 53.352,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1450.4509,
+        "atk": 39.32136,
+        "def": 91.26,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2253.7776,
+        "atk": 61.099342,
+        "def": 141.804,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2856.2727,
+        "atk": 77.43283,
+        "def": 179.712,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3458.7676,
+        "atk": 93.76632,
+        "def": 217.62,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4061.2627,
+        "atk": 110.09981,
+        "def": 255.528,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Durin": {
     "name_id": "Durin",
@@ -1466,7 +8702,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 967.6198,
+    "atkBase": 26.999,
+    "defBase": 64.0181,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 829.6465,
+        "atk": 23.14751,
+        "def": 54.891,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1419.1322,
+        "atk": 39.594425,
+        "def": 93.8925,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2205.113,
+        "atk": 61.523643,
+        "def": 145.8945,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2794.5986,
+        "atk": 77.97056,
+        "def": 184.896,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3384.0842,
+        "atk": 94.41747,
+        "def": 223.8975,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3973.57,
+        "atk": 110.86439,
+        "def": 262.899,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Jahoda": {
     "name_id": "Jahoda",
@@ -1479,7 +8784,76 @@
       "heal_": 0.1846
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 808.7586,
+    "atkBase": 18.6984,
+    "defBase": 48.64125,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 604.1841,
+        "atk": 13.96899,
+        "def": 36.3375,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1033.4728,
+        "atk": 23.894325,
+        "def": 62.15625,
+        "stats": {
+          "heal_": 0.0462
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1605.8577,
+        "atk": 37.128105,
+        "def": 96.58125,
+        "stats": {
+          "heal_": 0.0923
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2035.1465,
+        "atk": 47.05344,
+        "def": 122.4,
+        "stats": {
+          "heal_": 0.0923
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2464.435,
+        "atk": 56.978775,
+        "def": 148.21875,
+        "stats": {
+          "heal_": 0.1385
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2893.7239,
+        "atk": 66.90411,
+        "def": 174.0375,
+        "stats": {
+          "heal_": 0.1846
+        }
+      }
+    ]
   },
   "Columbina": {
     "name_id": "Columbina",
@@ -1492,7 +8866,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1143.984,
+    "atkBase": 7.448,
+    "defBase": 40.0861,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 980.86285,
+        "atk": 6.38552,
+        "def": 34.371,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1677.7917,
+        "atk": 10.9226,
+        "def": 58.7925,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2607.0303,
+        "atk": 16.97204,
+        "def": 91.3545,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3303.959,
+        "atk": 21.50912,
+        "def": 115.776,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4000.888,
+        "atk": 26.0462,
+        "def": 140.1975,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4697.817,
+        "atk": 30.58328,
+        "def": 164.619,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Zibai": {
     "name_id": "Zibai",
@@ -1505,7 +8948,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1005.7526,
+    "atkBase": 17.5028,
+    "defBase": 74.48835,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 862.3419,
+        "atk": 15.006,
+        "def": 63.8685,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1475.0585,
+        "atk": 25.6681,
+        "def": 109.2488,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2292.014,
+        "atk": 39.8843,
+        "def": 169.7558,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2904.7307,
+        "atk": 50.5464,
+        "def": 215.136,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3517.4473,
+        "atk": 61.2086,
+        "def": 260.5163,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4130.164,
+        "atk": 71.8707,
+        "def": 305.8965,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Illuga": {
     "name_id": "Illuga",
@@ -1518,7 +9030,76 @@
       "eleMas": 96
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1002.9701,
+    "atkBase": 16.0272,
+    "defBase": 68.2122,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 749.27,
+        "atk": 11.97342,
+        "def": 50.958,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1281.6461,
+        "atk": 20.48085,
+        "def": 87.165,
+        "stats": {
+          "eleMas": 24
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1991.4808,
+        "atk": 31.82409,
+        "def": 135.441,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2523.857,
+        "atk": 40.33152,
+        "def": 171.648,
+        "stats": {
+          "eleMas": 48
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3056.233,
+        "atk": 48.83895,
+        "def": 207.855,
+        "stats": {
+          "eleMas": 72
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3588.6091,
+        "atk": 57.34638,
+        "def": 244.062,
+        "stats": {
+          "eleMas": 96
+        }
+      }
+    ]
   },
   "Varka": {
     "name_id": "Varka",
@@ -1531,7 +9112,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 981.9196,
+    "atkBase": 27.4645,
+    "defBase": 61.92405,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 841.9073,
+        "atk": 23.546604,
+        "def": 53.0955,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1440.1045,
+        "atk": 40.27709,
+        "def": 90.82125,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2237.701,
+        "atk": 62.584396,
+        "def": 141.12225,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2835.8982,
+        "atk": 79.31488,
+        "def": 178.848,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3434.0955,
+        "atk": 96.045364,
+        "def": 216.57375,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4032.2927,
+        "atk": 112.77585,
+        "def": 254.2995,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Lohen": {
     "name_id": "Lohen",
@@ -1544,7 +9194,76 @@
       "critDMG_": 0.384
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1000.986,
+    "atkBase": 26.8128,
+    "defBase": 61.0266,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 858.255,
+        "atk": 22.987871,
+        "def": 52.326,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1468.0677,
+        "atk": 39.32136,
+        "def": 89.505,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2281.1514,
+        "atk": 61.099342,
+        "def": 139.077,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2890.964,
+        "atk": 77.43283,
+        "def": 176.256,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3500.7769,
+        "atk": 93.76632,
+        "def": 213.435,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4110.59,
+        "atk": 110.09981,
+        "def": 250.614,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   },
   "Linnea": {
     "name_id": "Linnea",
@@ -1557,7 +9276,76 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 770.28253,
+    "atkBase": 11.172,
+    "defBase": 70.5994,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 660.44763,
+        "atk": 9.57828,
+        "def": 60.534,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1129.7131,
+        "atk": 16.3839,
+        "def": 103.545,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1755.4003,
+        "atk": 25.45806,
+        "def": 160.893,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2224.6658,
+        "atk": 32.26368,
+        "def": 203.904,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2693.9312,
+        "atk": 39.0693,
+        "def": 246.915,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3163.1965,
+        "atk": 45.87492,
+        "def": 289.926,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
   },
   "Nicole": {
     "name_id": "Nicole",
@@ -1570,7 +9358,76 @@
       "atk_": 0.288
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 810.322,
+    "atkBase": 26.6266,
+    "defBase": 43.79556,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 694.77783,
+        "atk": 22.828234,
+        "def": 37.5516,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1188.4358,
+        "atk": 39.048294,
+        "def": 64.233,
+        "stats": {
+          "atk_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1846.6464,
+        "atk": 60.67504,
+        "def": 99.8082,
+        "stats": {
+          "atk_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2340.3042,
+        "atk": 76.8951,
+        "def": 126.4896,
+        "stats": {
+          "atk_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2833.9622,
+        "atk": 93.115166,
+        "def": 153.171,
+        "stats": {
+          "atk_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3327.62,
+        "atk": 109.33523,
+        "def": 179.8524,
+        "stats": {
+          "atk_": 0.288
+        }
+      }
+    ]
   },
   "Prune": {
     "name_id": "Prune",
@@ -1583,7 +9440,76 @@
       "atk_": 0.24
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 811.494,
+    "atkBase": 18.52032,
+    "defBase": 48.64125,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 606.22754,
+        "atk": 13.835952,
+        "def": 36.3375,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1036.9681,
+        "atk": 23.66676,
+        "def": 62.15625,
+        "stats": {
+          "atk_": 0.06
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1611.2891,
+        "atk": 36.774506,
+        "def": 96.58125,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2042.0297,
+        "atk": 46.605312,
+        "def": 122.4,
+        "stats": {
+          "atk_": 0.12
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 2472.7703,
+        "atk": 56.43612,
+        "def": 148.21875,
+        "stats": {
+          "atk_": 0.18
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 2903.511,
+        "atk": 66.26693,
+        "def": 174.0375,
+        "stats": {
+          "atk_": 0.24
+        }
+      }
+    ]
   },
   "Sandrone": {
     "name_id": "MarionetteNew",
@@ -1596,6 +9522,239 @@
       "critRate_": 0.192
     },
     "baseCritRate": 0.05,
-    "baseCritDMG": 0.5
+    "baseCritDMG": 0.5,
+    "hpBase": 1029.5856,
+    "atkBase": 26.6266,
+    "defBase": 58.57357,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 882.77655,
+        "atk": 22.828234,
+        "def": 50.2227,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1510.0126,
+        "atk": 39.048294,
+        "def": 85.90725,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2346.3271,
+        "atk": 60.67504,
+        "def": 133.48665,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2973.5632,
+        "atk": 76.8951,
+        "def": 169.1712,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3600.799,
+        "atk": 93.115166,
+        "def": 204.85574,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4228.035,
+        "atk": 109.33523,
+        "def": 240.5403,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
+  },
+  "Alyosha": {
+    "name_id": "Alyosha",
+    "name": "Alyosha",
+    "level": 90,
+    "hp": 11962.4,
+    "atk": 265.5,
+    "def": 703,
+    "ascension": {
+      "enerRech_": 0.2667
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5,
+    "hpBase": 1002.9701,
+    "atkBase": 22.26,
+    "defBase": 58.94175,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S4",
+      "atk": "GROW_CURVE_ATTACK_S4",
+      "def": "GROW_CURVE_HP_S4"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 749.27,
+        "atk": 16.62975,
+        "def": 44.0325,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1281.6461,
+        "atk": 28.445625,
+        "def": 75.31875,
+        "stats": {
+          "enerRech_": 0.0667
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 1991.4808,
+        "atk": 44.200127,
+        "def": 117.03375,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2523.857,
+        "atk": 56.016,
+        "def": 148.32,
+        "stats": {
+          "enerRech_": 0.1333
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3056.233,
+        "atk": 67.83188,
+        "def": 179.60625,
+        "stats": {
+          "enerRech_": 0.2
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 3588.6091,
+        "atk": 79.64775,
+        "def": 210.8925,
+        "stats": {
+          "enerRech_": 0.2667
+        }
+      }
+    ]
+  },
+  "Odette": {
+    "name_id": "Odette",
+    "name": "Odette",
+    "level": 90,
+    "hp": 12980.7,
+    "atk": 334.8,
+    "def": 787,
+    "ascension": {
+      "critDMG_": 0.384
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5,
+    "hpBase": 1010.5192,
+    "atkBase": 26.068,
+    "defBase": 61.26592,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 866.42883,
+        "atk": 22.34932,
+        "def": 52.5312,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1482.0493,
+        "atk": 38.2291,
+        "def": 89.856,
+        "stats": {
+          "critDMG_": 0.096
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2302.8767,
+        "atk": 59.40214,
+        "def": 139.6224,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2918.497,
+        "atk": 75.28192,
+        "def": 176.9472,
+        "stats": {
+          "critDMG_": 0.192
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3534.1177,
+        "atk": 91.1617,
+        "def": 214.272,
+        "stats": {
+          "critDMG_": 0.288
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4149.7383,
+        "atk": 107.04148,
+        "def": 251.5968,
+        "stats": {
+          "critDMG_": 0.384
+        }
+      }
+    ]
   }
 }

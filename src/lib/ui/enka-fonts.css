@@ -1,0 +1,16 @@
+/* Enka card fonts — ShinShin body + shicon for star glyphs */
+@font-face {
+  font-family: ShinShin;
+  src: url("../assets/fonts/ShinShin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: shicon;
+  src: url("../assets/fonts/shicon.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}

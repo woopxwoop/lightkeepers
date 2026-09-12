@@ -1,0 +1,10487 @@
+{
+  "DullBlade": {
+    "key": "DullBlade",
+    "name": "Dull Blade",
+    "stars": 1,
+    "atkBase": 23.245,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "SilverSword": {
+    "key": "SilverSword",
+    "name": "Silver Sword",
+    "stars": 2,
+    "atkBase": 32.93,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "CoolSteel": {
+    "key": "CoolSteel",
+    "name": "Cool Steel",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.0766,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "HarbingerOfDawn": {
+    "key": "HarbingerOfDawn",
+    "name": "Harbinger of Dawn",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.102,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "TravelersHandySword": {
+    "key": "TravelersHandySword",
+    "name": "Traveler's Handy Sword",
+    "stars": 3,
+    "atkBase": 39.8751,
+    "atkCurve": "GROW_CURVE_ATTACK_102",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.063733,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "FilletBlade": {
+    "key": "FilletBlade",
+    "name": "Fillet Blade",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.0766,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "SkyriderSword": {
+    "key": "SkyriderSword",
+    "name": "Skyrider Sword",
+    "stars": 3,
+    "atkBase": 37.6075,
+    "atkCurve": "GROW_CURVE_ATTACK_104",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.113333,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "FavoniusSword": {
+    "key": "FavoniusSword",
+    "name": "Favonius Sword",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheFlute": {
+    "key": "TheFlute",
+    "name": "The Flute",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SacrificialSword": {
+    "key": "SacrificialSword",
+    "name": "Sacrificial Sword",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RoyalLongsword": {
+    "key": "RoyalLongsword",
+    "name": "Royal Longsword",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "LionsRoar": {
+    "key": "LionsRoar",
+    "name": "Lion's Roar",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "PrototypeRancour": {
+    "key": "PrototypeRancour",
+    "name": "Prototype Rancour",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.075067,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "IronSting": {
+    "key": "IronSting",
+    "name": "Iron Sting",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BlackcliffLongsword": {
+    "key": "BlackcliffLongsword",
+    "name": "Blackcliff Longsword",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.08,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheBlackSword": {
+    "key": "TheBlackSword",
+    "name": "The Black Sword",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheAlleyFlash": {
+    "key": "TheAlleyFlash",
+    "name": "The Alley Flash",
+    "stars": 4,
+    "atkBase": 45.0687,
+    "atkCurve": "GROW_CURVE_ATTACK_203",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 11.999988,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SwordOfDescension": {
+    "key": "SwordOfDescension",
+    "name": "Sword of Descension",
+    "stars": 4,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.0766,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FesteringDesire": {
+    "key": "FesteringDesire",
+    "name": "Festering Desire",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "AmenomaKageuchi": {
+    "key": "AmenomaKageuchi",
+    "name": "Amenoma Kageuchi",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "CinnabarSpindle": {
+    "key": "CinnabarSpindle",
+    "name": "Cinnabar Spindle",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.150133,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "KagotsurubeIsshin": {
+    "key": "KagotsurubeIsshin",
+    "name": "Kagotsurube Isshin",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SapwoodBlade": {
+    "key": "SapwoodBlade",
+    "name": "Sapwood Blade",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "XiphosMoonlight": {
+    "key": "XiphosMoonlight",
+    "name": "Xiphos' Moonlight",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ToukabouShigure": {
+    "key": "ToukabouShigure",
+    "name": "Toukabou Shigure",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "WolfFang": {
+    "key": "WolfFang",
+    "name": "Wolf-Fang",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FinaleOfTheDeep": {
+    "key": "FinaleOfTheDeep",
+    "name": "Finale of the Deep",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FleuveCendreFerryman": {
+    "key": "FleuveCendreFerryman",
+    "name": "Fleuve Cendre Ferryman",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheDockhandsAssistant": {
+    "key": "TheDockhandsAssistant",
+    "name": "The Dockhand's Assistant",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SwordOfNarzissenkreuz": {
+    "key": "SwordOfNarzissenkreuz",
+    "name": "Sword of Narzissenkreuz",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SturdyBone": {
+    "key": "SturdyBone",
+    "name": "Sturdy Bone",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FluteOfEzpitzal": {
+    "key": "FluteOfEzpitzal",
+    "name": "Flute of Ezpitzal",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.150133,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "CalamityOfEshu": {
+    "key": "CalamityOfEshu",
+    "name": "Calamity of Eshu",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SerenitysCall": {
+    "key": "SerenitysCall",
+    "name": "Serenity's Call",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MoonweaversDawn": {
+    "key": "MoonweaversDawn",
+    "name": "Moonweaver's Dawn",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "HereticsMoltenBlade": {
+    "key": "HereticsMoltenBlade",
+    "name": "Heretic's Molten Blade",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Emberwell": {
+    "key": "Emberwell",
+    "name": "Emberwell",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "AquilaFavonia": {
+    "key": "AquilaFavonia",
+    "name": "Aquila Favonia",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SkywardBlade": {
+    "key": "SkywardBlade",
+    "name": "Skyward Blade",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "FreedomSworn": {
+    "key": "FreedomSworn",
+    "name": "Freedom-Sworn",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 43.2,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SummitShaper": {
+    "key": "SummitShaper",
+    "name": "Summit Shaper",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "PrimordialJadeCutter": {
+    "key": "PrimordialJadeCutter",
+    "name": "Primordial Jade Cutter",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "MistsplitterReforged": {
+    "key": "MistsplitterReforged",
+    "name": "Mistsplitter Reforged",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "HaranGeppakuFutsu": {
+    "key": "HaranGeppakuFutsu",
+    "name": "Haran Geppaku Futsu",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "KeyOfKhajNisut": {
+    "key": "KeyOfKhajNisut",
+    "name": "Key of Khaj-Nisut",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "LightOfFoliarIncision": {
+    "key": "LightOfFoliarIncision",
+    "name": "Light of Foliar Incision",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SplendorOfTranquilWaters": {
+    "key": "SplendorOfTranquilWaters",
+    "name": "Splendor of Tranquil Waters",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "UrakuMisugiri": {
+    "key": "UrakuMisugiri",
+    "name": "Uraku Misugiri",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "Absolution": {
+    "key": "Absolution",
+    "name": "Absolution",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "PeakPatrolSong": {
+    "key": "PeakPatrolSong",
+    "name": "Peak Patrol Song",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.18,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "Azurelight": {
+    "key": "Azurelight",
+    "name": "Azurelight",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "AthameArtis": {
+    "key": "AthameArtis",
+    "name": "Athame Artis",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "LightbearingMoonshard": {
+    "key": "LightbearingMoonshard",
+    "name": "Lightbearing Moonshard",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "WhitelakeFrostfeather": {
+    "key": "WhitelakeFrostfeather",
+    "name": "Whitelake Frostfeather",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "ExaiphanesBlade": {
+    "key": "ExaiphanesBlade",
+    "name": "Exaiphanes Blade",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "WasterGreatsword": {
+    "key": "WasterGreatsword",
+    "name": "Waster Greatsword",
+    "stars": 1,
+    "atkBase": 23.245,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "OldMercsPal": {
+    "key": "OldMercsPal",
+    "name": "Old Merc's Pal",
+    "stars": 2,
+    "atkBase": 32.93,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "FerrousShadow": {
+    "key": "FerrousShadow",
+    "name": "Ferrous Shadow",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.0766,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "BloodtaintedGreatsword": {
+    "key": "BloodtaintedGreatsword",
+    "name": "Bloodtainted Greatsword",
+    "stars": 3,
+    "atkBase": 37.6075,
+    "atkCurve": "GROW_CURVE_ATTACK_104",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 40.8,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "WhiteIronGreatsword": {
+    "key": "WhiteIronGreatsword",
+    "name": "White Iron Greatsword",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.0956,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "DebateClub": {
+    "key": "DebateClub",
+    "name": "Debate Club",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.0766,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "SkyriderGreatsword": {
+    "key": "SkyriderGreatsword",
+    "name": "Skyrider Greatsword",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.0956,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "FavoniusGreatsword": {
+    "key": "FavoniusGreatsword",
+    "name": "Favonius Greatsword",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheBell": {
+    "key": "TheBell",
+    "name": "The Bell",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SacrificialGreatsword": {
+    "key": "SacrificialGreatsword",
+    "name": "Sacrificial Greatsword",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RoyalGreatsword": {
+    "key": "RoyalGreatsword",
+    "name": "Royal Greatsword",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Rainslasher": {
+    "key": "Rainslasher",
+    "name": "Rainslasher",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "PrototypeArchaic": {
+    "key": "PrototypeArchaic",
+    "name": "Prototype Archaic",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Whiteblind": {
+    "key": "Whiteblind",
+    "name": "Whiteblind",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.1126,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BlackcliffSlasher": {
+    "key": "BlackcliffSlasher",
+    "name": "Blackcliff Slasher",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SerpentSpine": {
+    "key": "SerpentSpine",
+    "name": "Serpent Spine",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "LithicBlade": {
+    "key": "LithicBlade",
+    "name": "Lithic Blade",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SnowTombedStarsilver": {
+    "key": "SnowTombedStarsilver",
+    "name": "Snow-Tombed Starsilver",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.075067,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "LuxuriousSeaLord": {
+    "key": "LuxuriousSeaLord",
+    "name": "Luxurious Sea-Lord",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "KatsuragikiriNagamasa": {
+    "key": "KatsuragikiriNagamasa",
+    "name": "Katsuragikiri Nagamasa",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MakhairaAquamarine": {
+    "key": "MakhairaAquamarine",
+    "name": "Makhaira Aquamarine",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Akuoumaru": {
+    "key": "Akuoumaru",
+    "name": "Akuoumaru",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ForestRegalia": {
+    "key": "ForestRegalia",
+    "name": "Forest Regalia",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MailedFlower": {
+    "key": "MailedFlower",
+    "name": "Mailed Flower",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 24,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TalkingStick": {
+    "key": "TalkingStick",
+    "name": "Talking Stick",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.04,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TidalShadow": {
+    "key": "TidalShadow",
+    "name": "Tidal Shadow",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "UltimateOverlordsMegaMagicSword": {
+    "key": "UltimateOverlordsMegaMagicSword",
+    "name": "\"Ultimate Overlord's Mega Magic Sword\"",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "PortablePowerSaw": {
+    "key": "PortablePowerSaw",
+    "name": "Portable Power Saw",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FruitfulHook": {
+    "key": "FruitfulHook",
+    "name": "Fruitful Hook",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "EarthShaker": {
+    "key": "EarthShaker",
+    "name": "Earth Shaker",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FlameForgedInsight": {
+    "key": "FlameForgedInsight",
+    "name": "Flame-Forged Insight",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MasterKey": {
+    "key": "MasterKey",
+    "name": "Master Key",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ForgedByTheGoldenMelody": {
+    "key": "ForgedByTheGoldenMelody",
+    "name": "Forged by the Golden Melody",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BladeOfAtonement": {
+    "key": "BladeOfAtonement",
+    "name": "Blade of Atonement",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SkywardPride": {
+    "key": "SkywardPride",
+    "name": "Skyward Pride",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.08,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "WolfsGravestone": {
+    "key": "WolfsGravestone",
+    "name": "Wolf's Gravestone",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SongOfBrokenPines": {
+    "key": "SongOfBrokenPines",
+    "name": "Song of Broken Pines",
+    "stars": 5,
+    "atkBase": 49.1377,
+    "atkCurve": "GROW_CURVE_ATTACK_303",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.045,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "TheUnforged": {
+    "key": "TheUnforged",
+    "name": "The Unforged",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "RedhornStonethresher": {
+    "key": "RedhornStonethresher",
+    "name": "Redhorn Stonethresher",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "BeaconOfTheReedSea": {
+    "key": "BeaconOfTheReedSea",
+    "name": "Beacon of the Reed Sea",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "Verdict": {
+    "key": "Verdict",
+    "name": "Verdict",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "FangOfTheMountainKing": {
+    "key": "FangOfTheMountainKing",
+    "name": "Fang of the Mountain King",
+    "stars": 5,
+    "atkBase": 49.1377,
+    "atkCurve": "GROW_CURVE_ATTACK_303",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.024,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "AThousandBlazingSuns": {
+    "key": "AThousandBlazingSuns",
+    "name": "A Thousand Blazing Suns",
+    "stars": 5,
+    "atkBase": 49.1377,
+    "atkCurve": "GROW_CURVE_ATTACK_303",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.024,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "GestOfTheMightyWolf": {
+    "key": "GestOfTheMightyWolf",
+    "name": "Gest of the Mighty Wolf",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "ATeaspoonOfTranscendence": {
+    "key": "ATeaspoonOfTranscendence",
+    "name": "A Teaspoon of Transcendence",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "BeginnersProtector": {
+    "key": "BeginnersProtector",
+    "name": "Beginner's Protector",
+    "stars": 1,
+    "atkBase": 23.245,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "IronPoint": {
+    "key": "IronPoint",
+    "name": "Iron Point",
+    "stars": 2,
+    "atkBase": 32.93,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "WhiteTassel": {
+    "key": "WhiteTassel",
+    "name": "White Tassel",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.051,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "Halberd": {
+    "key": "Halberd",
+    "name": "Halberd",
+    "stars": 3,
+    "atkBase": 39.8751,
+    "atkCurve": "GROW_CURVE_ATTACK_102",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.051067,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "BlackTassel": {
+    "key": "BlackTassel",
+    "name": "Black Tassel",
+    "stars": 3,
+    "atkBase": 37.6075,
+    "atkCurve": "GROW_CURVE_ATTACK_104",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.102133,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "DragonsBane": {
+    "key": "DragonsBane",
+    "name": "Dragon's Bane",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 48,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "PrototypeStarglitter": {
+    "key": "PrototypeStarglitter",
+    "name": "Prototype Starglitter",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "CrescentPike": {
+    "key": "CrescentPike",
+    "name": "Crescent Pike",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.075067,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BlackcliffPole": {
+    "key": "BlackcliffPole",
+    "name": "Blackcliff Pole",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Deathmatch": {
+    "key": "Deathmatch",
+    "name": "Deathmatch",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.08,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "LithicSpear": {
+    "key": "LithicSpear",
+    "name": "Lithic Spear",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FavoniusLance": {
+    "key": "FavoniusLance",
+    "name": "Favonius Lance",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RoyalSpear": {
+    "key": "RoyalSpear",
+    "name": "Royal Spear",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "DragonspineSpear": {
+    "key": "DragonspineSpear",
+    "name": "Dragonspine Spear",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.150133,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "KitainCrossSpear": {
+    "key": "KitainCrossSpear",
+    "name": "Kitain Cross Spear",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 24,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheCatch": {
+    "key": "TheCatch",
+    "name": "\"The Catch\"",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "WavebreakersFin": {
+    "key": "WavebreakersFin",
+    "name": "Wavebreaker's Fin",
+    "stars": 4,
+    "atkBase": 45.0687,
+    "atkCurve": "GROW_CURVE_ATTACK_203",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.03,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Moonpiercer": {
+    "key": "Moonpiercer",
+    "name": "Moonpiercer",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 24,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MissiveWindspear": {
+    "key": "MissiveWindspear",
+    "name": "Missive Windspear",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BalladOfTheFjords": {
+    "key": "BalladOfTheFjords",
+    "name": "Ballad of the Fjords",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RightfulReward": {
+    "key": "RightfulReward",
+    "name": "Rightful Reward",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "DialoguesOfTheDesertSages": {
+    "key": "DialoguesOfTheDesertSages",
+    "name": "Dialogues of the Desert Sages",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ProspectorsDrill": {
+    "key": "ProspectorsDrill",
+    "name": "Prospector's Drill",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MountainBracingBolt": {
+    "key": "MountainBracingBolt",
+    "name": "Mountain-Bracing Bolt",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FootprintOfTheRainbow": {
+    "key": "FootprintOfTheRainbow",
+    "name": "Footprint of the Rainbow",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.1126,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TamayurateiNoOhanashi": {
+    "key": "TamayurateiNoOhanashi",
+    "name": "Tamayuratei no Ohanashi",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ProspectorsShovel": {
+    "key": "ProspectorsShovel",
+    "name": "Prospector's Shovel",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SacrificersStaff": {
+    "key": "SacrificersStaff",
+    "name": "Sacrificer's Staff",
+    "stars": 4,
+    "atkBase": 45.0687,
+    "atkCurve": "GROW_CURVE_ATTACK_203",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.02,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Frostbreath": {
+    "key": "Frostbreath",
+    "name": "Frostbreath",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SongOfTheVigil": {
+    "key": "SongOfTheVigil",
+    "name": "Song of the Vigil",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 24,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "StaffOfHoma": {
+    "key": "StaffOfHoma",
+    "name": "Staff of Homa",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SkywardSpine": {
+    "key": "SkywardSpine",
+    "name": "Skyward Spine",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.08,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "VortexVanquisher": {
+    "key": "VortexVanquisher",
+    "name": "Vortex Vanquisher",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "PrimordialJadeWingedSpear": {
+    "key": "PrimordialJadeWingedSpear",
+    "name": "Primordial Jade Winged-Spear",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "CalamityQueller": {
+    "key": "CalamityQueller",
+    "name": "Calamity Queller",
+    "stars": 5,
+    "atkBase": 49.1377,
+    "atkCurve": "GROW_CURVE_ATTACK_303",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.036,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "EngulfingLightning": {
+    "key": "EngulfingLightning",
+    "name": "Engulfing Lightning",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "StaffOfTheScarletSands": {
+    "key": "StaffOfTheScarletSands",
+    "name": "Staff of the Scarlet Sands",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "CrimsonMoonsSemblance": {
+    "key": "CrimsonMoonsSemblance",
+    "name": "Crimson Moon's Semblance",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "LumidouceElegy": {
+    "key": "LumidouceElegy",
+    "name": "Lumidouce Elegy",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SymphonistOfScents": {
+    "key": "SymphonistOfScents",
+    "name": "Symphonist of Scents",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "FracturedHalo": {
+    "key": "FracturedHalo",
+    "name": "Fractured Halo",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "BloodsoakedRuins": {
+    "key": "BloodsoakedRuins",
+    "name": "Bloodsoaked Ruins",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "DisasterAndRemorse": {
+    "key": "DisasterAndRemorse",
+    "name": "Disaster and Remorse",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "ApprenticesNotes": {
+    "key": "ApprenticesNotes",
+    "name": "Apprentice's Notes",
+    "stars": 1,
+    "atkBase": 23.245,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "PocketGrimoire": {
+    "key": "PocketGrimoire",
+    "name": "Pocket Grimoire",
+    "stars": 2,
+    "atkBase": 32.93,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "MagicGuide": {
+    "key": "MagicGuide",
+    "name": "Magic Guide",
+    "stars": 3,
+    "atkBase": 37.6075,
+    "atkCurve": "GROW_CURVE_ATTACK_104",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 40.8,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "ThrillingTalesOfDragonSlayers": {
+    "key": "ThrillingTalesOfDragonSlayers",
+    "name": "Thrilling Tales of Dragon Slayers",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.0766,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "OtherworldlyStory": {
+    "key": "OtherworldlyStory",
+    "name": "Otherworldly Story",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.085,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "EmeraldOrb": {
+    "key": "EmeraldOrb",
+    "name": "Emerald Orb",
+    "stars": 3,
+    "atkBase": 39.8751,
+    "atkCurve": "GROW_CURVE_ATTACK_102",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 20.4,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "TwinNephrite": {
+    "key": "TwinNephrite",
+    "name": "Twin Nephrite",
+    "stars": 3,
+    "atkBase": 39.8751,
+    "atkCurve": "GROW_CURVE_ATTACK_102",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.034,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "FavoniusCodex": {
+    "key": "FavoniusCodex",
+    "name": "Favonius Codex",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheWidsith": {
+    "key": "TheWidsith",
+    "name": "The Widsith",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SacrificialFragments": {
+    "key": "SacrificialFragments",
+    "name": "Sacrificial Fragments",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 48,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RoyalGrimoire": {
+    "key": "RoyalGrimoire",
+    "name": "Royal Grimoire",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SolarPearl": {
+    "key": "SolarPearl",
+    "name": "Solar Pearl",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "PrototypeAmber": {
+    "key": "PrototypeAmber",
+    "name": "Prototype Amber",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MappaMare": {
+    "key": "MappaMare",
+    "name": "Mappa Mare",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 24,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BlackcliffAgate": {
+    "key": "BlackcliffAgate",
+    "name": "Blackcliff Agate",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "EyeOfPerception": {
+    "key": "EyeOfPerception",
+    "name": "Eye of Perception",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "WineAndSong": {
+    "key": "WineAndSong",
+    "name": "Wine and Song",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Frostbearer": {
+    "key": "Frostbearer",
+    "name": "Frostbearer",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "DodocoTales": {
+    "key": "DodocoTales",
+    "name": "Dodoco Tales",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "HakushinRing": {
+    "key": "HakushinRing",
+    "name": "Hakushin Ring",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "OathswornEye": {
+    "key": "OathswornEye",
+    "name": "Oathsworn Eye",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "WanderingEvenstar": {
+    "key": "WanderingEvenstar",
+    "name": "Wandering Evenstar",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FruitOfFulfillment": {
+    "key": "FruitOfFulfillment",
+    "name": "Fruit of Fulfillment",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SacrificialJade": {
+    "key": "SacrificialJade",
+    "name": "Sacrificial Jade",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.08,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FlowingPurity": {
+    "key": "FlowingPurity",
+    "name": "Flowing Purity",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BalladOfTheBoundlessBlue": {
+    "key": "BalladOfTheBoundlessBlue",
+    "name": "Ballad of the Boundless Blue",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "AshGravenDrinkingHorn": {
+    "key": "AshGravenDrinkingHorn",
+    "name": "Ash-Graven Drinking Horn",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "WaveridingWhirl": {
+    "key": "WaveridingWhirl",
+    "name": "Waveriding Whirl",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RingOfYaxche": {
+    "key": "RingOfYaxche",
+    "name": "Ring of Yaxche",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "EtherlightSpindlelute": {
+    "key": "EtherlightSpindlelute",
+    "name": "Etherlight Spindlelute",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BlackmarrowLantern": {
+    "key": "BlackmarrowLantern",
+    "name": "Blackmarrow Lantern",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 48,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "DawningFrost": {
+    "key": "DawningFrost",
+    "name": "Dawning Frost",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ClashOfKings": {
+    "key": "ClashOfKings",
+    "name": "Clash of Kings",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "EchoesOfTheHeart": {
+    "key": "EchoesOfTheHeart",
+    "name": "Echoes of the Heart",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SkywardAtlas": {
+    "key": "SkywardAtlas",
+    "name": "Skyward Atlas",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "LostPrayerToTheSacredWinds": {
+    "key": "LostPrayerToTheSacredWinds",
+    "name": "Lost Prayer to the Sacred Winds",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "MemoryOfDust": {
+    "key": "MemoryOfDust",
+    "name": "Memory of Dust",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "JadefallsSplendor": {
+    "key": "JadefallsSplendor",
+    "name": "Jadefall's Splendor",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "EverlastingMoonglow": {
+    "key": "EverlastingMoonglow",
+    "name": "Everlasting Moonglow",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "KagurasVerity": {
+    "key": "KagurasVerity",
+    "name": "Kagura's Verity",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "AThousandFloatingDreams": {
+    "key": "AThousandFloatingDreams",
+    "name": "A Thousand Floating Dreams",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 57.6,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "TulaytullahsRemembrance": {
+    "key": "TulaytullahsRemembrance",
+    "name": "Tulaytullah's Remembrance",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "CashflowSupervision": {
+    "key": "CashflowSupervision",
+    "name": "Cashflow Supervision",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "TomeOfTheEternalFlow": {
+    "key": "TomeOfTheEternalFlow",
+    "name": "Tome of the Eternal Flow",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "CranesEchoingCall": {
+    "key": "CranesEchoingCall",
+    "name": "Crane's Echoing Call",
+    "stars": 5,
+    "atkBase": 49.1377,
+    "atkCurve": "GROW_CURVE_ATTACK_303",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.036,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SurfsUp": {
+    "key": "SurfsUp",
+    "name": "Surf's Up",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "StarcallersWatch": {
+    "key": "StarcallersWatch",
+    "name": "Starcaller's Watch",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 57.6,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SunnyMorningSleepIn": {
+    "key": "SunnyMorningSleepIn",
+    "name": "Sunny Morning Sleep-In",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 57.6,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "VividNotions": {
+    "key": "VividNotions",
+    "name": "Vivid Notions",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "NightweaversLookingGlass": {
+    "key": "NightweaversLookingGlass",
+    "name": "Nightweaver's Looking Glass",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 57.6,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "ReliquaryOfTruth": {
+    "key": "ReliquaryOfTruth",
+    "name": "Reliquary of Truth",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "NocturnesCurtainCall": {
+    "key": "NocturnesCurtainCall",
+    "name": "Nocturne's Curtain Call",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "AngelosHeptades": {
+    "key": "AngelosHeptades",
+    "name": "Angelos' Heptades",
+    "stars": 5,
+    "atkBase": 49.1377,
+    "atkCurve": "GROW_CURVE_ATTACK_303",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.036,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "HuntersBow": {
+    "key": "HuntersBow",
+    "name": "Hunter's Bow",
+    "stars": 1,
+    "atkBase": 23.245,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "SeasonedHuntersBow": {
+    "key": "SeasonedHuntersBow",
+    "name": "Seasoned Hunter's Bow",
+    "stars": 2,
+    "atkBase": 32.93,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": null,
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 11.7
+      },
+      {
+        "asc": 2,
+        "atk": 23.3
+      },
+      {
+        "asc": 3,
+        "atk": 35
+      },
+      {
+        "asc": 4,
+        "atk": 46.7
+      },
+      {
+        "asc": 5,
+        "atk": 0
+      },
+      {
+        "asc": 6,
+        "atk": 0
+      }
+    ]
+  },
+  "RavenBow": {
+    "key": "RavenBow",
+    "name": "Raven Bow",
+    "stars": 3,
+    "atkBase": 39.8751,
+    "atkCurve": "GROW_CURVE_ATTACK_102",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 20.4,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "SharpshootersOath": {
+    "key": "SharpshootersOath",
+    "name": "Sharpshooter's Oath",
+    "stars": 3,
+    "atkBase": 38.7413,
+    "atkCurve": "GROW_CURVE_ATTACK_101",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.102,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "RecurveBow": {
+    "key": "RecurveBow",
+    "name": "Recurve Bow",
+    "stars": 3,
+    "atkBase": 37.6075,
+    "atkCurve": "GROW_CURVE_ATTACK_104",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.102133,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "Slingshot": {
+    "key": "Slingshot",
+    "name": "Slingshot",
+    "stars": 3,
+    "atkBase": 37.6075,
+    "atkCurve": "GROW_CURVE_ATTACK_104",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.068,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "Messenger": {
+    "key": "Messenger",
+    "name": "Messenger",
+    "stars": 3,
+    "atkBase": 39.8751,
+    "atkCurve": "GROW_CURVE_ATTACK_102",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.068,
+      "curve": "GROW_CURVE_CRITICAL_101",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 19.5
+      },
+      {
+        "asc": 2,
+        "atk": 38.9
+      },
+      {
+        "asc": 3,
+        "atk": 58.4
+      },
+      {
+        "asc": 4,
+        "atk": 77.8
+      },
+      {
+        "asc": 5,
+        "atk": 97.3
+      },
+      {
+        "asc": 6,
+        "atk": 116.7
+      }
+    ]
+  },
+  "FavoniusWarbow": {
+    "key": "FavoniusWarbow",
+    "name": "Favonius Warbow",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheStringless": {
+    "key": "TheStringless",
+    "name": "The Stringless",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SacrificialBow": {
+    "key": "SacrificialBow",
+    "name": "Sacrificial Bow",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RoyalBow": {
+    "key": "RoyalBow",
+    "name": "Royal Bow",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Rust": {
+    "key": "Rust",
+    "name": "Rust",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "PrototypeCrescent": {
+    "key": "PrototypeCrescent",
+    "name": "Prototype Crescent",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "CompoundBow": {
+    "key": "CompoundBow",
+    "name": "Compound Bow",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.150133,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BlackcliffWarbow": {
+    "key": "BlackcliffWarbow",
+    "name": "Blackcliff Warbow",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.08,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "TheViridescentHunt": {
+    "key": "TheViridescentHunt",
+    "name": "The Viridescent Hunt",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "AlleyHunter": {
+    "key": "AlleyHunter",
+    "name": "Alley Hunter",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FadingTwilight": {
+    "key": "FadingTwilight",
+    "name": "Fading Twilight",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.066667,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MitternachtsWaltz": {
+    "key": "MitternachtsWaltz",
+    "name": "Mitternachts Waltz",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_PHYSICAL_ADD_HURT",
+      "initValue": 0.1126,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "WindblumeOde": {
+    "key": "WindblumeOde",
+    "name": "Windblume Ode",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Hamayumi": {
+    "key": "Hamayumi",
+    "name": "Hamayumi",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Predator": {
+    "key": "Predator",
+    "name": "Predator",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "MouunsMoon": {
+    "key": "MouunsMoon",
+    "name": "Mouun's Moon",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "KingsSquire": {
+    "key": "KingsSquire",
+    "name": "King's Squire",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "EndOfTheLine": {
+    "key": "EndOfTheLine",
+    "name": "End of the Line",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "IbisPiercer": {
+    "key": "IbisPiercer",
+    "name": "Ibis Piercer",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ScionOfTheBlazingSun": {
+    "key": "ScionOfTheBlazingSun",
+    "name": "Scion of the Blazing Sun",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.04,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SongOfStillness": {
+    "key": "SongOfStillness",
+    "name": "Song of Stillness",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "Cloudforged": {
+    "key": "Cloudforged",
+    "name": "Cloudforged",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ELEMENT_MASTERY",
+      "initValue": 36,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": false
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RangeGauge": {
+    "key": "RangeGauge",
+    "name": "Range Gauge",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "FlowerWreathedFeathers": {
+    "key": "FlowerWreathedFeathers",
+    "name": "Flower-Wreathed Feathers",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "ChainBreaker": {
+    "key": "ChainBreaker",
+    "name": "Chain Breaker",
+    "stars": 4,
+    "atkBase": 43.7349,
+    "atkCurve": "GROW_CURVE_ATTACK_202",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SequenceOfSolitude": {
+    "key": "SequenceOfSolitude",
+    "name": "Sequence of Solitude",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SnareHook": {
+    "key": "SnareHook",
+    "name": "Snare Hook",
+    "stars": 4,
+    "atkBase": 41.0671,
+    "atkCurve": "GROW_CURVE_ATTACK_204",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.133333,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "RainbowSerpentsRainBow": {
+    "key": "RainbowSerpentsRainBow",
+    "name": "Rainbow Serpent's Rain Bow",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.1,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "JadeVista": {
+    "key": "JadeVista",
+    "name": "Jade Vista",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "CovenantOfFrostAndSnow": {
+    "key": "CovenantOfFrostAndSnow",
+    "name": "Covenant of Frost and Snow",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_DEFENSE_PERCENT",
+      "initValue": 0.1126,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SkywardHarp": {
+    "key": "SkywardHarp",
+    "name": "Skyward Harp",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.048,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "AmosBow": {
+    "key": "AmosBow",
+    "name": "Amos' Bow",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.108,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "ElegyForTheEnd": {
+    "key": "ElegyForTheEnd",
+    "name": "Elegy for the End",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CHARGE_EFFICIENCY",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "PolarStar": {
+    "key": "PolarStar",
+    "name": "Polar Star",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "AquaSimulacra": {
+    "key": "AquaSimulacra",
+    "name": "Aqua Simulacra",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "ThunderingPulse": {
+    "key": "ThunderingPulse",
+    "name": "Thundering Pulse",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "HuntersPath": {
+    "key": "HuntersPath",
+    "name": "Hunter's Path",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "TheFirstGreatMagic": {
+    "key": "TheFirstGreatMagic",
+    "name": "The First Great Magic",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "SilvershowerHeartstrings": {
+    "key": "SilvershowerHeartstrings",
+    "name": "Silvershower Heartstrings",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "AstralVulturesCrimsonPlumage": {
+    "key": "AstralVulturesCrimsonPlumage",
+    "name": "Astral Vulture's Crimson Plumage",
+    "stars": 5,
+    "atkBase": 45.9364,
+    "atkCurve": "GROW_CURVE_ATTACK_301",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.144,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "TheDaybreakChronicles": {
+    "key": "TheDaybreakChronicles",
+    "name": "The Daybreak Chronicles",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.096,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "GoldenFrostboundOath": {
+    "key": "GoldenFrostboundOath",
+    "name": "Golden Frostbound Oath",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.192,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  }
+}

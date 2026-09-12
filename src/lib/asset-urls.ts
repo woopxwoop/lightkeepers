@@ -90,6 +90,44 @@ export function artifactIconUrl(iconName: string | null): string | null {
   return uiUrl(iconName);
 }
 
+/**
+ * miHoYo `UI_RelicIcon_{setId}_{n}` slot suffixes (not GOOD order).
+ * Flower=4 is what artifact-set JSON stores as the set icon.
+ */
+const RELIC_SLOT_SUFFIX: Record<
+  "flower" | "plume" | "sands" | "goblet" | "circlet",
+  string
+> = {
+  goblet: "1",
+  plume: "2",
+  circlet: "3",
+  flower: "4",
+  sands: "5",
+};
+
+/**
+ * Swap a set / piece relic stem to another slot (`UI_RelicIcon_15025_4` → `_2`).
+ * Returns null when the name is not a numbered RelicIcon stem.
+ */
+export function relicIconForSlot(
+  iconName: string | null | undefined,
+  slot: keyof typeof RELIC_SLOT_SUFFIX,
+): string | null {
+  if (!iconName) return null;
+  const base = iconName.replace(/\.(png|webp|jpe?g)$/i, "");
+  if (!/^UI_RelicIcon_\d+_\d+$/.test(base)) return null;
+  return base.replace(/_\d+$/, `_${RELIC_SLOT_SUFFIX[slot]}`);
+}
+
+/** Piece icon URL for a set's RelicIcon stem + GOOD slot. */
+export function artifactPieceIconUrl(
+  setIconName: string | null | undefined,
+  slot: keyof typeof RELIC_SLOT_SUFFIX,
+): string | null {
+  const stem = relicIconForSlot(setIconName, slot);
+  return stem ? artifactIconUrl(stem) : null;
+}
+
 /** Weapon icon (standard or awakened). */
 export function weaponIconUrl(iconName: string | null): string | null {
   if (!iconName) return null;

@@ -147,6 +147,7 @@ export function artifactsForLocation(
 
 /**
  * Unequip `characterKey`, then equip `next` (existing unequipped copy or a new row).
+ * Prefer {@link equipExistingInventoryWeapon} in UI — that path never creates rows.
  */
 export function equipInventoryWeapon(
   weapons: readonly InventoryWeapon[],
@@ -189,6 +190,76 @@ export function equipInventoryWeapon(
       lock: false,
     },
   ];
+}
+
+/**
+ * Unequip `characterKey`, then equip an existing bag row by index (or unequip only).
+ * Never appends a weapon. Invalid / occupied / missing indexes leave the bag unchanged;
+ * only `null` clears the character's current weapon.
+ */
+export function equipExistingInventoryWeapon(
+  weapons: readonly InventoryWeapon[],
+  characterKey: string,
+  weaponIndex: number | null,
+): InventoryWeapon[] {
+  if (!characterKey) return weapons.map(cloneInventoryWeapon);
+  const next = weapons.map(cloneInventoryWeapon);
+  if (weaponIndex == null) {
+    for (const weapon of next) {
+      if (weapon.location === characterKey) weapon.location = "";
+    }
+    return next;
+  }
+  const piece = next[weaponIndex];
+  if (
+    !piece ||
+    (piece.location !== "" && piece.location !== characterKey)
+  ) {
+    return next;
+  }
+  for (const weapon of next) {
+    if (weapon.location === characterKey) weapon.location = "";
+  }
+  piece.location = characterKey;
+  return next;
+}
+
+/**
+ * Clear `characterKey`'s piece in `slot`, then optionally equip an existing
+ * unequipped bag row by index. Never creates artifacts. Invalid / occupied /
+ * wrong-slot indexes leave the bag unchanged; only `null` unequips the slot.
+ */
+export function equipInventoryArtifact(
+  artifacts: readonly InventoryArtifact[],
+  characterKey: string,
+  slot: InventoryArtifactSlot,
+  pieceIndex: number | null,
+): InventoryArtifact[] {
+  if (!characterKey) return artifacts.map(cloneInventoryArtifact);
+  const next = artifacts.map(cloneInventoryArtifact);
+  if (pieceIndex == null) {
+    for (const artifact of next) {
+      if (artifact.location === characterKey && artifact.slotKey === slot) {
+        artifact.location = "";
+      }
+    }
+    return next;
+  }
+  const piece = next[pieceIndex];
+  if (
+    !piece ||
+    piece.slotKey !== slot ||
+    (piece.location !== "" && piece.location !== characterKey)
+  ) {
+    return next;
+  }
+  for (const artifact of next) {
+    if (artifact.location === characterKey && artifact.slotKey === slot) {
+      artifact.location = "";
+    }
+  }
+  piece.location = characterKey;
+  return next;
 }
 
 export function isArtifactSlot(value: unknown): value is InventoryArtifactSlot {

@@ -528,15 +528,20 @@ export function weaponTypeIconUrl(
 }
 
 /** Artifact slot icon stems (Lunaris `icons/Icon_*`, mirrored to genshin/ui). */
-const ARTIFACT_SLOT_ICON: Record<"sands" | "goblet" | "circlet", string> = {
+const ARTIFACT_SLOT_ICON: Record<
+  "flower" | "plume" | "sands" | "goblet" | "circlet",
+  string
+> = {
+  flower: "Icon_Flower_of_Life",
+  plume: "Icon_Plume_of_Death",
   sands: "Icon_Sands_of_Eon",
   goblet: "Icon_Goblet_of_Eonothem",
   circlet: "Icon_Circlet_of_Logos",
 };
 
-/** CDN URL for an artifact main-stat slot icon. */
+/** CDN URL for an artifact slot placeholder icon. */
 export function artifactSlotIconUrl(
-  slot: "sands" | "goblet" | "circlet",
+  slot: "flower" | "plume" | "sands" | "goblet" | "circlet",
 ): string {
   return genshinUiUrl(ARTIFACT_SLOT_ICON[slot]);
 }

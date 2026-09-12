@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { authClient } from "$lib/auth-client";
   import Button from "$lib/ui/components/Button.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
@@ -229,6 +230,9 @@
         href="https://frzyc.github.io/genshin-optimizer/#/doc"
         target="_blank"
         rel="noopener noreferrer">Documentation</a
+      >
+      <a class="back-link" href={resolve("/settings?tab=inventory")}
+        >Inventory</a
       >
     </p>
     <div class="import-actions">
