@@ -51,8 +51,10 @@
   import {
     ARTIFACT_MAIN_STAT_VALUE,
     WEAPON_PROP_TO_GOOD,
+    artifactMainValue,
     computeRosterSheetStats,
     formatSheetStat,
+    resolveWeaponStats,
   } from "$lib/build-stats";
   import {
     DEFAULT_ROSTER_PROGRESS,
@@ -397,12 +399,20 @@
     return artifactSlotIconUrl(slot);
   }
 
-  /** +20 main (GOOD has no stored main value). Flower/plume flats are fixed. */
-  function mainStatDisplay(key: string): string {
-    if (key === "hp") return "4780";
-    if (key === "atk") return "311";
-    const v = ARTIFACT_MAIN_STAT_VALUE[key];
+  /** Main from ReliquaryLevel for this piece's rarity/level (GOOD has no stored value). */
+  function mainStatDisplay(piece: {
+    mainStatKey: string;
+    rarity: number;
+    level: number;
+  }): string {
+    const key = piece.mainStatKey;
+    const v =
+      artifactMainValue(key, piece.rarity, piece.level) ??
+      ARTIFACT_MAIN_STAT_VALUE[key];
     if (v == null) return translateStatKey(key);
+    if (key === "hp" || key === "atk" || key === "def" || key === "eleMas") {
+      return String(Math.round(v));
+    }
     if (key.endsWith("_")) return `${(v * 100).toFixed(1)}%`;
     return String(Math.round(v));
   }
@@ -448,6 +458,8 @@
       level: progress.level,
       ascension: progress.ascension,
       weaponKey: view.weapon?.key ?? null,
+      weaponLevel: view.weapon?.level,
+      weaponAscension: view.weapon?.ascension,
       pieces: INVENTORY_ARTIFACT_SLOTS.map((slot) => view.piecesBySlot[slot]),
     });
   });
@@ -502,15 +514,26 @@
     return [...core, ...dmg];
   });
 
+  let resolvedWeapon = $derived.by(() => {
+    void equipment.version;
+    const key = view.weapon?.key;
+    if (!key) return null;
+    return resolveWeaponStats(
+      key,
+      view.weapon?.level ?? 90,
+      view.weapon?.ascension ?? 6,
+    );
+  });
   let weaponAtk = $derived(
-    weapon?.baseAtk != null ? Math.round(weapon.baseAtk) : null,
+    resolvedWeapon != null ? Math.round(resolvedWeapon.baseAtk) : null,
   );
   let weaponSub = $derived.by(() => {
-    const s = weapon?.subStat;
+    const s = resolvedWeapon?.subStat;
     if (!s) return null;
+    const baked = weapon?.subStat;
     const goodKey = WEAPON_PROP_TO_GOOD[s.propType] ?? null;
     return {
-      label: s.label,
+      label: baked?.label ?? translateStatKey(goodKey ?? s.propType),
       text: s.isPercent
         ? `${(s.value * 100).toFixed(1)}%`
         : String(Math.round(s.value)),
@@ -922,7 +945,7 @@
                       />
                     {/if}
                   </div>
-                  <div>{mainStatDisplay(piece.mainStatKey)}</div>
+                  <div>{mainStatDisplay(piece)}</div>
                   <div>
                     <span class="Stars" aria-hidden="true">
                       {#each Array.from(

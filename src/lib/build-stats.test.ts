@@ -6,12 +6,14 @@ import type { CharacterBuild } from "./types/investment.ts";
 import {
   ARTIFACT_MAIN_STAT_VALUE,
   SUBSTAT_ROLL_VALUE,
+  artifactMainValue,
   clampSubstatRolls,
   computeBuildSheetStats,
   computeRosterSheetStats,
   formatSheetStat,
   goodInventoryStatToSheet,
   resolveCharacterBaseStats,
+  resolveWeaponStats,
   characterBaseByKey,
 } from "./build-stats.ts";
 
@@ -157,6 +159,60 @@ describe("computeRosterSheetStats", () => {
     assert.equal(sheet.dmgBonus.pyro_dmg_, 0.466);
     assert.equal(sheet.hp, base.hp + 4780);
     assert.equal(sheet.atk, base.atk + homa.baseAtk);
+  });
+
+  it("scales weapon ATK/sub from WeaponCurve at inventory level", () => {
+    const l90 = resolveWeaponStats("StaffOfHoma", 90, 6);
+    const l70 = resolveWeaponStats("StaffOfHoma", 70, 5);
+    const baked = weaponByKey.get("StaffOfHoma");
+    assert.ok(l90);
+    assert.ok(l70);
+    assert.ok(baked);
+    assert.ok(Math.abs(l90.baseAtk - baked.baseAtk) < 0.15);
+    assert.ok(l70.baseAtk < l90.baseAtk);
+    assert.ok((l70.subStat?.value ?? 0) < (l90.subStat?.value ?? 0));
+
+    const sheet70 = computeRosterSheetStats({
+      characterKey: "HuTao",
+      level: 70,
+      ascension: 5,
+      weaponKey: "StaffOfHoma",
+      weaponLevel: 70,
+      weaponAscension: 5,
+      pieces: [],
+    });
+    assert.ok(sheet70);
+    const char70 = resolveCharacterBaseStats("HuTao", 70, 5)!;
+    assert.ok(
+      Math.abs(sheet70.atk - (char70.atk + l70.baseAtk)) < 1e-6,
+    );
+  });
+
+  it("uses ReliquaryLevel mains for piece rarity/level", () => {
+    const low = computeRosterSheetStats({
+      characterKey: "HuTao",
+      weaponKey: "StaffOfHoma",
+      pieces: [
+        piece({
+          slotKey: "flower",
+          mainStatKey: "hp",
+          rarity: 4,
+          level: 16,
+        }),
+      ],
+    });
+    const maxed = computeRosterSheetStats({
+      characterKey: "HuTao",
+      weaponKey: "StaffOfHoma",
+      pieces: [
+        piece({ slotKey: "flower", mainStatKey: "hp", rarity: 5, level: 20 }),
+      ],
+    });
+    assert.ok(low);
+    assert.ok(maxed);
+    assert.equal(maxed.flatHp, 4780);
+    assert.ok(low.flatHp < maxed.flatHp);
+    assert.equal(low.flatHp, artifactMainValue("hp", 4, 16));
   });
 
   it("computeBuildSheetStats bakes flower/plume, mains, and clamped subs", () => {

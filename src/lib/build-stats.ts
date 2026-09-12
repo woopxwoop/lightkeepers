@@ -4,8 +4,11 @@
  * Shared sources:
  * - Character bases + AvatarCurve / promote tables (`character-bases.json`,
  *   `character-stat-curves.json`) — roster uses real level/ascension
- * - Weapon L90 ATK + substat (`weapons.json`) for now
- * - Artifact mains (`ARTIFACT_MAIN_STAT_VALUE` / flower+plume flats)
+ * - Weapon bases + WeaponCurve / promote (`weapon-bases.json`,
+ *   `weapon-stat-curves.json`) — roster uses inventory level/ascension;
+ *   investment still uses L90 bake from `weapons.json`
+ * - Artifact mains by rarity/level (`artifact-main-stats.json` from
+ *   ReliquaryLevel); investment still uses +20 5★ constants
  *
  * Two entry points:
  * - {@link computeBuildSheetStats} — gcsim / investment builds (L90 bake)
@@ -15,6 +18,9 @@
  */
 import characterBasesRaw from "$lib/data/character-bases.json";
 import characterStatCurvesRaw from "$lib/data/character-stat-curves.json";
+import weaponBasesRaw from "$lib/data/weapon-bases.json";
+import weaponStatCurvesRaw from "$lib/data/weapon-stat-curves.json";
+import artifactMainStatsRaw from "$lib/data/artifact-main-stats.json";
 import { weaponByKey, type WeaponData } from "$lib/equipment-data";
 import type { InventoryArtifact } from "$lib/definitions";
 import type { CharacterBuild } from "$lib/types/investment";
@@ -55,14 +61,141 @@ export const characterStatCurves = characterStatCurvesRaw as Record<
   Record<string, number>
 >;
 
+export type WeaponPromoteStep = {
+  asc: number;
+  atk: number;
+};
+
+export type WeaponSubBase = {
+  propType: string;
+  initValue: number;
+  curve: string;
+  isPercent: boolean;
+};
+
+export interface WeaponBaseRow {
+  key: string;
+  name: string;
+  stars: number;
+  atkBase: number;
+  atkCurve: string;
+  subStat: WeaponSubBase | null;
+  promotes: WeaponPromoteStep[];
+}
+
+export const weaponBaseByKey = new Map(
+  Object.entries(weaponBasesRaw as Record<string, WeaponBaseRow>),
+);
+
+/** Weapon GROW_CURVE_* → level string → multiplier. */
+export const weaponStatCurves = weaponStatCurvesRaw as Record<
+  string,
+  Record<string, number>
+>;
+
+/** rarity → GOOD level → main-stat map (from ReliquaryLevel). */
+export const artifactMainStats = artifactMainStatsRaw as Record<
+  string,
+  Record<string, Record<string, number>>
+>;
+
 function roundStat(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+function roundWeaponSub(value: number, isPercent: boolean): number {
+  if (isPercent) return Math.round(value * 10000) / 10000;
+  return roundStat(value);
 }
 
 function curveMult(growCurve: string, level: number): number {
   const bag = characterStatCurves[growCurve];
   if (!bag) return 1;
   return bag[String(level)] ?? bag[String(Math.min(90, level))] ?? 1;
+}
+
+function weaponCurveMult(growCurve: string, level: number): number {
+  const bag = weaponStatCurves[growCurve];
+  if (!bag) return 1;
+  return bag[String(level)] ?? bag[String(Math.min(90, level))] ?? 1;
+}
+
+export type ResolvedWeaponStats = {
+  baseAtk: number;
+  subStat: {
+    propType: string;
+    value: number;
+    isPercent: boolean;
+  } | null;
+};
+
+/**
+ * Resolve weapon ATK + substat for a roster level / promote.
+ * Falls back to the L90 `weapons.json` bake when curve fields are missing.
+ */
+export function resolveWeaponStats(
+  weaponKey: string,
+  level = 90,
+  ascension = 6,
+): ResolvedWeaponStats | null {
+  const row = weaponBaseByKey.get(weaponKey);
+  if (!row) {
+    const baked = weaponByKey.get(weaponKey);
+    if (!baked) return null;
+    return {
+      baseAtk: baked.baseAtk,
+      subStat: baked.subStat
+        ? {
+            propType: baked.subStat.propType,
+            value: baked.subStat.value,
+            isPercent: baked.subStat.isPercent,
+          }
+        : null,
+    };
+  }
+
+  const lv = Math.max(1, Math.min(90, Math.floor(level)));
+  const asc = Math.max(0, Math.min(6, Math.floor(ascension)));
+  const promote =
+    row.promotes.find((p) => p.asc === asc) ??
+    row.promotes[asc] ??
+    row.promotes[row.promotes.length - 1];
+  const baseAtk = roundStat(
+    row.atkBase * weaponCurveMult(row.atkCurve, lv) + (promote?.atk ?? 0),
+  );
+
+  let subStat: ResolvedWeaponStats["subStat"] = null;
+  if (row.subStat) {
+    const scaled =
+      row.subStat.initValue * weaponCurveMult(row.subStat.curve, lv);
+    subStat = {
+      propType: row.subStat.propType,
+      value: roundWeaponSub(scaled, row.subStat.isPercent),
+      isPercent: row.subStat.isPercent,
+    };
+  }
+
+  return { baseAtk, subStat };
+}
+
+/**
+ * Artifact main-stat value for a GOOD rarity (1–5) and level (0–20).
+ * Falls back to the 5★ +20 constants when the table misses a cell.
+ */
+export function artifactMainValue(
+  statKey: string,
+  rarity = 5,
+  level = 20,
+): number | null {
+  const r = Math.max(1, Math.min(5, Math.floor(rarity)));
+  const lv = Math.max(0, Math.min(20, Math.floor(level)));
+  const fromTable = artifactMainStats[String(r)]?.[String(lv)]?.[statKey];
+  if (typeof fromTable === "number" && Number.isFinite(fromTable)) {
+    return fromTable;
+  }
+  if (statKey === "hp") return FLOWER_HP;
+  if (statKey === "atk") return PLUME_ATK;
+  return ARTIFACT_MAIN_STAT_VALUE[statKey] ?? null;
 }
 
 /**
@@ -407,6 +540,10 @@ export type RosterSheetInput = {
   /** Roster ascension / promote (0–6). Defaults to 6 when omitted. */
   ascension?: number;
   weaponKey?: string | null;
+  /** Equipped weapon level (defaults to 90). */
+  weaponLevel?: number;
+  /** Equipped weapon ascension (defaults to 6). */
+  weaponAscension?: number;
   pieces: readonly (InventoryArtifact | null | undefined)[];
 };
 
@@ -414,9 +551,9 @@ export type RosterSheetInput = {
  * Sheet totals from roster + GOOD inventory pieces.
  * Character HP/ATK/DEF follow AvatarCurve at {@link RosterSheetInput.level}
  * and promote bonuses at {@link RosterSheetInput.ascension}.
- * Mains use L90 +20 constants (same as card display). Substats use inventory
- * values (percents ÷ 100). Missing flower/plume → no flat main for that slot.
- * Weapon ATK/substat still use the L90 weapon table.
+ * Weapon ATK/substat follow WeaponCurve at weapon level/ascension.
+ * Artifact mains use ReliquaryLevel values for each piece's rarity/level.
+ * Substats use inventory values (percents ÷ 100).
  */
 export function computeRosterSheetStats(
   input: RosterSheetInput,
@@ -428,25 +565,29 @@ export function computeRosterSheetStats(
   );
   if (!base) return null;
   const weaponKey = input.weaponKey ?? "";
-  const weapon: WeaponData | undefined = weaponKey
-    ? weaponByKey.get(weaponKey)
-    : undefined;
+  const resolvedWeapon = weaponKey
+    ? resolveWeaponStats(
+        weaponKey,
+        input.weaponLevel ?? 90,
+        input.weaponAscension ?? 6,
+      )
+    : null;
   const acc = emptyAccum(base);
 
   applyAscension(acc, base);
-  applyWeaponSub(acc, weapon);
+  if (resolvedWeapon?.subStat) {
+    const good = WEAPON_PROP_TO_GOOD[resolvedWeapon.subStat.propType];
+    if (good) applySheetStat(acc, good, resolvedWeapon.subStat.value);
+  }
 
   for (const piece of input.pieces) {
     if (!piece) continue;
-    const mainKey = piece.mainStatKey;
-    if (mainKey === "hp" && piece.slotKey === "flower") {
-      acc.flatHp += FLOWER_HP;
-    } else if (mainKey === "atk" && piece.slotKey === "plume") {
-      acc.flatAtk += PLUME_ATK;
-    } else {
-      const mainVal = ARTIFACT_MAIN_STAT_VALUE[mainKey];
-      if (mainVal != null) applySheetStat(acc, mainKey, mainVal);
-    }
+    const mainVal = artifactMainValue(
+      piece.mainStatKey,
+      piece.rarity ?? 5,
+      piece.level ?? 20,
+    );
+    if (mainVal != null) applySheetStat(acc, piece.mainStatKey, mainVal);
     for (const sub of piece.substats) {
       applySheetStat(
         acc,
@@ -456,7 +597,7 @@ export function computeRosterSheetStats(
     }
   }
 
-  return finalizeSheet(acc, base, weapon?.baseAtk ?? 0);
+  return finalizeSheet(acc, base, resolvedWeapon?.baseAtk ?? 0);
 }
 
 export function formatSheetStat(
