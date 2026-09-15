@@ -139,6 +139,19 @@ function builds(partial: Partial<CharacterIndex> = {}): CharacterIndex {
       max_pct_drop: 5,
       tier: "solid",
     },
+    weapon_level_importance: {
+      weapons: [
+        {
+          key: "StaffOfHoma",
+          teams: 3,
+          mean_pct_drop: 5,
+          median_pct_drop: 5,
+          min_pct_drop: 5,
+          max_pct_drop: 5,
+          tier: "solid",
+        },
+      ],
+    },
     ...partial,
   };
 }
@@ -271,7 +284,7 @@ describe("gradeOwnedBuild", () => {
     ]);
   });
 
-  it("Liked underleveled weapon is hard Needs work; wrong weapon stays silent", () => {
+  it("Liked underleveled weapon Needs work only when measured 80→90 impact clears negligible", () => {
     const likedLow = gradeOwnedBuild({
       view: fullView([{ ...homa, level: 70, ascension: 4 }]),
       builds: builds(),
@@ -286,6 +299,38 @@ describe("gradeOwnedBuild", () => {
     ]);
     assert.deepEqual(likedLow.advice, ["Lv 70 → Lv 90", "A4 → A6"]);
     assert.ok(!likedLow.aside.some((line) => /Weapon:/.test(line)));
+
+    const negligible = gradeOwnedBuild({
+      view: fullView([{ ...homa, level: 70, ascension: 4 }]),
+      builds: builds({
+        weapon_level_importance: {
+          weapons: [
+            {
+              key: "StaffOfHoma",
+              teams: 2,
+              mean_pct_drop: 0.5,
+              median_pct_drop: 0.4,
+              min_pct_drop: 0.2,
+              max_pct_drop: 0.8,
+              tier: "negligible",
+            },
+          ],
+        },
+      }),
+      nameId: "Hutao",
+      getWeaponStars: (key) => (key === "StaffOfHoma" ? 5 : 4),
+    });
+    assert.equal(negligible.bucket, "built_well");
+    assert.deepEqual(negligible.adviceSteps, []);
+
+    const unscored = gradeOwnedBuild({
+      view: fullView([{ ...homa, level: 70, ascension: 4 }]),
+      builds: builds({ weapon_level_importance: { weapons: [] } }),
+      nameId: "Hutao",
+      getWeaponStars: (key) => (key === "StaffOfHoma" ? 5 : 4),
+    });
+    assert.equal(unscored.bucket, "built_well");
+    assert.deepEqual(unscored.adviceSteps, []);
 
     const wrong = gradeOwnedBuild({
       view: fullView([{ ...homa, key: "DragonBane", level: 1, ascension: 0 }]),

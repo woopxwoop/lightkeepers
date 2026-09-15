@@ -2,7 +2,8 @@
  * Grade owned characters against Builds summaries.
  *
  * Character progress (level / ascension / talents) and liked-weapon investment
- * drive Needs work. Set / mains stay soft asides. Never recommend weapon swaps.
+ * drive Needs work when measured weapon 80→90 impact clears negligible.
+ * Set / mains stay soft asides. Never recommend weapon swaps.
  */
 
 import { rankWeaponsByRarityAndTeams } from "$lib/character-builds";
@@ -12,8 +13,16 @@ import {
 } from "$lib/roster-build-card";
 import { plannerTargetFromBuilds } from "$lib/planner-targets";
 import { isStaleBuildSummary } from "$lib/stale-build-summary";
-import { primaryUpgradePct } from "$lib/upgrade-priority";
-import type { CharacterIndex } from "$lib/types/investment";
+import {
+  LEVEL_UPGRADE,
+  primaryUpgradePct,
+  resolveUpgradeImpact,
+} from "$lib/upgrade-priority";
+import type {
+  CharacterIndex,
+  CharacterWeaponLevelGain,
+  ImportanceImpactTier,
+} from "$lib/types/investment";
 import type { UpgradePromoteStep } from "$lib/types/upgrade-costs";
 import { UPGRADE_DEFAULTS } from "$lib/upgrade-costs";
 
@@ -31,8 +40,16 @@ export const GRADE_CHARACTER_PROMOTES: UpgradePromoteStep[] = [
 export const WEAPON_OK_MAX_RANK = 3;
 export const MAIN_OK_MAX_RANK = 2;
 
-/** Liked-weapon investment target (Planner default weapon goal). */
+/** Liked-weapon investment target when measured 80→90 impact clears negligible. */
 export const WEAPON_GRADE_TARGET = UPGRADE_DEFAULTS.weaponTarget;
+
+/** Recommend L90 when measured weapon-level impact is above negligible. */
+const WEAPON_LEVEL_RECOMMEND_TIERS = new Set<ImportanceImpactTier>([
+  "exceptional",
+  "high",
+  "solid",
+  "modest",
+]);
 
 export type AccountBuildBucket = "built_well" | "needs_work" | "ungraded";
 
@@ -307,8 +324,9 @@ function progressAdviceSteps(
 }
 
 /**
- * Hard weapon steps only when equipped weapon is Builds-OK and underinvested.
- * Wrong / missing weapons stay silent (no swap tips).
+ * Hard weapon steps only when equipped weapon is Builds-OK, has measured
+ * 80→90 impact above negligible, and is underinvested. Wrong / missing /
+ * unscored / negligible weapons stay silent (no swap tips).
  */
 export function weaponProgressAdviceSteps(
   view: RosterBuildView,
@@ -317,7 +335,9 @@ export function weaponProgressAdviceSteps(
 ): AccountBuildAdviceStep[] {
   if (!weaponAxisOk(view, builds, getStars)) return [];
   const w = view.weapon;
-  if (!w) return [];
+  if (!w?.key) return [];
+  if (!shouldRecommendWeaponLevel90(builds, w.key)) return [];
+
   const steps: AccountBuildAdviceStep[] = [];
   if (w.level < WEAPON_GRADE_TARGET.level) {
     steps.push({
@@ -334,6 +354,39 @@ export function weaponProgressAdviceSteps(
     });
   }
   return steps;
+}
+
+/** Measured 80→90 row for one weapon key, if any. */
+export function weaponLevelImportanceForKey(
+  builds: CharacterIndex,
+  weaponKey: string,
+): CharacterWeaponLevelGain | null {
+  const rows = builds.weapon_level_importance?.weapons;
+  if (!rows?.length) return null;
+  return rows.find((row) => row.key === weaponKey) ?? null;
+}
+
+export function resolveWeaponLevelTier(
+  builds: CharacterIndex,
+  weaponKey: string,
+): ImportanceImpactTier | null {
+  const row = weaponLevelImportanceForKey(builds, weaponKey);
+  if (!row || row.teams <= 0) return null;
+  const pct = primaryUpgradePct(row.mean_pct_drop, row.median_pct_drop);
+  return resolveUpgradeImpact(
+    row.tier,
+    pct,
+    LEVEL_UPGRADE,
+    builds.impact_tiers?.weapon_levels,
+  ).tier;
+}
+
+export function shouldRecommendWeaponLevel90(
+  builds: CharacterIndex,
+  weaponKey: string,
+): boolean {
+  const tier = resolveWeaponLevelTier(builds, weaponKey);
+  return tier != null && WEAPON_LEVEL_RECOMMEND_TIERS.has(tier);
 }
 
 function slotImpactPct(
