@@ -29,7 +29,13 @@ export interface InvestmentTeam {
   results: InvestmentSim[];
 }
 
-export type SimKind = "baseline" | "f2p" | "owned" | "vertical" | "talent";
+export type SimKind =
+  | "baseline"
+  | "f2p"
+  | "owned"
+  | "vertical"
+  | "talent"
+  | "weapon_level";
 
 export interface InvestmentSim {
   /** Stable key: characters sorted, Char~C{cons}~{weapon}, joined by __ */
@@ -45,7 +51,8 @@ export interface InvestmentSim {
    * f2p = floor-cost alternative (free weapon / 4★ budget cons, etc.);
    * owned = already-owned 5★ weapon alt (+1 cost, vs baseline — not a pull rung);
    * vertical = limited-pull upgrades (extra cost above floor);
-   * talent = one-step talent drop from baseline (single char, one talent at 1).
+   * talent = one-step talent drop from baseline (single char, one talent at 1);
+   * weapon_level = one-step authored weapon at lvl 80/90 (OptimFull re-run).
    */
   kind: SimKind;
   /** Total cost in limited5 copies (baseline + upgrades). */
@@ -65,6 +72,8 @@ export interface CharacterBuild {
     key: string;
     refinement: number;
     level: number;
+    /** Weapon max level in gcsim ``lvl=a/b`` (defaults to 90 when omitted). */
+    max_level?: number;
   };
   set: {
     key: string;
@@ -114,13 +123,16 @@ export interface ImpactTierScale {
 
 /**
  * Merge-time impact buckets uploaded with character summaries.
- * Each upgrade axis has its own floors (talents vs cons vs sigs vs artifacts).
+ * Each upgrade axis has its own floors (talents vs cons vs sigs vs artifacts
+ * vs weapon levels).
  */
 export interface ImpactTiersMeta {
   talents: ImpactTierScale;
   constellations: ImpactTierScale;
   sig_weapons: ImpactTierScale;
   artifacts: ImpactTierScale;
+  /** Weapon 80→90 level impact (optional on older CDN payloads). */
+  weapon_levels?: ImpactTierScale;
 }
 
 export interface CharacterIndex {
@@ -183,6 +195,11 @@ export interface CharacterIndex {
    * % of the 80/90 rung), aggregated across teams that have both samples.
    */
   ascension_importance?: CharacterLevelImportance;
+  /**
+   * How much DPS drops when each authored weapon runs at level 80/90 vs the
+   * matching same-weapon 90/90 board (OptimFull re-run per board).
+   */
+  weapon_level_importance?: CharacterWeaponLevelImportance;
   /**
    * One-step gains: constellations are stepwise vs the previous constellation
    * (C2 vs C1), covering rungs below the team baseline as well as above it;
@@ -330,6 +347,32 @@ export interface CharacterTalentImportance {
 export interface CharacterLevelImportance extends CharacterTalentSlotImportance {
   /** Teams with a level-80 (or ascension) drop sample for this character. */
   teams: number;
+}
+
+/** Per-weapon 80→90 DPS drop for one character. */
+export interface CharacterWeaponLevelGain {
+  /** Weapon GOOD key. */
+  key: string;
+  /** Teams that contributed an 80 vs 90 sample for this weapon. */
+  teams: number;
+  /** Average % DPS drop vs the matching L90 board. */
+  mean_pct_drop: number;
+  /** Median % DPS drop vs the matching L90 board. */
+  median_pct_drop: number;
+  /** Smallest % DPS drop on any contributing team. */
+  min_pct_drop: number;
+  /** Largest % DPS drop on any contributing team. */
+  max_pct_drop: number;
+  /**
+   * Merge-time impact bucket from the weapon-level Jenks scale.
+   * Null when this entry was not scored.
+   */
+  tier?: ImportanceImpactTier | null;
+}
+
+export interface CharacterWeaponLevelImportance {
+  /** Authored weapons ranked by mean % drop (highest first). */
+  weapons: CharacterWeaponLevelGain[];
 }
 
 export interface CharacterVerticalGain {
