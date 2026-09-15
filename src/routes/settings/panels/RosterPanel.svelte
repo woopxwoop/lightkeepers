@@ -315,7 +315,7 @@
 {#if synced}
   <div class="roster-page">
     <header class="panel-head">
-      <span>
+      <div>
         <h2 class="section-title">Roster</h2>
         <a class="back-link" href={resolve("/settings?tab=account")}>
           Import with GOOD
@@ -323,7 +323,7 @@
         <span class="section-lede roster-lede"
           >or select the characters you own manually</span
         >
-      </span>
+      </div>
     </header>
 
     <CharacterFilterBar

@@ -1,8 +1,8 @@
 /**
  * Grade owned characters against Builds summaries.
  *
- * v1 scoring is progress-only (level / ascension / talents). Weapon, set, and
- * mains tips stay as soft asides — the gear comparison isn’t comprehensive yet.
+ * Character progress (level / ascension / talents) and liked-weapon investment
+ * drive Needs work. Set / mains stay soft asides. Never recommend weapon swaps.
  */
 
 import { rankWeaponsByRarityAndTeams } from "$lib/character-builds";
@@ -15,6 +15,7 @@ import { isStaleBuildSummary } from "$lib/stale-build-summary";
 import { primaryUpgradePct } from "$lib/upgrade-priority";
 import type { CharacterIndex } from "$lib/types/investment";
 import type { UpgradePromoteStep } from "$lib/types/upgrade-costs";
+import { UPGRADE_DEFAULTS } from "$lib/upgrade-costs";
 
 /** Unlock table for gating planner targets when the upgrade catalog isn’t loaded. */
 export const GRADE_CHARACTER_PROMOTES: UpgradePromoteStep[] = [
@@ -29,6 +30,9 @@ export const GRADE_CHARACTER_PROMOTES: UpgradePromoteStep[] = [
 
 export const WEAPON_OK_MAX_RANK = 3;
 export const MAIN_OK_MAX_RANK = 2;
+
+/** Liked-weapon investment target (Planner default weapon goal). */
+export const WEAPON_GRADE_TARGET = UPGRADE_DEFAULTS.weaponTarget;
 
 export type AccountBuildBucket = "built_well" | "needs_work" | "ungraded";
 
@@ -48,7 +52,9 @@ export type AccountBuildAdviceKind =
   | "ascension"
   | "normal"
   | "skill"
-  | "burst";
+  | "burst"
+  | "weapon_level"
+  | "weapon_ascension";
 
 export type AccountBuildAdviceStep = {
   kind: AccountBuildAdviceKind;
@@ -62,7 +68,7 @@ export type AccountBuildGrade = {
   complete: boolean;
   /** Axis checks when a usable summary exists; null when ungraded. */
   axes: Record<AccountBuildAxis, boolean> | null;
-  /** Progress gaps only (drives Needs work). */
+  /** Axes that drive Needs work (character progress and/or liked-weapon lag). */
   gaps: AccountBuildAxis[];
   /** Structured progress gaps (current → target). Empty when Built well / ungraded copy. */
   adviceSteps: AccountBuildAdviceStep[];
@@ -87,7 +93,7 @@ export const ACCOUNT_BUILD_ADVICE_UI_ICON: Partial<
   ascension: "UI_ItemIcon_104104",
 };
 
-/** Resolve advice icon: level/ascension UI items, or kit talent URLs. */
+/** Resolve advice icon: level/ascension UI items, kit talents, or weapon icon. */
 export function adviceStepIconSrc(
   kind: AccountBuildAdviceKind,
   talents?: {
@@ -96,7 +102,11 @@ export function adviceStepIconSrc(
     burst: string | null;
   } | null,
   uiAssetUrl: (uiName: string) => string = (n) => n,
+  weaponIcon: string | null = null,
 ): string | null {
+  if (kind === "weapon_level" || kind === "weapon_ascension") {
+    return weaponIcon;
+  }
   const ui = ACCOUNT_BUILD_ADVICE_UI_ICON[kind];
   if (ui) return uiAssetUrl(ui);
   if (!talents) return null;
@@ -109,8 +119,10 @@ export function adviceStepIconSrc(
 export function formatAdviceStep(step: AccountBuildAdviceStep): string {
   switch (step.kind) {
     case "level":
+    case "weapon_level":
       return `Lv ${step.current} → Lv ${step.target}`;
     case "ascension":
+    case "weapon_ascension":
       return `A${step.current} → A${step.target}`;
     case "normal":
       return `NA ${step.current} → ${step.target}`;
@@ -200,13 +212,6 @@ function usableSummary(
   return true;
 }
 
-function weaponLabel(
-  key: string,
-  resolvers: AccountBuildNameResolvers,
-): string {
-  return resolvers.getWeaponName?.(key)?.trim() || key;
-}
-
 function setLabel(key: string, resolvers: AccountBuildNameResolvers): string {
   return resolvers.getSetName?.(key)?.trim() || key;
 }
@@ -221,20 +226,6 @@ function joinNames(names: string[], max = 3): string {
   if (slice.length === 1) return slice[0]!;
   if (slice.length === 2) return `${slice[0]} or ${slice[1]}`;
   return `${slice.slice(0, -1).join(", ")}, or ${slice[slice.length - 1]}`;
-}
-
-function topWeaponAdvice(
-  builds: CharacterIndex,
-  resolvers: AccountBuildNameResolvers,
-): string | null {
-  const getStars = resolvers.getWeaponStars ?? (() => 0);
-  const ranked = rankWeaponsByRarityAndTeams(builds.weapons, getStars).slice(
-    0,
-    WEAPON_OK_MAX_RANK,
-  );
-  if (ranked.length === 0) return null;
-  const names = ranked.map((row) => weaponLabel(row.key, resolvers));
-  return `Weapon: ${joinNames(names)}`;
 }
 
 function topSetAdvice(
@@ -315,6 +306,36 @@ function progressAdviceSteps(
   return steps;
 }
 
+/**
+ * Hard weapon steps only when equipped weapon is Builds-OK and underinvested.
+ * Wrong / missing weapons stay silent (no swap tips).
+ */
+export function weaponProgressAdviceSteps(
+  view: RosterBuildView,
+  builds: CharacterIndex,
+  getStars: (key: string) => number = () => 0,
+): AccountBuildAdviceStep[] {
+  if (!weaponAxisOk(view, builds, getStars)) return [];
+  const w = view.weapon;
+  if (!w) return [];
+  const steps: AccountBuildAdviceStep[] = [];
+  if (w.level < WEAPON_GRADE_TARGET.level) {
+    steps.push({
+      kind: "weapon_level",
+      current: w.level,
+      target: WEAPON_GRADE_TARGET.level,
+    });
+  }
+  if (w.ascension < WEAPON_GRADE_TARGET.ascension) {
+    steps.push({
+      kind: "weapon_ascension",
+      current: w.ascension,
+      target: WEAPON_GRADE_TARGET.ascension,
+    });
+  }
+  return steps;
+}
+
 function slotImpactPct(
   row:
     | { mean_pct_drop: number; median_pct_drop: number }
@@ -355,18 +376,13 @@ export function progressPriority(
   return score;
 }
 
-/** Soft gear notes only — never drives the bucket. */
+/** Soft set/mains notes only — never weapon swaps, never drives the bucket. */
 function gearAside(
   view: RosterBuildView,
   builds: CharacterIndex,
   resolvers: AccountBuildNameResolvers,
 ): string[] {
   const aside: string[] = [];
-  const getStars = resolvers.getWeaponStars ?? (() => 0);
-  if (!weaponAxisOk(view, builds, getStars)) {
-    const line = topWeaponAdvice(builds, resolvers);
-    if (line) aside.push(line);
-  }
   if (!setAxisOk(view, builds)) {
     const line = topSetAdvice(builds, resolvers);
     if (line) aside.push(line);
@@ -447,26 +463,36 @@ export function gradeOwnedBuild(input: {
     progress: progressAxisOk(input.view, builds, promotes),
   };
   const progressOk = axes.progress;
-  const adviceSteps = progressOk
+  const progressSteps = progressOk
     ? []
     : progressAdviceSteps(input.view, builds, promotes);
+  const weaponSteps = weaponProgressAdviceSteps(
+    input.view,
+    builds,
+    getStars,
+  );
+  const adviceSteps = [...progressSteps, ...weaponSteps];
+  const gaps: AccountBuildAxis[] = [];
+  if (!progressOk) gaps.push("progress");
+  if (weaponSteps.length > 0) gaps.push("weapon");
+  const needsWork = gaps.length > 0;
   const priority = progressOk
     ? 0
     : progressPriority(input.view, builds, promotes);
 
   return {
-    bucket: progressOk ? "built_well" : "needs_work",
+    bucket: needsWork ? "needs_work" : "built_well",
     complete,
     axes,
-    gaps: progressOk ? [] : ["progress"],
+    gaps,
     adviceSteps,
-    advice: progressOk
-      ? []
-      : adviceSteps.length > 0
+    advice: needsWork
+      ? adviceSteps.length > 0
         ? adviceSteps.map(formatAdviceStep)
-        : ["Raise level, ascension, or talents"],
-    // Gear tips only on the recommendation bucket — keep Built well clean.
-    aside: progressOk ? [] : gearAside(input.view, builds, resolvers),
+        : ["Raise level, ascension, or talents"]
+      : [],
+    // Soft set/mains only on Needs work — never weapon swaps.
+    aside: needsWork ? gearAside(input.view, builds, resolvers) : [],
     priority,
     ungradedReason: null,
   };

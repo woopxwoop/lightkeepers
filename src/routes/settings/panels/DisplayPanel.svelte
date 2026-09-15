@@ -124,7 +124,9 @@
         <p class="tcg-info">
           <IconInfo size={13} />
           Uses Genius Invokation TCG card art when the published card index lists
-          the character — otherwise their portrait is shown.
+          the character. Characters missing from a provisional index may still
+          show card art if the card.webp probe succeeds — otherwise their
+          portrait is shown.
         </p>
       {/if}
     </div>

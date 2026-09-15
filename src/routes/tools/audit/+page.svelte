@@ -21,7 +21,7 @@
     loadRosterWeapons,
   } from "$lib/app/roster-inventory";
   import type { CharacterOwned } from "$lib/definitions";
-  import { weaponByKey, artifactSetByKey } from "$lib/equipment-data";
+  import { weaponByKey, artifactSetByKey, weaponIconSrc } from "$lib/equipment-data";
   import { ensureEquipmentData } from "$lib/equipment-data";
   import {
     kitIconsFromCharacterKit,
@@ -50,6 +50,7 @@
     sortName: string;
     nameId: string;
     href: string;
+    weaponKey: string | null;
   };
 
   let loading = $state(true);
@@ -251,6 +252,7 @@
             sortName: character.name ?? character.name_id,
             nameId: character.name_id,
             href: resolve(`/characters/${character.name_id}`),
+            weaponKey: view.weapon?.key ?? null,
           };
         });
         if (cancelled) return;
@@ -373,6 +375,9 @@
                       step.kind,
                       selectedKitTalents,
                       getUiAssetUrl,
+                      selectedRow.weaponKey
+                        ? weaponIconSrc(selectedRow.weaponKey)
+                        : null,
                     )}
                     <li class="advice-step">
                       {#if iconSrc}

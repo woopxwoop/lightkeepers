@@ -196,4 +196,14 @@ describe("normalizeCharacterIndexFile", () => {
     });
     assert.equal(file.characters.Furina?.key, "Furina");
   });
+
+  it("rejects a characters array and falls back to an empty map", () => {
+    const file = normalizeCharacterIndexFile({
+      characters: [summary({ key: "Furina" })] as unknown as Record<
+        string,
+        CharacterIndex
+      >,
+    });
+    assert.deepEqual(file.characters, {});
+  });
 });

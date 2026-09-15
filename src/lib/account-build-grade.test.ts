@@ -271,6 +271,45 @@ describe("gradeOwnedBuild", () => {
     ]);
   });
 
+  it("Liked underleveled weapon is hard Needs work; wrong weapon stays silent", () => {
+    const likedLow = gradeOwnedBuild({
+      view: fullView([{ ...homa, level: 70, ascension: 4 }]),
+      builds: builds(),
+      nameId: "Hutao",
+      getWeaponStars: (key) => (key === "StaffOfHoma" ? 5 : 4),
+    });
+    assert.equal(likedLow.bucket, "needs_work");
+    assert.deepEqual(likedLow.gaps, ["weapon"]);
+    assert.deepEqual(likedLow.adviceSteps, [
+      { kind: "weapon_level", current: 70, target: 90 },
+      { kind: "weapon_ascension", current: 4, target: 6 },
+    ]);
+    assert.deepEqual(likedLow.advice, ["Lv 70 → Lv 90", "A4 → A6"]);
+    assert.ok(!likedLow.aside.some((line) => /Weapon:/.test(line)));
+
+    const wrong = gradeOwnedBuild({
+      view: fullView([{ ...homa, key: "DragonBane", level: 1, ascension: 0 }]),
+      builds: builds(),
+      nameId: "Hutao",
+      getWeaponStars: (key) => (key === "StaffOfHoma" ? 5 : 4),
+      getWeaponName: (key) =>
+        key === "StaffOfHoma" ? "Staff of Homa" : key,
+    });
+    assert.equal(wrong.bucket, "built_well");
+    assert.deepEqual(wrong.gaps, []);
+    assert.deepEqual(wrong.adviceSteps, []);
+    assert.ok(!wrong.aside.some((line) => /Weapon:/.test(line)));
+
+    const likedMaxed = gradeOwnedBuild({
+      view: fullView([homa]),
+      builds: builds(),
+      nameId: "Hutao",
+      getWeaponStars: (key) => (key === "StaffOfHoma" ? 5 : 4),
+    });
+    assert.equal(likedMaxed.bucket, "built_well");
+    assert.deepEqual(likedMaxed.adviceSteps, []);
+  });
+
   it("Missing gear still grades on progress; gear aside only when Needs work", () => {
     const ok = gradeOwnedBuild({
       view: fullView([homa], fullArtifacts.slice(0, 2)),
@@ -358,6 +397,15 @@ describe("adviceStepIconSrc", () => {
         (n) => `ui:${n}`,
       ),
       "s.webp",
+    );
+    assert.equal(
+      adviceStepIconSrc(
+        "weapon_level",
+        null,
+        (n) => `ui:${n}`,
+        "homa.webp",
+      ),
+      "homa.webp",
     );
     assert.equal(adviceStepIconSrc("burst", null, (n) => `ui:${n}`), null);
   });

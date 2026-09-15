@@ -224,7 +224,9 @@ export function normalizeCharacterIndexFile(
 ): CharacterIndexFile {
   const characters: Record<string, CharacterIndex> = {};
   const source =
-    raw?.characters && typeof raw.characters === "object"
+    raw?.characters &&
+    typeof raw.characters === "object" &&
+    !Array.isArray(raw.characters)
       ? raw.characters
       : {};
   for (const [key, entry] of Object.entries(source)) {
@@ -241,8 +243,10 @@ export function normalizeCharacterIndexFile(
 
 async function fetchCharacterIndexFile(): Promise<CharacterIndexFile> {
   const res = await fetchWithTimeout(getSimCharactersIndexUrl());
-  if (!res.ok) throw new Error(`character index CDN HTTP ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
+  if (!res.ok) {
+    cancelUpstreamBody(res);
+    throw new Error(`character index CDN HTTP ${res.status}`);
+  }  const buf = Buffer.from(await res.arrayBuffer());
   const text = isGzipped(buf)
     ? (await gunzipAsync(buf)).toString("utf-8")
     : buf.toString("utf-8");
