@@ -60,6 +60,31 @@ export type TierListPayload = {
   fourStarCutoff: number;
 };
 
+/** name_ids on both Pulls “Most used” boards (limited + non-limited). */
+export function creamNameIds(
+  payload: TierListPayload | null | undefined,
+): Set<string> {
+  const out = new Set<string>();
+  if (!payload) return out;
+  for (const entry of payload.fiveStar) out.add(entry.nameId);
+  for (const entry of payload.fourStar) out.add(entry.nameId);
+  return out;
+}
+
+/**
+ * Stygian avg usage rate by name_id from both Most used boards.
+ * Characters only appear if they made a cream cut.
+ */
+export function creamUsageByNameId(
+  payload: TierListPayload | null | undefined,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  if (!payload) return out;
+  for (const entry of payload.fiveStar) out.set(entry.nameId, entry.score);
+  for (const entry of payload.fourStar) out.set(entry.nameId, entry.score);
+  return out;
+}
+
 export type CharacterUsageRow = {
   character_id: number;
   avg_usage_rate: number;

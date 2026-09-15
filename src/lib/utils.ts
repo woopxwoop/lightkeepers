@@ -150,6 +150,8 @@ export function getCharacterCoop(nameId: string) {
 /**
  * TCG character card art. Synced by `scripts/sync/tcg-cards-r2.ts` to
  * `characters/{name_id}/card.webp` (not genshin/ui — keep that prefix for TCG).
+ * Prefer the `tcg-cards.json` index (via `/api/tcg-cards`) before requesting —
+ * many roster rows have no card.
  */
 export function getCharacterCard(nameId: string) {
   return `${CDN_BASE}/characters/${encodeURIComponent(uiAssetNameId(nameId))}/card.webp`;

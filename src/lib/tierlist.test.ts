@@ -7,6 +7,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   creamCutoff,
+  creamNameIds,
+  creamUsageByNameId,
   computeTierList,
   type CharacterMeta,
   type CharacterUsageRow,
@@ -179,5 +181,44 @@ describe("computeTierList", () => {
     assert.equal(result.fourStar.length, 28);
     assert.equal(result.fourStar[0]?.nameId, "NL0");
     assert.ok(result.fourStarCutoff >= 24 && result.fourStarCutoff <= 32);
+  });
+});
+
+describe("creamNameIds", () => {
+  it("unions limited and non-limited boards", () => {
+    const ids = creamNameIds({
+      windowCycles: 5,
+      cutoffMethod: "relative-gap",
+      fiveStar: [
+        { nameId: "Furina", name: "Furina", score: 90, cycles: 5, rank: 1 },
+      ],
+      fourStar: [
+        { nameId: "Xingqiu", name: "Xingqiu", score: 80, cycles: 5, rank: 1 },
+      ],
+      fiveStarCutoff: 1,
+      fourStarCutoff: 1,
+    });
+    assert.deepEqual([...ids].sort(), ["Furina", "Xingqiu"]);
+    assert.equal(creamNameIds(null).size, 0);
+  });
+});
+
+describe("creamUsageByNameId", () => {
+  it("maps scores from both boards", () => {
+    const usage = creamUsageByNameId({
+      windowCycles: 5,
+      cutoffMethod: "relative-gap",
+      fiveStar: [
+        { nameId: "Furina", name: "Furina", score: 90, cycles: 5, rank: 1 },
+      ],
+      fourStar: [
+        { nameId: "Xingqiu", name: "Xingqiu", score: 80, cycles: 5, rank: 1 },
+      ],
+      fiveStarCutoff: 1,
+      fourStarCutoff: 1,
+    });
+    assert.equal(usage.get("Furina"), 90);
+    assert.equal(usage.get("Xingqiu"), 80);
+    assert.equal(creamUsageByNameId(null).size, 0);
   });
 });

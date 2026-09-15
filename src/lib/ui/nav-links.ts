@@ -5,6 +5,7 @@ export const abyssPath = resolve("/tools/abyss");
 export const stygianPath = resolve("/tools/stygian");
 export const pullsPath = resolve("/tools/pulls");
 export const plannerPath = resolve("/tools/planner");
+export const auditPath = resolve("/tools/audit");
 export const teamsPath = resolve("/teams");
 export const charactersPath = resolve("/characters");
 export const settingsPath = resolve("/settings");
@@ -28,6 +29,11 @@ export const toolsLinks = [
   {
     label: "Planner",
     path: plannerPath,
+    match: "prefix" as const,
+  },
+  {
+    label: "Audit",
+    path: auditPath,
     match: "prefix" as const,
   },
 ] as const;

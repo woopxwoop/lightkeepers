@@ -1,22 +1,34 @@
 /**
  * Server-side gcsim character build summary from CDN (cached).
  * Source: `sim/characters/{GoodKey}.json.gz` (synced by gcsim-r2).
+ * Aggregate index: `sim/characters.json.gz` via {@link getCharacterIndexFile}.
  *
  * Concurrent misses share one request (kit-style inflight map). Definitive
  * absences (404/410/empty body) are cached as null; transport / 5xx failures
  * stay uncached so the next request retries.
  */
+import { gunzip } from "node:zlib";
+import { promisify } from "node:util";
 import type {
   CharacterIndex,
+  CharacterIndexFile,
   CharacterLiquidSubstats,
   CharacterStatRank,
 } from "$lib/types/investment";
-import { getSimCharacterSummaryUrl } from "$lib/utils";
+import {
+  getSimCharacterSummaryUrl,
+  getSimCharactersIndexUrl,
+} from "$lib/utils";
 import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 
+const gunzipAsync = promisify(gunzip);
+
 const summaryCache = new LRUCache<CharacterIndex | null>(200, 15 * 60 * 1000);
 const summaryInflight = new Map<string, Promise<CharacterIndex | null>>();
+const indexCache = new LRUCache<CharacterIndexFile>(1, 15 * 60 * 1000, {
+  redisNamespace: "character-index",
+});
 
 const EMPTY_LIQUID: CharacterLiquidSubstats = {
   teams: 0,
@@ -197,4 +209,56 @@ async function loadSummaryFromCdn(
   const summary = liveCharacterSummary(parsed as CharacterIndex);
   summaryCache.set(goodKey, summary);
   return summary;
+}
+
+function isGzipped(buf: Buffer): boolean {
+  return buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b;
+}
+
+/**
+ * Normalize the aggregate `characters.json` map: drop tombstones, fill legacy
+ * shapes, skip malformed rows.
+ */
+export function normalizeCharacterIndexFile(
+  raw: CharacterIndexFile,
+): CharacterIndexFile {
+  const characters: Record<string, CharacterIndex> = {};
+  const source =
+    raw?.characters && typeof raw.characters === "object"
+      ? raw.characters
+      : {};
+  for (const [key, entry] of Object.entries(source)) {
+    if (!key || !entry || typeof entry !== "object") continue;
+    const live = liveCharacterSummary({ ...entry, key: entry.key || key });
+    if (!live) continue;
+    characters[key] = live;
+  }
+  return {
+    characters,
+    ...(raw.impact_tiers ? { impact_tiers: raw.impact_tiers } : {}),
+  };
+}
+
+async function fetchCharacterIndexFile(): Promise<CharacterIndexFile> {
+  const res = await fetchWithTimeout(getSimCharactersIndexUrl());
+  if (!res.ok) throw new Error(`character index CDN HTTP ${res.status}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  const text = isGzipped(buf)
+    ? (await gunzipAsync(buf)).toString("utf-8")
+    : buf.toString("utf-8");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("character index: invalid JSON");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("character index: invalid payload");
+  }
+  return normalizeCharacterIndexFile(parsed as CharacterIndexFile);
+}
+
+/** One CDN pull for all Builds summaries (Audit / account grading). */
+export async function getCharacterIndexFile(): Promise<CharacterIndexFile> {
+  return indexCache.getOrSet("character-index", fetchCharacterIndexFile);
 }

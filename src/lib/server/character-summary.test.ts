@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { liveCharacterSummary } from "./character-summary.ts";
+import {
+  liveCharacterSummary,
+  normalizeCharacterIndexFile,
+} from "./character-summary.ts";
 import type { CharacterIndex } from "../types/investment.ts";
 
 function summary(partial: Partial<CharacterIndex> = {}): CharacterIndex {
@@ -170,5 +173,27 @@ describe("liveCharacterSummary", () => {
     const liveArray = liveCharacterSummary(arrayMean);
     assert.ok(liveArray);
     assert.deepEqual(liveArray.substat_rolls_liquid?.mean, {});
+  });
+});
+
+describe("normalizeCharacterIndexFile", () => {
+  it("keeps live rows and drops tombstones", () => {
+    const file = normalizeCharacterIndexFile({
+      characters: {
+        Furina: summary({ key: "Furina" }),
+        Aloy: { key: "Aloy", upToDate: false } as CharacterIndex,
+      },
+    });
+    assert.ok(file.characters.Furina);
+    assert.equal(file.characters.Aloy, undefined);
+  });
+
+  it("fills key from map entry when missing on the row", () => {
+    const row = summary();
+    delete (row as { key?: string }).key;
+    const file = normalizeCharacterIndexFile({
+      characters: { Furina: row },
+    });
+    assert.equal(file.characters.Furina?.key, "Furina");
   });
 });

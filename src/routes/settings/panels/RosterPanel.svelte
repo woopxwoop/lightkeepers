@@ -315,19 +315,15 @@
 {#if synced}
   <div class="roster-page">
     <header class="panel-head">
-      <h2 class="section-title">Roster</h2>
-      <p class="lede">
-        Select who you own. Owned characters get a gear to edit constellation,
-        level, talents, and review equipped gear on the build card.
-      </p>
-      <p class="section-lede">
-        Have a GOOD export? Upload it under
-        <a class="back-link" href={resolve("/settings?tab=account")}>Account</a
-        >, then browse
-        <a class="back-link" href={resolve("/settings?tab=inventory")}
-          >Inventory</a
-        >.
-      </p>
+      <span>
+        <h2 class="section-title">Roster</h2>
+        <a class="back-link" href={resolve("/settings?tab=account")}>
+          Import with GOOD
+        </a>
+        <span class="section-lede roster-lede"
+          >or select the characters you own manually</span
+        >
+      </span>
     </header>
 
     <CharacterFilterBar
@@ -527,11 +523,8 @@
     max-width: 42rem;
   }
 
-  .lede {
-    margin: 0;
-    font-size: var(--text-sm);
-    line-height: 1.45;
-    color: var(--foreground-mid);
+  .roster-lede {
+    color: var(--foreground-color);
   }
 
   .roster-actions {
