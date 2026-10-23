@@ -12,8 +12,8 @@
  */
 
 import { get } from "svelte/store";
-import type { Character, CharacterOwned } from "$lib/definitions";
-import { authClient } from "$lib/auth-client";
+import type { Character, CharacterOwned } from "#lib/definitions.js";
+import { authClient } from "#lib/auth-client.js";
 import {
   charactersOwned,
   charactersHydrated,
@@ -23,16 +23,16 @@ import {
   invalidateTeamsOwned,
   invalidateNearMissTeams,
   ensureStaticBoards,
-} from "$lib/stores";
-import { isNewCharacter } from "$lib/is-new-character";
-import { isBetaCharacter } from "$lib/is-beta-character";
-import { parseRosterProgress } from "$lib/roster-progress";
+} from "#lib/stores.js";
+import { isNewCharacter } from "#lib/is-new-character.js";
+import { isBetaCharacter } from "#lib/is-beta-character.js";
+import { parseRosterProgress } from "#lib/roster-progress.js";
 import {
   postRoster,
   rostersDifferForSync,
   writeRosterLocal,
-} from "$lib/roster-snapshot";
-import { promptRosterSyncConflict } from "$lib/app/roster-sync-conflict";
+} from "#lib/roster-snapshot.js";
+import { promptRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
 
 type LayoutHydration = {
   characters: Character[];

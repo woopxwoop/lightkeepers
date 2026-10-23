@@ -1,7 +1,10 @@
 import type { PageServerLoad } from "./$types";
-import { isPlaywrightE2e } from "$lib/server/e2e";
-import { e2eStygianEnemyCycles, e2eStygianEnemyList } from "$lib/e2e/fixtures";
-import { listStygianEnemyAppearances } from "$lib/server/stygian-enemies";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
+import {
+  e2eStygianEnemyCycles,
+  e2eStygianEnemyList,
+} from "#lib/e2e/fixtures.js";
+import { listStygianEnemyAppearances } from "#lib/server/stygian-enemies.js";
 
 export const load: PageServerLoad = async () => {
   const { enemies, cycles } = isPlaywrightE2e()

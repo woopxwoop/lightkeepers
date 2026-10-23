@@ -119,7 +119,7 @@ export function formatGameDescriptionHtml(
 }
 
 /** Characters released within this many days are considered "new". */
-export { NEW_CHARACTER_DAYS, isNewCharacter } from "$lib/is-new-character";
+export { NEW_CHARACTER_DAYS, isNewCharacter } from "#lib/is-new-character.js";
 
 const CDN_BASE = "https://api.lightkeepers.moe";
 const GENSIN_UI_BASE = `${CDN_BASE}/genshin/ui`;

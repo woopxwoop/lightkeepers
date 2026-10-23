@@ -6,14 +6,14 @@ import type {
   CharacterOwned,
   InventoryArtifact,
   InventoryWeapon,
-} from "$lib/definitions";
-import { toGoodKey, travelerElementKey } from "$lib/utils";
+} from "#lib/definitions.js";
+import { toGoodKey, travelerElementKey } from "#lib/utils.js";
 import type {
   IArtifact,
   ICharacter,
   IGOOD,
   IWeapon,
-} from "$lib/types/good/good";
+} from "#lib/types/good/good.js";
 
 export const GOOD_EXPORT_SOURCE = "Lightkeepers";
 export const GOOD_EXPORT_VERSION = 3;

@@ -3,9 +3,9 @@
  * Bearer token stays on the server — never sent to the browser.
  */
 
-import { env } from "$env/dynamic/private";
-import type { ResearchRequest, ResearchResponse } from "$lib/research-types";
-import { readBoundedResponseBody } from "$lib/server/team-config";
+import { RESEARCH_AGENT_URL, RESEARCH_API_TOKEN } from "$app/env/private";
+import type { ResearchRequest, ResearchResponse } from "#lib/research-types.js";
+import { readBoundedResponseBody } from "#lib/server/team-config.js";
 
 /** Gemini + retrieval can be slow over a tunnel; two-pass personalize needs ~2×. */
 const RESEARCH_TIMEOUT_MS = 180_000;
@@ -75,7 +75,8 @@ function parseResearchResponse(raw: unknown): ResearchResponse {
     );
   }
   o.citations = o.citations.filter(
-    (c) => c && typeof c === "object" && isSafeCiteId((c as { id: unknown }).id),
+    (c) =>
+      c && typeof c === "object" && isSafeCiteId((c as { id: unknown }).id),
   );
   for (const key of [
     "disagreements",
@@ -97,8 +98,9 @@ function parseResearchResponse(raw: unknown): ResearchResponse {
 export async function fetchResearch(
   body: ResearchRequest,
 ): Promise<ResearchResponse> {
-  const baseUrl = env.RESEARCH_AGENT_URL?.replace(/\/$/, "");
-  const token = env.RESEARCH_API_TOKEN;
+  const baseUrl = RESEARCH_AGENT_URL?.replace(/\/$/, "");
+  const token = RESEARCH_API_TOKEN;
+
   if (!baseUrl || !token) {
     throw new ResearchAgentError(
       503,
@@ -162,6 +164,7 @@ export async function fetchResearch(
     return parseResearchResponse(parsed);
   } catch (err) {
     if (err instanceof ResearchAgentError) throw err;
+
     if (
       (err instanceof Error && err.name === "AbortError") ||
       (typeof DOMException !== "undefined" &&

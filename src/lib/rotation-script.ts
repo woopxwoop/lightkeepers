@@ -8,7 +8,7 @@
 import type {
   RotationAction,
   RotationSampleEvent,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 
 const MATCH_ACTIONS = new Set<RotationAction>([
   "skill",
@@ -240,7 +240,8 @@ class Parser {
     const n = this.parseForCount();
     this.skipUntil("{");
     const body = this.parseBlock();
-    if (typeof n === "number" && n > 0) return { kind: "repeat", n, item: body };
+    if (typeof n === "number" && n > 0)
+      return { kind: "repeat", n, item: body };
     if (typeof n === "string" && n) {
       return { kind: "repeatParam", param: n, item: body };
     }
@@ -296,7 +297,7 @@ class Parser {
     return { kind: "alt", items: branches };
   }
 
-    parseBracketParams(): Record<string, number> {
+  parseBracketParams(): Record<string, number> {
     const out: Record<string, number> = {};
     if (!this.eat("sym", "[")) return out;
     while (this.i < this.toks.length && !this.at("sym", "]")) {
@@ -390,7 +391,10 @@ function bindPat(pat: ScriptPat, env: Record<string, number>): ScriptPat {
     case "seq":
       return seqOf(pat.items.map((item) => bindPat(item, env)));
     case "alt":
-      return { kind: "alt", items: pat.items.map((item) => bindPat(item, env)) };
+      return {
+        kind: "alt",
+        items: pat.items.map((item) => bindPat(item, env)),
+      };
     case "star":
       return { kind: "star", item: bindPat(pat.item, env) };
     case "repeat":
@@ -506,9 +510,7 @@ type MatchTok = {
 
 type ActionOverlay = (RotationAction | null)[];
 
-function matchableEvents(
-  events: readonly RotationSampleEvent[],
-): MatchTok[] {
+function matchableEvents(events: readonly RotationSampleEvent[]): MatchTok[] {
   const out: MatchTok[] = [];
   events.forEach((e, eventIndex) => {
     if (

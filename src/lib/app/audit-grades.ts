@@ -11,21 +11,21 @@
 import {
   characterSummaryFromIndex,
   loadCharacterIndex,
-} from "$lib/app/character-summary";
+} from "#lib/app/character-summary.js";
 import {
   getRosterArtifactsCached,
   getRosterWeaponsCached,
   loadRosterArtifacts,
   loadRosterWeapons,
-} from "$lib/app/roster-inventory";
-import { gradeAuditRoster, type AuditRow } from "$lib/audit-grades";
-import type { CharacterOwned } from "$lib/definitions";
+} from "#lib/app/roster-inventory.js";
+import { gradeAuditRoster, type AuditRow } from "#lib/audit-grades.js";
+import type { CharacterOwned } from "#lib/definitions.js";
 import {
   artifactSetByKey,
   ensureEquipmentData,
   weaponByKey,
-} from "$lib/equipment-data";
-import { translateStatKey } from "$lib/utils";
+} from "#lib/equipment-data.js";
+import { translateStatKey } from "#lib/utils.js";
 
 export async function loadAuditGrades(
   roster: readonly CharacterOwned[],

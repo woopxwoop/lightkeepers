@@ -2,27 +2,30 @@
   /**
    * + Character / + Weapon pick overlay used by Planner and the itinerary.
    */
-  import { assetUrl } from "$lib/asset-urls";
-  import type { CharacterOwned, CharacterPortraitRef } from "$lib/definitions";
-  import { weaponById } from "$lib/equipment-data";
-  import { useEquipmentData } from "$lib/equipment-data.svelte";
-  import type { OwnershipFilter } from "$lib/character-filter";
+  import { assetUrl } from "#lib/asset-urls.js";
+  import type {
+    CharacterOwned,
+    CharacterPortraitRef,
+  } from "#lib/definitions.js";
+  import { weaponById } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import type { OwnershipFilter } from "#lib/character-filter.js";
   import type {
     UpgradeCostsCatalog,
     WeaponUpgradeCosts,
-  } from "$lib/types/upgrade-costs";
-  import { isOwnedNameId } from "$lib/utils";
-  import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
-  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import PickModal from "$lib/ui/components/PickModal.svelte";
-  import Toggle from "$lib/ui/components/Toggle.svelte";
-  import WeaponFilterBar from "$lib/ui/components/WeaponFilterBar.svelte";
+  } from "#lib/types/upgrade-costs.js";
+  import { isOwnedNameId } from "#lib/utils.js";
+  import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
+  import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
+  import PickModal from "#lib/ui/components/PickModal.svelte";
+  import Toggle from "#lib/ui/components/Toggle.svelte";
+  import WeaponFilterBar from "#lib/ui/components/WeaponFilterBar.svelte";
   import {
     filterPlannerCharacterPickOptions,
     filterPlannerWeaponPickOptions,
     type PlannerPickOption,
-  } from "$lib/planner-goal-edits";
-  import { defaultWeaponRarityFilter } from "$lib/weapon-filter";
+  } from "#lib/planner-goal-edits.js";
+  import { defaultWeaponRarityFilter } from "#lib/weapon-filter.js";
 
   let {
     open = false,

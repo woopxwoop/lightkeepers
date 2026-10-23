@@ -5,12 +5,14 @@
  * migration. Character Builds calls loadRosterArtifacts() — not bootstrap.
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
-import { assertNoDbError, requireUser } from "$lib/server/request-validation";
-import { selectUserRosterColumn } from "$lib/server/user-rosters";
-import { isPlaywrightE2e } from "$lib/server/e2e";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
+import {
+  assertNoDbError,
+  requireUser,
+} from "#lib/server/request-validation.js";
+import { selectUserRosterColumn } from "#lib/server/user-rosters.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
 
 export const GET: RequestHandler = async ({
   locals,
@@ -19,7 +21,7 @@ export const GET: RequestHandler = async ({
 }) => {
   await enforceApiRateLimit({ request, getClientAddress });
   const user = requireUser(locals);
-  if (isPlaywrightE2e()) return json({ artifacts: [] });
+  if (isPlaywrightE2e()) return Response.json({ artifacts: [] });
 
   const { data, error: err } = await selectUserRosterColumn(
     user.id,
@@ -27,5 +29,5 @@ export const GET: RequestHandler = async ({
   );
   assertNoDbError("GET /api/roster/artifacts", err);
 
-  return json({ artifacts: Array.isArray(data) ? data : [] });
+  return Response.json({ artifacts: Array.isArray(data) ? data : [] });
 };

@@ -1,26 +1,26 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { resolve } from "$app/paths";
-  import { animationsEnabled, charactersOwned } from "$lib/stores";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
+  import { animationsEnabled, charactersOwned } from "#lib/stores.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
   import {
     fetchStygianEnemyTeams,
     isAbortError,
     isTimeoutError,
-  } from "$lib/app/stygian-enemy-teams";
-  import { stygianSlotIndexLabel } from "$lib/slotLabels";
-  import { getEnemyAsset, ownedNameIds } from "$lib/utils";
+  } from "#lib/app/stygian-enemy-teams.js";
+  import { stygianSlotIndexLabel } from "#lib/slotLabels.js";
+  import { getEnemyAsset, ownedNameIds } from "#lib/utils.js";
   import type {
     Character,
     StygianEnemyTeamsPayload,
     StygianEnemyTopTeam,
-  } from "$lib/definitions";
+  } from "#lib/definitions.js";
 
   let { data } = $props();
   let enemy = $derived(data.enemy);
@@ -71,7 +71,6 @@
       label: g.version_name,
     })),
   );
-
   let activeGroup = $derived(
     teamsByVersion.find((g) => String(g.version_number) === selectedVersion) ??
       teamsByVersion[0] ??
@@ -158,8 +157,8 @@
       <PageTrail
         class="hero-trail"
         items={[
-          { label: "Stygian", href: resolve("/tools/stygian") },
-          { label: "Enemies", href: resolve("/tools/stygian/enemies") },
+          { label: "Stygian", href: resolve("tools/stygian") },
+          { label: "Enemies", href: resolve("tools/stygian/enemies") },
           { label: enemy.enemy_name ?? `Enemy ${enemy.id}` },
         ]}
       />

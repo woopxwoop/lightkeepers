@@ -1,16 +1,17 @@
 import { resolve } from "$app/paths";
 
 export const homePath = resolve("/");
-export const abyssPath = resolve("/tools/abyss");
-export const stygianPath = resolve("/tools/stygian");
-export const pullsPath = resolve("/tools/pulls");
-export const plannerPath = resolve("/tools/planner");
-export const auditPath = resolve("/tools/audit");
-export const teamsPath = resolve("/teams");
-export const charactersPath = resolve("/characters");
-export const settingsPath = resolve("/settings");
-export const patchNotesPath = resolve("/patch-notes");
-export const toolsPrefixPath = resolve("/tools");
+export const abyssPath = resolve("tools/abyss");
+export const stygianPath = resolve("tools/stygian");
+export const pullsPath = resolve("tools/pulls");
+export const plannerPath = resolve("tools/planner");
+export const auditPath = resolve("tools/audit");
+export const teamsPath = resolve("teams");
+export const charactersPath = resolve("characters");
+export const settingsPath = resolve("settings");
+export const patchNotesPath = resolve("patch-notes");
+const toolsRoot = resolve("tools/abyss");
+export const toolsPrefixPath = toolsRoot.slice(0, -"/abyss".length);
 
 export const toolsLinks = [
   {
@@ -47,13 +48,13 @@ export const settingsLinks = [
   },
   {
     label: "Account",
-    path: resolve(`/settings?tab=account`),
+    path: resolve(`settings?tab=account`),
     tab: "account",
     icon: "cloud" as const,
   },
   {
     label: "Display",
-    path: resolve(`/settings?tab=display`),
+    path: resolve(`settings?tab=display`),
     tab: "display",
     icon: "monitor" as const,
   },
@@ -94,6 +95,8 @@ export function isSettingsPage(pathname: string): boolean {
 }
 
 /** Settings drawer/submenu tab; missing `tab` defaults to roster. */
-export function settingsTabFromSearch(searchParams: URLSearchParams): string {
+export function settingsTabFromSearch(searchParams: {
+  get(name: string): string | null;
+}): string {
   return searchParams.get("tab") ?? "roster";
 }

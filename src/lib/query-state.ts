@@ -4,14 +4,27 @@
  *
  * Pages own their parsing (types differ), but share the write path: build a
  * patch of the keys the page owns and let {@link nextSearchPath} decide whether
- * a `replaceState` is warranted.
+ * a URL rewrite is warranted.
  */
 
 export type QueryValue = string | string[] | null | undefined;
 
+/** `page.url` is readonly in Kit 3; readers only need these lookups. */
+type SearchParamsLike = {
+  get(name: string): string | null;
+  getAll(name: string): string[];
+  entries(): Iterable<[string, string]>;
+};
+
+type QueryUrl = {
+  pathname: string;
+  hash: string;
+  searchParams: SearchParamsLike;
+};
+
 /** Repeated values for `key`, optionally narrowed to a known set. */
 export function readList(
-  url: URL,
+  url: QueryUrl,
   key: string,
   allowed?: Iterable<string>,
 ): string[] {
@@ -23,7 +36,7 @@ export function readList(
 
 /** `key` when it is one of `allowed`, else `fallback`. */
 export function readEnum<T extends string>(
-  url: URL,
+  url: QueryUrl,
   key: string,
   allowed: readonly T[],
   fallback: T,
@@ -33,7 +46,7 @@ export function readEnum<T extends string>(
 }
 
 /** Compare ignoring order — a shared link shouldn't trigger a rewrite. */
-function canonical(params: URLSearchParams): string {
+function canonical(params: SearchParamsLike): string {
   return [...params.entries()]
     .map(([key, value]) => `${key}=${value}`)
     .sort()
@@ -58,10 +71,13 @@ export function sameList(current: string[], values: string[]): boolean {
  * params the page doesn't own are preserved, as is any fragment.
  */
 export function nextSearchPath(
-  url: URL,
+  url: QueryUrl,
   patch: Record<string, QueryValue>,
 ): string | null {
-  const params = new URLSearchParams(url.searchParams);
+  const params = new URLSearchParams();
+  for (const [key, value] of url.searchParams.entries()) {
+    params.append(key, value);
+  }
 
   for (const [key, value] of Object.entries(patch)) {
     params.delete(key);

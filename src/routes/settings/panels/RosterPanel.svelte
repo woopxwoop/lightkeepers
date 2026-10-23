@@ -8,48 +8,48 @@
     setHasSavedRoster,
     invalidateNearMissTeams,
     invalidateTeamsOwned,
-  } from "$lib/stores";
-  import { authClient } from "$lib/auth-client";
-  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import RosterBuildCard from "$lib/ui/components/RosterBuildCard.svelte";
-  import RosterProgressFields from "$lib/ui/components/RosterProgressFields.svelte";
-  import Toggle from "$lib/ui/components/Toggle.svelte";
+  } from "#lib/stores.js";
+  import { authClient } from "#lib/auth-client.js";
+  import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
+  import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
+  import IconCog from "#lib/ui/icons/IconCog.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import RosterBuildCard from "#lib/ui/components/RosterBuildCard.svelte";
+  import RosterProgressFields from "#lib/ui/components/RosterProgressFields.svelte";
+  import Toggle from "#lib/ui/components/Toggle.svelte";
   import type {
     CharacterOwned,
     InventoryArtifact,
     InventoryWeapon,
     RosterProgress,
-  } from "$lib/definitions";
-  import { cloneRosterProgress } from "$lib/roster-progress";
-  import { rosterBuildViewFromOwned } from "$lib/roster-build-card";
+  } from "#lib/definitions.js";
+  import { cloneRosterProgress } from "#lib/roster-progress.js";
+  import { rosterBuildViewFromOwned } from "#lib/roster-build-card.js";
   import {
     getRosterArtifactsCached,
     getRosterWeaponsCached,
     loadRosterArtifacts,
     loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
-  import { weaponTypeLabel, ownedNameIds } from "$lib/utils";
-  import { isNewCharacter } from "$lib/is-new-character";
+  } from "#lib/app/roster-inventory.js";
+  import { weaponTypeLabel, ownedNameIds } from "#lib/utils.js";
+  import { isNewCharacter } from "#lib/is-new-character.js";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "$lib/character-filter";
+  } from "#lib/character-filter.js";
   import {
     captureRoster,
     postRoster,
     rosterDiffersFromSnapshot,
     writeRosterLocal,
     type RosterCapture,
-  } from "$lib/roster-snapshot";
-  import { trapTabKey } from "$lib/ui/focus-trap";
+  } from "#lib/roster-snapshot.js";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
   import { resolve } from "$app/paths";
 
   const session = authClient.useSession();
@@ -317,9 +317,11 @@
     <header class="panel-head">
       <div>
         <h2 class="section-title">Roster</h2>
-        <a class="back-link" href={resolve("/settings?tab=account")}>
-          Import with GOOD
-        </a>
+
+        <a class="back-link" href={resolve("settings?tab=account")}
+          >Import with GOOD</a
+        >
+
         <span class="section-lede roster-lede"
           >or select the characters you own manually</span
         >

@@ -16,7 +16,7 @@
 import type {
   ImpactTierScale,
   ImportanceImpactTier,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 
 export type UpgradeTier = ImportanceImpactTier;
 

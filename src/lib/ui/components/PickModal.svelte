@@ -14,8 +14,8 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import { trapTabKey } from "$lib/ui/focus-trap";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
 
   let {
     open = false,

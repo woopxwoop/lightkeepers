@@ -3,13 +3,13 @@
  * CharacterIcon uses this to skip probing missing `card.webp` URLs.
  */
 import { writable } from "svelte/store";
-import { CDN_FETCH_TIMEOUT_MS } from "$lib/cdn-fetch";
+import { CDN_FETCH_TIMEOUT_MS } from "#lib/cdn-fetch.js";
 import {
   parseTcgCardsFile,
   stemHasTcgCard,
   type TcgCardsFile,
-} from "$lib/tcg-cards";
-import { uiAssetNameId } from "$lib/utils";
+} from "#lib/tcg-cards.js";
+import { uiAssetNameId } from "#lib/utils.js";
 
 /** Bumped after index load/failure so icons re-derive. */
 export const tcgCardIndexVersion = writable(0);

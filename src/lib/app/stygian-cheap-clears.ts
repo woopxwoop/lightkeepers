@@ -8,13 +8,13 @@ import type {
   StygianCheapClearRow,
   StygianCheapClearsPayload,
   StygianClearDifficulty,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 import {
   STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST,
   STYGIAN_CHEAP_CLEARS_DIFFICULTY,
-} from "$lib/definitions";
-import { raceAbort } from "$lib/app/race-abort";
-import { ownedNameIds } from "$lib/utils";
+} from "#lib/definitions.js";
+import { raceAbort } from "#lib/app/race-abort.js";
+import { ownedNameIds } from "#lib/utils.js";
 
 const API_URL = "/api/stygian-cheap-clears";
 const FETCH_TIMEOUT_MS = 15_000;

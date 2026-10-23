@@ -10,16 +10,19 @@
     postResearchBuild,
     fetchResearchProxyHealth,
     type ResearchProxyHealth,
-  } from "$lib/app/research";
-  import type { ResearchLlmProvider, ResearchResponse } from "$lib/research-types";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
-  import ResearchAnswer from "$lib/ui/components/ResearchAnswer.svelte";
-  import ResearchTrace from "$lib/ui/components/ResearchTrace.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import type { SelectOption } from "$lib/ui/components/Select.svelte";
-  import type { Character } from "$lib/definitions";
+  } from "#lib/app/research.js";
+  import type {
+    ResearchLlmProvider,
+    ResearchResponse,
+  } from "#lib/research-types.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import CharacterSearchSelect from "#lib/ui/components/CharacterSearchSelect.svelte";
+  import ResearchAnswer from "#lib/ui/components/ResearchAnswer.svelte";
+  import ResearchTrace from "#lib/ui/components/ResearchTrace.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import type { SelectOption } from "#lib/ui/components/Select.svelte";
+  import type { Character } from "#lib/definitions.js";
 
   type ResearchTopicChip = "build" | "teams" | "rotation" | "er" | "worth_it";
 
@@ -37,10 +40,9 @@
 
   let {
     chrome = "page",
-  }: {
+
     /** Full page shell + Dev breadcrumb, or fill a parent sheet. */
-    chrome?: "page" | "plain";
-  } = $props();
+  }: { chrome?: "page" | "plain" } = $props();
 
   const providerOptions: SelectOption<ResearchLlmProvider>[] = [
     { value: "gemini", label: "Gemini" },
@@ -227,7 +229,7 @@
           <CharacterSearchSelect
             bind:value={focusNameId}
             options={characterOptions}
-            getCharacter={getCharacter}
+            {getCharacter}
             placeholder="Select character"
             aria-label="Focus character"
             class="focus-select"
@@ -276,7 +278,9 @@
           {/if}
         </Button>
         {#if !focusNameId}
-          <p class="ask-hint meta-sub">Select a focus character to run Build.</p>
+          <p class="ask-hint meta-sub">
+            Select a focus character to run Build.
+          </p>
         {:else if !providerReady}
           <p class="ask-hint meta-sub">Agent must be connected before Run.</p>
         {/if}
@@ -365,7 +369,7 @@
   <PageShell class="ask-page">
     <header class="ask-top">
       <div class="ask-top-text">
-        <a class="back-link" href={resolve("/dev")}>Dev</a>
+        <a class="back-link" href={resolve("dev")}>Dev</a>
         <span class="page-meta-sep" aria-hidden="true">/</span>
         <h1 class="ask-title">Research</h1>
       </div>

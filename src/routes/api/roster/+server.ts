@@ -7,10 +7,9 @@
  * inventory slices without clearing them on roster-only saves.
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import {
   assertNoDbError,
   requireInventoryArtifacts,
@@ -18,8 +17,8 @@ import {
   requireJsonObject,
   requireRosterEntries,
   requireUser,
-} from "$lib/server/request-validation";
-import { upsertUserRoster } from "$lib/server/user-rosters";
+} from "#lib/server/request-validation.js";
+import { upsertUserRoster } from "#lib/server/user-rosters.js";
 
 export const GET: RequestHandler = async ({
   locals,
@@ -36,7 +35,7 @@ export const GET: RequestHandler = async ({
     .maybeSingle();
   assertNoDbError("GET /api/roster", err);
 
-  return json({ roster: data?.roster ?? null });
+  return Response.json({ roster: data?.roster ?? null });
 };
 
 export const POST: RequestHandler = async ({
@@ -67,7 +66,7 @@ export const POST: RequestHandler = async ({
   });
   assertNoDbError("POST /api/roster", err);
 
-  return json({
+  return Response.json({
     ok: true,
     ...(inventoryOmitted ? { inventoryOmitted: true } : {}),
   });
@@ -87,5 +86,5 @@ export const DELETE: RequestHandler = async ({
     .eq("user_id", user.id);
   assertNoDbError("DELETE /api/roster", err);
 
-  return json({ ok: true });
+  return Response.json({ ok: true });
 };

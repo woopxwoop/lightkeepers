@@ -1,11 +1,11 @@
 import { handleErrorWithSentry, replayIntegration } from "@sentry/sveltekit";
 import * as Sentry from "@sentry/sveltekit";
-import { env } from "$env/dynamic/public";
+import { PUBLIC_SENTRY_DSN } from "$app/env/public";
 
 // Optional — dynamic public so client builds succeed without PUBLIC_SENTRY_DSN.
-if (env.PUBLIC_SENTRY_DSN) {
+if (PUBLIC_SENTRY_DSN) {
   Sentry.init({
-    dsn: env.PUBLIC_SENTRY_DSN,
+    dsn: PUBLIC_SENTRY_DSN,
     // Keep DSN in .env for prod parity, but never report from vite/sveltekit dev.
     enabled: !import.meta.env.DEV,
     tracesSampleRate: 1.0,

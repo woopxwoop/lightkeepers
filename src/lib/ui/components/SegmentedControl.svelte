@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends string">
-  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
+  import { handleKeyboardClick, handlePointerAction } from "#lib/ui/pointer.js";
 
   type Option = { value: T; label: string };
 

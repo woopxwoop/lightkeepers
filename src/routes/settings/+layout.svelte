@@ -1,11 +1,11 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import IconUser from "$lib/ui/icons/IconUser.svelte";
-  import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
-  import IconAppsGrid from "$lib/ui/icons/IconAppsGrid.svelte";
-  import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import IconUser from "#lib/ui/icons/IconUser.svelte";
+  import IconCloudUp from "#lib/ui/icons/IconCloudUp.svelte";
+  import IconAppsGrid from "#lib/ui/icons/IconAppsGrid.svelte";
+  import IconMonitor from "#lib/ui/icons/IconMonitor.svelte";
 
   const sections = [
     {
@@ -45,7 +45,7 @@
   );
 
   function hrefFor(id: SectionId): string {
-    const base = resolve("/settings");
+    const base = resolve("settings");
     return id === "roster" ? base : `${base}?tab=${id}`;
   }
 </script>

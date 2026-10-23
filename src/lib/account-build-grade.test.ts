@@ -212,8 +212,7 @@ describe("gradeOwnedBuild", () => {
       view: fullView([{ ...homa, key: "DragonBane" }]),
       builds: builds(),
       nameId: "Hutao",
-      getWeaponName: (key) =>
-        key === "StaffOfHoma" ? "Staff of Homa" : key,
+      getWeaponName: (key) => (key === "StaffOfHoma" ? "Staff of Homa" : key),
     });
     assert.equal(grade.bucket, "built_well");
     assert.deepEqual(grade.gaps, []);
@@ -337,8 +336,7 @@ describe("gradeOwnedBuild", () => {
       builds: builds(),
       nameId: "Hutao",
       getWeaponStars: (key) => (key === "StaffOfHoma" ? 5 : 4),
-      getWeaponName: (key) =>
-        key === "StaffOfHoma" ? "Staff of Homa" : key,
+      getWeaponName: (key) => (key === "StaffOfHoma" ? "Staff of Homa" : key),
     });
     assert.equal(wrong.bucket, "built_well");
     assert.deepEqual(wrong.gaps, []);
@@ -444,15 +442,13 @@ describe("adviceStepIconSrc", () => {
       "s.webp",
     );
     assert.equal(
-      adviceStepIconSrc(
-        "weapon_level",
-        null,
-        (n) => `ui:${n}`,
-        "homa.webp",
-      ),
+      adviceStepIconSrc("weapon_level", null, (n) => `ui:${n}`, "homa.webp"),
       "homa.webp",
     );
-    assert.equal(adviceStepIconSrc("burst", null, (n) => `ui:${n}`), null);
+    assert.equal(
+      adviceStepIconSrc("burst", null, (n) => `ui:${n}`),
+      null,
+    );
   });
 });
 

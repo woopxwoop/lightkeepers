@@ -3,7 +3,7 @@
    * Artifact set icon from a GOOD key. Empty until equipment JSON loads, then
    * updates without a parent {#key $equipmentVersion}.
    */
-  import { useArtifactSet } from "$lib/equipment-data.svelte";
+  import { useArtifactSet } from "#lib/equipment-data.svelte.js";
 
   let {
     setKey,

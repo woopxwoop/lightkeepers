@@ -3,11 +3,11 @@
   import { afterNavigate } from "$app/navigation";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { researchChatOpen } from "$lib/research-chat-open";
-  import { trapTabKey } from "$lib/ui/focus-trap";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import ResearchChat from "$lib/ui/components/ResearchChat.svelte";
+  import { researchChatOpen } from "#lib/research-chat-open.js";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import ResearchChat from "#lib/ui/components/ResearchChat.svelte";
 
   let panelEl: HTMLDivElement | null = $state(null);
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
@@ -17,7 +17,8 @@
     researchChatOpen.set(false);
   }
 
-  afterNavigate(() => {
+  afterNavigate(({ shallow, type }) => {
+    if (shallow && type === "goto") return;
     if (!$researchChatOpen) return;
     closedByNavigate = true;
     close();

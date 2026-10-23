@@ -11,43 +11,43 @@
     statIconUrl,
     toGoodKey,
     translateStatKey,
-  } from "$lib/utils";
-  import { artifactSetByKey, weaponByKey } from "$lib/equipment-data";
-  import { useEquipmentData, useWeapon } from "$lib/equipment-data.svelte";
+  } from "#lib/utils.js";
+  import { artifactSetByKey, weaponByKey } from "#lib/equipment-data.js";
+  import { useEquipmentData, useWeapon } from "#lib/equipment-data.svelte.js";
   import {
     artifactIconUrl,
     artifactPieceIconUrl,
     weaponIconUrl,
-  } from "$lib/asset-urls";
-  import avatarImg from "$lib/assets/default-avatar.jpg";
-  import shadeImg from "$lib/assets/enka-shade.svg";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
-  import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
-  import EnkaOverlay from "$lib/ui/components/EnkaOverlay.svelte";
-  import EnkaConstFrame from "$lib/ui/components/EnkaConstFrame.svelte";
-  import EnkaTalentFrame from "$lib/ui/components/EnkaTalentFrame.svelte";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import "$lib/ui/enka-fonts.css";
-  import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
+  } from "#lib/asset-urls.js";
+  import avatarImg from "#lib/assets/default-avatar.jpg";
+  import shadeImg from "#lib/assets/enka-shade.svg";
+  import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
+  import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
+  import EnkaOverlay from "#lib/ui/components/EnkaOverlay.svelte";
+  import EnkaConstFrame from "#lib/ui/components/EnkaConstFrame.svelte";
+  import EnkaTalentFrame from "#lib/ui/components/EnkaTalentFrame.svelte";
+  import IconCog from "#lib/ui/icons/IconCog.svelte";
+  import "#lib/ui/enka-fonts.css";
+  import type { InvestmentBuildKitIcons } from "#lib/investment-build-card.js";
   import {
     getCharacterKitIconsCached,
     loadCharacterKitIcons,
-  } from "$lib/app/character-kit-icons";
+  } from "#lib/app/character-kit-icons.js";
   import {
     INVENTORY_ARTIFACT_SLOTS,
     formatGoodStatValue,
     type RosterBuildView,
-  } from "$lib/roster-build-card";
+  } from "#lib/roster-build-card.js";
   import type {
     InventoryArtifactSlot,
     RosterProgress,
-  } from "$lib/definitions";
+  } from "#lib/definitions.js";
   import {
     MAX_ASCENSION,
     MAX_TALENT,
     clampLevelToAscension,
     levelCapForAscension,
-  } from "$lib/upgrade-costs";
+  } from "#lib/upgrade-costs.js";
   import {
     ARTIFACT_MAIN_STAT_VALUE,
     WEAPON_PROP_TO_GOOD,
@@ -55,12 +55,12 @@
     computeRosterSheetStats,
     formatSheetStat,
     resolveWeaponStats,
-  } from "$lib/build-stats";
+  } from "#lib/build-stats.js";
   import {
     DEFAULT_ROSTER_PROGRESS,
     MAX_CONSTELLATION,
     cloneRosterProgress,
-  } from "$lib/roster-progress";
+  } from "#lib/roster-progress.js";
 
   let {
     view,
@@ -148,10 +148,7 @@
   }
 
   /** Resulting constellation if the user activates constellation `index`. */
-  function constellationAfterActivate(
-    current: number,
-    index: number,
-  ): number {
+  function constellationAfterActivate(current: number, index: number): number {
     const clamped = Math.max(0, Math.min(MAX_CONSTELLATION, index));
     const next = current >= clamped ? clamped - 1 : clamped;
     return Math.max(0, Math.min(MAX_CONSTELLATION, next));
@@ -162,10 +159,7 @@
     if (!editMode) return;
     commitProgress({
       ...progress,
-      constellation: constellationAfterActivate(
-        progress.constellation,
-        index,
-      ),
+      constellation: constellationAfterActivate(progress.constellation, index),
       talents: { ...progress.talents },
       weapon: progress.weapon,
     });
@@ -574,10 +568,7 @@
       />
 
       <div class="card-host {elementClass}">
-        <EnkaOverlay
-          element={elementClass}
-          onAccent={onOverlayAccent}
-        />
+        <EnkaOverlay element={elementClass} onAccent={onOverlayAccent} />
 
         <div class="DraggableCanvas" aria-hidden="true">
           <img
@@ -610,9 +601,7 @@
                 aria-label={editMode
                   ? "Done editing build"
                   : "Edit constellations and talents"}
-                title={editMode
-                  ? "Done"
-                  : "Edit constellations & talents"}
+                title={editMode ? "Done" : "Edit constellations & talents"}
                 onclick={toggleEditMode}
               >
                 <IconCog size={16} />
@@ -686,7 +675,7 @@
                   {@const truthLocked = c.index > cons}
                   {@const wouldChange =
                     consPreview != null &&
-                    (c.index <= cons) !== (c.index <= consPreview)}
+                    c.index <= cons !== c.index <= consPreview}
                   {#if editMode}
                     <button
                       type="button"
@@ -764,16 +753,14 @@
                             type="button"
                             class="talent-nudge"
                             aria-label="Decrease {row.slot} talent"
-                            onclick={() => bumpTalent(row.slot, -1)}
-                            >−</button
+                            onclick={() => bumpTalent(row.slot, -1)}>−</button
                           >
                           <div class="level">{row.level}</div>
                           <button
                             type="button"
                             class="talent-nudge"
                             aria-label="Increase {row.slot} talent"
-                            onclick={() => bumpTalent(row.slot, 1)}
-                            >+</button
+                            onclick={() => bumpTalent(row.slot, 1)}>+</button
                           >
                         </div>
                       {:else}
@@ -787,203 +774,197 @@
           {/if}
         </div>
 
-      <div class="section middle">
-        {#if showWeapon}
-          <div class="Weapon">
-            {#if view.weapon}
-              <figure data-rank={starCount(weapon?.stars)}>
-                {#if wIcon}
-                  <img class="WeaponIcon" src={wIcon} alt="" loading="lazy" />
-                {/if}
-                <div
-                  class="Stars"
-                  aria-label="{starCount(weapon?.stars)} stars"
-                >
-                  {#each Array.from(
-                    { length: starCount(weapon?.stars) },
-                    (_, i) => i,
-                  ) as i (i)}
-                    <span>{"\u{E938}"}</span>
-                  {/each}
-                </div>
-              </figure>
-              <div class="weapon-caption">
-                <div class="title">
-                  <span>{weapon?.name ?? view.weapon.key}</span>
-                </div>
-                <div class="stats">
-                  {#if weaponAtk != null}
-                    <div class="Substat">
-                      {#if statIconUrl("atk")}
-                        <img
-                          src={statIconUrl("atk")}
-                          alt=""
-                          class="stat-icon"
-                        />
-                      {/if}
-                      <span>{weaponAtk}</span>
-                    </div>
+        <div class="section middle">
+          {#if showWeapon}
+            <div class="Weapon">
+              {#if view.weapon}
+                <figure data-rank={starCount(weapon?.stars)}>
+                  {#if wIcon}
+                    <img class="WeaponIcon" src={wIcon} alt="" loading="lazy" />
                   {/if}
-                  {#if weaponSub}
-                    <div class="Substat">
-                      {#if weaponSub.iconKey && statIconUrl(weaponSub.iconKey)}
-                        <img
-                          src={statIconUrl(weaponSub.iconKey)}
-                          alt=""
-                          class="stat-icon"
-                        />
-                      {/if}
-                      <span>{weaponSub.text}</span>
+                  <div
+                    class="Stars"
+                    aria-label="{starCount(weapon?.stars)} stars"
+                  >
+                    {#each Array.from({ length: starCount(weapon?.stars) }, (_, i) => i) as i (i)}
+                      <span>{"\u{E938}"}</span>
+                    {/each}
+                  </div>
+                </figure>
+                <div class="weapon-caption">
+                  <div class="title">
+                    <span>{weapon?.name ?? view.weapon.key}</span>
+                  </div>
+                  <div class="stats">
+                    {#if weaponAtk != null}
+                      <div class="Substat">
+                        {#if statIconUrl("atk")}
+                          <img
+                            src={statIconUrl("atk")}
+                            alt=""
+                            class="stat-icon"
+                          />
+                        {/if}
+                        <span>{weaponAtk}</span>
+                      </div>
+                    {/if}
+                    {#if weaponSub}
+                      <div class="Substat">
+                        {#if weaponSub.iconKey && statIconUrl(weaponSub.iconKey)}
+                          <img
+                            src={statIconUrl(weaponSub.iconKey)}
+                            alt=""
+                            class="stat-icon"
+                          />
+                        {/if}
+                        <span>{weaponSub.text}</span>
+                      </div>
+                    {/if}
+                  </div>
+                  <div class="sub">
+                    <div class="refine">R{view.weapon.refinement}</div>
+                    <div class="wlevel">
+                      Lv. {view.weapon.level} /
+                      {levelCapForAscension(view.weapon.ascension)}
                     </div>
-                  {/if}
-                </div>
-                <div class="sub">
-                  <div class="refine">R{view.weapon.refinement}</div>
-                  <div class="wlevel">
-                    Lv. {view.weapon.level} /
-                    {levelCapForAscension(view.weapon.ascension)}
                   </div>
                 </div>
-              </div>
-              <WeaponTooltip
-                weaponKey={view.weapon.key}
-                refinement={view.weapon.refinement}
-              />
-            {:else}
-              <p class="empty-note">No weapon equipped</p>
-            {/if}
-          </div>
-        {/if}
-
-        {#snippet setBlock()}
-          <div class="set">
-            {#if view.setCounts[0] && setIcon(view.setCounts[0].setKey)}
-              <i class="set-glyph" aria-hidden="true">
-                <img
-                  src={setIcon(view.setCounts[0].setKey)}
-                  alt=""
-                  loading="lazy"
+                <WeaponTooltip
+                  weaponKey={view.weapon.key}
+                  refinement={view.weapon.refinement}
                 />
-              </i>
-            {:else}
-              <i class="set-glyph" aria-hidden="true"></i>
-            {/if}
-            <div class="sets">
-              {#if view.setCounts.length === 0}
-                <div>
-                  <div class="desc muted">No set bonus</div>
-                </div>
               {:else}
-                {#each view.setCounts as s (s.setKey)}
-                  <div class="group">
-                    <div class="desc">{setName(s.setKey)}</div>
-                    <div class="count">{s.count}</div>
-                    <ArtifactTooltip setKey={s.setKey} pieceCount={s.count} />
-                  </div>
-                {/each}
+                <p class="empty-note">No weapon equipped</p>
               {/if}
             </div>
-          </div>
-        {/snippet}
+          {/if}
 
-        {#if showStats}
-          <div class="StatsTable">
-            {#each statRows as row (row.key)}
-              <div class="row">
-                {#if statIconUrl(row.icon)}
-                  <img src={statIconUrl(row.icon)} alt="" class="stat-icon" />
+          {#snippet setBlock()}
+            <div class="set">
+              {#if view.setCounts[0] && setIcon(view.setCounts[0].setKey)}
+                <i class="set-glyph" aria-hidden="true">
+                  <img
+                    src={setIcon(view.setCounts[0].setKey)}
+                    alt=""
+                    loading="lazy"
+                  />
+                </i>
+              {:else}
+                <i class="set-glyph" aria-hidden="true"></i>
+              {/if}
+              <div class="sets">
+                {#if view.setCounts.length === 0}
+                  <div>
+                    <div class="desc muted">No set bonus</div>
+                  </div>
+                {:else}
+                  {#each view.setCounts as s (s.setKey)}
+                    <div class="group">
+                      <div class="desc">{setName(s.setKey)}</div>
+                      <div class="count">{s.count}</div>
+                      <ArtifactTooltip setKey={s.setKey} pieceCount={s.count} />
+                    </div>
+                  {/each}
                 {/if}
-                <p>{row.label}</p>
-                <div class="mid">
-                  <span class="sep"></span>
-                  <span class="val"
-                    >{row.value == null
-                      ? "—"
-                      : formatSheetStat(row.key, row.value)}</span
-                  >
+              </div>
+            </div>
+          {/snippet}
+
+          {#if showStats}
+            <div class="StatsTable">
+              {#each statRows as row (row.key)}
+                <div class="row">
+                  {#if statIconUrl(row.icon)}
+                    <img src={statIconUrl(row.icon)} alt="" class="stat-icon" />
+                  {/if}
+                  <p>{row.label}</p>
+                  <div class="mid">
+                    <span class="sep"></span>
+                    <span class="val"
+                      >{row.value == null
+                        ? "—"
+                        : formatSheetStat(row.key, row.value)}</span
+                    >
+                  </div>
                 </div>
+              {/each}
+
+              {#if showSets}
+                {@render setBlock()}
+              {/if}
+            </div>
+          {:else if showSets}
+            <div class="StatsTable">
+              {@render setBlock()}
+            </div>
+          {/if}
+        </div>
+
+        {#if showArtifacts}
+          <div class="section right">
+            {#each INVENTORY_ARTIFACT_SLOTS as slot (slot)}
+              {@const piece = view.piecesBySlot[slot]}
+              {@const icon = piece
+                ? pieceIcon(piece.setKey, slot)
+                : emptySlotIcon(slot)}
+              <div class="Artifact" class:empty={!piece}>
+                {#if icon}
+                  <img class="ArtifactIcon" src={icon} alt="" loading="lazy" />
+                {/if}
+                {#if piece}
+                  <div class="mainstat">
+                    <div>
+                      {#if statIconUrl(piece.mainStatKey)}
+                        <img
+                          src={statIconUrl(piece.mainStatKey)}
+                          alt=""
+                          class="stat-icon"
+                        />
+                      {/if}
+                    </div>
+                    <div>{mainStatDisplay(piece)}</div>
+                    <div>
+                      <span class="Stars" aria-hidden="true">
+                        {#each Array.from({ length: starCount(piece.rarity) }, (_, i) => i) as i (i)}
+                          <span>{"\u{E938}"}</span>
+                        {/each}
+                      </span>
+                      <span class="level">+{piece.level}</span>
+                    </div>
+                  </div>
+                  <hr />
+                  {#if showSubstats}
+                    <div class="substats">
+                      {#each [0, 1, 2, 3] as i (i)}
+                        {@const sub = piece.substats[i]}
+                        <div class="Substat">
+                          {#if sub}
+                            {#if statIconUrl(sub.key)}
+                              <img
+                                src={statIconUrl(sub.key)}
+                                alt=""
+                                class="stat-icon"
+                              />
+                            {/if}
+                            <span
+                              >{formatGoodStatValue(sub.key, sub.value)}</span
+                            >
+                          {/if}
+                        </div>
+                      {/each}
+                    </div>
+                  {/if}
+                {:else}
+                  <div class="mainstat">
+                    <div class="muted">{slot}</div>
+                  </div>
+                {/if}
               </div>
             {/each}
-
-            {#if showSets}
-              {@render setBlock()}
-            {/if}
-          </div>
-        {:else if showSets}
-          <div class="StatsTable">
-            {@render setBlock()}
           </div>
         {/if}
       </div>
-
-      {#if showArtifacts}
-        <div class="section right">
-          {#each INVENTORY_ARTIFACT_SLOTS as slot (slot)}
-            {@const piece = view.piecesBySlot[slot]}
-            {@const icon = piece
-              ? pieceIcon(piece.setKey, slot)
-              : emptySlotIcon(slot)}
-            <div class="Artifact" class:empty={!piece}>
-              {#if icon}
-                <img class="ArtifactIcon" src={icon} alt="" loading="lazy" />
-              {/if}
-              {#if piece}
-                <div class="mainstat">
-                  <div>
-                    {#if statIconUrl(piece.mainStatKey)}
-                      <img
-                        src={statIconUrl(piece.mainStatKey)}
-                        alt=""
-                        class="stat-icon"
-                      />
-                    {/if}
-                  </div>
-                  <div>{mainStatDisplay(piece)}</div>
-                  <div>
-                    <span class="Stars" aria-hidden="true">
-                      {#each Array.from(
-                        { length: starCount(piece.rarity) },
-                        (_, i) => i,
-                      ) as i (i)}
-                        <span>{"\u{E938}"}</span>
-                      {/each}
-                    </span>
-                    <span class="level">+{piece.level}</span>
-                  </div>
-                </div>
-                <hr />
-                {#if showSubstats}
-                  <div class="substats">
-                    {#each [0, 1, 2, 3] as i (i)}
-                      {@const sub = piece.substats[i]}
-                      <div class="Substat">
-                        {#if sub}
-                          {#if statIconUrl(sub.key)}
-                            <img
-                              src={statIconUrl(sub.key)}
-                              alt=""
-                              class="stat-icon"
-                            />
-                          {/if}
-                          <span
-                            >{formatGoodStatValue(sub.key, sub.value)}</span
-                          >
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-                {/if}
-              {:else}
-                <div class="mainstat">
-                  <div class="muted">{slot}</div>
-                </div>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      {/if}
     </div>
-  </div>
   </div>
 </div>
 

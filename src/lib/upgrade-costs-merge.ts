@@ -9,7 +9,7 @@ import type {
   UpgradeCostsCatalog,
   UpgradeMaterialMeta,
   WeaponUpgradeCosts,
-} from "$lib/types/upgrade-costs";
+} from "#lib/types/upgrade-costs.js";
 
 function sortedCharacters(
   characters: CharacterUpgradeCosts[],

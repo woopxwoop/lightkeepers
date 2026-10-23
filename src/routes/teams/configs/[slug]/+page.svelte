@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { charactersOwned, animationsEnabled } from "$lib/stores";
+  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
   import {
     buildGoodKeyMap,
     humanizeTeamName,
     namesFromGoodKeyMap,
-  } from "$lib/utils";
+  } from "#lib/utils.js";
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
-  } from "$lib/equipment-data";
-  import { useEquipmentData } from "$lib/equipment-data.svelte";
+  } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
   import { onMount } from "svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
-  import CostPopover from "$lib/ui/components/CostPopover.svelte";
-  import InvestmentBuildCard from "$lib/ui/components/InvestmentBuildCard.svelte";
-  import RotationTimeline from "$lib/ui/components/RotationTimeline.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import Surface from "#lib/ui/components/Surface.svelte";
+  import CostPopover from "#lib/ui/components/CostPopover.svelte";
+  import InvestmentBuildCard from "#lib/ui/components/InvestmentBuildCard.svelte";
+  import RotationTimeline from "#lib/ui/components/RotationTimeline.svelte";
 
   let { data } = $props();
   const equipment = useEquipmentData();

@@ -1,18 +1,18 @@
 <script lang="ts">
   import type { Attachment } from "svelte/attachments";
-  import { adviceStepIconSrc } from "$lib/account-build-grade";
+  import { adviceStepIconSrc } from "#lib/account-build-grade.js";
   import {
     getCharacterKitIconsCached,
     loadCharacterKitIcons,
-  } from "$lib/app/character-kit-icons";
-  import { auditStepLabel, type AuditRow } from "$lib/audit-grades";
-  import type { AuditPlannerState } from "$lib/audit-planner-goals";
-  import { elementBg } from "$lib/element-colors";
-  import { useWeapon } from "$lib/equipment-data.svelte";
-  import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
-  import Button from "$lib/ui/components/Button.svelte";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import { getUiAssetUrl } from "$lib/utils";
+  } from "#lib/app/character-kit-icons.js";
+  import { auditStepLabel, type AuditRow } from "#lib/audit-grades.js";
+  import type { AuditPlannerState } from "#lib/audit-planner-goals.js";
+  import { elementBg } from "#lib/element-colors.js";
+  import { useWeapon } from "#lib/equipment-data.svelte.js";
+  import type { InvestmentBuildKitIcons } from "#lib/investment-build-card.js";
+  import Button from "#lib/ui/components/Button.svelte";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import { getUiAssetUrl } from "#lib/utils.js";
 
   let {
     row,

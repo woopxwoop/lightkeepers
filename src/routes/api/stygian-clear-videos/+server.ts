@@ -5,17 +5,16 @@
  * Returns clear-video rows for those team×boss pairs (public meta).
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
-import { isPlaywrightE2e } from "$lib/server/e2e";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   assertNoDbError,
   requireJsonObject,
   requireTeamEnemyPairs,
-} from "$lib/server/request-validation";
-import type { StygianClearVideosPayload } from "$lib/definitions";
+} from "#lib/server/request-validation.js";
+import type { StygianClearVideosPayload } from "#lib/definitions.js";
 
 function pairKey(teamKey: string, enemyId: number): string {
   return `${teamKey}|${enemyId}`;
@@ -24,7 +23,7 @@ function pairKey(teamKey: string, enemyId: number): string {
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (isPlaywrightE2e()) {
     const payload: StygianClearVideosPayload = { clears: [] };
-    return json(payload, {
+    return Response.json(payload, {
       headers: { "Cache-Control": "no-store", "X-Playwright-E2E": "1" },
     });
   }
@@ -59,7 +58,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     });
 
   const payload: StygianClearVideosPayload = { clears };
-  return json(payload, {
+  return Response.json(payload, {
     headers: {
       "Cache-Control": "private, max-age=60",
     },

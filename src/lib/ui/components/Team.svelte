@@ -1,8 +1,8 @@
 <script lang="ts">
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import { animationsEnabled, isIconCompact } from "$lib/stores";
-  import type { AbyssTeam, StygianTeam } from "$lib/definitions";
-  import type { Tables } from "$lib/types/database.types";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import { animationsEnabled, isIconCompact } from "#lib/stores.js";
+  import type { AbyssTeam, StygianTeam } from "#lib/definitions.js";
+  import type { Tables } from "#lib/types/database.types.js";
 
   type Character = Tables<"characters">;
 

@@ -9,7 +9,7 @@ import {
   parseGoalsState,
   removeGoal,
   replaceGoal,
-} from "$lib/calculator-goals";
+} from "#lib/calculator-goals.js";
 import {
   captureGoals,
   fetchGoalsCloud,
@@ -18,14 +18,14 @@ import {
   readGoalsLocal,
   writeGoalsLocal,
   type GoalsCapture,
-} from "$lib/calculator-goals-snapshot";
+} from "#lib/calculator-goals-snapshot.js";
 import {
   fetchPlannerTargetFromBuilds,
   simKeyForCatalogCharacter,
-} from "$lib/planner-goal-edits";
-import type { CalculatorGoalsState } from "$lib/types/calculator-goals";
-import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-import { orderCharacterConfigs } from "$lib/upgrade-costs";
+} from "#lib/planner-goal-edits.js";
+import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
+import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+import { orderCharacterConfigs } from "#lib/upgrade-costs.js";
 
 export function goalsWithoutPendingRemoves(
   state: CalculatorGoalsState,

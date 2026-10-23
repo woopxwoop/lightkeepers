@@ -1,5 +1,5 @@
-import type { AbyssTeam, StygianTeam, Character } from "$lib/definitions";
-import type { InvestmentSim, InvestmentTeam } from "$lib/types/investment";
+import type { AbyssTeam, StygianTeam, Character } from "#lib/definitions.js";
+import type { InvestmentSim, InvestmentTeam } from "#lib/types/investment.js";
 
 /** Character-page team lists (meta + simulated). */
 export const TOP_TEAMS_LIMIT = 6;

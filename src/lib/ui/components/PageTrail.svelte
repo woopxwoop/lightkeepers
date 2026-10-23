@@ -10,7 +10,7 @@
    * Compact path trail for shallow hierarchies.
    * Parent hops use BackLink so list filters survive when history allows.
    */
-  import BackLink from "$lib/ui/components/BackLink.svelte";
+  import BackLink from "#lib/ui/components/BackLink.svelte";
 
   let {
     items,

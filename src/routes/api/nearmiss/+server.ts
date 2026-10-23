@@ -11,24 +11,23 @@
  * Rate limit: 60 req/min/IP via checkApiRateLimit (Valkey when configured).
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { cachedRosterRpc } from "$lib/server/cached-rpc";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
-import { isPlaywrightE2e } from "$lib/server/e2e";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { cachedRosterRpc } from "#lib/server/cached-rpc.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   requireCharacterNameIds,
   requireFiniteInteger,
   requireJsonObject,
   requireNumberInRange,
-} from "$lib/server/request-validation";
-import { requireSupportedStygianVersion } from "$lib/server/version-validation";
+} from "#lib/server/request-validation.js";
+import { requireSupportedStygianVersion } from "#lib/server/version-validation.js";
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   // Default empty; Playwright browser routes override with scenario fixtures.
   if (isPlaywrightE2e()) {
-    return json({ nearMissTeams: [], nearMissPairs: [] });
+    return Response.json({ nearMissTeams: [], nearMissPairs: [] });
   }
 
   await enforceApiRateLimit({ request, getClientAddress });
@@ -76,5 +75,5 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     }),
   ]);
 
-  return json({ nearMissTeams, nearMissPairs });
+  return Response.json({ nearMissTeams, nearMissPairs });
 };

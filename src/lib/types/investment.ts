@@ -30,12 +30,7 @@ export interface InvestmentTeam {
 }
 
 export type SimKind =
-  | "baseline"
-  | "f2p"
-  | "owned"
-  | "vertical"
-  | "talent"
-  | "weapon_level";
+  "baseline" | "f2p" | "owned" | "vertical" | "talent" | "weapon_level";
 
 export interface InvestmentSim {
   /** Stable key: characters sorted, Char~C{cons}~{weapon}, joined by __ */

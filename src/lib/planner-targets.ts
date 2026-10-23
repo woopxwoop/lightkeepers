@@ -13,25 +13,25 @@ import {
   primaryUpgradePct,
   TALENT_UPGRADE,
   type UpgradeImpactLadder,
-} from "$lib/upgrade-priority";
+} from "#lib/upgrade-priority.js";
 import {
   gateCharacterConfig,
   minAscensionForLevel,
   minAscensionForTalent,
   minLevelForAscension,
   UPGRADE_DEFAULTS,
-} from "$lib/upgrade-costs";
+} from "#lib/upgrade-costs.js";
 import type {
   CharacterIndex,
   CharacterLevelImportance,
   CharacterTalentImportance,
   ImportanceImpactTier,
   TalentSlot,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 import type {
   CharacterUpgradeConfig,
   UpgradePromoteStep,
-} from "$lib/types/upgrade-costs";
+} from "#lib/types/upgrade-costs.js";
 
 export const TALENT_LEVEL_BY_TIER: Record<ImportanceImpactTier, number> = {
   exceptional: 10,

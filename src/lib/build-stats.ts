@@ -16,14 +16,14 @@
  *
  * Does **not** include artifact set bonuses or weapon passives (conditional).
  */
-import characterBasesRaw from "$lib/data/character-bases.json";
-import characterStatCurvesRaw from "$lib/data/character-stat-curves.json";
-import weaponBasesRaw from "$lib/data/weapon-bases.json";
-import weaponStatCurvesRaw from "$lib/data/weapon-stat-curves.json";
-import artifactMainStatsRaw from "$lib/data/artifact-main-stats.json";
-import { weaponByKey, type WeaponData } from "$lib/equipment-data";
-import type { InventoryArtifact } from "$lib/definitions";
-import type { CharacterBuild } from "$lib/types/investment";
+import characterBasesRaw from "#lib/data/character-bases.json";
+import characterStatCurvesRaw from "#lib/data/character-stat-curves.json";
+import weaponBasesRaw from "#lib/data/weapon-bases.json";
+import weaponStatCurvesRaw from "#lib/data/weapon-stat-curves.json";
+import artifactMainStatsRaw from "#lib/data/artifact-main-stats.json";
+import { weaponByKey, type WeaponData } from "#lib/equipment-data.js";
+import type { InventoryArtifact } from "#lib/definitions.js";
+import type { CharacterBuild } from "#lib/types/investment.js";
 
 export type CharacterPromoteStep = {
   asc: number;
@@ -229,9 +229,7 @@ export function resolveCharacterBaseStats(
   return {
     ...row,
     level: lv,
-    hp: roundStat(
-      row.hpBase * curveMult(row.growCurves.hp, lv) + promote.hp,
-    ),
+    hp: roundStat(row.hpBase * curveMult(row.growCurves.hp, lv) + promote.hp),
     atk: roundStat(
       row.atkBase * curveMult(row.growCurves.atk, lv) + promote.atk,
     ),

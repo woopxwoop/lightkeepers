@@ -7,7 +7,7 @@
  */
 
 import { error } from "@sveltejs/kit";
-import { checkApiRateLimit, getClientIp } from "$lib/server/cache";
+import { checkApiRateLimit, getClientIp } from "#lib/server/cache.js";
 
 const RATE_LIMIT_MESSAGE = "Too many requests — please wait a moment.";
 

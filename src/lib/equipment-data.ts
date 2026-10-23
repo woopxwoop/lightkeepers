@@ -7,8 +7,8 @@
  * `equipmentVersion` bumps after load so Svelte dependents can re-derive.
  */
 import { writable } from "svelte/store";
-import { weaponIconUrl } from "$lib/asset-urls";
-import { buildGoodKeyMap } from "$lib/utils";
+import { weaponIconUrl } from "#lib/asset-urls.js";
+import { buildGoodKeyMap } from "#lib/utils.js";
 
 export interface WeaponData {
   id: number;
@@ -64,10 +64,10 @@ export function ensureEquipmentData(): Promise<void> {
 
   loadPromise = (async () => {
     const [weaponsMod, artifactsMod] = await Promise.all([
-      import("$lib/data/weapons.json"),
+      import("#lib/data/weapons.json"),
       // Descriptions are copied from game files (Hoyoverse wording as-is,
       // including awkward clauses like Scarlet Proof’s Stellar Swirl 4pc).
-      import("$lib/data/artifact-sets.json"),
+      import("#lib/data/artifact-sets.json"),
     ]);
     const weaponsRaw =
       (weaponsMod as { default?: WeaponData[] }).default ??

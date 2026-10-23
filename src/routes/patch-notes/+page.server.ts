@@ -1,5 +1,5 @@
 import type { PageServerLoad } from "./$types";
-import { listPatchNotes } from "$lib/patch-notes-catalog";
+import { listPatchNotes } from "#lib/patch-notes-catalog.js";
 
 export const load: PageServerLoad = async () => {
   const notes = listPatchNotes().map(({ slug, title, date, summary }) => ({

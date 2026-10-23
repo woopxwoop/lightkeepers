@@ -4,23 +4,24 @@
    * or dismisses and keeps using the device roster without syncing.
    * Optional Character|Local|Cloud diff table; upload failures reopen with an error.
    */
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { tick } from "svelte";
   import { scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import Button from "$lib/ui/components/Button.svelte";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
   import {
     rosterSyncConflict,
     type RosterSyncChoice,
-  } from "$lib/app/roster-sync-conflict";
+  } from "#lib/app/roster-sync-conflict.js";
+
   import {
     diffRostersForSync,
     type RosterSyncDiff,
     type RosterSyncProgressBits,
-  } from "$lib/roster-snapshot";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
+  } from "#lib/roster-snapshot.js";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
 
   let dialogEl: HTMLElement | null = $state(null);
   let busy = $state(false);
@@ -57,7 +58,6 @@
       browser && document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-
     const focusableSelector =
       'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 

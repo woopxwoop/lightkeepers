@@ -4,21 +4,17 @@
    * When href is available the root is a link; otherwise a button so HoverTooltip
    * stays keyboard-focusable. Tip body stays non-interactive.
    */
-  import {
-    entityHref,
-    entityIconUrl,
-  } from "$lib/research-answer";
-  import type { ResearchEntity } from "$lib/research-types";
-  import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
-  import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
+  import { entityHref, entityIconUrl } from "#lib/research-answer.js";
+  import type { ResearchEntity } from "#lib/research-types.js";
+  import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
+  import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
+  import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
 
   let { entity }: { entity: ResearchEntity } = $props();
 
   let icon = $derived(entityIconUrl(entity));
   let href = $derived(entityHref(entity));
   let description = $derived(entity.description?.trim() || "");
-  let triggerTag = $derived(href ? "a" : "button");
 
   let useWeaponTip = $derived(
     entity.type === "weapon" && Boolean(entity.weapon_key),
@@ -28,12 +24,7 @@
   );
 </script>
 
-<svelte:element
-  this={triggerTag}
-  href={href || undefined}
-  type={href ? undefined : "button"}
-  class="research-entity group relative research-entity-{entity.type}"
->
+{#snippet body()}
   {#if icon}
     <img
       class="research-entity-icon"
@@ -58,13 +49,31 @@
         </div>
       {/if}
       {#if href}
-        <div class="tip-detail-text tip-detail-text--small mt-1.5 research-entity-page-hint">
+        <div
+          class="tip-detail-text tip-detail-text--small mt-1.5 research-entity-page-hint"
+        >
           View on character page
         </div>
       {/if}
     </HoverTooltip>
   {/if}
-</svelte:element>
+{/snippet}
+
+{#if href}
+  <a
+    {href}
+    class="research-entity group relative research-entity-{entity.type}"
+  >
+    {@render body()}
+  </a>
+{:else}
+  <button
+    type="button"
+    class="research-entity group relative research-entity-{entity.type}"
+  >
+    {@render body()}
+  </button>
+{/if}
 
 <style>
   .research-entity {

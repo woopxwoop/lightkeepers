@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { Character, CharacterOwned } from "$lib/definitions";
-  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
-  import InvestmentCR from "$lib/ui/components/InvestmentCR.svelte";
-  import { weaponIconSrc } from "$lib/equipment-data";
-  import { useEquipmentData } from "$lib/equipment-data.svelte";
+  import type { Character, CharacterOwned } from "#lib/definitions.js";
+  import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
+  import WeaponBadge from "#lib/ui/components/WeaponBadge.svelte";
+  import InvestmentCR from "#lib/ui/components/InvestmentCR.svelte";
+  import { weaponIconSrc } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
 
   type BuildBadge = {
     cons: number;

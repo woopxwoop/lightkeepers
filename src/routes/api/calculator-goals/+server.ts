@@ -4,16 +4,15 @@
  * Auth-gated upgrade-goal sync. Mirrors `/api/roster`.
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import {
   assertNoDbError,
   requireCalculatorGoals,
   requireJsonObject,
   requireUser,
-} from "$lib/server/request-validation";
+} from "#lib/server/request-validation.js";
 
 export const GET: RequestHandler = async ({
   locals,
@@ -30,7 +29,7 @@ export const GET: RequestHandler = async ({
     .maybeSingle();
   assertNoDbError("GET /api/calculator-goals", err);
 
-  return json({ goals: data?.goals ?? null });
+  return Response.json({ goals: data?.goals ?? null });
 };
 
 export const POST: RequestHandler = async ({
@@ -54,7 +53,7 @@ export const POST: RequestHandler = async ({
   );
   assertNoDbError("POST /api/calculator-goals", err);
 
-  return json({ ok: true });
+  return Response.json({ ok: true });
 };
 
 export const DELETE: RequestHandler = async ({
@@ -71,5 +70,5 @@ export const DELETE: RequestHandler = async ({
     .eq("user_id", user.id);
   assertNoDbError("DELETE /api/calculator-goals", err);
 
-  return json({ ok: true });
+  return Response.json({ ok: true });
 };

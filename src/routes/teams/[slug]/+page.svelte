@@ -1,44 +1,44 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
-  import { charactersOwned, animationsEnabled } from "$lib/stores";
+  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
   import {
     buildGoodKeyMap,
     humanizeTeamName,
     namesFromGoodKeyMap,
     ownedGoodKeys,
-  } from "$lib/utils";
+  } from "#lib/utils.js";
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
-  } from "$lib/equipment-data";
-  import { useEquipmentData } from "$lib/equipment-data.svelte";
-  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import WeaponBadge from "$lib/ui/components/WeaponBadge.svelte";
-  import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import BackLink from "$lib/ui/components/BackLink.svelte";
-  import CostPopover from "$lib/ui/components/CostPopover.svelte";
-  import TeamNumbersNote from "$lib/ui/components/TeamNumbersNote.svelte";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
+  import WeaponBadge from "#lib/ui/components/WeaponBadge.svelte";
+  import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import Surface from "#lib/ui/components/Surface.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import BackLink from "#lib/ui/components/BackLink.svelte";
+  import CostPopover from "#lib/ui/components/CostPopover.svelte";
+  import TeamNumbersNote from "#lib/ui/components/TeamNumbersNote.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
+  import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
   import {
     baselineSim as findBaselineSim,
     baselineVariants,
     ownedVariants,
     findInvestmentTeam,
     groupVerticalSimsByCost,
-  } from "$lib/investment-teams";
+  } from "#lib/investment-teams.js";
   import type {
     InvestmentFile,
     InvestmentSim,
     CharacterBuild,
-  } from "$lib/types/investment";
+  } from "#lib/types/investment.js";
 
   let { data: layoutData } = $props();
   const equipment = useEquipmentData();

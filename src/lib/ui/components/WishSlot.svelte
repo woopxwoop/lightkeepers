@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getCharacterGachaIcon, getCharacterCoop } from "$lib/utils";
+  import { getCharacterGachaIcon, getCharacterCoop } from "#lib/utils.js";
 
   let {
     nameId = "",

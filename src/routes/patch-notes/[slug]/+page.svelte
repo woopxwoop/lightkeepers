@@ -1,12 +1,12 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
 
   let { data } = $props();
 
   const trail = $derived([
-    { label: "Patch notes", href: resolve("/patch-notes") },
+    { label: "Patch notes", href: resolve("patch-notes") },
     { label: data.note.title },
   ]);
 

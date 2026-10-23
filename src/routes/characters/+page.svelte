@@ -1,32 +1,32 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import {
     charactersOwned,
     charactersHydrated,
     animationsEnabled,
-  } from "$lib/stores";
-  import BrowseFlipCard from "$lib/ui/components/BrowseFlipCard.svelte";
-  import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
+  } from "#lib/stores.js";
+  import BrowseFlipCard from "#lib/ui/components/BrowseFlipCard.svelte";
+  import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import {
     CHARACTER_ELEMENTS,
     CHARACTER_WEAPON_TYPES,
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "$lib/character-filter";
+  } from "#lib/character-filter.js";
   import {
     nextSearchPath,
     readEnum,
     readList,
     sameSet,
-  } from "$lib/query-state";
+  } from "#lib/query-state.js";
 
   const RARITIES = ["4", "5"];
   const OWNERSHIP_KEYS = ["all", "owned", "unowned"] as const;
@@ -124,7 +124,7 @@
       sort: sortBy === "release_date" ? null : sortBy,
       dir: sortAsc ? "asc" : null,
     });
-    if (next) replaceState(next, page.state);
+    if (next) goto(next, { shallow: true, replace: true, state: page.state });
   });
 
   let visible = $derived(

@@ -1,17 +1,17 @@
 <script lang="ts">
-  import avatarImg from "$lib/assets/default-avatar.jpg";
-  import type { CharacterPortraitRef } from "$lib/definitions";
+  import avatarImg from "#lib/assets/default-avatar.jpg";
+  import type { CharacterPortraitRef } from "#lib/definitions.js";
   import {
     hasTcgCard,
     loadTcgCardIds,
     tcgCardIndexVersion,
-  } from "$lib/app/tcg-cards";
-  import { displayPreferences } from "$lib/stores";
+  } from "#lib/app/tcg-cards.js";
+  import { displayPreferences } from "#lib/stores.js";
   import {
     getCharacterPortrait,
     getCharacterCoop,
     getCharacterCard,
-  } from "$lib/utils";
+  } from "#lib/utils.js";
 
   let {
     character,
@@ -85,9 +85,7 @@
     return hasTcgCard(character?.name_id);
   });
 
-  let useTcgArt = $derived(
-    useTcg && !tcgFailed && tcgAvailable !== false,
-  );
+  let useTcgArt = $derived(useTcg && !tcgFailed && tcgAvailable !== false);
 
   let imgSrc = $derived(
     assetFailed || !character?.name_id

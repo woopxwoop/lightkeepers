@@ -3,31 +3,31 @@
    * One-character investment build card (weapon, sheet stats, talents, sets).
    * Shared by team-config pages and character build examples.
    */
-  import { displayPreferences } from "$lib/stores";
+  import { displayPreferences } from "#lib/stores.js";
   import {
     translateStatKey,
     statIconUrl,
     artifactSlotIconUrl,
-  } from "$lib/utils";
-  import { useWeapon, useArtifactSet } from "$lib/equipment-data.svelte";
-  import { artifactIconUrl, weaponIconUrl } from "$lib/asset-urls";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
-  import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
-  import StatRow from "$lib/ui/components/StatRow.svelte";
+  } from "#lib/utils.js";
+  import { useWeapon, useArtifactSet } from "#lib/equipment-data.svelte.js";
+  import { artifactIconUrl, weaponIconUrl } from "#lib/asset-urls.js";
+  import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
+  import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import Surface from "#lib/ui/components/Surface.svelte";
+  import StatRow from "#lib/ui/components/StatRow.svelte";
   import {
     computeBuildSheetStats,
     formatSheetStat,
     type SheetStatBag,
-  } from "$lib/build-stats";
+  } from "#lib/build-stats.js";
   import {
     MAIN_STAT_SLOTS,
     normalizeSetPieceCount,
-  } from "$lib/character-builds";
-  import type { CharacterBuild } from "$lib/types/investment";
-  import type { Character } from "$lib/definitions";
-  import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
+  } from "#lib/character-builds.js";
+  import type { CharacterBuild } from "#lib/types/investment.js";
+  import type { Character } from "#lib/definitions.js";
+  import type { InvestmentBuildKitIcons } from "#lib/investment-build-card.js";
 
   let {
     build,

@@ -6,11 +6,11 @@
  *
  * `null` from per-key load = genuinely missing (HTTP 404). Transient failures throw.
  */
-import { CDN_FETCH_TIMEOUT_MS } from "$lib/cdn-fetch";
+import { CDN_FETCH_TIMEOUT_MS } from "#lib/cdn-fetch.js";
 import type {
   CharacterIndex,
   CharacterIndexFile,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 
 const cache = new Map<string, CharacterIndex | null>();
 const pending = new Map<string, Promise<CharacterIndex | null>>();

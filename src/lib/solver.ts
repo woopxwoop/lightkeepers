@@ -13,14 +13,14 @@ import type {
   AbyssTeam,
   StygianCheapClearRow,
   StygianTeam,
-} from "$lib/definitions";
-import { teamSlotFieldRate } from "$lib/slot-fields";
+} from "#lib/definitions.js";
+import { teamSlotFieldRate } from "#lib/slot-fields.js";
 import {
   clearTimeAtCap,
   clearTimeAtCostCeiling,
   floorTeamCost,
-} from "$lib/team-cost";
-import type { CharacterMeta } from "$lib/tierlist";
+} from "#lib/team-cost.js";
+import type { CharacterMeta } from "#lib/tierlist.js";
 
 // ---- Types ----------------------------------------------------------------
 

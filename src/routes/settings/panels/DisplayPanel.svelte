@@ -10,16 +10,16 @@
     normalizeHexColor,
     type IconStyle,
     type ThemeColorKey,
-  } from "$lib/stores";
-  import Button from "$lib/ui/components/Button.svelte";
-  import Toggle from "$lib/ui/components/Toggle.svelte";
-  import IconInfo from "$lib/ui/icons/IconInfo.svelte";
+  } from "#lib/stores.js";
+  import Button from "#lib/ui/components/Button.svelte";
+  import Toggle from "#lib/ui/components/Toggle.svelte";
+  import IconInfo from "#lib/ui/icons/IconInfo.svelte";
   import {
     getCharacterCoop,
     getCharacterPortrait,
     getCharacterCard,
     getSiteBackgroundUrl,
-  } from "$lib/utils";
+  } from "#lib/utils.js";
   import { page } from "$app/state";
 
   let colorPickerOpen = $state(false);
@@ -124,9 +124,8 @@
         <p class="tcg-info">
           <IconInfo size={13} />
           Uses Genius Invokation TCG card art when the published card index lists
-          the character. Characters missing from a provisional index may still
-          show card art if the card.webp probe succeeds — otherwise their
-          portrait is shown.
+          the character. Characters missing from a provisional index may still show
+          card art if the card.webp probe succeeds — otherwise their portrait is shown.
         </p>
       {/if}
     </div>

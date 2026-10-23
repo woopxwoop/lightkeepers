@@ -4,14 +4,14 @@
  * Proxies `characters/tcg-cards.json` (name_ids with TCG card art).
  * Always includes manual Traveler (`PlayerBoy`). Same cache class as investment.
  */
-import { json, error, isHttpError } from "@sveltejs/kit";
+import { error, isHttpError } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getTcgCardsFile } from "$lib/server/tcg-cards";
+import { getTcgCardsFile } from "#lib/server/tcg-cards.js";
 
 export const GET: RequestHandler = async () => {
   try {
     const payload = await getTcgCardsFile();
-    return json(payload, {
+    return Response.json(payload, {
       headers: {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
       },

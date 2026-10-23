@@ -6,12 +6,12 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { trapTabKey } from "$lib/ui/focus-trap";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import GoalList from "$lib/ui/components/GoalList.svelte";
-  import type { CalculatorGoal } from "$lib/types/calculator-goals";
-  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import GoalList from "#lib/ui/components/GoalList.svelte";
+  import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
+  import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
 
   let {
     open = false,

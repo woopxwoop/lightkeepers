@@ -4,21 +4,21 @@
    * Adding or editing pieces is out of scope — Roster gear equips from this bag.
    */
   import { resolve } from "$app/paths";
-  import { authClient } from "$lib/auth-client";
+  import { authClient } from "#lib/auth-client.js";
   import {
     getRosterArtifactsCached,
     getRosterWeaponsCached,
     loadRosterArtifacts,
     loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
-  import type { InventoryArtifact, InventoryWeapon } from "$lib/definitions";
-  import { artifactSetByKey } from "$lib/equipment-data";
-  import { useEquipmentData } from "$lib/equipment-data.svelte";
-  import ArtifactIcon from "$lib/ui/components/ArtifactIcon.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import WeaponIcon from "$lib/ui/components/WeaponIcon.svelte";
-  import WeaponName from "$lib/ui/components/WeaponName.svelte";
+  } from "#lib/app/roster-inventory.js";
+  import type { InventoryArtifact, InventoryWeapon } from "#lib/definitions.js";
+  import { artifactSetByKey } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import ArtifactIcon from "#lib/ui/components/ArtifactIcon.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import WeaponIcon from "#lib/ui/components/WeaponIcon.svelte";
+  import WeaponName from "#lib/ui/components/WeaponName.svelte";
 
   const session = authClient.useSession();
   const equipment = useEquipmentData();
@@ -82,9 +82,12 @@
     </p>
     <p class="section-lede">
       Import under
-      <a class="back-link" href={resolve("/settings?tab=account")}>Account</a>,
-      or browse your
-      <a class="back-link" href={resolve("/settings")}>Roster</a>.
+
+      <a class="back-link" href={resolve("settings?tab=account")}>Account</a>
+
+      , or browse your
+      <a class="back-link" href={resolve("settings")}>Roster</a>
+      .
     </p>
   </header>
 
@@ -95,7 +98,7 @@
   {:else if empty}
     <EmptyState message="No weapons or artifacts imported yet.">
       {#snippet action()}
-        <a class="back-link" href={resolve("/settings?tab=account")}
+        <a class="back-link" href={resolve("settings?tab=account")}
           >Upload GOOD on Account</a
         >
       {/snippet}
