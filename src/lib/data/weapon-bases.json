@@ -1580,6 +1580,92 @@
       }
     ]
   },
+  "NewBough": {
+    "key": "NewBough",
+    "name": "New Bough",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "SilverLight": {
+    "key": "SilverLight",
+    "name": "Silver Light",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "initValue": 0.09,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
   "AquilaFavonia": {
     "key": "AquilaFavonia",
     "name": "Aquila Favonia",
@@ -2320,6 +2406,49 @@
     "subStat": {
       "propType": "FIGHT_PROP_CRITICAL",
       "initValue": 0.072,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "BeyondTheChrysalis": {
+    "key": "BeyondTheChrysalis",
+    "name": "Beyond the Chrysalis",
+    "stars": 5,
+    "atkBase": 47.537,
+    "atkCurve": "GROW_CURVE_ATTACK_302",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.096,
       "curve": "GROW_CURVE_CRITICAL_301",
       "isPercent": true
     },
@@ -7570,6 +7699,49 @@
       }
     ]
   },
+  "WintersHeavyHeart": {
+    "key": "WintersHeavyHeart",
+    "name": "Winter's Heavy Heart",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "initValue": 0.12,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
   "SkywardAtlas": {
     "key": "SkywardAtlas",
     "name": "Skyward Atlas",
@@ -8353,6 +8525,49 @@
     "subStat": {
       "propType": "FIGHT_PROP_ATTACK_PERCENT",
       "initValue": 0.036,
+      "curve": "GROW_CURVE_CRITICAL_301",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 31.1
+      },
+      {
+        "asc": 2,
+        "atk": 62.2
+      },
+      {
+        "asc": 3,
+        "atk": 93.4
+      },
+      {
+        "asc": 4,
+        "atk": 124.5
+      },
+      {
+        "asc": 5,
+        "atk": 155.6
+      },
+      {
+        "asc": 6,
+        "atk": 186.7
+      }
+    ]
+  },
+  "HymnOfTheMaelstrom": {
+    "key": "HymnOfTheMaelstrom",
+    "name": "Hymn of the Maelstrom",
+    "stars": 5,
+    "atkBase": 44.3358,
+    "atkCurve": "GROW_CURVE_ATTACK_304",
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "initValue": 0.144,
       "curve": "GROW_CURVE_CRITICAL_301",
       "isPercent": true
     },
@@ -9934,6 +10149,49 @@
     "subStat": {
       "propType": "FIGHT_PROP_DEFENSE_PERCENT",
       "initValue": 0.1126,
+      "curve": "GROW_CURVE_CRITICAL_201",
+      "isPercent": true
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "atk": 0
+      },
+      {
+        "asc": 1,
+        "atk": 25.9
+      },
+      {
+        "asc": 2,
+        "atk": 51.9
+      },
+      {
+        "asc": 3,
+        "atk": 77.8
+      },
+      {
+        "asc": 4,
+        "atk": 103.7
+      },
+      {
+        "asc": 5,
+        "atk": 129.7
+      },
+      {
+        "asc": 6,
+        "atk": 155.6
+      }
+    ]
+  },
+  "BreezeborneRefrain": {
+    "key": "BreezeborneRefrain",
+    "name": "Breezeborne Refrain",
+    "stars": 4,
+    "atkBase": 42.401,
+    "atkCurve": "GROW_CURVE_ATTACK_201",
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "initValue": 0.06,
       "curve": "GROW_CURVE_CRITICAL_201",
       "isPercent": true
     },

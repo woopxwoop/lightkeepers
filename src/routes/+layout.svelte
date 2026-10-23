@@ -5,7 +5,7 @@
    */
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import type { Character } from "$lib/definitions";
@@ -33,7 +33,7 @@
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { getSiteBackgroundUrl } from "$lib/utils";
-  import { dev } from "$app/environment";
+  import { browser, dev } from "$app/environment";
   import "../app.css";
 
   const patchNotesPath = resolve("/patch-notes");
@@ -72,6 +72,18 @@
     syncBackgroundToPath(page.url.pathname);
   });
 
+  // Seed before child components exist: page effects can run before this
+  // layout's, and store version globals are module-level (server-shared), so
+  // browser-only.
+  if (browser) {
+    untrack(() =>
+      seedClientStores({
+        characters: data.characters,
+        abyssVersionNumber: data.abyssVersionNumber,
+        stygianVersionNumber: data.stygianVersionNumber,
+      }),
+    );
+  }
   $effect(() => {
     seedClientStores({
       characters,

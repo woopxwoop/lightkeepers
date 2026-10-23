@@ -21,7 +21,10 @@
     "sync:schedules": "tsx scripts/workflows/sync-schedules.ts",
     "sync:character-assets": "tsx scripts/workflows/sync-character-assets.ts",
     "sync:equipment": "tsx scripts/workflows/sync-equipment.ts",
-    "sync:beta-assets": "tsx scripts/workflows/sync-beta-assets.ts"
+    "sync:beta-assets": "tsx scripts/workflows/sync-beta-assets.ts",
+    "sync:stygian": "tsx scripts/workflows/sync-stygian.ts",
+    "sync:abyss": "tsx scripts/workflows/sync-abyss.ts",
+    "sync:patch": "tsx scripts/workflows/sync-patch.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
