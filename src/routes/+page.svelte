@@ -13,6 +13,7 @@
   const abyssPath = resolve("/tools/abyss");
   const stygianPath = resolve("/tools/stygian");
   const pullsPath = resolve("/tools/pulls");
+  const auditPath = resolve("/tools/audit");
   const teamsPath = resolve("/teams");
   const charactersPath = resolve("/characters");
 
@@ -67,6 +68,13 @@
       label: "Pull Suggestions",
       description: "See which characters would improve your teams.",
       banner: siteAssetUrl("heizou"),
+      gated: showNudge,
+    },
+    {
+      href: auditPath,
+      label: "Build Audit",
+      description: "See which of your characters need levels or talents next.",
+      banner: siteAssetUrl("faruzan_banner"),
       gated: showNudge,
     },
     {

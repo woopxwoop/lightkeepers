@@ -5,6 +5,7 @@
  *
  *   genshin/ui/{UI_*}.webp                 — textures (portraits, skills, enemies, …)
  *   characters/{name_id}/card.webp         — TCG cards (see getCharacterCard in utils.ts)
+ *   characters/tcg-cards.json              — name_ids that have a card (incl. manual Traveler)
  *   genshin/data/characters/index.json     — kit roster summary (live)
  *   genshin/data/characters/{name_id}.json — full kit per character (live)
  *   genshin/data/beta/characters/…         — CB / unreleased kits (YuanShen)

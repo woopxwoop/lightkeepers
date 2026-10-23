@@ -1,6 +1,11 @@
 <script lang="ts">
   import avatarImg from "$lib/assets/default-avatar.jpg";
   import type { CharacterPortraitRef } from "$lib/definitions";
+  import {
+    hasTcgCard,
+    loadTcgCardIds,
+    tcgCardIndexVersion,
+  } from "$lib/app/tcg-cards";
   import { displayPreferences } from "$lib/stores";
   import {
     getCharacterPortrait,
@@ -31,6 +36,11 @@
   );
   let useEnkaIcon = $derived(resolvedIconStyle === "enka");
   let useTcg = $derived(resolvedIconStyle === "tcg");
+
+  // Warm the TCG availability index once icons ask for cards.
+  $effect(() => {
+    if (useTcg) void loadTcgCardIds();
+  });
 
   // When the TCG card image 404s, we fall back to the coop portrait.  But the
   // coop image needs the coop container styling (higher zoom, different origin)
@@ -69,23 +79,33 @@
     });
   }
 
+  /** null = index not ready yet (may probe); false = skip card URL. */
+  let tcgAvailable = $derived.by(() => {
+    void $tcgCardIndexVersion;
+    return hasTcgCard(character?.name_id);
+  });
+
+  let useTcgArt = $derived(
+    useTcg && !tcgFailed && tcgAvailable !== false,
+  );
+
   let imgSrc = $derived(
     assetFailed || !character?.name_id
       ? avatarImg
       : useEnkaIcon
         ? getCharacterPortrait(character.name_id)
-        : useTcg && !tcgFailed
+        : useTcgArt
           ? getCharacterCard(character.name_id)
           : getCharacterCoop(character.name_id),
   );
 
   /** Whether the coop container styling should be used (including TCG fallback). */
-  let useCoopContainer = $derived(!useEnkaIcon && (!useTcg || tcgFailed));
+  let useCoopContainer = $derived(!useEnkaIcon && !useTcgArt);
 </script>
 
 <div
   class="relative icon-root"
-  class:icon-container-tcg={useTcg && !tcgFailed}
+  class:icon-container-tcg={useTcgArt}
   class:icon-container-coop={useCoopContainer}
   class:icon-container-compact={useEnkaIcon}
   style:--czoom={zoom}
@@ -98,7 +118,7 @@
     decoding="async"
     style={settled ? "" : "transition: none"}
     onerror={() => {
-      if (useTcg && !tcgFailed) {
+      if (useTcgArt && !tcgFailed) {
         tcgFailed = true;
         // Don't settle yet — the coop fallback image hasn't loaded.
         // Let the new image's own onload/onerror settle the component
