@@ -1322,6 +1322,82 @@
     ]
   },
   {
+    "id": 11437,
+    "name": "New Bough",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_SpikedStake",
+    "awakenIcon": "UI_EquipIcon_Sword_SpikedStake_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_SpikedStake",
+    "baseAtk": 509.6,
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "label": "CRIT DMG",
+      "value": 0.5513,
+      "isPercent": true
+    },
+    "refinements": [
+      {
+        "rank": 1,
+        "description": "When the equipping character hits the opponent with an attack within 12s after using the Elemental Skill, they gain the \"Verdant\" effect, which increases their ATK by 4% and their Elemental Mastery by 20. This effect lasts 6s and can trigger once every second. Max 3 stacks. The aforementioned effects can still trigger even when the equipping character is not on the field.\\nRadiance: Stellar Glimmer: The effect of \"Verdant\" is changed to: Increases ATK by 6% as well as Stellar Glimmer reaction DMG dealt by the equipping character by 8%."
+      },
+      {
+        "rank": 2,
+        "description": "When the equipping character hits the opponent with an attack within 12s after using the Elemental Skill, they gain the \"Verdant\" effect, which increases their ATK by 5% and their Elemental Mastery by 25. This effect lasts 6s and can trigger once every second. Max 3 stacks. The aforementioned effects can still trigger even when the equipping character is not on the field.\\nRadiance: Stellar Glimmer: The effect of \"Verdant\" is changed to: Increases ATK by 7.5% as well as Stellar Glimmer reaction DMG dealt by the equipping character by 10%."
+      },
+      {
+        "rank": 3,
+        "description": "When the equipping character hits the opponent with an attack within 12s after using the Elemental Skill, they gain the \"Verdant\" effect, which increases their ATK by 6% and their Elemental Mastery by 30. This effect lasts 6s and can trigger once every second. Max 3 stacks. The aforementioned effects can still trigger even when the equipping character is not on the field.\\nRadiance: Stellar Glimmer: The effect of \"Verdant\" is changed to: Increases ATK by 9% as well as Stellar Glimmer reaction DMG dealt by the equipping character by 12%."
+      },
+      {
+        "rank": 4,
+        "description": "When the equipping character hits the opponent with an attack within 12s after using the Elemental Skill, they gain the \"Verdant\" effect, which increases their ATK by 7% and their Elemental Mastery by 35. This effect lasts 6s and can trigger once every second. Max 3 stacks. The aforementioned effects can still trigger even when the equipping character is not on the field.\\nRadiance: Stellar Glimmer: The effect of \"Verdant\" is changed to: Increases ATK by 10.5% as well as Stellar Glimmer reaction DMG dealt by the equipping character by 14%."
+      },
+      {
+        "rank": 5,
+        "description": "When the equipping character hits the opponent with an attack within 12s after using the Elemental Skill, they gain the \"Verdant\" effect, which increases their ATK by 8% and their Elemental Mastery by 40. This effect lasts 6s and can trigger once every second. Max 3 stacks. The aforementioned effects can still trigger even when the equipping character is not on the field.\\nRadiance: Stellar Glimmer: The effect of \"Verdant\" is changed to: Increases ATK by 12% as well as Stellar Glimmer reaction DMG dealt by the equipping character by 16%."
+      }
+    ]
+  },
+  {
+    "id": 11438,
+    "name": "Silver Light",
+    "stars": 4,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Fajian",
+    "awakenIcon": "UI_EquipIcon_Sword_Fajian_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Fajian",
+    "baseAtk": 509.6,
+    "subStat": {
+      "propType": "FIGHT_PROP_ATTACK_PERCENT",
+      "label": "ATK",
+      "value": 0.4135,
+      "isPercent": true
+    },
+    "refinements": [
+      {
+        "rank": 1,
+        "description": "Increases Elemental Mastery by 52 for 12s after Elemental Skill use. Max 2 stacks, and each stack's duration is independent of the others."
+      },
+      {
+        "rank": 2,
+        "description": "Increases Elemental Mastery by 65 for 12s after Elemental Skill use. Max 2 stacks, and each stack's duration is independent of the others."
+      },
+      {
+        "rank": 3,
+        "description": "Increases Elemental Mastery by 78 for 12s after Elemental Skill use. Max 2 stacks, and each stack's duration is independent of the others."
+      },
+      {
+        "rank": 4,
+        "description": "Increases Elemental Mastery by 91 for 12s after Elemental Skill use. Max 2 stacks, and each stack's duration is independent of the others."
+      },
+      {
+        "rank": 5,
+        "description": "Increases Elemental Mastery by 104 for 12s after Elemental Skill use. Max 2 stacks, and each stack's duration is independent of the others."
+      }
+    ]
+  },
+  {
     "id": 11501,
     "name": "Aquila Favonia",
     "stars": 5,
@@ -2002,6 +2078,44 @@
       {
         "rank": 5,
         "description": "When the Traveler equips this, their CRIT DMG increases by 6% for every Element they have resonated with. Additionally, the Traveler's ATK will also increase by 40% for 8s, and regenerate 5 Elemental Energy, after they attack and hit an opponent. This effect can trigger once every 5s. This can be triggered even when the character is not on the field."
+      }
+    ]
+  },
+  {
+    "id": 11522,
+    "name": "Beyond the Chrysalis",
+    "stars": 5,
+    "weaponType": "WEAPON_SWORD_ONE_HAND",
+    "icon": "UI_EquipIcon_Sword_Samosvist",
+    "awakenIcon": "UI_EquipIcon_Sword_Samosvist_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Sword_Samosvist",
+    "baseAtk": 674.3,
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "label": "CRIT DMG",
+      "value": 0.441,
+      "isPercent": true
+    },
+    "refinements": [
+      {
+        "rank": 1,
+        "description": "Each time the equipping character uses their Elemental Skill or Elemental Burst, they gain one of the following three effects in sequence:\\nWinds of Devotion: Increases the equipping character's CRIT DMG by 56% for 10s;\\nWinds of Defiance: Increases Stellar Swirl reaction DMG dealt by the equipping character by 36% for 10s; and\\nWinds of Plenty: Regenerates 5 Elemental Energy for the equipping character. Up to 5 Elemental Energy can be regenerated in this way every 4s.\\nThe aforementioned effects are removed and the sequence is reset when the equipping character leaves the field."
+      },
+      {
+        "rank": 2,
+        "description": "Each time the equipping character uses their Elemental Skill or Elemental Burst, they gain one of the following three effects in sequence:\\nWinds of Devotion: Increases the equipping character's CRIT DMG by 72% for 10s;\\nWinds of Defiance: Increases Stellar Swirl reaction DMG dealt by the equipping character by 45% for 10s; and\\nWinds of Plenty: Regenerates 5.5 Elemental Energy for the equipping character. Up to 5.5 Elemental Energy can be regenerated in this way every 4s.\\nThe aforementioned effects are removed and the sequence is reset when the equipping character leaves the field."
+      },
+      {
+        "rank": 3,
+        "description": "Each time the equipping character uses their Elemental Skill or Elemental Burst, they gain one of the following three effects in sequence:\\nWinds of Devotion: Increases the equipping character's CRIT DMG by 88% for 10s;\\nWinds of Defiance: Increases Stellar Swirl reaction DMG dealt by the equipping character by 54% for 10s; and\\nWinds of Plenty: Regenerates 6 Elemental Energy for the equipping character. Up to 6 Elemental Energy can be regenerated in this way every 4s.\\nThe aforementioned effects are removed and the sequence is reset when the equipping character leaves the field."
+      },
+      {
+        "rank": 4,
+        "description": "Each time the equipping character uses their Elemental Skill or Elemental Burst, they gain one of the following three effects in sequence:\\nWinds of Devotion: Increases the equipping character's CRIT DMG by 104% for 10s;\\nWinds of Defiance: Increases Stellar Swirl reaction DMG dealt by the equipping character by 63% for 10s; and\\nWinds of Plenty: Regenerates 6.5 Elemental Energy for the equipping character. Up to 6.5 Elemental Energy can be regenerated in this way every 4s.\\nThe aforementioned effects are removed and the sequence is reset when the equipping character leaves the field."
+      },
+      {
+        "rank": 5,
+        "description": "Each time the equipping character uses their Elemental Skill or Elemental Burst, they gain one of the following three effects in sequence:\\nWinds of Devotion: Increases the equipping character's CRIT DMG by 120% for 10s;\\nWinds of Defiance: Increases Stellar Swirl reaction DMG dealt by the equipping character by 72% for 10s; and\\nWinds of Plenty: Regenerates 7 Elemental Energy for the equipping character. Up to 7 Elemental Energy can be regenerated in this way every 4s.\\nThe aforementioned effects are removed and the sequence is reset when the equipping character leaves the field."
       }
     ]
   },
@@ -6486,6 +6600,44 @@
     ]
   },
   {
+    "id": 14437,
+    "name": "Winter's Heavy Heart",
+    "stars": 4,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_FrostScepter",
+    "awakenIcon": "UI_EquipIcon_Catalyst_FrostScepter_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_FrostScepter",
+    "baseAtk": 509.6,
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL_HURT",
+      "label": "CRIT DMG",
+      "value": 0.5513,
+      "isPercent": true
+    },
+    "refinements": [
+      {
+        "rank": 1,
+        "description": "The equipping character gains \"Silver-Tinged Blood Pact\": The equipping character's Elemental Mastery is increased by 24 for every Cryo character present in the party. For every Electro character present in the party, the equipping character's ATK is increased by 4.8%. Up to 4 Cryo or Electro characters can provide the above buffs.\\nRadiance: Stellar Glimmer: The effect of Silver-Tinged Blood Pact is changed to: For every Cryo or Electro character present in the party, the equipping character gains a 20-point Elemental Mastery boost and deals 6% increased Stellar Glimmer reaction DMG."
+      },
+      {
+        "rank": 2,
+        "description": "The equipping character gains \"Silver-Tinged Blood Pact\": The equipping character's Elemental Mastery is increased by 30 for every Cryo character present in the party. For every Electro character present in the party, the equipping character's ATK is increased by 6%. Up to 4 Cryo or Electro characters can provide the above buffs.\\nRadiance: Stellar Glimmer: The effect of Silver-Tinged Blood Pact is changed to: For every Cryo or Electro character present in the party, the equipping character gains a 25-point Elemental Mastery boost and deals 7.5% increased Stellar Glimmer reaction DMG."
+      },
+      {
+        "rank": 3,
+        "description": "The equipping character gains \"Silver-Tinged Blood Pact\": The equipping character's Elemental Mastery is increased by 36 for every Cryo character present in the party. For every Electro character present in the party, the equipping character's ATK is increased by 7.2%. Up to 4 Cryo or Electro characters can provide the above buffs.\\nRadiance: Stellar Glimmer: The effect of Silver-Tinged Blood Pact is changed to: For every Cryo or Electro character present in the party, the equipping character gains a 30-point Elemental Mastery boost and deals 9% increased Stellar Glimmer reaction DMG."
+      },
+      {
+        "rank": 4,
+        "description": "The equipping character gains \"Silver-Tinged Blood Pact\": The equipping character's Elemental Mastery is increased by 42 for every Cryo character present in the party. For every Electro character present in the party, the equipping character's ATK is increased by 8.4%. Up to 4 Cryo or Electro characters can provide the above buffs.\\nRadiance: Stellar Glimmer: The effect of Silver-Tinged Blood Pact is changed to: For every Cryo or Electro character present in the party, the equipping character gains a 35-point Elemental Mastery boost and deals 10.5% increased Stellar Glimmer reaction DMG."
+      },
+      {
+        "rank": 5,
+        "description": "The equipping character gains \"Silver-Tinged Blood Pact\": The equipping character's Elemental Mastery is increased by 48 for every Cryo character present in the party. For every Electro character present in the party, the equipping character's ATK is increased by 9.6%. Up to 4 Cryo or Electro characters can provide the above buffs.\\nRadiance: Stellar Glimmer: The effect of Silver-Tinged Blood Pact is changed to: For every Cryo or Electro character present in the party, the equipping character gains a 40-point Elemental Mastery boost and deals 12% increased Stellar Glimmer reaction DMG."
+      }
+    ]
+  },
+  {
     "id": 14501,
     "name": "Skyward Atlas",
     "stars": 5,
@@ -7204,6 +7356,44 @@
       {
         "rank": 5,
         "description": "ATK is increased by 24%. After the equipping character creates a Shield, they gain \"Pathfinder's Light\" for 20s: Increases your active party member's DMG by 22% for every 1,000 ATK the equipping character has, up to a maximum of 58%. Additionally, when the equipping character creates a Shield, they will also gain \"Guide's Contentment\": Restores 18 Elemental Energy to the equipping character. The aforementioned effect can trigger once every 14s, and can also be triggered when any type of chest is opened outside of combat. The equipping character may trigger this effect even when they are an off-field.\\nHexerei: Secret Rite: When your own Hexerei character is off-field in the party, they will also gain 50% of the DMG increase from Pathfinder's Light."
+      }
+    ]
+  },
+  {
+    "id": 14524,
+    "name": "Hymn of the Maelstrom",
+    "stars": 5,
+    "weaponType": "WEAPON_CATALYST",
+    "icon": "UI_EquipIcon_Catalyst_Bludnye",
+    "awakenIcon": "UI_EquipIcon_Catalyst_Bludnye_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Catalyst_Bludnye",
+    "baseAtk": 541.8,
+    "subStat": {
+      "propType": "FIGHT_PROP_HP_PERCENT",
+      "label": "HP",
+      "value": 0.6615,
+      "isPercent": true
+    },
+    "refinements": [
+      {
+        "rank": 1,
+        "description": "Increases Healing Bonus by 4%.\\nWhen performing healing, the equipping character gains the \"Vatsamonga's Vatic Vintage\" effect, which increases Max HP by 4% as well as increases the currently active party member's ATK by 0.4% for every 1,000 Max HP the equipping character has over 40,000. A maximum of 8% ATK can be gained in this way. This effect lasts 10s, max 3 stacks.\\nWhen a nearby party member triggers a Frozen or Stellar Swirl reaction, the aforementioned Max HP and ATK boosts will be further increased by 75% for the next 5s.\\nThe aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 2,
+        "description": "Increases Healing Bonus by 5%.\\nWhen performing healing, the equipping character gains the \"Vatsamonga's Vatic Vintage\" effect, which increases Max HP by 5% as well as increases the currently active party member's ATK by 0.5% for every 1,000 Max HP the equipping character has over 40,000. A maximum of 10% ATK can be gained in this way. This effect lasts 10s, max 3 stacks.\\nWhen a nearby party member triggers a Frozen or Stellar Swirl reaction, the aforementioned Max HP and ATK boosts will be further increased by 75% for the next 5s.\\nThe aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 3,
+        "description": "Increases Healing Bonus by 6%.\\nWhen performing healing, the equipping character gains the \"Vatsamonga's Vatic Vintage\" effect, which increases Max HP by 6% as well as increases the currently active party member's ATK by 0.6% for every 1,000 Max HP the equipping character has over 40,000. A maximum of 12% ATK can be gained in this way. This effect lasts 10s, max 3 stacks.\\nWhen a nearby party member triggers a Frozen or Stellar Swirl reaction, the aforementioned Max HP and ATK boosts will be further increased by 75% for the next 5s.\\nThe aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 4,
+        "description": "Increases Healing Bonus by 7%.\\nWhen performing healing, the equipping character gains the \"Vatsamonga's Vatic Vintage\" effect, which increases Max HP by 7% as well as increases the currently active party member's ATK by 0.7% for every 1,000 Max HP the equipping character has over 40,000. A maximum of 14% ATK can be gained in this way. This effect lasts 10s, max 3 stacks.\\nWhen a nearby party member triggers a Frozen or Stellar Swirl reaction, the aforementioned Max HP and ATK boosts will be further increased by 75% for the next 5s.\\nThe aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 5,
+        "description": "Increases Healing Bonus by 8%.\\nWhen performing healing, the equipping character gains the \"Vatsamonga's Vatic Vintage\" effect, which increases Max HP by 8% as well as increases the currently active party member's ATK by 0.8% for every 1,000 Max HP the equipping character has over 40,000. A maximum of 16% ATK can be gained in this way. This effect lasts 10s, max 3 stacks.\\nWhen a nearby party member triggers a Frozen or Stellar Swirl reaction, the aforementioned Max HP and ATK boosts will be further increased by 75% for the next 5s.\\nThe aforementioned effects can still trigger even when the equipping character is not on the field."
       }
     ]
   },
@@ -8542,6 +8732,44 @@
       {
         "rank": 5,
         "description": "For 12s after the equipping character uses an Elemental Skill, their Elemental Mastery is increased by 240."
+      }
+    ]
+  },
+  {
+    "id": 15437,
+    "name": "Breezeborne Refrain",
+    "stars": 4,
+    "weaponType": "WEAPON_BOW",
+    "icon": "UI_EquipIcon_Bow_Windtalker",
+    "awakenIcon": "UI_EquipIcon_Bow_Windtalker_Awaken",
+    "splashIcon": "UI_Gacha_EquipIcon_Bow_Windtalker",
+    "baseAtk": 509.6,
+    "subStat": {
+      "propType": "FIGHT_PROP_CRITICAL",
+      "label": "CRIT Rate",
+      "value": 0.2756,
+      "isPercent": true
+    },
+    "refinements": [
+      {
+        "rank": 1,
+        "description": "Increases Energy Recharge by 20%. When the equipping character hits the opponent with their Elemental Skill or Elemental Burst, they gain a stack of \"Hymn of the Pure.\" This effect can trigger once every 0.03s, max 3 stacks, and at 3 stacks, all instances of \"Hymn of the Pure\" are cleared to give the equipping character \"Thus Lied the Viper\" instead. This grants nearby party members a 24% Stellar Glimmer reaction DMG boost for 12s, during which no stacks of \"Hymn of the Pure\" can be obtained. The aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 2,
+        "description": "Increases Energy Recharge by 25%. When the equipping character hits the opponent with their Elemental Skill or Elemental Burst, they gain a stack of \"Hymn of the Pure.\" This effect can trigger once every 0.03s, max 3 stacks, and at 3 stacks, all instances of \"Hymn of the Pure\" are cleared to give the equipping character \"Thus Lied the Viper\" instead. This grants nearby party members a 30% Stellar Glimmer reaction DMG boost for 12s, during which no stacks of \"Hymn of the Pure\" can be obtained. The aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 3,
+        "description": "Increases Energy Recharge by 30%. When the equipping character hits the opponent with their Elemental Skill or Elemental Burst, they gain a stack of \"Hymn of the Pure.\" This effect can trigger once every 0.03s, max 3 stacks, and at 3 stacks, all instances of \"Hymn of the Pure\" are cleared to give the equipping character \"Thus Lied the Viper\" instead. This grants nearby party members a 36% Stellar Glimmer reaction DMG boost for 12s, during which no stacks of \"Hymn of the Pure\" can be obtained. The aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 4,
+        "description": "Increases Energy Recharge by 35%. When the equipping character hits the opponent with their Elemental Skill or Elemental Burst, they gain a stack of \"Hymn of the Pure.\" This effect can trigger once every 0.03s, max 3 stacks, and at 3 stacks, all instances of \"Hymn of the Pure\" are cleared to give the equipping character \"Thus Lied the Viper\" instead. This grants nearby party members a 42% Stellar Glimmer reaction DMG boost for 12s, during which no stacks of \"Hymn of the Pure\" can be obtained. The aforementioned effects can still trigger even when the equipping character is not on the field."
+      },
+      {
+        "rank": 5,
+        "description": "Increases Energy Recharge by 40%. When the equipping character hits the opponent with their Elemental Skill or Elemental Burst, they gain a stack of \"Hymn of the Pure.\" This effect can trigger once every 0.03s, max 3 stacks, and at 3 stacks, all instances of \"Hymn of the Pure\" are cleared to give the equipping character \"Thus Lied the Viper\" instead. This grants nearby party members a 48% Stellar Glimmer reaction DMG boost for 12s, during which no stacks of \"Hymn of the Pure\" can be obtained. The aforementioned effects can still trigger even when the equipping character is not on the field."
       }
     ]
   },

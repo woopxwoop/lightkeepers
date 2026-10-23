@@ -47,6 +47,15 @@ export function setVersionNumbers(abyss: number, stygian: number) {
   stygianVersionNumber = stygian;
 }
 
+/** Roster-keyed fetches must never post the unseeded -1 sentinel. */
+function assertVersionsSeeded(): void {
+  if (abyssVersionNumber < 0 || stygianVersionNumber < 0) {
+    throw new Error(
+      "[stores] version numbers not seeded — seedClientStores must run first",
+    );
+  }
+}
+
 export type IconStyle = "coop" | "enka" | "tcg";
 
 export type ColorTheme = "dark" | "light";
@@ -596,6 +605,7 @@ export function invalidateTeamsOwned(): void {
  * The server caches results by character list so rapid re-calls are cheap.
  */
 export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
+  assertVersionsSeeded();
   const id = ++teamsRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
 
@@ -666,6 +676,7 @@ export function invalidateNearMissTeams(): void {
 export async function writeNearMissTeams(
   owned: CharacterOwned[],
 ): Promise<void> {
+  assertVersionsSeeded();
   const id = ++nearMissRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
 

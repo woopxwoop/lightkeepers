@@ -5,7 +5,7 @@
    */
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import type { Character } from "$lib/definitions";
@@ -20,6 +20,7 @@
   import {
     displayPreferences,
     initDisplayPreferences,
+    setVersionNumbers,
     faviconDataUri,
     backgroundVisible,
     syncBackgroundToPath,
@@ -33,7 +34,7 @@
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "$lib/site";
   import { getSiteBackgroundUrl } from "$lib/utils";
-  import { dev } from "$app/environment";
+  import { browser, dev } from "$app/environment";
   import "../app.css";
 
   const patchNotesPath = resolve("/patch-notes");
@@ -72,6 +73,15 @@
     syncBackgroundToPath(page.url.pathname);
   });
 
+  // Version globals are module-level and child effects can run before this
+  // layout's, so seed them before those components exist. Leave the roster and
+  // charactersHydrated false until the effect below, after hydration, so
+  // /characters still renders LoadingState for the server HTML.
+  if (browser) {
+    untrack(() =>
+      setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber),
+    );
+  }
   $effect(() => {
     seedClientStores({
       characters,

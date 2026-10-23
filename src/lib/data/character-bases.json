@@ -9593,6 +9593,170 @@
       }
     ]
   },
+  "Vodyanitsa": {
+    "name_id": "Vodyanitsa",
+    "name": "Vodyanitsa",
+    "level": 90,
+    "hp": 14817.6,
+    "atk": 107.6,
+    "def": 484.2,
+    "ascension": {
+      "hp_": 0.288
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5,
+    "hpBase": 1153.5172,
+    "atkBase": 8.379,
+    "defBase": 37.6929,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 989.0367,
+        "atk": 7.18371,
+        "def": 32.319,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1691.7733,
+        "atk": 12.287925,
+        "def": 55.2825,
+        "stats": {
+          "hp_": 0.072
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2628.7554,
+        "atk": 19.093546,
+        "def": 85.9005,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 3331.492,
+        "atk": 24.19776,
+        "def": 108.864,
+        "stats": {
+          "hp_": 0.144
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 4034.2285,
+        "atk": 29.301975,
+        "def": 131.8275,
+        "stats": {
+          "hp_": 0.216
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4736.9653,
+        "atk": 34.40619,
+        "def": 154.791,
+        "stats": {
+          "hp_": 0.288
+        }
+      }
+    ]
+  },
+  "Vesna": {
+    "name_id": "Vesna",
+    "name": "Vesna",
+    "level": 90,
+    "hp": 13262.3,
+    "atk": 354,
+    "def": 730.1,
+    "ascension": {
+      "critRate_": 0.192
+    },
+    "baseCritRate": 0.05,
+    "baseCritDMG": 0.5,
+    "hpBase": 1032.4456,
+    "atkBase": 27.5576,
+    "defBase": 56.8385,
+    "growCurves": {
+      "hp": "GROW_CURVE_HP_S5",
+      "atk": "GROW_CURVE_ATTACK_S5",
+      "def": "GROW_CURVE_HP_S5"
+    },
+    "promotes": [
+      {
+        "asc": 0,
+        "hp": 0,
+        "atk": 0,
+        "def": 0,
+        "stats": {}
+      },
+      {
+        "asc": 1,
+        "hp": 885.2287,
+        "atk": 23.626425,
+        "def": 48.735,
+        "stats": {}
+      },
+      {
+        "asc": 2,
+        "hp": 1514.207,
+        "atk": 40.41362,
+        "def": 83.3625,
+        "stats": {
+          "critRate_": 0.048
+        }
+      },
+      {
+        "asc": 3,
+        "hp": 2352.8447,
+        "atk": 62.796547,
+        "def": 129.5325,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 4,
+        "hp": 2981.823,
+        "atk": 79.58374,
+        "def": 164.16,
+        "stats": {
+          "critRate_": 0.096
+        }
+      },
+      {
+        "asc": 5,
+        "hp": 3610.8013,
+        "atk": 96.37094,
+        "def": 198.7875,
+        "stats": {
+          "critRate_": 0.144
+        }
+      },
+      {
+        "asc": 6,
+        "hp": 4239.78,
+        "atk": 113.158134,
+        "def": 233.415,
+        "stats": {
+          "critRate_": 0.192
+        }
+      }
+    ]
+  },
   "Alyosha": {
     "name_id": "Alyosha",
     "name": "Alyosha",

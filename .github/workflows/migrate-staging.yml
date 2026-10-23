@@ -1,0 +1,58 @@
+name: Migrate staging
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+# migrate-staging is one directory on the app server. A second run must wait
+# instead of deleting it while the first is still applying migrations.
+concurrency:
+  group: migrate-staging
+  cancel-in-progress: false
+
+# STAGING_DATABASE_URL is reached from the app server, not from this runner:
+# postgres://lightkeepers:<password>@10.0.0.3:5433/lightkeepers
+# The password is POSTGRES_PASSWORD in /home/deploy/staging-postgres/.env
+# on the database server.
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clear previous migrator copy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: rm -rf "$HOME/migrate-staging"
+
+      - name: Copy migrator to app server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "migrations"
+          target: migrate-staging/
+
+      - name: Apply migrations
+        uses: appleboy/ssh-action@v1
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 30m
+          envs: DATABASE_URL
+          script: |
+            set -euo pipefail
+            bash "$HOME/migrate-staging/migrations/migrate-remote.sh"

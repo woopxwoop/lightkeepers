@@ -9,6 +9,12 @@ permissions:
   contents: read
   packages: write
 
+# migrate-prod is one directory on the app server. A second run must wait
+# instead of deleting it while the first is still applying migrations.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -16,6 +22,39 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      # Migrate before the image is published. A failed migration must not
+      # move :latest. DATABASE_URL is the database the running app uses.
+      - name: Clear previous migrator copy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: rm -rf "$HOME/migrate-prod"
+
+      - name: Copy migrator to app server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "migrations"
+          target: migrate-prod/
+
+      - name: Apply database migrations
+        uses: appleboy/ssh-action@v1
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 30m
+          envs: DATABASE_URL
+          script: |
+            set -euo pipefail
+            bash "$HOME/migrate-prod/migrations/migrate-remote.sh"
 
       # Prometheus refuses to start on a malformed config, and the compose
       # restart loop is silent — catch it here instead of on the VPS.
@@ -126,3 +165,39 @@ jobs:
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
             docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d
             docker image prune -af
+
+  # The database server runs the nightly dump. Each deploy copies the script
+  # and reconciles crontab; an unchanged script leaves the existing line.
+  install-backup-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clear previous backup script
+        uses: appleboy/ssh-action@v1
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: rm -rf "$HOME/backup-job"
+
+      - name: Copy backup script
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "backups/backup.sh"
+          target: backup-job/
+
+      - name: Reconcile backup cron
+        uses: appleboy/ssh-action@v1
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            bash "$HOME/backup-job/backups/backup.sh" install
