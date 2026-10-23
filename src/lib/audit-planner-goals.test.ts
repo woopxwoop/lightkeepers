@@ -15,7 +15,11 @@ import {
   emptyGoalsState,
   MAX_CALCULATOR_GOALS,
 } from "./calculator-goals.ts";
-import type { CharacterOwned } from "./definitions.ts";
+import type {
+  CharacterOwned,
+  InventoryWeapon,
+  RosterProgress,
+} from "./definitions.ts";
 import type { UpgradeCostsCatalog } from "./types/upgrade-costs.ts";
 
 function catalogWith(ids: string[]): UpgradeCostsCatalog {
@@ -117,6 +121,20 @@ function ownedHutao(weaponKey: string | null = null): CharacterOwned {
   } as CharacterOwned;
 }
 
+function gradedProgress(
+  weaponKey: string,
+  level: number,
+  ascension: number,
+): RosterProgress {
+  return {
+    level: 70,
+    ascension: 4,
+    constellation: 0,
+    talents: { normal: 6, skill: 6, burst: 6 },
+    weapon: { key: weaponKey, level, ascension, refinement: 1 },
+  };
+}
+
 function charRow(
   nameId: string,
   steps: AccountBuildGrade["adviceSteps"],
@@ -192,14 +210,17 @@ describe("audit-planner-goals", () => {
       emptyGoalsState(),
       catalog,
       [
-        charRow(
-          "Hutao",
-          [
-            { kind: "level", current: 70, target: 90 },
-            { kind: "weapon_level", current: 70, target: 90 },
-          ],
-          "StaffOfHoma",
-        ),
+        {
+          ...charRow(
+            "Hutao",
+            [
+              { kind: "level", current: 70, target: 90 },
+              { kind: "weapon_level", current: 70, target: 90 },
+            ],
+            "StaffOfHoma",
+          ),
+          progress: gradedProgress("StaffOfHoma", 70, 4),
+        },
       ],
       { owned: [ownedHutao("StaffOfHoma")], weapons: null },
     );
@@ -208,6 +229,51 @@ describe("audit-planner-goals", () => {
     assert.ok(weaponGoal);
     if (weaponGoal?.kind === "weapon") {
       assert.equal(weaponGoal.weapon_id, 11401);
+      assert.equal(weaponGoal.start.level, 70);
+      assert.equal(weaponGoal.start.ascension, 4);
+      assert.equal(weaponGoal.target.level, 90);
+    }
+  });
+
+  it("starts the weapon goal at the graded copy, not a lower spare", () => {
+    const catalog = catalogWith(["Hutao"]);
+    const spare: InventoryWeapon = {
+      key: "StaffOfHoma",
+      level: 1,
+      ascension: 0,
+      refinement: 1,
+      location: "",
+      lock: false,
+    };
+    const equipped: InventoryWeapon = {
+      key: "StaffOfHoma",
+      level: 80,
+      ascension: 6,
+      refinement: 1,
+      location: "HuTao",
+      lock: false,
+    };
+    const result = appendAuditSuggestions(
+      emptyGoalsState(),
+      catalog,
+      [
+        {
+          ...charRow(
+            "Hutao",
+            [{ kind: "weapon_level", current: 80, target: 90 }],
+            "StaffOfHoma",
+          ),
+          progress: gradedProgress("StaffOfHoma", 80, 6),
+        },
+      ],
+      { owned: [ownedHutao("StaffOfHoma")], weapons: [equipped, spare] },
+    );
+    assert.equal(result.added, 1);
+    const weaponGoal = result.state.goals.find((g) => g.kind === "weapon");
+    assert.ok(weaponGoal);
+    if (weaponGoal?.kind === "weapon") {
+      assert.equal(weaponGoal.start.level, 80);
+      assert.equal(weaponGoal.start.ascension, 6);
       assert.equal(weaponGoal.target.level, 90);
     }
   });
@@ -245,11 +311,14 @@ describe("audit-planner-goals", () => {
     const rows = [
       charRow("Hutao", [{ kind: "skill", current: 6, target: 9 }]),
       charRow("Xiangling", [{ kind: "burst", current: 6, target: 9 }]),
-      charRow(
-        "Hutao",
-        [{ kind: "weapon_level", current: 70, target: 90 }],
-        "StaffOfHoma",
-      ),
+      {
+        ...charRow(
+          "Hutao",
+          [{ kind: "weapon_level", current: 70, target: 90 }],
+          "StaffOfHoma",
+        ),
+        progress: gradedProgress("StaffOfHoma", 70, 4),
+      },
     ];
     const result = appendAuditSuggestions(state, catalog, rows, {
       owned: [

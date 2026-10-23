@@ -14,13 +14,13 @@ import {
   createWeaponGoal,
   MAX_CALCULATOR_GOALS,
 } from "$lib/calculator-goals";
-import type { CharacterOwned, InventoryWeapon } from "$lib/definitions";
+import type {
+  CharacterOwned,
+  InventoryWeapon,
+  RosterProgress,
+} from "$lib/definitions";
 import { resolveCatalogCharacterId } from "$lib/planner-goal-edits";
 import { plannerTargetFromBuilds } from "$lib/planner-targets";
-import {
-  lowestInventoryWeaponByKey,
-  plannerStartFromOwnedWeapon,
-} from "$lib/roster-inventory";
 import {
   progressToCharacterStart,
   rosterProgressForNameId,
@@ -58,6 +58,11 @@ export type AuditSuggestionRow = {
   nameId: string;
   grade: AccountBuildGrade;
   weaponKey: string | null;
+  /**
+   * Progress the row was graded from. Weapon goals start at this copy's
+   * level and ascension — the copy that produced the advice.
+   */
+  progress?: RosterProgress | null;
   /** Builds summary used for character target autofill. */
   builds: CharacterIndex | null;
 };
@@ -219,13 +224,18 @@ function buildCharacterGoal(
   });
 }
 
+/** Level and ascension of the weapon the row's advice was computed from. */
+function gradedWeaponStart(
+  row: AuditSuggestionRow,
+): { level: number; ascension: number } | null {
+  const weapon = row.progress?.weapon;
+  if (!weapon || weapon.key !== row.weaponKey) return null;
+  return { level: weapon.level, ascension: weapon.ascension };
+}
+
 function buildWeaponGoal(
   catalog: UpgradeCostsCatalog,
   row: AuditSuggestionRow,
-  opts: {
-    owned: readonly CharacterOwned[];
-    weapons: readonly InventoryWeapon[] | null;
-  },
 ): WeaponCalculatorGoal | null {
   if (!row.weaponKey || !hasWeaponProgressAdvice(row.grade)) return null;
   const weaponId = catalogWeaponIdForKey(catalog, row.weaponKey);
@@ -233,12 +243,8 @@ function buildWeaponGoal(
   const catRow = catalog.weapons.find((w) => w.id === weaponId);
   if (!catRow) return null;
 
-  const fromBag = lowestInventoryWeaponByKey(opts.weapons ?? [], row.weaponKey);
-  const fromRoster = opts.owned.find(
-    (c) => c.isOwned && c.progress?.weapon?.key === row.weaponKey,
-  )?.progress?.weapon;
-  const ownedStart = plannerStartFromOwnedWeapon(fromBag ?? fromRoster);
-  const start = ownedStart ?? { ...UPGRADE_DEFAULTS.weaponStart };
+  const start = gradedWeaponStart(row);
+  if (!start) return null;
   let ordered = orderWeaponConfigs(
     start,
     { ...WEAPON_GRADE_TARGET },
@@ -300,7 +306,7 @@ export function appendAuditSuggestions(
         if (hasWeaponGoal(next, weaponId)) {
           skipped += 1;
         } else if (next.goals.length < MAX_CALCULATOR_GOALS) {
-          const goal = buildWeaponGoal(catalog, row, opts);
+          const goal = buildWeaponGoal(catalog, row);
           if (goal) {
             const after = appendGoal(next, goal);
             if (after.goals.length > next.goals.length) {

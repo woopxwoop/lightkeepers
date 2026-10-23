@@ -5,7 +5,13 @@
   import { loadAuditGrades } from "$lib/app/audit-grades";
   import { getRosterWeaponsCached } from "$lib/app/roster-inventory";
   import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
-  import { buildNextRows, type AuditRow } from "$lib/audit-grades";
+  import {
+    auditEmptyQueueMessage,
+    auditRosterFingerprint,
+    auditUngradedNote,
+    buildNextRows,
+    type AuditRow,
+  } from "$lib/audit-grades";
   import {
     appendAuditSuggestions,
     auditRowPlannerState,
@@ -49,18 +55,23 @@
   let plannerSnapshot = $state("");
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
+  /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
+  let plannerInit: Promise<{
+    catalog: UpgradeCostsCatalog;
+    state: CalculatorGoalsState;
+    snapshot: string;
+  }> | null = null;
 
   let owned = $derived($charactersOwned.filter((c) => c.isOwned));
-  /** Stable effect key — ignore roster array identity churn from store rewrites. */
-  let ownedFingerprint = $derived(
-    owned
-      .map((c) => c.name_id)
-      .sort()
-      .join("\0"),
-  );
+  /** Regrade when ids or the progress those grades read changes, not on array identity. */
+  let ownedFingerprint = $derived(auditRosterFingerprint(owned));
 
   let usageByNameId = $derived(stygianUsageByNameId($tierList));
   let buildNext = $derived(grades ? buildNextRows(grades, usageByNameId) : []);
+  let emptyQueueMessage = $derived(
+    grades ? auditEmptyQueueMessage(grades) : "",
+  );
+  let ungradedNote = $derived(grades ? auditUngradedNote(grades) : null);
 
   type PageView = "loading" | "no_roster" | "error" | "ready";
 
@@ -89,34 +100,58 @@
     gradeRetry += 1;
   }
 
-  /** Planner goals + catalog; refreshes from storage when already loaded. */
+  async function loadPlanner(): Promise<{
+    catalog: UpgradeCostsCatalog;
+    state: CalculatorGoalsState;
+    snapshot: string;
+  }> {
+    const [catalog, { data: sess }] = await Promise.all([
+      loadUpgradeCosts(),
+      authClient.getSession(),
+    ]);
+    const pending = await hydrateGoalsState(Boolean(sess));
+    plannerCatalog = catalog;
+    plannerGoals = pending.state;
+    plannerSnapshot = pending.json;
+    return {
+      catalog,
+      state: pending.state,
+      snapshot: pending.json,
+    };
+  }
+
+  /**
+   * Planner goals + catalog. The first load is single-flight: Add and the
+   * background warm-up share one hydrate, so an older cloud response cannot
+   * write back over goals the click just saved.
+   */
   async function readyPlanner(): Promise<{
     catalog: UpgradeCostsCatalog;
     state: CalculatorGoalsState;
     snapshot: string;
   } | null> {
     try {
-      if (!plannerCatalog || !plannerGoals) {
-        const [catalog, { data: sess }] = await Promise.all([
-          loadUpgradeCosts(),
-          authClient.getSession(),
-        ]);
-        const pending = await hydrateGoalsState(Boolean(sess));
-        plannerCatalog = catalog;
-        plannerGoals = pending.state;
-        plannerSnapshot = pending.json;
-      } else {
+      if (plannerCatalog && plannerGoals) {
         const pending = readGoalsIfChanged(plannerSnapshot);
         if (pending) {
           plannerGoals = pending.state;
           plannerSnapshot = pending.json;
         }
+        return {
+          catalog: plannerCatalog,
+          state: plannerGoals,
+          snapshot: plannerSnapshot,
+        };
       }
-      return {
-        catalog: plannerCatalog,
-        state: plannerGoals,
-        snapshot: plannerSnapshot,
-      };
+
+      if (!plannerInit) {
+        const run = loadPlanner();
+        plannerInit = run;
+        void run.finally(() => {
+          if (plannerInit === run) plannerInit = null;
+        });
+      }
+      return await plannerInit;
     } catch {
       return null;
     }
@@ -255,9 +290,7 @@
         {/if}
       </div>
       {#if buildNext.length === 0}
-        <p class="section-lede">
-          Nothing to build here — everyone meets their Builds targets.
-        </p>
+        <p class="section-lede">{emptyQueueMessage}</p>
       {:else}
         <ol class="queue-list">
           {#each buildNext as row, i (row.nameId)}
@@ -271,6 +304,9 @@
             />
           {/each}
         </ol>
+        {#if ungradedNote}
+          <p class="section-lede">{ungradedNote}</p>
+        {/if}
       {/if}
     </section>
 

@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AccountBuildGrade } from "./account-build-grade.ts";
 import {
+  auditEmptyQueueMessage,
+  auditRosterFingerprint,
   auditStepLabel,
+  auditUngradedNote,
   buildNextRows,
   gradeAuditRoster,
   type AuditRow,
@@ -88,6 +91,90 @@ describe("audit-grades", () => {
     assert.deepEqual(
       buildNextRows(rows, usage).map((r) => r.nameId),
       ["High", "TieA", "TieB", "Low"],
+    );
+  });
+
+  it("regrades when the same characters change progress", () => {
+    const yae = {
+      name_id: "Yae",
+      name: "Yae",
+      isOwned: true,
+      progress: { ...progress, level: 80 },
+    } as CharacterOwned;
+    const beidou = {
+      name_id: "Beidou",
+      name: "Beidou",
+      isOwned: true,
+      progress: { ...progress, level: 70 },
+    } as CharacterOwned;
+    const sameIds = auditRosterFingerprint([
+      { ...yae, progress: { ...progress, level: 90 } },
+    ]);
+    assert.notEqual(auditRosterFingerprint([yae]), sameIds);
+    assert.equal(
+      auditRosterFingerprint([yae, beidou]),
+      auditRosterFingerprint([beidou, yae]),
+    );
+    assert.equal(
+      auditRosterFingerprint([yae]),
+      auditRosterFingerprint([{ ...yae }]),
+    );
+    const armed = {
+      ...yae,
+      progress: {
+        ...progress,
+        level: 80,
+        weapon: {
+          key: "StaffOfHoma",
+          level: 80,
+          ascension: 6,
+          refinement: 1,
+        },
+      },
+    } as CharacterOwned;
+    assert.notEqual(
+      auditRosterFingerprint([yae]),
+      auditRosterFingerprint([armed]),
+    );
+  });
+
+  it("does not treat an ungraded roster as finished", () => {
+    const staleOnly = [
+      row("Yae", "ungraded", { reason: "stale" }),
+      row("Beidou", "ungraded", { reason: "stale" }),
+    ];
+    assert.deepEqual(
+      buildNextRows(staleOnly, new Map()).map((r) => r.nameId),
+      [],
+    );
+    assert.equal(
+      auditEmptyQueueMessage(staleOnly),
+      "Couldn’t grade 2 characters — Builds data is out of date.",
+    );
+
+    const mixed = [
+      row("A", "built_well"),
+      row("B", "ungraded", { reason: "missing" }),
+    ];
+    assert.equal(
+      auditEmptyQueueMessage(mixed),
+      "1 character meets their Builds targets. Couldn’t grade 1 character — Builds data is missing.",
+    );
+    assert.equal(
+      auditEmptyQueueMessage([row("A", "built_well"), row("B", "built_well")]),
+      "Nothing to build here — everyone meets their Builds targets.",
+    );
+    assert.equal(
+      auditUngradedNote([
+        row("A", "needs_work"),
+        row("Yae", "ungraded", { reason: "stale" }),
+        row("C", "ungraded", { reason: "missing" }),
+      ]),
+      "Couldn’t grade 2 characters — Builds data is missing or out of date.",
+    );
+    assert.equal(
+      auditEmptyQueueMessage([row("A", "ungraded", { reason: "error" })]),
+      "Couldn’t grade 1 character — Builds didn’t load.",
     );
   });
 
