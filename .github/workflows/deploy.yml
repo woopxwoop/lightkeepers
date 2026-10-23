@@ -16,17 +16,52 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  reconcile-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Clear previous database copy
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: rm -rf "$HOME/db-job"
+
+      - name: Copy database stack
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "db"
+          target: db-job/
+
+      - name: Reconcile database stacks
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            bash "$HOME/db-job/db/bootstrap.sh"
+
   build-and-deploy:
+    needs: reconcile-database
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Migrate before the image is published. A failed migration must not
       # move :latest. DATABASE_URL is the database the running app uses.
       - name: Clear previous migrator copy
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
@@ -34,7 +69,7 @@ jobs:
           script: rm -rf "$HOME/migrate-prod"
 
       - name: Copy migrator to app server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
@@ -43,7 +78,7 @@ jobs:
           target: migrate-prod/
 
       - name: Apply database migrations
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         with:
@@ -135,7 +170,7 @@ jobs:
           printf '%s' "$METRICS_TOKEN" > metrics_token
 
       - name: Copy compose files to VPS
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
@@ -144,7 +179,7 @@ jobs:
           target: app/
 
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
           GHCR_USER: ${{ github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
@@ -164,6 +199,23 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
             docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d
+            healthy=""
+            code=""
+            for _ in $(seq 1 45); do
+              code=$(curl -s -o /tmp/lightkeepers-health.json -w "%{http_code}" --max-time 5 http://127.0.0.1:3000/api/health || true)
+              if [ "$code" = "200" ]; then
+                healthy=1
+                break
+              fi
+              sleep 2
+            done
+            if [ -z "$healthy" ]; then
+              echo "api health check failed with status ${code:-none}" >&2
+              cat /tmp/lightkeepers-health.json >&2 || true
+              docker compose -f ~/app/docker-compose.yml --project-directory ~/app logs --tail 80 app >&2 || true
+              exit 1
+            fi
+            echo "api health ok"
             docker image prune -af
 
   # The database server runs the nightly dump. Each deploy copies the script
@@ -172,10 +224,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Clear previous backup script
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: "167.233.174.167"
           username: deploy
@@ -183,16 +235,16 @@ jobs:
           script: rm -rf "$HOME/backup-job"
 
       - name: Copy backup script
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: "167.233.174.167"
           username: deploy
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "backups/backup.sh"
+          source: "backups/backup.sh,backups/restore-check.sh"
           target: backup-job/
 
       - name: Reconcile backup cron
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: "167.233.174.167"
           username: deploy
@@ -201,3 +253,4 @@ jobs:
           script: |
             set -euo pipefail
             bash "$HOME/backup-job/backups/backup.sh" install
+            bash "$HOME/backup-job/backups/restore-check.sh" install

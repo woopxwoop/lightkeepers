@@ -1,5 +1,9 @@
 allowBuilds:
   "@sentry/cli": true
   esbuild: true
-  sharp: true
   supabase: true
+
+# SNYK-JS-ESBUILD-17750822: drizzle-kit (optional peer of better-auth) still
+# resolves esbuild 0.25.12 and, via @esbuild-kit, 0.18.20. Both are <0.28.1.
+overrides:
+  "esbuild@<0.28.1": "0.28.2"

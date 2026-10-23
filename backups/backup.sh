@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Nightly dump of prod Postgres, uploaded to the R2 bucket Coolify already uses.
+# Nightly dump of prod Postgres, uploaded to the R2 bucket lightkeepers-db-backup.
 #
 #   backup.sh install
 #     Copies this file to /home/deploy/backups/backup.sh and reconciles the
