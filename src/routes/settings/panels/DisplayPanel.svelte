@@ -123,8 +123,10 @@
       {#if $displayPreferences.iconStyle === "tcg"}
         <p class="tcg-info">
           <IconInfo size={13} />
-          Not all characters have a TCG card yet — in that case, their portrait will
-          be shown instead.
+          Uses Genius Invokation TCG card art when the published card index lists
+          the character. Characters missing from a provisional index may still
+          show card art if the card.webp probe succeeds — otherwise their
+          portrait is shown.
         </p>
       {/if}
     </div>

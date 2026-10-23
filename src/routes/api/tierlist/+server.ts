@@ -3,8 +3,9 @@
  *
  * Stygian cream-of-the-crop from `character_usage_avg_stygian`, split into
  * limited 5★ and non-limited (4★ + standard 5★) boards. Cutoff via relative
- * largest gap (ranks 8–16 limited / 24–32 non-limited). Independent of roster
- * — cache hard like /api/static.
+ * largest gap (ranks 8–16 limited / 24–32 non-limited). Also returns
+ * `usageByNameId` for every catalog character with positive avg usage.
+ * Independent of roster — cache hard like /api/static.
  */
 
 import { json, error } from "@sveltejs/kit";
@@ -26,7 +27,7 @@ const tierListCache = new LRUCache<TierListPayload>(1, 15 * 60 * 1000, {
   redisNamespace: "tierlist",
   staleWhileRevalidate: true,
 });
-const CACHE_KEY = "tierlist-cream-v2";
+const CACHE_KEY = "tierlist-cream-v3";
 
 async function fetchTierList(): Promise<TierListPayload> {
   const [usageRes, characters] = await Promise.all([

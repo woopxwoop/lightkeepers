@@ -54,6 +54,7 @@
     type GoalsCapture,
   } from "$lib/calculator-goals-snapshot";
   import { nextSearchPath } from "$lib/query-state";
+  import { auditPath } from "$lib/ui/nav-links";
   import type {
     AggregatedUpgradeCosts,
     CalculatorGoalsState,
@@ -566,7 +567,9 @@
 
         {#if goalsState.goals.length === 0}
           <p class="section-lede">
-            Add a character or weapon goal to start planning costs.
+            Add a character or weapon goal to start planning costs, or
+            <a class="lede-link" href={auditPath}>get suggestions from Build Audit</a
+            >.
           </p>
         {:else}
           <GoalList
@@ -877,6 +880,12 @@
   .scope-row {
     display: flex;
     gap: 0.35rem;
+  }
+
+  .lede-link {
+    color: var(--foreground-color);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
   }
 
   .totals {

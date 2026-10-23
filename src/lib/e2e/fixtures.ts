@@ -278,6 +278,14 @@ export function e2eTierListPayload(): TierListPayload {
         rank: 2,
       },
     ],
+    usageByNameId: {
+      Hutao: 55,
+      Yelan: 42,
+      Furina: 28,
+      Bennett: 60,
+      Xiangling: 18,
+      Amber: 5,
+    },
   };
 }
 

@@ -28,11 +28,11 @@
   import EnkaTalentFrame from "$lib/ui/components/EnkaTalentFrame.svelte";
   import IconCog from "$lib/ui/icons/IconCog.svelte";
   import "$lib/ui/enka-fonts.css";
+  import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
   import {
-    kitIconsFromCharacterKit,
-    type InvestmentBuildKitIcons,
-  } from "$lib/investment-build-card";
-  import type { CharacterKit } from "$lib/types/character-kit";
+    getCharacterKitIconsCached,
+    loadCharacterKitIcons,
+  } from "$lib/app/character-kit-icons";
   import {
     INVENTORY_ARTIFACT_SLOTS,
     formatGoodStatValue,
@@ -61,7 +61,6 @@
     MAX_CONSTELLATION,
     cloneRosterProgress,
   } from "$lib/roster-progress";
-  import { resolve } from "$app/paths";
 
   let {
     view,
@@ -333,22 +332,16 @@
       return;
     }
     let cancelled = false;
-    const ac = new AbortController();
-    const url = resolve(`/api/character-kit/${encodeURIComponent(id)}`);
-    void fetch(url, { signal: ac.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`kit ${res.status}`);
-        return (await res.json()) as CharacterKit;
-      })
-      .then((kitJson) => {
-        if (!cancelled) fetchedKit = kitIconsFromCharacterKit(kitJson);
+    fetchedKit = getCharacterKitIconsCached(id);
+    void loadCharacterKitIcons(id)
+      .then((icons) => {
+        if (!cancelled) fetchedKit = icons;
       })
       .catch(() => {
         if (!cancelled) fetchedKit = null;
       });
     return () => {
       cancelled = true;
-      ac.abort();
     };
   });
   let kit = $derived(view.kit ?? fetchedKit);
