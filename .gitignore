@@ -24,6 +24,8 @@ vite.config.ts.timestamp-*
 
 .claude
 .cursor
+__pycache__/
+.pytest_cache/
 DOCKER.md
 cache
 CLAUDE.md
