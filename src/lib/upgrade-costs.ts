@@ -13,16 +13,14 @@ import type {
   UpgradeTalentTrack,
   WeaponUpgradeConfig,
   WeaponUpgradeCosts,
-} from "$lib/types/upgrade-costs";
+} from "#lib/types/upgrade-costs.js";
 
 export const MAX_LEVEL = 90;
 export const MAX_ASCENSION = 6;
 export const MAX_TALENT = 10;
 
 /** Standard character/weapon level caps by promote (ascension) 0–6. */
-export const LEVEL_CAP_BY_ASCENSION = [
-  20, 40, 50, 60, 70, 80, 90,
-] as const;
+export const LEVEL_CAP_BY_ASCENSION = [20, 40, 50, 60, 70, 80, 90] as const;
 
 function clamp(n: number, min: number, max: number): number {
   if (!Number.isFinite(n)) return min;

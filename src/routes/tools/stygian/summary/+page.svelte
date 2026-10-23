@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SummaryTool from "$lib/ui/components/SummaryTool.svelte";
+  import SummaryTool from "#lib/ui/components/SummaryTool.svelte";
 
   let { data } = $props();
 </script>

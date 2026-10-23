@@ -5,7 +5,7 @@ import {
   isPatchNoteFilename,
   parsePatchNoteMarkdown,
   type PatchNote,
-} from "$lib/patch-notes";
+} from "#lib/patch-notes.js";
 
 const rawModules = import.meta.glob("../../patch-notes/*.md", {
   eager: true,

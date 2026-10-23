@@ -7,7 +7,5 @@ export function needsRosterSetup(input: {
   hasSavedRoster: boolean;
   sessionData: unknown;
 }): boolean {
-  return (
-    !input.sessionPending && !input.hasSavedRoster && !input.sessionData
-  );
+  return !input.sessionPending && !input.hasSavedRoster && !input.sessionData;
 }

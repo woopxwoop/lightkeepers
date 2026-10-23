@@ -6,8 +6,11 @@
  * `element` slot when that file is missing — so today's single Pyro upload
  * keeps working.
  */
-import type { CharacterKit } from "$lib/types/character-kit";
-import { TRAVELER_GUIDE_ELEMENTS, type TravelerGuideElement } from "$lib/utils";
+import type { CharacterKit } from "#lib/types/character-kit.js";
+import {
+  TRAVELER_GUIDE_ELEMENTS,
+  type TravelerGuideElement,
+} from "#lib/utils.js";
 
 /** Bare roster name_id (`PlayerBoy-Anemo` → `PlayerBoy`). */
 export function travelerBaseNameId(nameId: string): string {

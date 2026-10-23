@@ -1,19 +1,19 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import { resolve } from "$app/paths";
-  import { dev } from "$app/environment";
-  import { animationsEnabled, charactersOwned } from "$lib/stores";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import ActionMenu from "$lib/ui/components/ActionMenu.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import BuildResearchSheet from "$lib/ui/components/BuildResearchSheet.svelte";
-  import CharacterKitPanel from "$lib/ui/components/character/CharacterKitPanel.svelte";
-  import CharacterTeamsPanel from "$lib/ui/components/character/CharacterTeamsPanel.svelte";
-  import CharacterAnalyticsPanel from "$lib/ui/components/character/CharacterAnalyticsPanel.svelte";
-  import CharacterBuildsPanel from "$lib/ui/components/character/CharacterBuildsPanel.svelte";
-  import { elementColor } from "$lib/element-colors";
+  import { dev } from "$app/env";
+  import { animationsEnabled, charactersOwned } from "#lib/stores.js";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import ActionMenu from "#lib/ui/components/ActionMenu.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import BuildResearchSheet from "#lib/ui/components/BuildResearchSheet.svelte";
+  import CharacterKitPanel from "#lib/ui/components/character/CharacterKitPanel.svelte";
+  import CharacterTeamsPanel from "#lib/ui/components/character/CharacterTeamsPanel.svelte";
+  import CharacterAnalyticsPanel from "#lib/ui/components/character/CharacterAnalyticsPanel.svelte";
+  import CharacterBuildsPanel from "#lib/ui/components/character/CharacterBuildsPanel.svelte";
+  import { elementColor } from "#lib/element-colors.js";
   import {
     buildGoodKeyMap,
     getUiAssetUrl,
@@ -21,13 +21,13 @@
     ownedNameIds,
     getCrimsonWitchLinks,
     simCharacterKey,
-  } from "$lib/utils";
-  import { travelerElementKitId } from "$lib/traveler-kits";
-  import type { CharacterKit } from "$lib/types/character-kit";
-  import type { CharacterIndex } from "$lib/types/investment";
-  import type { Character } from "$lib/definitions";
-  import { isStaleBuildSummary } from "$lib/stale-build-summary";
-  import type { ActionMenuItem } from "$lib/ui/components/ActionMenu.svelte";
+  } from "#lib/utils.js";
+  import { travelerElementKitId } from "#lib/traveler-kits.js";
+  import type { CharacterKit } from "#lib/types/character-kit.js";
+  import type { CharacterIndex } from "#lib/types/investment.js";
+  import type { Character } from "#lib/definitions.js";
+  import { isStaleBuildSummary } from "#lib/stale-build-summary.js";
+  import type { ActionMenuItem } from "#lib/ui/components/ActionMenu.svelte";
 
   let { data } = $props();
   let kit = $derived(data.kit as CharacterKit);
@@ -107,8 +107,9 @@
   // Kit asset stem, not name_id: an elemental Traveler kit (`PlayerBoy-Anemo`)
   // still resolves `UI_NameCardPic_PlayerBoy_P` rather than a missing suffix key.
   let namecard = $derived(getUiAssetUrl(kit.assets.namecard));
+
   let plannerAddHref = $derived(
-    `${resolve("/tools/planner")}?add=${encodeURIComponent(
+    `${resolve("tools/planner")}?add=${encodeURIComponent(
       kit.is_traveler
         ? travelerElementKitId(kit.name_id, kit.element ?? "Pyro")
         : kit.name_id,
@@ -168,9 +169,7 @@
         class="hero-body relative z-10 flex flex-row items-center gap-3 sm:gap-4 md:gap-5"
       >
         {#if character}
-          <div class="hero-portrait">
-            <CharacterIcon {character} />
-          </div>
+          <div class="hero-portrait"><CharacterIcon {character} /></div>
         {/if}
         <div
           class="hero-copy flex flex-col gap-1.5 min-w-0 flex-1 pb-3 sm:pb-4 md:pb-5"
@@ -200,10 +199,8 @@
           <Button
             variant="secondary"
             class="hero-build-btn"
-            onclick={() => (buildResearchOpen = true)}
+            onclick={() => (buildResearchOpen = true)}>Build</Button
           >
-            Build
-          </Button>
         {/if}
         <ActionMenu label="Character actions" items={heroMenuItems} />
       </div>

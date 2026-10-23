@@ -9,7 +9,14 @@ const root = dirname(fileURLToPath(import.meta.url));
 const key = join(homedir(), ".ssh", "id_ed25519_deploy");
 const host = "deploy@167.233.174.167";
 const identity = existsSync(key) ? ["-i", key] : [];
-const sshBase = ["-o", "BatchMode=yes", "-o", "ConnectTimeout=20", ...identity, host];
+const sshBase = [
+  "-o",
+  "BatchMode=yes",
+  "-o",
+  "ConnectTimeout=20",
+  ...identity,
+  host,
+];
 const port = "18080";
 const url = `http://127.0.0.1:${port}`;
 const noTunnel = process.argv.includes("--no-tunnel");
@@ -19,7 +26,9 @@ function run(command, args, input) {
     cwd: root,
     encoding: "utf8",
     input,
-    stdio: input ? ["pipe", "inherit", "inherit"] : ["ignore", "inherit", "inherit"],
+    stdio: input
+      ? ["pipe", "inherit", "inherit"]
+      : ["ignore", "inherit", "inherit"],
   });
   if (result.error) {
     console.error(result.error.message);
@@ -44,7 +53,15 @@ function pageIsUp() {
 }
 
 run("ssh", ["-n", ...sshBase, "mkdir -p ~/studio"]);
-run("scp", ["-o", "BatchMode=yes", "-o", "ConnectTimeout=20", ...identity, join(root, "studio", "docker-compose.yml"), `${host}:studio/docker-compose.yml`]);
+run("scp", [
+  "-o",
+  "BatchMode=yes",
+  "-o",
+  "ConnectTimeout=20",
+  ...identity,
+  join(root, "studio", "docker-compose.yml"),
+  `${host}:studio/docker-compose.yml`,
+]);
 
 // Same parser bootstrap uses, so a quoted .env password reaches Studio without the quotes.
 const composeEnvPy = readFileSync(join(root, "db", "compose_env.py"), "utf8");
@@ -99,7 +116,11 @@ run("ssh", [...sshBase, "bash", "-s"], remote);
 
 const serve = spawnSync(
   "ssh",
-  ["-n", ...sshBase, `tailscale serve --bg --tcp ${port} tcp://127.0.0.1:${port}`],
+  [
+    "-n",
+    ...sshBase,
+    `tailscale serve --bg --tcp ${port} tcp://127.0.0.1:${port}`,
+  ],
   { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
 );
 if (serve.status === 0) {
@@ -111,7 +132,15 @@ if (noTunnel) process.exit(0);
 
 const tunnel = spawn(
   "ssh",
-  ["-n", "-o", "ExitOnForwardFailure=yes", ...sshBase, "-N", "-L", `127.0.0.1:${port}:127.0.0.1:${port}`],
+  [
+    "-n",
+    "-o",
+    "ExitOnForwardFailure=yes",
+    ...sshBase,
+    "-N",
+    "-L",
+    `127.0.0.1:${port}:127.0.0.1:${port}`,
+  ],
   { stdio: ["ignore", "inherit", "inherit"] },
 );
 let opened = false;

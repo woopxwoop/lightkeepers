@@ -6,7 +6,7 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { trapTabKey } from "$lib/ui/focus-trap";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
   import {
     patchCharacterGoalSide,
     patchWeaponGoalSide,
@@ -15,17 +15,17 @@
     type CharacterSidePatch,
     type PlannerPickOption,
     type WeaponSidePatch,
-  } from "$lib/planner-goal-edits";
-  import { assetUrl } from "$lib/asset-urls";
-  import type { CalculatorGoal } from "$lib/types/calculator-goals";
-  import type { CharacterPortraitRef } from "$lib/definitions";
-  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-  import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
-  import Button from "$lib/ui/components/Button.svelte";
-  import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
-  import NumberSliderField from "$lib/ui/components/NumberSliderField.svelte";
-  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
+  } from "#lib/planner-goal-edits.js";
+  import { assetUrl } from "#lib/asset-urls.js";
+  import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
+  import type { CharacterPortraitRef } from "#lib/definitions.js";
+  import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+  import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "#lib/upgrade-costs.js";
+  import Button from "#lib/ui/components/Button.svelte";
+  import CharacterSearchSelect from "#lib/ui/components/CharacterSearchSelect.svelte";
+  import NumberSliderField from "#lib/ui/components/NumberSliderField.svelte";
+  import SegmentedControl from "#lib/ui/components/SegmentedControl.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
 
   let {
     open = false,

@@ -6,14 +6,17 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { RotationAction, RotationSampleEvent } from "$lib/types/investment";
+import type {
+  RotationAction,
+  RotationSampleEvent,
+} from "#lib/types/investment.js";
 import {
   applyScriptEventActions,
   matchScriptLoops,
   parseRotationScript,
   resolveScriptChar,
   type ScriptPat,
-} from "$lib/rotation-script";
+} from "#lib/rotation-script.js";
 
 const FLINS_PARTY = ["Columbina", "Flins", "Ineffa", "Sucrose"] as const;
 
@@ -178,9 +181,9 @@ function collectActs(pat: { kind: string; [k: string]: unknown }): string[] {
     case "act":
       return [`${pat.char}:${pat.action}`];
     case "seq":
-      return (pat.items as typeof pat[]).flatMap(collectActs);
+      return (pat.items as (typeof pat)[]).flatMap(collectActs);
     case "alt":
-      return (pat.items as typeof pat[]).flatMap(collectActs);
+      return (pat.items as (typeof pat)[]).flatMap(collectActs);
     case "star":
     case "repeat":
     case "repeatParam":
@@ -213,7 +216,9 @@ for let i=0; i<4; i=i+1 {
     const parsed = parseRotationScript(script);
     assert.ok(parsed);
 
-    function findAlt(pat: ScriptPat): Extract<ScriptPat, { kind: "alt" }> | null {
+    function findAlt(
+      pat: ScriptPat,
+    ): Extract<ScriptPat, { kind: "alt" }> | null {
       if (pat.kind === "alt") return pat;
       if (pat.kind === "seq") {
         for (const item of pat.items) {
@@ -432,7 +437,11 @@ for let i=0; i<2; i=i+1 {
       match.starts.map((t) => Math.round(t)),
       [1, 20],
     );
-    const annotated = applyScriptEventActions(events, VARESA_SCRIPT, VARESA_PARTY);
+    const annotated = applyScriptEventActions(
+      events,
+      VARESA_SCRIPT,
+      VARESA_PARTY,
+    );
     assert.equal(annotated[2]?.action, "hold_skill");
   });
 });

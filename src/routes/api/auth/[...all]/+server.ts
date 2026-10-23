@@ -1,4 +1,4 @@
-import { getAuth } from "$lib/server/auth";
+import { getAuth } from "#lib/server/auth.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = ({ request }) => getAuth().handler(request);

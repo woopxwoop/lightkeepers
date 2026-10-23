@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
-  import { loadAuditGrades } from "$lib/app/audit-grades";
-  import { getRosterWeaponsCached } from "$lib/app/roster-inventory";
-  import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
+  import { loadAuditGrades } from "#lib/app/audit-grades.js";
+  import { getRosterWeaponsCached } from "#lib/app/roster-inventory.js";
+  import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
   import {
     auditEmptyQueueMessage,
     auditRosterFingerprint,
     auditUngradedNote,
     buildNextRows,
     type AuditRow,
-  } from "$lib/audit-grades";
+  } from "#lib/audit-grades.js";
   import {
     appendAuditSuggestions,
     auditRowPlannerState,
     type AuditPlannerState,
-  } from "$lib/audit-planner-goals";
-  import { authClient } from "$lib/auth-client";
+  } from "#lib/audit-planner-goals.js";
+  import { authClient } from "#lib/auth-client.js";
   import {
     hydrateGoalsState,
     readGoalsIfChanged,
     saveGoalsState,
-  } from "$lib/calculator-goals-lifecycle";
-  import { goalsLocalRevision } from "$lib/calculator-goals-snapshot";
+  } from "#lib/calculator-goals-lifecycle.js";
+  import { goalsLocalRevision } from "#lib/calculator-goals-snapshot.js";
   import {
     charactersHydrated,
     charactersOwned,
@@ -31,17 +31,17 @@
     tierList,
     tierListError,
     tierListLoaded,
-  } from "$lib/stores";
-  import { stygianUsageByNameId } from "$lib/tierlist";
-  import type { CalculatorGoalsState } from "$lib/types/calculator-goals";
-  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-  import { settingsPath } from "$lib/ui/nav-links";
-  import AuditQueueRow from "$lib/ui/components/AuditQueueRow.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import InfoPopover from "$lib/ui/components/InfoPopover.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
+  } from "#lib/stores.js";
+  import { stygianUsageByNameId } from "#lib/tierlist.js";
+  import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
+  import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+  import { settingsPath } from "#lib/ui/nav-links.js";
+  import AuditQueueRow from "#lib/ui/components/AuditQueueRow.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import InfoPopover from "#lib/ui/components/InfoPopover.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
 
   const session = authClient.useSession();
 
@@ -93,7 +93,7 @@
     buildNext.filter((row) => plannerStateFor(row) === "add"),
   );
   function characterHref(nameId: string): string {
-    return resolve(`/characters/${nameId}`);
+    return resolve(`characters/${nameId}`);
   }
 
   function retryGrades() {

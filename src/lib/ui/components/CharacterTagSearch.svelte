@@ -1,8 +1,8 @@
 <script lang="ts">
   import { tick } from "svelte";
   import type { Snippet } from "svelte";
-  import type { Character, CharacterOwned } from "$lib/definitions";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import type { Character, CharacterOwned } from "#lib/definitions.js";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
 
   let {
     tags = $bindable([] as string[]),

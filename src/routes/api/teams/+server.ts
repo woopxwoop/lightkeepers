@@ -10,29 +10,28 @@
  * Rate limit: 60 requests / minute / IP (Valkey-shared when configured).
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { cachedRosterRpc } from "$lib/server/cached-rpc";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
-import { isPlaywrightE2e } from "$lib/server/e2e";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { cachedRosterRpc } from "#lib/server/cached-rpc.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   E2E_ABYSS_TEAM_BOTTOM,
   E2E_ABYSS_TEAM_TOP,
   E2E_STYGIAN_TEAM_BOTTOM,
   E2E_STYGIAN_TEAM_MIDDLE,
   E2E_STYGIAN_TEAM_TOP,
-} from "$lib/e2e/fixtures";
+} from "#lib/e2e/fixtures.js";
 import {
   requireCharacterNameIds,
   requireFiniteInteger,
   requireJsonObject,
-} from "$lib/server/request-validation";
-import { requireSupportedAbyssAndStygianVersions } from "$lib/server/version-validation";
+} from "#lib/server/request-validation.js";
+import { requireSupportedAbyssAndStygianVersions } from "#lib/server/version-validation.js";
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (isPlaywrightE2e()) {
-    return json({
+    return Response.json({
       abyssTeams: [E2E_ABYSS_TEAM_TOP, E2E_ABYSS_TEAM_BOTTOM],
       stygianTeams: [
         E2E_STYGIAN_TEAM_TOP,
@@ -81,5 +80,5 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     }),
   ]);
 
-  return json({ abyssTeams, stygianTeams });
+  return Response.json({ abyssTeams, stygianTeams });
 };

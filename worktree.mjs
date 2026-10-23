@@ -18,7 +18,9 @@ if (process.argv.length > 3) {
 }
 
 if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)) {
-  console.error(`Invalid name "${name}". Use letters, numbers, dots, underscores, and hyphens.`);
+  console.error(
+    `Invalid name "${name}". Use letters, numbers, dots, underscores, and hyphens.`,
+  );
   process.exit(1);
 }
 
@@ -50,7 +52,9 @@ if (!mainLine) {
 }
 
 const mainRoot = mainLine.slice("worktree ".length);
-const dirName = name.startsWith("lightkeepers-") ? name : `lightkeepers-${name}`;
+const dirName = name.startsWith("lightkeepers-")
+  ? name
+  : `lightkeepers-${name}`;
 const dest = join(dirname(mainRoot), dirName);
 
 if (existsSync(dest)) {
@@ -68,8 +72,8 @@ if (!refExists("refs/heads/develop")) {
   process.exit(1);
 }
 
-const envSource = [join(process.cwd(), ".env"), join(mainRoot, ".env")].find((file) =>
-  existsSync(file),
+const envSource = [join(process.cwd(), ".env"), join(mainRoot, ".env")].find(
+  (file) => existsSync(file),
 );
 
 if (!envSource) {

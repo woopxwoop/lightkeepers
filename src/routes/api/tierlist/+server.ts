@@ -8,18 +8,18 @@
  * Independent of roster — cache hard like /api/static.
  */
 
-import { json, error } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { LRUCache, charactersCache } from "$lib/server/cache";
-import { isPlaywrightE2e } from "$lib/server/e2e";
-import { e2eTierListPayload } from "$lib/e2e/fixtures";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { LRUCache, charactersCache } from "#lib/server/cache.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
+import { e2eTierListPayload } from "#lib/e2e/fixtures.js";
 import {
   computeTierList,
   type CharacterUsageRow,
   type TierListPayload,
-} from "$lib/tierlist";
-import type { Tables } from "$lib/types/database.types";
+} from "#lib/tierlist.js";
+import type { Tables } from "#lib/types/database.types.js";
 
 type Character = Tables<"characters">;
 
@@ -77,7 +77,7 @@ async function fetchTierList(): Promise<TierListPayload> {
 
 export const GET: RequestHandler = async () => {
   if (isPlaywrightE2e()) {
-    return json(e2eTierListPayload(), {
+    return Response.json(e2eTierListPayload(), {
       headers: {
         "Cache-Control": "no-store",
         "X-Playwright-E2E": "1",
@@ -87,7 +87,7 @@ export const GET: RequestHandler = async () => {
 
   const payload = await tierListCache.getOrSet(CACHE_KEY, fetchTierList);
 
-  return json(payload, {
+  return Response.json(payload, {
     headers: {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
     },

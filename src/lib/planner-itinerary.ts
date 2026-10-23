@@ -2,16 +2,16 @@
  * Farming itinerary — group planner costs by domain / boss.
  * Starred goals from the saved plan are the itinerary set.
  */
-import type { CalculatorGoal } from "$lib/types/calculator-goals";
-import { costsForGoal } from "$lib/calculator-goals";
-import { assetUrl } from "$lib/asset-urls";
-import { getCharacterPortrait } from "$lib/utils";
+import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
+import { costsForGoal } from "#lib/calculator-goals.js";
+import { assetUrl } from "#lib/asset-urls.js";
+import { getCharacterPortrait } from "#lib/utils.js";
 import type {
   UpgradeCostsCatalog,
   UpgradeMaterialMeta,
   UpgradeMaterialSource,
   UpgradeMaterialWeekday,
-} from "$lib/types/upgrade-costs";
+} from "#lib/types/upgrade-costs.js";
 
 const FARM_KINDS = ["domain", "weekly", "boss"] as const;
 export type FarmPlaceKind = (typeof FARM_KINDS)[number];

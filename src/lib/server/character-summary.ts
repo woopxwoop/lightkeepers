@@ -14,13 +14,13 @@ import type {
   CharacterIndexFile,
   CharacterLiquidSubstats,
   CharacterStatRank,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 import {
   getSimCharacterSummaryUrl,
   getSimCharactersIndexUrl,
-} from "$lib/utils";
-import { LRUCache } from "$lib/server/cache";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
+} from "#lib/utils.js";
+import { LRUCache } from "#lib/server/cache.js";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
 
 const gunzipAsync = promisify(gunzip);
 
@@ -198,11 +198,7 @@ async function loadSummaryFromCdn(
     throw new Error(`character summary ${goodKey}: invalid JSON`);
   }
 
-  if (
-    parsed === null ||
-    typeof parsed !== "object" ||
-    Array.isArray(parsed)
-  ) {
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error(`character summary ${goodKey}: invalid payload`);
   }
 
@@ -246,7 +242,8 @@ async function fetchCharacterIndexFile(): Promise<CharacterIndexFile> {
   if (!res.ok) {
     cancelUpstreamBody(res);
     throw new Error(`character index CDN HTTP ${res.status}`);
-  }  const buf = Buffer.from(await res.arrayBuffer());
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
   const text = isGzipped(buf)
     ? (await gunzipAsync(buf)).toString("utf-8")
     : buf.toString("utf-8");

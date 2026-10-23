@@ -3,19 +3,19 @@
    * Compact constellation / level / ascension / talent sliders for roster config.
    * Live-updates via `onChange` (no Done/Cancel — parent owns save).
    */
-  import NumberSliderField from "$lib/ui/components/NumberSliderField.svelte";
-  import type { RosterProgress } from "$lib/definitions";
+  import NumberSliderField from "#lib/ui/components/NumberSliderField.svelte";
+  import type { RosterProgress } from "#lib/definitions.js";
   import {
     cloneRosterProgress,
     DEFAULT_ROSTER_PROGRESS,
     MAX_CONSTELLATION,
-  } from "$lib/roster-progress";
+  } from "#lib/roster-progress.js";
   import {
     MAX_ASCENSION,
     MAX_LEVEL,
     MAX_TALENT,
     clampLevelToAscension,
-  } from "$lib/upgrade-costs";
+  } from "#lib/upgrade-costs.js";
 
   let {
     progress = null,

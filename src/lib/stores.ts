@@ -9,8 +9,8 @@
  * Pull suggestions:  ensureNearMissTeams() → POST /api/nearmiss
  * Stygian tier list: ensureTierList() → GET /api/tierlist
  *
- * Abyss/Stygian solution pager helpers: `$lib/board-solutions`
- * (not this file). Solver: `$lib/solver`.
+ * Abyss/Stygian solution pager helpers: `#lib/board-solutions.js`
+ * (not this file). Solver: `#lib/solver.js`.
  */
 
 import { writable, derived, get, readable, type Writable } from "svelte/store";
@@ -24,18 +24,18 @@ import type {
   TierListPayload,
   StygianSolverMode,
   StygianClearDifficulty,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 import {
   isStygianSolverMode,
   isStygianClearDifficulty,
   STYGIAN_CHEAP_CLEARS_DIFFICULTY,
   STYGIAN_SOLVER_MODE_DEFAULT,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 import type {
   NearMissStygianTeam,
   NearMissPairTeam,
-} from "$lib/pullSuggestions";
-import { postJson } from "$lib/api/http";
+} from "#lib/pullSuggestions.js";
+import { postJson } from "#lib/api/http.js";
 
 // ── Version numbers ────────────────────────────────────────────────────────
 // Populated from layout server data — no client-side fetch needed.

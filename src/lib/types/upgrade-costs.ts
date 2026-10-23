@@ -1,6 +1,6 @@
 /**
  * Character / weapon upgrade cost tables (CDN).
- * fetch via `$lib/asset-urls` + `$lib/app/upgrade-costs` (`/api/upgrade-costs` proxy) — not ESM-bundled.
+ * fetch via `#lib/asset-urls` + `#lib/app/upgrade-costs` (`/api/upgrade-costs` proxy) — not ESM-bundled.
  */
 
 /** One material stack in a cost row. */

@@ -4,13 +4,13 @@
   import { resolve } from "$app/paths";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { plannerItineraryOpen } from "$lib/planner-itinerary-open";
-  import { trapTabKey } from "$lib/ui/focus-trap";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import PlannerItinerary from "$lib/ui/components/PlannerItinerary.svelte";
+  import { plannerItineraryOpen } from "#lib/planner-itinerary-open.js";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import PlannerItinerary from "#lib/ui/components/PlannerItinerary.svelte";
 
-  const plannerPath = resolve("/tools/planner");
+  const plannerPath = resolve("tools/planner");
 
   let panelEl: HTMLDivElement | null = $state(null);
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
@@ -20,7 +20,8 @@
     plannerItineraryOpen.set(false);
   }
 
-  afterNavigate(() => {
+  afterNavigate(({ shallow, type }) => {
+    if (shallow && type === "goto") return;
     if (!$plannerItineraryOpen) return;
     closedByNavigate = true;
     close();

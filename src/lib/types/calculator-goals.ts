@@ -6,7 +6,7 @@
 import type {
   CharacterUpgradeConfig,
   WeaponUpgradeConfig,
-} from "$lib/types/upgrade-costs";
+} from "#lib/types/upgrade-costs.js";
 
 export type CharacterCalculatorGoal = {
   id: string;

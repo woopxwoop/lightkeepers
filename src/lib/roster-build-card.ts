@@ -10,21 +10,21 @@ import type {
   InventoryWeapon,
   RosterProgress,
   RosterWeapon,
-} from "$lib/definitions";
-import type { InvestmentBuildKitIcons } from "$lib/investment-build-card";
+} from "#lib/definitions.js";
+import type { InvestmentBuildKitIcons } from "#lib/investment-build-card.js";
 import {
   INVENTORY_ARTIFACT_SLOTS,
   artifactsForLocation,
   cloneInventoryArtifact,
   equippedWeaponForLocation,
   inventoryWeaponToRoster,
-} from "$lib/roster-inventory";
+} from "#lib/roster-inventory.js";
 import {
   DEFAULT_ROSTER_PROGRESS,
   cloneRosterProgress,
   cloneRosterWeapon,
   goodKeysForRosterName,
-} from "$lib/roster-progress";
+} from "#lib/roster-progress.js";
 
 export type RosterBuildSetCount = {
   setKey: string;
@@ -106,11 +106,10 @@ export function rosterBuildViewFromOwned(
   kit: InvestmentBuildKitIcons | null = null,
 ): RosterBuildView {
   const locationKey = resolveLocationKey(character, weapons, artifacts);
-  const progress =
-    cloneRosterProgress(character.progress) ?? {
-      ...DEFAULT_ROSTER_PROGRESS,
-      talents: { ...DEFAULT_ROSTER_PROGRESS.talents },
-    };
+  const progress = cloneRosterProgress(character.progress) ?? {
+    ...DEFAULT_ROSTER_PROGRESS,
+    talents: { ...DEFAULT_ROSTER_PROGRESS.talents },
+  };
 
   let weapon: RosterWeapon | null = null;
   if (locationKey) {

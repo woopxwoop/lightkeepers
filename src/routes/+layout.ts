@@ -7,7 +7,7 @@
  */
 
 import type { LayoutLoad } from "./$types";
-import type { Tables } from "$lib/types/database.types";
+import type { Tables } from "#lib/types/database.types.js";
 
 type Character = Tables<"characters">;
 

@@ -5,7 +5,7 @@
  * Not part of global bootstrap.
  */
 
-import type { InvestmentFile } from "$lib/types/investment";
+import type { InvestmentFile } from "#lib/types/investment.js";
 
 const API_URL = "/api/investment";
 

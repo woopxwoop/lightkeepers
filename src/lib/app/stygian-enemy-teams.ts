@@ -2,8 +2,8 @@
  * Client fetch for Stygian boss historical top teams.
  */
 
-import type { StygianEnemyTeamsPayload } from "$lib/definitions";
-import { isAbortError, isTimeoutError } from "$lib/app/character-analytics";
+import type { StygianEnemyTeamsPayload } from "#lib/definitions.js";
+import { isAbortError, isTimeoutError } from "#lib/app/character-analytics.js";
 
 export { isAbortError, isTimeoutError };
 

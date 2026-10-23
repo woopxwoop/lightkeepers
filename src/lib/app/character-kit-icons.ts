@@ -7,8 +7,8 @@ import { resolve } from "$app/paths";
 import {
   kitIconsFromCharacterKit,
   type InvestmentBuildKitIcons,
-} from "$lib/investment-build-card";
-import type { CharacterKit } from "$lib/types/character-kit";
+} from "#lib/investment-build-card.js";
+import type { CharacterKit } from "#lib/types/character-kit.js";
 
 const cache = new Map<string, InvestmentBuildKitIcons>();
 const pending = new Map<string, Promise<InvestmentBuildKitIcons>>();
@@ -30,12 +30,15 @@ export function loadCharacterKitIcons(
   const req = (async () => {
     try {
       const res = await fetch(
-        resolve(`/api/character-kit/${encodeURIComponent(nameId)}`),
+        resolve(`api/character-kit/${encodeURIComponent(nameId)}`),
       );
+
       if (!res.ok) throw new Error(`kit ${res.status}`);
+
       const icons = kitIconsFromCharacterKit(
         (await res.json()) as CharacterKit,
       );
+
       cache.set(nameId, icons);
       return icons;
     } finally {

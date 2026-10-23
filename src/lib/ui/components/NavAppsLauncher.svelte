@@ -11,7 +11,7 @@
 
 <script lang="ts">
   import { tick } from "svelte";
-  import IconAppsGrid from "$lib/ui/icons/IconAppsGrid.svelte";
+  import IconAppsGrid from "#lib/ui/icons/IconAppsGrid.svelte";
 
   let {
     items = [],

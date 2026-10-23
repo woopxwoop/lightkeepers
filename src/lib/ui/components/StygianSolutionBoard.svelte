@@ -16,14 +16,14 @@
     stygianVersionNumber,
     abyssVersionNumber,
     hasSavedRoster,
-  } from "$lib/stores";
-  import { stygianSlotLabel } from "$lib/slotLabels";
+  } from "#lib/stores.js";
+  import { stygianSlotLabel } from "#lib/slotLabels.js";
   import {
     solveStygianWithFallback,
     solveStygianCheapClears,
     solveStygianHybrid,
     SOLVER_REVISION,
-  } from "$lib/solver";
+  } from "#lib/solver.js";
   import {
     SOLUTIONS_COUNT,
     boardSlotRate,
@@ -36,18 +36,18 @@
     teamsFingerprint,
     characterMetaFingerprint,
     cheapClearsFingerprint,
-  } from "$lib/board-solutions";
-  import { ownedNameIds, getEnemyAsset } from "$lib/utils";
-  import Team from "$lib/ui/components/Team.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import InfoPopover from "$lib/ui/components/InfoPopover.svelte";
-  import IconPlay from "$lib/ui/icons/IconPlay.svelte";
-  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
+  } from "#lib/board-solutions.js";
+  import { ownedNameIds, getEnemyAsset } from "#lib/utils.js";
+  import Team from "#lib/ui/components/Team.svelte";
+  import Surface from "#lib/ui/components/Surface.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
+  import InfoPopover from "#lib/ui/components/InfoPopover.svelte";
+  import IconPlay from "#lib/ui/icons/IconPlay.svelte";
+  import { handleKeyboardClick, handlePointerAction } from "#lib/ui/pointer.js";
   import {
     STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST,
     STYGIAN_CHEAP_CLEARS_DIFFICULTY,
@@ -59,25 +59,25 @@
     type StygianClearVideo,
     type StygianCheapClearRow,
     type StygianSolverMode,
-  } from "$lib/definitions";
+  } from "#lib/definitions.js";
   import {
     STYGIAN_C0R0_CLEAR_MAX_COST,
     c0r0ClearPairKeys,
     clearTimeAtCap,
     clearTimeAtCostCeiling,
     floorTeamCost,
-  } from "$lib/team-cost";
+  } from "#lib/team-cost.js";
   import { resolve } from "$app/paths";
-  import { settingsPath } from "$lib/ui/nav-links";
-  import { authClient } from "$lib/auth-client";
-  import { needsRosterSetup } from "$lib/roster-setup";
+  import { settingsPath } from "#lib/ui/nav-links.js";
+  import { authClient } from "#lib/auth-client.js";
+  import { needsRosterSetup } from "#lib/roster-setup.js";
   import {
     ensureClearVideos,
     getClearVideosCached,
     youtubeThumbnailFallbackUrl,
     youtubeThumbnailUrl,
-  } from "$lib/app/stygian-clear-videos";
-  import { ensureCheapClears } from "$lib/app/stygian-cheap-clears";
+  } from "#lib/app/stygian-clear-videos.js";
+  import { ensureCheapClears } from "#lib/app/stygian-cheap-clears.js";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -437,7 +437,7 @@
 {#snippet enemyLabel(slot: Slot, linkClass: string)}
   {@const enemy = enemies?.[slot]}
   {#if enemy}
-    <a class={linkClass} href={resolve(`/tools/stygian/enemies/${enemy.id}`)}
+    <a class={linkClass} href={resolve(`tools/stygian/enemies/${enemy.id}`)}
       >{enemy.enemy_name ?? stygianSlotLabel[slot]}</a
     >
   {:else}
@@ -514,7 +514,8 @@
                             loading="lazy"
                             decoding="async"
                             onerror={(event) => {
-                              const img = event.currentTarget as HTMLImageElement;
+                              const img =
+                                event.currentTarget as HTMLImageElement;
                               if (img.dataset.ytFallback === "1") return;
                               const fallback = youtubeThumbnailFallbackUrl(
                                 clear.video_url,
@@ -647,7 +648,7 @@
             message="No video-backed clears for this roster at baseline."
           >
             {#snippet action()}
-              <a class="pulls-cta" href={resolve("/tools/pulls")}
+              <a class="pulls-cta" href={resolve("tools/pulls")}
                 >See pull suggestions</a
               >
             {/snippet}
@@ -655,7 +656,7 @@
         {:else if solverMode === "hybrid"}
           <EmptyState message="No balanced board for this roster.">
             {#snippet action()}
-              <a class="pulls-cta" href={resolve("/tools/pulls")}
+              <a class="pulls-cta" href={resolve("tools/pulls")}
                 >See pull suggestions</a
               >
             {/snippet}
@@ -665,7 +666,7 @@
             message="No viable field clears for your roster right now."
           >
             {#snippet action()}
-              <a class="pulls-cta" href={resolve("/tools/pulls")}
+              <a class="pulls-cta" href={resolve("tools/pulls")}
                 >See pull suggestions</a
               >
             {/snippet}

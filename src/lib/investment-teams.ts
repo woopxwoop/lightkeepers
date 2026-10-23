@@ -9,7 +9,7 @@ import type {
   InvestmentFile,
   InvestmentSim,
   InvestmentTeam,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 
 export type TeamDpsSort = "dps-desc" | "dps-asc";
 

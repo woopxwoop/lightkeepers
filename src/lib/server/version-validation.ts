@@ -6,8 +6,8 @@
  */
 
 import { error } from "@sveltejs/kit";
-import { LRUCache } from "$lib/server/cache";
-import { serverDb } from "$lib/server/supabaseServer";
+import { LRUCache } from "#lib/server/cache.js";
+import { serverDb } from "#lib/server/supabaseServer.js";
 
 const TTL_15_MIN = 15 * 60 * 1000;
 

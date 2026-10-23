@@ -5,14 +5,14 @@ import {
   getInvestmentFile,
   getSimConfigText,
   getSimRotationSample,
-} from "$lib/server/team-config";
-import { getCharacterKit } from "$lib/server/character-kit";
-import { characterBaseByKey } from "$lib/build-stats";
-import { getSimConfigUrl } from "$lib/utils";
+} from "#lib/server/team-config.js";
+import { getCharacterKit } from "#lib/server/character-kit.js";
+import { characterBaseByKey } from "#lib/build-stats.js";
+import { getSimConfigUrl } from "#lib/utils.js";
 import {
   kitIconsFromCharacterKit,
   type InvestmentBuildKitIcons,
-} from "$lib/investment-build-card";
+} from "#lib/investment-build-card.js";
 
 export type TeamConfigKitIcons = InvestmentBuildKitIcons;
 

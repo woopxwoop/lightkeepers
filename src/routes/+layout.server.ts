@@ -11,15 +11,15 @@
 
 import { error } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { charactersCache } from "$lib/server/cache";
-import { isPlaywrightE2e } from "$lib/server/e2e";
-import { e2eCharacters, e2eStaticPayload } from "$lib/e2e/fixtures";
-import { listPatchNotes } from "$lib/patch-notes-catalog";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { charactersCache } from "#lib/server/cache.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
+import { e2eCharacters, e2eStaticPayload } from "#lib/e2e/fixtures.js";
+import { listPatchNotes } from "#lib/patch-notes-catalog.js";
 import {
   getLatestAbyssVersionNumber,
   getLatestStygianVersionNumber,
-} from "$lib/server/version-validation";
+} from "#lib/server/version-validation.js";
 
 export const load: LayoutServerLoad = async () => {
   const [versions, characters] = await Promise.all([

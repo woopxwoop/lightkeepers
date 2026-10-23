@@ -5,9 +5,9 @@
  * (`pnpm update-types`). Until then, payloads stay asserted at the call site.
  */
 
-import { serverDb } from "$lib/server/supabaseServer";
-import type { InventoryArtifact, InventoryWeapon } from "$lib/definitions";
-import type { RosterEntry } from "$lib/server/request-validation";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import type { InventoryArtifact, InventoryWeapon } from "#lib/definitions.js";
+import type { RosterEntry } from "#lib/server/request-validation.js";
 
 export type RosterInventoryRow = {
   user_id: string;

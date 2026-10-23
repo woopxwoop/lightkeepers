@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { useWeapon } from "$lib/equipment-data.svelte";
-  import type { WeaponData } from "$lib/equipment-data";
-  import { weaponTypeLabel } from "$lib/utils";
+  import { useWeapon } from "#lib/equipment-data.svelte.js";
+  import type { WeaponData } from "#lib/equipment-data.js";
+  import { weaponTypeLabel } from "#lib/utils.js";
   import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
 
   let { data } = $props();
 
@@ -32,10 +32,11 @@
     <ul class="note-list">
       {#each data.notes as note (note.slug)}
         <li>
-          <a class="note-row" href={resolve(`/patch-notes/${note.slug}`)}>
+          <a class="note-row" href={resolve(`patch-notes/${note.slug}`)}>
             <time class="note-date" datetime={note.date}
               >{formatDate(note.date)}</time
             >
+
             <span class="note-copy">
               <span class="meta-name">{note.title}</span>
               <span class="meta-sub">{note.summary}</span>

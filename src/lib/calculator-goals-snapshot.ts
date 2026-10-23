@@ -8,11 +8,11 @@ import {
   CALCULATOR_GOALS_VERSION,
   emptyGoalsState,
   parseGoalsState,
-} from "$lib/calculator-goals";
+} from "#lib/calculator-goals.js";
 import type {
   CalculatorGoal,
   CalculatorGoalsState,
-} from "$lib/types/calculator-goals";
+} from "#lib/types/calculator-goals.js";
 
 export const CALCULATOR_GOALS_STORAGE_KEY = "calculatorGoals";
 

@@ -23,13 +23,9 @@
       gradientUnits="userSpaceOnUse"
     >
       <stop offset="0" style="stop-color:currentColor;stop-opacity:0"></stop>
-      <stop
-        offset=".446"
-        style="stop-color:currentColor;stop-opacity:.80000001"
+      <stop offset=".446" style="stop-color:currentColor;stop-opacity:.80000001"
       ></stop>
-      <stop
-        offset=".548"
-        style="stop-color:currentColor;stop-opacity:.80000001"
+      <stop offset=".548" style="stop-color:currentColor;stop-opacity:.80000001"
       ></stop>
       <stop offset="1" style="stop-color:currentColor;stop-opacity:0"></stop>
     </linearGradient>

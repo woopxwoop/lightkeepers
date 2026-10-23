@@ -5,7 +5,7 @@
 import type {
   CharacterAnalyticsMode,
   CharacterAnalyticsPayload,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
 

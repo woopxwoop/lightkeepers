@@ -5,19 +5,22 @@
  * (same pattern as `/api/investment`). Merges live + beta catalogs so CB chars
  * (Odette / Alyosha) appear alongside live Dimbreath rows — live wins on id.
  */
-import { json, error, isHttpError } from "@sveltejs/kit";
+import { error, isHttpError } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { LRUCache } from "$lib/server/cache";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
-import { upgradeCostsFileUrl, type UpgradeCostsChannel } from "$lib/asset-urls";
-import { mergeUpgradeCostCatalogs } from "$lib/upgrade-costs-merge";
+import { LRUCache } from "#lib/server/cache.js";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
+import {
+  upgradeCostsFileUrl,
+  type UpgradeCostsChannel,
+} from "#lib/asset-urls.js";
+import { mergeUpgradeCostCatalogs } from "#lib/upgrade-costs-merge.js";
 import type {
   CharacterUpgradeCosts,
   UpgradeCostsCatalog,
   UpgradeCurves,
   UpgradeMaterialMeta,
   WeaponUpgradeCosts,
-} from "$lib/types/upgrade-costs";
+} from "#lib/types/upgrade-costs.js";
 
 const cache = new LRUCache<UpgradeCostsCatalog>(1, 15 * 60 * 1000, {
   redisNamespace: "upgrade-costs",
@@ -94,7 +97,7 @@ async function fetchCatalog(): Promise<UpgradeCostsCatalog> {
 export const GET: RequestHandler = async () => {
   try {
     const payload = await cache.getOrSet(CACHE_KEY, fetchCatalog);
-    return json(payload, {
+    return Response.json(payload, {
       headers: {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
       },

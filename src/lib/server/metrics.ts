@@ -5,7 +5,7 @@
  * Scraped by Prometheus at /metrics — no push, no OTLP gateway.
  *
  * Usage:
- *   import { metrics } from '$lib/server/metrics';
+ *   import { metrics } from '#lib/server/metrics.js';
  *   metrics.recordRequest({ path, method, status, durationMs });
  *   metrics.log('info', 'something happened', { key: 'value' });
  *

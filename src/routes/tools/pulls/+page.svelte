@@ -20,24 +20,24 @@
     ensureTierList,
     invalidateTierList,
     animationsEnabled,
-  } from "$lib/stores";
-  import { ownedNameIds } from "$lib/utils";
+  } from "#lib/stores.js";
+  import { ownedNameIds } from "#lib/utils.js";
   import {
     computePullSuggestions,
     computePairSuggestions,
-  } from "$lib/pullSuggestions";
-  import type { PullSuggestion, PairSuggestion } from "$lib/pullSuggestions";
-  import type { TierListEntry } from "$lib/tierlist";
-  import type { StygianTeam } from "$lib/definitions";
-  import WishSlot from "$lib/ui/components/WishSlot.svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import IconEye from "$lib/ui/icons/IconEye.svelte";
-  import IconEyeOff from "$lib/ui/icons/IconEyeOff.svelte";
-  import { settingsPath } from "$lib/ui/nav-links";
+  } from "#lib/pullSuggestions.js";
+  import type { PullSuggestion, PairSuggestion } from "#lib/pullSuggestions.js";
+  import type { TierListEntry } from "#lib/tierlist.js";
+  import type { StygianTeam } from "#lib/definitions.js";
+  import WishSlot from "#lib/ui/components/WishSlot.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
+  import IconEye from "#lib/ui/icons/IconEye.svelte";
+  import IconEyeOff from "#lib/ui/icons/IconEyeOff.svelte";
+  import { settingsPath } from "#lib/ui/nav-links.js";
 
   let { data } = $props();
   let mapping = $derived(data.mapping);
@@ -556,8 +556,7 @@
   <header class="page-head">
     <h1 class="page-title">Pull Suggestions</h1>
     <p class="page-meta">
-      Based on your {ownedCount} characters · Stygian usage for long-term roster
-      strength
+      Based on your {ownedCount} characters · Stygian usage for long-term roster strength
     </p>
   </header>
 
@@ -595,7 +594,8 @@
             <div class="panel-head-text">
               <h2 class="panel-title">Best next pulls</h2>
               <p class="panel-lede">
-                Characters that unlock high-usage teams for your roster long-term
+                Characters that unlock high-usage teams for your roster
+                long-term
               </p>
             </div>
           </header>

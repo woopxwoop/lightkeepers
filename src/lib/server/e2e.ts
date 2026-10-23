@@ -1,7 +1,7 @@
 /**
  * Playwright E2E detection.
  *
- * Use `process.env` (not `$env/dynamic/private`). In `vite dev`, Kit's dynamic
+ * Use `process.env` (not `$app/env/private`). In `vite dev`, Kit's private
  * private env is a config-time snapshot from `loadEnv` and has missed
  * PLAYWRIGHT_E2E on CI even when Playwright's webServer.env set it.
  */

@@ -6,6 +6,6 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ params }) => {
   redirect(
     308,
-    resolve(`/tools/stygian/enemies/${encodeURIComponent(params.id)}`),
+    resolve(`tools/stygian/enemies/${encodeURIComponent(params.id)}`),
   );
 };

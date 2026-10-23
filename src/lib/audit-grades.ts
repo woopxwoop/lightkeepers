@@ -10,16 +10,16 @@ import {
   type AccountBuildAdviceStep,
   type AccountBuildGrade,
   type AccountBuildNameResolvers,
-} from "$lib/account-build-grade";
+} from "#lib/account-build-grade.js";
 import type {
   CharacterOwned,
   InventoryArtifact,
   InventoryWeapon,
   RosterProgress,
-} from "$lib/definitions";
-import { rosterBuildViewFromOwned } from "$lib/roster-build-card";
-import type { CharacterIndex } from "$lib/types/investment";
-import { toGoodKey } from "$lib/utils";
+} from "#lib/definitions.js";
+import { rosterBuildViewFromOwned } from "#lib/roster-build-card.js";
+import type { CharacterIndex } from "#lib/types/investment.js";
+import { toGoodKey } from "#lib/utils.js";
 
 export type AuditRow = {
   character: CharacterOwned;

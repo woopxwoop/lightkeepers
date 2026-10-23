@@ -1,19 +1,19 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { dev } from "$app/environment";
-  import IconPerson from "$lib/ui/icons/IconPerson.svelte";
-  import IconCalendarWeek from "$lib/ui/icons/IconCalendarWeek.svelte";
-  import IconFileSearch from "$lib/ui/icons/IconFileSearch.svelte";
-  import NavAppsLauncher from "$lib/ui/components/NavAppsLauncher.svelte";
-  import type { NavAppItem } from "$lib/ui/components/NavAppsLauncher.svelte";
-  import NavDesktopLinks from "$lib/ui/components/NavDesktopLinks.svelte";
-  import NavMobileDrawer from "$lib/ui/components/NavMobileDrawer.svelte";
-  import { authClient } from "$lib/auth-client";
-  import { backgroundVisible, toggleBackgroundVisible } from "$lib/stores";
-  import { plannerItineraryOpen } from "$lib/planner-itinerary-open";
-  import { researchChatOpen } from "$lib/research-chat-open";
-  import { accountSettingsOpen } from "$lib/account-settings-open";
-  import { homePath } from "$lib/ui/nav-links";
+  import { dev } from "$app/env";
+  import IconPerson from "#lib/ui/icons/IconPerson.svelte";
+  import IconCalendarWeek from "#lib/ui/icons/IconCalendarWeek.svelte";
+  import IconFileSearch from "#lib/ui/icons/IconFileSearch.svelte";
+  import NavAppsLauncher from "#lib/ui/components/NavAppsLauncher.svelte";
+  import type { NavAppItem } from "#lib/ui/components/NavAppsLauncher.svelte";
+  import NavDesktopLinks from "#lib/ui/components/NavDesktopLinks.svelte";
+  import NavMobileDrawer from "#lib/ui/components/NavMobileDrawer.svelte";
+  import { authClient } from "#lib/auth-client.js";
+  import { backgroundVisible, toggleBackgroundVisible } from "#lib/stores.js";
+  import { plannerItineraryOpen } from "#lib/planner-itinerary-open.js";
+  import { researchChatOpen } from "#lib/research-chat-open.js";
+  import { accountSettingsOpen } from "#lib/account-settings-open.js";
+  import { homePath } from "#lib/ui/nav-links.js";
 
   const session = authClient.useSession();
 

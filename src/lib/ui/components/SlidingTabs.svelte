@@ -1,6 +1,6 @@
 <script lang="ts" generics="T extends string">
-  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  import { handleKeyboardClick, handlePointerAction } from "#lib/ui/pointer.js";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
 
   type Option = { value: T; label: string };
 

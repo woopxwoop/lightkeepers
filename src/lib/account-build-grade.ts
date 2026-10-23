@@ -6,25 +6,25 @@
  * Set / mains stay soft asides. Never recommend weapon swaps.
  */
 
-import { rankWeaponsByRarityAndTeams } from "$lib/character-builds";
+import { rankWeaponsByRarityAndTeams } from "#lib/character-builds.js";
 import {
   INVENTORY_ARTIFACT_SLOTS,
   type RosterBuildView,
-} from "$lib/roster-build-card";
-import { plannerTargetFromBuilds } from "$lib/planner-targets";
-import { isStaleBuildSummary } from "$lib/stale-build-summary";
+} from "#lib/roster-build-card.js";
+import { plannerTargetFromBuilds } from "#lib/planner-targets.js";
+import { isStaleBuildSummary } from "#lib/stale-build-summary.js";
 import {
   LEVEL_UPGRADE,
   primaryUpgradePct,
   resolveUpgradeImpact,
-} from "$lib/upgrade-priority";
+} from "#lib/upgrade-priority.js";
 import type {
   CharacterIndex,
   CharacterWeaponLevelGain,
   ImportanceImpactTier,
-} from "$lib/types/investment";
-import type { UpgradePromoteStep } from "$lib/types/upgrade-costs";
-import { UPGRADE_DEFAULTS } from "$lib/upgrade-costs";
+} from "#lib/types/investment.js";
+import type { UpgradePromoteStep } from "#lib/types/upgrade-costs.js";
+import { UPGRADE_DEFAULTS } from "#lib/upgrade-costs.js";
 
 /** Unlock table for gating planner targets when the upgrade catalog isn’t loaded. */
 export const GRADE_CHARACTER_PROMOTES: UpgradePromoteStep[] = [
@@ -390,10 +390,7 @@ export function shouldRecommendWeaponLevel90(
 }
 
 function slotImpactPct(
-  row:
-    | { mean_pct_drop: number; median_pct_drop: number }
-    | null
-    | undefined,
+  row: { mean_pct_drop: number; median_pct_drop: number } | null | undefined,
 ): number {
   if (!row) return 0;
   return Math.abs(primaryUpgradePct(row.mean_pct_drop, row.median_pct_drop));
@@ -519,11 +516,7 @@ export function gradeOwnedBuild(input: {
   const progressSteps = progressOk
     ? []
     : progressAdviceSteps(input.view, builds, promotes);
-  const weaponSteps = weaponProgressAdviceSteps(
-    input.view,
-    builds,
-    getStars,
-  );
+  const weaponSteps = weaponProgressAdviceSteps(input.view, builds, getStars);
   const adviceSteps = [...progressSteps, ...weaponSteps];
   const gaps: AccountBuildAxis[] = [];
   if (!progressOk) gaps.push("progress");

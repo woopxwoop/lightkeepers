@@ -3,10 +3,10 @@
  *
  * Proxies `sim/characters/{GoodKey}.json.gz` (same CDN path as character page SSR).
  */
-import { json, error } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getCharacterSummary } from "$lib/server/character-summary";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
+import { getCharacterSummary } from "#lib/server/character-summary.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 
 export const GET: RequestHandler = async ({
   params,
@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({
   }
   if (!summary) throw error(404, `No Builds summary for ${key}`);
 
-  return json(summary, {
+  return Response.json(summary, {
     headers: {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
     },

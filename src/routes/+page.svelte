@@ -1,23 +1,23 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { hasSavedRoster } from "$lib/stores";
-  import { needsRosterSetup } from "$lib/roster-setup";
-  import { authClient } from "$lib/auth-client";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
-  import { DISCORD_INVITE_URL } from "$lib/site";
-  import { siteAssetUrl } from "$lib/utils";
+  import { hasSavedRoster } from "#lib/stores.js";
+  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { authClient } from "#lib/auth-client.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";
+  import { DISCORD_INVITE_URL } from "#lib/site.js";
+  import { siteAssetUrl } from "#lib/utils.js";
 
   const session = authClient.useSession();
 
-  const abyssPath = resolve("/tools/abyss");
-  const stygianPath = resolve("/tools/stygian");
-  const pullsPath = resolve("/tools/pulls");
-  const auditPath = resolve("/tools/audit");
-  const teamsPath = resolve("/teams");
-  const charactersPath = resolve("/characters");
+  const abyssPath = resolve("tools/abyss");
+  const stygianPath = resolve("tools/stygian");
+  const pullsPath = resolve("tools/pulls");
+  const auditPath = resolve("tools/audit");
+  const teamsPath = resolve("teams");
+  const charactersPath = resolve("characters");
 
-  const rosterPath = resolve("/settings");
+  const rosterPath = resolve("settings");
 
   /** Show the nudge only when the user has never saved a roster AND isn't logged in. */
   let showNudge = $derived(

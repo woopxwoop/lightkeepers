@@ -7,14 +7,14 @@ import type {
   InventoryWeapon,
   RosterProgress,
   RosterWeapon,
-} from "$lib/definitions";
-import type { CharacterUpgradeConfig } from "$lib/types/upgrade-costs";
-import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
-import { toGoodKey, TRAVELER_GUIDE_ELEMENTS } from "$lib/utils";
+} from "#lib/definitions.js";
+import type { CharacterUpgradeConfig } from "#lib/types/upgrade-costs.js";
+import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "#lib/upgrade-costs.js";
+import { toGoodKey, TRAVELER_GUIDE_ELEMENTS } from "#lib/utils.js";
 import {
   equippedWeaponForLocation,
   inventoryWeaponToRoster,
-} from "$lib/roster-inventory";
+} from "#lib/roster-inventory.js";
 
 export const MAX_CONSTELLATION = 6;
 export const MAX_REFINEMENT = 5;

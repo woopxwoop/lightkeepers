@@ -2,13 +2,13 @@
  * Server fetch for TCG card availability manifest.
  * Source: `characters/tcg-cards.json` on the asset CDN.
  */
-import { LRUCache } from "$lib/server/cache";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
+import { LRUCache } from "#lib/server/cache.js";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
 import {
   mergeTcgCardNameIds,
   tcgCardsPayloadFromCdn,
   type TcgCardsFile,
-} from "$lib/tcg-cards";
+} from "#lib/tcg-cards.js";
 
 const CDN_TCG_CARDS = "https://api.lightkeepers.moe/characters/tcg-cards.json";
 

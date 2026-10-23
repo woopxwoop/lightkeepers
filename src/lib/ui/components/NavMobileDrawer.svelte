@@ -3,14 +3,14 @@
   import { tick, untrack } from "svelte";
   import { fly, fade } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import IconUser from "$lib/ui/icons/IconUser.svelte";
-  import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
-  import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import { DISCORD_INVITE_URL } from "$lib/site";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
+  import IconCog from "#lib/ui/icons/IconCog.svelte";
+  import IconUser from "#lib/ui/icons/IconUser.svelte";
+  import IconCloudUp from "#lib/ui/icons/IconCloudUp.svelte";
+  import IconMonitor from "#lib/ui/icons/IconMonitor.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import { DISCORD_INVITE_URL } from "#lib/site.js";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
   import {
     isMainLinkActive,
     isPathActive,
@@ -25,7 +25,7 @@
     toolsLinks,
     type MainLink,
     type ToolsLink,
-  } from "$lib/ui/nav-links";
+  } from "#lib/ui/nav-links.js";
 
   let {
     open = $bindable(false),

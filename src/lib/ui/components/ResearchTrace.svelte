@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ResearchTrace } from "$lib/research-types";
+  import type { ResearchTrace } from "#lib/research-types.js";
 
   let { trace }: { trace: ResearchTrace } = $props();
 
@@ -27,7 +27,9 @@
       {#each trace.retrieved_preview ?? [] as hit, i (i)}
         <li>
           <span class="trace-hit-publisher">{hit.publisher}</span>
-          <span class="trace-hit-meta">{hit.chunk_kind} · {hit.source_tier}</span>
+          <span class="trace-hit-meta"
+            >{hit.chunk_kind} · {hit.source_tier}</span
+          >
           {#if hit.heading_path}
             <span class="trace-hit-heading">{hit.heading_path}</span>
           {/if}

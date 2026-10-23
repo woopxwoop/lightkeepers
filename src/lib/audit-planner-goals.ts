@@ -7,39 +7,39 @@ import {
   WEAPON_GRADE_TARGET,
   type AccountBuildAdviceKind,
   type AccountBuildGrade,
-} from "$lib/account-build-grade";
+} from "#lib/account-build-grade.js";
 import {
   appendGoal,
   createCharacterGoal,
   createWeaponGoal,
   MAX_CALCULATOR_GOALS,
-} from "$lib/calculator-goals";
+} from "#lib/calculator-goals.js";
 import type {
   CharacterOwned,
   InventoryWeapon,
   RosterProgress,
-} from "$lib/definitions";
-import { resolveCatalogCharacterId } from "$lib/planner-goal-edits";
-import { plannerTargetFromBuilds } from "$lib/planner-targets";
+} from "#lib/definitions.js";
+import { resolveCatalogCharacterId } from "#lib/planner-goal-edits.js";
+import { plannerTargetFromBuilds } from "#lib/planner-targets.js";
 import {
   progressToCharacterStart,
   rosterProgressForNameId,
-} from "$lib/roster-progress";
+} from "#lib/roster-progress.js";
 import type {
   CalculatorGoalsState,
   CharacterCalculatorGoal,
   WeaponCalculatorGoal,
-} from "$lib/types/calculator-goals";
-import type { CharacterIndex } from "$lib/types/investment";
-import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
+} from "#lib/types/calculator-goals.js";
+import type { CharacterIndex } from "#lib/types/investment.js";
+import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
 import {
   MAX_ASCENSION,
   MAX_LEVEL,
   orderCharacterConfigs,
   orderWeaponConfigs,
   UPGRADE_DEFAULTS,
-} from "$lib/upgrade-costs";
-import { toGoodKey } from "$lib/utils";
+} from "#lib/upgrade-costs.js";
+import { toGoodKey } from "#lib/utils.js";
 
 const CHAR_PROGRESS_KINDS = new Set<AccountBuildAdviceKind>([
   "level",
