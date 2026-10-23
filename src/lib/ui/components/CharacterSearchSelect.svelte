@@ -1,8 +1,8 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import type { CharacterPortraitRef } from "$lib/definitions";
-  import type { SelectOption } from "$lib/ui/components/Select.svelte";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
+  import type { CharacterPortraitRef } from "#lib/definitions.js";
+  import type { SelectOption } from "#lib/ui/components/Select.svelte";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
 
   let {
     value = $bindable(""),

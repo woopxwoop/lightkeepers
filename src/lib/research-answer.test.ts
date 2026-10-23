@@ -119,28 +119,20 @@ describe("research answer embeddings", () => {
   });
 
   it("orderCitationsForDisplay includes comparison text", () => {
-    const ordered = orderCitationsForDisplay(
-      [cite2297],
-      "Short verdict.",
-      ["~20% [[cite:2297]]"],
-    );
+    const ordered = orderCitationsForDisplay([cite2297], "Short verdict.", [
+      "~20% [[cite:2297]]",
+    ]);
     assert.equal(ordered.length, 1);
     assert.equal(ordered[0]?.id, 2297);
   });
 
   it("renderResearchAnswer namespaces cite anchors per answer prefix", () => {
-    const a = renderResearchAnswer(
-      "A [[cite:2297]].",
-      [],
-      [cite2297],
-      { citeAnchorPrefix: "ra-a-" },
-    );
-    const b = renderResearchAnswer(
-      "B [[cite:2297]].",
-      [],
-      [cite2297],
-      { citeAnchorPrefix: "ra-b-" },
-    );
+    const a = renderResearchAnswer("A [[cite:2297]].", [], [cite2297], {
+      citeAnchorPrefix: "ra-a-",
+    });
+    const b = renderResearchAnswer("B [[cite:2297]].", [], [cite2297], {
+      citeAnchorPrefix: "ra-b-",
+    });
     assert.match(a, /#ra-a-research-cite-2297/);
     assert.match(b, /#ra-b-research-cite-2297/);
     assert.doesNotMatch(a, /#ra-b-research-cite/);
@@ -166,7 +158,10 @@ describe("research answer embeddings", () => {
     };
     const html = renderEntityChip(nasty);
     assert.doesNotMatch(html, /<script/);
-    assert.match(html, /data-research-entity-key="char:X&lt;&quot;y&quot;&gt;"/);
+    assert.match(
+      html,
+      /data-research-entity-key="char:X&lt;&quot;y&quot;&gt;"/,
+    );
     assert.doesNotMatch(html, /title=/);
   });
 

@@ -1,5 +1,5 @@
 /**
- * Import a GOOD JSON roster (any `source`; see `$lib/types/good/good`).
+ * Import a GOOD JSON roster (any `source`; see `#lib/types/good/good.js`).
  * Characters, weapons (including unequipped), and artifacts are kept.
  * Materials and extra producer fields (GO `id`, etc.) are ignored.
  * Spec ranges that exceed planner caps (character level 100, talent 15)
@@ -12,14 +12,14 @@ import type {
   InventorySubstat,
   InventoryWeapon,
   RosterProgress,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 import {
   DEFAULT_ROSTER_PROGRESS,
   goodKeysForRosterName,
   MAX_CONSTELLATION,
   MAX_REFINEMENT,
   MAX_WEAPON_KEY_LENGTH,
-} from "$lib/roster-progress";
+} from "#lib/roster-progress.js";
 import {
   cloneInventoryArtifact,
   cloneInventoryWeapon,
@@ -30,14 +30,14 @@ import {
   MAX_GOOD_KEY_LENGTH,
   MAX_STAT_KEY_LENGTH,
   MAX_UNACTIVATED_SUBSTATS,
-} from "$lib/roster-inventory";
+} from "#lib/roster-inventory.js";
 import type {
   IArtifact,
   ICharacter,
   IGOOD,
   IWeapon,
-} from "$lib/types/good/good";
-import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
+} from "#lib/types/good/good.js";
+import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "#lib/upgrade-costs.js";
 
 export const MAX_GOOD_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -184,7 +184,8 @@ function parseGoodCharacter(row: unknown): GoodCharacterRecord | null {
   const character = row as Partial<ICharacter> & Record<string, unknown>;
   const key = parseKey(character.key, MAX_GOOD_KEY_LENGTH);
   if (!key) return null;
-  const talent = isRecord(character.talent) ? character.talent : {};
+  const rawTalent = character.talent;
+  const talent: Record<string, unknown> = isRecord(rawTalent) ? rawTalent : {};
   const auto = talent.auto ?? talent.normal;
   return {
     key,

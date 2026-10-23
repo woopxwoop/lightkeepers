@@ -1,4 +1,4 @@
-import type { Tables, Database, Json } from "$lib/types/database.types";
+import type { Tables, Database, Json } from "#lib/types/database.types.js";
 
 export type Character = Tables<"characters">;
 
@@ -144,8 +144,8 @@ export type {
   CharacterKit,
   CharacterKitIndex,
   CharacterKitIndexEntry,
-} from "$lib/types/character-kit";
-export type { EnemyIndex, EnemyIndexEntry } from "$lib/types/enemy";
+} from "#lib/types/character-kit.js";
+export type { EnemyIndex, EnemyIndexEntry } from "#lib/types/enemy.js";
 
 // ── Shared payload shapes used by /api/static, layout data, and consumers ────
 
@@ -290,15 +290,17 @@ export const STYGIAN_SOLVER_MODE_OPTIONS_RELEASE: ReadonlyArray<{
 ];
 
 /** One-line player help for each production Stygian seating mode. */
-export const STYGIAN_SOLVER_MODE_HELP: Record<StygianSolverModeRelease, string> =
-  {
-    hybrid:
-      "Prefer popular teams that also have Fearless clears at low investment.",
-    yshelper:
-      "Rank by how often teams are used and how well they fit each field.",
-    "video-c0r0":
-      "Seat teams from real Fearless clear videos at baseline investment.",
-  };
+export const STYGIAN_SOLVER_MODE_HELP: Record<
+  StygianSolverModeRelease,
+  string
+> = {
+  hybrid:
+    "Prefer popular teams that also have Fearless clears at low investment.",
+  yshelper:
+    "Rank by how often teams are used and how well they fit each field.",
+  "video-c0r0":
+    "Seat teams from real Fearless clear videos at baseline investment.",
+};
 
 /** Default seating mode on `/tools/stygian`. */
 export const STYGIAN_SOLVER_MODE_DEFAULT =
@@ -327,4 +329,8 @@ export function toStygianSolverModeRelease(
     : STYGIAN_SOLVER_MODE_DEFAULT;
 }
 
-export type { TierBoard, TierListEntry, TierListPayload } from "$lib/tierlist";
+export type {
+  TierBoard,
+  TierListEntry,
+  TierListPayload,
+} from "#lib/tierlist.js";

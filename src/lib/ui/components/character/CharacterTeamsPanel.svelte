@@ -6,14 +6,14 @@
     staticBoardsLoaded,
     staticBoardsError,
     ensureStaticBoards,
-  } from "$lib/stores";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import CostPopover from "$lib/ui/components/CostPopover.svelte";
-  import TeamHandList from "$lib/ui/components/character/TeamHandList.svelte";
+  } from "#lib/stores.js";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import CostPopover from "#lib/ui/components/CostPopover.svelte";
+  import TeamHandList from "#lib/ui/components/character/TeamHandList.svelte";
   import {
     CHARACTER_SIM_COST,
     TOP_TEAMS_LIMIT,
@@ -24,10 +24,10 @@
     dimmedKeysFromGoodKeys,
     handCharactersFromMembers,
     dimmedKeysFromMembers,
-  } from "$lib/character-teams";
-  import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
-  import type { Character, CharacterOwned } from "$lib/definitions";
-  import type { InvestmentFile } from "$lib/types/investment";
+  } from "#lib/character-teams.js";
+  import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
+  import type { Character, CharacterOwned } from "#lib/definitions.js";
+  import type { InvestmentFile } from "#lib/types/investment.js";
 
   type TeamsMode = "stygian" | "abyss" | "simulated";
 
@@ -197,7 +197,7 @@
                   >
                 </span>
                 <a
-                  href={resolve(`/teams/${row.team.team_key}`)}
+                  href={resolve(`teams/${row.team.team_key}`)}
                   class="team-hand-link"
                 >
                   View team details →

@@ -11,12 +11,12 @@ import type {
   InventoryArtifact,
   InventoryWeapon,
   RosterProgress,
-} from "$lib/definitions";
-import { cloneRosterProgress } from "$lib/roster-progress";
+} from "#lib/definitions.js";
+import { cloneRosterProgress } from "#lib/roster-progress.js";
 import {
   cloneInventoryArtifact,
   cloneInventoryWeapon,
-} from "$lib/roster-inventory";
+} from "#lib/roster-inventory.js";
 
 export const ROSTER_STORAGE_KEY = "charactersOwned";
 

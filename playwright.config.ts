@@ -11,6 +11,7 @@ const onCI = !!process.env.CI;
 /**
  * Pin IPv4 — on Windows Vite may listen on [::1] only, while Playwright probes
  * http://127.0.0.1:5173 and times out waiting for the webServer URL.
+ * adapter-node 6 ignores ORIGIN; the request Host is the origin.
  */
 const webServerCommand = onCI
   ? "pnpm build && PORT=5173 HOST=127.0.0.1 ORIGIN=http://127.0.0.1:5173 node build"

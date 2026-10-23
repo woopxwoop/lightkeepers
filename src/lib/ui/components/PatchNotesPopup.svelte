@@ -3,19 +3,19 @@
    * One-shot popup for the latest patch note when the visitor hasn't
    * acknowledged it yet (first visit or a newer note after a prior dismiss).
    */
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { onMount, tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import Button from "$lib/ui/components/Button.svelte";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
+  import Button from "#lib/ui/components/Button.svelte";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
   import {
     readSeenPatchNoteSlug,
     shouldShowPatchNotesPopup,
     writeSeenPatchNoteSlug,
-  } from "$lib/patch-notes-seen";
+  } from "#lib/patch-notes-seen.js";
 
   let {
     note,
@@ -31,7 +31,7 @@
   let open = $state(false);
   let dialogEl: HTMLElement | null = $state(null);
 
-  const patchNotesBase = resolve("/patch-notes");
+  const patchNotesBase = resolve("patch-notes");
 
   function formatDate(iso: string): string {
     const [y, m, d] = iso.split("-").map(Number);
@@ -95,7 +95,6 @@
       browser && document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-
     const focusableSelector =
       'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -180,7 +179,7 @@
         <Button variant="ghost" onclick={acknowledge}>Got it</Button>
         <a
           class="popup-read"
-          href={resolve(`/patch-notes/${note.slug}`)}
+          href={resolve(`patch-notes/${note.slug}`)}
           onclick={acknowledge}
         >
           Read note

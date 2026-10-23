@@ -2,11 +2,14 @@
  * Client helpers for the rotation sample swimlane UI.
  * CDN events stay raw; collapse/abbrev happen at display time.
  */
-import { matchScriptLoops, type ScriptLoopMatch } from "$lib/rotation-script";
+import {
+  matchScriptLoops,
+  type ScriptLoopMatch,
+} from "#lib/rotation-script.js";
 import type {
   RotationAction,
   RotationSampleEvent,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 
 export const ROTATION_ACTION_ABBREV = {
   skill: "E",
@@ -87,9 +90,7 @@ export function formatCollapsedActionLabel(
  * Atomic KQM tokens for one collapsed event (before cancel-jamming /
  * repeat compression). Swaps are omitted — emitted as `>` between blocks.
  */
-export function formatKqmActionTokens(
-  event: CollapsedRotationEvent,
-): string[] {
+export function formatKqmActionTokens(event: CollapsedRotationEvent): string[] {
   const n = Math.max(1, event.count);
   switch (event.action) {
     case "attack":
@@ -218,9 +219,7 @@ export function formatRotationPlaintext(
     }
     segments[segments.length - 1]!.push(block.text);
   }
-  return segments
-    .filter((seg) => seg.length > 0)
-    .map((seg) => seg.join(" > "));
+  return segments.filter((seg) => seg.length > 0).map((seg) => seg.join(" > "));
 }
 
 /** True when the first cut is setup → loop, not loop → loop. */
@@ -233,10 +232,7 @@ export function rotationHasSetupPrefix(
 }
 
 /** `setup`, `rotation 1`, `rotation 2`, … for plaintext / divider labels. */
-export function rotationSegmentLabel(
-  index: number,
-  hasSetup: boolean,
-): string {
+export function rotationSegmentLabel(index: number, hasSetup: boolean): string {
   if (hasSetup) {
     return index <= 0 ? "setup" : `rotation ${index}`;
   }
@@ -520,7 +516,13 @@ export function detectRotationWindow(
     if (sw && sw.t > 0) loopEndsS.push(sw.t);
   }
   // Setup + first loop, inclusive of the next-cycle swap at loopEndS.
-  return { startS: 0, endS: loopEndS, loopEndS, loopEndsS, period: best.period };
+  return {
+    startS: 0,
+    endS: loopEndS,
+    loopEndS,
+    loopEndsS,
+    period: best.period,
+  };
 }
 
 /**
@@ -530,7 +532,8 @@ export function detectRotationWindow(
  */
 export function sliceRotationWindow(
   events: readonly CollapsedRotationEvent[],
-  window: number | { startS?: number; endS: number } = DEFAULT_ROTATION_WINDOW_S,
+  window:
+    number | { startS?: number; endS: number } = DEFAULT_ROTATION_WINDOW_S,
 ): CollapsedRotationEvent[] {
   if (typeof window === "number") {
     if (!(window > 0)) return [...events];

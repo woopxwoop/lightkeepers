@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { primaryUpgradePct, type UpgradeTier } from "$lib/upgrade-priority";
+  import {
+    primaryUpgradePct,
+    type UpgradeTier,
+  } from "#lib/upgrade-priority.js";
   import InfoPopover from "./InfoPopover.svelte";
 
   let {

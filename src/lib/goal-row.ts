@@ -1,8 +1,8 @@
-import { assetUrl } from "$lib/asset-urls";
-import type { CalculatorGoal } from "$lib/types/calculator-goals";
-import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-import { maxLevelForAscension } from "$lib/upgrade-costs";
-import { getCharacterPortrait } from "$lib/utils";
+import { assetUrl } from "#lib/asset-urls.js";
+import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
+import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+import { maxLevelForAscension } from "#lib/upgrade-costs.js";
+import { getCharacterPortrait } from "#lib/utils.js";
 
 /** Square icon for a planner goal row. */
 export function goalRowIcon(

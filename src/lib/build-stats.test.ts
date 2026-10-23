@@ -154,7 +154,9 @@ describe("computeRosterSheetStats", () => {
     const base = resolveCharacterBaseStats("HuTao", 90, 6)!;
     const homa = weaponByKey.get("StaffOfHoma")!;
     assert.equal(sheet.flatHp, 4780);
-    assert.ok(Math.abs(sheet.critRate - (base.baseCritRate + 0.311 + 0.1)) < 1e-9);
+    assert.ok(
+      Math.abs(sheet.critRate - (base.baseCritRate + 0.311 + 0.1)) < 1e-9,
+    );
     assert.equal(sheet.eleMas, 23);
     assert.equal(sheet.dmgBonus.pyro_dmg_, 0.466);
     assert.equal(sheet.hp, base.hp + 4780);
@@ -183,9 +185,7 @@ describe("computeRosterSheetStats", () => {
     });
     assert.ok(sheet70);
     const char70 = resolveCharacterBaseStats("HuTao", 70, 5)!;
-    assert.ok(
-      Math.abs(sheet70.atk - (char70.atk + l70.baseAtk)) < 1e-6,
-    );
+    assert.ok(Math.abs(sheet70.atk - (char70.atk + l70.baseAtk)) < 1e-6);
   });
 
   it("uses ReliquaryLevel mains for piece rarity/level", () => {
@@ -266,9 +266,7 @@ describe("computeRosterSheetStats", () => {
             SUBSTAT_ROLL_VALUE.critDMG_! * 4),
       ) < 1e-9,
     );
-    assert.ok(
-      Math.abs(sheet.eleMas - SUBSTAT_ROLL_VALUE.eleMas! * 2) < 1e-9,
-    );
+    assert.ok(Math.abs(sheet.eleMas - SUBSTAT_ROLL_VALUE.eleMas! * 2) < 1e-9);
     assert.equal(sheet.hp, base.hp * (1 + sheet.hpPct) + sheet.flatHp);
     assert.equal(
       sheet.atk,

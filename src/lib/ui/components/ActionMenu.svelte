@@ -11,7 +11,7 @@
 
 <script lang="ts">
   import { tick } from "svelte";
-  import IconEllipsis from "$lib/ui/icons/IconEllipsis.svelte";
+  import IconEllipsis from "#lib/ui/icons/IconEllipsis.svelte";
 
   let {
     label,

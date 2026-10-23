@@ -18,8 +18,8 @@ import {
   artifactSetByKey,
   type WeaponData,
   type ArtifactSetData,
-} from "$lib/equipment-data";
-import { artifactIconUrl } from "$lib/asset-urls";
+} from "#lib/equipment-data.js";
+import { artifactIconUrl } from "#lib/asset-urls.js";
 
 export type EquipmentData = {
   /** Bumps when the tables finish loading. Read it to take a dependency. */

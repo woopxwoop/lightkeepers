@@ -12,34 +12,34 @@
     isIconCompact,
     charactersOwned,
     hasSavedRoster,
-  } from "$lib/stores";
+  } from "#lib/stores.js";
   import {
     orderMembersLeadFirst,
     pickTopMainDpsGroups,
     type InfographicSlot,
     type MainDpsTeamGroup,
-  } from "$lib/infographic-teams";
-  import { getEnemyAsset } from "$lib/utils";
-  import type { AbyssTeam, StygianTeam } from "$lib/definitions";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
-  import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
-  import { trapTabKey } from "$lib/ui/focus-trap";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
+  } from "#lib/infographic-teams.js";
+  import { getEnemyAsset } from "#lib/utils.js";
+  import type { AbyssTeam, StygianTeam } from "#lib/definitions.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import SegmentedControl from "#lib/ui/components/SegmentedControl.svelte";
+  import CharacterTagSearch from "#lib/ui/components/CharacterTagSearch.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import { handleKeyboardClick, handlePointerAction } from "#lib/ui/pointer.js";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { isOwnedNameId, ownedNameIds } from "$lib/utils";
-  import { abyssPath, settingsPath, stygianPath } from "$lib/ui/nav-links";
-  import { authClient } from "$lib/auth-client";
-  import { needsRosterSetup } from "$lib/roster-setup";
-  import type { Tables } from "$lib/types/database.types";
+  import { isOwnedNameId, ownedNameIds } from "#lib/utils.js";
+  import { abyssPath, settingsPath, stygianPath } from "#lib/ui/nav-links.js";
+  import { authClient } from "#lib/auth-client.js";
+  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import type { Tables } from "#lib/types/database.types.js";
 
   const ABYSS_SLOTS = ["top", "bottom"] as const;
   const STYGIAN_SLOTS = ["top", "middle", "bottom"] as const;
@@ -250,7 +250,8 @@
 
   /** Autocomplete pool: On-Field DPS on this mode's board (respects owned filter). */
   let dpsOptions = $derived.by(() => {
-    const cols = mode === "abyss" ? abyssColumnsPrepared : stygianColumnsPrepared;
+    const cols =
+      mode === "abyss" ? abyssColumnsPrepared : stygianColumnsPrepared;
     const ids = new Set<string>();
     for (const col of cols) {
       for (const g of col.pool) ids.add(g.mainDps);
@@ -261,7 +262,8 @@
   });
 
   let activeRawGroupCount = $derived.by(() => {
-    const cols = mode === "abyss" ? abyssColumnsPrepared : stygianColumnsPrepared;
+    const cols =
+      mode === "abyss" ? abyssColumnsPrepared : stygianColumnsPrepared;
     return cols.find((c) => c.slot === activeSlot)?.pool.length ?? 0;
   });
 

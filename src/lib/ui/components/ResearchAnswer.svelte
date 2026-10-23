@@ -7,14 +7,14 @@
   import {
     collectOwnedResearchGearKeys,
     type ResearchOwnedGearKeys,
-  } from "$lib/app/research";
+  } from "#lib/app/research.js";
   import {
     loadRosterArtifacts,
     loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
-  import { handCharactersFromMembers } from "$lib/character-teams";
-  import type { Character } from "$lib/definitions";
-  import { equipmentVersion } from "$lib/equipment-data";
+  } from "#lib/app/roster-inventory.js";
+  import { handCharactersFromMembers } from "#lib/character-teams.js";
+  import type { Character } from "#lib/definitions.js";
+  import { equipmentVersion } from "#lib/equipment-data.js";
   import {
     RESEARCH_ENTITY_SLOT_ATTR,
     citationShortLabel,
@@ -23,7 +23,7 @@
     renderResearchAnswer,
     renderResearchInline,
     safeExternalHref,
-  } from "$lib/research-answer";
+  } from "#lib/research-answer.js";
   import type {
     ResearchArtifactOption,
     ResearchCitation,
@@ -35,11 +35,11 @@
     ResearchStatPriority,
     ResearchTeamLineup,
     ResearchView,
-  } from "$lib/research-types";
-  import { charactersOwned } from "$lib/stores";
-  import BuildPanel from "$lib/ui/components/BuildPanel.svelte";
-  import ResearchEntityMention from "$lib/ui/components/ResearchEntityMention.svelte";
-  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
+  } from "#lib/research-types.js";
+  import { charactersOwned } from "#lib/stores.js";
+  import BuildPanel from "#lib/ui/components/BuildPanel.svelte";
+  import ResearchEntityMention from "#lib/ui/components/ResearchEntityMention.svelte";
+  import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
   import { mount, tick, unmount } from "svelte";
 
   let {
@@ -124,7 +124,13 @@
   });
 
   function comparisonBlob(c: ResearchComparison): string[] {
-    const parts = [c.verdict, c.option_a.label, c.option_a.summary, c.option_b.label, c.option_b.summary];
+    const parts = [
+      c.verdict,
+      c.option_a.label,
+      c.option_a.summary,
+      c.option_b.label,
+      c.option_b.summary,
+    ];
     for (const side of [c.option_a, c.option_b]) {
       for (const b of side.bullets ?? []) parts.push(b);
     }
@@ -212,7 +218,12 @@
   let verdictHtml = $derived.by(() => {
     void $equipmentVersion;
     if (!comparison?.verdict) return null;
-    return renderResearchInline(comparison.verdict, entities, citations, renderOpts);
+    return renderResearchInline(
+      comparison.verdict,
+      entities,
+      citations,
+      renderOpts,
+    );
   });
 
   let sides = $derived.by(() => {
@@ -223,8 +234,18 @@
       { key: "b" as const, side: comparison.option_b },
     ].map(({ key, side }) => ({
       key,
-      labelHtml: renderResearchInline(side.label, entities, citations, renderOpts),
-      summaryHtml: renderResearchInline(side.summary, entities, citations, renderOpts),
+      labelHtml: renderResearchInline(
+        side.label,
+        entities,
+        citations,
+        renderOpts,
+      ),
+      summaryHtml: renderResearchInline(
+        side.summary,
+        entities,
+        citations,
+        renderOpts,
+      ),
       bullets: (side.bullets ?? []).map((b) =>
         renderResearchInline(b, entities, citations, renderOpts),
       ),
@@ -441,7 +462,9 @@
 
     void tick().then(() => {
       if (cancelled || !answerRoot) return;
-      const slots = answerRoot.querySelectorAll(`[${RESEARCH_ENTITY_SLOT_ATTR}]`);
+      const slots = answerRoot.querySelectorAll(
+        `[${RESEARCH_ENTITY_SLOT_ATTR}]`,
+      );
       for (const el of slots) {
         if (!(el instanceof HTMLElement)) continue;
         const key = el.getAttribute(RESEARCH_ENTITY_SLOT_ATTR);
@@ -471,7 +494,7 @@
 
 {#if view === "build"}
   <BuildPanel
-    focus_name_id={focus_name_id}
+    {focus_name_id}
     {markdown}
     {entities}
     {citations}
@@ -483,211 +506,224 @@
     ownedGear={ownedGear ?? buildOwnedGear}
   />
 {:else}
-<div class="research-answer" bind:this={answerRoot}>
-  {#if disagreements.length > 0}
-    <aside class="research-disagreements" aria-label="Source disagreements">
-      {#each disagreements as d, i (i)}
-        <p class="research-disagreement">{d.summary}</p>
-      {/each}
-    </aside>
-  {/if}
-
-  <div class="research-body">
-    {@html html}
-  </div>
-
-  {#if sides.length > 0}
-    <section class="research-comparison" aria-label="Option comparison">
-      {#if verdictHtml}
-        <p class="research-comparison-verdict">{@html verdictHtml}</p>
-      {/if}
-      <div class="research-comparison-grid">
-        {#each sides as side, i (side.key)}
-          {#if i === 1}
-            <div class="research-comparison-vs" aria-hidden="true">vs</div>
-          {/if}
-          <div class="research-comparison-side">
-            <h3 class="research-comparison-label">{@html side.labelHtml}</h3>
-            <p class="research-comparison-summary">{@html side.summaryHtml}</p>
-            {#if side.bullets.length > 0}
-              <ul class="research-comparison-bullets">
-                {#each side.bullets as bullet, bi (bi)}
-                  <li>{@html bullet}</li>
-                {/each}
-              </ul>
-            {/if}
-          </div>
+  <div class="research-answer" bind:this={answerRoot}>
+    {#if disagreements.length > 0}
+      <aside class="research-disagreements" aria-label="Source disagreements">
+        {#each disagreements as d, i (i)}
+          <p class="research-disagreement">{d.summary}</p>
         {/each}
-      </div>
-    </section>
-  {/if}
+      </aside>
+    {/if}
 
-  {#if lineupCards.length > 0}
-    <section class="research-teams" aria-label="Recommended teams">
-      {#each lineupCards as team (team.key)}
-        <article class="research-team-card">
-          <header class="research-team-header">
-            <h3 class="research-team-label">{team.label}</h3>
-            {#if team.citeHtml}
-              <span class="research-team-cites">{@html team.citeHtml}</span>
+    <div class="research-body">
+      {@html html}
+    </div>
+
+    {#if sides.length > 0}
+      <section class="research-comparison" aria-label="Option comparison">
+        {#if verdictHtml}
+          <p class="research-comparison-verdict">{@html verdictHtml}</p>
+        {/if}
+        <div class="research-comparison-grid">
+          {#each sides as side, i (side.key)}
+            {#if i === 1}
+              <div class="research-comparison-vs" aria-hidden="true">vs</div>
             {/if}
-          </header>
-          {#if team.hasPortraits}
-            <div class="research-team-hand">
-              <TeamCardHand characters={team.hand} spread="flat" />
-            </div>
-          {:else}
-            <div class="research-team-members">
-              {#each team.members as m (m.id)}
-                {#if m.entity}
-                  <ResearchEntityMention entity={m.entity} />
-                {:else}
-                  <span class="research-team-member-plain">{m.label}</span>
-                {/if}
-              {/each}
-            </div>
-          {/if}
-          {#if team.weaponEntity || team.weaponLabel || team.setEntity || team.setLabel}
-            <div class="research-team-gear">
-              {#if team.weaponEntity}
-                <ResearchEntityMention entity={team.weaponEntity} />
-              {:else if team.weaponLabel}
-                <span class="research-team-gear-plain">{team.weaponLabel}</span>
-              {/if}
-              {#if team.setEntity}
-                <ResearchEntityMention entity={team.setEntity} />
-              {:else if team.setLabel}
-                <span class="research-team-gear-plain">{team.setLabel}</span>
+            <div class="research-comparison-side">
+              <h3 class="research-comparison-label">{@html side.labelHtml}</h3>
+              <p class="research-comparison-summary">
+                {@html side.summaryHtml}
+              </p>
+              {#if side.bullets.length > 0}
+                <ul class="research-comparison-bullets">
+                  {#each side.bullets as bullet, bi (bi)}
+                    <li>{@html bullet}</li>
+                  {/each}
+                </ul>
               {/if}
             </div>
-          {/if}
-          {#if team.notesHtml}
-            <p class="research-team-notes">{@html team.notesHtml}</p>
-          {/if}
-        </article>
-      {/each}
-    </section>
-  {/if}
-
-  {#snippet rankRow(row: (typeof weaponRankRows)[number])}
-    <li class="research-rank-row" class:is-top={row.rank === 1}>
-      <span class="research-rank-num" aria-hidden="true">{row.rank}</span>
-      <div class="research-rank-body">
-        <div class="research-rank-head">
-          {#if row.entity}
-            <ResearchEntityMention entity={row.entity} />
-          {:else}
-            <span class="research-rank-label">{row.label}</span>
-          {/if}
-          {#if row.citeHtml}
-            <span>{@html row.citeHtml}</span>
-          {/if}
+          {/each}
         </div>
-        {#if row.noteHtml}
-          <p class="research-rank-note">{@html row.noteHtml}</p>
-        {/if}
-      </div>
-    </li>
-  {/snippet}
-
-  {#snippet rankSection(
-    title: string,
-    ariaLabel: string,
-    rows: typeof weaponRankRows,
-  )}
-    {#if rows.length > 0}
-      {@const top = rows[0]}
-      {@const rest = rows.slice(1)}
-      <section class="research-ranks" aria-label={ariaLabel}>
-        <h3 class="research-ranks-title">{title}</h3>
-        <ol class="research-rank-list">
-          {@render rankRow(top)}
-        </ol>
-        {#if rest.length > 0}
-          <details class="research-ranks-more">
-            <summary>
-              {rest.length} more {rest.length === 1 ? "option" : "options"}
-            </summary>
-            <ol class="research-rank-list research-rank-list-more" start={2}>
-              {#each rest as row (row.key)}
-                {@render rankRow(row)}
-              {/each}
-            </ol>
-          </details>
-        {/if}
       </section>
     {/if}
-  {/snippet}
 
-  {@render rankSection("Weapons", "Weapon ranking", weaponRankRows)}
-  {@render rankSection("Artifacts", "Artifact ranking", artifactRankRows)}
+    {#if lineupCards.length > 0}
+      <section class="research-teams" aria-label="Recommended teams">
+        {#each lineupCards as team (team.key)}
+          <article class="research-team-card">
+            <header class="research-team-header">
+              <h3 class="research-team-label">{team.label}</h3>
+              {#if team.citeHtml}
+                <span class="research-team-cites">{@html team.citeHtml}</span>
+              {/if}
+            </header>
+            {#if team.hasPortraits}
+              <div class="research-team-hand">
+                <TeamCardHand characters={team.hand} spread="flat" />
+              </div>
+            {:else}
+              <div class="research-team-members">
+                {#each team.members as m (m.id)}
+                  {#if m.entity}
+                    <ResearchEntityMention entity={m.entity} />
+                  {:else}
+                    <span class="research-team-member-plain">{m.label}</span>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
+            {#if team.weaponEntity || team.weaponLabel || team.setEntity || team.setLabel}
+              <div class="research-team-gear">
+                {#if team.weaponEntity}
+                  <ResearchEntityMention entity={team.weaponEntity} />
+                {:else if team.weaponLabel}
+                  <span class="research-team-gear-plain"
+                    >{team.weaponLabel}</span
+                  >
+                {/if}
+                {#if team.setEntity}
+                  <ResearchEntityMention entity={team.setEntity} />
+                {:else if team.setLabel}
+                  <span class="research-team-gear-plain">{team.setLabel}</span>
+                {/if}
+              </div>
+            {/if}
+            {#if team.notesHtml}
+              <p class="research-team-notes">{@html team.notesHtml}</p>
+            {/if}
+          </article>
+        {/each}
+      </section>
+    {/if}
 
-  {#if erRows.length > 0}
-    <section class="research-er" aria-label="Energy recharge targets">
-      {#each erRows as row (row.key)}
-        <article class="research-er-card">
-          <div class="research-er-who">
+    {#snippet rankRow(row: (typeof weaponRankRows)[number])}
+      <li class="research-rank-row" class:is-top={row.rank === 1}>
+        <span class="research-rank-num" aria-hidden="true">{row.rank}</span>
+        <div class="research-rank-body">
+          <div class="research-rank-head">
             {#if row.entity}
               <ResearchEntityMention entity={row.entity} />
             {:else}
-              <span class="research-er-label">{row.label}</span>
+              <span class="research-rank-label">{row.label}</span>
             {/if}
             {#if row.citeHtml}
               <span>{@html row.citeHtml}</span>
             {/if}
           </div>
-          <p class="research-er-range">{row.range}</p>
-          {#if row.contextHtml}
-            <p class="research-er-context">{@html row.contextHtml}</p>
+          {#if row.noteHtml}
+            <p class="research-rank-note">{@html row.noteHtml}</p>
           {/if}
-        </article>
-      {/each}
-    </section>
-  {/if}
+        </div>
+      </li>
+    {/snippet}
 
-  {#if rotationView}
-    <section class="research-rotation" aria-label="Rotation">
-      <ol class="research-rotation-steps">
-        {#each rotationView.steps as step, i (i)}
-          <li>{@html step}</li>
+    {#snippet rankSection(
+      title: string,
+      ariaLabel: string,
+      rows: typeof weaponRankRows,
+    )}
+      {#if rows.length > 0}
+        {@const top = rows[0]}
+        {@const rest = rows.slice(1)}
+        <section class="research-ranks" aria-label={ariaLabel}>
+          <h3 class="research-ranks-title">{title}</h3>
+          <ol class="research-rank-list">
+            {@render rankRow(top)}
+          </ol>
+          {#if rest.length > 0}
+            <details class="research-ranks-more">
+              <summary>
+                {rest.length} more {rest.length === 1 ? "option" : "options"}
+              </summary>
+              <ol class="research-rank-list research-rank-list-more" start={2}>
+                {#each rest as row (row.key)}
+                  {@render rankRow(row)}
+                {/each}
+              </ol>
+            </details>
+          {/if}
+        </section>
+      {/if}
+    {/snippet}
+
+    {@render rankSection("Weapons", "Weapon ranking", weaponRankRows)}
+    {@render rankSection("Artifacts", "Artifact ranking", artifactRankRows)}
+
+    {#if erRows.length > 0}
+      <section class="research-er" aria-label="Energy recharge targets">
+        {#each erRows as row (row.key)}
+          <article class="research-er-card">
+            <div class="research-er-who">
+              {#if row.entity}
+                <ResearchEntityMention entity={row.entity} />
+              {:else}
+                <span class="research-er-label">{row.label}</span>
+              {/if}
+              {#if row.citeHtml}
+                <span>{@html row.citeHtml}</span>
+              {/if}
+            </div>
+            <p class="research-er-range">{row.range}</p>
+            {#if row.contextHtml}
+              <p class="research-er-context">{@html row.contextHtml}</p>
+            {/if}
+          </article>
+        {/each}
+      </section>
+    {/if}
+
+    {#if rotationView}
+      <section class="research-rotation" aria-label="Rotation">
+        <ol class="research-rotation-steps">
+          {#each rotationView.steps as step, i (i)}
+            <li>{@html step}</li>
+          {/each}
+        </ol>
+        {#if rotationView.notesHtml}
+          <p class="research-rotation-notes">{@html rotationView.notesHtml}</p>
+        {/if}
+        {#if rotationView.citeHtml}
+          <span class="research-rotation-cites"
+            >{@html rotationView.citeHtml}</span
+          >
+        {/if}
+      </section>
+    {/if}
+
+    {#if footnotes.length > 0}
+      <ol class="research-footnotes">
+        {#each footnotes as cite (cite.id)}
+          {@const num = citeNum.get(cite.id) ?? 0}
+          {@const href = safeExternalHref(cite.url)}
+          <li
+            id="{citeAnchorPrefix}research-cite-{cite.id}"
+            class="research-footnote"
+          >
+            <span class="research-footnote-num meta-sub" aria-hidden="true"
+              >{num}</span
+            >
+            <div class="research-footnote-body">
+              {#if href}
+                <a
+                  class="research-footnote-link"
+                  {href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {citationShortLabel(cite)}
+                </a>
+              {:else}
+                <span class="research-footnote-link"
+                  >{citationShortLabel(cite)}</span
+                >
+              {/if}
+              <p class="research-footnote-quote meta-sub">{cite.quote}</p>
+            </div>
+          </li>
         {/each}
       </ol>
-      {#if rotationView.notesHtml}
-        <p class="research-rotation-notes">{@html rotationView.notesHtml}</p>
-      {/if}
-      {#if rotationView.citeHtml}
-        <span class="research-rotation-cites">{@html rotationView.citeHtml}</span>
-      {/if}
-    </section>
-  {/if}
-
-  {#if footnotes.length > 0}
-    <ol class="research-footnotes">
-      {#each footnotes as cite (cite.id)}
-        {@const num = citeNum.get(cite.id) ?? 0}
-        {@const href = safeExternalHref(cite.url)}
-        <li id="{citeAnchorPrefix}research-cite-{cite.id}" class="research-footnote">
-          <span class="research-footnote-num meta-sub" aria-hidden="true">{num}</span>
-          <div class="research-footnote-body">
-            {#if href}
-              <a
-                class="research-footnote-link"
-                {href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {citationShortLabel(cite)}
-              </a>
-            {:else}
-              <span class="research-footnote-link">{citationShortLabel(cite)}</span>
-            {/if}
-            <p class="research-footnote-quote meta-sub">{cite.quote}</p>
-          </div>
-        </li>
-      {/each}
-    </ol>
-  {/if}
-</div>
+    {/if}
+  </div>
 {/if}
 
 <style>

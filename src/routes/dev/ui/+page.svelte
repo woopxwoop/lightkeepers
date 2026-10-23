@@ -1,47 +1,47 @@
 <script lang="ts">
-  import { charactersOwned, displayPreferences } from "$lib/stores";
+  import { charactersOwned, displayPreferences } from "#lib/stores.js";
   import {
     THEME_COLOR_KEYS,
     DEFAULT_DARK_COLORS,
     type ThemeColorKey,
-  } from "$lib/stores";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageHeader from "$lib/ui/components/PageHeader.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import Toggle from "$lib/ui/components/Toggle.svelte";
-  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import CharacterSearchSelect from "$lib/ui/components/CharacterSearchSelect.svelte";
-  import PickModal from "$lib/ui/components/PickModal.svelte";
-  import Chip from "$lib/ui/components/Chip.svelte";
-  import Badge from "$lib/ui/components/Badge.svelte";
-  import SlidingTabs from "$lib/ui/components/SlidingTabs.svelte";
-  import CharacterPortraitCard from "$lib/ui/components/CharacterPortraitCard.svelte";
-  import CharacterFilterBar from "$lib/ui/components/CharacterFilterBar.svelte";
-  import BrowseFlipCard from "$lib/ui/components/BrowseFlipCard.svelte";
-  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
-  import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
-  import SolutionDots from "$lib/ui/components/SolutionDots.svelte";
-  import StatRow from "$lib/ui/components/StatRow.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import Team from "$lib/ui/components/Team.svelte";
-  import GameText from "$lib/ui/components/GameText.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
-  import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
-  import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
-  import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
-  import RosterBuildCard from "$lib/ui/components/RosterBuildCard.svelte";
-  import IconInfo from "$lib/ui/icons/IconInfo.svelte";
-  import IconFilter from "$lib/ui/icons/IconFilter.svelte";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import IconUser from "$lib/ui/icons/IconUser.svelte";
-  import IconMonitor from "$lib/ui/icons/IconMonitor.svelte";
-  import IconCloudUp from "$lib/ui/icons/IconCloudUp.svelte";
-  import { ELEMENT_COLORS, elementColor } from "$lib/element-colors";
+  } from "#lib/stores.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageHeader from "#lib/ui/components/PageHeader.svelte";
+  import Surface from "#lib/ui/components/Surface.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import Toggle from "#lib/ui/components/Toggle.svelte";
+  import SegmentedControl from "#lib/ui/components/SegmentedControl.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import CharacterSearchSelect from "#lib/ui/components/CharacterSearchSelect.svelte";
+  import PickModal from "#lib/ui/components/PickModal.svelte";
+  import Chip from "#lib/ui/components/Chip.svelte";
+  import Badge from "#lib/ui/components/Badge.svelte";
+  import SlidingTabs from "#lib/ui/components/SlidingTabs.svelte";
+  import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
+  import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
+  import BrowseFlipCard from "#lib/ui/components/BrowseFlipCard.svelte";
+  import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
+  import CharacterTagSearch from "#lib/ui/components/CharacterTagSearch.svelte";
+  import SolutionDots from "#lib/ui/components/SolutionDots.svelte";
+  import StatRow from "#lib/ui/components/StatRow.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import Team from "#lib/ui/components/Team.svelte";
+  import GameText from "#lib/ui/components/GameText.svelte";
+  import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
+  import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
+  import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
+  import UsageSeriesChart from "#lib/ui/components/UsageSeriesChart.svelte";
+  import RosterBuildCard from "#lib/ui/components/RosterBuildCard.svelte";
+  import IconInfo from "#lib/ui/icons/IconInfo.svelte";
+  import IconFilter from "#lib/ui/icons/IconFilter.svelte";
+  import IconCog from "#lib/ui/icons/IconCog.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
+  import IconUser from "#lib/ui/icons/IconUser.svelte";
+  import IconMonitor from "#lib/ui/icons/IconMonitor.svelte";
+  import IconCloudUp from "#lib/ui/icons/IconCloudUp.svelte";
+  import { ELEMENT_COLORS, elementColor } from "#lib/element-colors.js";
   import type {
     AbyssTeam,
     CharacterAnalyticsMode,
@@ -49,40 +49,40 @@
     CharacterOwned,
     InventoryArtifact,
     InventoryWeapon,
-  } from "$lib/definitions";
+  } from "#lib/definitions.js";
   import {
     getNamecardUrl,
     siteAssetUrl,
     statIconUrl,
     toGoodKey,
     weaponTypeLabel,
-  } from "$lib/utils";
-  import { isNewCharacter } from "$lib/is-new-character";
+  } from "#lib/utils.js";
+  import { isNewCharacter } from "#lib/is-new-character.js";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "$lib/character-filter";
+  } from "#lib/character-filter.js";
   import {
     fetchCharacterAnalytics,
     isAbortError,
-  } from "$lib/app/character-analytics";
+  } from "#lib/app/character-analytics.js";
   import {
     ensureEquipmentData,
     equipmentVersion,
     weaponByKey,
     weaponIconSrc,
-  } from "$lib/equipment-data";
+  } from "#lib/equipment-data.js";
   import {
     getRosterArtifactsCached,
     getRosterWeaponsCached,
     loadRosterArtifacts,
     loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
+  } from "#lib/app/roster-inventory.js";
   import {
     rosterBuildViewFromOwned,
     type RosterBuildView,
-  } from "$lib/roster-build-card";
+  } from "#lib/roster-build-card.js";
 
   void ensureEquipmentData().catch(() => {});
 
@@ -969,208 +969,213 @@
     </div>
   </section>
 
-  <!-- ── Solution board chrome study ──────────────────────────────────── -->
-  {#snippet sbcPager()}
-    <div class="sbc-pager">
-      <button type="button" class="sbc-pager-btn" aria-label="Previous" disabled>
-        <IconChevronDown size={16} strokeWidth={2.25} />
-      </button>
-      <button
-        type="button"
-        class="sbc-pager-btn sbc-pager-btn-next"
-        aria-label="Next"
-        disabled
+  <section class="gallery-section" id="solution-board-chrome">
+    <!-- ── Solution board chrome study ──────────────────────────────────── -->
+    {#snippet sbcPager()}
+      <div class="sbc-pager">
+        <button
+          type="button"
+          class="sbc-pager-btn"
+          aria-label="Previous"
+          disabled
+        >
+          <IconChevronDown size={16} strokeWidth={2.25} />
+        </button>
+        <button
+          type="button"
+          class="sbc-pager-btn sbc-pager-btn-next"
+          aria-label="Next"
+          disabled
+        >
+          <IconChevronDown size={16} strokeWidth={2.25} />
+        </button>
+      </div>
+    {/snippet}
+
+    {#snippet abyssBoard(proposed: boolean)}
+      <Surface
+        flush
+        class="solution-board sbc-board{proposed ? ' sbc-proposed' : ''}"
       >
-        <IconChevronDown size={16} strokeWidth={2.25} />
-      </button>
-    </div>
-  {/snippet}
-
-  {#snippet abyssBoard(proposed: boolean)}
-    <Surface
-      flush
-      class="solution-board sbc-board{proposed ? ' sbc-proposed' : ''}"
-    >
-      <div class="sbc-head">
-        <div class="sbc-head-left">
-          <span class="eyebrow sbc-eyebrow">
-            Solution 1 <span class="sbc-eyebrow-total">of 4</span>
-          </span>
+        <div class="sbc-head">
+          <div class="sbc-head-left">
+            <span class="eyebrow sbc-eyebrow">
+              Solution 1 <span class="sbc-eyebrow-total">of 4</span>
+            </span>
+          </div>
+          <div class="sbc-actions">
+            <span class="sbc-enemy-toggle" aria-hidden="true">
+              <span>Enemies</span>
+              <IconChevronDown size={14} strokeWidth={2.25} />
+            </span>
+            {@render sbcPager()}
+          </div>
         </div>
-        <div class="sbc-actions">
-          <span class="sbc-enemy-toggle" aria-hidden="true">
-            <span>Enemies</span>
-            <IconChevronDown size={14} strokeWidth={2.25} />
-          </span>
-          {@render sbcPager()}
-        </div>
-      </div>
-      <div class="sbc-abyss-body">
-        {#each ["Top Half", "Bottom Half"] as halfLabel (halfLabel)}
-          <div class="sbc-abyss-cell">
-            <h3 class="sbc-half-heading">{halfLabel}</h3>
-            <div class="sbc-chamber-strip">
-              <div class="sbc-chambers">
-                {#each [0, 1, 2] as chamber (chamber)}
-                  <div class="sbc-chamber">
-                    <div class="sbc-chamber-enemies">
-                      <span class="sbc-enemy-stub"></span>
-                      <span class="sbc-enemy-stub"></span>
-                      <span class="sbc-enemy-stub"></span>
+        <div class="sbc-abyss-body">
+          {#each ["Top Half", "Bottom Half"] as halfLabel (halfLabel)}
+            <div class="sbc-abyss-cell">
+              <h3 class="sbc-half-heading">{halfLabel}</h3>
+              <div class="sbc-chamber-strip">
+                <div class="sbc-chambers">
+                  {#each [0, 1, 2] as chamber (chamber)}
+                    <div class="sbc-chamber">
+                      <div class="sbc-chamber-enemies">
+                        <span class="sbc-enemy-stub"></span>
+                        <span class="sbc-enemy-stub"></span>
+                        <span class="sbc-enemy-stub"></span>
+                      </div>
                     </div>
-                  </div>
-                {/each}
+                  {/each}
+                </div>
               </div>
+              {#if demoTeam}
+                <Team
+                  team={demoTeam}
+                  mapping={sampleMap}
+                  missingCharacters={[demoTeam.members[3]]}
+                />
+              {/if}
+              <p class="sbc-rate meta-sub">12% usage</p>
             </div>
-            {#if demoTeam}
-              <Team
-                team={demoTeam}
-                mapping={sampleMap}
-                missingCharacters={[demoTeam.members[3]]}
-              />
-            {/if}
-            <p class="sbc-rate meta-sub">12% usage</p>
-          </div>
-        {/each}
-      </div>
-    </Surface>
-  {/snippet}
+          {/each}
+        </div>
+      </Surface>
+    {/snippet}
 
-  {#snippet stygianBoard(proposed: boolean)}
-    <Surface
-      flush
-      class="solution-board sbc-board{proposed ? ' sbc-proposed' : ''}"
-    >
-      <div class="sbc-head">
-        <div class="sbc-head-left sbc-head-left-stack">
-          <span class="eyebrow sbc-eyebrow">
-            Solution 1 <span class="sbc-eyebrow-total">of 4</span>
-          </span>
-          <p class="sbc-mode-hint">Balanced · ownership-aware clears</p>
-        </div>
-        <div class="sbc-actions">
-          <span class="sbc-mode-label">Balanced</span>
-          {@render sbcPager()}
-        </div>
-      </div>
-      <div class="sbc-stygian-body">
-        {#each [1, 2, 3] as field (field)}
-          <div class="sbc-stygian-cell">
-            <div
-              class="sbc-field-hero"
-              style="background-image: url('{sbcStygianBanner}');"
-            >
-              <div class="sbc-field-scrim" aria-hidden="true"></div>
-              <h3 class="sbc-field-title">Field {field}</h3>
-              <div class="sbc-hero-body">
-                {#if demoTeam}
-                  <Team
-                    team={demoTeam}
-                    mapping={sampleMap}
-                    missingCharacters={[demoTeam.members[3]]}
-                  />
-                {/if}
-              </div>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </Surface>
-  {/snippet}
-
-  {#snippet abyssBoardUnboxed()}
-    <div class="sbc-open sbc-open-abyss">
-      <div class="sbc-open-head">
-        <div class="sbc-head-left">
-          <span class="eyebrow sbc-eyebrow">
-            Solution 1 <span class="sbc-eyebrow-total">of 4</span>
-          </span>
-        </div>
-        <div class="sbc-actions">
-          <span class="sbc-enemy-toggle" aria-hidden="true">
-            <span>Enemies</span>
-            <IconChevronDown size={14} strokeWidth={2.25} />
-          </span>
-          {@render sbcPager()}
-        </div>
-      </div>
-      <div class="sbc-open-abyss-body">
-        {#each ["Top Half", "Bottom Half"] as halfLabel (halfLabel)}
-          <div class="sbc-open-abyss-cell">
-            <h3 class="sbc-half-heading">{halfLabel}</h3>
-            <div class="sbc-chamber-strip">
-              <div class="sbc-chambers">
-                {#each [0, 1, 2] as chamber (chamber)}
-                  <div class="sbc-chamber">
-                    <div class="sbc-chamber-enemies">
-                      <span class="sbc-enemy-stub"></span>
-                      <span class="sbc-enemy-stub"></span>
-                      <span class="sbc-enemy-stub"></span>
-                    </div>
-                  </div>
-                {/each}
-              </div>
-            </div>
-            {#if demoTeam}
-              <Team
-                team={demoTeam}
-                mapping={sampleMap}
-                missingCharacters={[demoTeam.members[3]]}
-              />
-            {/if}
-            <p class="sbc-rate meta-sub">12% usage</p>
-          </div>
-        {/each}
-      </div>
-    </div>
-  {/snippet}
-
-  {#snippet stygianBoardUnboxed()}
-    <div class="sbc-open sbc-open-stygian">
-      <div class="sbc-open-head">
-        <div class="sbc-head-left sbc-head-left-stack">
-          <span class="eyebrow sbc-eyebrow">
-            Solution 1 <span class="sbc-eyebrow-total">of 4</span>
-          </span>
-          <p class="sbc-mode-hint">Balanced · ownership-aware clears</p>
-        </div>
-        <div class="sbc-actions">
-          <span class="sbc-mode-label">Balanced</span>
-          {@render sbcPager()}
-        </div>
-      </div>
-      <div
-        class="sbc-stage"
-        style="background-image: url('{sbcStygianBanner}');"
+    {#snippet stygianBoard(proposed: boolean)}
+      <Surface
+        flush
+        class="solution-board sbc-board{proposed ? ' sbc-proposed' : ''}"
       >
-        <div class="sbc-stage-scrim" aria-hidden="true"></div>
-        <div class="sbc-stage-seats">
+        <div class="sbc-head">
+          <div class="sbc-head-left sbc-head-left-stack">
+            <span class="eyebrow sbc-eyebrow">
+              Solution 1 <span class="sbc-eyebrow-total">of 4</span>
+            </span>
+            <p class="sbc-mode-hint">Balanced · ownership-aware clears</p>
+          </div>
+          <div class="sbc-actions">
+            <span class="sbc-mode-label">Balanced</span>
+            {@render sbcPager()}
+          </div>
+        </div>
+        <div class="sbc-stygian-body">
           {#each [1, 2, 3] as field (field)}
-            <div class="sbc-stage-seat">
-              <h3 class="sbc-stage-field-title">Field {field}</h3>
-              <div class="sbc-stage-seat-body">
-                {#if demoTeam}
-                  <Team
-                    team={demoTeam}
-                    mapping={sampleMap}
-                    missingCharacters={[demoTeam.members[3]]}
-                  />
-                {/if}
+            <div class="sbc-stygian-cell">
+              <div
+                class="sbc-field-hero"
+                style="background-image: url('{sbcStygianBanner}');"
+              >
+                <div class="sbc-field-scrim" aria-hidden="true"></div>
+                <h3 class="sbc-field-title">Field {field}</h3>
+                <div class="sbc-hero-body">
+                  {#if demoTeam}
+                    <Team
+                      team={demoTeam}
+                      mapping={sampleMap}
+                      missingCharacters={[demoTeam.members[3]]}
+                    />
+                  {/if}
+                </div>
               </div>
             </div>
           {/each}
         </div>
-      </div>
-    </div>
-  {/snippet}
+      </Surface>
+    {/snippet}
 
-  <section class="gallery-section" id="solution-board-chrome">
+    {#snippet abyssBoardUnboxed()}
+      <div class="sbc-open sbc-open-abyss">
+        <div class="sbc-open-head">
+          <div class="sbc-head-left">
+            <span class="eyebrow sbc-eyebrow">
+              Solution 1 <span class="sbc-eyebrow-total">of 4</span>
+            </span>
+          </div>
+          <div class="sbc-actions">
+            <span class="sbc-enemy-toggle" aria-hidden="true">
+              <span>Enemies</span>
+              <IconChevronDown size={14} strokeWidth={2.25} />
+            </span>
+            {@render sbcPager()}
+          </div>
+        </div>
+        <div class="sbc-open-abyss-body">
+          {#each ["Top Half", "Bottom Half"] as halfLabel (halfLabel)}
+            <div class="sbc-open-abyss-cell">
+              <h3 class="sbc-half-heading">{halfLabel}</h3>
+              <div class="sbc-chamber-strip">
+                <div class="sbc-chambers">
+                  {#each [0, 1, 2] as chamber (chamber)}
+                    <div class="sbc-chamber">
+                      <div class="sbc-chamber-enemies">
+                        <span class="sbc-enemy-stub"></span>
+                        <span class="sbc-enemy-stub"></span>
+                        <span class="sbc-enemy-stub"></span>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+              {#if demoTeam}
+                <Team
+                  team={demoTeam}
+                  mapping={sampleMap}
+                  missingCharacters={[demoTeam.members[3]]}
+                />
+              {/if}
+              <p class="sbc-rate meta-sub">12% usage</p>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/snippet}
+
+    {#snippet stygianBoardUnboxed()}
+      <div class="sbc-open sbc-open-stygian">
+        <div class="sbc-open-head">
+          <div class="sbc-head-left sbc-head-left-stack">
+            <span class="eyebrow sbc-eyebrow">
+              Solution 1 <span class="sbc-eyebrow-total">of 4</span>
+            </span>
+            <p class="sbc-mode-hint">Balanced · ownership-aware clears</p>
+          </div>
+          <div class="sbc-actions">
+            <span class="sbc-mode-label">Balanced</span>
+            {@render sbcPager()}
+          </div>
+        </div>
+        <div
+          class="sbc-stage"
+          style="background-image: url('{sbcStygianBanner}');"
+        >
+          <div class="sbc-stage-scrim" aria-hidden="true"></div>
+          <div class="sbc-stage-seats">
+            {#each [1, 2, 3] as field (field)}
+              <div class="sbc-stage-seat">
+                <h3 class="sbc-stage-field-title">Field {field}</h3>
+                <div class="sbc-stage-seat-body">
+                  {#if demoTeam}
+                    <Team
+                      team={demoTeam}
+                      mapping={sampleMap}
+                      missingCharacters={[demoTeam.members[3]]}
+                    />
+                  {/if}
+                </div>
+              </div>
+            {/each}
+          </div>
+        </div>
+      </div>
+    {/snippet}
+
     <div class="section-head">
       <p class="concept-kicker">Route study · Abyss / Stygian boards</p>
       <h2>Solution board chrome</h2>
       <p>
-        Three steps: Current (white widget) → Proposed (cream box) → Unboxed
-        (no card / one composition). Chamber and field art stay in spirit.
+        Three steps: Current (white widget) → Proposed (cream box) → Unboxed (no
+        card / one composition). Chamber and field art stay in spirit.
       </p>
     </div>
 
@@ -1372,9 +1377,9 @@
         <h2>Roster build card</h2>
         <p>
           Near-1:1 Enka card host. Settings will pass
-          <code>editing=&quot;always&quot;</code> (one-tap cons, level /
-          ascension, talent steppers; hover preview on desktop). Layout stays
-          scrollable on narrow viewports.
+          <code>editing=&quot;always&quot;</code> (one-tap cons, level / ascension,
+          talent steppers; hover preview on desktop). Layout stays scrollable on narrow
+          viewports.
         </p>
       </div>
       <div class="concept-picker" role="group" aria-label="Build card sections">
@@ -1391,14 +1396,12 @@
           active={rbcShowWeapon}
           onclick={() => (rbcShowWeapon = !rbcShowWeapon)}>Weapon</Chip
         >
-        <Chip
-          active={rbcShowSets}
-          onclick={() => (rbcShowSets = !rbcShowSets)}>Sets</Chip
+        <Chip active={rbcShowSets} onclick={() => (rbcShowSets = !rbcShowSets)}
+          >Sets</Chip
         >
         <Chip
           active={rbcShowArtifacts}
-          onclick={() => (rbcShowArtifacts = !rbcShowArtifacts)}
-          >Artifacts</Chip
+          onclick={() => (rbcShowArtifacts = !rbcShowArtifacts)}>Artifacts</Chip
         >
         <Chip
           active={rbcShowSubstats}
@@ -1409,14 +1412,16 @@
 
     <p class="concept-note">
       Fixture uses Hu Tao + Crimson Witch / Shim 4+1. Toggle “Live inventory” to
-      bind the first owned character that has gear in the GOOD bag (after import).
-      Narrow viewports keep Enka column math via horizontal scroll.
+      bind the first owned character that has gear in the GOOD bag (after
+      import). Narrow viewports keep Enka column math via horizontal scroll.
     </p>
 
     <div class="rbc-toolbar">
       <label class="rbc-live">
         <Toggle bind:pressed={rbcUseLive} aria-label="Use live inventory" />
-        <span>Live inventory{#if rbcInvLoading}…{/if}</span>
+        <span
+          >Live inventory{#if rbcInvLoading}…{/if}</span
+        >
       </label>
       {#if rbcUseLive && !rbcLiveView}
         <span class="token-meta"
@@ -2388,7 +2393,7 @@
   <section class="gallery-section" id="components">
     <div class="section-head">
       <h2>Existing components</h2>
-      <p>Shared modules under <code>$lib/ui</code>.</p>
+      <p>Shared modules under <code>#lib/ui</code>.</p>
     </div>
 
     <div class="control-stack">

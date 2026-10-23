@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import type { CharacterPortraitRef } from "$lib/definitions";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import { elementBg, elementColor } from "$lib/element-colors";
+  import type { CharacterPortraitRef } from "#lib/definitions.js";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import { elementBg, elementColor } from "#lib/element-colors.js";
 
   let {
     character,

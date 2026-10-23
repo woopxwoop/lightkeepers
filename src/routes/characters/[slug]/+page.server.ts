@@ -3,9 +3,9 @@ import type { PageServerLoad } from "./$types";
 import {
   getCharacterKitResult,
   getTravelerElementKits,
-} from "$lib/server/character-kit";
-import { getCharacterSummary } from "$lib/server/character-summary";
-import { simCharacterKey } from "$lib/utils";
+} from "#lib/server/character-kit.js";
+import { getCharacterSummary } from "#lib/server/character-summary.js";
+import { simCharacterKey } from "#lib/utils.js";
 
 /** null = no such character (404); a throw = CDN trouble, so 503 not 404. */
 async function loadKit(slug: string) {

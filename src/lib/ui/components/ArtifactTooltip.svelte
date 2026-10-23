@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { useArtifactSet } from "$lib/equipment-data.svelte";
-  import type { ArtifactSetData } from "$lib/equipment-data";
+  import { useArtifactSet } from "#lib/equipment-data.svelte.js";
+  import type { ArtifactSetData } from "#lib/equipment-data.js";
   import GameText from "./GameText.svelte";
   import HoverTooltip from "./HoverTooltip.svelte";
 

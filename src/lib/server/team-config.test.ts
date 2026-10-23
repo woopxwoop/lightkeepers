@@ -24,7 +24,9 @@ function streamBody(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
 describe("readBoundedResponseBody", () => {
   it("buffers a streamed response within the limit", async () => {
     const payload = new Uint8Array([1, 2, 3, 4]);
-    const res = new Response(streamBody([payload.slice(0, 2), payload.slice(2)]));
+    const res = new Response(
+      streamBody([payload.slice(0, 2), payload.slice(2)]),
+    );
     const buf = await readBoundedResponseBody(res, MAX);
     assert.ok(buf);
     assert.deepEqual([...buf!], [...payload]);
@@ -156,10 +158,7 @@ describe("parseRotationSample", () => {
       char: "HuTao",
       action: "skill",
     }));
-    assert.equal(
-      parseRotationSample({ ...validRotation, events }),
-      null,
-    );
+    assert.equal(parseRotationSample({ ...validRotation, events }), null);
   });
 
   it("skips malformed events, sorts by t, and normalizes unknown actions", () => {

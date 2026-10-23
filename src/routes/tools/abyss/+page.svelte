@@ -11,8 +11,8 @@
     ensureTeamsOwned,
     ensureStaticBoards,
     hasSavedRoster,
-  } from "$lib/stores";
-  import { solveAbyssWithFallback, SOLVER_REVISION } from "$lib/solver";
+  } from "#lib/stores.js";
+  import { solveAbyssWithFallback, SOLVER_REVISION } from "#lib/solver.js";
   import {
     SOLUTIONS_COUNT,
     boardSlotRate,
@@ -23,22 +23,22 @@
     createMemo,
     rosterFingerprint,
     teamsFingerprint,
-  } from "$lib/board-solutions";
-  import { ownedNameIds } from "$lib/utils";
-  import Team from "$lib/ui/components/Team.svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import Surface from "$lib/ui/components/Surface.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
-  import type { AbyssTeam } from "$lib/definitions";
-  import { getEnemyAsset } from "$lib/utils";
-  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
+  } from "#lib/board-solutions.js";
+  import { ownedNameIds } from "#lib/utils.js";
+  import Team from "#lib/ui/components/Team.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import Surface from "#lib/ui/components/Surface.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
+  import type { AbyssTeam } from "#lib/definitions.js";
+  import { getEnemyAsset } from "#lib/utils.js";
+  import { handleKeyboardClick, handlePointerAction } from "#lib/ui/pointer.js";
   import { resolve } from "$app/paths";
-  import { settingsPath } from "$lib/ui/nav-links";
-  import { authClient } from "$lib/auth-client";
-  import { needsRosterSetup } from "$lib/roster-setup";
+  import { settingsPath } from "#lib/ui/nav-links.js";
+  import { authClient } from "#lib/auth-client.js";
+  import { needsRosterSetup } from "#lib/roster-setup.js";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -112,14 +112,12 @@
   });
 
   let solution = $derived(displaySolutions[safeIndex]);
-
   let loading = $derived(
     !$charactersHydrated ||
       (!$staticBoardsError &&
         !$staticBoardsLoaded &&
         $allTeamsAbyss.length === 0),
   );
-
   let waitingForOwned = $derived(hasOwnedCharacters && !$teamsOwnedLoaded);
 
   let updatedLabel = $derived.by(() => {
@@ -235,7 +233,8 @@
         {#if metaParts.length > 0}
           <span class="page-meta-sep" aria-hidden="true">·</span>
         {/if}
-        <a class="back-link" href={resolve("/tools/abyss/summary")}>Summary</a>
+
+        <a class="back-link" href={resolve("tools/abyss/summary")}>Summary</a>
       </p>
     </div>
   </header>
@@ -261,11 +260,9 @@
       {/snippet}
     </EmptyState>
   {:else if displaySolutions.length === 0}
-    <EmptyState
-      message="No viable clears for your roster right now."
-    >
+    <EmptyState message="No viable clears for your roster right now.">
       {#snippet action()}
-        <a class="pulls-cta" href={resolve("/tools/pulls")}
+        <a class="pulls-cta" href={resolve("tools/pulls")}
           >See pull suggestions</a
         >
       {/snippet}

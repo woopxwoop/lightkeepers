@@ -6,9 +6,13 @@
   import {
     joinBuildInventory,
     type ResearchOwnedGearKeys,
-  } from "$lib/app/research";
-  import { artifactSetByKey, equipmentVersion, weaponByKey } from "$lib/equipment-data";
-  import { useEquipmentData } from "$lib/equipment-data.svelte";
+  } from "#lib/app/research.js";
+  import {
+    artifactSetByKey,
+    equipmentVersion,
+    weaponByKey,
+  } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
   import {
     RESEARCH_ENTITY_SLOT_ATTR,
     citationShortLabel,
@@ -17,21 +21,21 @@
     renderResearchAnswer,
     renderResearchInline,
     safeExternalHref,
-  } from "$lib/research-answer";
+  } from "#lib/research-answer.js";
   import type {
     ResearchArtifactOption,
     ResearchCitation,
     ResearchEntity,
     ResearchRankItem,
     ResearchStatPriority,
-  } from "$lib/research-types";
-  import ArtifactIcon from "$lib/ui/components/ArtifactIcon.svelte";
-  import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
-  import ResearchEntityMention from "$lib/ui/components/ResearchEntityMention.svelte";
-  import WeaponIcon from "$lib/ui/components/WeaponIcon.svelte";
-  import WeaponName from "$lib/ui/components/WeaponName.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
-  import { getCharacterPortrait, translateStatKey } from "$lib/utils";
+  } from "#lib/research-types.js";
+  import ArtifactIcon from "#lib/ui/components/ArtifactIcon.svelte";
+  import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
+  import ResearchEntityMention from "#lib/ui/components/ResearchEntityMention.svelte";
+  import WeaponIcon from "#lib/ui/components/WeaponIcon.svelte";
+  import WeaponName from "#lib/ui/components/WeaponName.svelte";
+  import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
+  import { getCharacterPortrait, translateStatKey } from "#lib/utils.js";
   import { mount, tick, unmount } from "svelte";
 
   let {
@@ -156,10 +160,7 @@
   );
 
   let focusLabel = $derived(
-    characterLabel ??
-      focusEntity?.label ??
-      focus_name_id ??
-      "Character",
+    characterLabel ?? focusEntity?.label ?? focus_name_id ?? "Character",
   );
 
   let entityByWeapon = $derived.by(() => {
@@ -223,13 +224,18 @@
       .join("");
   }
 
-  function resolveWeaponKey(raw: string, entity: ResearchEntity | null): string {
+  function resolveWeaponKey(
+    raw: string,
+    entity: ResearchEntity | null,
+  ): string {
     if (entity?.weapon_key) return entity.weapon_key;
     if (weaponByKey.has(raw)) return raw;
     const compact = raw.replace(/[^A-Za-z0-9]/g, "");
     for (const key of weaponByKey.keys()) {
       if (key.toLowerCase() === raw.toLowerCase()) return key;
-      if (key.replace(/[^A-Za-z0-9]/g, "").toLowerCase() === compact.toLowerCase())
+      if (
+        key.replace(/[^A-Za-z0-9]/g, "").toLowerCase() === compact.toLowerCase()
+      )
         return key;
     }
     return raw;
@@ -241,7 +247,9 @@
     const compact = raw.replace(/[^A-Za-z0-9]/g, "");
     for (const key of artifactSetByKey.keys()) {
       if (key.toLowerCase() === raw.toLowerCase()) return key;
-      if (key.replace(/[^A-Za-z0-9]/g, "").toLowerCase() === compact.toLowerCase())
+      if (
+        key.replace(/[^A-Za-z0-9]/g, "").toLowerCase() === compact.toLowerCase()
+      )
         return key;
     }
     return raw;
@@ -377,7 +385,9 @@
 
     void tick().then(() => {
       if (cancelled || !answerRoot) return;
-      const slots = answerRoot.querySelectorAll(`[${RESEARCH_ENTITY_SLOT_ATTR}]`);
+      const slots = answerRoot.querySelectorAll(
+        `[${RESEARCH_ENTITY_SLOT_ATTR}]`,
+      );
       for (const el of slots) {
         if (!(el instanceof HTMLElement)) continue;
         const key = el.getAttribute(RESEARCH_ENTITY_SLOT_ATTR);
@@ -609,7 +619,8 @@
                 {citationShortLabel(cite)}
               </a>
             {:else}
-              <span class="build-footnote-link">{citationShortLabel(cite)}</span>
+              <span class="build-footnote-link">{citationShortLabel(cite)}</span
+              >
             {/if}
             <p class="build-footnote-quote meta-sub">{cite.quote}</p>
           </div>

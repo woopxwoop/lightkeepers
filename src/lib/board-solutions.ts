@@ -3,7 +3,7 @@
  * Mode-specific markup stays in the route pages.
  */
 
-import { teamSlotFieldRate } from "$lib/slot-fields";
+import { teamSlotFieldRate } from "#lib/slot-fields.js";
 
 export const SOLUTIONS_COUNT = 6;
 

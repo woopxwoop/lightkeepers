@@ -23,7 +23,7 @@
  *
  * ### Displaying assets
  *
- * Prefer `entity.icon` (a `UI_*` stem) via `$lib/asset-urls`:
+ * Prefer `entity.icon` (a `UI_*` stem) via `#lib/asset-urls.js`:
  *
  * | `entity.type`   | typical `icon` prefix     | helper                         |
  * |-----------------|---------------------------|--------------------------------|
@@ -189,11 +189,7 @@ export type ResearchRotation = {
 };
 
 export type ResearchTracePhase =
-  | "intent"
-  | "retrieve"
-  | "static"
-  | "synthesize"
-  | "refuse";
+  "intent" | "retrieve" | "static" | "synthesize" | "refuse";
 
 export type ResearchAnswerPath =
   | "kit_fast_path"
@@ -256,7 +252,7 @@ export type ResearchEntity = {
   /** Hoyoverse/Lightkeepers link ref: `S…` / `P…` / `T…`. */
   kit_ref?: string | null;
   game_id?: number | null;
-  /** `UI_*` icon stem for `$lib/asset-urls` helpers. */
+  /** `UI_*` icon stem for `#lib/asset-urls.js` helpers. */
   icon?: string | null;
   description?: string | null;
   skill_slot?: "normal" | "skill" | "burst" | null;

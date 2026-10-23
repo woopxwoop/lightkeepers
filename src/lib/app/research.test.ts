@@ -6,7 +6,7 @@ import {
   collectOwnedResearchGearKeys,
   joinBuildInventory,
 } from "./research.ts";
-import type { InventoryWeapon } from "$lib/definitions";
+import type { InventoryWeapon } from "#lib/definitions.js";
 
 describe("buildResearchPersonalization", () => {
   it("returns personalize false for empty / unowned roster", () => {
@@ -203,10 +203,7 @@ describe("buildResearchPersonalization", () => {
     const base = {
       characters: [{ isOwned: true, name_id: "Xingqiu" }],
     };
-    assert.equal(
-      buildResearchPersonalization(base).owned_weapons,
-      undefined,
-    );
+    assert.equal(buildResearchPersonalization(base).owned_weapons, undefined);
     assert.equal(
       buildResearchPersonalization({ ...base, inventoryWeapons: null })
         .owned_weapons,

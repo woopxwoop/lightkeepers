@@ -6,7 +6,7 @@
  */
 
 import { error, isHttpError } from "@sveltejs/kit";
-import { buildRpcKey, rpcCache } from "$lib/server/cache";
+import { buildRpcKey, rpcCache } from "#lib/server/cache.js";
 
 type RpcResponse<TRow> = {
   data: TRow[] | null;

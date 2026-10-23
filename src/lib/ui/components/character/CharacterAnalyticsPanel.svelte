@@ -1,28 +1,28 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import UsageSeriesChart from "$lib/ui/components/UsageSeriesChart.svelte";
-  import TeamHandList from "$lib/ui/components/character/TeamHandList.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import UsageSeriesChart from "#lib/ui/components/UsageSeriesChart.svelte";
+  import TeamHandList from "#lib/ui/components/character/TeamHandList.svelte";
   import {
     analyticsCacheKey,
     fetchCharacterAnalytics,
     getCharacterAnalyticsCached,
     isAbortError,
     isTimeoutError,
-  } from "$lib/app/character-analytics";
+  } from "#lib/app/character-analytics.js";
   import {
     dimmedKeysFromMembers,
     handCharactersFromMembers,
-  } from "$lib/character-teams";
+  } from "#lib/character-teams.js";
   import type {
     Character,
     CharacterAnalyticsMode,
     CharacterAnalyticsPayload,
-  } from "$lib/definitions";
+  } from "#lib/definitions.js";
 
   let {
     nameId,

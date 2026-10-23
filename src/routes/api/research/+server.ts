@@ -2,23 +2,23 @@
  * POST /api/research — dev-only proxy to lightkeepers-agent /v1/research.
  * GET — dev diagnostics (env + agent /health).
  */
+import { dev } from "$app/env";
 
-import { dev } from "$app/environment";
-import { env } from "$env/dynamic/private";
-import { error, json } from "@sveltejs/kit";
+import { RESEARCH_AGENT_URL, RESEARCH_API_TOKEN } from "$app/env/private";
+import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
 import {
   E2E_RESEARCH_BUILD_RESPONSE,
   E2E_RESEARCH_RESPONSE,
-} from "$lib/e2e/fixtures";
-import { isPlaywrightE2e } from "$lib/server/e2e";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
+} from "#lib/e2e/fixtures.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import {
   ResearchAgentError,
   fetchResearch,
-} from "$lib/server/research-agent";
-import type { ResearchRequest } from "$lib/research-types";
+} from "#lib/server/research-agent.js";
+import type { ResearchRequest } from "#lib/research-types.js";
 
 /** SvelteKit `error()` only accepts 400–599. */
 function httpErrorStatus(status: number): number {
@@ -31,7 +31,7 @@ export const GET: RequestHandler = async () => {
   if (!dev) error(404, "Not found");
 
   if (isPlaywrightE2e()) {
-    return json({
+    return Response.json({
       configured: true,
       agentUrl: "http://e2e.invalid",
       agent: {
@@ -43,11 +43,11 @@ export const GET: RequestHandler = async () => {
     });
   }
 
-  const agentUrl = env.RESEARCH_AGENT_URL?.replace(/\/$/, "") ?? null;
-  const tokenSet = Boolean(env.RESEARCH_API_TOKEN);
+  const agentUrl = RESEARCH_AGENT_URL?.replace(/\/$/, "") ?? null;
+  const tokenSet = Boolean(RESEARCH_API_TOKEN);
 
   if (!agentUrl || !tokenSet) {
-    return json({
+    return Response.json({
       configured: false,
       agentUrl,
       agent: {
@@ -61,7 +61,7 @@ export const GET: RequestHandler = async () => {
   try {
     const res = await fetchWithTimeout(`${agentUrl}/health`, {}, 8_000);
     const body = (await res.json().catch(() => null)) as unknown;
-    return json({
+    return Response.json({
       configured: true,
       agentUrl,
       agent: {
@@ -69,15 +69,15 @@ export const GET: RequestHandler = async () => {
         body,
         geminiConfigured: Boolean(
           body &&
-            typeof body === "object" &&
-            "gemini_configured" in body &&
-            (body as { gemini_configured?: boolean }).gemini_configured,
+          typeof body === "object" &&
+          "gemini_configured" in body &&
+          (body as { gemini_configured?: boolean }).gemini_configured,
         ),
         deepseekConfigured: Boolean(
           body &&
-            typeof body === "object" &&
-            "deepseek_configured" in body &&
-            (body as { deepseek_configured?: boolean }).deepseek_configured,
+          typeof body === "object" &&
+          "deepseek_configured" in body &&
+          (body as { deepseek_configured?: boolean }).deepseek_configured,
         ),
         defaultLlmProvider:
           body &&
@@ -90,7 +90,7 @@ export const GET: RequestHandler = async () => {
       },
     });
   } catch (err) {
-    return json({
+    return Response.json({
       configured: true,
       agentUrl,
       agent: {
@@ -104,10 +104,7 @@ export const GET: RequestHandler = async () => {
   }
 };
 
-export const POST: RequestHandler = async ({
-  request,
-  getClientAddress,
-}) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (!dev) error(404, "Not found");
 
   let raw: unknown;
@@ -135,9 +132,7 @@ export const POST: RequestHandler = async ({
     typeof body.question === "string" ? body.question.trim() : "";
   const question =
     questionRaw ||
-    (topic === "build"
-      ? `How should I build ${focusNameIds[0]}?`
-      : "");
+    (topic === "build" ? `How should I build ${focusNameIds[0]}?` : "");
   if (!question) error(400, "question is required");
 
   if (isPlaywrightE2e()) {
@@ -149,7 +144,7 @@ export const POST: RequestHandler = async ({
               focusNameIds[0] ?? E2E_RESEARCH_BUILD_RESPONSE.focus_name_id,
           }
         : E2E_RESEARCH_RESPONSE;
-    return json(fixture, {
+    return Response.json(fixture, {
       headers: { "Cache-Control": "no-store" },
     });
   }
@@ -167,7 +162,7 @@ export const POST: RequestHandler = async ({
       mode: body.mode,
       answer_style: body.answer_style,
     });
-    return json(result, {
+    return Response.json(result, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (err) {

@@ -3,55 +3,55 @@
  * Persistence stays in `calculator-goals-snapshot.ts`.
  */
 
-import { loadCharacterSummary } from "$lib/app/character-summary";
+import { loadCharacterSummary } from "#lib/app/character-summary.js";
 import {
   appendGoal,
   createCharacterGoal,
   createWeaponGoal,
   MAX_CALCULATOR_GOALS,
-} from "$lib/calculator-goals";
+} from "#lib/calculator-goals.js";
 import type {
   CharacterOwned,
   CharacterPortraitRef,
   InventoryWeapon,
-} from "$lib/definitions";
-import { isStaleBuildSummary } from "$lib/stale-build-summary";
+} from "#lib/definitions.js";
+import { isStaleBuildSummary } from "#lib/stale-build-summary.js";
 import type {
   CalculatorGoal,
   CalculatorGoalsState,
   CharacterCalculatorGoal,
   WeaponCalculatorGoal,
-} from "$lib/types/calculator-goals";
+} from "#lib/types/calculator-goals.js";
 import type {
   CharacterUpgradeConfig,
   UpgradeCostsCatalog,
   UpgradePromoteStep,
-} from "$lib/types/upgrade-costs";
-import { plannerTargetFromBuilds } from "$lib/planner-targets";
+} from "#lib/types/upgrade-costs.js";
+import { plannerTargetFromBuilds } from "#lib/planner-targets.js";
 import {
   lowestInventoryWeaponByKey,
   plannerStartFromOwnedWeapon,
-} from "$lib/roster-inventory";
+} from "#lib/roster-inventory.js";
 import {
   progressToCharacterStart,
   rosterProgressForNameId,
-} from "$lib/roster-progress";
-import { isOwnedNameId, plannerSimKey, toGoodKey } from "$lib/utils";
+} from "#lib/roster-progress.js";
+import { isOwnedNameId, plannerSimKey, toGoodKey } from "#lib/utils.js";
 import {
   characterMatchesChipFilters,
   type OwnershipFilter,
-} from "$lib/character-filter";
+} from "#lib/character-filter.js";
 import {
   filterWeapons,
   weaponFilterTypeLabel,
   type WeaponFilterState,
-} from "$lib/weapon-filter";
+} from "#lib/weapon-filter.js";
 import {
   MAX_ASCENSION,
   MAX_LEVEL,
   orderCharacterConfigs,
   orderWeaponConfigs,
-} from "$lib/upgrade-costs";
+} from "#lib/upgrade-costs.js";
 
 export type PlannerPickOption = { value: string; label: string };
 

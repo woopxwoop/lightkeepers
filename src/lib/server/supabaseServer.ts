@@ -1,8 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { dev } from "$app/environment";
-import type { Database } from "$lib/types/database.types";
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY } from "$env/static/public";
-import { env } from "$env/dynamic/private";
+import { dev } from "$app/env";
+import type { Database } from "#lib/types/database.types.js";
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY } from "$app/env/public";
+import { PRIVATE_SUPABASE_KEY } from "$app/env/private";
 
 /**
  * Server-only Supabase client.
@@ -14,7 +14,7 @@ import { env } from "$env/dynamic/private";
  * Lazy-init so private keys stay runtime-only (not baked into the Docker image).
  */
 function serviceRoleKey(): string {
-  const key = env.PRIVATE_SUPABASE_KEY;
+  const key = PRIVATE_SUPABASE_KEY;
   if (key) return key;
   if (dev) return PUBLIC_SUPABASE_KEY;
   throw new Error(

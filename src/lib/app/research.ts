@@ -4,7 +4,7 @@ import type {
   InventoryArtifact,
   InventoryWeapon,
   RosterProgress,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 import type {
   ResearchArtifactOption,
   ResearchOwnedCharacter,
@@ -13,7 +13,7 @@ import type {
   ResearchRequest,
   ResearchResponse,
   ResearchLlmProvider,
-} from "$lib/research-types";
+} from "#lib/research-types.js";
 
 /**
  * Match server research-agent budget. Two LLM passes (corpus + personalize)
@@ -194,9 +194,7 @@ function ownedSetHas(owned: ReadonlySet<string>, key: string): boolean {
  * Annotate rank / option rows with owned vs unowned and mark the best owned
  * (lowest rank number among owned keys; for unranked options, first owned).
  */
-export function annotateOwnedRankRows<
-  T extends { key: string; rank?: number },
->(
+export function annotateOwnedRankRows<T extends { key: string; rank?: number }>(
   rows: ReadonlyArray<T>,
   ownedKeys: ReadonlySet<string>,
 ): ResearchOwnedRankRow<T>[] {
@@ -224,7 +222,8 @@ export function annotateOwnedRankRows<
     return {
       ...row,
       owned,
-      bestOwned: owned && bestFold !== null && gearKeyFold(row.key) === bestFold,
+      bestOwned:
+        owned && bestFold !== null && gearKeyFold(row.key) === bestFold,
     };
   });
 }

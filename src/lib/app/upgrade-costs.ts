@@ -2,8 +2,8 @@
  * Lazy client loader for upgrade-cost JSON.
  * Goes through `/api/upgrade-costs` (same-origin) — CDN has no browser CORS.
  */
-import { CDN_FETCH_TIMEOUT_MS } from "$lib/cdn-fetch";
-import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
+import { CDN_FETCH_TIMEOUT_MS } from "#lib/cdn-fetch.js";
+import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
 
 const API_URL = "/api/upgrade-costs";
 

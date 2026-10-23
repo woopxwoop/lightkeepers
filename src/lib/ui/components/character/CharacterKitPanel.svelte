@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import GameText from "$lib/ui/components/GameText.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import { elementColor } from "$lib/element-colors";
+  import GameText from "#lib/ui/components/GameText.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import { elementColor } from "#lib/element-colors.js";
   import {
     availableTravelerElements,
     defaultTravelerElement,
-  } from "$lib/traveler-kits";
-  import { enhanceExtra, type EnhanceExtra } from "$lib/character-kit-text";
-  import { getUiAssetUrl } from "$lib/utils";
-  import { skillIconUrl, talentIconUrl } from "$lib/asset-urls";
-  import type { CharacterKit } from "$lib/types/character-kit";
+  } from "#lib/traveler-kits.js";
+  import { enhanceExtra, type EnhanceExtra } from "#lib/character-kit-text.js";
+  import { getUiAssetUrl } from "#lib/utils.js";
+  import { skillIconUrl, talentIconUrl } from "#lib/asset-urls.js";
+  import type { CharacterKit } from "#lib/types/character-kit.js";
 
   let {
     kit,

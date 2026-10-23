@@ -1,24 +1,24 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { authClient } from "$lib/auth-client";
-  import Button from "$lib/ui/components/Button.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import IconGoogle from "$lib/ui/icons/IconGoogle.svelte";
-  import IconDiscord from "$lib/ui/icons/IconDiscord.svelte";
+  import { authClient } from "#lib/auth-client.js";
+  import Button from "#lib/ui/components/Button.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import IconGoogle from "#lib/ui/icons/IconGoogle.svelte";
+  import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";
   import {
     charactersHydrated,
     charactersOwned,
     invalidateNearMissTeams,
     invalidateTeamsOwned,
     setHasSavedRoster,
-  } from "$lib/stores";
+  } from "#lib/stores.js";
   import {
     captureRoster,
     postRoster,
     writeRosterLocal,
-  } from "$lib/roster-snapshot";
-  import { applyGoodRoster, parseGoodText } from "$lib/good-import";
-  import { serializeGoodDocument } from "$lib/good-export";
+  } from "#lib/roster-snapshot.js";
+  import { applyGoodRoster, parseGoodText } from "#lib/good-import.js";
+  import { serializeGoodDocument } from "#lib/good-export.js";
   import {
     clearRosterInventory,
     getRosterArtifactsCached,
@@ -26,8 +26,8 @@
     loadRosterArtifacts,
     loadRosterWeapons,
     setRosterInventory,
-  } from "$lib/app/roster-inventory";
-  import GoodImportModal from "$lib/ui/components/GoodImportModal.svelte";
+  } from "#lib/app/roster-inventory.js";
+  import GoodImportModal from "#lib/ui/components/GoodImportModal.svelte";
 
   let {
     showHeading = true,
@@ -231,8 +231,8 @@
         target="_blank"
         rel="noopener noreferrer">Documentation</a
       >
-      <a class="back-link" href={resolve("/settings?tab=inventory")}
-        >Inventory</a
+
+      <a class="back-link" href={resolve("settings?tab=inventory")}>Inventory</a
       >
     </p>
     <div class="import-actions">

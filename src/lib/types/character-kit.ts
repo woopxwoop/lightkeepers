@@ -8,7 +8,7 @@
  *
  * Produced by `scripts/data/extract-characters-json.ts` (via genshin-data
  * `listRichCharacters`) and uploaded by `scripts/sync/character-data-r2.ts`.
- * Fetched at runtime via `$lib/asset-urls` (`fetchCharacterKit*`).
+ * Fetched at runtime via `#lib/asset-urls` (`fetchCharacterKit*`).
  *
  * Asset fields are Excel / UI_* names only — resolve with `assetUrl` / helpers.
  */

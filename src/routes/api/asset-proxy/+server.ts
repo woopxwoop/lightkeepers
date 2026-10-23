@@ -3,7 +3,7 @@
  * GET /api/asset-proxy?u=https://api.lightkeepers.moe/...
  */
 import { error } from "@sveltejs/kit";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
 import type { RequestHandler } from "./$types";
 
 const ALLOWED_HOSTS = new Set(["api.lightkeepers.moe"]);

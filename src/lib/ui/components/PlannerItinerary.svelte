@@ -6,11 +6,12 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
+  import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
   import {
     getRosterWeaponsCached,
     loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
+  } from "#lib/app/roster-inventory.js";
+
   import {
     aggregateGoalCosts,
     cloneGoal,
@@ -21,28 +22,28 @@
     replaceGoal,
     starredGoals,
     toggleGoalStarred,
-  } from "$lib/calculator-goals";
+  } from "#lib/calculator-goals.js";
   import {
     autofillCharacterGoalState,
     goalsHaveUnsavedChanges,
     hydrateGoalsState,
     readGoalsIfChanged,
     saveGoalsState,
-  } from "$lib/calculator-goals-lifecycle";
+  } from "#lib/calculator-goals-lifecycle.js";
   import {
     captureGoals,
     goalsLocalRevision,
     readGoalsLocal,
-  } from "$lib/calculator-goals-snapshot";
-  import { authClient } from "$lib/auth-client";
-  import type { Character, CharacterPortraitRef } from "$lib/definitions";
+  } from "#lib/calculator-goals-snapshot.js";
+  import { authClient } from "#lib/auth-client.js";
+  import type { Character, CharacterPortraitRef } from "#lib/definitions.js";
   import {
     appendCatalogCharacterGoal,
     appendCatalogWeaponGoal,
     pickModalCharacter,
     plannerCharacterOptions,
     plannerWeaponOptions,
-  } from "$lib/planner-goal-edits";
+  } from "#lib/planner-goal-edits.js";
   import {
     FARM_KIND_LABEL,
     farmMaterialContributors,
@@ -56,33 +57,34 @@
     type FarmGoalRef,
     type FarmPlace,
     type FarmPlaceMaterial,
-  } from "$lib/planner-itinerary";
-  import { assetUrl } from "$lib/asset-urls";
-  import { charactersOwned } from "$lib/stores";
-  import { ownedNameIds } from "$lib/utils";
-  import type { CalculatorGoalsState } from "$lib/types/calculator-goals";
-  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import GoalConfigureModal from "$lib/ui/components/GoalConfigureModal.svelte";
-  import GoalPickModal from "$lib/ui/components/GoalPickModal.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import IconCalendarDay from "$lib/ui/icons/IconCalendarDay.svelte";
-  import IconCalendarWeek from "$lib/ui/icons/IconCalendarWeek.svelte";
-  import PlannerItineraryGoalsModal from "$lib/ui/components/PlannerItineraryGoalsModal.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
+  } from "#lib/planner-itinerary.js";
+  import { assetUrl } from "#lib/asset-urls.js";
+  import { charactersOwned } from "#lib/stores.js";
+  import { ownedNameIds } from "#lib/utils.js";
+  import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
+  import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import GoalConfigureModal from "#lib/ui/components/GoalConfigureModal.svelte";
+  import GoalPickModal from "#lib/ui/components/GoalPickModal.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import IconCalendarDay from "#lib/ui/icons/IconCalendarDay.svelte";
+  import IconCalendarWeek from "#lib/ui/icons/IconCalendarWeek.svelte";
+  import PlannerItineraryGoalsModal from "#lib/ui/components/PlannerItineraryGoalsModal.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
 
   let {
     chrome = "card",
     showEmpty = false,
     showHeading = true,
+
+    /** When no goals, still render the picker CTA. */
   }: {
     chrome?: "card" | "plain";
-    /** When no goals, still render the picker CTA. */
     showEmpty?: boolean;
     showHeading?: boolean;
   } = $props();
 
-  const plannerPath = resolve("/tools/planner");
+  const plannerPath = resolve("tools/planner");
   const session = authClient.useSession();
 
   let goalsState = $state<CalculatorGoalsState>(emptyGoalsState());
@@ -409,6 +411,7 @@
 
   function characterFor(g: FarmGoalRef): CharacterPortraitRef | undefined {
     if (!g.name_id) return undefined;
+
     return (
       mapping.get(g.name_id) ?? {
         name_id: g.name_id,
@@ -525,9 +528,9 @@
                     aria-pressed={!weekExpanded}
                     aria-label="Today"
                     onclick={() => (weekExpanded = false)}
+                    ><IconCalendarDay size={16} strokeWidth={2.25} /></button
                   >
-                    <IconCalendarDay size={16} strokeWidth={2.25} />
-                  </button>
+
                   <button
                     type="button"
                     class="view-btn"
@@ -535,9 +538,8 @@
                     aria-pressed={weekExpanded}
                     aria-label="Week"
                     onclick={() => (weekExpanded = true)}
+                    ><IconCalendarWeek size={16} strokeWidth={2.25} /></button
                   >
-                    <IconCalendarWeek size={16} strokeWidth={2.25} />
-                  </button>
                 </div>
               </div>
             </div>
@@ -619,10 +621,7 @@
 {#snippet goalFace(g: FarmGoalRef, mat: FarmPlaceMaterial | null = null)}
   {@const character = characterFor(g)}
   {@const matSrc = mat ? assetUrl(mat.icon) : null}
-  <div
-    class="farm-face"
-    title={mat ? `${g.name} · ${mat.name}` : g.name}
-  >
+  <div class="farm-face" title={mat ? `${g.name} · ${mat.name}` : g.name}>
     {#if matSrc}
       <img
         class="farm-face-mat"

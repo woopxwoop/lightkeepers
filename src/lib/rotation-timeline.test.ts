@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { RotationSampleEvent } from "$lib/types/investment";
+import type { RotationSampleEvent } from "#lib/types/investment.js";
 import {
   collapseRotationEvents,
   formatCollapsedActionLabel,
@@ -26,7 +26,7 @@ import {
   detectRotationWindow,
   DEFAULT_ROTATION_WINDOW_S,
   type CollapsedRotationEvent,
-} from "$lib/rotation-timeline";
+} from "#lib/rotation-timeline.js";
 
 function ev(
   partial: Partial<RotationSampleEvent> &
@@ -154,12 +154,9 @@ describe("formatRotationPlaintext", () => {
       ]).flat(),
       { t: 20, char: "Arlecchino", action: "attack" },
     ]);
-    assert.deepEqual(
-      formatRotationPlaintext(collapsed),
-      [
-        "Arlecchino E > Bennett E > Xilonen E N2 > Yelan EQ > Bennett Q N1 > Arlecchino N3C 5[N3D] N1",
-      ],
-    );
+    assert.deepEqual(formatRotationPlaintext(collapsed), [
+      "Arlecchino E > Bennett E > Xilonen E N2 > Yelan EQ > Bennett Q N1 > Arlecchino N3C 5[N3D] N1",
+    ]);
   });
 
   it("emits plunge abbreviations and omits wait/delay/other", () => {
@@ -185,9 +182,7 @@ describe("formatRotationPlaintext", () => {
       { t: 2, char: "Neuvillette", action: "charge" },
     ]);
     assert.equal(formatCollapsedActionLabel("walk", collapsed[1]!.count), "W");
-    assert.deepEqual(formatRotationPlaintext(collapsed), [
-      "Neuvillette C W C",
-    ]);
+    assert.deepEqual(formatRotationPlaintext(collapsed), ["Neuvillette C W C"]);
   });
 
   it("keeps hold E distinct from tap E", () => {
@@ -444,8 +439,8 @@ describe("findBestSwapCycle", () => {
       "xingqiu",
     ];
     const times = [
-      0.567, 1.767, 3.817, 8.117, 12.25, 23.433, 25.483, 29.783, 33.917,
-      45.1, 47.15, 51.45, 55.583, 66.767,
+      0.567, 1.767, 3.817, 8.117, 12.25, 23.433, 25.483, 29.783, 33.917, 45.1,
+      47.15, 51.45, 55.583, 66.767,
     ];
     const best = findBestSwapCycle(targets, times);
     assert.ok(best);
@@ -589,7 +584,10 @@ for let i=0; i<4; i=i+1 {
     });
     assert.equal(scripted.loopEndS, 22.4);
     assert.equal(scripted.loopEndsS[0], 1.5);
-    assert.equal(rotationHasSetupPrefix(scripted.loopEndS, scripted.loopEndsS), true);
+    assert.equal(
+      rotationHasSetupPrefix(scripted.loopEndS, scripted.loopEndsS),
+      true,
+    );
   });
 
   it("uses the gcsim for body when even/odd swaps do not repeat", () => {
@@ -748,7 +746,10 @@ describe("layoutFieldOccupancy", () => {
       mark(80, ev({ t: 2, char: "Fischl", action: "skill" })),
       mark(100, ev({ t: 3, char: "Raiden", action: "swap", label: "Raiden" })),
       mark(140, ev({ t: 4, char: "Raiden", action: "skill" })),
-      mark(200, ev({ t: 5, char: "Xingqiu", action: "swap", label: "Xingqiu" })),
+      mark(
+        200,
+        ev({ t: 5, char: "Xingqiu", action: "swap", label: "Xingqiu" }),
+      ),
     ];
     const { spans, handoffs } = layoutFieldOccupancy(markers, 400);
     assert.equal(markerCenterX(markers[2]!), 110);

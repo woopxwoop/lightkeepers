@@ -9,13 +9,13 @@
  */
 
 import { createClient, type RedisClientType } from "redis";
-import { env } from "$env/dynamic/private";
+import { VALKEY_URL, REDIS_URL } from "$app/env/private";
 
 let client: RedisClientType | null | undefined;
 let connecting: Promise<RedisClientType | null> | null = null;
 
 function redisUrl(): string | undefined {
-  const url = env.VALKEY_URL?.trim() || env.REDIS_URL?.trim();
+  const url = VALKEY_URL?.trim() || REDIS_URL?.trim();
   return url || undefined;
 }
 

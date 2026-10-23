@@ -1,8 +1,11 @@
 <script lang="ts">
   import { slide } from "svelte/transition";
-  import { toggleFilterSet } from "$lib/character-filter";
-  import { WEAPON_FILTER_TYPES, weaponFiltersActive } from "$lib/weapon-filter";
-  import IconFilter from "$lib/ui/icons/IconFilter.svelte";
+  import { toggleFilterSet } from "#lib/character-filter.js";
+  import {
+    WEAPON_FILTER_TYPES,
+    weaponFiltersActive,
+  } from "#lib/weapon-filter.js";
+  import IconFilter from "#lib/ui/icons/IconFilter.svelte";
 
   let {
     rarityFilter = $bindable(new Set<string>()),

@@ -4,7 +4,7 @@
  */
 
 import { get, writable } from "svelte/store";
-import type { CharacterOwned } from "$lib/definitions";
+import type { CharacterOwned } from "#lib/definitions.js";
 
 export type RosterSyncChoice = "use-cloud" | "upload-local" | "dismiss";
 

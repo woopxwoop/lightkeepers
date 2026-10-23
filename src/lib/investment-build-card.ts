@@ -1,5 +1,5 @@
-import { skillIconUrl, talentIconUrl } from "$lib/asset-urls";
-import type { CharacterKit } from "$lib/types/character-kit";
+import { skillIconUrl, talentIconUrl } from "#lib/asset-urls.js";
+import type { CharacterKit } from "#lib/types/character-kit.js";
 
 /** Kit icon strip passed into InvestmentBuildCard. */
 export type InvestmentBuildKitIcons = {

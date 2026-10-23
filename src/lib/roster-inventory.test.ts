@@ -122,9 +122,16 @@ describe("inventory weapons", () => {
   });
 
   it("unequips on null; invalid / occupied indexes leave the bag unchanged", () => {
-    const unequipped = equipExistingInventoryWeapon([homa, spare], "HuTao", null);
+    const unequipped = equipExistingInventoryWeapon(
+      [homa, spare],
+      "HuTao",
+      null,
+    );
     assert.equal(unequipped.length, 2);
-    assert.equal(unequipped.every((w) => w.location === ""), true);
+    assert.equal(
+      unequipped.every((w) => w.location === ""),
+      true,
+    );
     const noCreate = equipExistingInventoryWeapon([homa], "HuTao", 5);
     assert.equal(noCreate.length, 1);
     assert.equal(noCreate[0]?.location, "HuTao");

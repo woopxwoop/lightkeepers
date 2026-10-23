@@ -4,7 +4,7 @@
 
 ## Stack
 
-SvelteKit 5 + TypeScript + Tailwind · Postgres (Supabase) · Better Auth · Valkey · Sentry / Grafana / Better Stack
+SvelteKit 3 + TypeScript + Tailwind · Postgres (Supabase) · Better Auth · Valkey · Sentry / Grafana / Better Stack
 
 ## Develop
 

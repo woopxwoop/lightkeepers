@@ -3,12 +3,9 @@
  * Per side/field: On-Field DPS by best team (usage_index = slot% × usage),
  * each with alternate teams that clear the same floors.
  */
-import { MIN_USAGE_RATE } from "$lib/solver";
-import { teamSlotFieldRate } from "$lib/slot-fields";
-import {
-  ON_FIELD_DPS_NAME_IDS,
-  onFieldMembers,
-} from "$lib/on-field-dps";
+import { MIN_USAGE_RATE } from "#lib/solver.js";
+import { teamSlotFieldRate } from "#lib/slot-fields.js";
+import { ON_FIELD_DPS_NAME_IDS, onFieldMembers } from "#lib/on-field-dps.js";
 
 export type InfographicSlot = "top" | "middle" | "bottom";
 

@@ -1,18 +1,18 @@
 /**
  * Render research `answer_markdown` with entity slots and cite superscripts.
- * See `$lib/research-types` for token forms and asset helpers.
+ * See `#lib/research-types.js` for token forms and asset helpers.
  * Entity slots are hydrated to ResearchEntityMention by ResearchAnswer.
  */
 
-import { artifactIconUrl, assetUrl } from "$lib/asset-urls";
+import { artifactIconUrl, assetUrl } from "#lib/asset-urls.js";
 import {
   artifactSetByKey,
   ensureEquipmentData,
   weaponIconSrc,
-} from "$lib/equipment-data";
-import { renderPatchNoteBody } from "$lib/patch-notes";
-import type { ResearchCitation, ResearchEntity } from "$lib/research-types";
-import { getCharacterPortrait } from "$lib/utils";
+} from "#lib/equipment-data.js";
+import { renderPatchNoteBody } from "#lib/patch-notes.js";
+import type { ResearchCitation, ResearchEntity } from "#lib/research-types.js";
+import { getCharacterPortrait } from "#lib/utils.js";
 
 const ENTITY_TOKEN_RE = /\[\[(?!cite:)([^\]]+)\]\]/gi;
 /** Single id or comma cluster: `[[cite:2297]]` / `[[cite:2297, 2300]]`. */
@@ -157,10 +157,7 @@ export type RenderResearchAnswerOptions = {
   citeDisplayNum?: Map<number, number>;
 };
 
-function normalizeCiteClusters(
-  md: string,
-  allowed: Set<number>,
-): string {
+function normalizeCiteClusters(md: string, allowed: Set<number>): string {
   return md.replace(CITE_TOKEN_RE, (full, body: string) => {
     const tokens = body.split(",").map((part: string) => {
       const trimmed = part.trim();
@@ -172,10 +169,7 @@ function normalizeCiteClusters(
   });
 }
 
-function normalizeLegacyCiteTokens(
-  md: string,
-  allowed: Set<number>,
-): string {
+function normalizeLegacyCiteTokens(md: string, allowed: Set<number>): string {
   return md.replace(LEGACY_CITE_RE, (full, body: string) =>
     body
       .split(",")
@@ -218,19 +212,22 @@ export function renderResearchAnswer(
   let normalized = normalizeLegacyCiteTokens(md, citeIds);
   normalized = normalizeCiteClusters(normalized, citeIds);
 
-  let withCitePlaceholders = normalized.replace(singleCiteRe, (_full, idStr: string) => {
-    const id = Number(idStr);
-    if (!citeIds.has(id)) return "";
-    if (!citeDisplayNum.has(id)) {
-      nextCiteNum += 1;
-      citeDisplayNum.set(id, nextCiteNum);
-    }
-    const i = citeChips.length;
-    citeChips.push(
-      renderCiteSuperscript(id, citeDisplayNum.get(id)!, citeAnchorPrefix),
-    );
-    return CITE_PLACEHOLDER(i);
-  });
+  let withCitePlaceholders = normalized.replace(
+    singleCiteRe,
+    (_full, idStr: string) => {
+      const id = Number(idStr);
+      if (!citeIds.has(id)) return "";
+      if (!citeDisplayNum.has(id)) {
+        nextCiteNum += 1;
+        citeDisplayNum.set(id, nextCiteNum);
+      }
+      const i = citeChips.length;
+      citeChips.push(
+        renderCiteSuperscript(id, citeDisplayNum.get(id)!, citeAnchorPrefix),
+      );
+      return CITE_PLACEHOLDER(i);
+    },
+  );
 
   withCitePlaceholders = withCitePlaceholders.replace(
     ENTITY_TOKEN_RE,

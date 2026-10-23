@@ -9,8 +9,8 @@ import type {
   InventorySubstat,
   InventoryWeapon,
   RosterWeapon,
-} from "$lib/definitions";
-import { MAX_LEVEL } from "$lib/upgrade-costs";
+} from "#lib/definitions.js";
+import { MAX_LEVEL } from "#lib/upgrade-costs.js";
 
 export const MAX_INVENTORY_WEAPONS = 2048;
 export const MAX_INVENTORY_ARTIFACTS = 8192;
@@ -211,10 +211,7 @@ export function equipExistingInventoryWeapon(
     return next;
   }
   const piece = next[weaponIndex];
-  if (
-    !piece ||
-    (piece.location !== "" && piece.location !== characterKey)
-  ) {
+  if (!piece || (piece.location !== "" && piece.location !== characterKey)) {
     return next;
   }
   for (const weapon of next) {

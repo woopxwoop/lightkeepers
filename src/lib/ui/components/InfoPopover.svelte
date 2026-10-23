@@ -202,6 +202,8 @@
 
   .info-trigger {
     font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
     color: inherit;
     background: transparent;
     border: none;

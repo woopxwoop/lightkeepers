@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatGameDescriptionHtml } from "$lib/utils";
+  import { formatGameDescriptionHtml } from "#lib/utils.js";
 
   let {
     text,

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { animationsEnabled } from "$lib/stores";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import { getEnemyAsset } from "$lib/utils";
+  import { animationsEnabled } from "#lib/stores.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import { getEnemyAsset } from "#lib/utils.js";
 
   let { data } = $props();
   let enemies = $derived(data.enemies);
@@ -41,7 +41,7 @@
   <header class="page-head">
     <PageTrail
       items={[
-        { label: "Stygian", href: resolve("/tools/stygian") },
+        { label: "Stygian", href: resolve("tools/stygian") },
         { label: "Enemies" },
       ]}
     />
@@ -81,7 +81,7 @@
           <li>
             <a
               class="enemy-card"
-              href={resolve(`/tools/stygian/enemies/${enemy.id}`)}
+              href={resolve(`tools/stygian/enemies/${enemy.id}`)}
               aria-label={name}
             >
               <span class="enemy-art" aria-hidden="true">

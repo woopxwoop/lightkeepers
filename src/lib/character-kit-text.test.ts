@@ -36,8 +36,7 @@ describe("enhanceExtra", () => {
   });
 
   it("extracts a Hexerei tail separated by escaped carriage returns", () => {
-    const enhanced =
-      "Rewritten opener.\\r\\rHexerei\\rGrants a buff.";
+    const enhanced = "Rewritten opener.\\r\\rHexerei\\rGrants a buff.";
     assert.deepEqual(enhanceExtra("Original base.", enhanced), {
       mode: "extra",
       text: "Hexerei\\rGrants a buff.",

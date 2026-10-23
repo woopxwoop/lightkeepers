@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { goalRowIcon, goalRowSummary } from "$lib/goal-row";
-  import { itineraryGoalLabel } from "$lib/planner-itinerary";
-  import type { CalculatorGoal } from "$lib/types/calculator-goals";
-  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import IconGripVertical from "$lib/ui/icons/IconGripVertical.svelte";
-  import IconStar from "$lib/ui/icons/IconStar.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
+  import { goalRowIcon, goalRowSummary } from "#lib/goal-row.js";
+  import { itineraryGoalLabel } from "#lib/planner-itinerary.js";
+  import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
+  import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+  import IconCog from "#lib/ui/icons/IconCog.svelte";
+  import IconGripVertical from "#lib/ui/icons/IconGripVertical.svelte";
+  import IconStar from "#lib/ui/icons/IconStar.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
 
   let {
     goals,

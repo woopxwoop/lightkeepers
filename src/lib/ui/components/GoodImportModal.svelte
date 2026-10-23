@@ -5,10 +5,10 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import Button from "$lib/ui/components/Button.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
-  import { trapTabKey } from "$lib/ui/focus-trap";
-  import { MAX_GOOD_FILE_BYTES } from "$lib/good-import";
+  import Button from "#lib/ui/components/Button.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import { MAX_GOOD_FILE_BYTES } from "#lib/good-import.js";
 
   let {
     open = false,
