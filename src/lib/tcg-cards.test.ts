@@ -5,6 +5,7 @@ import {
   mergeTcgCardNameIds,
   parseTcgCardsFile,
   stemHasTcgCard,
+  tcgCardsPayloadFromCdn,
 } from "./tcg-cards.ts";
 
 describe("mergeTcgCardNameIds", () => {
@@ -25,6 +26,29 @@ describe("parseTcgCardsFile", () => {
         "Amber",
       ),
     );
+  });
+});
+
+describe("tcgCardsPayloadFromCdn", () => {
+  it("keeps a published name_ids array as a settled manifest", () => {
+    const payload = tcgCardsPayloadFromCdn({ name_ids: ["Hutao"] });
+    assert.equal("provisional" in payload, false);
+    assert.ok(payload.name_ids.includes("Hutao"));
+    assert.ok(payload.name_ids.includes("PlayerBoy"));
+  });
+
+  it("marks a missing or non-array manifest provisional", () => {
+    for (const raw of [null, {}, { name_ids: "Hutao" }, { name_ids: null }]) {
+      const payload = tcgCardsPayloadFromCdn(raw);
+      assert.equal(payload.provisional, true);
+      assert.deepEqual(payload.name_ids, ["PlayerBoy"]);
+    }
+  });
+
+  it("treats an empty name_ids array as published", () => {
+    const payload = tcgCardsPayloadFromCdn({ name_ids: [] });
+    assert.equal("provisional" in payload, false);
+    assert.deepEqual(payload.name_ids, ["PlayerBoy"]);
   });
 });
 

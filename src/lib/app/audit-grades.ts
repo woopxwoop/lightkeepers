@@ -1,7 +1,8 @@
 /**
  * Client loader for Build Audit: GOOD gear slices + Builds summaries, then one
  * grading pass over every owned character. Not part of layout bootstrap.
- * Throws when the Builds index can't load — nothing is gradable without it.
+ * A failed weapons or artifacts request falls back to that slice's cache, or
+ * none. Throws when the Builds index can't load — nothing is gradable without it.
  *
  * Stygian usage (tierlist) is loaded separately by the page — rows don't
  * depend on it, only ordering does.
@@ -12,6 +13,8 @@ import {
   loadCharacterIndex,
 } from "$lib/app/character-summary";
 import {
+  getRosterArtifactsCached,
+  getRosterWeaponsCached,
   loadRosterArtifacts,
   loadRosterWeapons,
 } from "$lib/app/roster-inventory";
@@ -28,8 +31,8 @@ export async function loadAuditGrades(
   roster: readonly CharacterOwned[],
 ): Promise<AuditRow[]> {
   const [weapons, artifacts] = await Promise.all([
-    loadRosterWeapons(),
-    loadRosterArtifacts(),
+    loadRosterWeapons().catch(() => getRosterWeaponsCached() ?? []),
+    loadRosterArtifacts().catch(() => getRosterArtifactsCached() ?? []),
   ]);
   await ensureEquipmentData().catch(() => {});
   const index = await loadCharacterIndex();

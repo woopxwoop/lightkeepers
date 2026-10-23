@@ -6,7 +6,7 @@ import { LRUCache } from "$lib/server/cache";
 import { fetchWithTimeout } from "$lib/cdn-fetch";
 import {
   mergeTcgCardNameIds,
-  parseTcgCardsFile,
+  tcgCardsPayloadFromCdn,
   type TcgCardsFile,
 } from "$lib/tcg-cards";
 
@@ -14,8 +14,8 @@ const CDN_TCG_CARDS = "https://api.lightkeepers.moe/characters/tcg-cards.json";
 
 export type TcgCardsPayload = TcgCardsFile & {
   /**
-   * True when the CDN manifest is missing — only manuals are known; clients
-   * should still probe other characters until the next sync publishes the file.
+   * True when the CDN manifest is missing or malformed — only manuals are
+   * known; clients should still probe other characters until a real list exists.
    */
   provisional?: boolean;
 };
@@ -30,7 +30,7 @@ async function fetchTcgCardsFile(): Promise<TcgCardsPayload> {
     return { name_ids: mergeTcgCardNameIds([]), provisional: true };
   }
   if (!res.ok) throw new Error(`tcg-cards CDN HTTP ${res.status}`);
-  return parseTcgCardsFile(await res.json());
+  return tcgCardsPayloadFromCdn(await res.json());
 }
 
 export async function getTcgCardsFile(): Promise<TcgCardsPayload> {

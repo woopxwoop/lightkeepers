@@ -39,7 +39,9 @@ export function hasTcgCard(nameId: string | null | undefined): boolean | null {
 }
 
 export function loadTcgCardIds(): Promise<ReadonlySet<string>> {
-  if (cached && settled) return Promise.resolve(cached);
+  // A published index can be reused. Provisional results (missing manifest or
+  // a failed load) retry the next time icons ask.
+  if (cached && settled && !provisional) return Promise.resolve(cached);
   if (pending) return pending;
 
   pending = (async () => {

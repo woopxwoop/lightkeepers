@@ -27,6 +27,23 @@ export function mergeTcgCardNameIds(
   return [...out].sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * CDN body → index. A missing or non-array `name_ids` is provisional so
+ * clients keep probing card URLs. A real array is returned unchanged.
+ */
+export function tcgCardsPayloadFromCdn(
+  raw: unknown,
+): TcgCardsFile & { provisional?: true } {
+  const nameIds =
+    raw !== null && typeof raw === "object"
+      ? (raw as { name_ids?: unknown }).name_ids
+      : undefined;
+  if (!Array.isArray(nameIds)) {
+    return { ...parseTcgCardsFile(raw), provisional: true };
+  }
+  return parseTcgCardsFile(raw);
+}
+
 export function parseTcgCardsFile(raw: unknown): TcgCardsFile {
   const ids =
     raw &&
