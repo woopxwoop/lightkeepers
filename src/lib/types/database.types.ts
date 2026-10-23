@@ -7,54 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  pgbouncer: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      get_auth: {
-        Args: { p_usename: string }
-        Returns: {
-          password: string
-          username: string
-        }[]
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       abyss_versions: {
@@ -125,6 +77,7 @@ export type Database = {
           {
             foreignKeyName: "account_userId_fkey"
             columns: ["userId"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
@@ -162,12 +115,14 @@ export type Database = {
           {
             foreignKeyName: "character_stats_abyss_character_id_fkey"
             columns: ["character_id"]
+            isOneToOne: false
             referencedRelation: "characters"
             referencedColumns: ["game_id"]
           },
           {
             foreignKeyName: "character_stats_abyss_version_number_fkey"
             columns: ["version_number"]
+            isOneToOne: false
             referencedRelation: "abyss_versions"
             referencedColumns: ["version_number"]
           },
@@ -205,12 +160,14 @@ export type Database = {
           {
             foreignKeyName: "character_stats_stygian_character_id_fkey"
             columns: ["character_id"]
+            isOneToOne: false
             referencedRelation: "characters"
             referencedColumns: ["game_id"]
           },
           {
             foreignKeyName: "character_stats_stygian_version_number_fkey"
             columns: ["version_number"]
+            isOneToOne: false
             referencedRelation: "stygian_versions"
             referencedColumns: ["version_number"]
           },
@@ -308,6 +265,7 @@ export type Database = {
           {
             foreignKeyName: "lunaris_abyss_versions_ys_abyss_version_fkey"
             columns: ["ys_abyss_version"]
+            isOneToOne: true
             referencedRelation: "abyss_versions"
             referencedColumns: ["version_number"]
           },
@@ -345,10 +303,26 @@ export type Database = {
           {
             foreignKeyName: "lunaris_stygian_versions_ys_stygian_version_fkey"
             columns: ["ys_stygian_version"]
+            isOneToOne: true
             referencedRelation: "stygian_versions"
             referencedColumns: ["version_number"]
           },
         ]
+      }
+      schema_migrations: {
+        Row: {
+          applied_at: string
+          filename: string
+        }
+        Insert: {
+          applied_at?: string
+          filename: string
+        }
+        Update: {
+          applied_at?: string
+          filename?: string
+        }
+        Relationships: []
       }
       session: {
         Row: {
@@ -385,6 +359,7 @@ export type Database = {
           {
             foreignKeyName: "session_userId_fkey"
             columns: ["userId"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
@@ -428,12 +403,14 @@ export type Database = {
           {
             foreignKeyName: "stygian_team_clear_videos_enemy_id_fkey"
             columns: ["enemy_id"]
+            isOneToOne: false
             referencedRelation: "enemies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "stygian_team_clear_videos_team_key_fkey"
             columns: ["team_key"]
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["team_key"]
           },
@@ -459,12 +436,14 @@ export type Database = {
           {
             foreignKeyName: "stygian_version_enemies_enemy_id_fkey"
             columns: ["enemy_id"]
+            isOneToOne: false
             referencedRelation: "enemies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "stygian_version_enemies_version_number_fkey"
             columns: ["version_number"]
+            isOneToOne: false
             referencedRelation: "stygian_versions"
             referencedColumns: ["version_number"]
           },
@@ -505,12 +484,14 @@ export type Database = {
           {
             foreignKeyName: "team_characters_character_id_fkey"
             columns: ["character_id"]
+            isOneToOne: false
             referencedRelation: "characters"
             referencedColumns: ["game_id"]
           },
           {
             foreignKeyName: "team_characters_team_key_fkey"
             columns: ["team_key"]
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["team_key"]
           },
@@ -551,12 +532,14 @@ export type Database = {
           {
             foreignKeyName: "team_stats_abyss_team_key_fkey"
             columns: ["team_key"]
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["team_key"]
           },
           {
             foreignKeyName: "team_stats_abyss_version_number_fkey"
             columns: ["version_number"]
+            isOneToOne: false
             referencedRelation: "abyss_versions"
             referencedColumns: ["version_number"]
           },
@@ -600,12 +583,14 @@ export type Database = {
           {
             foreignKeyName: "team_stats_stygian_team_key_fkey"
             columns: ["team_key"]
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["team_key"]
           },
           {
             foreignKeyName: "team_stats_stygian_version_number_fkey"
             columns: ["version_number"]
+            isOneToOne: false
             referencedRelation: "stygian_versions"
             referencedColumns: ["version_number"]
           },
@@ -679,6 +664,7 @@ export type Database = {
           {
             foreignKeyName: "user_calculator_goals_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
@@ -713,6 +699,7 @@ export type Database = {
           {
             foreignKeyName: "user_rosters_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
@@ -757,6 +744,7 @@ export type Database = {
           {
             foreignKeyName: "character_stats_abyss_character_id_fkey"
             columns: ["character_id"]
+            isOneToOne: false
             referencedRelation: "characters"
             referencedColumns: ["game_id"]
           },
@@ -772,6 +760,7 @@ export type Database = {
           {
             foreignKeyName: "character_stats_stygian_character_id_fkey"
             columns: ["character_id"]
+            isOneToOne: false
             referencedRelation: "characters"
             referencedColumns: ["game_id"]
           },
@@ -788,6 +777,7 @@ export type Database = {
           {
             foreignKeyName: "team_stats_stygian_team_key_fkey"
             columns: ["team_key"]
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["team_key"]
           },
@@ -813,6 +803,7 @@ export type Database = {
           {
             foreignKeyName: "team_stats_stygian_team_key_fkey"
             columns: ["team_key"]
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["team_key"]
           },
@@ -820,6 +811,9 @@ export type Database = {
       }
     }
     Functions: {
+      dearmor: { Args: { "": string }; Returns: string }
+      gen_random_uuid: { Args: never; Returns: string }
+      gen_salt: { Args: { "": string }; Returns: string }
       get_character_top_teams_by_version_abyss: {
         Args: { p_limit?: number; p_name_id: string }
         Returns: {
@@ -1007,6 +1001,10 @@ export type Database = {
           version_number: number
         }[]
       }
+      pgp_armor_headers: {
+        Args: { "": string }
+        Returns: Record<string, unknown>[]
+      }
       refresh_stygian_views: { Args: never; Returns: undefined }
       upsert_abyss_team_batch: {
         Args: { p_members: Json; p_stats: Json; p_teams: Json }
@@ -1016,535 +1014,25 @@ export type Database = {
         Args: { p_members: Json; p_stats: Json; p_teams: Json }
         Returns: undefined
       }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  storage: {
-    Tables: {
-      buckets: {
-        Row: {
-          allowed_mime_types: string[] | null
-          avif_autodetection: boolean | null
-          created_at: string | null
-          file_size_limit: number | null
-          id: string
-          name: string
-          owner: string | null
-          owner_id: string | null
-          public: boolean | null
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string | null
-        }
-        Insert: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id: string
-          name: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string | null
-        }
-        Update: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id?: string
-          name?: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      buckets_analytics: {
-        Row: {
-          created_at: string
-          deleted_at: string | null
-          format: string
-          id: string
-          name: string
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          format?: string
-          id?: string
-          name: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          format?: string
-          id?: string
-          name?: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      buckets_vectors: {
-        Row: {
-          created_at: string
-          id: string
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      iceberg_namespaces: {
-        Row: {
-          bucket_name: string
-          catalog_id: string
-          created_at: string
-          id: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          bucket_name: string
-          catalog_id: string
-          created_at?: string
-          id?: string
-          metadata?: Json
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          bucket_name?: string
-          catalog_id?: string
-          created_at?: string
-          id?: string
-          metadata?: Json
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "iceberg_namespaces_catalog_id_fkey"
-            columns: ["catalog_id"]
-            referencedRelation: "buckets_analytics"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      iceberg_tables: {
-        Row: {
-          bucket_name: string
-          catalog_id: string
-          created_at: string
-          id: string
-          location: string
-          name: string
-          namespace_id: string
-          remote_table_id: string | null
-          shard_id: string | null
-          shard_key: string | null
-          updated_at: string
-        }
-        Insert: {
-          bucket_name: string
-          catalog_id: string
-          created_at?: string
-          id?: string
-          location: string
-          name: string
-          namespace_id: string
-          remote_table_id?: string | null
-          shard_id?: string | null
-          shard_key?: string | null
-          updated_at?: string
-        }
-        Update: {
-          bucket_name?: string
-          catalog_id?: string
-          created_at?: string
-          id?: string
-          location?: string
-          name?: string
-          namespace_id?: string
-          remote_table_id?: string | null
-          shard_id?: string | null
-          shard_key?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "iceberg_tables_catalog_id_fkey"
-            columns: ["catalog_id"]
-            referencedRelation: "buckets_analytics"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "iceberg_tables_namespace_id_fkey"
-            columns: ["namespace_id"]
-            referencedRelation: "iceberg_namespaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      migrations: {
-        Row: {
-          executed_at: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Insert: {
-          executed_at?: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Update: {
-          executed_at?: string | null
-          hash?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      objects: {
-        Row: {
-          bucket_id: string | null
-          created_at: string | null
-          id: string
-          last_accessed_at: string | null
-          metadata: Json | null
-          name: string | null
-          owner: string | null
-          owner_id: string | null
-          path_tokens: string[] | null
-          updated_at: string | null
-          user_metadata: Json | null
-          version: string | null
-        }
-        Insert: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          user_metadata?: Json | null
-          version?: string | null
-        }
-        Update: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          user_metadata?: Json | null
-          version?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "objects_bucketId_fkey"
-            columns: ["bucket_id"]
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          id: string
-          in_progress_size: number
-          key: string
-          owner_id: string | null
-          upload_signature: string
-          user_metadata: Json | null
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          id: string
-          in_progress_size?: number
-          key: string
-          owner_id?: string | null
-          upload_signature: string
-          user_metadata?: Json | null
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          id?: string
-          in_progress_size?: number
-          key?: string
-          owner_id?: string | null
-          upload_signature?: string
-          user_metadata?: Json | null
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_bucket_id_fkey"
-            columns: ["bucket_id"]
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads_parts: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          etag: string
-          id: string
-          key: string
-          owner_id: string | null
-          part_number: number
-          size: number
-          upload_id: string
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          etag: string
-          id?: string
-          key: string
-          owner_id?: string | null
-          part_number: number
-          size?: number
-          upload_id: string
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          etag?: string
-          id?: string
-          key?: string
-          owner_id?: string | null
-          part_number?: number
-          size?: number
-          upload_id?: string
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_bucket_id_fkey"
-            columns: ["bucket_id"]
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_upload_id_fkey"
-            columns: ["upload_id"]
-            referencedRelation: "s3_multipart_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vector_indexes: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          data_type: string
-          dimension: number
-          distance_metric: string
-          id: string
-          metadata_configuration: Json | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          data_type: string
-          dimension: number
-          distance_metric: string
-          id?: string
-          metadata_configuration?: Json | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          data_type?: string
-          dimension?: number
-          distance_metric?: string
-          id?: string
-          metadata_configuration?: Json | null
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vector_indexes_bucket_id_fkey"
-            columns: ["bucket_id"]
-            referencedRelation: "buckets_vectors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      can_insert_object: {
-        Args: { bucketid: string; metadata: Json; name: string; owner: string }
-        Returns: undefined
-      }
-      extension: { Args: { name: string }; Returns: string }
-      filename: { Args: { name: string }; Returns: string }
-      foldername: { Args: { name: string }; Returns: string[] }
-      get_common_prefix: {
-        Args: { p_delimiter: string; p_key: string; p_prefix: string }
+      uuid_generate_v1: { Args: never; Returns: string }
+      uuid_generate_v1mc: { Args: never; Returns: string }
+      uuid_generate_v3: {
+        Args: { name: string; namespace: string }
         Returns: string
       }
-      get_size_by_bucket: {
-        Args: never
-        Returns: {
-          bucket_id: string
-          size: number
-        }[]
+      uuid_generate_v4: { Args: never; Returns: string }
+      uuid_generate_v5: {
+        Args: { name: string; namespace: string }
+        Returns: string
       }
-      list_multipart_uploads_with_delimiter: {
-        Args: {
-          bucket_id: string
-          delimiter_param: string
-          max_keys?: number
-          next_key_token?: string
-          next_upload_token?: string
-          prefix_param: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-        }[]
-      }
-      list_objects_with_delimiter: {
-        Args: {
-          _bucket_id: string
-          delimiter_param: string
-          max_keys?: number
-          next_token?: string
-          prefix_param: string
-          sort_order?: string
-          start_after?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      operation: { Args: never; Returns: string }
-      search: {
-        Args: {
-          bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
-          prefix: string
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      search_by_timestamp: {
-        Args: {
-          p_bucket_id: string
-          p_level: number
-          p_limit: number
-          p_prefix: string
-          p_sort_column: string
-          p_sort_column_after: string
-          p_sort_order: string
-          p_start_after: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      search_v2: {
-        Args: {
-          bucket_name: string
-          levels?: number
-          limits?: number
-          prefix: string
-          sort_column?: string
-          sort_column_after?: string
-          sort_order?: string
-          start_after?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
+      uuid_nil: { Args: never; Returns: string }
+      uuid_ns_dns: { Args: never; Returns: string }
+      uuid_ns_oid: { Args: never; Returns: string }
+      uuid_ns_url: { Args: never; Returns: string }
+      uuid_ns_x500: { Args: never; Returns: string }
     }
     Enums: {
-      buckettype: "STANDARD" | "ANALYTICS" | "VECTOR"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1670,18 +1158,8 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
-  pgbouncer: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
-  storage: {
-    Enums: {
-      buckettype: ["STANDARD", "ANALYTICS", "VECTOR"],
-    },
-  },
 } as const
+
