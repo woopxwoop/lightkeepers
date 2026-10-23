@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { request } from "node:http";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -46,39 +46,24 @@ function pageIsUp() {
 run("ssh", ["-n", ...sshBase, "mkdir -p ~/studio"]);
 run("scp", ["-o", "BatchMode=yes", "-o", "ConnectTimeout=20", ...identity, join(root, "studio", "docker-compose.yml"), `${host}:studio/docker-compose.yml`]);
 
-const remote = String.raw`
+// Same parser bootstrap uses, so a quoted .env password reaches Studio without the quotes.
+const composeEnvPy = readFileSync(join(root, "db", "compose_env.py"), "utf8");
+const remote =
+  String.raw`
 set -euo pipefail
 umask 077
 python3 - << 'PY'
-from pathlib import Path
+` +
+  composeEnvPy +
+  String.raw`
 import secrets
-
-def load(path):
-    env = {}
-    for line in Path(path).read_text().splitlines():
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        if len(value) >= 2 and value[0] == value[-1] == "'":
-            value = value[1:-1]
-        env[key] = value
-    return env
-
-def quote(value):
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"').replace("$", "$$")
-    return f'"{escaped}"'
-
-def unquote(value):
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
-        value = value[1:-1]
-    return value.replace("$$", "$").replace('\\"', '"').replace("\\\\", "\\")
 
 prod = load("/home/deploy/prod-postgres/.env")
 client = load("/home/deploy/prod-postgres/client.env")
 target = Path("/home/deploy/studio/.env")
 current = load(target) if target.exists() else {}
 saved = current.get("PG_META_CRYPTO_KEY")
-crypto = unquote(saved) if saved else secrets.token_hex(16)
+crypto = saved if saved else secrets.token_hex(16)
 values = {
     "POSTGRES_PASSWORD": prod["POSTGRES_PASSWORD"],
     "JWT_SECRET": prod["JWT_SECRET"],

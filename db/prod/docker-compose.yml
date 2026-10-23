@@ -27,8 +27,9 @@ services:
     image: postgrest/postgrest:v14.6
     container_name: prod-postgrest
     restart: unless-stopped
+    # bootstrap.sh writes this so the authenticator password is percent-encoded.
+    env_file: postgrest.env
     environment:
-      PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@postgres:5432/lightkeepers
       PGRST_DB_SCHEMAS: public
       PGRST_DB_ANON_ROLE: anon
       PGRST_DB_EXTRA_SEARCH_PATH: public

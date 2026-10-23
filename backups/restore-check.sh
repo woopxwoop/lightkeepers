@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Restore the newest prod dump into a throwaway database and check that it
-# has rows. The container is removed when the script exits.
+# has rows. The container and its anonymous data volume are removed on exit.
 #
 #   restore-check.sh install
 #     Copies this file to /home/deploy/backups/restore-check.sh and reconciles
@@ -62,6 +62,15 @@ if [[ "${1:-}" == "install" ]]; then
   exit 0
 fi
 
+# backup.sh deletes the file it was writing when pg_dump fails, and that name
+# sorts newest. Hold the lock first so the dump we pick has already finished.
+mkdir -p "$dir"
+exec 9>"$dir/backup.lock"
+if ! flock -w 7200 9; then
+  echo "backup lock held" >&2
+  exit 1
+fi
+
 shopt -s nullglob
 dumps=("$dir"/lightkeepers-prod-*.dump)
 if ((${#dumps[@]} == 0)); then
@@ -70,17 +79,12 @@ if ((${#dumps[@]} == 0)); then
 fi
 dump=$(printf '%s\n' "${dumps[@]}" | LC_ALL=C sort | tail -n 1)
 
-exec 9>"$dir/backup.lock"
-if ! flock -w 7200 9; then
-  echo "backup lock held" >&2
-  exit 1
-fi
-
 cleanup() {
-  docker rm -f "$container" >/dev/null 2>&1 || true
+  # -v removes the anonymous volume the postgres image keeps its data files in.
+  docker rm -fv "$container" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
-docker rm -f "$container" >/dev/null 2>&1 || true
+docker rm -fv "$container" >/dev/null 2>&1 || true
 
 docker run -d --name "$container" --network none \
   -e POSTGRES_USER=lightkeepers \
