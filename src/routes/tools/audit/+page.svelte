@@ -123,7 +123,8 @@
   /**
    * Planner goals + catalog. The first load is single-flight: Add and the
    * background warm-up share one hydrate, so an older cloud response cannot
-   * write back over goals the click just saved.
+   * write back over goals the click just saved. An itinerary save during
+   * that read bumps `goalsLocalRevision`; hydrate keeps the save.
    */
   async function readyPlanner(): Promise<{
     catalog: UpgradeCostsCatalog;
