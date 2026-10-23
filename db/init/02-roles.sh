@@ -30,10 +30,18 @@ WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticator')
 \gexec
 GRANT anon, authenticated, service_role TO authenticator;
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+CREATE SCHEMA IF NOT EXISTS extensions;
+GRANT USAGE ON SCHEMA extensions TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE lightkeepers IN SCHEMA public
-  GRANT ALL ON TABLES TO anon, authenticated, service_role;
+  REVOKE ALL ON TABLES FROM anon, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE lightkeepers IN SCHEMA public
-  GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+  REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE lightkeepers IN SCHEMA public
-  GRANT ALL ON FUNCTIONS TO anon, authenticated, service_role;
+  REVOKE ALL ON FUNCTIONS FROM anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE lightkeepers IN SCHEMA public
+  GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE lightkeepers IN SCHEMA public
+  GRANT ALL ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE lightkeepers IN SCHEMA public
+  GRANT ALL ON FUNCTIONS TO service_role;
 SQL

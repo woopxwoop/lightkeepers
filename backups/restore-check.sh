@@ -79,6 +79,17 @@ if ((${#dumps[@]} == 0)); then
 fi
 dump=$(printf '%s\n' "${dumps[@]}" | LC_ALL=C sort | tail -n 1)
 
+# Nightly backup is cron 04:07. The newest name can still be an older file
+# when that night's dump failed and was deleted.
+expect=$(date -d '04:07' +%s)
+if (( $(date +%s) < expect )); then
+  expect=$(date -d 'yesterday 04:07' +%s)
+fi
+if (( $(stat -c %Y "$dump") < expect )); then
+  echo "dump is older than the nightly backup at 04:07: $(basename "$dump")" >&2
+  exit 1
+fi
+
 cleanup() {
   # -v removes the anonymous volume the postgres image keeps its data files in.
   docker rm -fv "$container" >/dev/null 2>&1 || true

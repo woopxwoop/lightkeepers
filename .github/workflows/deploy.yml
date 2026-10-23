@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Clear previous database copy
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: "167.233.174.167"
           username: deploy
@@ -31,7 +31,7 @@ jobs:
           script: rm -rf "$HOME/db-job"
 
       - name: Copy database stack
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: "167.233.174.167"
           username: deploy
@@ -40,7 +40,7 @@ jobs:
           target: db-job/
 
       - name: Reconcile database stacks
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: "167.233.174.167"
           username: deploy
@@ -56,12 +56,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Migrate before the image is published. A failed migration must not
       # move :latest. DATABASE_URL is the database the running app uses.
       - name: Clear previous migrator copy
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
@@ -69,7 +69,7 @@ jobs:
           script: rm -rf "$HOME/migrate-prod"
 
       - name: Copy migrator to app server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
@@ -78,7 +78,7 @@ jobs:
           target: migrate-prod/
 
       - name: Apply database migrations
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         with:
@@ -170,7 +170,7 @@ jobs:
           printf '%s' "$METRICS_TOKEN" > metrics_token
 
       - name: Copy compose files to VPS
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
@@ -179,7 +179,7 @@ jobs:
           target: app/
 
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
           GHCR_USER: ${{ github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
@@ -224,10 +224,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Clear previous backup script
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: "167.233.174.167"
           username: deploy
@@ -235,7 +235,7 @@ jobs:
           script: rm -rf "$HOME/backup-job"
 
       - name: Copy backup script
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: "167.233.174.167"
           username: deploy
@@ -244,7 +244,7 @@ jobs:
           target: backup-job/
 
       - name: Reconcile backup cron
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: "167.233.174.167"
           username: deploy
