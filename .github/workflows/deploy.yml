@@ -16,7 +16,42 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  reconcile-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clear previous database copy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: rm -rf "$HOME/db-job"
+
+      - name: Copy database stack
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "db"
+          target: db-job/
+
+      - name: Reconcile database stacks
+        uses: appleboy/ssh-action@v1
+        with:
+          host: "167.233.174.167"
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            bash "$HOME/db-job/db/bootstrap.sh"
+
   build-and-deploy:
+    needs: reconcile-database
     runs-on: ubuntu-latest
 
     steps:
@@ -164,6 +199,23 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull ghcr.io/${{ github.repository_owner }}/lightkeepers:latest
             docker compose -f ~/app/docker-compose.yml --project-directory ~/app up -d
+            healthy=""
+            code=""
+            for _ in $(seq 1 45); do
+              code=$(curl -s -o /tmp/lightkeepers-health.json -w "%{http_code}" --max-time 5 http://127.0.0.1:3000/api/health || true)
+              if [ "$code" = "200" ]; then
+                healthy=1
+                break
+              fi
+              sleep 2
+            done
+            if [ -z "$healthy" ]; then
+              echo "api health check failed with status ${code:-none}" >&2
+              cat /tmp/lightkeepers-health.json >&2 || true
+              docker compose -f ~/app/docker-compose.yml --project-directory ~/app logs --tail 80 app >&2 || true
+              exit 1
+            fi
+            echo "api health ok"
             docker image prune -af
 
   # The database server runs the nightly dump. Each deploy copies the script
@@ -188,7 +240,7 @@ jobs:
           host: "167.233.174.167"
           username: deploy
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "backups/backup.sh"
+          source: "backups/backup.sh,backups/restore-check.sh"
           target: backup-job/
 
       - name: Reconcile backup cron
@@ -201,3 +253,4 @@ jobs:
           script: |
             set -euo pipefail
             bash "$HOME/backup-job/backups/backup.sh" install
+            bash "$HOME/backup-job/backups/restore-check.sh" install
