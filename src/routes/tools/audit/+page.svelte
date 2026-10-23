@@ -2,71 +2,53 @@
   import { browser } from "$app/environment";
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
+  import { loadAuditGrades } from "$lib/app/audit-grades";
+  import { getRosterWeaponsCached } from "$lib/app/roster-inventory";
+  import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
+  import { buildNextRows, type AuditRow } from "$lib/audit-grades";
   import {
-    adviceStepIconSrc,
-    ACCOUNT_BUILD_BUCKET_LABEL,
-    ACCOUNT_BUILD_BUCKET_ORDER,
-    compareGradeRows,
-    formatAdviceStep,
-    gradeOwnedBuild,
-    type AccountBuildBucket,
-    type AccountBuildGrade,
-  } from "$lib/account-build-grade";
+    appendAuditSuggestions,
+    auditRowPlannerState,
+    type AuditPlannerState,
+  } from "$lib/audit-planner-goals";
+  import { authClient } from "$lib/auth-client";
   import {
-    characterSummaryFromIndex,
-    loadCharacterIndex,
-  } from "$lib/app/character-summary";
+    hydrateGoalsState,
+    readGoalsIfChanged,
+    saveGoalsState,
+  } from "$lib/calculator-goals-lifecycle";
+  import { goalsLocalRevision } from "$lib/calculator-goals-snapshot";
   import {
-    loadRosterArtifacts,
-    loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
-  import type { CharacterOwned } from "$lib/definitions";
-  import { weaponByKey, artifactSetByKey, weaponIconSrc } from "$lib/equipment-data";
-  import { ensureEquipmentData } from "$lib/equipment-data";
-  import {
-    kitIconsFromCharacterKit,
-    type InvestmentBuildKitIcons,
-  } from "$lib/investment-build-card";
-  import { rosterBuildViewFromOwned } from "$lib/roster-build-card";
-  import {
+    charactersHydrated,
     charactersOwned,
     ensureTierList,
-    invalidateTierList,
     tierList,
+    tierListError,
+    tierListLoaded,
   } from "$lib/stores";
-  import { creamNameIds, creamUsageByNameId } from "$lib/tierlist";
-  import type { CharacterKit } from "$lib/types/character-kit";
+  import { stygianUsageByNameId } from "$lib/tierlist";
+  import type { CalculatorGoalsState } from "$lib/types/calculator-goals";
+  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
   import { settingsPath } from "$lib/ui/nav-links";
-  import AccountBuildGradeCard from "$lib/ui/components/AccountBuildGradeCard.svelte";
+  import AuditQueueRow from "$lib/ui/components/AuditQueueRow.svelte";
   import Button from "$lib/ui/components/Button.svelte";
   import EmptyState from "$lib/ui/components/EmptyState.svelte";
+  import InfoPopover from "$lib/ui/components/InfoPopover.svelte";
   import LoadingState from "$lib/ui/components/LoadingState.svelte";
   import PageShell from "$lib/ui/components/PageShell.svelte";
-  import { toGoodKey, translateStatKey, getUiAssetUrl } from "$lib/utils";
 
-  type GradedRow = {
-    character: CharacterOwned;
-    grade: AccountBuildGrade;
-    sortName: string;
-    nameId: string;
-    href: string;
-    weaponKey: string | null;
-  };
+  const session = authClient.useSession();
 
+  let grades = $state<AuditRow[] | null>(null);
   let loading = $state(true);
-  let loadError = $state<string | null>(null);
-  let tierError = $state<string | null>(null);
-  let graded = $state<GradedRow[]>([]);
-  let inventoryEmpty = $state(false);
-  /** Session expand — once true, grades all owned until reload. */
-  let gradeAll = $state(false);
-  let tierRetry = $state(0);
-  /** One selected card across the page. */
-  let selectedNameId = $state<string | null>(null);
-  /** Kit talent icons for selected characters (session cache). */
-  let kitIconsByNameId = $state(
-    new Map<string, InvestmentBuildKitIcons>(),
-  );
+  let loadError = $state(false);
+  let gradeRetry = $state(0);
+
+  let plannerCatalog = $state<UpgradeCostsCatalog | null>(null);
+  let plannerGoals = $state<CalculatorGoalsState | null>(null);
+  let plannerSnapshot = $state("");
+  let plannerBusy = $state(false);
+  let plannerError = $state<string | null>(null);
 
   let owned = $derived($charactersOwned.filter((c) => c.isOwned));
   /** Stable effect key — ignore roster array identity churn from store rewrites. */
@@ -77,401 +59,287 @@
       .join("\0"),
   );
 
-  /** Pulls “Most used” — limited + non-limited cream (default grade scope). */
-  let creamIds = $derived(creamNameIds($tierList));
-  let usageByNameId = $derived(creamUsageByNameId($tierList));
-  let priorityOwnedCount = $derived(
-    owned.filter((c) => creamIds.has(c.name_id)).length,
-  );
+  let usageByNameId = $derived(stygianUsageByNameId($tierList));
+  let buildNext = $derived(grades ? buildNextRows(grades, usageByNameId) : []);
 
-  let sections = $derived.by(() => {
-    const byBucket = new Map<AccountBuildBucket, GradedRow[]>();
-    for (const bucket of ACCOUNT_BUILD_BUCKET_ORDER) {
-      byBucket.set(bucket, []);
-    }
-    for (const row of graded) {
-      byBucket.get(row.grade.bucket)?.push(row);
-    }
-    for (const bucket of ACCOUNT_BUILD_BUCKET_ORDER) {
-      byBucket
-        .get(bucket)
-        ?.sort((a, b) => compareGradeRows(a, b, creamIds, usageByNameId));
-    }
-    return ACCOUNT_BUILD_BUCKET_ORDER.map((bucket) => ({
-      bucket,
-      label: ACCOUNT_BUILD_BUCKET_LABEL[bucket],
-      rows: byBucket.get(bucket) ?? [],
-    })).filter((section) => section.rows.length > 0);
+  type PageView = "loading" | "no_roster" | "error" | "ready";
+
+  /** Wait for usage too so the ranking doesn't reshuffle; a usage failure just loses the ordering. */
+  let view = $derived.by((): PageView => {
+    if (!$charactersHydrated) return "loading";
+    if (owned.length === 0) return "no_roster";
+    if (loadError) return "error";
+    if (loading || !grades) return "loading";
+    if (!$tierListLoaded && !$tierListError) return "loading";
+    return "ready";
   });
 
-  let selectedRow = $derived(
-    selectedNameId
-      ? (graded.find((r) => r.nameId === selectedNameId) ?? null)
-      : null,
+  function plannerStateFor(row: AuditRow): AuditPlannerState {
+    return auditRowPlannerState(plannerGoals, plannerCatalog, row);
+  }
+
+  let addableRows = $derived(
+    buildNext.filter((row) => plannerStateFor(row) === "add"),
   );
-
-  let selectedKitTalents = $derived(
-    selectedNameId
-      ? (kitIconsByNameId.get(selectedNameId)?.talents ?? null)
-      : null,
-  );
-
-  function expandToAllOwned() {
-    gradeAll = true;
+  function characterHref(nameId: string): string {
+    return resolve(`/characters/${nameId}`);
   }
 
-  function retryTierList() {
-    invalidateTierList();
-    tierRetry += 1;
+  function retryGrades() {
+    gradeRetry += 1;
   }
 
-  function toggleSelect(nameId: string) {
-    selectedNameId = selectedNameId === nameId ? null : nameId;
-  }
-
-  function gradeFallbackSub(grade: AccountBuildGrade): string {
-    if (grade.bucket === "ungraded") {
-      if (grade.ungradedReason === "error") return "Couldn’t load Builds";
-      if (grade.ungradedReason === "stale") return "Builds summary stale";
-      return "No Builds summary";
+  /** Planner goals + catalog; refreshes from storage when already loaded. */
+  async function readyPlanner(): Promise<{
+    catalog: UpgradeCostsCatalog;
+    state: CalculatorGoalsState;
+    snapshot: string;
+  } | null> {
+    try {
+      if (!plannerCatalog || !plannerGoals) {
+        const [catalog, { data: sess }] = await Promise.all([
+          loadUpgradeCosts(),
+          authClient.getSession(),
+        ]);
+        const pending = await hydrateGoalsState(Boolean(sess));
+        plannerCatalog = catalog;
+        plannerGoals = pending.state;
+        plannerSnapshot = pending.json;
+      } else {
+        const pending = readGoalsIfChanged(plannerSnapshot);
+        if (pending) {
+          plannerGoals = pending.state;
+          plannerSnapshot = pending.json;
+        }
+      }
+      return {
+        catalog: plannerCatalog,
+        state: plannerGoals,
+        snapshot: plannerSnapshot,
+      };
+    } catch {
+      return null;
     }
-    if (grade.bucket === "built_well") {
-      return "Level and talents match Builds targets";
-    }
-    return "Raise level or talents";
   }
 
-  /** Lazy kit fetch for talent icons when a card is selected. */
-  $effect(() => {
-    if (!browser) return;
-    const id = selectedNameId;
-    if (!id) return;
-    if (kitIconsByNameId.has(id)) return;
-
-    let cancelled = false;
-    const ac = new AbortController();
-    const url = resolve(`/api/character-kit/${encodeURIComponent(id)}`);
-    void fetch(url, { signal: ac.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`kit ${res.status}`);
-        return (await res.json()) as CharacterKit;
-      })
-      .then((kitJson) => {
-        if (cancelled) return;
-        const next = new Map(kitIconsByNameId);
-        next.set(id, kitIconsFromCharacterKit(kitJson));
-        kitIconsByNameId = next;
-      })
-      .catch(() => {
-        /* strip still shows text without talent icons */
+  async function addToPlanner(rows: AuditRow[]) {
+    if (plannerBusy || rows.length === 0) return;
+    plannerBusy = true;
+    plannerError = null;
+    try {
+      const ready = await readyPlanner();
+      if (!ready) {
+        plannerError = "Couldn’t load the Planner right now";
+        return;
+      }
+      const result = appendAuditSuggestions(ready.state, ready.catalog, rows, {
+        owned: untrack(() => $charactersOwned),
+        weapons: getRosterWeaponsCached(),
       });
+      if (result.added === 0) return;
+      const save = await saveGoalsState({
+        state: result.state,
+        pendingRemoveIds: new Set(),
+        savedSnapshot: ready.snapshot,
+        cloud: Boolean($session.data),
+      });
+      if (!save.ok) {
+        plannerError = save.message;
+        return;
+      }
+      plannerGoals = save.capture.state;
+      plannerSnapshot = save.capture.json;
+    } finally {
+      plannerBusy = false;
+    }
+  }
 
-    return () => {
-      cancelled = true;
-      ac.abort();
-    };
+  $effect(() => {
+    if (browser) ensureTierList().catch(() => {});
+  });
+
+  /** Warm planner state so rows show Add / In Planner before any click. */
+  $effect(() => {
+    if (browser) untrack(() => void readyPlanner());
+  });
+
+  /** Same-tab sync when Planner (or another surface) persists goals. */
+  $effect(() => {
+    void $goalsLocalRevision;
+    untrack(() => {
+      if (!plannerSnapshot) return;
+      const pending = readGoalsIfChanged(plannerSnapshot);
+      if (!pending) return;
+      plannerGoals = pending.state;
+      plannerSnapshot = pending.json;
+    });
   });
 
   $effect(() => {
-    if (!browser) return;
-    const fingerprint = ownedFingerprint;
-    const expandAll = gradeAll;
-    const retry = tierRetry;
-    void fingerprint;
-    void expandAll;
-    void retry;
-
-    const roster = untrack(() =>
-      $charactersOwned.filter((c) => c.isOwned),
-    );
+    if (!browser || !$charactersHydrated) return;
+    void ownedFingerprint;
+    void gradeRetry;
+    const roster = untrack(() => owned);
     let cancelled = false;
     loading = true;
-    loadError = null;
-    tierError = null;
-
-    void (async () => {
-      try {
-        const [weapons, artifacts] = await Promise.all([
-          loadRosterWeapons(),
-          loadRosterArtifacts(),
-        ]);
-        await ensureEquipmentData().catch(() => {});
-        if (cancelled) return;
-
-        inventoryEmpty = weapons.length === 0 && artifacts.length === 0;
-
-        let toGrade = roster;
-        if (!expandAll) {
-          try {
-            await ensureTierList();
-          } catch (err) {
-            if (cancelled) return;
-            tierError =
-              err instanceof Error
-                ? err.message
-                : "Could not load Stygian standouts";
-            graded = [];
-            return;
-          }
-          if (cancelled) return;
-          const ids = creamNameIds(untrack(() => $tierList));
-          toGrade = roster.filter((c) => ids.has(c.name_id));
-        }
-
-        let index = null as Awaited<ReturnType<typeof loadCharacterIndex>> | null;
-        let indexError = false;
-        try {
-          index = await loadCharacterIndex();
-        } catch {
-          indexError = true;
-        }
-        if (cancelled) return;
-
-        const rows: GradedRow[] = toGrade.map((character) => {
-          const view = rosterBuildViewFromOwned(
-            character,
-            weapons,
-            artifacts,
-          );
-          const summaryKey =
-            view.locationKey || toGoodKey(character.name) || "";
-          const builds = characterSummaryFromIndex(index, summaryKey);
-          const grade = gradeOwnedBuild({
-            view,
-            builds,
-            nameId: character.name_id,
-            summaryError: indexError,
-            getWeaponStars: (key) => weaponByKey.get(key)?.stars ?? 0,
-            getWeaponName: (key) => weaponByKey.get(key)?.name ?? null,
-            getSetName: (key) => artifactSetByKey.get(key)?.name ?? null,
-            translateStat: translateStatKey,
-          });
-          return {
-            character,
-            grade,
-            sortName: character.name ?? character.name_id,
-            nameId: character.name_id,
-            href: resolve(`/characters/${character.name_id}`),
-            weaponKey: view.weapon?.key ?? null,
-          };
-        });
-        if (cancelled) return;
-        graded = rows;
-        if (
-          selectedNameId &&
-          !rows.some((r) => r.nameId === selectedNameId)
-        ) {
-          selectedNameId = null;
-        }
-      } catch (err) {
-        if (cancelled) return;
-        loadError = err instanceof Error ? err.message : String(err);
-        graded = [];
-      } finally {
+    loadError = false;
+    loadAuditGrades(roster)
+      .then((result) => {
+        if (!cancelled) grades = result;
+      })
+      .catch(() => {
+        if (!cancelled) loadError = true;
+      })
+      .finally(() => {
         if (!cancelled) loading = false;
-      }
-    })();
-
+      });
     return () => {
       cancelled = true;
     };
   });
 </script>
 
-<PageShell class="gap-8 audit-page">
+<PageShell class="gap-8">
   <header class="page-head">
     <div class="page-head-text">
-      <h1 class="page-title">Audit</h1>
+      <h1 class="page-title">Build Audit</h1>
       <p class="page-meta">
-        {#if gradeAll}
-          All owned characters · {owned.length} graded.
-        {:else if !loading && !tierError && owned.length > 0}
-          Stygian most-used · {priorityOwnedCount} of {owned.length} owned.
+        {#if owned.length > 0}
+          Based on your {owned.length} characters · level and talent targets from
+          Builds
         {:else}
-          See which owned characters meet Builds level and talent targets.
+          See which characters need levels or talents next
         {/if}
       </p>
     </div>
-    {#if !gradeAll && !loading && !tierError && graded.length > 0}
-      <Button variant="secondary" onclick={expandToAllOwned}
-        >Grade all owned</Button
-      >
-    {/if}
   </header>
 
-  {#if loading}
-    <LoadingState message="Grading owned builds…" />
-  {:else if tierError && !gradeAll}
-    <EmptyState message="Could not load Stygian standouts right now.">
+  {#if view === "loading"}
+    <LoadingState
+      variant="pulse"
+      message="Checking your characters against Builds targets…"
+    />
+  {:else if view === "no_roster"}
+    <EmptyState message="Set up your roster in Settings to audit your builds.">
       {#snippet action()}
-        <Button variant="secondary" onclick={retryTierList}>Try again</Button>
+        <a class="audit-cta" href={settingsPath}>Configure roster</a>
       {/snippet}
     </EmptyState>
-  {:else if loadError}
-    <EmptyState message={loadError ?? "Couldn’t load inventory"} />
-  {:else if owned.length === 0}
-    <EmptyState message="No owned characters yet.">
+  {:else if view === "error"}
+    <EmptyState message="Couldn’t load your builds right now.">
       {#snippet action()}
-        <a class="back-link" href="{settingsPath}?tab=roster">Open Roster</a>
-      {/snippet}
-    </EmptyState>
-  {:else if !gradeAll && graded.length === 0}
-    <EmptyState
-      message="None of your owned characters are on the Stygian most-used boards."
-    >
-      {#snippet action()}
-        <Button variant="secondary" onclick={expandToAllOwned}
-          >Grade all owned</Button
-        >
+        <Button variant="secondary" onclick={retryGrades}>Try again</Button>
       {/snippet}
     </EmptyState>
   {:else}
-    {#if inventoryEmpty}
-      <p class="section-lede">
-        No weapons or artifacts imported yet — gear tips stay soft until then.
-        <a class="inline-link" href="{settingsPath}?tab=account">Import GOOD</a>
-        or browse
-        <a class="inline-link" href="{settingsPath}?tab=inventory">Inventory</a>.
-      </p>
-    {/if}
-
-    {#each sections as section (section.bucket)}
-      <section class="grade-section">
-        <div class="section-head">
-          <h2 class="section-title">{section.label}</h2>
-          <p class="section-lede">
-            {#if section.bucket === "built_well"}
-              Level and talents meet Builds targets.
-            {:else if section.bucket === "needs_work"}
-              Stygian most-used first, then highest avg usage — raise level,
-              ascension, or talents.
-            {:else}
-              No usable Builds summary to grade against.
+    <section class="audit-section">
+      <div class="section-head">
+        <h2 class="section-title">
+          <InfoPopover label="Build next" align="start">
+            Ranked by how often each character is used in Stygian.
+          </InfoPopover>
+        </h2>
+        {#if buildNext.length > 0}
+          <div class="section-actions">
+            {#if plannerError}
+              <p class="planner-error" role="alert">{plannerError}</p>
             {/if}
-          </p>
-        </div>
-
-        <ul class="grade-grid">
-          {#each section.rows as row (row.character.name_id)}
-            <li>
-              <AccountBuildGradeCard
-                character={row.character}
-                grade={row.grade}
-                pressed={selectedNameId === row.nameId}
-                standout={creamIds.has(row.nameId)}
-                onclick={() => toggleSelect(row.nameId)}
-              />
-            </li>
-          {/each}
-        </ul>
-        {#if selectedRow && section.rows.some((r) => r.nameId === selectedRow.nameId)}
-          <div class="select-strip">
-            <div class="select-strip-text">
-              <span class="meta-name">{selectedRow.character.name}</span>
-              {#if selectedRow.grade.adviceSteps.length > 0}
-                <ul class="advice-list">
-                  {#each selectedRow.grade.adviceSteps as step (`${step.kind}-${step.current}-${step.target}`)}
-                    {@const iconSrc = adviceStepIconSrc(
-                      step.kind,
-                      selectedKitTalents,
-                      getUiAssetUrl,
-                      selectedRow.weaponKey
-                        ? weaponIconSrc(selectedRow.weaponKey)
-                        : null,
-                    )}
-                    <li class="advice-step">
-                      {#if iconSrc}
-                        <img
-                          class="advice-icon"
-                          src={iconSrc}
-                          alt=""
-                          loading="lazy"
-                        />
-                      {/if}
-                      <span class="meta-sub">{formatAdviceStep(step)}</span>
-                    </li>
-                  {/each}
-                </ul>
-              {:else if selectedRow.grade.advice.length > 0}
-                <ul class="advice-list">
-                  {#each selectedRow.grade.advice as line (line)}
-                    <li class="meta-sub">{line}</li>
-                  {/each}
-                </ul>
-              {:else}
-                <span class="meta-sub"
-                  >{gradeFallbackSub(selectedRow.grade)}</span
-                >
-              {/if}
-              {#if selectedRow.grade.aside.length > 0}
-                <p class="aside-line">
-                  Also · {selectedRow.grade.aside.join(" · ")}
-                </p>
-              {/if}
-            </div>
-            <a class="back-link" href={selectedRow.href}>Open character</a>
+            <Button
+              variant="primary"
+              disabled={plannerBusy || addableRows.length === 0}
+              onclick={() => addToPlanner(addableRows)}
+            >
+              {addableRows.length > 0 ? "Add all to Planner" : "All in Planner"}
+            </Button>
           </div>
         {/if}
-      </section>
-    {/each}
+      </div>
+      {#if buildNext.length === 0}
+        <p class="section-lede">
+          Nothing to build here — everyone meets their Builds targets.
+        </p>
+      {:else}
+        <ol class="queue-list">
+          {#each buildNext as row, i (row.nameId)}
+            <AuditQueueRow
+              {row}
+              rank={i + 1}
+              href={characterHref(row.nameId)}
+              plannerState={plannerStateFor(row)}
+              busy={plannerBusy}
+              onAdd={() => addToPlanner([row])}
+            />
+          {/each}
+        </ol>
+      {/if}
+    </section>
+
+    <p class="audit-note">
+      Targets are the level and talents top teams run on each character’s Builds
+      page. Weapon level only counts when it measurably changes damage.
+    </p>
   {/if}
 </PageShell>
 
 <style>
   .page-head {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: var(--border-width) solid rgba(255, 255, 255, 0.14);
   }
 
-  :global(.audit-page) {
-    max-width: 64rem;
+  .audit-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid var(--accent-1);
+    background: var(--accent-1);
+    color: var(--control-knob-on);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .audit-cta:hover {
+    background: color-mix(in srgb, var(--accent-1) 88%, white);
+    border-color: color-mix(in srgb, var(--accent-1) 88%, white);
+  }
+
+  .audit-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
   }
 
   .section-head {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    margin-bottom: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-3);
   }
 
-  .grade-section + .grade-section {
-    margin-top: var(--space-6);
-  }
-
-  .grade-grid {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-    gap: var(--space-3);
-  }
-
-  .select-strip {
-    margin-top: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 18%, transparent);
-    border-radius: var(--radius-lg);
-    background: var(--surface-raised);
+  .section-actions {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-3);
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2) var(--space-3);
   }
 
-  .select-strip-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    min-width: 0;
-    flex: 1 1 12rem;
+  .planner-error {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
   }
 
-  .advice-list {
+  .queue-list {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -480,34 +348,13 @@
     gap: 0.25rem;
   }
 
-  .advice-step {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    min-width: 0;
-  }
-
-  .advice-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    flex-shrink: 0;
-    object-fit: contain;
-  }
-
-  .aside-line {
-    margin: 0.15rem 0 0;
+  .audit-note {
+    margin-top: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: var(--border-width) solid rgba(255, 255, 255, 0.12);
+    max-width: 60ch;
     font-size: var(--text-xs);
-    color: color-mix(in srgb, var(--foreground-color) 55%, transparent);
-    line-height: 1.35;
-  }
-
-  .inline-link {
-    color: var(--foreground-color);
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
-  }
-
-  .inline-link:hover {
-    color: color-mix(in srgb, var(--foreground-color) 80%, white);
+    line-height: 1.55;
+    color: var(--foreground-mid);
   }
 </style>

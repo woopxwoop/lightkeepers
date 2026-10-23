@@ -554,18 +554,17 @@ export function gradeOwnedBuild(input: {
 export function compareGradeRows(
   a: { grade: AccountBuildGrade; sortName: string; nameId?: string },
   b: { grade: AccountBuildGrade; sortName: string; nameId?: string },
-  creamNameIds?: ReadonlySet<string> | null,
+  _creamNameIds?: ReadonlySet<string> | null,
   usageByNameId?: ReadonlyMap<string, number> | null,
 ): number {
-  if (creamNameIds && creamNameIds.size > 0) {
-    const aCream = a.nameId && creamNameIds.has(a.nameId) ? 1 : 0;
-    const bCream = b.nameId && creamNameIds.has(b.nameId) ? 1 : 0;
-    if (aCream !== bCream) return bCream - aCream;
-  }
   if (usageByNameId && usageByNameId.size > 0) {
     const aUsage = (a.nameId && usageByNameId.get(a.nameId)) || 0;
     const bUsage = (b.nameId && usageByNameId.get(b.nameId)) || 0;
     if (aUsage !== bUsage) return bUsage - aUsage;
+  }
+  // Usage ties / missing — highest Builds upgrade impact first.
+  if (a.grade.priority !== b.grade.priority) {
+    return b.grade.priority - a.grade.priority;
   }
   return a.sortName.localeCompare(b.sortName);
 }

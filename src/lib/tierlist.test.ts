@@ -10,6 +10,7 @@ import {
   creamNameIds,
   creamUsageByNameId,
   computeTierList,
+  stygianUsageByNameId,
   type CharacterMeta,
   type CharacterUsageRow,
 } from "./tierlist.ts";
@@ -140,6 +141,14 @@ describe("computeTierList", () => {
       result.fourStar.some((e) => e.nameId.startsWith("Five")),
       false,
     );
+    // Full usage map includes characters below the cream cut.
+    assert.equal(result.usageByNameId["Five0"], 80);
+    assert.equal(result.usageByNameId["Five15"], 15);
+    assert.equal(result.usageByNameId["Mona"], 95);
+    assert.ok(
+      Object.keys(result.usageByNameId).length >
+        result.fiveStar.length + result.fourStar.length,
+    );
   });
 
   it("cuts non-limited cream in the 24–32 window and clamps at 32", () => {
@@ -197,6 +206,7 @@ describe("creamNameIds", () => {
       ],
       fiveStarCutoff: 1,
       fourStarCutoff: 1,
+      usageByNameId: { Furina: 90, Xingqiu: 80, Amber: 3 },
     });
     assert.deepEqual([...ids].sort(), ["Furina", "Xingqiu"]);
     assert.equal(creamNameIds(null).size, 0);
@@ -216,9 +226,47 @@ describe("creamUsageByNameId", () => {
       ],
       fiveStarCutoff: 1,
       fourStarCutoff: 1,
+      usageByNameId: { Furina: 90, Xingqiu: 80, Amber: 3 },
     });
     assert.equal(usage.get("Furina"), 90);
     assert.equal(usage.get("Xingqiu"), 80);
+    assert.equal(usage.has("Amber"), false);
     assert.equal(creamUsageByNameId(null).size, 0);
+  });
+});
+
+describe("stygianUsageByNameId", () => {
+  it("prefers full usageByNameId over cream boards", () => {
+    const usage = stygianUsageByNameId({
+      windowCycles: 5,
+      cutoffMethod: "relative-gap",
+      fiveStar: [
+        { nameId: "Furina", name: "Furina", score: 90, cycles: 5, rank: 1 },
+      ],
+      fourStar: [],
+      fiveStarCutoff: 1,
+      fourStarCutoff: 0,
+      usageByNameId: { Furina: 90, Amber: 12 },
+    });
+    assert.equal(usage.get("Furina"), 90);
+    assert.equal(usage.get("Amber"), 12);
+  });
+
+  it("falls back to cream boards when usageByNameId is empty", () => {
+    const usage = stygianUsageByNameId({
+      windowCycles: 5,
+      cutoffMethod: "relative-gap",
+      fiveStar: [
+        { nameId: "Furina", name: "Furina", score: 90, cycles: 5, rank: 1 },
+      ],
+      fourStar: [
+        { nameId: "Xingqiu", name: "Xingqiu", score: 80, cycles: 5, rank: 1 },
+      ],
+      fiveStarCutoff: 1,
+      fourStarCutoff: 1,
+      usageByNameId: {},
+    });
+    assert.equal(usage.get("Furina"), 90);
+    assert.equal(usage.get("Xingqiu"), 80);
   });
 });

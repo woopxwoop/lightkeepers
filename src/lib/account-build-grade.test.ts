@@ -457,7 +457,7 @@ describe("adviceStepIconSrc", () => {
 });
 
 describe("compareGradeRows", () => {
-  it("sorts by Stygian cream, then avg usage, then name", () => {
+  it("sorts by Stygian usage, then Builds priority, then name", () => {
     const low = gradeOwnedBuild({
       view: fullView([homa], fullArtifacts, {
         ...baseChar,
@@ -480,7 +480,7 @@ describe("compareGradeRows", () => {
       builds: builds(),
       nameId: "Hutao",
     });
-    // Without cream, higher usage wins regardless of Builds impact.
+    // Higher usage wins regardless of Builds impact or cream membership.
     const usage = new Map([
       ["Zhongli", 40],
       ["Amber", 90],
@@ -489,18 +489,18 @@ describe("compareGradeRows", () => {
       compareGradeRows(
         { sortName: "Amber", nameId: "Amber", grade: low },
         { sortName: "Zhongli", nameId: "Zhongli", grade: high },
-        null,
+        new Set(["Zhongli"]),
         usage,
       ) < 0,
     );
-    // Cream membership beats higher usage.
-    const cream = new Set(["Zhongli"]);
+    // Outside usage, higher Builds priority beats alphabetical.
+    assert.ok(high.priority > low.priority);
     assert.ok(
       compareGradeRows(
         { sortName: "Zhongli", nameId: "Zhongli", grade: high },
         { sortName: "Amber", nameId: "Amber", grade: low },
-        cream,
-        usage,
+        null,
+        null,
       ) < 0,
     );
   });

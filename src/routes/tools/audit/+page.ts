@@ -1,9 +1,9 @@
 export function load() {
   return {
     seo: {
-      title: "Audit — Lightkeepers",
+      title: "Build Audit — Lightkeepers",
       description:
-        "See which owned characters meet Builds level and talent targets.",
+        "See which of your characters need levels or talents next, and add them to your Planner.",
     },
   };
 }
