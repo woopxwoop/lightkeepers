@@ -20,6 +20,7 @@
   import {
     displayPreferences,
     initDisplayPreferences,
+    setVersionNumbers,
     faviconDataUri,
     backgroundVisible,
     syncBackgroundToPath,
@@ -72,16 +73,13 @@
     syncBackgroundToPath(page.url.pathname);
   });
 
-  // Seed before child components exist: page effects can run before this
-  // layout's, and store version globals are module-level (server-shared), so
-  // browser-only.
+  // Version globals are module-level and child effects can run before this
+  // layout's, so seed them before those components exist. Leave the roster and
+  // charactersHydrated false until the effect below, after hydration, so
+  // /characters still renders LoadingState for the server HTML.
   if (browser) {
     untrack(() =>
-      seedClientStores({
-        characters: data.characters,
-        abyssVersionNumber: data.abyssVersionNumber,
-        stygianVersionNumber: data.stygianVersionNumber,
-      }),
+      setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber),
     );
   }
   $effect(() => {

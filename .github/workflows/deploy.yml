@@ -9,6 +9,12 @@ permissions:
   contents: read
   packages: write
 
+# migrate-prod is one directory on the app server. A second run must wait
+# instead of deleting it while the first is still applying migrations.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest

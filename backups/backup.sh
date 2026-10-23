@@ -114,13 +114,20 @@ if [[ ! -f "$conf" ]]; then
   exit 1
 fi
 
-docker exec prod-postgres pg_dump -U lightkeepers -d lightkeepers -Fc > "$out"
+# pg_dump holds backup.lock until this process exits. A deadline kills a hung
+# dump so the lock closes and the next cron run can take it.
+if ! timeout --kill-after=30s 2h docker exec prod-postgres pg_dump -U lightkeepers -d lightkeepers -Fc > "$out"; then
+  rm -f "$out"
+  echo "pg_dump failed or timed out" >&2
+  exit 1
+fi
 chmod 600 "$out"
-docker exec -i prod-postgres pg_restore -l < "$out" >/dev/null
+# Read the whole custom-format archive, not only its table of contents.
+docker exec -i prod-postgres pg_restore --exit-on-error -f /dev/null < "$out"
 
 find "$dir" -name 'lightkeepers-prod-*.dump' -mtime +7 -delete
 
-"$rclone" --config "$conf" copy --s3-no-head "$out" "$remote/"
+"$rclone" --config "$conf" copy "$out" "$remote/"
 "$rclone" --config "$conf" delete --min-age 14d "$remote/"
 
 bytes=$(wc -c < "$out")

@@ -26,7 +26,10 @@ done
 
 declare -a sorted=()
 if ((${#names[@]} > 0)); then
-  mapfile -t sorted < <(printf '%s\n' "${names[@]}" | LC_ALL=C sort)
+  # Assignment, not process substitution: mapfile would hide a sort failure
+  # from set -e, and the script would report success.
+  sorted_text=$(printf '%s\n' "${names[@]}" | LC_ALL=C sort)
+  mapfile -t sorted <<< "$sorted_text"
 fi
 
 driver=$(mktemp)
@@ -59,6 +62,9 @@ BEGIN
 END $$;
 SQL
   for name in "${sorted[@]}"; do
+    include="${dir}/${name}"
+    include=${include//\\/\\\\}
+    include=${include//\'/\\\'}
     cat <<SQL
 SELECT CASE WHEN EXISTS (
   SELECT 1 FROM schema_migrations WHERE filename = '${name}'
@@ -66,7 +72,7 @@ SELECT CASE WHEN EXISTS (
 \\if :should_apply
 \\echo applying ${name}
 BEGIN;
-\\i ${dir}/${name}
+\\i '${include}'
 INSERT INTO schema_migrations (filename) VALUES ('${name}');
 COMMIT;
 \\endif

@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# migrate-staging is one directory on the app server. A second run must wait
+# instead of deleting it while the first is still applying migrations.
+concurrency:
+  group: migrate-staging
+  cancel-in-progress: false
+
 # STAGING_DATABASE_URL is reached from the app server, not from this runner:
 # postgres://lightkeepers:<password>@10.0.0.3:5433/lightkeepers
 # The password is POSTGRES_PASSWORD in /home/deploy/staging-postgres/.env
