@@ -145,11 +145,10 @@
       }
 
       if (!plannerInit) {
-        const run = loadPlanner();
-        plannerInit = run;
-        void run.finally(() => {
+        const run = loadPlanner().finally(() => {
           if (plannerInit === run) plannerInit = null;
         });
+        plannerInit = run;
       }
       return await plannerInit;
     } catch {
