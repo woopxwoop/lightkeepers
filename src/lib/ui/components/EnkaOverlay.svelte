@@ -4,7 +4,7 @@
    * fixed 1280×533 logical → canvas at 1.2×, solid element fill,
    * then overlay.jpg with globalCompositeOperation "overlay".
    */
-  import overlayJpg from "$lib/assets/enka-overlay.jpg";
+  import overlayJpg from "#lib/assets/enka-overlay.jpg";
 
   let {
     element = "Fire",

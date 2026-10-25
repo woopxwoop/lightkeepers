@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Character } from "$lib/definitions";
-  import { elementColor } from "$lib/element-colors";
+  import type { Character } from "#lib/definitions.js";
+  import { elementColor } from "#lib/element-colors.js";
   import {
     collapseRotationEvents,
     DEFAULT_ROTATION_WINDOW_S,
@@ -14,11 +14,11 @@
     rotationHasSetupPrefix,
     rotationSegmentLabel,
     spansForCharacter,
-  } from "$lib/rotation-timeline";
-  import { resolveScriptSampleAlignment } from "$lib/rotation-script";
-  import type { RotationSample } from "$lib/types/investment";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import SegmentedControl from "$lib/ui/components/SegmentedControl.svelte";
+  } from "#lib/rotation-timeline.js";
+  import { resolveScriptSampleAlignment } from "#lib/rotation-script.js";
+  import type { RotationSample } from "#lib/types/investment.js";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import SegmentedControl from "#lib/ui/components/SegmentedControl.svelte";
 
   let {
     sample,
@@ -83,9 +83,7 @@
     }
     return keys;
   });
-  let laneIndexByKey = $derived(
-    new Map(laneKeys.map((key, i) => [key, i])),
-  );
+  let laneIndexByKey = $derived(new Map(laneKeys.map((key, i) => [key, i])));
   let lanes = $derived(
     laneKeys.map((key) => ({
       key,
@@ -124,10 +122,7 @@
     }),
   );
   let hasSetup = $derived(
-    rotationHasSetupPrefix(
-      rotationWindow.loopEndS,
-      rotationWindow.loopEndsS,
-    ),
+    rotationHasSetupPrefix(rotationWindow.loopEndS, rotationWindow.loopEndsS),
   );
   let axisBands = $derived(
     rotationAxisBands(boundaryLeftPxs, layout.trackWidthPx, hasSetup),
@@ -145,7 +140,9 @@
       const root = Number.parseFloat(
         getComputedStyle(document.documentElement).fontSize,
       );
-      return Number.isFinite(n) && Number.isFinite(root) ? n * root : fallbackPx;
+      return Number.isFinite(n) && Number.isFinite(root)
+        ? n * root
+        : fallbackPx;
     }
     return fallbackPx;
   }
@@ -153,8 +150,7 @@
   const measureViewport = (node: HTMLDivElement) => {
     const apply = () => {
       const root = node.closest(".rotation");
-      const style =
-        root instanceof HTMLElement ? getComputedStyle(root) : null;
+      const style = root instanceof HTMLElement ? getComputedStyle(root) : null;
       const headW = style
         ? cssLengthPx(style.getPropertyValue("--lane-head-w"), 144)
         : 144;
@@ -164,9 +160,7 @@
       const gridGap = style
         ? cssLengthPx(style.getPropertyValue("--lane-grid-gap"), 8)
         : 8;
-      const w = Math.floor(
-        node.clientWidth - scrollPad * 2 - headW - gridGap,
-      );
+      const w = Math.floor(node.clientWidth - scrollPad * 2 - headW - gridGap);
       if (w > 0) viewportWidthPx = w;
     };
     const ro = new ResizeObserver(apply);
@@ -195,10 +189,7 @@
         aria-label="Rotation sample"
         {@attach measureViewport}
       >
-        <div
-          class="lane axis-lane"
-          style:--track-w="{layout.trackWidthPx}px"
-        >
+        <div class="lane axis-lane" style:--track-w="{layout.trackWidthPx}px">
           <div class="lane-head axis-head"></div>
           <div class="lane-track axis-track">
             {#each axisBands as band, i (`ax${i}:${band.label}:${band.leftPx}`)}
@@ -211,79 +202,73 @@
               </span>
             {/each}
             {#each boundaryLeftPxs as x, bi (`axb${bi}:${x}`)}
-              <span
-                class="loop-boundary"
-                style:left="{x}px"
-                aria-hidden="true"
+              <span class="loop-boundary" style:left="{x}px" aria-hidden="true"
               ></span>
             {/each}
           </div>
         </div>
-        <div
-          class="char-lanes"
-          style:--track-w="{layout.trackWidthPx}px"
-        >
-        {#each lanes as lane (lane.key)}
-          {@const who = lane.character?.name ?? lane.key}
-          {@const accent = elementColor(
-            lane.character?.element,
-            "var(--border-control-quiet)",
-          )}
-          <div
-            class="lane"
-            style:--lane-accent={accent}
-            style:--track-w="{layout.trackWidthPx}px"
-          >
-            <div class="lane-head">
-              {#if lane.character}
-                <span class="lane-icon">
-                  <CharacterIcon
-                    character={lane.character}
-                    zoom={0.85}
-                    loading="lazy"
-                  />
-                </span>
-              {/if}
-              <span class="lane-name">{who}</span>
+        <div class="char-lanes" style:--track-w="{layout.trackWidthPx}px">
+          {#each lanes as lane (lane.key)}
+            {@const who = lane.character?.name ?? lane.key}
+            {@const accent = elementColor(
+              lane.character?.element,
+              "var(--border-control-quiet)",
+            )}
+            <div
+              class="lane"
+              style:--lane-accent={accent}
+              style:--track-w="{layout.trackWidthPx}px"
+            >
+              <div class="lane-head">
+                {#if lane.character}
+                  <span class="lane-icon">
+                    <CharacterIcon
+                      character={lane.character}
+                      zoom={0.85}
+                      loading="lazy"
+                    />
+                  </span>
+                {/if}
+                <span class="lane-name">{who}</span>
+              </div>
+              <div class="lane-track">
+                {#each lane.spans as span, si (`fs${si}:${span.leftPx}`)}
+                  <span
+                    class="field-line"
+                    style:left="{span.leftPx}px"
+                    style:width="{span.widthPx}px"
+                    title="{who} on field"
+                    aria-hidden="true"
+                  ></span>
+                {/each}
+                {#each boundaryLeftPxs as x, bi (`b${bi}:${x}`)}
+                  <span
+                    class="loop-boundary"
+                    style:left="{x}px"
+                    title={rotationSegmentLabel(bi + 1, hasSetup)}
+                    aria-hidden="true"
+                  ></span>
+                {/each}
+                {#each lane.markers as marker, i (`${i}:${marker.event.t}:${marker.event.action}:${marker.event.count}`)}
+                  <span
+                    class="marker"
+                    role="img"
+                    class:marker-skill={marker.event.action === "skill" ||
+                      marker.event.action === "hold_skill"}
+                    class:marker-burst={marker.event.action === "burst"}
+                    style:left="{marker.leftPx}px"
+                    style:width="{marker.widthPx}px"
+                    title="{who} {marker.label} · {marker.event.t.toFixed(1)}s"
+                    aria-label="{who} {marker.label} · {marker.event.t.toFixed(
+                      1,
+                    )}s"
+                  >
+                    {marker.label}
+                  </span>
+                {/each}
+              </div>
             </div>
-            <div class="lane-track">
-              {#each lane.spans as span, si (`fs${si}:${span.leftPx}`)}
-                <span
-                  class="field-line"
-                  style:left="{span.leftPx}px"
-                  style:width="{span.widthPx}px"
-                  title="{who} on field"
-                  aria-hidden="true"
-                ></span>
-              {/each}
-              {#each boundaryLeftPxs as x, bi (`b${bi}:${x}`)}
-                <span
-                  class="loop-boundary"
-                  style:left="{x}px"
-                  title={rotationSegmentLabel(bi + 1, hasSetup)}
-                  aria-hidden="true"
-                ></span>
-              {/each}
-              {#each lane.markers as marker, i (`${i}:${marker.event.t}:${marker.event.action}:${marker.event.count}`)}
-                <span
-                  class="marker"
-                  role="img"
-                  class:marker-skill={
-                    marker.event.action === "skill" ||
-                    marker.event.action === "hold_skill"
-                  }
-                  class:marker-burst={marker.event.action === "burst"}
-                  style:left="{marker.leftPx}px"
-                  style:width="{marker.widthPx}px"
-                  title="{who} {marker.label} · {marker.event.t.toFixed(1)}s"
-                  aria-label="{who} {marker.label} · {marker.event.t.toFixed(1)}s"
-                >
-                  {marker.label}
-                </span>
-              {/each}
-            </div>
-          </div>
-        {/each}
+          {/each}
           {#if handoffs.length > 0}
             <div class="swap-links" aria-hidden="true">
               {#each handoffs as h (`sw${h.i}`)}

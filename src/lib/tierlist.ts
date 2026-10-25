@@ -58,7 +58,55 @@ export type TierListPayload = {
   fourStar: TierListEntry[];
   fiveStarCutoff: number;
   fourStarCutoff: number;
+  /**
+   * Stygian avg among-owner usage for every catalog character with rate > 0.
+   * Keyed by `name_id`. Cream boards are a cut of this same source.
+   */
+  usageByNameId: Record<string, number>;
 };
+
+/** name_ids on both Pulls “Most used” boards (limited + non-limited). */
+export function creamNameIds(
+  payload: TierListPayload | null | undefined,
+): Set<string> {
+  const out = new Set<string>();
+  if (!payload) return out;
+  for (const entry of payload.fiveStar) out.add(entry.nameId);
+  for (const entry of payload.fourStar) out.add(entry.nameId);
+  return out;
+}
+
+/**
+ * Full Stygian avg usage by name_id (not cream-cut).
+ * Falls back to cream board scores when `usageByNameId` is missing (old cache).
+ */
+export function stygianUsageByNameId(
+  payload: TierListPayload | null | undefined,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  if (!payload) return out;
+  const full = payload.usageByNameId;
+  if (full && Object.keys(full).length > 0) {
+    for (const [nameId, score] of Object.entries(full)) {
+      if (typeof score === "number" && score > 0) out.set(nameId, score);
+    }
+    return out;
+  }
+  for (const entry of payload.fiveStar) out.set(entry.nameId, entry.score);
+  for (const entry of payload.fourStar) out.set(entry.nameId, entry.score);
+  return out;
+}
+
+/** @deprecated Prefer {@link stygianUsageByNameId} — cream-only map. */
+export function creamUsageByNameId(
+  payload: TierListPayload | null | undefined,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  if (!payload) return out;
+  for (const entry of payload.fiveStar) out.set(entry.nameId, entry.score);
+  for (const entry of payload.fourStar) out.set(entry.nameId, entry.score);
+  return out;
+}
 
 export type CharacterUsageRow = {
   character_id: number;
@@ -185,6 +233,7 @@ export function computeCreamBoard(
 
 /**
  * Build limited-5★ and non-limited cream boards from avg usage + catalog.
+ * Also stamps full `usageByNameId` for every character with positive usage.
  * Payload keys stay `fiveStar` / `fourStar` for API stability.
  */
 export function computeTierList(
@@ -197,6 +246,19 @@ export function computeTierList(
     if (row.character_id == null) continue;
     usageByGameId.set(row.character_id, row);
     if (row.cycles > maxCycles) maxCycles = row.cycles;
+  }
+
+  const usageByNameId: Record<string, number> = {};
+  for (const c of characters) {
+    const row = usageByGameId.get(c.game_id);
+    if (
+      !row ||
+      typeof row.avg_usage_rate !== "number" ||
+      !(row.avg_usage_rate > 0)
+    ) {
+      continue;
+    }
+    usageByNameId[c.name_id] = row.avg_usage_rate;
   }
 
   const limited = computeCreamBoard(
@@ -221,5 +283,6 @@ export function computeTierList(
     fourStar: nonLimited.entries,
     fiveStarCutoff: limited.cutoff,
     fourStarCutoff: nonLimited.cutoff,
+    usageByNameId,
   };
 }

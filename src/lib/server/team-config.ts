@@ -3,9 +3,9 @@
  */
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
-import { LRUCache } from "$lib/server/cache";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
-import { getSimConfigUrl, getSimRotationUrl } from "$lib/utils";
+import { LRUCache } from "#lib/server/cache.js";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
+import { getSimConfigUrl, getSimRotationUrl } from "#lib/utils.js";
 import type {
   InvestmentFile,
   InvestmentSim,
@@ -13,7 +13,7 @@ import type {
   RotationAction,
   RotationSample,
   RotationSampleEvent,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 
 const gunzipAsync = promisify(gunzip);
 /** Max compressed rotation payload from CDN (512 KiB). */
@@ -297,9 +297,7 @@ async function loadSimRotationFromCdn(
     return null;
   }
   if (!res.ok) {
-    throw new Error(
-      `sim rotation ${stateKey} unavailable: HTTP ${res.status}`,
-    );
+    throw new Error(`sim rotation ${stateKey} unavailable: HTTP ${res.status}`);
   }
   const buf = await readBoundedResponseBody(res, MAX_ROTATION_GZIP_BYTES);
   if (!buf) {

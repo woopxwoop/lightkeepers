@@ -7,8 +7,8 @@ import type {
   StygianClearVideo,
   StygianClearVideoPair,
   StygianClearVideosPayload,
-} from "$lib/definitions";
-import { raceAbort } from "$lib/app/race-abort";
+} from "#lib/definitions.js";
+import { raceAbort } from "#lib/app/race-abort.js";
 
 const API_URL = "/api/stygian-clear-videos";
 const FETCH_TIMEOUT_MS = 15_000;

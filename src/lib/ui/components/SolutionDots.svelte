@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { handleKeyboardClick, handlePointerAction } from "$lib/ui/pointer";
+  import { handleKeyboardClick, handlePointerAction } from "#lib/ui/pointer.js";
 
   let {
     count,

@@ -1,8 +1,8 @@
 /**
  * Weapon pick filters — rarity + type chips (planner GoalPickModal).
  */
-import { CHARACTER_WEAPON_TYPES } from "$lib/character-filter";
-import { weaponTypeLabel } from "$lib/utils";
+import { CHARACTER_WEAPON_TYPES } from "#lib/character-filter.js";
+import { weaponTypeLabel } from "#lib/utils.js";
 
 export const WEAPON_FILTER_TYPES = CHARACTER_WEAPON_TYPES;
 

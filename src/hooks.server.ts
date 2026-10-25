@@ -2,15 +2,14 @@
  * src/hooks.server.ts
  */
 
-import { sequence } from "@sveltejs/kit/hooks";
+import { sequence, type Handle } from "@sveltejs/kit/hooks";
 import { handleErrorWithSentry, sentryHandle } from "@sentry/sveltekit";
 import {
   metricRouteLabel,
   metrics,
   shouldRecordHttpMetric,
-} from "$lib/server/metrics";
-import { getAuth } from "$lib/server/auth";
-import type { Handle } from "@sveltejs/kit";
+} from "#lib/server/metrics.js";
+import { getAuth } from "#lib/server/auth.js";
 
 const metricsHandle: Handle = async ({ event, resolve }) => {
   const start = Date.now();

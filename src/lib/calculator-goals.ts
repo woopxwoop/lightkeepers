@@ -10,20 +10,20 @@ import {
   UPGRADE_DEFAULTS,
   diffCharacterUpgrade,
   diffWeaponUpgrade,
-} from "$lib/upgrade-costs";
+} from "#lib/upgrade-costs.js";
 import type {
   AggregatedUpgradeCosts,
   CalculatorGoal,
   CalculatorGoalsState,
   CharacterCalculatorGoal,
   WeaponCalculatorGoal,
-} from "$lib/types/calculator-goals";
+} from "#lib/types/calculator-goals.js";
 import type {
   CharacterUpgradeConfig,
   UpgradeCostResult,
   UpgradeCostsCatalog,
   WeaponUpgradeConfig,
-} from "$lib/types/upgrade-costs";
+} from "#lib/types/upgrade-costs.js";
 
 export const CALCULATOR_GOALS_VERSION = 1 as const;
 export const MAX_CALCULATOR_GOALS = 64;

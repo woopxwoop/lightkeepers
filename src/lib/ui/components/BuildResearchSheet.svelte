@@ -11,19 +11,19 @@
     collectOwnedResearchGearKeys,
     postResearchBuild,
     type ResearchOwnedGearKeys,
-  } from "$lib/app/research";
+  } from "#lib/app/research.js";
   import {
     loadRosterArtifacts,
     loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
-  import type { ResearchResponse } from "$lib/research-types";
-  import { charactersOwned } from "$lib/stores";
-  import { trapTabKey } from "$lib/ui/focus-trap";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
-  import BuildPanel from "$lib/ui/components/BuildPanel.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import ResearchTrace from "$lib/ui/components/ResearchTrace.svelte";
-  import IconX from "$lib/ui/icons/IconX.svelte";
+  } from "#lib/app/roster-inventory.js";
+  import type { ResearchResponse } from "#lib/research-types.js";
+  import { charactersOwned } from "#lib/stores.js";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
+  import BuildPanel from "#lib/ui/components/BuildPanel.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import ResearchTrace from "#lib/ui/components/ResearchTrace.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
   import { get } from "svelte/store";
 
   let {
@@ -51,7 +51,8 @@
     open = false;
   }
 
-  afterNavigate(() => {
+  afterNavigate(({ shallow, type }) => {
+    if (shallow && type === "goto") return;
     if (!open) return;
     closedByNavigate = true;
     close();
@@ -195,7 +196,10 @@
           <div class="build-state build-error" role="alert">
             <p class="section-title">Couldn’t load build</p>
             <p class="section-lede">{error}</p>
-            <Button variant="secondary" onclick={() => void loadBuild(focusNameId, true)}>
+            <Button
+              variant="secondary"
+              onclick={() => void loadBuild(focusNameId, true)}
+            >
               Retry
             </Button>
           </div>
@@ -222,7 +226,10 @@
             <p class="section-lede">
               Agent did not return a Build view. Try again from Research.
             </p>
-            <Button variant="secondary" onclick={() => void loadBuild(focusNameId, true)}>
+            <Button
+              variant="secondary"
+              onclick={() => void loadBuild(focusNameId, true)}
+            >
               Retry
             </Button>
           </div>

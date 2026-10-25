@@ -14,8 +14,8 @@
     toolsLinks,
     type MainLink,
     type ToolsLink,
-  } from "$lib/ui/nav-links";
-  import { shouldArmSubmenuFirstActivation } from "$lib/ui/nav-submenu-arm";
+  } from "#lib/ui/nav-links.js";
+  import { shouldArmSubmenuFirstActivation } from "#lib/ui/nav-submenu-arm.js";
 
   let {
     onSubOpenChange,
@@ -157,10 +157,7 @@
   const onSettingsPage = $derived(isSettingsPage(page.url.pathname));
 </script>
 
-<div
-  class="hidden md:flex items-center gap-6 relative"
-  bind:this={navWrapEl}
->
+<div class="hidden md:flex items-center gap-6 relative" bind:this={navWrapEl}>
   <div class="nav-menu-item">
     <a
       href={abyssPath}

@@ -8,15 +8,18 @@
   import { onMount, untrack } from "svelte";
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
-  import type { Character } from "$lib/definitions";
-  import { bootstrapClient, seedClientStores } from "$lib/app/bootstrapClient";
-  import { clearRosterInventory } from "$lib/app/roster-inventory";
-  import { cancelRosterSyncConflict } from "$lib/app/roster-sync-conflict";
-  import { authClient } from "$lib/auth-client";
-  import { installChunkLoadRecovery } from "$lib/app/chunkLoadRecovery";
-  import { installDebugHitTest } from "$lib/app/debugHitTest";
-  import { rememberNavigation } from "$lib/nav-history";
-  import { clearOrphanBodyScrollLock } from "$lib/ui/body-scroll-lock";
+  import type { Character } from "#lib/definitions.js";
+  import {
+    bootstrapClient,
+    seedClientStores,
+  } from "#lib/app/bootstrapClient.js";
+  import { clearRosterInventory } from "#lib/app/roster-inventory.js";
+  import { cancelRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
+  import { authClient } from "#lib/auth-client.js";
+  import { installChunkLoadRecovery } from "#lib/app/chunkLoadRecovery.js";
+  import { installDebugHitTest } from "#lib/app/debugHitTest.js";
+  import { rememberNavigation } from "#lib/nav-history.js";
+  import { clearOrphanBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
   import {
     displayPreferences,
     initDisplayPreferences,
@@ -24,26 +27,28 @@
     faviconDataUri,
     backgroundVisible,
     syncBackgroundToPath,
-  } from "$lib/stores";
-  import NavBar from "$lib/ui/NavBar.svelte";
-  import PatchNotesPopup from "$lib/ui/components/PatchNotesPopup.svelte";
-  import PlannerItinerarySheet from "$lib/ui/components/PlannerItinerarySheet.svelte";
-  import ResearchChatSheet from "$lib/ui/components/ResearchChatSheet.svelte";
-  import AccountSettingsModal from "$lib/ui/components/AccountSettingsModal.svelte";
-  import RosterSyncConflictPopup from "$lib/ui/components/RosterSyncConflictPopup.svelte";
+  } from "#lib/stores.js";
+  import NavBar from "#lib/ui/NavBar.svelte";
+  import PatchNotesPopup from "#lib/ui/components/PatchNotesPopup.svelte";
+  import PlannerItinerarySheet from "#lib/ui/components/PlannerItinerarySheet.svelte";
+  import ResearchChatSheet from "#lib/ui/components/ResearchChatSheet.svelte";
+  import AccountSettingsModal from "#lib/ui/components/AccountSettingsModal.svelte";
+  import RosterSyncConflictPopup from "#lib/ui/components/RosterSyncConflictPopup.svelte";
   import { resolve } from "$app/paths";
-  import { DISCORD_INVITE_URL } from "$lib/site";
-  import { getSiteBackgroundUrl } from "$lib/utils";
-  import { browser, dev } from "$app/environment";
+  import { DISCORD_INVITE_URL } from "#lib/site.js";
+  import { getSiteBackgroundUrl } from "#lib/utils.js";
+  import { browser, dev } from "$app/env";
   import "../app.css";
 
-  const patchNotesPath = resolve("/patch-notes");
+  const patchNotesPath = resolve("patch-notes");
 
   if (typeof window !== "undefined") {
     installChunkLoadRecovery();
   }
 
-  afterNavigate(({ from }) => {
+  afterNavigate(({ from, shallow, type }) => {
+    if (shallow && type === "goto") return;
+
     rememberNavigation(from?.url);
     clearOrphanBodyScrollLock();
   });

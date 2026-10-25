@@ -5,6 +5,7 @@
  *
  *   genshin/ui/{UI_*}.webp                 — textures (portraits, skills, enemies, …)
  *   characters/{name_id}/card.webp         — TCG cards (see getCharacterCard in utils.ts)
+ *   characters/tcg-cards.json              — name_ids that have a card (incl. manual Traveler)
  *   genshin/data/characters/index.json     — kit roster summary (live)
  *   genshin/data/characters/{name_id}.json — full kit per character (live)
  *   genshin/data/beta/characters/…         — CB / unreleased kits (YuanShen)
@@ -19,20 +20,23 @@
  * Costs:  scripts/sync/upgrade-costs-r2.ts (+ DATA_CHANNEL=beta for CB)
  *
  * Note: weapon/artifact tables are loaded via dynamic import in
- * `$lib/equipment-data` (not this module). Character kits + enemy index
+ * `#lib/equipment-data.js` (not this module). Character kits + enemy index
  * live on the CDN.
  */
 
-import type { CharacterKit, CharacterKitIndex } from "$lib/types/character-kit";
-import type { EnemyIndex } from "$lib/types/enemy";
+import type {
+  CharacterKit,
+  CharacterKitIndex,
+} from "#lib/types/character-kit.js";
+import type { EnemyIndex } from "#lib/types/enemy.js";
 import type {
   CharacterUpgradeCosts,
   UpgradeCostsCatalog,
   UpgradeCurves,
   UpgradeMaterialMeta,
   WeaponUpgradeCosts,
-} from "$lib/types/upgrade-costs";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
+} from "#lib/types/upgrade-costs.js";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
 
 const CDN_BASE = "https://api.lightkeepers.moe";
 const UI_PREFIX = `${CDN_BASE}/genshin/ui`;

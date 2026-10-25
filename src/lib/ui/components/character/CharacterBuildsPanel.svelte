@@ -1,19 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { resolve } from "$app/paths";
-  import CharacterIcon from "$lib/ui/components/CharacterIcon.svelte";
-  import WeaponTooltip from "$lib/ui/components/WeaponTooltip.svelte";
-  import WeaponIcon from "$lib/ui/components/WeaponIcon.svelte";
-  import WeaponName from "$lib/ui/components/WeaponName.svelte";
-  import ArtifactTooltip from "$lib/ui/components/ArtifactTooltip.svelte";
-  import ArtifactIcon from "$lib/ui/components/ArtifactIcon.svelte";
-  import HoverTooltip from "$lib/ui/components/HoverTooltip.svelte";
-  import UpgradeImpactPopover from "$lib/ui/components/UpgradeImpactPopover.svelte";
-  import InvestmentBuildCard from "$lib/ui/components/InvestmentBuildCard.svelte";
-  import CharacterUsefulLinks from "$lib/ui/components/character/CharacterUsefulLinks.svelte";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import IconFileSearch from "$lib/ui/icons/IconFileSearch.svelte";
-  import { loadRosterArtifacts } from "$lib/app/roster-inventory";
+  import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
+  import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
+  import WeaponIcon from "#lib/ui/components/WeaponIcon.svelte";
+  import WeaponName from "#lib/ui/components/WeaponName.svelte";
+  import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
+  import ArtifactIcon from "#lib/ui/components/ArtifactIcon.svelte";
+  import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
+  import UpgradeImpactPopover from "#lib/ui/components/UpgradeImpactPopover.svelte";
+  import InvestmentBuildCard from "#lib/ui/components/InvestmentBuildCard.svelte";
+  import CharacterUsefulLinks from "#lib/ui/components/character/CharacterUsefulLinks.svelte";
+  import IconCog from "#lib/ui/icons/IconCog.svelte";
+  import IconFileSearch from "#lib/ui/icons/IconFileSearch.svelte";
+  import { loadRosterArtifacts } from "#lib/app/roster-inventory.js";
   import {
     artifactSlotIconUrl,
     getUiAssetUrl,
@@ -21,9 +21,9 @@
     statIconUrl,
     translateStatKey,
     type CrimsonWitchLink,
-  } from "$lib/utils";
-  import { weaponByKey, ensureEquipmentData } from "$lib/equipment-data";
-  import { useEquipmentData } from "$lib/equipment-data.svelte";
+  } from "#lib/utils.js";
+  import { weaponByKey, ensureEquipmentData } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
   import {
     MAIN_STAT_SLOTS,
     buildExamples,
@@ -40,13 +40,13 @@
     recommendedSubstatsFromBuilds,
     sigWeaponPrioritySection,
     talentPrioritySection,
-  } from "$lib/character-builds";
-  import { kitIconsFromCharacterKit } from "$lib/investment-build-card";
-  import { skillIconUrl, talentIconUrl } from "$lib/asset-urls";
-  import type { CharacterKit } from "$lib/types/character-kit";
-  import type { CharacterIndex } from "$lib/types/investment";
-  import type { CharacterOwned } from "$lib/definitions";
-  import type { UpgradeTier } from "$lib/upgrade-priority";
+  } from "#lib/character-builds.js";
+  import { kitIconsFromCharacterKit } from "#lib/investment-build-card.js";
+  import { skillIconUrl, talentIconUrl } from "#lib/asset-urls.js";
+  import type { CharacterKit } from "#lib/types/character-kit.js";
+  import type { CharacterIndex } from "#lib/types/investment.js";
+  import type { CharacterOwned } from "#lib/definitions.js";
+  import type { UpgradeTier } from "#lib/upgrade-priority.js";
 
   let {
     kit,
@@ -120,16 +120,20 @@
   );
   let exampleCardBuild = $derived.by(() => {
     if (!activeExample) return null;
+
     const tier = exampleHasHighConfig(activeExample)
       ? ("high" as const)
       : ("mid" as const);
+
     return characterBuildFromExample(activeExample, tier);
   });
   let exampleCardRelevantKeys = $derived.by(() => {
     if (!activeExample) return null;
+
     const tier = exampleHasHighConfig(activeExample)
       ? ("high" as const)
       : ("mid" as const);
+
     return exampleRelevantGoodKeys(activeExample, tier);
   });
   let exampleCardKit = $derived(kitIconsFromCharacterKit(kit));
@@ -672,7 +676,7 @@
               <div class="example-picker-actions">
                 <a
                   class="example-picker-action"
-                  href={resolve(`/teams/${activeExample.team_key}`)}
+                  href={resolve(`teams/${activeExample.team_key}`)}
                   aria-label="View team details"
                   title="View team details"
                 >
@@ -689,9 +693,8 @@
                       ? "Hide other example teams"
                       : "Show other example teams"}
                     onclick={() => (exampleMenuOpen = !exampleMenuOpen)}
+                    ><IconCog size={18} /></button
                   >
-                    <IconCog size={18} />
-                  </button>
                 {/if}
               </div>
             </div>

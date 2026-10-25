@@ -1,25 +1,25 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { authClient } from "$lib/auth-client";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import { loadUpgradeCosts } from "$lib/app/upgrade-costs";
+  import { authClient } from "#lib/auth-client.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
   import {
     getRosterWeaponsCached,
     loadRosterWeapons,
-  } from "$lib/app/roster-inventory";
-  import { assetUrl } from "$lib/asset-urls";
-  import { ownedNameIds } from "$lib/utils";
-  import { charactersOwned } from "$lib/stores";
+  } from "#lib/app/roster-inventory.js";
+  import { assetUrl } from "#lib/asset-urls.js";
+  import { ownedNameIds } from "#lib/utils.js";
+  import { charactersOwned } from "#lib/stores.js";
   import {
     expItemsNeeded,
     formatMaterialSourceLine,
     collapseCraftRanks,
     craftRanksCanExpand,
-  } from "$lib/upgrade-costs";
+  } from "#lib/upgrade-costs.js";
   import {
     aggregateGoalCosts,
     costsForGoal,
@@ -31,7 +31,7 @@
     replaceGoal,
     starredGoals,
     toggleGoalStarred,
-  } from "$lib/calculator-goals";
+  } from "#lib/calculator-goals.js";
   import {
     appendCatalogCharacterGoal,
     appendCatalogWeaponGoal,
@@ -39,31 +39,32 @@
     plannerCharacterOptions,
     plannerWeaponOptions,
     resolveCatalogCharacterId,
-  } from "$lib/planner-goal-edits";
+  } from "#lib/planner-goal-edits.js";
   import {
     autofillCharacterGoalState,
     goalsHaveUnsavedChanges,
     hydrateGoalsState,
     readGoalsIfChanged,
     saveGoalsState,
-  } from "$lib/calculator-goals-lifecycle";
+  } from "#lib/calculator-goals-lifecycle.js";
   import {
     captureGoals,
     goalsLocalRevision,
     readGoalsLocal,
     type GoalsCapture,
-  } from "$lib/calculator-goals-snapshot";
-  import { nextSearchPath } from "$lib/query-state";
+  } from "#lib/calculator-goals-snapshot.js";
+  import { nextSearchPath } from "#lib/query-state.js";
+  import { auditPath } from "#lib/ui/nav-links.js";
   import type {
     AggregatedUpgradeCosts,
     CalculatorGoalsState,
-  } from "$lib/types/calculator-goals";
-  import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-  import Button from "$lib/ui/components/Button.svelte";
-  import GoalConfigureModal from "$lib/ui/components/GoalConfigureModal.svelte";
-  import GoalList from "$lib/ui/components/GoalList.svelte";
-  import GoalPickModal from "$lib/ui/components/GoalPickModal.svelte";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  } from "#lib/types/calculator-goals.js";
+  import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+  import Button from "#lib/ui/components/Button.svelte";
+  import GoalConfigureModal from "#lib/ui/components/GoalConfigureModal.svelte";
+  import GoalList from "#lib/ui/components/GoalList.svelte";
+  import GoalPickModal from "#lib/ui/components/GoalPickModal.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
 
   type CostScope = "all" | "selected" | "starred";
 
@@ -194,7 +195,7 @@
     const nameId = page.url.searchParams.get("add")?.trim();
     if (!nameId) return;
     const next = nextSearchPath(page.url, { add: null });
-    if (next) replaceState(next, page.state);
+    if (next) goto(next, { shallow: true, replace: true, state: page.state });
     pendingPlannerAdd = nameId;
   });
 
@@ -566,7 +567,10 @@
 
         {#if goalsState.goals.length === 0}
           <p class="section-lede">
-            Add a character or weapon goal to start planning costs.
+            Add a character or weapon goal to start planning costs, or
+            <a class="lede-link" href={auditPath}
+              >get suggestions from Build Audit</a
+            >.
           </p>
         {:else}
           <GoalList
@@ -593,28 +597,24 @@
               class="scope-btn"
               class:active={costScope === "all"}
               aria-pressed={costScope === "all"}
-              onclick={() => (costScope = "all")}
+              onclick={() => (costScope = "all")}>All goals</button
             >
-              All goals
-            </button>
+
             <button
               type="button"
               class="scope-btn"
               class:active={costScope === "selected"}
               aria-pressed={costScope === "selected"}
-              onclick={() => (costScope = "selected")}
+              onclick={() => (costScope = "selected")}>Selected</button
             >
-              Selected
-            </button>
+
             <button
               type="button"
               class="scope-btn"
               class:active={costScope === "starred"}
               aria-pressed={costScope === "starred"}
-              onclick={() => (costScope = "starred")}
+              onclick={() => (costScope = "starred")}>Starred</button
             >
-              Starred
-            </button>
           </div>
         </div>
 
@@ -730,8 +730,9 @@
                             height="16"
                             loading="lazy"
                             onerror={(e) => {
-                              (e.currentTarget as HTMLImageElement).style.display =
-                                "none";
+                              (
+                                e.currentTarget as HTMLImageElement
+                              ).style.display = "none";
                             }}
                           />
                         {/if}
@@ -877,6 +878,12 @@
   .scope-row {
     display: flex;
     gap: 0.35rem;
+  }
+
+  .lede-link {
+    color: var(--foreground-color);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
   }
 
   .totals {

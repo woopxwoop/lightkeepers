@@ -11,14 +11,14 @@
  * Server L1 + Valkey live in getInvestmentFile() (shared with team-config SSR).
  */
 
-import { json, error, isHttpError } from "@sveltejs/kit";
+import { error, isHttpError } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getInvestmentFile } from "$lib/server/team-config";
+import { getInvestmentFile } from "#lib/server/team-config.js";
 
 export const GET: RequestHandler = async () => {
   try {
     const payload = await getInvestmentFile();
-    return json(payload, {
+    return Response.json(payload, {
       headers: {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
       },

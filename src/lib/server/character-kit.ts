@@ -2,12 +2,12 @@
  * Server-side character kit fetch from CDN (cached).
  * Live kits under `genshin/data/characters/`; CB kits under `genshin/data/beta/characters/`.
  */
-import type { CharacterKit } from "$lib/types/character-kit";
-import { characterKitUrl, type CharacterKitChannel } from "$lib/asset-urls";
-import { LRUCache } from "$lib/server/cache";
-import { fetchWithTimeout } from "$lib/cdn-fetch";
-import { mergeTravelerKits, travelerElementKitId } from "$lib/traveler-kits";
-import { TRAVELER_GUIDE_ELEMENTS } from "$lib/utils";
+import type { CharacterKit } from "#lib/types/character-kit.js";
+import { characterKitUrl, type CharacterKitChannel } from "#lib/asset-urls.js";
+import { LRUCache } from "#lib/server/cache.js";
+import { fetchWithTimeout } from "#lib/cdn-fetch.js";
+import { mergeTravelerKits, travelerElementKitId } from "#lib/traveler-kits.js";
+import { TRAVELER_GUIDE_ELEMENTS } from "#lib/utils.js";
 
 export type CharacterKitResult = {
   kit: CharacterKit;

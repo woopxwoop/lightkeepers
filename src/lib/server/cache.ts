@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Tables } from "$lib/types/database.types";
+import type { Tables } from "#lib/types/database.types.js";
 
 // ── LRU Cache ──────────────────────────────────────────────────────────────
 
@@ -156,7 +156,8 @@ export class LRUCache<T> {
 
         const rKey = this.redisKey(key);
         if (rKey) {
-          const { valkeyGetJsonWithTtl } = await import("$lib/server/valkey");
+          const { valkeyGetJsonWithTtl } =
+            await import("#lib/server/valkey.js");
           const remote = await valkeyGetJsonWithTtl<T>(rKey);
           if (remote !== undefined) {
             const ttl = Math.min(this.ttlMs, remote.ttlMs);
@@ -170,7 +171,7 @@ export class LRUCache<T> {
         const value = await fn();
         this.set(key, value);
         if (rKey) {
-          const { valkeySetJson } = await import("$lib/server/valkey");
+          const { valkeySetJson } = await import("#lib/server/valkey.js");
           void valkeySetJson(rKey, value, this.ttlMs);
         }
         return value;
@@ -288,7 +289,7 @@ export const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
 export async function checkApiRateLimit(ip: string | null): Promise<boolean> {
   if (ip == null || ip === "") return true;
   try {
-    const { valkeyIncrWithTtl } = await import("$lib/server/valkey");
+    const { valkeyIncrWithTtl } = await import("#lib/server/valkey.js");
     const window = Math.floor(Date.now() / API_RATE_WINDOW_MS);
     const key = `lk:ratelimit:api:${ip}:${window}`;
     const count = await valkeyIncrWithTtl(key, API_RATE_WINDOW_MS);

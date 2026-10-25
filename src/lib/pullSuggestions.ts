@@ -2,7 +2,7 @@ import type {
   StygianTeam,
   NearMissStygianTeam,
   NearMissStygianPair,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 
 export type PullSuggestion = {
   character: string;
@@ -110,7 +110,7 @@ export function computePullSuggestions(
   return suggestions.sort((a, b) => b.score - a.score).slice(0, maxSuggestions);
 }
 
-export type { NearMissStygianTeam } from "$lib/definitions";
+export type { NearMissStygianTeam } from "#lib/definitions.js";
 export type NearMissPairTeam = NearMissStygianPair;
 
 /**

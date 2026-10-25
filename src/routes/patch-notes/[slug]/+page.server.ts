@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { getPatchNote } from "$lib/patch-notes-catalog";
-import { renderPatchNoteBody } from "$lib/patch-notes";
+import { getPatchNote } from "#lib/patch-notes-catalog.js";
+import { renderPatchNoteBody } from "#lib/patch-notes.js";
 
 export const load: PageServerLoad = async ({ params }) => {
   const note = getPatchNote(params.slug);

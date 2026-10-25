@@ -2,12 +2,12 @@
  * GET /api/character-kit/[nameId]
  *
  * Proxies CDN character kit JSON (live, then beta). Browser cannot fetch the
- * CDN kit directly (no CORS); SSR uses `$lib/server/character-kit` instead.
+ * CDN kit directly (no CORS); SSR uses `#lib/server/character-kit.js` instead.
  */
-import { json, error } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getCharacterKit } from "$lib/server/character-kit";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
+import { getCharacterKit } from "#lib/server/character-kit.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 
 export const GET: RequestHandler = async ({
   params,
@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({
   }
   if (!kit) throw error(404, `No kit for ${nameId}`);
 
-  return json(kit, {
+  return Response.json(kit, {
     headers: {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
     },

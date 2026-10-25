@@ -12,19 +12,19 @@
  *   - Valkey L2 when VALKEY_URL is set (shared across pm2 workers)
  */
 
-import { json, error } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { LRUCache } from "$lib/server/cache";
-import { isPlaywrightE2e } from "$lib/server/e2e";
-import { e2eStaticPayload } from "$lib/e2e/fixtures";
-import type { Tables } from "$lib/types/database.types";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { LRUCache } from "#lib/server/cache.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
+import { e2eStaticPayload } from "#lib/e2e/fixtures.js";
+import type { Tables } from "#lib/types/database.types.js";
 import type {
   StygianEnemies,
   AbyssChamberEnemy,
   AbyssEnemies,
   StygianSchedule,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 
 type Version = Tables<"abyss_versions">;
 type StygianVersion = Tables<"stygian_versions">;
@@ -178,7 +178,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
 
   // ── Parse abyss floors (floor 12) ───────────────────────────────────────
   // floors JSONB follows AbyssFloorRecord[] from hybrid sync
-  // (scripts/sync/abyss-schedules.ts → $lib/types/schedules)
+  // (scripts/sync/abyss-schedules.ts → #lib/types/schedules)
   type ParsedMonster = { id: number; name: string; icon: string };
   type FloorRecord = {
     floorId: number;
@@ -300,7 +300,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
 
 export const GET: RequestHandler = async () => {
   if (isPlaywrightE2e()) {
-    return json(e2eStaticPayload(), {
+    return Response.json(e2eStaticPayload(), {
       headers: {
         "Cache-Control": "no-store",
         "X-Playwright-E2E": "1",
@@ -310,7 +310,7 @@ export const GET: RequestHandler = async () => {
 
   const payload = await staticCache.getOrSet(CACHE_KEY, fetchStaticData);
 
-  return json(payload, {
+  return Response.json(payload, {
     headers: {
       // Cloudflare will cache this response for 5 minutes,
       // serving stale for an extra 60s while it revalidates.

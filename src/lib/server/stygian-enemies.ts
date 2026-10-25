@@ -3,13 +3,13 @@
  */
 
 import { error } from "@sveltejs/kit";
-import { serverDb } from "$lib/server/supabaseServer";
-import { assertNoDbError } from "$lib/server/request-validation";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { assertNoDbError } from "#lib/server/request-validation.js";
 import type {
   Enemy,
   StygianEnemyCycleOption,
   StygianEnemyListItem,
-} from "$lib/definitions";
+} from "#lib/definitions.js";
 
 export async function listStygianEnemyAppearances(): Promise<{
   enemies: StygianEnemyListItem[];

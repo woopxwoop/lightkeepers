@@ -4,10 +4,10 @@
   import { page } from "$app/state";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { accountSettingsOpen } from "$lib/account-settings-open";
-  import { trapTabKey } from "$lib/ui/focus-trap";
-  import { acquireBodyScrollLock } from "$lib/ui/body-scroll-lock";
-  import IconX from "$lib/ui/icons/IconX.svelte";
+  import { accountSettingsOpen } from "#lib/account-settings-open.js";
+  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
+  import IconX from "#lib/ui/icons/IconX.svelte";
   import AccountPanel from "../../../routes/settings/panels/AccountPanel.svelte";
 
   let panelEl: HTMLDivElement | null = $state(null);
@@ -18,7 +18,8 @@
     accountSettingsOpen.set(false);
   }
 
-  afterNavigate(() => {
+  afterNavigate(({ shallow, type }) => {
+    if (shallow && type === "goto") return;
     if (!$accountSettingsOpen) return;
     closedByNavigate = true;
     close();
@@ -88,6 +89,7 @@
           <IconX size={16} />
         </button>
       </header>
+
       <AccountPanel showHeading={false} embed {oauthCallbackUrl} />
     </div>
   </div>

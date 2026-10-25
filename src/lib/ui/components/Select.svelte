@@ -8,7 +8,7 @@
 <script lang="ts" generics="Value extends string = string">
   import { tick } from "svelte";
   import type { HTMLAttributes } from "svelte/elements";
-  import IconChevronDown from "$lib/ui/icons/IconChevronDown.svelte";
+  import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
 
   let {
     value = $bindable("" as Value),

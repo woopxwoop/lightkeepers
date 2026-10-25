@@ -3,22 +3,23 @@
  *
  * Stygian cream-of-the-crop from `character_usage_avg_stygian`, split into
  * limited 5★ and non-limited (4★ + standard 5★) boards. Cutoff via relative
- * largest gap (ranks 8–16 limited / 24–32 non-limited). Independent of roster
- * — cache hard like /api/static.
+ * largest gap (ranks 8–16 limited / 24–32 non-limited). Also returns
+ * `usageByNameId` for every catalog character with positive avg usage.
+ * Independent of roster — cache hard like /api/static.
  */
 
-import { json, error } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { LRUCache, charactersCache } from "$lib/server/cache";
-import { isPlaywrightE2e } from "$lib/server/e2e";
-import { e2eTierListPayload } from "$lib/e2e/fixtures";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { LRUCache, charactersCache } from "#lib/server/cache.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
+import { e2eTierListPayload } from "#lib/e2e/fixtures.js";
 import {
   computeTierList,
   type CharacterUsageRow,
   type TierListPayload,
-} from "$lib/tierlist";
-import type { Tables } from "$lib/types/database.types";
+} from "#lib/tierlist.js";
+import type { Tables } from "#lib/types/database.types.js";
 
 type Character = Tables<"characters">;
 
@@ -26,7 +27,7 @@ const tierListCache = new LRUCache<TierListPayload>(1, 15 * 60 * 1000, {
   redisNamespace: "tierlist",
   staleWhileRevalidate: true,
 });
-const CACHE_KEY = "tierlist-cream-v2";
+const CACHE_KEY = "tierlist-cream-v3";
 
 async function fetchTierList(): Promise<TierListPayload> {
   const [usageRes, characters] = await Promise.all([
@@ -76,7 +77,7 @@ async function fetchTierList(): Promise<TierListPayload> {
 
 export const GET: RequestHandler = async () => {
   if (isPlaywrightE2e()) {
-    return json(e2eTierListPayload(), {
+    return Response.json(e2eTierListPayload(), {
       headers: {
         "Cache-Control": "no-store",
         "X-Playwright-E2E": "1",
@@ -86,7 +87,7 @@ export const GET: RequestHandler = async () => {
 
   const payload = await tierListCache.getOrSet(CACHE_KEY, fetchTierList);
 
-  return json(payload, {
+  return Response.json(payload, {
     headers: {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
     },

@@ -5,20 +5,19 @@
  * roster-keyed) — cache like /api/tierlist.
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { LRUCache } from "$lib/server/cache";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
-import { isPlaywrightE2e } from "$lib/server/e2e";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { LRUCache } from "#lib/server/cache.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   assertNoDbError,
   requireAnalyticsMode,
   requireCharacterNameId,
-} from "$lib/server/request-validation";
-import { TOP_TEAMS_LIMIT } from "$lib/character-teams";
-import type { CharacterAnalyticsPayload } from "$lib/definitions";
-import { e2eCharacterAnalyticsPayload } from "$lib/e2e/fixtures";
+} from "#lib/server/request-validation.js";
+import { TOP_TEAMS_LIMIT } from "#lib/character-teams.js";
+import type { CharacterAnalyticsPayload } from "#lib/definitions.js";
+import { e2eCharacterAnalyticsPayload } from "#lib/e2e/fixtures.js";
 
 const analyticsCache = new LRUCache<CharacterAnalyticsPayload>(
   256,
@@ -78,7 +77,7 @@ export const GET: RequestHandler = async ({
   if (isPlaywrightE2e()) {
     const nameId = requireCharacterNameId(url.searchParams.get("nameId"));
     const mode = requireAnalyticsMode(url.searchParams.get("mode"));
-    return json(e2eCharacterAnalyticsPayload(nameId, mode), {
+    return Response.json(e2eCharacterAnalyticsPayload(nameId, mode), {
       headers: {
         "Cache-Control": "no-store",
         "X-Playwright-E2E": "1",
@@ -96,7 +95,7 @@ export const GET: RequestHandler = async ({
     fetchCharacterAnalytics(nameId, mode),
   );
 
-  return json(payload, {
+  return Response.json(payload, {
     headers: {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
     },

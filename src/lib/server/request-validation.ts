@@ -3,7 +3,7 @@ import type { User } from "better-auth";
 import {
   MAX_CALCULATOR_GOALS,
   MAX_GOAL_ID_LENGTH,
-} from "$lib/calculator-goals";
+} from "#lib/calculator-goals.js";
 import {
   STYGIAN_CHEAP_CLEARS_DIFFICULTY,
   isStygianClearDifficulty,
@@ -13,14 +13,14 @@ import {
   type RosterProgress,
   type RosterWeapon,
   type StygianClearDifficulty,
-} from "$lib/definitions";
-import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "$lib/upgrade-costs";
-import type { CalculatorGoal } from "$lib/types/calculator-goals";
+} from "#lib/definitions.js";
+import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "#lib/upgrade-costs.js";
+import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
 import {
   MAX_CONSTELLATION,
   MAX_REFINEMENT,
   MAX_WEAPON_KEY_LENGTH,
-} from "$lib/roster-progress";
+} from "#lib/roster-progress.js";
 import {
   isArtifactSlot,
   MAX_ARTIFACT_LEVEL,
@@ -32,7 +32,7 @@ import {
   MAX_STAT_KEY_LENGTH,
   MAX_SUBSTAT_INPUT_ROWS,
   MAX_UNACTIVATED_SUBSTATS,
-} from "$lib/roster-inventory";
+} from "#lib/roster-inventory.js";
 
 /** Soft cap — Genshin roster is ~100; leave headroom for future growth. */
 export const MAX_ROSTER_CHARACTERS = 256;

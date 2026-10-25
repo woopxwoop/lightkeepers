@@ -14,7 +14,7 @@
  * planner autofill also skips those numbers. Remove the id once summaries
  * are regenerated and marked up to date.
  */
-import { travelerBaseNameId } from "$lib/traveler-kits";
+import { travelerBaseNameId } from "#lib/traveler-kits.js";
 
 export const STALE_BUILD_SUMMARY_NAME_IDS: ReadonlySet<string> = new Set([
   "Yae",

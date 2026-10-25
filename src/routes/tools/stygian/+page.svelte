@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { stygianScheduleBoard } from "$lib/stores";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import StygianSolutionBoard from "$lib/ui/components/StygianSolutionBoard.svelte";
+  import { stygianScheduleBoard } from "#lib/stores.js";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import StygianSolutionBoard from "#lib/ui/components/StygianSolutionBoard.svelte";
   import { resolve } from "$app/paths";
 
   let { data } = $props();
@@ -39,10 +39,12 @@
         {#if metaParts.length > 0}
           <span class="page-meta-sep" aria-hidden="true">·</span>
         {/if}
-        <a class="back-link" href={resolve("/tools/stygian/summary")}>Summary</a
-        >
+
+        <a class="back-link" href={resolve("tools/stygian/summary")}>Summary</a>
+
         <span class="page-meta-sep" aria-hidden="true">·</span>
-        <a class="back-link" href={resolve("/tools/stygian/enemies")}
+
+        <a class="back-link" href={resolve("tools/stygian/enemies")}
           >Enemy Database</a
         >
       </p>

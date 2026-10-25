@@ -5,7 +5,7 @@
    * filters in the query string survive.
    */
   import type { Snippet } from "svelte";
-  import { canPopTo } from "$lib/nav-history";
+  import { canPopTo } from "#lib/nav-history.js";
 
   let {
     href,

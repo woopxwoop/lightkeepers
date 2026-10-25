@@ -1,6 +1,6 @@
-import type { CharacterOwned } from "$lib/definitions";
-import { ELEMENT_NAMES } from "$lib/element-colors";
-import { weaponTypeLabel } from "$lib/utils";
+import type { CharacterOwned } from "#lib/definitions.js";
+import { ELEMENT_NAMES } from "#lib/element-colors.js";
+import { weaponTypeLabel } from "#lib/utils.js";
 
 export const CHARACTER_ELEMENTS = ELEMENT_NAMES;
 

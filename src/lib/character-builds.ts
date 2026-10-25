@@ -8,8 +8,8 @@ import {
   clampSubstatRolls,
   computeBuildSheetStats,
   isArtifactSubstatKey,
-} from "$lib/build-stats";
-import { translateStatKey } from "$lib/utils";
+} from "#lib/build-stats.js";
+import { translateStatKey } from "#lib/utils.js";
 import {
   CONSTELLATION_UPGRADE,
   LEVEL_UPGRADE,
@@ -21,7 +21,7 @@ import {
   resolveUpgradeImpact,
   type UpgradeImpactLadder,
   type UpgradeTier,
-} from "$lib/upgrade-priority";
+} from "#lib/upgrade-priority.js";
 import type {
   CharacterBuild,
   CharacterBuildExample,
@@ -34,7 +34,7 @@ import type {
   CharacterWeaponRank,
   ImpactTierScale,
   TalentSlot,
-} from "$lib/types/investment";
+} from "#lib/types/investment.js";
 
 export const MAIN_STAT_SLOTS = [
   { key: "sands" as const, label: "Sands" },
@@ -728,7 +728,10 @@ export function exampleRelevantGoodKeys(
     const k = example.main_stats?.[slot.key];
     if (typeof k === "string" && k) keys.add(k);
   }
-  if (Array.isArray(example.goal_substats) && example.goal_substats.length > 0) {
+  if (
+    Array.isArray(example.goal_substats) &&
+    example.goal_substats.length > 0
+  ) {
     for (const k of example.goal_substats) {
       if (typeof k === "string" && k) keys.add(k);
     }
@@ -881,7 +884,10 @@ export function normalizeSetPieceCount(
 export function characterBuildFromExample(
   example: CharacterBuildExample,
   tier: ExampleRollTier = "mid",
-): CharacterBuild {
+): CharacterBuild & {
+  substat_rolls: Record<string, number>;
+  substat_rolls_liquid: Record<string, number>;
+} {
   const useHigh = tier === "high" && exampleHasHighConfig(example);
   const mains = example.main_stats;
   const totals = useHigh

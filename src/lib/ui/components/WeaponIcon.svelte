@@ -3,7 +3,7 @@
    * Weapon icon from a GOOD key. Empty until equipment JSON loads, then
    * updates without a parent {#key $equipmentVersion}.
    */
-  import { useWeapon } from "$lib/equipment-data.svelte";
+  import { useWeapon } from "#lib/equipment-data.svelte.js";
 
   let {
     weaponKey,

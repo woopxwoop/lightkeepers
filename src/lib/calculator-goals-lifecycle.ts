@@ -3,29 +3,31 @@
  * Hydration, same-tab sync, pending removes, save, character autofill.
  */
 
+import { get } from "svelte/store";
 import {
   applyCloudGoals,
   findGoal,
   parseGoalsState,
   removeGoal,
   replaceGoal,
-} from "$lib/calculator-goals";
+} from "#lib/calculator-goals.js";
 import {
   captureGoals,
   fetchGoalsCloud,
+  goalsLocalRevision,
   persistGoalsLocal,
   postGoals,
   readGoalsLocal,
   writeGoalsLocal,
   type GoalsCapture,
-} from "$lib/calculator-goals-snapshot";
+} from "#lib/calculator-goals-snapshot.js";
 import {
   fetchPlannerTargetFromBuilds,
   simKeyForCatalogCharacter,
-} from "$lib/planner-goal-edits";
-import type { CalculatorGoalsState } from "$lib/types/calculator-goals";
-import type { UpgradeCostsCatalog } from "$lib/types/upgrade-costs";
-import { orderCharacterConfigs } from "$lib/upgrade-costs";
+} from "#lib/planner-goal-edits.js";
+import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
+import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
+import { orderCharacterConfigs } from "#lib/upgrade-costs.js";
 
 export function goalsWithoutPendingRemoves(
   state: CalculatorGoalsState,
@@ -67,6 +69,8 @@ export function goalsHaveUnsavedChanges(input: {
 
 /**
  * Local → optional cloud (signed-in). Cloud list wins when a row exists.
+ * A same-tab save during the read bumps `goalsLocalRevision`; that older
+ * response is discarded and does not replace the save.
  * Always returns a capture ready to commit as the saved baseline.
  */
 export async function hydrateGoalsState(
@@ -74,14 +78,17 @@ export async function hydrateGoalsState(
 ): Promise<GoalsCapture> {
   let local = readGoalsLocal();
   if (signedIn) {
+    const revision = get(goalsLocalRevision);
     try {
       const cloud = await fetchGoalsCloud();
-      if (cloud) {
+      if (get(goalsLocalRevision) !== revision) {
+        local = readGoalsLocal();
+      } else if (cloud) {
         local = applyCloudGoals(local, cloud);
         persistGoalsLocal(local);
       }
     } catch {
-      /* keep local */
+      if (get(goalsLocalRevision) !== revision) local = readGoalsLocal();
     }
   }
   return captureGoals(local);

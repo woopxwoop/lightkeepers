@@ -12,8 +12,8 @@
 import type {
   StygianClearFrontierPoint,
   StygianCheapClearFrontier,
-} from "$lib/definitions";
-import { isLimitedFiveStar, type CharacterMeta } from "$lib/tierlist";
+} from "#lib/definitions.js";
+import { isLimitedFiveStar, type CharacterMeta } from "#lib/tierlist.js";
 
 /** Max limited 5★s on a 4-man team — used when fetching enough frontier span. */
 export const STYGIAN_C0R0_CLEAR_MAX_COST = 4;

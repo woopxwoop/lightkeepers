@@ -1,0 +1,53 @@
+/**
+ * Client loader for Build Audit: GOOD gear slices + Builds summaries, then one
+ * grading pass over every owned character. Not part of layout bootstrap.
+ * A failed weapons or artifacts request falls back to that slice's cache, or
+ * none. Throws when the Builds index can't load — nothing is gradable without it.
+ *
+ * Stygian usage (tierlist) is loaded separately by the page — rows don't
+ * depend on it, only ordering does.
+ */
+
+import {
+  characterSummaryFromIndex,
+  loadCharacterIndex,
+} from "#lib/app/character-summary.js";
+import {
+  getRosterArtifactsCached,
+  getRosterWeaponsCached,
+  loadRosterArtifacts,
+  loadRosterWeapons,
+} from "#lib/app/roster-inventory.js";
+import { gradeAuditRoster, type AuditRow } from "#lib/audit-grades.js";
+import type { CharacterOwned } from "#lib/definitions.js";
+import {
+  artifactSetByKey,
+  ensureEquipmentData,
+  weaponByKey,
+} from "#lib/equipment-data.js";
+import { translateStatKey } from "#lib/utils.js";
+
+export async function loadAuditGrades(
+  roster: readonly CharacterOwned[],
+): Promise<AuditRow[]> {
+  const [weapons, artifacts] = await Promise.all([
+    loadRosterWeapons().catch(() => getRosterWeaponsCached() ?? []),
+    loadRosterArtifacts().catch(() => getRosterArtifactsCached() ?? []),
+  ]);
+  await ensureEquipmentData().catch(() => {});
+  const index = await loadCharacterIndex();
+
+  return gradeAuditRoster({
+    roster,
+    weapons,
+    artifacts,
+    summaryFor: (key) => characterSummaryFromIndex(index, key),
+    summaryError: false,
+    resolvers: {
+      getWeaponStars: (key) => weaponByKey.get(key)?.stars ?? 0,
+      getWeaponName: (key) => weaponByKey.get(key)?.name ?? null,
+      getSetName: (key) => artifactSetByKey.get(key)?.name ?? null,
+      translateStat: translateStatKey,
+    },
+  });
+}

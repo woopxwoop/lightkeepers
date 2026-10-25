@@ -1,27 +1,27 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { slide } from "svelte/transition";
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { charactersOwned, animationsEnabled } from "$lib/stores";
-  import { buildGoodKeyMap, ownedGoodKeys } from "$lib/utils";
-  import TeamCardHand from "$lib/ui/components/TeamCardHand.svelte";
-  import CharacterTagSearch from "$lib/ui/components/CharacterTagSearch.svelte";
-  import PageShell from "$lib/ui/components/PageShell.svelte";
-  import PageTrail from "$lib/ui/components/PageTrail.svelte";
-  import LoadingState from "$lib/ui/components/LoadingState.svelte";
-  import EmptyState from "$lib/ui/components/EmptyState.svelte";
-  import Button from "$lib/ui/components/Button.svelte";
-  import IconCog from "$lib/ui/icons/IconCog.svelte";
-  import Select from "$lib/ui/components/Select.svelte";
-  import CostPopover from "$lib/ui/components/CostPopover.svelte";
-  import TeamNumbersNote from "$lib/ui/components/TeamNumbersNote.svelte";
+  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
+  import { buildGoodKeyMap, ownedGoodKeys } from "#lib/utils.js";
+  import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
+  import CharacterTagSearch from "#lib/ui/components/CharacterTagSearch.svelte";
+  import PageShell from "#lib/ui/components/PageShell.svelte";
+  import PageTrail from "#lib/ui/components/PageTrail.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import EmptyState from "#lib/ui/components/EmptyState.svelte";
+  import Button from "#lib/ui/components/Button.svelte";
+  import IconCog from "#lib/ui/icons/IconCog.svelte";
+  import Select from "#lib/ui/components/Select.svelte";
+  import CostPopover from "#lib/ui/components/CostPopover.svelte";
+  import TeamNumbersNote from "#lib/ui/components/TeamNumbersNote.svelte";
   import {
     handCharactersFromGoodKeys,
     handBuilds,
     dimmedKeysFromGoodKeys,
-  } from "$lib/character-teams";
+  } from "#lib/character-teams.js";
   import {
     allTeamCharacterKeys,
     availableInvestmentCosts,
@@ -30,15 +30,15 @@
     sortTeamsForDisplay,
     teamsMatchingTags,
     type TeamDpsSort,
-  } from "$lib/investment-teams";
-  import { loadInvestment, getInvestmentCached } from "$lib/app/investment";
+  } from "#lib/investment-teams.js";
+  import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
   import {
     nextSearchPath,
     readEnum,
     readList,
     sameList,
-  } from "$lib/query-state";
-  import type { InvestmentFile } from "$lib/types/investment";
+  } from "#lib/query-state.js";
+  import type { InvestmentFile } from "#lib/types/investment.js";
 
   const SORT_KEYS = ["dps-desc", "dps-asc"] as const;
 
@@ -137,7 +137,7 @@
       owned: sortOwnedFirst ? null : "0",
       cost,
     });
-    if (next) replaceState(next, page.state);
+    if (next) goto(next, { shallow: true, replace: true, state: page.state });
   });
 
   onMount(() => fetchData());
@@ -161,6 +161,7 @@
   let availableCosts = $derived(
     data ? availableInvestmentCosts(data) : ([] as number[]),
   );
+
   let displayTeams = $derived(
     data
       ? sortTeamsForDisplay(teamsMatchingTags(data.teams, tags), {

@@ -20,9 +20,9 @@ import type {
   StygianSchedule,
   StygianTeam,
   StygianVersion,
-} from "$lib/definitions";
-import type { ResearchResponse } from "$lib/research-types";
-import type { TierListPayload } from "$lib/tierlist";
+} from "#lib/definitions.js";
+import type { ResearchResponse } from "#lib/research-types.js";
+import type { TierListPayload } from "#lib/tierlist.js";
 
 export const E2E_ABYSS_TEAM_TOP = {
   team_key: "test-abyss-top",
@@ -278,6 +278,14 @@ export function e2eTierListPayload(): TierListPayload {
         rank: 2,
       },
     ],
+    usageByNameId: {
+      Hutao: 55,
+      Yelan: 42,
+      Furina: 28,
+      Bennett: 60,
+      Xiangling: 18,
+      Amber: 5,
+    },
   };
 }
 
@@ -423,7 +431,8 @@ export const E2E_RESEARCH_RESPONSE = {
       source_tier: "guide",
       publisher: "KeqingMains",
       heading_path: "FAQ > C1",
-      quote: "C0 with R1 Homa has a similar damage ceiling to C1 with a strong 4-star.",
+      quote:
+        "C0 with R1 Homa has a similar damage ceiling to C1 with a strong 4-star.",
     },
   ],
   confidence: "high",

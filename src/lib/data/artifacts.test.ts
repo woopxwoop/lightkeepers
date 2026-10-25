@@ -34,7 +34,11 @@ describe("artifacts.json", () => {
 
       assert.equal(typeof id, "number");
       assert.ok(Number.isSafeInteger(id));
-      assert.equal(seen.has(id as number), false, `duplicate artifact id ${id}`);
+      assert.equal(
+        seen.has(id as number),
+        false,
+        `duplicate artifact id ${id}`,
+      );
       seen.add(id as number);
 
       assert.equal(typeof stars, "number");
@@ -42,7 +46,10 @@ describe("artifacts.json", () => {
       assert.ok((stars as number) >= 1 && (stars as number) <= 5);
 
       assert.equal(typeof equipType, "string");
-      assert.ok(EQUIP_TYPES.has(equipType as string), `bad equipType ${equipType}`);
+      assert.ok(
+        EQUIP_TYPES.has(equipType as string),
+        `bad equipType ${equipType}`,
+      );
 
       assert.equal(typeof setId, "number");
       assert.ok(Number.isSafeInteger(setId));

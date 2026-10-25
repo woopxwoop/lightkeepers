@@ -14,12 +14,11 @@
  * }
  */
 
-import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { serverDb } from "$lib/server/supabaseServer";
-import { cachedRosterRpc } from "$lib/server/cached-rpc";
-import { enforceApiRateLimit } from "$lib/server/rate-limit";
-import { isPlaywrightE2e } from "$lib/server/e2e";
+import { serverDb } from "#lib/server/supabaseServer.js";
+import { cachedRosterRpc } from "#lib/server/cached-rpc.js";
+import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
+import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   requireCharacterNameIds,
   requireEnemyIds,
@@ -27,20 +26,20 @@ import {
   requireJsonObject,
   requireNumberInRange,
   requireStygianClearDifficulty,
-} from "$lib/server/request-validation";
-import { requireSupportedStygianVersion } from "$lib/server/version-validation";
+} from "#lib/server/request-validation.js";
+import { requireSupportedStygianVersion } from "#lib/server/version-validation.js";
 import type {
   StygianCheapClearRow,
   StygianCheapClearsPayload,
-} from "$lib/definitions";
-import { STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST } from "$lib/definitions";
+} from "#lib/definitions.js";
+import { STYGIAN_CHEAP_CLEARS_DEFAULT_MAX_COST } from "#lib/definitions.js";
 
 const MAX_COST_CAP = 10_000;
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (isPlaywrightE2e()) {
     const payload: StygianCheapClearsPayload = { rows: [] };
-    return json(payload, {
+    return Response.json(payload, {
       headers: { "Cache-Control": "no-store", "X-Playwright-E2E": "1" },
     });
   }
@@ -83,7 +82,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   });
 
   const payload: StygianCheapClearsPayload = { rows };
-  return json(payload, {
+  return Response.json(payload, {
     headers: { "Cache-Control": "private, max-age=60" },
   });
 };

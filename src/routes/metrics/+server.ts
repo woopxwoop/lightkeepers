@@ -9,8 +9,8 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { env } from "$env/dynamic/private";
-import { registry } from "$lib/server/metrics";
+import { METRICS_TOKEN } from "$app/env/private";
+import { registry } from "#lib/server/metrics.js";
 
 /** Case-insensitive Bearer scheme; compares SHA-256 digests in constant time. */
 function bearerMatches(authHeader: string | null, token: string): boolean {
@@ -24,7 +24,7 @@ function bearerMatches(authHeader: string | null, token: string): boolean {
 }
 
 export const GET: RequestHandler = async ({ request }) => {
-  const token = env.METRICS_TOKEN;
+  const token = METRICS_TOKEN;
   if (!token) {
     throw error(404, "Not found");
   }

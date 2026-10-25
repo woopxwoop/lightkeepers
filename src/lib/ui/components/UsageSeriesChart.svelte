@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { CharacterUsageSeriesPoint } from "$lib/definitions";
-  import type { CharacterUsageSeriesPointAbyss } from "$lib/definitions";
+  import type { CharacterUsageSeriesPoint } from "#lib/definitions.js";
+  import type { CharacterUsageSeriesPointAbyss } from "#lib/definitions.js";
 
   let {
     points = [],
