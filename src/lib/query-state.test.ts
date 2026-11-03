@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  addressUrl,
   nextSearchPath,
   readEnum,
   readList,
@@ -63,6 +64,27 @@ describe("sameSet / sameList", () => {
     assert.equal(sameSet(new Set(["4", "5"]), ["4"]), false);
     assert.equal(sameList(["Furina"], ["Skirk"]), false);
     assert.equal(sameList(["Furina"], ["Furina"]), true);
+  });
+});
+
+describe("addressUrl", () => {
+  it("keeps patching the shallow URL so a query write can converge", () => {
+    const loaded = url("");
+    const patch = { q: "a" };
+    // page.url stays on the pre-shallow navigation, so the same patch never settles.
+    assert.equal(nextSearchPath(loaded, patch), "/teams?q=a");
+    assert.equal(nextSearchPath(loaded, patch), "/teams?q=a");
+
+    const shown = url("?q=a");
+    assert.equal(addressUrl({ url: loaded, shallow: null }), loaded);
+    assert.equal(addressUrl({ url: loaded, shallow: { url: shown } }), shown);
+    assert.equal(
+      nextSearchPath(
+        addressUrl({ url: loaded, shallow: { url: shown } }),
+        patch,
+      ),
+      null,
+    );
   });
 });
 
