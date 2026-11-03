@@ -33,6 +33,7 @@
   } from "#lib/investment-teams.js";
   import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
   import {
+    addressUrl,
     nextSearchPath,
     readEnum,
     readList,
@@ -131,7 +132,7 @@
       selectedCost !== null && Number.isFinite(selectedCost)
         ? String(selectedCost)
         : null;
-    const next = nextSearchPath(page.url, {
+    const next = nextSearchPath(addressUrl(page), {
       char: tags,
       sort: sortBy === "dps-desc" ? null : sortBy,
       owned: sortOwnedFirst ? null : "0",

@@ -53,7 +53,7 @@
     readGoalsLocal,
     type GoalsCapture,
   } from "#lib/calculator-goals-snapshot.js";
-  import { nextSearchPath } from "#lib/query-state.js";
+  import { addressUrl, nextSearchPath } from "#lib/query-state.js";
   import { auditPath } from "#lib/ui/nav-links.js";
   import type {
     AggregatedUpgradeCosts,
@@ -192,9 +192,10 @@
 
   $effect(() => {
     if (!browser) return;
-    const nameId = page.url.searchParams.get("add")?.trim();
+    const url = addressUrl(page);
+    const nameId = url.searchParams.get("add")?.trim();
     if (!nameId) return;
-    const next = nextSearchPath(page.url, { add: null });
+    const next = nextSearchPath(url, { add: null });
     if (next) goto(next, { shallow: true, replace: true, state: page.state });
     pendingPlannerAdd = nameId;
   });
