@@ -66,6 +66,22 @@ export function sameList(current: string[], values: string[]): boolean {
 }
 
 /**
+ * URL currently shown in the address bar.
+ *
+ * Shallow `goto` writes `page.shallow.url` and replaces `page.state`, and
+ * leaves `page.url` at the last real navigation. An effect that patches
+ * `page.url` while reading `page.state` therefore sees a stale query and a
+ * brand-new state object, calls `goto` again, and repeats until the browser
+ * throttles navigation.
+ */
+export function addressUrl(current: {
+  url: QueryUrl;
+  shallow: { url: QueryUrl } | null;
+}): QueryUrl {
+  return current.shallow?.url ?? current.url;
+}
+
+/**
  * Path + query with `patch` applied, or `null` when the URL already says the
  * same thing. Empty values drop their key (defaults stay out of the URL);
  * params the page doesn't own are preserved, as is any fragment.
