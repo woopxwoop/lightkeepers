@@ -38,6 +38,7 @@
     "@types/pg": "^8.23.1",
     "prettier": "^3.9.10",
     "prettier-plugin-svelte": "^4.1.1",
+    "sharp": "^0.35.5",
     "svelte": "^5.57.2",
     "svelte-check": "^4.7.7",
     "tsx": "^4.23.15",
