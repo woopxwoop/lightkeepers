@@ -17,6 +17,7 @@
     SOLUTIONS_COUNT,
     boardSlotRate,
     filterDisplaySolutions,
+    boardOutcome,
     clampSolutionIndex,
     stepSolutionIndex,
     assignmentKeyFor,
@@ -113,6 +114,7 @@
   });
 
   let displaySolutions = $derived(filterDisplaySolutions(solutions));
+  let outcome = $derived(boardOutcome(solutions));
 
   let safeIndex = $derived(
     clampSolutionIndex(selectedIndex, displaySolutions.length),
@@ -286,7 +288,7 @@
         <a class="pulls-cta" href={settingsPath}>Configure roster</a>
       {/snippet}
     </EmptyState>
-  {:else if displaySolutions.length === 0}
+  {:else if outcome === "none"}
     <EmptyState message="No viable clears for your roster right now.">
       {#snippet action()}
         <a class="pulls-cta" href={resolve("tools/pulls")}

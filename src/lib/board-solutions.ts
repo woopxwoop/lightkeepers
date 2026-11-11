@@ -35,6 +35,19 @@ export function filterDisplaySolutions<T extends { unfilled: string[] }>(
   return solutions.filter((s) => s.unfilled.length === 0);
 }
 
+export type BoardOutcome = "board" | "none";
+
+/**
+ * `none` only means no complete board. A filled budget-0 fallback
+ * (nobody missing, `unfilled` empty) is `board`. Call this after
+ * loading and error have already been handled.
+ */
+export function boardOutcome<T extends { unfilled: string[] }>(
+  solutions: T[],
+): BoardOutcome {
+  return filterDisplaySolutions(solutions).length > 0 ? "board" : "none";
+}
+
 export function clampSolutionIndex(
   selectedIndex: number,
   length: number,
