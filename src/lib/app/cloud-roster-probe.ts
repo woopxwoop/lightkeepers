@@ -3,6 +3,8 @@
  * `unknown` is signed out. A thrown read is `unreachable` at the call site.
  */
 
+import { writable } from "svelte/store";
+
 export type CloudRosterProbe =
   "unknown" | "checking" | "backed-up" | "empty" | "unreachable";
 
@@ -13,4 +15,11 @@ export function cloudRosterProbeFromBody(input: {
 }): "backed-up" | "empty" | "unreachable" {
   if (!input.ok) return "unreachable";
   return input.roster !== null ? "backed-up" : "empty";
+}
+
+/** Bumped after a roster sync writes the cloud row, so a probe re-reads. */
+export const cloudRosterProbeRevision = writable(0);
+
+export function noteCloudRosterSynced(): void {
+  cloudRosterProbeRevision.update((n) => n + 1);
 }

@@ -15,6 +15,7 @@
     shouldSyncCloudRoster,
     syncCloudRoster,
   } from "#lib/app/bootstrapClient.js";
+  import { noteCloudRosterSynced } from "#lib/app/cloud-roster-probe.js";
   import { clearRosterInventory } from "#lib/app/roster-inventory.js";
   import { cancelRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
   import { authClient } from "#lib/auth-client.js";
@@ -74,7 +75,9 @@
       lastRosterUserId = id;
       if (shouldSyncCloudRoster(previous, id)) {
         const rosterCharacters = untrack(() => characters);
-        void syncCloudRoster(rosterCharacters);
+        void syncCloudRoster(rosterCharacters).then((synced) => {
+          if (synced) noteCloudRosterSynced();
+        });
       }
     }
   });

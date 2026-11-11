@@ -394,7 +394,7 @@ export const stygianScheduleBoard = writable<StygianSchedule>(null);
 /**
  * Static-board fetch. `current` matches the layout versions. `stale` is a
  * previous cycle kept on screen while a backoff retry is scheduled. `error`
- * keeps any teams already applied (`retained`).
+ * keeps any teams already applied (`retained`) and shows that same warning.
  */
 export type StaticBoardsPhase =
   | { phase: "cold" }
@@ -418,8 +418,9 @@ export function staticBoardsView(phase: StaticBoardsPhase): StaticBoardsView {
   if (phase.phase === "error" && !phase.retained) {
     return { kind: "empty-error" };
   }
-  if (phase.phase === "stale") return { kind: "board", notice: "stale" };
-  if (phase.phase === "error") return { kind: "board", notice: "retry" };
+  if (phase.phase === "stale" || phase.phase === "error") {
+    return { kind: "board", notice: "stale" };
+  }
   return { kind: "board", notice: null };
 }
 
@@ -434,6 +435,8 @@ export type RosterFetchStatus = "idle" | "loading" | "ready" | "error";
 export const teamsOwnedStatus = writable<RosterFetchStatus>("idle");
 
 let staticBoardsInFlight: Promise<void> | null = null;
+/** Bumped by reset so an older fetch cannot write boards or schedule a retry. */
+let staticBoardsGeneration = 0;
 /** Versions the current allTeams* stores were fetched for. */
 let staticBoardsAbyssVersion = -1;
 let staticBoardsStygianVersion = -1;
@@ -458,6 +461,7 @@ function staticBoardsRetained(): boolean {
 
 /** Drops board stores and a scheduled rollover retry. */
 export function resetStaticBoards(): void {
+  staticBoardsGeneration += 1;
   clearStaticBoardsRetry();
   staticBoardsInFlight = null;
   staticBoardsAbyssVersion = -1;
@@ -525,26 +529,35 @@ export async function ensureStaticBoards(opts?: {
     phase.phase === "current" ||
     phase.phase === "stale" ||
     (phase.phase === "error" && phase.retained);
+  const generation = staticBoardsGeneration;
   if (!keepBoards) staticBoardsPhase.set({ phase: "loading" });
 
   const pending = (async () => {
     try {
       const data = await fetchStaticBoardsPayload(false);
+      if (generation !== staticBoardsGeneration) return;
       if (applyStaticBoardsIfCurrent(data)) return;
 
       // Edge/CDN may still be serving the previous cycle — bust once.
       const fresh = await fetchStaticBoardsPayload(true);
+      if (generation !== staticBoardsGeneration) return;
       if (applyStaticBoardsIfCurrent(fresh)) return;
 
       // Still behind — show last cycle with honest stamps; match stays false.
       const abyssVer = fresh.latestAbyssVersion?.version_number;
       const stygianVer = fresh.latestStygianVersion?.version_number;
-      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+      if (
+        generation === staticBoardsGeneration &&
+        typeof abyssVer === "number" &&
+        typeof stygianVer === "number"
+      ) {
         applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
         staticBoardsPhase.set({ phase: "stale" });
       }
+      if (generation !== staticBoardsGeneration) return;
       scheduleStaticBoardsRetry();
     } catch (err) {
+      if (generation !== staticBoardsGeneration) return;
       staticBoardsPhase.set({
         phase: "error",
         retained: staticBoardsRetained(),

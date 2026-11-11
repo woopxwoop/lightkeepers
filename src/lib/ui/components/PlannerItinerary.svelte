@@ -148,11 +148,16 @@
     applySavedGoals(pending.state);
   }
 
+  function clearTransientSaveError() {
+    if ($session.data && !postCloud) return;
+    saveError = "";
+  }
+
   function cancelEdits() {
     try {
       applySavedGoals(parseGoalsState(JSON.parse(savedSnapshot) as unknown));
       pendingRemoveIds = new Set();
-      saveError = "";
+      clearTransientSaveError();
     } catch {
       /* ignore */
     }
@@ -165,7 +170,7 @@
     configuringId = null;
     pendingRemoveIds = new Set();
     addError = "";
-    saveError = "";
+    clearTransientSaveError();
   }
 
   /** Backdrop, Escape, and the close button leave a dirty editor open. */
@@ -366,12 +371,17 @@
   async function saveStars() {
     if (isSaving || !hasUnsavedChanges) return;
     isSaving = true;
+    const syncing = postCloud && Boolean($session.data);
+    const unsynced =
+      !syncing && $session.data
+        ? saveError || "Sync failed (0) — goals not synced"
+        : "";
     saveError = "";
     const result = await saveGoalsState({
       state: goalsState,
       pendingRemoveIds,
       savedSnapshot,
-      cloud: postCloud && Boolean($session.data),
+      cloud: syncing,
     });
     if (!result.ok) {
       saveError = result.message;
@@ -385,6 +395,7 @@
     picking = null;
     configuringId = null;
     addError = "";
+    if (unsynced) saveError = unsynced;
     isSaving = false;
   }
 
@@ -459,6 +470,9 @@
     class:itinerary-card={chrome === "card"}
     class:itinerary-empty-state={needsGoalSetup}
   >
+    {#if saveError && !pickingGoals}
+      <p class="sync-note" role="status">{saveError}</p>
+    {/if}
     {#if !needsGoalSetup && (showHeading || !hasDomainWeek)}
       <div class="itinerary-head">
         {#if showHeading}
@@ -740,6 +754,12 @@
     border-radius: var(--radius-lg);
     background: var(--background-mid);
     border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .sync-note {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: color-mix(in srgb, #e07070 85%, var(--foreground-color));
   }
 
   .itinerary-head {

@@ -134,6 +134,8 @@ describe("hydrateGoalsState cloud read", () => {
 
     assert.equal(get(goalsLocalRevision), revisionAfterSave);
     assert.equal(result.state.goals[0]?.id, "saved");
+    assert.equal(result.postCloud, true);
+    assert.equal(result.syncError, "");
     assert.equal(readGoalsLocal().goals[0]?.id, "saved");
     const stored = globalThis.localStorage.getItem(
       CALCULATOR_GOALS_STORAGE_KEY,
@@ -160,6 +162,42 @@ describe("hydrateGoalsState cloud read", () => {
     assert.equal(readGoalsLocal().goals[0]?.id, "cloud");
     assert.equal(result.postCloud, true);
     assert.equal(result.syncError, "");
+  });
+
+  it("does not POST when a failed cloud read races a same-tab save", async () => {
+    installLocalStorage();
+    const older = captureGoals(goalsWith("Hutao", "old"));
+    const newer = captureGoals(goalsWith("Xingqiu", "saved"));
+    writeGoalsLocal(older.json);
+
+    let release!: (value: Response) => void;
+    const gate = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    mock.method(globalThis, "fetch", () => gate);
+
+    const pending = hydrateGoalsState(true);
+    writeGoalsLocal(newer.json);
+    release(new Response("nope", { status: 500 }));
+    const result = await pending;
+
+    assert.equal(result.state.goals[0]?.id, "saved");
+    assert.equal(result.postCloud, false);
+    assert.equal(result.syncError, "Sync failed (500) — goals not synced");
+
+    let posts = 0;
+    mock.method(globalThis, "fetch", async () => {
+      posts += 1;
+      return new Response("ok", { status: 200 });
+    });
+    const saved = await saveGoalsState({
+      state: result.state,
+      pendingRemoveIds: new Set(),
+      savedSnapshot: result.json,
+      cloud: result.postCloud,
+    });
+    assert.equal(saved.ok, true);
+    assert.equal(posts, 0);
   });
 
   it("keeps local and does not POST after a failed cloud read", async () => {

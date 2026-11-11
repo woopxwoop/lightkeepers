@@ -30,6 +30,7 @@
   import GoodImportModal from "#lib/ui/components/GoodImportModal.svelte";
   import {
     cloudRosterProbeFromBody,
+    cloudRosterProbeRevision,
     type CloudRosterProbe,
   } from "#lib/app/cloud-roster-probe.js";
 
@@ -57,6 +58,7 @@
   let importNote = $state("");
 
   $effect(() => {
+    void $cloudRosterProbeRevision;
     if ($session.data) {
       const version = ++cloudRosterVersion;
       probe = "checking";

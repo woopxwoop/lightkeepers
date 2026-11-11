@@ -250,13 +250,18 @@
   async function saveGoals() {
     if (isSaving) return;
     isSaving = true;
+    const syncing = postCloud && Boolean($session.data);
+    const unsynced =
+      !syncing && $session.data
+        ? saveError || "Sync failed (0) — goals not synced"
+        : "";
     saveError = "";
 
     const result = await saveGoalsState({
       state: goalsState,
       pendingRemoveIds,
       savedSnapshot,
-      cloud: postCloud && Boolean($session.data),
+      cloud: syncing,
     });
 
     if (!result.ok) {
@@ -266,7 +271,13 @@
     }
 
     pendingRemoveIds = new Set();
-    commitSaved(result.capture);
+    if (unsynced) {
+      savedSnapshot = result.capture.json;
+      goalsState = result.capture.state;
+      saveError = unsynced;
+    } else {
+      commitSaved(result.capture);
+    }
     isSaving = false;
   }
 
@@ -516,15 +527,18 @@
           ></span>
           <span
             class="save-label"
-            class:save-error={!!saveError && !isSaving && !savedVisible}
+            class:save-error={!!saveError &&
+              !isSaving &&
+              !savedVisible &&
+              !hasUnsavedChanges}
           >
             {isSaving
               ? "Saving..."
               : savedVisible
                 ? "Saved"
-                : saveError
-                  ? saveError
-                  : "Unsaved changes"}
+                : hasUnsavedChanges
+                  ? "Unsaved changes"
+                  : saveError}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>

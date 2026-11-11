@@ -54,6 +54,7 @@
   let plannerGoals = $state<CalculatorGoalsState | null>(null);
   let plannerSnapshot = $state("");
   let plannerPostCloud = false;
+  let plannerSyncError = $state("");
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
   /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
@@ -115,6 +116,7 @@
     plannerGoals = pending.state;
     plannerSnapshot = pending.json;
     plannerPostCloud = pending.postCloud;
+    plannerSyncError = pending.postCloud ? "" : pending.syncError;
     return {
       catalog,
       state: pending.state,
@@ -270,6 +272,9 @@
     </EmptyState>
   {:else}
     <section class="audit-section">
+      {#if plannerSyncError}
+        <p class="planner-error" role="status">{plannerSyncError}</p>
+      {/if}
       <div class="section-head">
         <h2 class="section-title">
           <InfoPopover label="Build next" align="start">

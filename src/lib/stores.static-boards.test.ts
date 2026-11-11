@@ -50,7 +50,7 @@ describe("staticBoardsView", () => {
       [{ phase: "current" }, "board"],
       [{ phase: "stale" }, "stale"],
       [{ phase: "error", retained: false }, "empty-error"],
-      [{ phase: "error", retained: true }, "retry"],
+      [{ phase: "error", retained: true }, "stale"],
     ];
     for (const [phase, expect] of cases) {
       const view = staticBoardsView(phase);
@@ -136,7 +136,36 @@ describe("ensureStaticBoards", () => {
     assert.equal(get(allTeamsAbyss)[0]?.team_key, "abyss-6");
     assert.deepEqual(staticBoardsView(get(staticBoardsPhase)), {
       kind: "board",
-      notice: "retry",
+      notice: "stale",
     });
+  });
+
+  it("drops a fetch that finishes after reset", async () => {
+    let release!: (value: Response) => void;
+    const gate = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    let calls = 0;
+    globalThis.fetch = () => {
+      calls += 1;
+      return gate;
+    };
+
+    const pending = ensureStaticBoards();
+    resetStaticBoards();
+    setVersionNumbers(6, 3);
+    release(jsonResponse(payload(6, 3)));
+    await pending;
+
+    assert.equal(get(allTeamsAbyss).length, 0);
+    assert.equal(get(staticBoardsPhase).phase, "cold");
+
+    globalThis.fetch = async () => {
+      calls += 1;
+      return jsonResponse(payload(6, 3));
+    };
+    await ensureStaticBoards();
+    assert.equal(get(staticBoardsPhase).phase, "current");
+    assert.equal(get(allTeamsAbyss)[0]?.team_key, "abyss-6");
   });
 });

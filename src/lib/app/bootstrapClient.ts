@@ -34,6 +34,7 @@ import {
   rostersDifferForSync,
   writeRosterLocal,
 } from "#lib/roster-snapshot.js";
+import { noteCloudRosterSynced } from "#lib/app/cloud-roster-probe.js";
 import { promptRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
 
 type LayoutHydration = {
@@ -216,7 +217,7 @@ async function resolveRosterConflict(args: {
   cloud: CharacterOwned[];
   error?: string | null;
   uploadRetry?: boolean;
-}): Promise<void> {
+}): Promise<boolean> {
   let error: string | null = args.error ?? null;
   const uploadRetry = args.uploadRetry === true;
 
@@ -229,7 +230,7 @@ async function resolveRosterConflict(args: {
     );
 
     // Dismiss needs no session revalidation — leave both sides unchanged.
-    if (choice === "dismiss") return;
+    if (choice === "dismiss") return false;
 
     error = null;
 
@@ -245,11 +246,11 @@ async function resolveRosterConflict(args: {
     if (choice === "use-cloud") {
       if (uploadRetry) continue;
       applyCloudRoster(args.cloud);
-      return;
+      return true;
     }
 
     const result = await uploadLocalRoster(args.local);
-    if (result.ok) return;
+    if (result.ok) return true;
     error = uploadFailureMessage(result);
   }
 }
@@ -284,9 +285,11 @@ export function seedClientStores(data: LayoutHydration): void {
  * Pull the signed-in cloud roster: upload when missing, prompt when it differs.
  * Guest and fetch errors leave the local roster alone.
  */
-export async function syncCloudRoster(characters: Character[]): Promise<void> {
+export async function syncCloudRoster(
+  characters: Character[],
+): Promise<boolean> {
   const cloud = await fetchCloudRoster(characters);
-  if (cloud.status === "guest" || cloud.status === "error") return;
+  if (cloud.status === "guest" || cloud.status === "error") return false;
 
   const localRoster = get(charactersOwned);
 
@@ -294,21 +297,20 @@ export async function syncCloudRoster(characters: Character[]): Promise<void> {
     const result = await uploadLocalRoster(localRoster);
     if (result.ok) {
       setHasSavedRoster();
-      return;
+      return true;
     }
-    await resolveRosterConflict({
+    return resolveRosterConflict({
       userId: cloud.userId,
       local: localRoster,
       cloud: [],
       error: uploadFailureMessage(result),
       uploadRetry: true,
     });
-    return;
   }
 
-  if (!rostersDifferForSync(localRoster, cloud.roster)) return;
+  if (!rostersDifferForSync(localRoster, cloud.roster)) return false;
 
-  await resolveRosterConflict({
+  return resolveRosterConflict({
     userId: cloud.userId,
     local: localRoster,
     cloud: cloud.roster,
@@ -328,5 +330,5 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   // Investment JSON is loaded on Teams / character routes (not every visit).
   void ensureStaticBoards();
 
-  await syncCloudRoster(data.characters);
+  if (await syncCloudRoster(data.characters)) noteCloudRosterSynced();
 }

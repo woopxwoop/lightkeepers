@@ -79,7 +79,8 @@ export type GoalsHydration = GoalsCapture & {
  * an empty one. No row keeps local. A failed read keeps local, reports
  * `syncError`, and sets `postCloud` false.
  * A same-tab save during the read bumps `goalsLocalRevision`; that older
- * response is discarded and does not replace the save.
+ * response is discarded and does not replace the save. A failed read still
+ * does not POST, including when the revision moved.
  */
 export async function hydrateGoalsState(
   signedIn: boolean,
@@ -99,11 +100,15 @@ export async function hydrateGoalsState(
     };
   }
   if (get(goalsLocalRevision) !== revision) {
-    return {
-      ...captureGoals(readGoalsLocal()),
-      postCloud: true,
-      syncError: "",
-    };
+    const current = captureGoals(readGoalsLocal());
+    if (cloud.status === "error") {
+      return {
+        ...current,
+        postCloud: false,
+        syncError: cloud.message,
+      };
+    }
+    return { ...current, postCloud: true, syncError: "" };
   }
   if (cloud.status === "error") {
     return {
