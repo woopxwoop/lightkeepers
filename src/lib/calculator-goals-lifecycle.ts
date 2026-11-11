@@ -20,6 +20,7 @@ import {
   readGoalsLocal,
   writeGoalsLocal,
   type GoalsCapture,
+  type GoalsCloudRead,
 } from "#lib/calculator-goals-snapshot.js";
 import {
   fetchPlannerTargetFromBuilds,
@@ -67,31 +68,56 @@ export function goalsHaveUnsavedChanges(input: {
   return goalsListDiffersFromSnapshot(input.state, input.savedSnapshot);
 }
 
+export type GoalsHydration = GoalsCapture & {
+  /** False when the cloud read failed. Save writes local only and does not POST. */
+  postCloud: boolean;
+  syncError: string;
+};
+
 /**
- * Local → optional cloud (signed-in). Cloud list wins when a row exists.
+ * Local → optional cloud (signed-in). A stored cloud list wins, including
+ * an empty one. No row keeps local. A failed read keeps local, reports
+ * `syncError`, and sets `postCloud` false.
  * A same-tab save during the read bumps `goalsLocalRevision`; that older
  * response is discarded and does not replace the save.
- * Always returns a capture ready to commit as the saved baseline.
  */
 export async function hydrateGoalsState(
   signedIn: boolean,
-): Promise<GoalsCapture> {
-  let local = readGoalsLocal();
-  if (signedIn) {
-    const revision = get(goalsLocalRevision);
-    try {
-      const cloud = await fetchGoalsCloud();
-      if (get(goalsLocalRevision) !== revision) {
-        local = readGoalsLocal();
-      } else if (cloud) {
-        local = applyCloudGoals(local, cloud);
-        persistGoalsLocal(local);
-      }
-    } catch {
-      if (get(goalsLocalRevision) !== revision) local = readGoalsLocal();
-    }
+): Promise<GoalsHydration> {
+  const local = readGoalsLocal();
+  if (!signedIn) {
+    return { ...captureGoals(local), postCloud: false, syncError: "" };
   }
-  return captureGoals(local);
+  const revision = get(goalsLocalRevision);
+  let cloud: GoalsCloudRead;
+  try {
+    cloud = await fetchGoalsCloud();
+  } catch {
+    cloud = {
+      status: "error",
+      message: "Sync failed (0) — goals not synced",
+    };
+  }
+  if (get(goalsLocalRevision) !== revision) {
+    return {
+      ...captureGoals(readGoalsLocal()),
+      postCloud: true,
+      syncError: "",
+    };
+  }
+  if (cloud.status === "error") {
+    return {
+      ...captureGoals(local),
+      postCloud: false,
+      syncError: cloud.message,
+    };
+  }
+  if (cloud.status === "goals") {
+    const next = applyCloudGoals(local, cloud.goals);
+    persistGoalsLocal(next);
+    return { ...captureGoals(next), postCloud: true, syncError: "" };
+  }
+  return { ...captureGoals(local), postCloud: true, syncError: "" };
 }
 
 /** Same-tab sync: re-read local only when it differs from the saved baseline. */

@@ -53,6 +53,7 @@
   let plannerCatalog = $state<UpgradeCostsCatalog | null>(null);
   let plannerGoals = $state<CalculatorGoalsState | null>(null);
   let plannerSnapshot = $state("");
+  let plannerPostCloud = false;
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
   /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
@@ -113,6 +114,7 @@
     plannerCatalog = catalog;
     plannerGoals = pending.state;
     plannerSnapshot = pending.json;
+    plannerPostCloud = pending.postCloud;
     return {
       catalog,
       state: pending.state,
@@ -176,7 +178,7 @@
         state: result.state,
         pendingRemoveIds: new Set(),
         savedSnapshot: ready.snapshot,
-        cloud: Boolean($session.data),
+        cloud: plannerPostCloud && Boolean($session.data),
       });
       if (!save.ok) {
         plannerError = save.message;

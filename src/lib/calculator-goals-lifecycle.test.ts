@@ -18,6 +18,7 @@ import {
   goalsListDiffersFromSnapshot,
   goalsWithoutPendingRemoves,
   hydrateGoalsState,
+  saveGoalsState,
 } from "./calculator-goals-lifecycle.ts";
 import type { CalculatorGoalsState } from "./types/calculator-goals.ts";
 
@@ -157,5 +158,57 @@ describe("hydrateGoalsState cloud read", () => {
     assert.equal(get(goalsLocalRevision), revision + 1);
     assert.equal(result.state.goals[0]?.id, "cloud");
     assert.equal(readGoalsLocal().goals[0]?.id, "cloud");
+    assert.equal(result.postCloud, true);
+    assert.equal(result.syncError, "");
+  });
+
+  it("keeps local and does not POST after a failed cloud read", async () => {
+    installLocalStorage();
+    const local = captureGoals(goalsWith("Hutao", "local"));
+    writeGoalsLocal(local.json);
+    const revision = get(goalsLocalRevision);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+
+    const result = await hydrateGoalsState(true);
+
+    assert.equal(result.postCloud, false);
+    assert.equal(result.syncError, "Sync failed (500) — goals not synced");
+    assert.equal(result.state.goals[0]?.id, "local");
+    assert.equal(get(goalsLocalRevision), revision);
+
+    let posts = 0;
+    mock.method(globalThis, "fetch", async () => {
+      posts += 1;
+      return new Response("nope", { status: 500 });
+    });
+    const saved = await saveGoalsState({
+      state: result.state,
+      pendingRemoveIds: new Set(),
+      savedSnapshot: result.json,
+      cloud: result.postCloud,
+    });
+    assert.equal(saved.ok, true);
+    assert.equal(posts, 0);
+  });
+
+  it("keeps local when the cloud has no row yet", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "local")).json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(JSON.stringify({ goals: null }), { status: 200 }),
+    );
+
+    const result = await hydrateGoalsState(true);
+
+    assert.equal(result.postCloud, true);
+    assert.equal(result.syncError, "");
+    assert.equal(result.state.goals[0]?.id, "local");
   });
 });

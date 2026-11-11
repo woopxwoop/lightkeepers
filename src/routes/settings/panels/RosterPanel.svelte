@@ -57,6 +57,7 @@
   let tempCharactersOwned: CharacterOwned[] = $state([]);
   let synced = $state(false);
   let showSaved = $state(false);
+  let savedGeneration = 0;
   let isSaving = $state(false);
   let rosterError = $state("");
   let savedSnapshot = $state("");
@@ -119,8 +120,24 @@
     charactersOwned.set(pending.roster);
     invalidateTeamsOwned();
     invalidateNearMissTeams();
+    const generation = ++savedGeneration;
     showSaved = true;
     setHasSavedRoster();
+    setTimeout(() => {
+      if (generation === savedGeneration) showSaved = false;
+    }, 2000);
+  }
+
+  function cancelEdits() {
+    try {
+      const pending = captureRoster(
+        JSON.parse(savedSnapshot) as CharacterOwned[],
+      );
+      tempCharactersOwned = pending.roster;
+      rosterError = "";
+    } catch {
+      /* ignore */
+    }
   }
 
   async function saveCharacters() {
@@ -156,10 +173,6 @@
     } finally {
       isSaving = false;
     }
-
-    setTimeout(() => {
-      showSaved = false;
-    }, 2000);
   }
 
   $effect(() => {
@@ -355,12 +368,17 @@
             class:saving={isSaving}
             class:saved={savedVisible}
           ></span>
-          <span class="save-label">
+          <span
+            class="save-label"
+            class:save-error={!!rosterError && !isSaving && !savedVisible}
+          >
             {isSaving
               ? "Saving..."
               : savedVisible
                 ? "Saved"
-                : "Unsaved changes"}
+                : rosterError
+                  ? rosterError
+                  : "Unsaved changes"}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
@@ -368,16 +386,7 @@
         </div>
         {#if hasUnsavedChanges && !isSaving}
           <div class="save-actions">
-            <Button
-              variant="ghost"
-              onclick={() => {
-                const pending = captureRoster($charactersOwned);
-                tempCharactersOwned = pending.roster;
-                savedSnapshot = pending.json;
-              }}
-            >
-              Cancel
-            </Button>
+            <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
             <Button variant="primary" onclick={saveCharacters}>Save</Button>
             <div class="save-cue" aria-hidden="true">
               <IconChevronDown
@@ -387,9 +396,6 @@
               />
             </div>
           </div>
-        {/if}
-        {#if rosterError}
-          <span class="save-error">{rosterError}</span>
         {/if}
       </div>
     {/if}

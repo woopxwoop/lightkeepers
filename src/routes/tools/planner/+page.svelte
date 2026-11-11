@@ -76,8 +76,11 @@
   let goalsState = $state<CalculatorGoalsState>(emptyGoalsState());
   let savedSnapshot = $state("");
   let showSaved = $state(false);
+  let savedGeneration = 0;
   let isSaving = $state(false);
   let saveError = $state("");
+  /** False after a failed cloud read — Save stays on this device. */
+  let postCloud = $state(false);
   let addError = $state("");
   /** Character name_id from `?add=` — consumed after catalog + goals hydrate. */
   let pendingPlannerAdd = $state<string | null>(null);
@@ -165,6 +168,8 @@
       if (cancelled) return;
       goalsState = pending.state;
       savedSnapshot = pending.json;
+      postCloud = pending.postCloud;
+      if (pending.syncError) saveError = pending.syncError;
       goalsHydrated = true;
     }
 
@@ -173,6 +178,8 @@
       const pending = captureGoals(readGoalsLocal());
       goalsState = pending.state;
       savedSnapshot = pending.json;
+      postCloud = false;
+      saveError = "Sync failed (0) — goals not synced";
       goalsHydrated = true;
     });
     return () => {
@@ -219,7 +226,11 @@
   function commitSaved(pending: GoalsCapture) {
     savedSnapshot = pending.json;
     goalsState = pending.state;
+    const generation = ++savedGeneration;
     showSaved = true;
+    setTimeout(() => {
+      if (generation === savedGeneration) showSaved = false;
+    }, 2000);
   }
 
   function cancelEdits() {
@@ -245,7 +256,7 @@
       state: goalsState,
       pendingRemoveIds,
       savedSnapshot,
-      cloud: Boolean($session.data),
+      cloud: postCloud && Boolean($session.data),
     });
 
     if (!result.ok) {
@@ -257,10 +268,6 @@
     pendingRemoveIds = new Set();
     commitSaved(result.capture);
     isSaving = false;
-
-    setTimeout(() => {
-      showSaved = false;
-    }, 2000);
   }
 
   let selectedGoal = $derived(findGoal(goalsState, goalsState.selectedId));
@@ -507,12 +514,17 @@
             class:saving={isSaving}
             class:saved={savedVisible}
           ></span>
-          <span class="save-label">
+          <span
+            class="save-label"
+            class:save-error={!!saveError && !isSaving && !savedVisible}
+          >
             {isSaving
               ? "Saving..."
               : savedVisible
                 ? "Saved"
-                : "Unsaved changes"}
+                : saveError
+                  ? saveError
+                  : "Unsaved changes"}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
@@ -530,9 +542,6 @@
               />
             </div>
           </div>
-        {/if}
-        {#if saveError}
-          <span class="save-error">{saveError}</span>
         {/if}
       </div>
     {/if}

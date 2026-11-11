@@ -104,6 +104,8 @@
   let savedSnapshot = $state("");
   let isSaving = $state(false);
   let saveError = $state("");
+  /** False after a failed cloud read — Save stays on this device. */
+  let postCloud = $state(false);
 
   let goals = $derived(goalsState.goals);
   let savedGoals = $derived.by(() => {
@@ -156,8 +158,7 @@
     }
   }
 
-  function closePicker() {
-    if (hasUnsavedChanges) cancelEdits();
+  function finishClose() {
     pickingGoals = false;
     picking = null;
     pickQuery = "";
@@ -165,6 +166,17 @@
     pendingRemoveIds = new Set();
     addError = "";
     saveError = "";
+  }
+
+  /** Backdrop, Escape, and the close button leave a dirty editor open. */
+  function closePicker() {
+    if (hasUnsavedChanges) return;
+    finishClose();
+  }
+
+  function cancelAndClose() {
+    cancelEdits();
+    finishClose();
   }
 
   function openPicker() {
@@ -189,8 +201,12 @@
       try {
         const { data: sess } = await authClient.getSession();
         const pending = await hydrateGoalsState(Boolean(sess));
+        postCloud = pending.postCloud;
+        if (pending.syncError) saveError = pending.syncError;
         commitSaved(pending.state);
       } catch {
+        postCloud = false;
+        saveError = "Sync failed (0) — goals not synced";
         commitSaved(readGoalsLocal());
       }
       hydrated = true;
@@ -355,7 +371,7 @@
       state: goalsState,
       pendingRemoveIds,
       savedSnapshot,
-      cloud: Boolean($session.data),
+      cloud: postCloud && Boolean($session.data),
     });
     if (!result.ok) {
       saveError = result.message;
@@ -674,7 +690,7 @@
   onConfigure={openConfigure}
   onRemove={deleteGoal}
   onSave={() => void saveStars()}
-  onCancel={closePicker}
+  onCancel={cancelAndClose}
 />
 <GoalConfigureModal
   open={configuringId !== null && !!configuringGoal}

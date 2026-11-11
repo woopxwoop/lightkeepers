@@ -77,25 +77,51 @@ export function readGoalsLocal(): CalculatorGoalsState {
 
 const POST_TIMEOUT_MS = 10_000;
 
-export async function fetchGoalsCloud(): Promise<CalculatorGoal[] | null> {
+export type GoalsCloudRead =
+  | { status: "none" }
+  | { status: "goals"; goals: CalculatorGoal[] }
+  | { status: "error"; message: string };
+
+function goalsCloudError(status: number): GoalsCloudRead {
+  return {
+    status: "error",
+    message:
+      status === 408
+        ? "Sync failed (408): Request timed out"
+        : `Sync failed (${status}) — goals not synced`,
+  };
+}
+
+/**
+ * `none` is no cloud row — local stays, and a later Save may create the row.
+ * `goals` is a stored list, including an empty one. `error` keeps local and
+ * must not be followed by a POST.
+ */
+export async function fetchGoalsCloud(): Promise<GoalsCloudRead> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), POST_TIMEOUT_MS);
   try {
     const res = await fetch("/api/calculator-goals", {
       signal: controller.signal,
     });
-    if (res.status === 401) return null;
-    if (!res.ok) return null;
+    if (!res.ok) return goalsCloudError(res.status);
     const body = (await res.json()) as { goals?: unknown };
-    // null = no row yet → caller keeps local. [] = saved empty list → DB wins.
-    if (body.goals == null) return null;
-    return parseGoalsState({
-      version: CALCULATOR_GOALS_VERSION,
-      goals: body.goals,
-      selectedId: null,
-    }).goals;
-  } catch {
-    return null;
+    if (body.goals == null) return { status: "none" };
+    return {
+      status: "goals",
+      goals: parseGoalsState({
+        version: CALCULATOR_GOALS_VERSION,
+        goals: body.goals,
+        selectedId: null,
+      }).goals,
+    };
+  } catch (err) {
+    const timedOut =
+      typeof err === "object" &&
+      err !== null &&
+      "name" in err &&
+      err.name === "AbortError";
+    return goalsCloudError(timedOut ? 408 : 0);
   } finally {
     clearTimeout(timer);
   }
