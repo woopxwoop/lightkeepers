@@ -28,6 +28,10 @@
     setRosterInventory,
   } from "#lib/app/roster-inventory.js";
   import GoodImportModal from "#lib/ui/components/GoodImportModal.svelte";
+  import {
+    cloudRosterProbeFromBody,
+    type CloudRosterProbe,
+  } from "#lib/app/cloud-roster-probe.js";
 
   let {
     showHeading = true,
@@ -41,10 +45,10 @@
 
   const session = authClient.useSession();
 
-  let hasCloudRoster = $state<boolean | null>(null);
-  let rosterLoading = $state(true);
+  let probe = $state<CloudRosterProbe>("unknown");
   let rosterError = $state("");
   let confirmReset = $state(false);
+  let resetting = $state(false);
 
   let cloudRosterVersion = 0;
   let pickingGood = $state(false);
@@ -54,33 +58,32 @@
 
   $effect(() => {
     if ($session.data) {
-      cloudRosterVersion++;
-      checkCloudRoster(cloudRosterVersion);
+      const version = ++cloudRosterVersion;
+      probe = "checking";
+      void checkCloudRoster(version);
     } else {
-      hasCloudRoster = null;
-      rosterLoading = false;
+      cloudRosterVersion += 1;
+      confirmReset = false;
+      probe = "unknown";
     }
   });
 
   async function checkCloudRoster(version: number) {
-    rosterLoading = true;
     try {
       const res = await fetch("/api/roster");
       if (version !== cloudRosterVersion) return;
       if (!res.ok) {
         console.error("checkCloudRoster: unexpected status", res.status);
-        hasCloudRoster = null;
+        probe = cloudRosterProbeFromBody({ ok: false, roster: null });
         return;
       }
       const { roster } = await res.json();
       if (version !== cloudRosterVersion) return;
-      hasCloudRoster = roster !== null;
+      probe = cloudRosterProbeFromBody({ ok: true, roster });
     } catch (err) {
       if (version !== cloudRosterVersion) return;
       console.error("checkCloudRoster: network error", err);
-      hasCloudRoster = null;
-    } finally {
-      if (version === cloudRosterVersion) rosterLoading = false;
+      probe = "unreachable";
     }
   }
 
@@ -93,20 +96,29 @@
   }
 
   async function executeReset() {
+    if (resetting) return;
+    const version = cloudRosterVersion;
+    resetting = true;
     rosterError = "";
-    confirmReset = false;
     try {
       const res = await fetch("/api/roster", { method: "DELETE" });
+      if (version !== cloudRosterVersion) return;
       if (res.ok) {
-        hasCloudRoster = false;
+        probe = "empty";
+        confirmReset = false;
         clearRosterInventory();
       } else {
         rosterError = `Server error (${res.status}) — roster not reset`;
+        confirmReset = false;
         console.error("resetCloudRoster: unexpected status", res.status);
       }
     } catch (err) {
+      if (version !== cloudRosterVersion) return;
       rosterError = "Network error — could not reset cloud roster";
+      confirmReset = false;
       console.error("resetCloudRoster: network error", err);
+    } finally {
+      resetting = false;
     }
   }
 
@@ -160,7 +172,7 @@
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
-        hasCloudRoster = true;
+        probe = "backed-up";
         if (result.inventoryOmitted) {
           importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}. Cloud saved roster only — inventory columns are not migrated.`;
         }
@@ -297,19 +309,31 @@
         </Button>
       </div>
 
-      {#if rosterLoading}
+      {#if probe === "checking" || probe === "unknown"}
         <p class="status-note">Checking cloud roster…</p>
-      {:else if hasCloudRoster === null}
+      {:else if probe === "unreachable"}
         <p class="status-note">Could not reach sync service.</p>
-      {:else if hasCloudRoster}
+      {:else if probe === "backed-up"}
         <div class="sync-status">
           <span class="status-dot" aria-hidden="true"></span>
           <p class="status-note sync-label">Cloud roster backed up</p>
           {#if confirmReset}
             <div class="confirm-row">
               <span class="status-note">Delete cloud roster?</span>
-              <Button variant="ghost" onclick={executeReset}>Yes</Button>
-              <Button variant="secondary" onclick={cancelReset}>No</Button>
+              <Button
+                variant="ghost"
+                disabled={resetting}
+                onclick={executeReset}
+              >
+                {resetting ? "Resetting…" : "Yes"}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={resetting}
+                onclick={cancelReset}
+              >
+                No
+              </Button>
             </div>
           {:else}
             <Button variant="secondary" onclick={promptReset}>Reset</Button>

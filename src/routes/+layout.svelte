@@ -12,6 +12,8 @@
   import {
     bootstrapClient,
     seedClientStores,
+    shouldSyncCloudRoster,
+    syncCloudRoster,
   } from "#lib/app/bootstrapClient.js";
   import { clearRosterInventory } from "#lib/app/roster-inventory.js";
   import { cancelRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
@@ -66,9 +68,14 @@
       return;
     }
     if (lastRosterUserId !== id) {
+      const previous = lastRosterUserId;
       clearRosterInventory();
       cancelRosterSyncConflict();
       lastRosterUserId = id;
+      if (shouldSyncCloudRoster(previous, id)) {
+        const rosterCharacters = untrack(() => characters);
+        void syncCloudRoster(rosterCharacters);
+      }
     }
   });
 

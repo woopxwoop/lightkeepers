@@ -4,6 +4,7 @@
  * Starts the one-time JSON load and tracks `equipmentVersion` so leaf
  * components re-resolve weapons once the data arrives, without any
  * caller-side `{#key $equipmentVersion}` wrapper.
+ * A failed load leaves the version on the last successful tables.
  *
  * Call from component initialization (these register an `onMount` hook).
  */
@@ -36,7 +37,6 @@ export function useEquipmentData(): EquipmentData {
     });
     void ensureEquipmentData().catch((error) => {
       console.error("[equipment-data] load failed:", error);
-      version += 1;
     });
     return unsubscribe;
   });

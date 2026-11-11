@@ -3,6 +3,8 @@
  *
  * seedClientStores — sync, safe during SSR/hydration (versions + local roster).
  * bootstrapClient — onMount only: warm /api/static, sync /api/roster if logged in.
+ * A later guest → signed-in transition calls syncCloudRoster from the layout.
+ * The first settled user id does not: mount bootstrap already synced it.
  * Owned teams stay lazy (Abyss / Stygian / Pulls call ensureTeamsOwned).
  *
  * Roster sync on login:
@@ -253,6 +255,17 @@ async function resolveRosterConflict(args: {
 }
 
 /**
+ * True only when a settled guest becomes a signed-in user.
+ * The first settled id is a no-op so mount bootstrap is not prompted twice.
+ */
+export function shouldSyncCloudRoster(
+  previousUserId: string | null | undefined,
+  nextUserId: string | null,
+): boolean {
+  return previousUserId === null && nextUserId !== null;
+}
+
+/**
  * Client-side hydration from root layout SSR data.
  * Full allTeams* lists are warmed via ensureStaticBoards (not layout HTML).
  */
@@ -268,19 +281,11 @@ export function seedClientStores(data: LayoutHydration): void {
 }
 
 /**
- * Seeds layout stores, syncs DB roster if logged in.
- * Owned teams + near-miss load lazily on Abyss / Stygian / Pulls.
- * Meta team boards warm in the background so home → /tools/abyss|stygian nav is snappy.
+ * Pull the signed-in cloud roster: upload when missing, prompt when it differs.
+ * Guest and fetch errors leave the local roster alone.
  */
-export async function bootstrapClient(data: LayoutHydration): Promise<void> {
-  seedClientStores(data);
-
-  // Fire early — do not await; home stays interactive while boards warm.
-  // Failures land in staticBoardsPhase for Abyss/Stygian retry UI.
-  // Investment JSON is loaded on Teams / character routes (not every visit).
-  void ensureStaticBoards();
-
-  const cloud = await fetchCloudRoster(data.characters);
+export async function syncCloudRoster(characters: Character[]): Promise<void> {
+  const cloud = await fetchCloudRoster(characters);
   if (cloud.status === "guest" || cloud.status === "error") return;
 
   const localRoster = get(charactersOwned);
@@ -308,4 +313,20 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
     local: localRoster,
     cloud: cloud.roster,
   });
+}
+
+/**
+ * Seeds layout stores, syncs DB roster if logged in.
+ * Owned teams + near-miss load lazily on Abyss / Stygian / Pulls.
+ * Meta team boards warm in the background so home → /tools/abyss|stygian nav is snappy.
+ */
+export async function bootstrapClient(data: LayoutHydration): Promise<void> {
+  seedClientStores(data);
+
+  // Fire early — do not await; home stays interactive while boards warm.
+  // Failures land in staticBoardsPhase for Abyss/Stygian retry UI.
+  // Investment JSON is loaded on Teams / character routes (not every visit).
+  void ensureStaticBoards();
+
+  await syncCloudRoster(data.characters);
 }
