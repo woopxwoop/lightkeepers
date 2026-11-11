@@ -22,6 +22,7 @@
     type OwnershipFilter,
   } from "#lib/character-filter.js";
   import {
+    addressUrl,
     nextSearchPath,
     readEnum,
     readList,
@@ -115,7 +116,7 @@
   $effect(() => {
     if (!browser) return;
 
-    const next = nextSearchPath(page.url, {
+    const next = nextSearchPath(addressUrl(page), {
       q: search.trim(),
       rarity: [...rarityFilter].sort(),
       element: [...elementFilter].sort(),
