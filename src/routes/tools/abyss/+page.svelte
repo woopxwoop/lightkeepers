@@ -59,8 +59,11 @@
   );
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
+  // Child effects can run before the layout seeds the roster. Fetching then
+  // posts an empty character list, which the teams RPC treats as "all teams".
   $effect(() => {
     ensureStaticBoards().catch(() => {});
+    if (!$charactersHydrated) return;
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
 

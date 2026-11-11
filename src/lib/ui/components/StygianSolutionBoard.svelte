@@ -112,7 +112,9 @@
     ensureStaticBoards().catch(() => {});
     // Versions seed from layout / static boards — don't POST /api/teams with -1.
     // Re-subscribe when boards load so we retry after setVersionNumbers.
+    // Wait for roster seed too: an empty character list is the all-teams sentinel.
     void $staticBoardsLoaded;
+    if (!$charactersHydrated) return;
     if (abyssVersionNumber < 0 || stygianVersionNumber < 0) return;
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });

@@ -397,7 +397,11 @@ export const staticBoardsLoaded = writable(false);
 /** Last warm-up failure; cleared on success or a new attempt. */
 export const staticBoardsError = writable<string | null>(null);
 
-/** True after a successful /api/teams fetch (or empty owned roster short-circuit). */
+/**
+ * True after a successful /api/teams fetch for `teamsOwnedRosterKey`
+ * (or the empty-roster short-circuit). Not a global "teams are loaded" bit —
+ * a fetch for a different roster must not satisfy this one.
+ */
 export const teamsOwnedLoaded = writable(false);
 
 let staticBoardsInFlight: Promise<void> | null = null;
@@ -586,6 +590,26 @@ export const nearMissPairLoaded = writable(false);
 let teamsRequestId = 0;
 let nearMissRequestId = 0;
 let teamsInFlight: Promise<void> | null = null;
+/** Roster key of `teamsInFlight`, when a fetch is running. */
+let teamsInFlightKey = "";
+/**
+ * Owned name_ids the current `teamsOwned` / `teamsOwnedStygian` lists were
+ * fetched for. Empty string is the real "owns nobody" key, so it is only
+ * valid once `teamsOwnedLoaded` is true.
+ * `OWNED_TEAMS_FETCH_FAILED` means the last fetch failed — it must not match
+ * a real roster, or Abyss would keep the empty failure lists.
+ */
+let teamsOwnedRosterKey = "";
+const OWNED_TEAMS_FETCH_FAILED = "\u0000";
+
+/** Stable key for the owned slice. Order-independent. */
+function ownedTeamsRosterKey(owned: CharacterOwned[]): string {
+  return owned
+    .filter((character) => character.isOwned)
+    .map((character) => character.name_id)
+    .sort()
+    .join("\0");
+}
 
 // ── Write functions ────────────────────────────────────────────────────────
 
@@ -595,6 +619,8 @@ let teamsInFlight: Promise<void> | null = null;
 export function invalidateTeamsOwned(): void {
   teamsRequestId++;
   teamsInFlight = null;
+  teamsInFlightKey = "";
+  teamsOwnedRosterKey = "";
   teamsOwnedLoaded.set(false);
   teamsOwned.set([]);
   teamsOwnedStygian.set([]);
@@ -608,8 +634,21 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   assertVersionsSeeded();
   const id = ++teamsRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
+  const rosterKey = ownedTeamsRosterKey(owned);
 
   teamsOwnedLoaded.set(false);
+
+  // Empty `p_name_ids` is the all-teams sentinel (/api/static). Posting it
+  // here would store every meta team as "owned" and the solver would seat
+  // characters this roster does not have.
+  if (characters.length === 0) {
+    if (id !== teamsRequestId) return;
+    teamsOwned.set([]);
+    teamsOwnedStygian.set([]);
+    teamsOwnedRosterKey = rosterKey;
+    teamsOwnedLoaded.set(true);
+    return;
+  }
 
   try {
     const { abyssTeams, stygianTeams } = await postJson<{
@@ -624,14 +663,17 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     if (id !== teamsRequestId) return; // superseded
     teamsOwned.set(abyssTeams);
     teamsOwnedStygian.set(stygianTeams);
+    teamsOwnedRosterKey = rosterKey;
     teamsOwnedLoaded.set(true);
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
     if (id !== teamsRequestId) return;
     // Don't leave Abyss/Stygian on an infinite Loading gate — empty owned
     // lists let the solver fall through to allTeams / pull CTA.
+    // A failed key matches no roster, so the next ensure retries.
     teamsOwned.set([]);
     teamsOwnedStygian.set([]);
+    teamsOwnedRosterKey = OWNED_TEAMS_FETCH_FAILED;
     teamsOwnedLoaded.set(true);
     throw err;
   }
@@ -642,15 +684,23 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
  * No-ops if already loaded; coalesces concurrent callers.
  */
 export async function ensureTeamsOwned(owned: CharacterOwned[]): Promise<void> {
-  if (get(teamsOwnedLoaded)) return;
-  if (teamsInFlight) return teamsInFlight;
+  const rosterKey = ownedTeamsRosterKey(owned);
+  if (get(teamsOwnedLoaded) && teamsOwnedRosterKey === rosterKey) return;
+  if (teamsInFlight && teamsInFlightKey === rosterKey) return teamsInFlight;
+  // A fetch already running for a different roster is superseded inside
+  // writeTeamsOwned (request id). Don't join that promise — its body is the
+  // earlier roster, including the pre-seed empty list.
   const pending = writeTeamsOwned(owned);
   teamsInFlight = pending;
+  teamsInFlightKey = rosterKey;
   // Consume rejection on the finally-derived promise so cleanup cannot
   // surface as an unhandled rejection; callers still await `pending`.
   void pending
     .finally(() => {
-      if (teamsInFlight === pending) teamsInFlight = null;
+      if (teamsInFlight === pending) {
+        teamsInFlight = null;
+        teamsInFlightKey = "";
+      }
     })
     .catch(() => {});
   return pending;
