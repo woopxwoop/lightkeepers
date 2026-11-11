@@ -12,11 +12,14 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import { get } from "svelte/store";
 import type { CharacterOwned } from "./definitions.ts";
 import {
+  ensureNearMissTeams,
   ensureTeamsOwned,
+  invalidateNearMissTeams,
   invalidateTeamsOwned,
+  nearMissStatus,
   setVersionNumbers,
   teamsOwned,
-  teamsOwnedLoaded,
+  teamsOwnedStatus,
 } from "./stores.ts";
 
 function row(name_id: string, isOwned: boolean): CharacterOwned {
@@ -53,7 +56,7 @@ describe("ensureTeamsOwned", () => {
     await ensureTeamsOwned([row("Furina", false)]);
 
     assert.equal(calls, 0);
-    assert.equal(get(teamsOwnedLoaded), true);
+    assert.equal(get(teamsOwnedStatus), "ready");
     assert.deepEqual(get(teamsOwned), []);
   });
 
@@ -118,11 +121,34 @@ describe("ensureTeamsOwned", () => {
     };
 
     await assert.rejects(() => ensureTeamsOwned([row("Furina", true)]));
-    assert.equal(get(teamsOwnedLoaded), true);
+    assert.equal(get(teamsOwnedStatus), "error");
     assert.deepEqual(get(teamsOwned), []);
 
     await ensureTeamsOwned([row("Furina", true)]);
     assert.equal(calls, 2);
+    assert.equal(get(teamsOwnedStatus), "ready");
     assert.equal(get(teamsOwned)[0]?.team_key, "ok");
+  });
+});
+
+describe("ensureNearMissTeams", () => {
+  beforeEach(() => {
+    invalidateNearMissTeams();
+  });
+
+  it("keeps a failed fetch retryable", async () => {
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      if (calls === 1) return new Response("nope", { status: 500 });
+      return jsonResponse({ nearMissTeams: [], nearMissPairs: [] });
+    };
+
+    await assert.rejects(() => ensureNearMissTeams([row("Furina", true)]));
+    assert.equal(get(nearMissStatus), "error");
+
+    await ensureNearMissTeams([row("Furina", true)]);
+    assert.equal(calls, 2);
+    assert.equal(get(nearMissStatus), "ready");
   });
 });

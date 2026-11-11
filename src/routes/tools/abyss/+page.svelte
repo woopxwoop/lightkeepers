@@ -7,7 +7,7 @@
     staticBoardsError,
     charactersOwned,
     charactersHydrated,
-    teamsOwnedLoaded,
+    teamsOwnedStatus,
     ensureTeamsOwned,
     ensureStaticBoards,
     hasSavedRoster,
@@ -75,6 +75,14 @@
     }
   }
 
+  async function retryTeamsOwned() {
+    try {
+      await ensureTeamsOwned($charactersOwned);
+    } catch {
+      // teamsOwnedStatus already set
+    }
+  }
+
   const halfLabel: Record<Slot, string> = {
     top: "First Half",
     bottom: "Second Half",
@@ -89,7 +97,7 @@
   );
 
   let solutions = $derived.by(() => {
-    if (hasOwnedCharacters && !$teamsOwnedLoaded) return [];
+    if (hasOwnedCharacters && $teamsOwnedStatus !== "ready") return [];
     const owned = $charactersOwned;
     const teams = $teamsOwned;
     const all = $allTeamsAbyss;
@@ -121,7 +129,13 @@
         !$staticBoardsLoaded &&
         $allTeamsAbyss.length === 0),
   );
-  let waitingForOwned = $derived(hasOwnedCharacters && !$teamsOwnedLoaded);
+  let waitingForOwned = $derived(
+    hasOwnedCharacters &&
+      ($teamsOwnedStatus === "idle" || $teamsOwnedStatus === "loading"),
+  );
+  let ownedTeamsFailed = $derived(
+    hasOwnedCharacters && $teamsOwnedStatus === "error",
+  );
 
   let updatedLabel = $derived.by(() => {
     if (!abyssEnemies?.openTime) return "";
@@ -254,6 +268,12 @@
     </EmptyState>
   {:else if waitingForOwned}
     <LoadingState variant="pulse" message="Matching your roster…" />
+  {:else if ownedTeamsFailed}
+    <EmptyState message="Could not match your roster right now.">
+      {#snippet action()}
+        <Button variant="secondary" onclick={retryTeamsOwned}>Try again</Button>
+      {/snippet}
+    </EmptyState>
   {:else if showRosterSetup}
     <EmptyState
       message="Set up your roster to find Abyss clears that match what you own."

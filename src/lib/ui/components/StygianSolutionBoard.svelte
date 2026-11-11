@@ -8,7 +8,7 @@
     staticBoardsError,
     charactersOwned,
     charactersHydrated,
-    teamsOwnedLoaded,
+    teamsOwnedStatus,
     ensureTeamsOwned,
     ensureStaticBoards,
     displayPreferences,
@@ -119,6 +119,14 @@
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
 
+  async function retryTeamsOwned() {
+    try {
+      await ensureTeamsOwned($charactersOwned);
+    } catch {
+      // teamsOwnedStatus already set
+    }
+  }
+
   async function retryStaticBoards() {
     try {
       await ensureStaticBoards({ force: true });
@@ -210,7 +218,11 @@
   let solutionsResult = $derived.by(() => {
     const needsOwnedTeams =
       solverMode === "yshelper" || solverMode === "hybrid";
-    if (needsOwnedTeams && hasOwnedCharacters && !$teamsOwnedLoaded) {
+    if (
+      needsOwnedTeams &&
+      hasOwnedCharacters &&
+      $teamsOwnedStatus !== "ready"
+    ) {
       return { solutions: [], mode: solverMode };
     }
 
@@ -351,10 +363,18 @@
         !$staticBoardsLoaded &&
         $allTeamsStygian.length === 0),
   );
+  let ownedRosterPending = $derived(
+    hasOwnedCharacters &&
+      ($teamsOwnedStatus === "idle" || $teamsOwnedStatus === "loading"),
+  );
   let waitingForOwned = $derived(
     (solverMode === "yshelper" || solverMode === "hybrid") &&
+      ownedRosterPending,
+  );
+  let ownedTeamsFailed = $derived(
+    (solverMode === "yshelper" || solverMode === "hybrid") &&
       hasOwnedCharacters &&
-      !$teamsOwnedLoaded,
+      $teamsOwnedStatus === "error",
   );
   let waitingForCheapClears = $derived(
     needsCheapClears &&
@@ -580,7 +600,7 @@
   <Surface flush class="solution-board">
     <div class="board-head">
       <div class="board-head-left">
-        {#if displaySolutions.length > 0 && !waitingForOwned && !waitingForCheapClears}
+        {#if displaySolutions.length > 0 && !waitingForOwned && !waitingForCheapClears && !ownedTeamsFailed}
           <span class="eyebrow board-eyebrow">
             Solution {safeIndex + 1}
             <span class="board-eyebrow-total">of {displaySolutions.length}</span
@@ -604,7 +624,7 @@
               setDisplayPreferences({ stygianSolverMode: value })
           }
         />
-        {#if displaySolutions.length > 1 && !waitingForOwned && !waitingForCheapClears}
+        {#if displaySolutions.length > 1 && !waitingForOwned && !waitingForCheapClears && !ownedTeamsFailed}
           <div class="pager">
             <button
               type="button"
@@ -635,7 +655,17 @@
       </div>
     </div>
 
-    {#if waitingForOwned}
+    {#if ownedTeamsFailed}
+      <div class="board-status">
+        <EmptyState message="Could not match your roster right now.">
+          {#snippet action()}
+            <Button variant="secondary" onclick={retryTeamsOwned}
+              >Try again</Button
+            >
+          {/snippet}
+        </EmptyState>
+      </div>
+    {:else if waitingForOwned}
       <div class="board-status">
         <LoadingState variant="pulse" message="Matching your roster…" />
       </div>

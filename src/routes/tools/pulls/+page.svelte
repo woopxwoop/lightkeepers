@@ -4,12 +4,10 @@
   import {
     charactersOwned,
     charactersHydrated,
-    teamsOwnedStygian,
-    teamsOwnedLoaded,
+    teamsOwnedStatus,
     nearMissStygianTeams,
     nearMissPairTeams,
-    nearMissStygianLoaded,
-    nearMissPairLoaded,
+    nearMissStatus,
     ensureNearMissTeams,
     ensureTeamsOwned,
     invalidateNearMissTeams,
@@ -42,11 +40,7 @@
   let { data } = $props();
   let mapping = $derived(data.mapping);
 
-  // "waiting" = owned teams and/or near-miss still in flight.
   type PageState = "waiting" | "done" | "empty" | "error";
-  let pageState: PageState = $state("waiting");
-  let suggestions: PullSuggestion[] = $state([]);
-  let pairSuggestions: PairSuggestion[] = $state([]);
   let revealedSingles = $state(new Set<string>());
   let revealedPairs = $state(new Set<string>());
   /** Active team per revealed row — rows page through their teams separately. */
@@ -76,39 +70,60 @@
   let ownedIds = $derived(ownedNameIds($charactersOwned));
   let ownedCount = $derived(ownedIds.size);
 
-  let nearMissReady = $derived($nearMissStygianLoaded && $nearMissPairLoaded);
-
-  /** Near-miss + owned teams ready; tier cream optional (filters when present). */
-  let pullsDataReady = $derived(
-    nearMissReady && $teamsOwnedLoaded && ($tierListLoaded || !!$tierListError),
-  );
-
   /** Limited cream name_ids — pull suggestions stay inside the standouts cut. */
   let creamPullIds = $derived(
     $tierList ? new Set($tierList.fiveStar.map((e) => e.nameId)) : undefined,
   );
 
-  function rankSuggestions() {
+  /**
+   * One read of the fetch statuses. A teams or near-miss error stays an
+   * error after the other request succeeds. Tier failure still ranks, with
+   * the cream filter off.
+   */
+  let pullView = $derived.by(() => {
+    const empty = {
+      suggestions: [] as PullSuggestion[],
+      pairSuggestions: [] as PairSuggestion[],
+    };
+    if (!$charactersHydrated) {
+      return { pageState: "waiting" as PageState, ...empty };
+    }
+    if (ownedCount === 0) {
+      return { pageState: "empty" as PageState, ...empty };
+    }
+    if ($teamsOwnedStatus === "error" || $nearMissStatus === "error") {
+      return { pageState: "error" as PageState, ...empty };
+    }
+    const tierSettled = $tierListLoaded || $tierListError != null;
+    if (
+      $teamsOwnedStatus !== "ready" ||
+      $nearMissStatus !== "ready" ||
+      !tierSettled
+    ) {
+      return { pageState: "waiting" as PageState, ...empty };
+    }
     try {
-      const singles = computePullSuggestions(
+      const suggestions = computePullSuggestions(
         $nearMissStygianTeams,
         3,
         creamPullIds,
       );
-      const pairs = computePairSuggestions($nearMissPairTeams, 3, creamPullIds);
-      suggestions = singles;
-      pairSuggestions = pairs;
-      // Reveal state is read here but owned by the toggles — don't make
-      // ranking depend on it.
-      untrack(() => syncRevealed(singles, pairs));
-      pageState = singles.length > 0 || pairs.length > 0 ? "done" : "empty";
+      const pairSuggestions = computePairSuggestions(
+        $nearMissPairTeams,
+        3,
+        creamPullIds,
+      );
+      const pageState: PageState =
+        suggestions.length > 0 || pairSuggestions.length > 0 ? "done" : "empty";
+      return { pageState, suggestions, pairSuggestions };
     } catch (error) {
-      suggestions = [];
-      pairSuggestions = [];
-      pageState = "error";
       console.error("pull suggestion ranking failed:", error);
+      return { pageState: "error" as PageState, ...empty };
     }
-  }
+  });
+  let pageState = $derived(pullView.pageState);
+  let suggestions = $derived(pullView.suggestions);
+  let pairSuggestions = $derived(pullView.pairSuggestions);
 
   /** Drops revealed ids that no longer exist and clamps each cycle index. */
   function syncRevealed(
@@ -150,40 +165,25 @@
   });
 
   // Lazy: owned teams + near-miss (not from global bootstrap).
+  // Read `idle` only. `loading` and `error` must not re-enter this effect —
+  // a failure would retry forever, and a join would stack calls.
   $effect(() => {
     if (!$charactersHydrated) return;
     if (ownedCount === 0) return;
-    ensureTeamsOwned($charactersOwned).catch(() => {
-      pageState = "error";
-    });
-    if (!nearMissReady) {
-      ensureNearMissTeams($charactersOwned).catch(() => {
-        pageState = "error";
-      });
+    const owned = $charactersOwned;
+    if ($teamsOwnedStatus === "idle") {
+      ensureTeamsOwned(owned).catch(() => {});
+    }
+    if ($nearMissStatus === "idle") {
+      ensureNearMissTeams(owned).catch(() => {});
     }
   });
 
   $effect(() => {
-    if (!$charactersHydrated) return;
-
-    if (ownedCount === 0) {
-      suggestions = [];
-      pairSuggestions = [];
-      pageState = "empty";
-      return;
-    }
-
-    if (!pullsDataReady) {
-      // Don't clobber a fetch failure with "waiting".
-      if (pageState !== "error") pageState = "waiting";
-      return;
-    }
-
-    $nearMissStygianTeams;
-    $nearMissPairTeams;
-    $teamsOwnedStygian;
-    creamPullIds;
-    rankSuggestions();
+    if (pageState !== "done" && pageState !== "empty") return;
+    const singles = suggestions;
+    const pairs = pairSuggestions;
+    untrack(() => syncRevealed(singles, pairs));
   });
 
   function toggleSingle(character: string) {
@@ -321,17 +321,12 @@
   }
 
   async function retryPulls() {
-    pageState = "waiting";
     invalidateTeamsOwned();
     invalidateNearMissTeams();
-    try {
-      await Promise.all([
-        ensureTeamsOwned($charactersOwned),
-        ensureNearMissTeams($charactersOwned),
-      ]);
-    } catch {
-      pageState = "error";
-    }
+    await Promise.all([
+      ensureTeamsOwned($charactersOwned),
+      ensureNearMissTeams($charactersOwned),
+    ]).catch(() => {});
   }
 
   async function retryTierList() {

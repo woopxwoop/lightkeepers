@@ -398,11 +398,14 @@ export const staticBoardsLoaded = writable(false);
 export const staticBoardsError = writable<string | null>(null);
 
 /**
- * True after a successful /api/teams fetch for `teamsOwnedRosterKey`
- * (or the empty-roster short-circuit). Not a global "teams are loaded" bit —
- * a fetch for a different roster must not satisfy this one.
+ * Owned-team fetch for `teamsOwnedRosterKey`.
+ * `ready` is the only state whose lists match that key — including the
+ * empty-roster short-circuit, whose key is `""`. `error` clears the lists
+ * and does not match any roster, so the next ensure retries.
  */
-export const teamsOwnedLoaded = writable(false);
+export type RosterFetchStatus = "idle" | "loading" | "ready" | "error";
+
+export const teamsOwnedStatus = writable<RosterFetchStatus>("idle");
 
 let staticBoardsInFlight: Promise<void> | null = null;
 /** Versions the current allTeams* stores were fetched for. */
@@ -581,9 +584,9 @@ function applyStaticBoardsPayload(
 
 // ── Near-miss stores ───────────────────────────────────────────────────────
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
-export const nearMissStygianLoaded = writable(false);
 export const nearMissPairTeams = writable<NearMissPairTeam[]>([]);
-export const nearMissPairLoaded = writable(false);
+/** Both near-miss lists move together. `ready` stays until invalidate. */
+export const nearMissStatus = writable<RosterFetchStatus>("idle");
 
 // ── Request ID counters ────────────────────────────────────────────────────
 // Discard responses from superseded requests (fast roster changes).
@@ -593,14 +596,11 @@ let teamsInFlight: Promise<void> | null = null;
 /** Roster key of `teamsInFlight`, when a fetch is running. */
 let teamsInFlightKey = "";
 /**
- * Owned name_ids the current `teamsOwned` / `teamsOwnedStygian` lists were
- * fetched for. Empty string is the real "owns nobody" key, so it is only
- * valid once `teamsOwnedLoaded` is true.
- * `OWNED_TEAMS_FETCH_FAILED` means the last fetch failed — it must not match
- * a real roster, or Abyss would keep the empty failure lists.
+ * Owned name_ids the current lists were fetched for.
+ * Meaningful only while `teamsOwnedStatus` is `ready`. `""` is the real
+ * "owns nobody" key.
  */
 let teamsOwnedRosterKey = "";
-const OWNED_TEAMS_FETCH_FAILED = "\u0000";
 
 /** Stable key for the owned slice. Order-independent. */
 function ownedTeamsRosterKey(owned: CharacterOwned[]): string {
@@ -621,7 +621,7 @@ export function invalidateTeamsOwned(): void {
   teamsInFlight = null;
   teamsInFlightKey = "";
   teamsOwnedRosterKey = "";
-  teamsOwnedLoaded.set(false);
+  teamsOwnedStatus.set("idle");
   teamsOwned.set([]);
   teamsOwnedStygian.set([]);
 }
@@ -636,7 +636,7 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
   const rosterKey = ownedTeamsRosterKey(owned);
 
-  teamsOwnedLoaded.set(false);
+  teamsOwnedStatus.set("loading");
 
   // Empty `p_name_ids` is the all-teams sentinel (/api/static). Posting it
   // here would store every meta team as "owned" and the solver would seat
@@ -646,7 +646,7 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     teamsOwned.set([]);
     teamsOwnedStygian.set([]);
     teamsOwnedRosterKey = rosterKey;
-    teamsOwnedLoaded.set(true);
+    teamsOwnedStatus.set("ready");
     return;
   }
 
@@ -664,17 +664,14 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
     teamsOwned.set(abyssTeams);
     teamsOwnedStygian.set(stygianTeams);
     teamsOwnedRosterKey = rosterKey;
-    teamsOwnedLoaded.set(true);
+    teamsOwnedStatus.set("ready");
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
     if (id !== teamsRequestId) return;
-    // Don't leave Abyss/Stygian on an infinite Loading gate — empty owned
-    // lists let the solver fall through to allTeams / pull CTA.
-    // A failed key matches no roster, so the next ensure retries.
     teamsOwned.set([]);
     teamsOwnedStygian.set([]);
-    teamsOwnedRosterKey = OWNED_TEAMS_FETCH_FAILED;
-    teamsOwnedLoaded.set(true);
+    teamsOwnedRosterKey = "";
+    teamsOwnedStatus.set("error");
     throw err;
   }
 }
@@ -685,7 +682,9 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
  */
 export async function ensureTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   const rosterKey = ownedTeamsRosterKey(owned);
-  if (get(teamsOwnedLoaded) && teamsOwnedRosterKey === rosterKey) return;
+  if (get(teamsOwnedStatus) === "ready" && teamsOwnedRosterKey === rosterKey) {
+    return;
+  }
   if (teamsInFlight && teamsInFlightKey === rosterKey) return teamsInFlight;
   // A fetch already running for a different roster is superseded inside
   // writeTeamsOwned (request id). Don't join that promise — its body is the
@@ -713,8 +712,7 @@ export async function ensureTeamsOwned(owned: CharacterOwned[]): Promise<void> {
 export function invalidateNearMissTeams(): void {
   nearMissRequestId++;
   nearMissInFlight = null;
-  nearMissStygianLoaded.set(false);
-  nearMissPairLoaded.set(false);
+  nearMissStatus.set("idle");
   nearMissStygianTeams.set([]);
   nearMissPairTeams.set([]);
 }
@@ -730,8 +728,7 @@ export async function writeNearMissTeams(
   const id = ++nearMissRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
 
-  nearMissStygianLoaded.set(false);
-  nearMissPairLoaded.set(false);
+  nearMissStatus.set("loading");
 
   try {
     const { nearMissTeams, nearMissPairs } = await postJson<{
@@ -746,11 +743,13 @@ export async function writeNearMissTeams(
     if (id !== nearMissRequestId) return; // superseded
     nearMissStygianTeams.set(nearMissTeams);
     nearMissPairTeams.set(nearMissPairs);
-    nearMissStygianLoaded.set(true);
-    nearMissPairLoaded.set(true);
+    nearMissStatus.set("ready");
   } catch (err) {
     console.error("[stores] writeNearMissTeams failed:", err);
-    // Leave loaded=false so ensureNearMissTeams can retry; rethrow for callers.
+    if (id !== nearMissRequestId) return;
+    nearMissStygianTeams.set([]);
+    nearMissPairTeams.set([]);
+    nearMissStatus.set("error");
     throw err;
   }
 }
@@ -764,7 +763,7 @@ let nearMissInFlight: Promise<void> | null = null;
 export async function ensureNearMissTeams(
   owned: CharacterOwned[],
 ): Promise<void> {
-  if (get(nearMissStygianLoaded) && get(nearMissPairLoaded)) return;
+  if (get(nearMissStatus) === "ready") return;
   if (nearMissInFlight) return nearMissInFlight;
   const pending = writeNearMissTeams(owned);
   nearMissInFlight = pending;
