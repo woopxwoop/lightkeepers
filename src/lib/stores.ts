@@ -391,11 +391,37 @@ export const stygianEnemiesBoard =
   writable<StygianEnemies>(emptyStygianEnemies);
 export const stygianScheduleBoard = writable<StygianSchedule>(null);
 
-/** True after a successful /api/static boards fetch (or empty payload). */
-export const staticBoardsLoaded = writable(false);
+/**
+ * Static-board fetch. `current` matches the layout versions. `stale` is a
+ * previous cycle kept on screen while a backoff retry is scheduled. `error`
+ * keeps any teams already applied (`retained`).
+ */
+export type StaticBoardsPhase =
+  | { phase: "cold" }
+  | { phase: "loading" }
+  | { phase: "current" }
+  | { phase: "stale" }
+  | { phase: "error"; retained: boolean };
 
-/** Last warm-up failure; cleared on success or a new attempt. */
-export const staticBoardsError = writable<string | null>(null);
+export type StaticBoardsView =
+  | { kind: "loading" }
+  | { kind: "empty-error" }
+  | { kind: "board"; notice: "stale" | "retry" | null };
+
+export const staticBoardsPhase = writable<StaticBoardsPhase>({ phase: "cold" });
+
+/** What Abyss, Stygian, Summary, and character teams should render. */
+export function staticBoardsView(phase: StaticBoardsPhase): StaticBoardsView {
+  if (phase.phase === "cold" || phase.phase === "loading") {
+    return { kind: "loading" };
+  }
+  if (phase.phase === "error" && !phase.retained) {
+    return { kind: "empty-error" };
+  }
+  if (phase.phase === "stale") return { kind: "board", notice: "stale" };
+  if (phase.phase === "error") return { kind: "board", notice: "retry" };
+  return { kind: "board", notice: null };
+}
 
 /**
  * Owned-team fetch for `teamsOwnedRosterKey`.
@@ -420,10 +446,28 @@ const STATIC_BOARDS_RETRY_MAX_MS = 5 * 60_000;
 
 function staticBoardsMatchCurrentVersions(): boolean {
   return (
-    get(staticBoardsLoaded) &&
+    get(staticBoardsPhase).phase === "current" &&
     staticBoardsAbyssVersion === abyssVersionNumber &&
     staticBoardsStygianVersion === stygianVersionNumber
   );
+}
+
+function staticBoardsRetained(): boolean {
+  return get(allTeamsAbyss).length > 0 || get(allTeamsStygian).length > 0;
+}
+
+/** Drops board stores and a scheduled rollover retry. */
+export function resetStaticBoards(): void {
+  clearStaticBoardsRetry();
+  staticBoardsInFlight = null;
+  staticBoardsAbyssVersion = -1;
+  staticBoardsStygianVersion = -1;
+  allTeamsAbyss.set([]);
+  allTeamsStygian.set([]);
+  abyssEnemiesBoard.set(emptyAbyssEnemies);
+  stygianEnemiesBoard.set(emptyStygianEnemies);
+  stygianScheduleBoard.set(null);
+  staticBoardsPhase.set({ phase: "cold" });
 }
 
 function clearStaticBoardsRetry(): void {
@@ -476,7 +520,12 @@ export async function ensureStaticBoards(opts?: {
   if (Date.now() < staticBoardsRetryAfterMs) return;
   if (staticBoardsInFlight) return staticBoardsInFlight;
 
-  staticBoardsError.set(null);
+  const phase = get(staticBoardsPhase);
+  const keepBoards =
+    phase.phase === "current" ||
+    phase.phase === "stale" ||
+    (phase.phase === "error" && phase.retained);
+  if (!keepBoards) staticBoardsPhase.set({ phase: "loading" });
 
   const pending = (async () => {
     try {
@@ -492,12 +541,14 @@ export async function ensureStaticBoards(opts?: {
       const stygianVer = fresh.latestStygianVersion?.version_number;
       if (typeof abyssVer === "number" && typeof stygianVer === "number") {
         applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
+        staticBoardsPhase.set({ phase: "stale" });
       }
       scheduleStaticBoardsRetry();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load team boards";
-      staticBoardsError.set(message);
+      staticBoardsPhase.set({
+        phase: "error",
+        retained: staticBoardsRetained(),
+      });
       scheduleStaticBoardsRetry();
       throw err;
     }
@@ -547,11 +598,13 @@ function applyStaticBoardsIfCurrent(data: StaticBoardsPayload): boolean {
       return false;
     }
     applyStaticBoardsPayload(data, abyssVer, stygianVer);
+    staticBoardsPhase.set({ phase: "current" });
     return true;
   }
 
   // No version payload — keep whatever layout has now, still seed boards.
   applyStaticBoardsPayload(data, currentAbyss, currentStygian);
+  staticBoardsPhase.set({ phase: "current" });
   return true;
 }
 
@@ -572,8 +625,6 @@ function applyStaticBoardsPayload(
     Math.max(abyssVer, abyssVersionNumber),
     Math.max(stygianVer, stygianVersionNumber),
   );
-  staticBoardsError.set(null);
-  staticBoardsLoaded.set(true);
   if (
     staticBoardsAbyssVersion === abyssVersionNumber &&
     staticBoardsStygianVersion === stygianVersionNumber

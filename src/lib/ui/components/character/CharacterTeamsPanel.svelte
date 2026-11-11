@@ -3,8 +3,8 @@
   import {
     allTeamsAbyss,
     allTeamsStygian,
-    staticBoardsLoaded,
-    staticBoardsError,
+    staticBoardsPhase,
+    staticBoardsView,
     ensureStaticBoards,
   } from "#lib/stores.js";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
@@ -110,12 +110,11 @@
       : [],
   );
 
+  let boards = $derived(staticBoardsView($staticBoardsPhase));
   let teamsLoading = $derived(
     teamsMode === "simulated"
       ? !investment && !investmentError
-      : !$staticBoardsError &&
-          !$staticBoardsLoaded &&
-          popularTeams.length === 0,
+      : boards.kind === "loading",
   );
 
   async function retryTeams() {
@@ -127,7 +126,7 @@
     try {
       await ensureStaticBoards({ force: true });
     } catch {
-      /* staticBoardsError store already set */
+      /* staticBoardsPhase already set */
     }
   }
 
@@ -209,36 +208,47 @@
       {/if}
     {:else if teamsLoading}
       <LoadingState variant="pulse" message="Loading meta teams…" />
-    {:else if $staticBoardsError && popularTeams.length === 0}
+    {:else if boards.kind === "empty-error"}
       <EmptyState message="Could not load teams right now.">
         {#snippet action()}
           <Button variant="secondary" onclick={retryTeams}>Try again</Button>
         {/snippet}
       </EmptyState>
-    {:else if popularTeams.length === 0}
-      <EmptyState
-        message="No {teamsMode === 'stygian'
-          ? 'Stygian'
-          : 'Abyss'} teams featuring {characterName} yet."
-      />
     {:else}
-      <TeamHandList>
-        {#each popularTeams as team, i (team.team_key ?? i)}
-          <li class="team-hand-row">
-            <TeamCardHand
-              characters={handCharactersFromMembers(team.members, mapping)}
-              dimmedKeys={dimmedKeysFromMembers(team.members, ownedNameIdsSet)}
-              spread="flat"
-            />
-            <div class="team-hand-footer">
-              <span class="team-hand-meta">
-                <span class="team-hand-rank">#{i + 1}</span>
-                <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span>
-              </span>
-            </div>
-          </li>
-        {/each}
-      </TeamHandList>
+      {#if boards.kind === "board" && boards.notice}
+        {#if boards.notice === "stale"}
+          <p class="page-meta">Showing the previous cycle.</p>
+        {/if}
+        <Button variant="secondary" onclick={retryTeams}>Try again</Button>
+      {/if}
+      {#if popularTeams.length === 0}
+        <EmptyState
+          message="No {teamsMode === 'stygian'
+            ? 'Stygian'
+            : 'Abyss'} teams featuring {characterName} yet."
+        />
+      {:else}
+        <TeamHandList>
+          {#each popularTeams as team, i (team.team_key ?? i)}
+            <li class="team-hand-row">
+              <TeamCardHand
+                characters={handCharactersFromMembers(team.members, mapping)}
+                dimmedKeys={dimmedKeysFromMembers(
+                  team.members,
+                  ownedNameIdsSet,
+                )}
+                spread="flat"
+              />
+              <div class="team-hand-footer">
+                <span class="team-hand-meta">
+                  <span class="team-hand-rank">#{i + 1}</span>
+                  <span>{(team.usage_rate ?? 0).toFixed(1)}% usage</span>
+                </span>
+              </div>
+            </li>
+          {/each}
+        </TeamHandList>
+      {/if}
     {/if}
   </section>
 </div>

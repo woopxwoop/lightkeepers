@@ -3,8 +3,8 @@
     teamsOwned,
     allTeamsAbyss,
     abyssEnemiesBoard,
-    staticBoardsLoaded,
-    staticBoardsError,
+    staticBoardsPhase,
+    staticBoardsView,
     charactersOwned,
     charactersHydrated,
     teamsOwnedStatus,
@@ -71,7 +71,7 @@
     try {
       await ensureStaticBoards({ force: true });
     } catch {
-      // staticBoardsError already set
+      // staticBoardsPhase already set
     }
   }
 
@@ -123,12 +123,8 @@
   });
 
   let solution = $derived(displaySolutions[safeIndex]);
-  let loading = $derived(
-    !$charactersHydrated ||
-      (!$staticBoardsError &&
-        !$staticBoardsLoaded &&
-        $allTeamsAbyss.length === 0),
-  );
+  let boards = $derived(staticBoardsView($staticBoardsPhase));
+  let loading = $derived(!$charactersHydrated || boards.kind === "loading");
   let waitingForOwned = $derived(
     hasOwnedCharacters &&
       ($teamsOwnedStatus === "idle" || $teamsOwnedStatus === "loading"),
@@ -253,12 +249,20 @@
 
         <a class="back-link" href={resolve("tools/abyss/summary")}>Summary</a>
       </p>
+      {#if boards.kind === "board" && boards.notice && !loading}
+        {#if boards.notice === "stale"}
+          <p class="page-meta">Showing the previous cycle.</p>
+        {/if}
+        <Button variant="secondary" onclick={retryStaticBoards}
+          >Try again</Button
+        >
+      {/if}
     </div>
   </header>
 
   {#if loading}
     <LoadingState />
-  {:else if $staticBoardsError && $allTeamsAbyss.length === 0}
+  {:else if boards.kind === "empty-error"}
     <EmptyState message="Could not load Abyss teams right now.">
       {#snippet action()}
         <Button variant="secondary" onclick={retryStaticBoards}

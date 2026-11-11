@@ -4,8 +4,8 @@
     teamsOwnedStygian,
     allTeamsStygian,
     stygianEnemiesBoard,
-    staticBoardsLoaded,
-    staticBoardsError,
+    staticBoardsPhase,
+    staticBoardsView,
     charactersOwned,
     charactersHydrated,
     teamsOwnedStatus,
@@ -111,9 +111,9 @@
   $effect(() => {
     ensureStaticBoards().catch(() => {});
     // Versions seed from layout / static boards — don't POST /api/teams with -1.
-    // Re-subscribe when boards load so we retry after setVersionNumbers.
+    // Re-subscribe when boards settle so we retry after setVersionNumbers.
     // Wait for roster seed too: an empty character list is the all-teams sentinel.
-    void $staticBoardsLoaded;
+    void $staticBoardsPhase;
     if (!$charactersHydrated) return;
     if (abyssVersionNumber < 0 || stygianVersionNumber < 0) return;
     ensureTeamsOwned($charactersOwned).catch(console.error);
@@ -131,7 +131,7 @@
     try {
       await ensureStaticBoards({ force: true });
     } catch {
-      // staticBoardsError already set
+      // staticBoardsPhase already set
     }
   }
 
@@ -165,8 +165,8 @@
 
     // Module version ints aren't reactive — re-run when boards finish applying
     // (that path also seeds stygianVersionNumber).
-    void $staticBoardsLoaded;
-    if (!$staticBoardsLoaded || stygianVersionNumber < 0) return;
+    const boards = staticBoardsView($staticBoardsPhase);
+    if (boards.kind !== "board" || stygianVersionNumber < 0) return;
 
     const board = enemies;
     if (!board || !hasOwnedCharacters) {
@@ -357,12 +357,8 @@
     return () => ac.abort();
   });
 
-  let loading = $derived(
-    !$charactersHydrated ||
-      (!$staticBoardsError &&
-        !$staticBoardsLoaded &&
-        $allTeamsStygian.length === 0),
-  );
+  let boards = $derived(staticBoardsView($staticBoardsPhase));
+  let loading = $derived(!$charactersHydrated || boards.kind === "loading");
   let ownedRosterPending = $derived(
     hasOwnedCharacters &&
       ($teamsOwnedStatus === "idle" || $teamsOwnedStatus === "loading"),
@@ -380,7 +376,7 @@
     needsCheapClears &&
       hasOwnedCharacters &&
       cheapClearsRows === null &&
-      $staticBoardsLoaded &&
+      boards.kind === "board" &&
       !!enemies?.top?.id &&
       !!enemies?.middle?.id &&
       !!enemies?.bottom?.id,
@@ -580,9 +576,16 @@
   </section>
 {/snippet}
 
+{#if boards.kind === "board" && boards.notice && !loading}
+  {#if boards.notice === "stale"}
+    <p class="page-meta">Showing the previous cycle.</p>
+  {/if}
+  <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+{/if}
+
 {#if loading}
   <LoadingState />
-{:else if $staticBoardsError && $allTeamsStygian.length === 0}
+{:else if boards.kind === "empty-error"}
   <EmptyState message="Could not load Stygian teams right now.">
     {#snippet action()}
       <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>

@@ -276,7 +276,7 @@ export async function bootstrapClient(data: LayoutHydration): Promise<void> {
   seedClientStores(data);
 
   // Fire early — do not await; home stays interactive while boards warm.
-  // Failures land in staticBoardsError for Abyss/Stygian retry UI.
+  // Failures land in staticBoardsPhase for Abyss/Stygian retry UI.
   // Investment JSON is loaded on Teams / character routes (not every visit).
   void ensureStaticBoards();
 

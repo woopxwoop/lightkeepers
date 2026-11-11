@@ -6,8 +6,8 @@
     abyssEnemiesBoard,
     stygianEnemiesBoard,
     stygianScheduleBoard,
-    staticBoardsLoaded,
-    staticBoardsError,
+    staticBoardsPhase,
+    staticBoardsView,
     ensureStaticBoards,
     isIconCompact,
     charactersOwned,
@@ -87,16 +87,12 @@
     try {
       await ensureStaticBoards({ force: true });
     } catch {
-      // staticBoardsError already set
+      // staticBoardsPhase already set
     }
   }
 
-  let loading = $derived(
-    !$staticBoardsError &&
-      !$staticBoardsLoaded &&
-      $allTeamsAbyss.length === 0 &&
-      $allTeamsStygian.length === 0,
-  );
+  let boards = $derived(staticBoardsView($staticBoardsPhase));
+  let loading = $derived(boards.kind === "loading");
 
   function withLeadFirst(team: BoardTeam, mainDps: string): BoardTeam {
     return {
@@ -437,6 +433,12 @@
       <h1 class="page-title">
         {mode === "abyss" ? "Abyss Summary" : "Stygian Summary"}
       </h1>
+      {#if boards.kind === "board" && boards.notice}
+        {#if boards.notice === "stale"}
+          <p class="page-meta">Showing the previous cycle.</p>
+        {/if}
+        <Button variant="secondary" onclick={retryBoards}>Try again</Button>
+      {/if}
     </div>
   </header>
 
@@ -473,7 +475,7 @@
 
   {#if loading}
     <LoadingState variant="pulse" message="Loading meta boards…" />
-  {:else if $staticBoardsError && $allTeamsAbyss.length === 0 && $allTeamsStygian.length === 0}
+  {:else if boards.kind === "empty-error"}
     <EmptyState message="Could not load static boards.">
       {#snippet action()}
         <Button variant="secondary" onclick={retryBoards}>Try again</Button>
