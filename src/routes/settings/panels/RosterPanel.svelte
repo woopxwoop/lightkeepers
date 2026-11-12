@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import {
@@ -47,6 +47,7 @@
     captureRoster,
     postRoster,
     rosterDiffersFromSnapshot,
+    rosterLocalIs,
     writeRosterLocal,
     type RosterCapture,
   } from "#lib/roster-snapshot.js";
@@ -62,6 +63,11 @@
   let isSaving = $state(false);
   let rosterError = $state("");
   let savedSnapshot = $state("");
+  /**
+   * Account the draft was loaded for. A different signed-in account drops
+   * the draft so one account's unsaved edits never post to another's cloud.
+   */
+  let draftOwner: string | null | undefined = undefined;
   let hasUnsavedChanges = $derived(
     synced && rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
   );
@@ -112,8 +118,19 @@
     );
   }
 
-  function restoreSavedSnapshot() {
-    writeRosterLocal(savedSnapshot);
+  /** Undo this save's local write while it is still the stored roster. */
+  function restoreSavedSnapshot(pendingJson: string) {
+    if (rosterLocalIs(pendingJson)) writeRosterLocal(savedSnapshot);
+  }
+
+  function sessionUserId(): string | null | undefined {
+    return $session.isPending ? undefined : ($session.data?.user?.id ?? null);
+  }
+
+  function loadDraft(owned: CharacterOwned[]) {
+    const pending = captureRoster(owned);
+    tempCharactersOwned = pending.roster;
+    savedSnapshot = pending.json;
   }
 
   function commitSaved(pending: RosterCapture) {
@@ -148,7 +165,12 @@
 
     // Freeze the editor state before any await so concurrent toggles stay unsaved.
     const pending = captureRoster(tempCharactersOwned);
-    const ownerId = $session.data?.user?.id ?? null;
+    const ownerId = sessionUserId();
+    if (ownerId === undefined || ownerId !== draftOwner) {
+      rosterError = "Account changed — review the roster before saving.";
+      isSaving = false;
+      return;
+    }
 
     try {
       if (!writeRosterLocal(pending.json)) {
@@ -157,21 +179,22 @@
 
       if (ownerId) {
         const result = await postRoster(pending.roster);
+        // A result for an account that is gone must not touch the new one.
+        if (sessionUserId() !== ownerId) return;
         if (!result.ok) {
-          restoreSavedSnapshot();
+          restoreSavedSnapshot(pending.json);
           rosterError = result.message
             ? `Sync failed (${result.status}): ${result.message}`
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
-        if (($session.data?.user?.id ?? null) !== ownerId) return;
         rememberRosterOwner(ownerId);
         commitSaved(pending);
       } else {
         commitSaved(pending);
       }
     } catch (e) {
-      restoreSavedSnapshot();
+      if (sessionUserId() === ownerId) restoreSavedSnapshot(pending.json);
       console.error("Roster save error:", e);
       rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
     } finally {
@@ -181,18 +204,25 @@
 
   $effect(() => {
     if ($charactersHydrated && !synced) {
-      const pending = captureRoster($charactersOwned);
-      tempCharactersOwned = pending.roster;
-      savedSnapshot = pending.json;
+      loadDraft($charactersOwned);
       synced = true;
     } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
       const storeJson = JSON.stringify($charactersOwned);
-      if (storeJson !== savedSnapshot) {
-        const pending = captureRoster($charactersOwned);
-        tempCharactersOwned = pending.roster;
-        savedSnapshot = pending.json;
-      }
+      if (storeJson !== savedSnapshot) loadDraft($charactersOwned);
     }
+  });
+
+  $effect(() => {
+    const id = sessionUserId();
+    if (id === undefined || id === draftOwner) return;
+    // First settled account adopts the draft; a later switch discards it.
+    if (draftOwner !== undefined && synced) {
+      untrack(() => {
+        loadDraft($charactersOwned);
+        rosterError = "";
+      });
+    }
+    draftOwner = id;
   });
 
   $effect(() => {

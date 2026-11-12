@@ -277,13 +277,27 @@ async function resolveRosterConflict(args: {
 
 const ROSTER_OWNER_KEY = "rosterOwnerUserId";
 
-function readRosterOwnerUserId(): string | null {
+/**
+ * The recorded owner, or `unavailable` when storage cannot be read. An
+ * unreadable store is not the same as no owner: callers fail closed.
+ */
+type RosterOwnerRead =
+  | { status: "ok"; owner: string | null }
+  | { status: "unavailable" };
+
+function readRosterOwner(): RosterOwnerRead {
   try {
     const value = localStorage.getItem(ROSTER_OWNER_KEY);
-    return value && value.length > 0 ? value : null;
+    return { status: "ok", owner: value && value.length > 0 ? value : null };
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
+}
+
+/** A different account is recorded. Unreadable storage keeps neutral copy. */
+function rosterOwnedByOther(): boolean {
+  const read = readRosterOwner();
+  return read.status === "ok" && read.owner !== null;
 }
 
 /** Record the account whose roster was just stored on this device. */
@@ -297,14 +311,17 @@ export function rememberRosterOwner(userId: string): void {
 
 /**
  * Missing cloud row. Upload without asking when this device already stored
- * the roster for `sessionUserId`. A direct account switch with no owner, or
- * a roster stored for someone else, has to be confirmed first.
+ * the roster for `sessionUserId`. A direct account switch with no owner, a
+ * roster stored for someone else, or unreadable storage is confirmed first.
  */
 export function missingCloudRosterNeedsConfirm(
   sessionUserId: string,
   directAccountSwitch: boolean,
 ): boolean {
-  const owner = readRosterOwnerUserId();
+  const read = readRosterOwner();
+  // No proof of who owns the in-memory roster — ask before uploading it.
+  if (read.status === "unavailable") return true;
+  const owner = read.owner;
   if (owner === sessionUserId) return false;
   if (owner !== null) return true;
   return directAccountSwitch;
@@ -316,7 +333,9 @@ export function missingCloudRosterNeedsConfirm(
  * an empty cloud row receives it. A roster already owned by someone stays.
  */
 export function retainUnownedRosterOnLogout(userId: string): void {
-  if (readRosterOwnerUserId() !== null) return;
+  const read = readRosterOwner();
+  // Unreadable storage cannot be stamped; the next sync fails closed instead.
+  if (read.status === "unavailable" || read.owner !== null) return;
   rememberRosterOwner(userId);
 }
 
@@ -380,7 +399,7 @@ export async function syncCloudRoster(
         local: localRoster,
         cloud: [],
         uploadRetry: true,
-        foreignOwner: readRosterOwnerUserId() !== null,
+        foreignOwner: rosterOwnedByOther(),
       });
       if (confirmed) rememberRosterOwner(cloud.userId);
       return confirmed;

@@ -8,6 +8,7 @@ import {
   MAX_TEAM_KEY_LENGTH,
   assertNoDbError,
   requireAnalyticsMode,
+  requireBaseRev,
   requireCalculatorGoals,
   requireCharacterNameId,
   requireCharacterNameIds,
@@ -690,6 +691,20 @@ describe("request validation", () => {
     assert.throws(
       () => requireUser({ user: null, session: null }),
       hasStatus(401),
+    );
+  });
+
+  it("requireBaseRev keeps absent/null and accepts revision strings", () => {
+    assert.equal(requireBaseRev(undefined), undefined);
+    assert.equal(requireBaseRev(null), null);
+    const rev = "2026-11-12T10:00:00.123456+00:00";
+    assert.equal(requireBaseRev(rev), rev);
+    assert.throws(() => requireBaseRev(""), isBadRequest);
+    assert.throws(() => requireBaseRev("not a date"), isBadRequest);
+    assert.throws(() => requireBaseRev(123), isBadRequest);
+    assert.throws(
+      () => requireBaseRev("2026-11-12".padEnd(65, "0")),
+      isBadRequest,
     );
   });
 

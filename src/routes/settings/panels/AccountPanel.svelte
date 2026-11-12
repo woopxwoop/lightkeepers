@@ -16,8 +16,8 @@
   import {
     captureRoster,
     postRoster,
+    rosterLocalIs,
     writeRosterLocal,
-    ROSTER_STORAGE_KEY,
   } from "#lib/roster-snapshot.js";
   import { applyGoodRoster, parseGoodText } from "#lib/good-import.js";
   import { serializeGoodDocument } from "#lib/good-export.js";
@@ -142,14 +142,6 @@
     }
   }
 
-  function localRosterStill(json: string): boolean {
-    try {
-      return localStorage.getItem(ROSTER_STORAGE_KEY) === json;
-    } catch {
-      return false;
-    }
-  }
-
   function openGoodModal() {
     importError = "";
     pickingGood = true;
@@ -171,6 +163,8 @@
     importError = "";
     importNote = "";
 
+    let written: string | null = null;
+    let previousJson: string | null = null;
     try {
       const parsed = parseGoodText(text);
       if (!parsed.ok) {
@@ -187,22 +181,27 @@
         artifacts: parsed.artifacts,
       };
 
-      if (!writeRosterLocal(pending.json)) {
+      previousJson = previous.json;
+      if (writeRosterLocal(pending.json)) {
+        written = pending.json;
+      } else {
         console.warn("localStorage unavailable — saving to memory only");
       }
 
       const ownerId = $session.data?.user?.id ?? null;
       if (ownerId) {
         const result = await postRoster(pending.roster, inventory);
+        // Resolved: the branches below own any rollback from here on.
+        written = null;
         if (!result.ok) {
-          if (localRosterStill(pending.json)) writeRosterLocal(previous.json);
+          if (rosterLocalIs(pending.json)) writeRosterLocal(previous.json);
           importError = result.message
             ? `Sync failed (${result.status}): ${result.message}`
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
         if (($session.data?.user?.id ?? null) !== ownerId) {
-          if (localRosterStill(pending.json)) writeRosterLocal(previous.json);
+          if (rosterLocalIs(pending.json)) writeRosterLocal(previous.json);
           return;
         }
         rememberRosterOwner(ownerId);
@@ -223,6 +222,10 @@
         importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
       }
     } catch (err) {
+      // postRoster rejects on network failure. Undo only our own write.
+      if (written !== null && previousJson !== null && rosterLocalIs(written)) {
+        writeRosterLocal(previousJson);
+      }
       console.error("GOOD import error:", err);
       importError = "Could not import that GOOD JSON.";
     } finally {

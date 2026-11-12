@@ -51,6 +51,27 @@ export function assertNoDbError(label: string, err: unknown): void {
   throw error(500, "Internal server error");
 }
 
+/** Longer than any timestamptz text; anything past it is not a revision. */
+const MAX_BASE_REV_LENGTH = 64;
+
+/**
+ * Optional `baseRev` on an account-document POST (see `account-doc.ts`).
+ * Absent → `undefined` (legacy write), `null` → create only, otherwise a
+ * parseable timestamp string the client got back as `rev`.
+ */
+export function requireBaseRev(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > MAX_BASE_REV_LENGTH ||
+    !Number.isFinite(Date.parse(value))
+  ) {
+    throw error(400, "baseRev must be a revision string or null.");
+  }
+  return value;
+}
+
 /** Parse a request body and require a plain JSON object. */
 export async function requireJsonObject(
   request: Request,

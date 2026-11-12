@@ -362,6 +362,16 @@ function rememberGoalsWrite(userId: string | null | undefined): void {
 }
 
 /**
+ * A hydration for another account takes over rollback ownership even when it
+ * stored nothing, so an earlier account's failed POST cannot restore its
+ * snapshot over the list this account now shows.
+ */
+function claimGoalsWrites(userId: string | null | undefined): void {
+  if ((goalsWriteOwner?.userId ?? null) === (userId ?? null)) return;
+  rememberGoalsWrite(userId);
+}
+
+/**
  * Restore `snapshot` only when this save's revision and account are still
  * the latest local write. A newer save or hydration keeps its goals.
  */
@@ -402,6 +412,22 @@ function keepMergedEdits(
   const { cloudSide, differs } = cloudGoalsDiffer(merged, cloudGoals);
   if (!differs) return;
   rebaseRecovery(userId, cloudSide);
+}
+
+/**
+ * A settled read whose list still differs from the recovery base has
+ * unsynced goals. Uses the peekPendingLocal flow, so a base that now matches
+ * is dropped.
+ */
+function withPendingRecovery(
+  hydration: GoalsHydration,
+  userId: string | null,
+  state: CalculatorGoalsState,
+): GoalsHydration {
+  if (!hydration.postCloud || !userId) return hydration;
+  return peekPendingLocal(userId, state)
+    ? { ...hydration, cloudDirty: true }
+    : hydration;
 }
 
 /** Mark a stored merge that still has edits the cloud list does not. */
@@ -454,6 +480,18 @@ export function acceptGoalsHydrationUser(input: {
 }
 
 /**
+ * An accepted read that failed. It keeps its account with posting off, and
+ * the page reads again on the next session or local revision change before
+ * cloud posting turns back on.
+ */
+export function goalsReadFailed(hydration: {
+  postCloud: boolean;
+  syncError: string;
+}): boolean {
+  return !hydration.postCloud && hydration.syncError !== "";
+}
+
+/**
  * Local → optional cloud (signed-in). A stored cloud list wins, including
  * an empty one, when no local-only edits are waiting. No row keeps local.
  * A failed read keeps local, reports `syncError`, and sets `postCloud` false.
@@ -479,6 +517,7 @@ export async function hydrateGoalsState(
 ): Promise<GoalsHydration> {
   const local = readGoalsLocal();
   if (!signedIn) {
+    if (!opts?.allowWrite || opts.allowWrite()) claimGoalsWrites(null);
     return { ...captureGoals(local), postCloud: false, syncError: "" };
   }
   const userId = opts?.userId ?? null;
@@ -522,10 +561,20 @@ export async function hydrateGoalsState(
       }
       // A newer read already stored its list. `cloudApplied` is true for that
       // write too, and applying this older cloud list would drop the save.
+      claimGoalsWrites(userId);
       if (goalsReadWasSuperseded(readSerial)) {
-        return { ...current, postCloud: true, syncError: "" };
+        return withPendingRecovery(
+          { ...current, postCloud: true, syncError: "" },
+          userId,
+          currentState,
+        );
       }
-      const savedDuringRead = savedStateDuringRead(editRevision);
+      // After a cloud apply, the stored list already merged any mid-read
+      // save against the newer read's cloud side. Comparing that save with
+      // a recovery base that advanced since would drop cloud-only goals.
+      const savedDuringRead = cloudApplied
+        ? null
+        : savedStateDuringRead(editRevision);
       if (savedDuringRead) {
         // A rebased recovery base omits additions the last merge kept.
         // The pre-read list still contains them, so an unchanged addition
@@ -550,12 +599,26 @@ export async function hydrateGoalsState(
         return withCloudDirty(hydration, reconciled, cloud.goals);
       }
       if (cloudApplied) {
-        return appliedHydration(
+        // Recovered local additions survive a revision marked cloud-applied.
+        const pendingBase = peekPendingLocal(userId, currentState);
+        const cloudSide = applyCloudGoals(currentState, cloud.goals);
+        const next = pendingBase
+          ? reconcilePendingGoals(pendingBase, currentState, cloud.goals)
+          : cloudSide;
+        const hydration = appliedHydration(
           readSerial,
           currentState,
-          applyCloudGoals(currentState, cloud.goals),
+          next,
           userId,
         );
+        if (hydration.postCloud && pendingBase && userId) {
+          if (cloudGoalsDiffer(next, cloud.goals).differs) {
+            rebaseRecovery(userId, cloudSide);
+          } else {
+            clearPendingGoalsRecovery();
+          }
+        }
+        return withCloudDirty(hydration, next, cloud.goals);
       }
       const reconciled = reconcilePendingGoals(
         local,
@@ -574,7 +637,12 @@ export async function hydrateGoalsState(
     if (!allowWrite) {
       return { ...current, postCloud: false, syncError: "" };
     }
-    return { ...current, postCloud: true, syncError: "" };
+    claimGoalsWrites(userId);
+    return withPendingRecovery(
+      { ...current, postCloud: true, syncError: "" },
+      userId,
+      currentState,
+    );
   }
   if (cloud.status === "error") {
     if (allowWrite) noteFailedRead(userId, local);
@@ -592,8 +660,13 @@ export async function hydrateGoalsState(
         syncError: "",
       };
     }
+    claimGoalsWrites(userId);
     if (goalsReadWasSuperseded(readSerial)) {
-      return { ...current, postCloud: true, syncError: "" };
+      return withPendingRecovery(
+        { ...current, postCloud: true, syncError: "" },
+        userId,
+        currentState,
+      );
     }
     const pendingBase = peekPendingLocal(userId, currentState);
     const cloudSide = applyCloudGoals(currentState, cloud.goals);
@@ -626,8 +699,12 @@ export async function hydrateGoalsState(
       syncError: "",
     };
   }
-  peekPendingLocal(userId, local);
-  return { ...captureGoals(local), postCloud: true, syncError: "" };
+  claimGoalsWrites(userId);
+  return withPendingRecovery(
+    { ...captureGoals(local), postCloud: true, syncError: "" },
+    userId,
+    local,
+  );
 }
 
 /** Same-tab sync: re-read local only when it differs from the saved baseline. */

@@ -43,14 +43,23 @@ export let abyssVersionNumber = -1;
 export let stygianVersionNumber = -1;
 
 export function setVersionNumbers(abyss: number, stygian: number) {
-  const previousStygian = versionsForRosterRequest().stygian;
+  const previous = versionsForRosterRequest();
   abyssVersionNumber = abyss;
   stygianVersionNumber = stygian;
-  // Near-miss follows the board on screen. A layout-only advance keeps the
+  // Roster reads follow the board on screen. A layout-only advance keeps the
   // applied cycle, so those results stay until that cycle actually changes.
-  const nextStygian = versionsForRosterRequest().stygian;
-  if (previousStygian >= 0 && nextStygian !== previousStygian) {
+  // Reset to idle even from `ready`: Pulls only ensures from idle.
+  const next = versionsForRosterRequest();
+  if (previous.stygian >= 0 && next.stygian !== previous.stygian) {
     invalidateNearMissTeams();
+  }
+  if (
+    previous.abyss >= 0 &&
+    previous.stygian >= 0 &&
+    (next.abyss !== previous.abyss || next.stygian !== previous.stygian) &&
+    get(teamsOwnedStatus) !== "idle"
+  ) {
+    invalidateTeamsOwned();
   }
   if (
     staticBoardsAbyssVersion >= 0 &&

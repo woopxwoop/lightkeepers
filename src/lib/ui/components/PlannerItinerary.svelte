@@ -25,6 +25,7 @@
   } from "#lib/calculator-goals.js";
   import {
     acceptGoalsHydrationUser,
+    goalsReadFailed,
     autofillCharacterGoalState,
     goalsHaveUnsavedChanges,
     goalsRevisionAllowsCloudReplace,
@@ -112,6 +113,8 @@
   let cloudDirty = $state(false);
   /** User id the current postCloud flag was read for. */
   let goalsUserId: string | null | undefined = undefined;
+  /** The accepted read for `goalsUserId` failed — the next effect run reads again. */
+  let goalsUserIdReadFailed = false;
   let seenGoalsRevision = 0;
   let goalsCloudGeneration = 0;
   /** Account whose cloud read is in flight. Not yet the hydrated account. */
@@ -239,6 +242,7 @@
           })
         ) {
           goalsUserId = userId;
+          goalsUserIdReadFailed = goalsReadFailed(pending);
         }
         postCloud =
           pending.postCloud && (sessionPending || sessionUserId === userId);
@@ -261,13 +265,16 @@
     return () => document.removeEventListener("visibilitychange", onVisible);
   });
 
-  /** A later sign-in repeats the cloud read. A failed read still does not POST. */
+  /**
+   * A later sign-in repeats the cloud read, and so does a session or revision
+   * change after a failed read. A failed read still does not POST.
+   */
   $effect(() => {
     if (!hydrated) return;
     if ($session.isPending) return;
     void goalsHydrateTick;
     const id = $session.data?.user?.id ?? null;
-    if (id === goalsUserId) return;
+    if (id === goalsUserId && !goalsUserIdReadFailed) return;
     const revisionAtRead = $goalsLocalRevision;
     const replaceLocal =
       !hasUnsavedChanges &&
@@ -321,6 +328,7 @@
         }
         discardedHydrateFor = undefined;
         goalsUserId = readFor;
+        goalsUserIdReadFailed = goalsReadFailed(pending);
         postCloud = pending.postCloud;
         cloudDirty = pending.cloudDirty === true;
         saveError =

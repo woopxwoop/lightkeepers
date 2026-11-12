@@ -228,6 +228,15 @@ export function writeRosterLocal(json: string): boolean {
   }
 }
 
+/** The stored roster is still exactly `json` (an unconfirmed write may be undone). */
+export function rosterLocalIs(json: string): boolean {
+  try {
+    return localStorage.getItem(ROSTER_STORAGE_KEY) === json;
+  } catch {
+    return false;
+  }
+}
+
 /** POST a captured roster to `/api/roster`. Optional inventory slices ride along on GOOD import. */
 export async function postRoster(
   roster: CharacterOwned[],

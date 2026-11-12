@@ -20,6 +20,7 @@
   import { authClient } from "#lib/auth-client.js";
   import {
     acceptGoalsHydrationUser,
+    goalsReadFailed,
     goalsRevisionAllowsCloudReplace,
     hydrateGoalsState,
     readGoalsIfChanged,
@@ -59,6 +60,8 @@
   let plannerSyncError = $state("");
   /** User id the current plannerPostCloud flag was read for. */
   let auditUserId: string | null | undefined = undefined;
+  /** The accepted read for `auditUserId` failed — the next effect run reads again. */
+  let auditUserIdReadFailed = false;
   let seenPlannerRevision = 0;
   let auditCloudGeneration = 0;
   /** Account whose cloud read is in flight. Not yet the hydrated account. */
@@ -144,6 +147,7 @@
       })
     ) {
       auditUserId = userId;
+      auditUserIdReadFailed = goalsReadFailed(pending);
     }
     plannerGoals = pending.state;
     plannerSnapshot = pending.json;
@@ -253,13 +257,16 @@
     }
   }
 
-  /** A later sign-in repeats the cloud read. A failed read still does not POST. */
+  /**
+   * A later sign-in repeats the cloud read, and so does a session or revision
+   * change after a failed read. A failed read still does not POST.
+   */
   $effect(() => {
     if (!browser || !plannerGoals) return;
     if ($session.isPending) return;
     void auditHydrateTick;
     const id = $session.data?.user?.id ?? null;
-    if (id === auditUserId) return;
+    if (id === auditUserId && !auditUserIdReadFailed) return;
     const revisionAtRead = $goalsLocalRevision;
     const replaceLocal =
       !plannerBusy &&
@@ -311,6 +318,7 @@
         }
         discardedHydrateFor = undefined;
         auditUserId = readFor;
+        auditUserIdReadFailed = goalsReadFailed(pending);
         plannerPostCloud = pending.postCloud;
         plannerSyncError = pending.cloudDirty
           ? pending.syncError || "Sync failed (0) — goals not synced"

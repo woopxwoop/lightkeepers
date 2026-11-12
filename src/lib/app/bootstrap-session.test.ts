@@ -89,4 +89,15 @@ describe("missingCloudRosterNeedsConfirm", () => {
     assert.equal(missingCloudRosterNeedsConfirm("user-a", true), false);
     assert.equal(missingCloudRosterNeedsConfirm("user-c", false), true);
   });
+
+  it("asks when the owner store cannot be read", () => {
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw new Error("SecurityError");
+      },
+    });
+    assert.equal(missingCloudRosterNeedsConfirm("user-a", false), true);
+    retainUnownedRosterOnLogout("user-a");
+  });
 });
