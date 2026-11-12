@@ -15,6 +15,7 @@
     setDisplayPreferences,
     stygianVersionNumber,
     abyssVersionNumber,
+    rosterBoardVersions,
     hasSavedRoster,
   } from "#lib/stores.js";
   import { stygianSlotLabel } from "#lib/slotLabels.js";
@@ -172,13 +173,18 @@
     );
   }
 
+  let cheapBoardVersion = $derived.by(() => {
+    // Phase updates when the retained board is replaced, after its version.
+    void $staticBoardsPhase;
+    return rosterBoardVersions().stygian;
+  });
+
   let cheapRequestKey = $derived.by(() => {
-    // Phase updates after the version let, so a new cycle recomputes the key.
     void $staticBoardsPhase;
     const ids = bossIds(enemies);
     ids.sort((a, b) => a - b);
     return [
-      String(stygianVersionNumber),
+      String(cheapBoardVersion),
       clearDifficulty,
       String(cheapClearsFetchMaxCost),
       ids.join(","),
@@ -234,7 +240,7 @@
     cheapClearsFetch = { phase: "loading", key };
     ensureCheapClears({
       owned,
-      stygianVersion: stygianVersionNumber,
+      stygianVersion: cheapBoardVersion,
       enemyIds: ids,
       maxCost: cheapClearsFetchMaxCost,
       difficulty: clearDifficulty,

@@ -262,6 +262,14 @@ async function resolveRosterConflict(args: {
     }
 
     const result = await uploadLocalRoster(args.local);
+    const afterUpload = await activeSessionUserId();
+    if (afterUpload.status === "error") {
+      error = "Could not verify signed-in account. Try again.";
+      continue;
+    }
+    // The account that confirmed the upload is gone. Do not record that
+    // owner, and do not reopen the prompt over the newer session.
+    if (afterUpload.userId !== args.userId) return false;
     if (result.ok) return true;
     error = uploadFailureMessage(result);
   }

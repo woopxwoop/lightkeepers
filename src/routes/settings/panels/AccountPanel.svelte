@@ -17,6 +17,7 @@
     captureRoster,
     postRoster,
     writeRosterLocal,
+    ROSTER_STORAGE_KEY,
   } from "#lib/roster-snapshot.js";
   import { applyGoodRoster, parseGoodText } from "#lib/good-import.js";
   import { serializeGoodDocument } from "#lib/good-export.js";
@@ -141,6 +142,14 @@
     }
   }
 
+  function localRosterStill(json: string): boolean {
+    try {
+      return localStorage.getItem(ROSTER_STORAGE_KEY) === json;
+    } catch {
+      return false;
+    }
+  }
+
   function openGoodModal() {
     importError = "";
     pickingGood = true;
@@ -186,17 +195,18 @@
       if (ownerId) {
         const result = await postRoster(pending.roster, inventory);
         if (!result.ok) {
-          writeRosterLocal(previous.json);
+          if (localRosterStill(pending.json)) writeRosterLocal(previous.json);
           importError = result.message
             ? `Sync failed (${result.status}): ${result.message}`
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
         if (($session.data?.user?.id ?? null) !== ownerId) {
-          writeRosterLocal(previous.json);
+          if (localRosterStill(pending.json)) writeRosterLocal(previous.json);
           return;
         }
         rememberRosterOwner(ownerId);
+        cloudRosterVersion += 1;
         probe = "backed-up";
         if (result.inventoryOmitted) {
           importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}. Cloud saved roster only — inventory columns are not migrated.`;

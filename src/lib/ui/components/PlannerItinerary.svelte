@@ -108,6 +108,8 @@
   let saveError = $state("");
   /** False after a failed cloud read — Save stays on this device. */
   let postCloud = $state(false);
+  /** Merged edits are stored locally and still need a cloud POST. */
+  let cloudDirty = $state(false);
   /** User id the current postCloud flag was read for. */
   let goalsUserId: string | null | undefined = undefined;
   let seenGoalsRevision = 0;
@@ -162,7 +164,7 @@
 
   function clearTransientSaveError() {
     if ($session.data && !postCloud) return;
-    saveError = "";
+    saveError = cloudDirty ? "Sync failed (0) — goals not synced" : "";
   }
 
   function cancelEdits() {
@@ -241,7 +243,10 @@
         postCloud =
           pending.postCloud && (sessionPending || sessionUserId === userId);
         seenGoalsRevision = untrack(() => $goalsLocalRevision);
+        cloudDirty = pending.cloudDirty === true;
         if (pending.syncError) saveError = pending.syncError;
+        else if (cloudDirty) saveError = "Sync failed (0) — goals not synced";
+        else saveError = "";
         commitSaved(pending.state);
       } catch {
         postCloud = false;
@@ -268,10 +273,10 @@
       !hasUnsavedChanges &&
       !pickingGoals &&
       goalsRevisionAllowsCloudReplace(revisionAtRead, seenGoalsRevision);
-    if (!replaceLocal || goalsReadFor === id) return;
-    if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
     goalsUserId = undefined;
     postCloud = false;
+    if (!replaceLocal || goalsReadFor === id) return;
+    if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
     goalsReadFor = id;
     const generation = ++goalsCloudGeneration;
     const readFor = id;
@@ -317,7 +322,10 @@
         discardedHydrateFor = undefined;
         goalsUserId = readFor;
         postCloud = pending.postCloud;
-        saveError = pending.syncError;
+        cloudDirty = pending.cloudDirty === true;
+        saveError =
+          pending.syncError ||
+          (cloudDirty ? "Sync failed (0) — goals not synced" : "");
         commitSaved(pending.state);
         seenGoalsRevision = untrack(() => $goalsLocalRevision);
       } finally {
@@ -331,7 +339,14 @@
     void $goalsLocalRevision;
     if (!hydrated || hasUnsavedChanges || pickingGoals) return;
     const pending = readGoalsIfChanged(savedSnapshot);
-    if (!pending) return;
+    if (!pending) {
+      const revision = untrack(() => $goalsLocalRevision);
+      if (seenGoalsRevision !== revision) {
+        seenGoalsRevision = revision;
+        goalsHydrateTick += 1;
+      }
+      return;
+    }
     commitSaved(pending.state);
     seenGoalsRevision = untrack(() => $goalsLocalRevision);
     goalsHydrateTick += 1;
@@ -475,7 +490,7 @@
   }
 
   async function saveStars() {
-    if (isSaving || !hasUnsavedChanges) return;
+    if (isSaving || (!hasUnsavedChanges && !cloudDirty)) return;
     isSaving = true;
     const sessionUserId = $session.isPending
       ? null
@@ -507,6 +522,7 @@
     picking = null;
     configuringId = null;
     addError = "";
+    if (syncing) cloudDirty = false;
     if (unsynced) saveError = unsynced;
     isSaving = false;
   }
@@ -800,7 +816,7 @@
   open={pickingGoals}
   {goals}
   {catalog}
-  dirty={hasUnsavedChanges}
+  dirty={hasUnsavedChanges || cloudDirty}
   saving={isSaving}
   {saveError}
   {addError}

@@ -214,6 +214,24 @@ describe("ensureNearMissTeams", () => {
     charactersOwned.set([]);
   });
 
+  it("resets a failed fetch when the roster changes and keeps it for the same roster", async () => {
+    globalThis.fetch = async () => new Response("nope", { status: 500 });
+    charactersOwned.set([row("Furina", true)]);
+    await assert.rejects(() => ensureTeamsOwned([row("Furina", true)]));
+    await assert.rejects(() => ensureNearMissTeams([row("Furina", true)]));
+    assert.equal(get(teamsOwnedStatus), "error");
+    assert.equal(get(nearMissStatus), "error");
+
+    charactersOwned.set([row("Furina", true)]);
+    assert.equal(get(teamsOwnedStatus), "error");
+    assert.equal(get(nearMissStatus), "error");
+
+    charactersOwned.set([row("Xingqiu", true)]);
+    assert.equal(get(teamsOwnedStatus), "idle");
+    assert.equal(get(nearMissStatus), "idle");
+    charactersOwned.set([]);
+  });
+
   it("drops ready owned and near-miss lists when boards reset", async () => {
     globalThis.fetch = async () =>
       jsonResponse({
@@ -268,5 +286,31 @@ describe("owned team requests while boards are stale", () => {
     await ensureTeamsOwned([row("Furina", true)]);
 
     assert.deepEqual(posted, [6]);
+  });
+
+  it("keeps near-miss when the layout version moves ahead of the applied board", async () => {
+    globalThis.fetch = async (input) => {
+      const url = String(input);
+      if (url.includes("/api/nearmiss")) {
+        return jsonResponse({
+          nearMissTeams: [{ character: "Furina" }],
+          nearMissPairs: [],
+        });
+      }
+      return jsonResponse({
+        allTeamsAbyss: [{ team_key: "abyss-6" }],
+        allTeamsStygian: [{ team_key: "stygian-3" }],
+        latestAbyssVersion: { version_number: 6 },
+        latestStygianVersion: { version_number: 3 },
+      });
+    };
+
+    await ensureStaticBoards();
+    await ensureNearMissTeams([row("Furina", true)]);
+    assert.equal(get(nearMissStatus), "ready");
+
+    setVersionNumbers(7, 4);
+
+    assert.equal(get(nearMissStatus), "ready");
   });
 });

@@ -1082,6 +1082,137 @@ describe("hydrateGoalsState cloud read", () => {
       false,
     );
   });
+
+  it("keeps a recovered addition when an unrelated save lands during the next read", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "hutao")).json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+    await hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(
+      captureGoals({
+        ...emptyGoalsState(),
+        goals: [
+          createCharacterGoal("Hutao", { id: "hutao" }),
+          createCharacterGoal("Yelan", { id: "added" }),
+        ],
+        selectedId: "added",
+      }).json,
+    );
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({
+            goals: [createCharacterGoal("Hutao", { id: "hutao" })],
+          }),
+          { status: 200 },
+        ),
+    );
+    const merged = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(merged.cloudDirty, true);
+    assert.equal(
+      merged.state.goals.some((goal) => goal.id === "added"),
+      true,
+    );
+
+    let release!: (value: Response) => void;
+    mock.method(
+      globalThis,
+      "fetch",
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(
+      captureGoals({
+        ...emptyGoalsState(),
+        goals: [
+          createCharacterGoal("Hutao", { id: "hutao" }),
+          createCharacterGoal("Yelan", { id: "added" }),
+          createCharacterGoal("Xingqiu", { id: "extra" }),
+        ],
+        selectedId: "extra",
+      }).json,
+    );
+    release(
+      new Response(
+        JSON.stringify({
+          goals: [createCharacterGoal("Hutao", { id: "hutao" })],
+        }),
+        { status: 200 },
+      ),
+    );
+    const again = await pending;
+    assert.equal(again.postCloud, true);
+    assert.equal(again.cloudDirty, true);
+    assert.equal(
+      again.state.goals.some((goal) => goal.id === "added"),
+      true,
+    );
+    assert.equal(
+      again.state.goals.some((goal) => goal.id === "extra"),
+      true,
+    );
+  });
+
+  it("drops a recovered addition after the cloud has caught up and then removes it", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "hutao")).json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+    await hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(
+      captureGoals({
+        ...emptyGoalsState(),
+        goals: [
+          createCharacterGoal("Hutao", { id: "hutao" }),
+          createCharacterGoal("Yelan", { id: "added" }),
+        ],
+        selectedId: "added",
+      }).json,
+    );
+
+    const cloud = (ids: string[]) =>
+      new Response(
+        JSON.stringify({
+          goals: ids.map((id) =>
+            createCharacterGoal(id === "added" ? "Yelan" : "Hutao", { id }),
+          ),
+        }),
+        { status: 200 },
+      );
+    mock.method(globalThis, "fetch", async () => cloud(["hutao"]));
+    const kept = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(
+      kept.state.goals.some((goal) => goal.id === "added"),
+      true,
+    );
+
+    mock.method(globalThis, "fetch", async () => cloud(["hutao", "added"]));
+    const caughtUp = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(caughtUp.cloudDirty, undefined);
+    assert.equal(
+      caughtUp.state.goals.some((goal) => goal.id === "added"),
+      true,
+    );
+
+    mock.method(globalThis, "fetch", async () => cloud(["hutao"]));
+    const removed = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(
+      removed.state.goals.some((goal) => goal.id === "added"),
+      false,
+    );
+  });
 });
 
 describe("goals cloud read guards", () => {

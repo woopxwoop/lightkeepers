@@ -149,7 +149,11 @@
     plannerSnapshot = pending.json;
     plannerPostCloud =
       pending.postCloud && (sessionPending || sessionUserId === userId);
-    plannerSyncError = pending.postCloud ? "" : pending.syncError;
+    plannerSyncError = pending.cloudDirty
+      ? pending.syncError || "Sync failed (0) — goals not synced"
+      : pending.postCloud
+        ? ""
+        : pending.syncError;
     seenPlannerRevision = untrack(() => $goalsLocalRevision);
     return {
       catalog,
@@ -221,14 +225,15 @@
       const sessionUserId = $session.isPending
         ? null
         : ($session.data?.user?.id ?? null);
+      const syncing =
+        plannerPostCloud &&
+        sessionUserId != null &&
+        sessionUserId === auditUserId;
       const save = await saveGoalsState({
         state,
         pendingRemoveIds: new Set(),
         savedSnapshot: snapshot,
-        cloud:
-          plannerPostCloud &&
-          sessionUserId != null &&
-          sessionUserId === auditUserId,
+        cloud: syncing,
         userId: sessionUserId,
       });
       if (!save.ok) {
@@ -238,6 +243,11 @@
       plannerGoals = save.capture.state;
       plannerSnapshot = save.capture.json;
       seenPlannerRevision = untrack(() => $goalsLocalRevision);
+      if (syncing) plannerSyncError = "";
+      else if (sessionUserId) {
+        plannerSyncError =
+          plannerSyncError || "Sync failed (0) — goals not synced";
+      }
     } finally {
       plannerBusy = false;
     }
@@ -254,11 +264,11 @@
     const replaceLocal =
       !plannerBusy &&
       goalsRevisionAllowsCloudReplace(revisionAtRead, seenPlannerRevision);
+    auditUserId = undefined;
+    plannerPostCloud = false;
     if (!replaceLocal || auditReadFor === id) return;
     if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
-    auditUserId = undefined;
     auditReadFor = id;
-    plannerPostCloud = false;
     const generation = ++auditCloudGeneration;
     const readFor = id;
     void (async () => {
@@ -302,7 +312,11 @@
         discardedHydrateFor = undefined;
         auditUserId = readFor;
         plannerPostCloud = pending.postCloud;
-        plannerSyncError = pending.postCloud ? "" : pending.syncError;
+        plannerSyncError = pending.cloudDirty
+          ? pending.syncError || "Sync failed (0) — goals not synced"
+          : pending.postCloud
+            ? ""
+            : pending.syncError;
         plannerGoals = pending.state;
         plannerSnapshot = pending.json;
         seenPlannerRevision = untrack(() => $goalsLocalRevision);
@@ -327,7 +341,14 @@
     untrack(() => {
       if (!plannerSnapshot) return;
       const pending = readGoalsIfChanged(plannerSnapshot);
-      if (!pending) return;
+      if (!pending) {
+        const revision = untrack(() => $goalsLocalRevision);
+        if (seenPlannerRevision !== revision) {
+          seenPlannerRevision = revision;
+          auditHydrateTick += 1;
+        }
+        return;
+      }
       plannerGoals = pending.state;
       plannerSnapshot = pending.json;
       seenPlannerRevision = untrack(() => $goalsLocalRevision);

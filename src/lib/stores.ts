@@ -43,11 +43,15 @@ export let abyssVersionNumber = -1;
 export let stygianVersionNumber = -1;
 
 export function setVersionNumbers(abyss: number, stygian: number) {
-  const stygianChanged =
-    stygianVersionNumber >= 0 && stygian !== stygianVersionNumber;
+  const previousStygian = versionsForRosterRequest().stygian;
   abyssVersionNumber = abyss;
   stygianVersionNumber = stygian;
-  if (stygianChanged) invalidateNearMissTeams();
+  // Near-miss follows the board on screen. A layout-only advance keeps the
+  // applied cycle, so those results stay until that cycle actually changes.
+  const nextStygian = versionsForRosterRequest().stygian;
+  if (previousStygian >= 0 && nextStygian !== previousStygian) {
+    invalidateNearMissTeams();
+  }
   if (
     staticBoardsAbyssVersion >= 0 &&
     staticBoardsStygianVersion >= 0 &&
@@ -56,6 +60,9 @@ export function setVersionNumbers(abyss: number, stygian: number) {
     get(staticBoardsPhase).phase === "current"
   ) {
     staticBoardsPhase.set({ phase: "stale" });
+    if (typeof globalThis.window !== "undefined") {
+      void ensureStaticBoards().catch(() => {});
+    }
   }
 }
 
@@ -640,10 +647,14 @@ function applyStaticBoardsIfCurrent(data: StaticBoardsPayload): boolean {
 }
 
 /**
- * Owned-team and near-miss requests follow the boards on screen.
+ * Versions for roster-keyed reads of the boards currently on screen.
  * While a stale cycle is retained, that cycle's versions — not the newer
- * layout numbers — are what `/api/teams` and `/api/nearmiss` must use.
+ * layout numbers — are what `/api/teams`, `/api/nearmiss`, and cheap clears use.
  */
+export function rosterBoardVersions(): { abyss: number; stygian: number } {
+  return versionsForRosterRequest();
+}
+
 function versionsForRosterRequest(): { abyss: number; stygian: number } {
   if (staticBoardsAbyssVersion >= 0 && staticBoardsStygianVersion >= 0) {
     return {
@@ -896,15 +907,10 @@ charactersOwned.subscribe((owned) => {
   const next = ownedTeamsRosterKey(owned);
   if (next === rosterFetchIdentity) return;
   rosterFetchIdentity = next;
-  if (
-    get(teamsOwnedStatus) === "ready" ||
-    get(teamsOwnedStatus) === "loading"
-  ) {
-    invalidateTeamsOwned();
-  }
-  if (get(nearMissStatus) === "ready" || get(nearMissStatus) === "loading") {
-    invalidateNearMissTeams();
-  }
+  // The identity check above leaves `error` in place for this roster.
+  // A different roster leaves `error` so idle-only callers fetch it.
+  if (get(teamsOwnedStatus) !== "idle") invalidateTeamsOwned();
+  if (get(nearMissStatus) !== "idle") invalidateNearMissTeams();
 });
 
 // ── Stygian tier list (roster-independent) ─────────────────────────────────

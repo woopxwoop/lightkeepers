@@ -84,6 +84,8 @@
   let saveError = $state("");
   /** False after a failed cloud read — Save stays on this device. */
   let postCloud = $state(false);
+  /** Merged edits are stored locally and still need a cloud POST. */
+  let cloudDirty = $state(false);
   /** User id the current postCloud flag was read for. */
   let goalsUserId: string | null | undefined = undefined;
   let seenGoalsRevision = 0;
@@ -205,7 +207,10 @@
       postCloud =
         pending.postCloud && (sessionPending || sessionUserId === userId);
       seenGoalsRevision = untrack(() => $goalsLocalRevision);
-      if (pending.syncError) saveError = pending.syncError;
+      cloudDirty = pending.cloudDirty === true;
+      saveError =
+        pending.syncError ||
+        (cloudDirty ? "Sync failed (0) — goals not synced" : "");
       goalsHydrated = true;
     }
 
@@ -234,11 +239,11 @@
     const replaceLocal =
       !hasUnsavedChanges &&
       goalsRevisionAllowsCloudReplace(revisionAtRead, seenGoalsRevision);
+    goalsUserId = undefined;
+    postCloud = false;
     if (!replaceLocal || goalsReadFor === id) return;
     if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
-    goalsUserId = undefined;
     goalsReadFor = id;
-    postCloud = false;
     const generation = ++goalsCloudGeneration;
     const readFor = id;
     void (async () => {
@@ -282,7 +287,10 @@
         discardedHydrateFor = undefined;
         goalsUserId = readFor;
         postCloud = pending.postCloud;
-        saveError = pending.syncError;
+        cloudDirty = pending.cloudDirty === true;
+        saveError =
+          pending.syncError ||
+          (cloudDirty ? "Sync failed (0) — goals not synced" : "");
         goalsState = pending.state;
         savedSnapshot = pending.json;
         seenGoalsRevision = untrack(() => $goalsLocalRevision);
@@ -297,7 +305,14 @@
     void $goalsLocalRevision;
     if (!browser || !goalsHydrated || hasUnsavedChanges) return;
     const pending = readGoalsIfChanged(savedSnapshot);
-    if (!pending) return;
+    if (!pending) {
+      const revision = untrack(() => $goalsLocalRevision);
+      if (seenGoalsRevision !== revision) {
+        seenGoalsRevision = revision;
+        goalsHydrateTick += 1;
+      }
+      return;
+    }
     goalsState = pending.state;
     savedSnapshot = pending.json;
     seenGoalsRevision = untrack(() => $goalsLocalRevision);
@@ -349,7 +364,7 @@
       goalsState = pending.state;
       savedSnapshot = pending.json;
       pendingRemoveIds = new Set();
-      saveError = "";
+      saveError = cloudDirty ? "Sync failed (0) — goals not synced" : "";
     } catch {
       /* ignore */
     }
@@ -384,6 +399,7 @@
     }
 
     pendingRemoveIds = new Set();
+    if (syncing) cloudDirty = false;
     if (unsynced) {
       savedSnapshot = result.capture.json;
       goalsState = result.capture.state;
@@ -631,7 +647,7 @@
   {:else if loadError}
     <EmptyState message={loadError ?? "Couldn’t load cost data"} />
   {:else if catalog}
-    {#if hasUnsavedChanges || isSaving || savedVisible || saveError}
+    {#if hasUnsavedChanges || cloudDirty || isSaving || savedVisible || saveError}
       <div class="save-bar">
         <div class="save-status">
           <span
@@ -661,9 +677,11 @@
             <span class="save-changed">({changedCount} changed)</span>
           {/if}
         </div>
-        {#if hasUnsavedChanges && !isSaving}
+        {#if (hasUnsavedChanges || cloudDirty) && !isSaving}
           <div class="save-actions">
-            <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
+            {#if hasUnsavedChanges}
+              <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
+            {/if}
             <Button variant="primary" onclick={saveGoals}>Save</Button>
             <div class="save-cue" aria-hidden="true">
               <IconChevronDown

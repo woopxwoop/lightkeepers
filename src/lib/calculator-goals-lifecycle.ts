@@ -75,6 +75,11 @@ export type GoalsHydration = GoalsCapture & {
   /** False when the cloud read failed or local edits are not reconciled yet. */
   postCloud: boolean;
   syncError: string;
+  /**
+   * The stored list still has edits the cloud response did not include.
+   * A later POST is what clears it; assigning the snapshot does not.
+   */
+  cloudDirty?: boolean;
 };
 
 /**
@@ -377,15 +382,37 @@ function restoreGoalsIfCurrent(
  * of a goal the cloud already had. A later read merges against that side
  * until a matching POST. Identical goal lists do not need a base.
  */
+function cloudGoalsDiffer(
+  merged: CalculatorGoalsState,
+  cloudGoals: CalculatorGoalsState["goals"],
+): { cloudSide: CalculatorGoalsState; differs: boolean } {
+  const cloudSide = applyCloudGoals(merged, cloudGoals);
+  return {
+    cloudSide,
+    differs: JSON.stringify(merged.goals) !== JSON.stringify(cloudSide.goals),
+  };
+}
+
 function keepMergedEdits(
   userId: string | null,
   merged: CalculatorGoalsState,
   cloudGoals: CalculatorGoalsState["goals"],
 ): void {
   if (!userId) return;
-  const cloudSide = applyCloudGoals(merged, cloudGoals);
-  if (JSON.stringify(merged.goals) === JSON.stringify(cloudSide.goals)) return;
+  const { cloudSide, differs } = cloudGoalsDiffer(merged, cloudGoals);
+  if (!differs) return;
   rebaseRecovery(userId, cloudSide);
+}
+
+/** Mark a stored merge that still has edits the cloud list does not. */
+function withCloudDirty(
+  hydration: GoalsHydration,
+  merged: CalculatorGoalsState,
+  cloudGoals: CalculatorGoalsState["goals"],
+): GoalsHydration {
+  if (!hydration.postCloud) return hydration;
+  if (!cloudGoalsDiffer(merged, cloudGoals).differs) return hydration;
+  return { ...hydration, cloudDirty: true };
 }
 
 /**
@@ -500,8 +527,12 @@ export async function hydrateGoalsState(
       }
       const savedDuringRead = savedStateDuringRead(editRevision);
       if (savedDuringRead) {
+        // A rebased recovery base omits additions the last merge kept.
+        // The pre-read list still contains them, so an unchanged addition
+        // would look synced and be dropped when the cloud omits it.
+        const pendingBase = peekPendingLocal(userId, savedDuringRead);
         const reconciled = reconcilePendingGoals(
-          local,
+          pendingBase ?? local,
           savedDuringRead,
           cloud.goals,
         );
@@ -512,9 +543,11 @@ export async function hydrateGoalsState(
           userId,
         );
         if (hydration.postCloud) {
-          keepMergedEdits(userId, reconciled, cloud.goals);
+          const { differs } = cloudGoalsDiffer(reconciled, cloud.goals);
+          if (pendingBase && userId && !differs) clearPendingGoalsRecovery();
+          else keepMergedEdits(userId, reconciled, cloud.goals);
         }
-        return hydration;
+        return withCloudDirty(hydration, reconciled, cloud.goals);
       }
       if (cloudApplied) {
         return appliedHydration(
@@ -536,7 +569,7 @@ export async function hydrateGoalsState(
         userId,
       );
       if (hydration.postCloud) keepMergedEdits(userId, reconciled, cloud.goals);
-      return hydration;
+      return withCloudDirty(hydration, reconciled, cloud.goals);
     }
     if (!allowWrite) {
       return { ...current, postCloud: false, syncError: "" };
@@ -569,14 +602,21 @@ export async function hydrateGoalsState(
       : cloudSide;
     const alreadyStored = captureGoals(next).json === current.json;
     const wrote = alreadyStored ? false : persistGoalsLocal(next);
-    if (pendingBase && userId && wrote) rebaseRecovery(userId, cloudSide);
     const postCloud = alreadyStored || wrote;
+    const { differs } = cloudGoalsDiffer(next, cloud.goals);
+    // An already-stored merge still has to move the recovery base. Leaving
+    // the previous base in place keeps a cloud copy that later disappears.
+    if (postCloud && pendingBase && userId) {
+      if (differs) rebaseRecovery(userId, cloudSide);
+      else clearPendingGoalsRecovery();
+    }
     if (postCloud) noteGoalsReadApplied(readSerial);
     if (wrote) rememberGoalsWrite(userId);
     return {
       ...captureGoals(postCloud ? next : readGoalsLocal()),
       postCloud,
       syncError: postCloud ? "" : "Sync failed (0) — goals not synced",
+      ...(postCloud && differs ? { cloudDirty: true } : {}),
     };
   }
   if (!allowWrite) {
