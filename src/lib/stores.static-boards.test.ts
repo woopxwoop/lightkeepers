@@ -168,4 +168,29 @@ describe("ensureStaticBoards", () => {
     assert.equal(get(staticBoardsPhase).phase, "current");
     assert.equal(get(allTeamsAbyss)[0]?.team_key, "abyss-6");
   });
+
+  it("marks the retained board stale while a new cycle is still loading", async () => {
+    globalThis.fetch = async () => jsonResponse(payload(6, 3));
+    await ensureStaticBoards();
+
+    let release!: (value: Response) => void;
+    const gate = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    globalThis.fetch = () => gate;
+    setVersionNumbers(7, 3);
+    const pending = ensureStaticBoards();
+
+    assert.equal(get(staticBoardsPhase).phase, "stale");
+    assert.equal(get(allTeamsAbyss)[0]?.team_key, "abyss-6");
+    assert.deepEqual(staticBoardsView(get(staticBoardsPhase)), {
+      kind: "board",
+      notice: "stale",
+    });
+
+    release(jsonResponse(payload(7, 3)));
+    await pending;
+    assert.equal(get(staticBoardsPhase).phase, "current");
+    assert.equal(get(allTeamsAbyss)[0]?.team_key, "abyss-7");
+  });
 });

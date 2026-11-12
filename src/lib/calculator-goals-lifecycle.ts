@@ -69,20 +69,88 @@ export function goalsHaveUnsavedChanges(input: {
 }
 
 export type GoalsHydration = GoalsCapture & {
-  /** False when the cloud read failed. Save writes local only and does not POST. */
+  /** False when the cloud read failed or local edits are not reconciled yet. */
   postCloud: boolean;
   syncError: string;
 };
 
 /**
+ * Local list at the last signed-in read failure. A later local write differs
+ * from this snapshot and must be merged with the next successful cloud list
+ * instead of being replaced by it.
+ */
+let failedReadLocal: GoalsCapture | null = null;
+
+function noteFailedRead(local: CalculatorGoalsState): void {
+  if (failedReadLocal) return;
+  failedReadLocal = captureGoals(local);
+}
+
+function consumePendingLocal(
+  current: CalculatorGoalsState,
+): CalculatorGoalsState | null {
+  const base = failedReadLocal;
+  failedReadLocal = null;
+  if (!base) return null;
+  if (base.json === captureGoals(current).json) return null;
+  return base.state;
+}
+
+/**
+ * Cloud is the base. Edits saved after a failed signed-in read stay:
+ * local adds and local changes win, and a goal removed since that failure
+ * stays removed. Goals the local list did not touch keep the cloud copy.
+ */
+function reconcilePendingGoals(
+  base: CalculatorGoalsState,
+  local: CalculatorGoalsState,
+  cloudGoals: CalculatorGoalsState["goals"],
+): CalculatorGoalsState {
+  const cloud = applyCloudGoals(local, cloudGoals);
+  const baseById = new Map(
+    base.goals.map((goal) => [goal.id, JSON.stringify(goal)]),
+  );
+  const localById = new Map(local.goals.map((goal) => [goal.id, goal]));
+  const seen = new Set<string>();
+  const goals: CalculatorGoalsState["goals"] = [];
+
+  for (const cloudGoal of cloud.goals) {
+    seen.add(cloudGoal.id);
+    const localGoal = localById.get(cloudGoal.id);
+    const baseJson = baseById.get(cloudGoal.id);
+    if (!localGoal) {
+      if (baseJson != null) continue;
+      goals.push(cloudGoal);
+      continue;
+    }
+    const localJson = JSON.stringify(localGoal);
+    goals.push(
+      baseJson == null || localJson !== baseJson ? localGoal : cloudGoal,
+    );
+  }
+
+  for (const localGoal of local.goals) {
+    if (seen.has(localGoal.id)) continue;
+    const baseJson = baseById.get(localGoal.id);
+    const localJson = JSON.stringify(localGoal);
+    if (baseJson == null || localJson !== baseJson) goals.push(localGoal);
+  }
+
+  return parseGoalsState({
+    goals,
+    selectedId: local.selectedId,
+  });
+}
+
+/**
  * Local → optional cloud (signed-in). A stored cloud list wins, including
- * an empty one. No row keeps local. A failed read keeps local, reports
- * `syncError`, and sets `postCloud` false.
+ * an empty one, when no local-only edits are waiting. No row keeps local.
+ * A failed read keeps local, reports `syncError`, and sets `postCloud` false.
  * A same-tab save during the read bumps `goalsLocalRevision`; that older
  * response is discarded and does not replace the save. A failed read still
  * does not POST, including when the revision moved.
- * `replaceLocal: false` still reports the read, but does not write a stored
- * cloud list over local goals.
+ * `replaceLocal: false` keeps the local list and leaves posting disabled
+ * until a later read reconciles it with the cloud list.
  */
 export async function hydrateGoalsState(
   signedIn: boolean,
@@ -90,6 +158,7 @@ export async function hydrateGoalsState(
 ): Promise<GoalsHydration> {
   const local = readGoalsLocal();
   if (!signedIn) {
+    failedReadLocal = null;
     return { ...captureGoals(local), postCloud: false, syncError: "" };
   }
   const revision = get(goalsLocalRevision);
@@ -102,18 +171,21 @@ export async function hydrateGoalsState(
       message: "Sync failed (0) — goals not synced",
     };
   }
+  const keepUnreconciled = opts?.replaceLocal === false;
   if (get(goalsLocalRevision) !== revision) {
     const current = captureGoals(readGoalsLocal());
-    if (cloud.status === "error") {
+    if (cloud.status === "error" || keepUnreconciled) {
+      if (cloud.status === "error") noteFailedRead(local);
       return {
         ...current,
         postCloud: false,
-        syncError: cloud.message,
+        syncError: cloud.status === "error" ? cloud.message : "",
       };
     }
     return { ...current, postCloud: true, syncError: "" };
   }
   if (cloud.status === "error") {
+    noteFailedRead(local);
     return {
       ...captureGoals(local),
       postCloud: false,
@@ -121,17 +193,22 @@ export async function hydrateGoalsState(
     };
   }
   if (cloud.status === "goals") {
-    if (opts?.replaceLocal === false) {
+    if (keepUnreconciled) {
       return {
         ...captureGoals(readGoalsLocal()),
-        postCloud: true,
+        postCloud: false,
         syncError: "",
       };
     }
-    const next = applyCloudGoals(local, cloud.goals);
+    const current = readGoalsLocal();
+    const pendingBase = consumePendingLocal(current);
+    const next = pendingBase
+      ? reconcilePendingGoals(pendingBase, current, cloud.goals)
+      : applyCloudGoals(current, cloud.goals);
     persistGoalsLocal(next);
     return { ...captureGoals(next), postCloud: true, syncError: "" };
   }
+  failedReadLocal = null;
   return { ...captureGoals(local), postCloud: true, syncError: "" };
 }
 

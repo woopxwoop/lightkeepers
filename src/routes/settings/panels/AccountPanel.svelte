@@ -52,6 +52,9 @@
   let resetting = $state(false);
 
   let cloudRosterVersion = 0;
+  /** Changes only when the signed-in account changes, not on a probe refresh. */
+  let accountGeneration = 0;
+  let seenAccountId: string | null | undefined = undefined;
   let pickingGood = $state(false);
   let importing = $state(false);
   let importError = $state("");
@@ -59,6 +62,11 @@
 
   $effect(() => {
     void $cloudRosterProbeRevision;
+    const id = $session.data?.user?.id ?? null;
+    if (id !== seenAccountId) {
+      seenAccountId = id;
+      accountGeneration += 1;
+    }
     if ($session.data) {
       const version = ++cloudRosterVersion;
       probe = "checking";
@@ -99,13 +107,14 @@
 
   async function executeReset() {
     if (resetting) return;
-    const version = cloudRosterVersion;
+    const account = accountGeneration;
     resetting = true;
     rosterError = "";
     try {
       const res = await fetch("/api/roster", { method: "DELETE" });
-      if (version !== cloudRosterVersion) return;
+      if (account !== accountGeneration) return;
       if (res.ok) {
+        cloudRosterVersion += 1;
         probe = "empty";
         confirmReset = false;
         clearRosterInventory();
@@ -115,7 +124,7 @@
         console.error("resetCloudRoster: unexpected status", res.status);
       }
     } catch (err) {
-      if (version !== cloudRosterVersion) return;
+      if (account !== accountGeneration) return;
       rosterError = "Network error — could not reset cloud roster";
       confirmReset = false;
       console.error("resetCloudRoster: network error", err);

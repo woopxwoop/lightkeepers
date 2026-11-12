@@ -129,6 +129,27 @@ describe("ensureTeamsOwned", () => {
     assert.equal(get(teamsOwnedStatus), "ready");
     assert.equal(get(teamsOwned)[0]?.team_key, "ok");
   });
+
+  it("refetches when either board version changes", async () => {
+    const versions: number[] = [];
+    globalThis.fetch = async (_url, init) => {
+      const body = JSON.parse(String(init?.body)) as { abyssVersion: number };
+      versions.push(body.abyssVersion);
+      return jsonResponse({
+        abyssTeams: [{ team_key: String(body.abyssVersion) }],
+        stygianTeams: [],
+      });
+    };
+
+    await ensureTeamsOwned([row("Furina", true)]);
+    await ensureTeamsOwned([row("Furina", true)]);
+    assert.deepEqual(versions, [6]);
+
+    setVersionNumbers(7, 4);
+    await ensureTeamsOwned([row("Furina", true)]);
+    assert.deepEqual(versions, [6, 7]);
+    assert.equal(get(teamsOwned)[0]?.team_key, "7");
+  });
 });
 
 describe("ensureNearMissTeams", () => {

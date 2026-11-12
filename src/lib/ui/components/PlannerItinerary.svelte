@@ -235,7 +235,9 @@
     const id = $session.data?.user?.id ?? null;
     if (id === goalsUserId) return;
     goalsUserId = id;
+    postCloud = false;
     const generation = ++goalsCloudGeneration;
+    const readFor = id;
     const replaceLocal = untrack(
       () =>
         !hasUnsavedChanges &&
@@ -243,8 +245,18 @@
         $goalsLocalRevision === seenGoalsRevision,
     );
     void (async () => {
-      const pending = await hydrateGoalsState(id !== null, { replaceLocal });
+      const pending = await hydrateGoalsState(readFor !== null, {
+        replaceLocal,
+      });
       if (generation !== goalsCloudGeneration) return;
+      const sessionUserId = $session.isPending
+        ? null
+        : ($session.data?.user?.id ?? null);
+      if (sessionUserId !== readFor) return;
+      if (hasUnsavedChanges || pickingGoals) {
+        saveError = pending.syncError;
+        return;
+      }
       postCloud = pending.postCloud;
       saveError = pending.syncError;
       if (!replaceLocal) return;
@@ -402,9 +414,13 @@
   async function saveStars() {
     if (isSaving || !hasUnsavedChanges) return;
     isSaving = true;
-    const syncing = postCloud && Boolean($session.data);
+    const sessionUserId = $session.isPending
+      ? null
+      : ($session.data?.user?.id ?? null);
+    const syncing =
+      postCloud && sessionUserId != null && sessionUserId === goalsUserId;
     const unsynced =
-      !syncing && $session.data
+      !syncing && sessionUserId
         ? saveError || "Sync failed (0) — goals not synced"
         : "";
     saveError = "";

@@ -182,11 +182,34 @@
         weapons: getRosterWeaponsCached(),
       });
       if (result.added === 0) return;
+      const landed = readGoalsIfChanged(ready.snapshot);
+      const added = result.state.goals.filter(
+        (goal) => !ready.state.goals.some((prev) => prev.id === goal.id),
+      );
+      const state = landed
+        ? {
+            ...landed.state,
+            goals: [
+              ...landed.state.goals,
+              ...added.filter(
+                (goal) =>
+                  !landed.state.goals.some((prev) => prev.id === goal.id),
+              ),
+            ],
+          }
+        : result.state;
+      const snapshot = landed?.json ?? ready.snapshot;
+      const sessionUserId = $session.isPending
+        ? null
+        : ($session.data?.user?.id ?? null);
       const save = await saveGoalsState({
-        state: result.state,
+        state,
         pendingRemoveIds: new Set(),
-        savedSnapshot: ready.snapshot,
-        cloud: plannerPostCloud && Boolean($session.data),
+        savedSnapshot: snapshot,
+        cloud:
+          plannerPostCloud &&
+          sessionUserId != null &&
+          sessionUserId === auditUserId,
       });
       if (!save.ok) {
         plannerError = save.message;
@@ -206,16 +229,27 @@
     const id = $session.data?.user?.id ?? null;
     if (id === auditUserId) return;
     auditUserId = id;
+    plannerPostCloud = false;
     const generation = ++auditCloudGeneration;
+    const readFor = id;
     const replaceLocal = untrack(
       () => !plannerBusy && $goalsLocalRevision === seenPlannerRevision,
     );
     void (async () => {
-      const pending = await hydrateGoalsState(id !== null, { replaceLocal });
+      const pending = await hydrateGoalsState(readFor !== null, {
+        replaceLocal,
+      });
       if (generation !== auditCloudGeneration) return;
+      const sessionUserId = $session.isPending
+        ? null
+        : ($session.data?.user?.id ?? null);
+      if (sessionUserId !== readFor) return;
+      if (!replaceLocal || plannerBusy) {
+        plannerSyncError = pending.syncError;
+        return;
+      }
       plannerPostCloud = pending.postCloud;
       plannerSyncError = pending.postCloud ? "" : pending.syncError;
-      if (!replaceLocal) return;
       plannerGoals = pending.state;
       plannerSnapshot = pending.json;
       seenPlannerRevision = untrack(() => $goalsLocalRevision);

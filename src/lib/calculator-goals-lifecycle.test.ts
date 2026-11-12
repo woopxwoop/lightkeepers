@@ -101,8 +101,9 @@ describe("hydrateGoalsState cloud read", () => {
     "localStorage",
   );
 
-  afterEach(() => {
+  afterEach(async () => {
     mock.restoreAll();
+    await hydrateGoalsState(false);
     if (originalStorage) {
       Object.defineProperty(globalThis, "localStorage", originalStorage);
     } else {
@@ -215,11 +216,74 @@ describe("hydrateGoalsState cloud read", () => {
 
     const result = await hydrateGoalsState(true, { replaceLocal: false });
 
-    assert.equal(result.postCloud, true);
+    assert.equal(result.postCloud, false);
     assert.equal(result.syncError, "");
     assert.equal(result.state.goals[0]?.id, "local");
     assert.equal(readGoalsLocal().goals[0]?.id, "local");
     assert.equal(get(goalsLocalRevision), revision);
+  });
+
+  it("merges local edits saved after a failed read with the next cloud list", async () => {
+    installLocalStorage();
+    const base = captureGoals({
+      ...emptyGoalsState(),
+      goals: [
+        createCharacterGoal("Hutao", { id: "hutao" }),
+        createCharacterGoal("Xingqiu", { id: "drop" }),
+      ],
+      selectedId: "hutao",
+    });
+    writeGoalsLocal(base.json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+    const failed = await hydrateGoalsState(true);
+    assert.equal(failed.postCloud, false);
+
+    const edited = captureGoals({
+      ...emptyGoalsState(),
+      goals: [
+        createCharacterGoal("Hutao", { id: "hutao" }),
+        createCharacterGoal("Yelan", { id: "added" }),
+      ],
+      selectedId: "added",
+    });
+    writeGoalsLocal(edited.json);
+    const cloudHutao = createCharacterGoal("Hutao", {
+      id: "hutao",
+      starred: true,
+    });
+    const cloudOnly = createCharacterGoal("Furina", { id: "cloud-only" });
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({
+            goals: [
+              cloudHutao,
+              cloudOnly,
+              createCharacterGoal("Xingqiu", { id: "drop" }),
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await hydrateGoalsState(true);
+
+    assert.equal(result.postCloud, true);
+    assert.deepEqual(
+      result.state.goals.map((goal) => goal.id),
+      ["hutao", "cloud-only", "added"],
+    );
+    assert.equal(result.state.goals[0]?.starred, true);
+    assert.equal(
+      readGoalsLocal().goals.some((goal) => goal.id === "drop"),
+      false,
+    );
   });
 
   it("keeps local and does not POST after a failed cloud read", async () => {

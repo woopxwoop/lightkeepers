@@ -727,6 +727,10 @@
       <div class="board-status">
         <LoadingState variant="pulse" message="Matching fastest clears…" />
       </div>
+    {:else if needsCheapClears && cheapStatus === "unavailable"}
+      <div class="board-status">
+        <EmptyState message="This boss lineup is incomplete." />
+      </div>
     {:else if outcome === "none"}
       <div class="board-status">
         {#if videoClearsMode}
