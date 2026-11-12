@@ -81,9 +81,12 @@ export type GoalsHydration = GoalsCapture & {
  * A same-tab save during the read bumps `goalsLocalRevision`; that older
  * response is discarded and does not replace the save. A failed read still
  * does not POST, including when the revision moved.
+ * `replaceLocal: false` still reports the read, but does not write a stored
+ * cloud list over local goals.
  */
 export async function hydrateGoalsState(
   signedIn: boolean,
+  opts?: { replaceLocal?: boolean },
 ): Promise<GoalsHydration> {
   const local = readGoalsLocal();
   if (!signedIn) {
@@ -118,6 +121,13 @@ export async function hydrateGoalsState(
     };
   }
   if (cloud.status === "goals") {
+    if (opts?.replaceLocal === false) {
+      return {
+        ...captureGoals(readGoalsLocal()),
+        postCloud: true,
+        syncError: "",
+      };
+    }
     const next = applyCloudGoals(local, cloud.goals);
     persistGoalsLocal(next);
     return { ...captureGoals(next), postCloud: true, syncError: "" };

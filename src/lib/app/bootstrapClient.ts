@@ -240,7 +240,7 @@ async function resolveRosterConflict(args: {
       continue;
     }
     if (session.userId !== args.userId) {
-      return;
+      return false;
     }
 
     if (choice === "use-cloud") {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/env";
+  import { untrack } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { authClient } from "#lib/auth-client.js";
@@ -81,6 +82,10 @@
   let saveError = $state("");
   /** False after a failed cloud read — Save stays on this device. */
   let postCloud = $state(false);
+  /** User id the current postCloud flag was read for. */
+  let goalsUserId: string | null | undefined = undefined;
+  let seenGoalsRevision = 0;
+  let goalsCloudGeneration = 0;
   let addError = $state("");
   /** Character name_id from `?add=` — consumed after catalog + goals hydrate. */
   let pendingPlannerAdd = $state<string | null>(null);
@@ -169,6 +174,8 @@
       goalsState = pending.state;
       savedSnapshot = pending.json;
       postCloud = pending.postCloud;
+      goalsUserId = sess?.user?.id ?? null;
+      seenGoalsRevision = untrack(() => $goalsLocalRevision);
       if (pending.syncError) saveError = pending.syncError;
       goalsHydrated = true;
     }
@@ -185,6 +192,29 @@
     return () => {
       cancelled = true;
     };
+  });
+
+  /** A later sign-in repeats the cloud read. A failed read still does not POST. */
+  $effect(() => {
+    if (!browser || !goalsHydrated) return;
+    if ($session.isPending) return;
+    const id = $session.data?.user?.id ?? null;
+    if (id === goalsUserId) return;
+    goalsUserId = id;
+    const generation = ++goalsCloudGeneration;
+    const replaceLocal = untrack(
+      () => !hasUnsavedChanges && $goalsLocalRevision === seenGoalsRevision,
+    );
+    void (async () => {
+      const pending = await hydrateGoalsState(id !== null, { replaceLocal });
+      if (generation !== goalsCloudGeneration) return;
+      postCloud = pending.postCloud;
+      saveError = pending.syncError;
+      if (!replaceLocal) return;
+      goalsState = pending.state;
+      savedSnapshot = pending.json;
+      seenGoalsRevision = untrack(() => $goalsLocalRevision);
+    })();
   });
 
   /** Same-tab sync when itinerary (or another surface) persists goals. */
@@ -541,6 +571,9 @@
                   ? "Unsaved changes"
                   : saveError}
           </span>
+          {#if hasUnsavedChanges && saveError && !isSaving}
+            <span class="save-error">{saveError}</span>
+          {/if}
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
           {/if}

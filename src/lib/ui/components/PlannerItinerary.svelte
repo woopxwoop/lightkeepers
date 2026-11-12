@@ -3,7 +3,7 @@
    * Farming itinerary — starred planner goals, domains / bosses.
    * The nav sheet mounts the plain layout as a large overlay.
    */
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
   import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
@@ -106,6 +106,10 @@
   let saveError = $state("");
   /** False after a failed cloud read — Save stays on this device. */
   let postCloud = $state(false);
+  /** User id the current postCloud flag was read for. */
+  let goalsUserId: string | null | undefined = undefined;
+  let seenGoalsRevision = 0;
+  let goalsCloudGeneration = 0;
 
   let goals = $derived(goalsState.goals);
   let savedGoals = $derived.by(() => {
@@ -207,6 +211,8 @@
         const { data: sess } = await authClient.getSession();
         const pending = await hydrateGoalsState(Boolean(sess));
         postCloud = pending.postCloud;
+        goalsUserId = sess?.user?.id ?? null;
+        seenGoalsRevision = untrack(() => $goalsLocalRevision);
         if (pending.syncError) saveError = pending.syncError;
         commitSaved(pending.state);
       } catch {
@@ -220,6 +226,31 @@
     })();
 
     return () => document.removeEventListener("visibilitychange", onVisible);
+  });
+
+  /** A later sign-in repeats the cloud read. A failed read still does not POST. */
+  $effect(() => {
+    if (!hydrated) return;
+    if ($session.isPending) return;
+    const id = $session.data?.user?.id ?? null;
+    if (id === goalsUserId) return;
+    goalsUserId = id;
+    const generation = ++goalsCloudGeneration;
+    const replaceLocal = untrack(
+      () =>
+        !hasUnsavedChanges &&
+        !pickingGoals &&
+        $goalsLocalRevision === seenGoalsRevision,
+    );
+    void (async () => {
+      const pending = await hydrateGoalsState(id !== null, { replaceLocal });
+      if (generation !== goalsCloudGeneration) return;
+      postCloud = pending.postCloud;
+      saveError = pending.syncError;
+      if (!replaceLocal) return;
+      commitSaved(pending.state);
+      seenGoalsRevision = untrack(() => $goalsLocalRevision);
+    })();
   });
 
   /** Same-tab sync when the planner page persists goals. */

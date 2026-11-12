@@ -200,6 +200,28 @@ describe("hydrateGoalsState cloud read", () => {
     assert.equal(posts, 0);
   });
 
+  it("reports a successful reread without replacing local goals", async () => {
+    installLocalStorage();
+    const local = captureGoals(goalsWith("Hutao", "local"));
+    writeGoalsLocal(local.json);
+    const revision = get(goalsLocalRevision);
+    const cloud = goalsWith("Xingqiu", "cloud");
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(JSON.stringify({ goals: cloud.goals }), { status: 200 }),
+    );
+
+    const result = await hydrateGoalsState(true, { replaceLocal: false });
+
+    assert.equal(result.postCloud, true);
+    assert.equal(result.syncError, "");
+    assert.equal(result.state.goals[0]?.id, "local");
+    assert.equal(readGoalsLocal().goals[0]?.id, "local");
+    assert.equal(get(goalsLocalRevision), revision);
+  });
+
   it("keeps local and does not POST after a failed cloud read", async () => {
     installLocalStorage();
     const local = captureGoals(goalsWith("Hutao", "local"));

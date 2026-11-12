@@ -55,6 +55,10 @@
   let plannerSnapshot = $state("");
   let plannerPostCloud = false;
   let plannerSyncError = $state("");
+  /** User id the current plannerPostCloud flag was read for. */
+  let auditUserId: string | null | undefined = undefined;
+  let seenPlannerRevision = 0;
+  let auditCloudGeneration = 0;
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
   /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
@@ -113,10 +117,12 @@
     ]);
     const pending = await hydrateGoalsState(Boolean(sess));
     plannerCatalog = catalog;
+    auditUserId = sess?.user?.id ?? null;
     plannerGoals = pending.state;
     plannerSnapshot = pending.json;
     plannerPostCloud = pending.postCloud;
     plannerSyncError = pending.postCloud ? "" : pending.syncError;
+    seenPlannerRevision = untrack(() => $goalsLocalRevision);
     return {
       catalog,
       state: pending.state,
@@ -192,6 +198,29 @@
       plannerBusy = false;
     }
   }
+
+  /** A later sign-in repeats the cloud read. A failed read still does not POST. */
+  $effect(() => {
+    if (!browser || !plannerGoals) return;
+    if ($session.isPending) return;
+    const id = $session.data?.user?.id ?? null;
+    if (id === auditUserId) return;
+    auditUserId = id;
+    const generation = ++auditCloudGeneration;
+    const replaceLocal = untrack(
+      () => !plannerBusy && $goalsLocalRevision === seenPlannerRevision,
+    );
+    void (async () => {
+      const pending = await hydrateGoalsState(id !== null, { replaceLocal });
+      if (generation !== auditCloudGeneration) return;
+      plannerPostCloud = pending.postCloud;
+      plannerSyncError = pending.postCloud ? "" : pending.syncError;
+      if (!replaceLocal) return;
+      plannerGoals = pending.state;
+      plannerSnapshot = pending.json;
+      seenPlannerRevision = untrack(() => $goalsLocalRevision);
+    })();
+  });
 
   $effect(() => {
     if (browser) ensureTierList().catch(() => {});
