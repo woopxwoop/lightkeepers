@@ -3,7 +3,7 @@
    * Farming itinerary — starred planner goals, domains / bosses.
    * The nav sheet mounts the plain layout as a large overlay.
    */
-  import { onMount, untrack } from "svelte";
+  import { onMount } from "svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
   import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
@@ -15,7 +15,6 @@
   import {
     aggregateGoalCosts,
     cloneGoal,
-    emptyGoalsState,
     findGoal,
     moveGoal,
     parseGoalsState,
@@ -23,22 +22,8 @@
     starredGoals,
     toggleGoalStarred,
   } from "#lib/calculator-goals.js";
-  import {
-    acceptGoalsHydrationUser,
-    goalsReadFailed,
-    autofillCharacterGoalState,
-    goalsHaveUnsavedChanges,
-    goalsRevisionAllowsCloudReplace,
-    hydrateGoalsState,
-    readGoalsIfChanged,
-    saveGoalsState,
-  } from "#lib/calculator-goals-lifecycle.js";
-  import {
-    captureGoals,
-    goalsLocalRevision,
-    readGoalsLocal,
-  } from "#lib/calculator-goals-snapshot.js";
-  import { authClient } from "#lib/auth-client.js";
+  import { autofillCharacterGoalState } from "#lib/calculator-goals-lifecycle.js";
+  import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import type { Character, CharacterPortraitRef } from "#lib/definitions.js";
   import {
     appendCatalogCharacterGoal,
@@ -88,10 +73,7 @@
   } = $props();
 
   const plannerPath = resolve("tools/planner");
-  const session = authClient.useSession();
 
-  let goalsState = $state<CalculatorGoalsState>(emptyGoalsState());
-  let hydrated = $state(false);
   let catalog = $state<UpgradeCostsCatalog | null>(null);
   let catalogError = $state("");
   let weekExpanded = $state(false);
@@ -101,46 +83,23 @@
   let pickQuery = $state("");
   let sortOwnedFirst = $state(true);
   let configuringId = $state<string | null>(null);
-  let pendingRemoveIds = $state(new Set<string>());
   let addError = $state("");
   let autofillSeq = 0;
-  let savedSnapshot = $state("");
-  let isSaving = $state(false);
-  let saveError = $state("");
-  /** False after a failed cloud read — Save stays on this device. */
-  let postCloud = $state(false);
-  /** Merged edits are stored locally and still need a cloud POST. */
-  let cloudDirty = $state(false);
-  /** User id the current postCloud flag was read for. */
-  let goalsUserId: string | null | undefined = undefined;
-  /** The accepted read for `goalsUserId` failed — the next effect run reads again. */
-  let goalsUserIdReadFailed = false;
-  let seenGoalsRevision = 0;
-  let goalsCloudGeneration = 0;
-  /** Account whose cloud read is in flight. Not yet the hydrated account. */
-  let goalsReadFor: string | null | undefined = undefined;
-  /** Bumped when a deferred hydrate should try again. */
-  let goalsHydrateTick = $state(0);
-  /** Account whose discarded read already got one retry. */
-  let discardedHydrateFor: string | null | undefined = undefined;
+  /** The editable goals: follows storage, merges on Save (`goals-draft`). */
+  const draft = useGoalsDraft();
+  /** Why the last read or send failed. */
+  let saveError = $derived(draft.error ?? "");
 
-  let goals = $derived(goalsState.goals);
+  let goals = $derived(draft.state.goals);
   let savedGoals = $derived.by(() => {
-    if (!savedSnapshot) return goalsState.goals;
+    if (!draft.savedJson) return draft.state.goals;
     try {
-      return parseGoalsState(JSON.parse(savedSnapshot) as unknown).goals;
+      return parseGoalsState(JSON.parse(draft.savedJson) as unknown).goals;
     } catch {
-      return goalsState.goals;
+      return draft.state.goals;
     }
   });
-  let hasUnsavedChanges = $derived(
-    goalsHaveUnsavedChanges({
-      hydrated,
-      state: goalsState,
-      savedSnapshot,
-      pendingRemoveIds,
-    }),
-  );
+  let hasUnsavedChanges = $derived(draft.unsaved);
   let focusedGoals = $derived(starredGoals(savedGoals));
 
   function ensureCatalog() {
@@ -155,29 +114,12 @@
   }
 
   function applySavedGoals(next: CalculatorGoalsState) {
-    goalsState = next;
+    draft.state = next;
     ensureCatalog();
   }
 
-  function commitSaved(next: CalculatorGoalsState) {
-    const pending = captureGoals(next);
-    savedSnapshot = pending.json;
-    applySavedGoals(pending.state);
-  }
-
-  function clearTransientSaveError() {
-    if ($session.data && !postCloud) return;
-    saveError = cloudDirty ? "Sync failed (0) — goals not synced" : "";
-  }
-
   function cancelEdits() {
-    try {
-      applySavedGoals(parseGoalsState(JSON.parse(savedSnapshot) as unknown));
-      pendingRemoveIds = new Set();
-      clearTransientSaveError();
-    } catch {
-      /* ignore */
-    }
+    draft.cancel();
   }
 
   function finishClose() {
@@ -185,9 +127,8 @@
     picking = null;
     pickQuery = "";
     configuringId = null;
-    pendingRemoveIds = new Set();
+    draft.pendingRemoveIds = new Set();
     addError = "";
-    clearTransientSaveError();
   }
 
   /** Backdrop, Escape, and the close button leave a dirty editor open. */
@@ -209,167 +150,27 @@
   }
 
   onMount(() => {
+    // The day column moves at midnight. Re-reading goals on return is the
+    // layout's job (one refresh for every surface).
     const onVisible = () => {
-      if (document.visibilityState !== "visible") return;
-      weekdayTick += 1;
-      if (hydrated && !hasUnsavedChanges && !pickingGoals) {
-        const pending = readGoalsIfChanged(savedSnapshot);
-        if (pending) commitSaved(pending.state);
-      }
+      if (document.visibilityState === "visible") weekdayTick += 1;
     };
     document.addEventListener("visibilitychange", onVisible);
-
-    void (async () => {
-      try {
-        const { data: sess } = await authClient.getSession();
-        const userId = sess?.user?.id ?? null;
-        const pending = await hydrateGoalsState(userId !== null, {
-          userId,
-          allowWrite: () =>
-            $session.isPending || ($session.data?.user?.id ?? null) === userId,
-        });
-        const sessionPending = $session.isPending;
-        const sessionUserId = sessionPending
-          ? null
-          : ($session.data?.user?.id ?? null);
-        if (
-          acceptGoalsHydrationUser({
-            readUserId: userId,
-            sessionPending,
-            sessionUserId,
-            postCloud: pending.postCloud,
-            syncError: pending.syncError,
-          })
-        ) {
-          goalsUserId = userId;
-          goalsUserIdReadFailed = goalsReadFailed(pending);
-        }
-        postCloud =
-          pending.postCloud && (sessionPending || sessionUserId === userId);
-        seenGoalsRevision = untrack(() => $goalsLocalRevision);
-        cloudDirty = pending.cloudDirty === true;
-        if (pending.syncError) saveError = pending.syncError;
-        else if (cloudDirty) saveError = "Sync failed (0) — goals not synced";
-        else saveError = "";
-        commitSaved(pending.state);
-      } catch {
-        postCloud = false;
-        saveError = "Sync failed (0) — goals not synced";
-        commitSaved(readGoalsLocal());
-      }
-      hydrated = true;
-      ensureCatalog();
-      void loadRosterWeapons().catch(() => {});
-    })();
-
+    ensureCatalog();
+    void loadRosterWeapons().catch(() => {});
     return () => document.removeEventListener("visibilitychange", onVisible);
   });
 
-  /**
-   * A later sign-in repeats the cloud read, and so does a session or revision
-   * change after a failed read. A failed read still does not POST.
-   */
-  $effect(() => {
-    if (!hydrated) return;
-    if ($session.isPending) return;
-    void goalsHydrateTick;
-    const id = $session.data?.user?.id ?? null;
-    if (id === goalsUserId && !goalsUserIdReadFailed) return;
-    const revisionAtRead = $goalsLocalRevision;
-    const replaceLocal =
-      !hasUnsavedChanges &&
-      !pickingGoals &&
-      goalsRevisionAllowsCloudReplace(revisionAtRead, seenGoalsRevision);
-    goalsUserId = undefined;
-    postCloud = false;
-    if (!replaceLocal || goalsReadFor === id) return;
-    if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
-    goalsReadFor = id;
-    const generation = ++goalsCloudGeneration;
-    const readFor = id;
-    void (async () => {
-      try {
-        const pending = await hydrateGoalsState(readFor !== null, {
-          replaceLocal: true,
-          userId: readFor,
-          allowWrite: () =>
-            !$session.isPending &&
-            ($session.data?.user?.id ?? null) === readFor,
-        });
-        if (generation !== goalsCloudGeneration) return;
-        const sessionUserId = $session.isPending
-          ? null
-          : ($session.data?.user?.id ?? null);
-        if (sessionUserId !== readFor) return;
-        const revisionNow = untrack(() => $goalsLocalRevision);
-        if (
-          hasUnsavedChanges ||
-          pickingGoals ||
-          !goalsRevisionAllowsCloudReplace(revisionNow, revisionAtRead)
-        ) {
-          saveError = pending.syncError;
-          goalsHydrateTick += 1;
-          return;
-        }
-        if (
-          !acceptGoalsHydrationUser({
-            readUserId: readFor,
-            sessionPending: false,
-            sessionUserId,
-            postCloud: pending.postCloud,
-            syncError: pending.syncError,
-          })
-        ) {
-          if (discardedHydrateFor !== readFor) {
-            discardedHydrateFor = readFor;
-            goalsHydrateTick += 1;
-          }
-          return;
-        }
-        discardedHydrateFor = undefined;
-        goalsUserId = readFor;
-        goalsUserIdReadFailed = goalsReadFailed(pending);
-        postCloud = pending.postCloud;
-        cloudDirty = pending.cloudDirty === true;
-        saveError =
-          pending.syncError ||
-          (cloudDirty ? "Sync failed (0) — goals not synced" : "");
-        commitSaved(pending.state);
-        seenGoalsRevision = untrack(() => $goalsLocalRevision);
-      } finally {
-        if (goalsReadFor === readFor) goalsReadFor = undefined;
-      }
-    })();
-  });
-
-  /** Same-tab sync when the planner page persists goals. */
-  $effect(() => {
-    void $goalsLocalRevision;
-    if (!hydrated || hasUnsavedChanges || pickingGoals) return;
-    const pending = readGoalsIfChanged(savedSnapshot);
-    if (!pending) {
-      const revision = untrack(() => $goalsLocalRevision);
-      if (seenGoalsRevision !== revision) {
-        seenGoalsRevision = revision;
-        goalsHydrateTick += 1;
-      }
-      return;
-    }
-    commitSaved(pending.state);
-    seenGoalsRevision = untrack(() => $goalsLocalRevision);
-    goalsHydrateTick += 1;
-  });
-
   function toggleStar(id: string) {
-    const current = findGoal(goalsState, id);
+    const current = findGoal(draft.state, id);
     if (!current) return;
-    applySavedGoals(replaceGoal(goalsState, toggleGoalStarred(current)));
+    applySavedGoals(replaceGoal(draft.state, toggleGoalStarred(current)));
   }
 
   function starAll() {
     applySavedGoals({
-      ...goalsState,
-      goals: goalsState.goals.map((g) => {
+      ...draft.state,
+      goals: draft.state.goals.map((g) => {
         const next = cloneGoal(g);
         next.starred = true;
         return next;
@@ -379,8 +180,8 @@
 
   function starNone() {
     applySavedGoals({
-      ...goalsState,
-      goals: goalsState.goals.map((g) => {
+      ...draft.state,
+      goals: draft.state.goals.map((g) => {
         const next = cloneGoal(g);
         delete next.starred;
         return next;
@@ -389,7 +190,7 @@
   }
 
   function reorderGoals(from: number, to: number) {
-    applySavedGoals(moveGoal(goalsState, from, to));
+    applySavedGoals(moveGoal(draft.state, from, to));
   }
 
   let ownedIds = $derived(ownedNameIds($charactersOwned));
@@ -401,7 +202,7 @@
     picking === "weapon" ? weaponOptions : characterOptions,
   );
   let configuringGoal = $derived(
-    configuringId ? findGoal(goalsState, configuringId) : null,
+    configuringId ? findGoal(draft.state, configuringId) : null,
   );
 
   function portraitFor(nameId: string) {
@@ -431,7 +232,7 @@
     if (!catalog) return;
     const seq = ++autofillSeq;
     const next = await autofillCharacterGoalState({
-      state: goalsState,
+      state: draft.state,
       catalog,
       nameId,
       goalId,
@@ -443,7 +244,7 @@
   function addCharacterWith(nameId: string) {
     if (!catalog) return;
     cancelPick();
-    const result = appendCatalogCharacterGoal(goalsState, catalog, nameId, {
+    const result = appendCatalogCharacterGoal(draft.state, catalog, nameId, {
       owned: $charactersOwned,
       weapons: getRosterWeaponsCached(),
       starred: true,
@@ -464,7 +265,7 @@
   function addWeaponWith(weaponId: number) {
     if (!catalog) return;
     cancelPick();
-    const result = appendCatalogWeaponGoal(goalsState, catalog, weaponId, {
+    const result = appendCatalogWeaponGoal(draft.state, catalog, weaponId, {
       owned: $charactersOwned,
       weapons: getRosterWeaponsCached(),
       starred: true,
@@ -479,7 +280,7 @@
   }
 
   function openConfigure(id: string) {
-    if (pendingRemoveIds.has(id)) return;
+    if (draft.pendingRemoveIds.has(id)) return;
     cancelPick();
     configuringId = id;
   }
@@ -491,48 +292,19 @@
   function deleteGoal(id: string) {
     if (configuringId === id) configuringId = null;
     addError = "";
-    const next = new Set(pendingRemoveIds);
+    const next = new Set(draft.pendingRemoveIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    pendingRemoveIds = next;
+    draft.pendingRemoveIds = next;
   }
 
   async function saveStars() {
-    if (isSaving || (!hasUnsavedChanges && !cloudDirty)) return;
-    isSaving = true;
-    const sessionUserId = $session.isPending
-      ? null
-      : ($session.data?.user?.id ?? null);
-    const syncing =
-      postCloud && sessionUserId != null && sessionUserId === goalsUserId;
-    const unsynced =
-      !syncing && sessionUserId
-        ? saveError || "Sync failed (0) — goals not synced"
-        : "";
-    saveError = "";
-    const result = await saveGoalsState({
-      state: goalsState,
-      pendingRemoveIds,
-      savedSnapshot,
-      cloud: syncing,
-      userId: sessionUserId,
-    });
-    if (!result.ok) {
-      saveError = result.message;
-      isSaving = false;
-      return;
-    }
-    pendingRemoveIds = new Set();
-    savedSnapshot = result.capture.json;
-    applySavedGoals(result.capture.state);
-    seenGoalsRevision = untrack(() => $goalsLocalRevision);
+    if (draft.saving || (!hasUnsavedChanges && !draft.unsent)) return;
+    if (!(await draft.save())) return;
     pickingGoals = false;
     picking = null;
     configuringId = null;
     addError = "";
-    if (syncing) cloudDirty = false;
-    if (unsynced) saveError = unsynced;
-    isSaving = false;
   }
 
   let focusedMaterials = $derived.by((): Record<string, number> => {
@@ -599,7 +371,7 @@
   }
 </script>
 
-{#if hydrated && (goals.length > 0 || showEmpty)}
+{#if draft.hydrated && (goals.length > 0 || showEmpty)}
   {@const needsGoalSetup = goals.length === 0 || focusedGoals.length === 0}
   <section
     class="itinerary"
@@ -824,11 +596,11 @@
   open={pickingGoals}
   {goals}
   {catalog}
-  dirty={hasUnsavedChanges || cloudDirty}
-  saving={isSaving}
+  dirty={hasUnsavedChanges || draft.unsent}
+  saving={draft.saving}
   {saveError}
   {addError}
-  removedIds={pendingRemoveIds}
+  removedIds={draft.pendingRemoveIds}
   suspendKeys={picking !== null || configuringId !== null}
   onClose={closePicker}
   onStar={toggleStar}
@@ -850,7 +622,7 @@
   {weaponOptions}
   getCharacter={portraitFor}
   onClose={closeConfigure}
-  onChange={(next) => applySavedGoals(replaceGoal(goalsState, next))}
+  onChange={(next) => applySavedGoals(replaceGoal(draft.state, next))}
   onAutofillCharacter={(nameId, goalId) =>
     void autofillCharacterTarget(nameId, goalId)}
 />

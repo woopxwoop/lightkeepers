@@ -3,9 +3,9 @@
  *
  * Auth-gated roster sync for logged-in users. Every handler is rate limited,
  * requires a session, and scopes reads/writes to that user's row.
- * GET → { roster, rev }. Optional POST `weapons` / `artifacts` write the
+ * GET → { roster, rev, account }. Optional POST `weapons` / `artifacts` write the
  * inventory slices without clearing them on roster-only saves.
- * POST { roster, baseRev? } → 200 { ok, rev } or 409 { roster, rev } when
+ * POST { roster, baseRev?, account? } → 200 { ok, rev } or 409 { roster, rev } when
  * `baseRev` is stale (`#lib/server/account-doc.js`).
  */
 
@@ -19,6 +19,7 @@ import {
 import {
   assertNoDbError,
   requireBaseRev,
+  requireExpectedAccount,
   requireInventoryArtifacts,
   requireInventoryWeapons,
   requireJsonObject,
@@ -38,7 +39,7 @@ export const GET: RequestHandler = async ({
   const { data, rev, error: err } = await rosterDoc.read(user.id, "roster");
   assertNoDbError("GET /api/roster", err);
 
-  return Response.json({ roster: data, rev });
+  return Response.json({ roster: data, rev, account: user.id });
 };
 
 export const POST: RequestHandler = async ({
@@ -61,6 +62,7 @@ export const POST: RequestHandler = async ({
       : requireInventoryArtifacts(body.artifacts);
 
   const baseRev = requireBaseRev(body.baseRev);
+  requireExpectedAccount(body.account, user.id);
 
   const result = await writeUserRoster(
     {

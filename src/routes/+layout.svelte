@@ -20,6 +20,7 @@
   import { clearRosterInventory } from "#lib/app/roster-inventory.js";
   import { cancelRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
   import { authClient } from "#lib/auth-client.js";
+  import { goalsSync } from "#lib/app/goals-sync.js";
   import { installChunkLoadRecovery } from "#lib/app/chunkLoadRecovery.js";
   import { installDebugHitTest } from "#lib/app/debugHitTest.js";
   import { rememberNavigation } from "#lib/nav-history.js";
@@ -65,6 +66,8 @@
   $effect(() => {
     if ($session.isPending) return;
     const id = $session.data?.user?.id ?? null;
+    // Synced documents follow every settled session, the first one included.
+    goalsSync().setAccount(id);
     if (lastRosterUserId === undefined) {
       lastRosterUserId = id;
       return;
@@ -112,6 +115,17 @@
       abyssVersionNumber: data.abyssVersionNumber,
       stygianVersionNumber: data.stygianVersionNumber,
     });
+  });
+
+  // Returning to the tab re-reads synced documents so an edit starts from the
+  // newest copy. A read never sends; unsent edits are merged and stay unsent.
+  onMount(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || $session.isPending) return;
+      void goalsSync().refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   });
 
   onMount(() => {

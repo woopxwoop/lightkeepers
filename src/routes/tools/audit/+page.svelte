@@ -17,16 +17,7 @@
     auditRowPlannerState,
     type AuditPlannerState,
   } from "#lib/audit-planner-goals.js";
-  import { authClient } from "#lib/auth-client.js";
-  import {
-    acceptGoalsHydrationUser,
-    goalsReadFailed,
-    goalsRevisionAllowsCloudReplace,
-    hydrateGoalsState,
-    readGoalsIfChanged,
-    saveGoalsState,
-  } from "#lib/calculator-goals-lifecycle.js";
-  import { goalsLocalRevision } from "#lib/calculator-goals-snapshot.js";
+  import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import {
     charactersHydrated,
     charactersOwned,
@@ -36,7 +27,6 @@
     tierListLoaded,
   } from "#lib/stores.js";
   import { stygianUsageByNameId } from "#lib/tierlist.js";
-  import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
   import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
   import { settingsPath } from "#lib/ui/nav-links.js";
   import AuditQueueRow from "#lib/ui/components/AuditQueueRow.svelte";
@@ -46,38 +36,19 @@
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
 
-  const session = authClient.useSession();
-
   let grades = $state<AuditRow[] | null>(null);
   let loading = $state(true);
   let loadError = $state(false);
   let gradeRetry = $state(0);
 
   let plannerCatalog = $state<UpgradeCostsCatalog | null>(null);
-  let plannerGoals = $state<CalculatorGoalsState | null>(null);
-  let plannerSnapshot = $state("");
-  let plannerPostCloud = false;
-  let plannerSyncError = $state("");
-  /** User id the current plannerPostCloud flag was read for. */
-  let auditUserId: string | null | undefined = undefined;
-  /** The accepted read for `auditUserId` failed — the next effect run reads again. */
-  let auditUserIdReadFailed = false;
-  let seenPlannerRevision = 0;
-  let auditCloudGeneration = 0;
-  /** Account whose cloud read is in flight. Not yet the hydrated account. */
-  let auditReadFor: string | null | undefined = undefined;
-  /** Bumped when a deferred hydrate should try again. */
-  let auditHydrateTick = $state(0);
-  /** Account whose discarded read already got one retry. */
-  let discardedHydrateFor: string | null | undefined = undefined;
+  /** Planner goals: follows storage, merges on Save (`goals-draft`). */
+  const goals = useGoalsDraft();
+  let plannerGoals = $derived(goals.hydrated ? goals.state : null);
+  /** Why the last goals read or send failed. */
+  let plannerSyncError = $derived(goals.error ?? "");
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
-  /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
-  let plannerInit: Promise<{
-    catalog: UpgradeCostsCatalog;
-    state: CalculatorGoalsState;
-    snapshot: string;
-  }> | null = null;
 
   let owned = $derived($charactersOwned.filter((c) => c.isOwned));
   /** Regrade when ids or the progress those grades read changes, not on array identity. */
@@ -117,87 +88,12 @@
     gradeRetry += 1;
   }
 
-  async function loadPlanner(): Promise<{
-    catalog: UpgradeCostsCatalog;
-    state: CalculatorGoalsState;
-    snapshot: string;
-  }> {
-    const [catalog, { data: sess }] = await Promise.all([
-      loadUpgradeCosts(),
-      authClient.getSession(),
-    ]);
-    const userId = sess?.user?.id ?? null;
-    const pending = await hydrateGoalsState(userId !== null, {
-      userId,
-      allowWrite: () =>
-        $session.isPending || ($session.data?.user?.id ?? null) === userId,
-    });
-    plannerCatalog = catalog;
-    const sessionPending = $session.isPending;
-    const sessionUserId = sessionPending
-      ? null
-      : ($session.data?.user?.id ?? null);
-    if (
-      acceptGoalsHydrationUser({
-        readUserId: userId,
-        sessionPending,
-        sessionUserId,
-        postCloud: pending.postCloud,
-        syncError: pending.syncError,
-      })
-    ) {
-      auditUserId = userId;
-      auditUserIdReadFailed = goalsReadFailed(pending);
-    }
-    plannerGoals = pending.state;
-    plannerSnapshot = pending.json;
-    plannerPostCloud =
-      pending.postCloud && (sessionPending || sessionUserId === userId);
-    plannerSyncError = pending.cloudDirty
-      ? pending.syncError || "Sync failed (0) — goals not synced"
-      : pending.postCloud
-        ? ""
-        : pending.syncError;
-    seenPlannerRevision = untrack(() => $goalsLocalRevision);
-    return {
-      catalog,
-      state: pending.state,
-      snapshot: pending.json,
-    };
-  }
-
-  /**
-   * Planner goals + catalog. The first load is single-flight: Add and the
-   * background warm-up share one hydrate, so an older cloud response cannot
-   * write back over goals the click just saved. An itinerary save during
-   * that read bumps `goalsLocalRevision`; hydrate keeps the save.
-   */
-  async function readyPlanner(): Promise<{
-    catalog: UpgradeCostsCatalog;
-    state: CalculatorGoalsState;
-    snapshot: string;
-  } | null> {
+  /** Catalog for Add / In Planner. Goals come from `goals`. */
+  async function readyCatalog(): Promise<UpgradeCostsCatalog | null> {
+    if (plannerCatalog) return plannerCatalog;
     try {
-      if (plannerCatalog && plannerGoals) {
-        const pending = readGoalsIfChanged(plannerSnapshot);
-        if (pending) {
-          plannerGoals = pending.state;
-          plannerSnapshot = pending.json;
-        }
-        return {
-          catalog: plannerCatalog,
-          state: plannerGoals,
-          snapshot: plannerSnapshot,
-        };
-      }
-
-      if (!plannerInit) {
-        const run = loadPlanner().finally(() => {
-          if (plannerInit === run) plannerInit = null;
-        });
-        plannerInit = run;
-      }
-      return await plannerInit;
+      plannerCatalog = await loadUpgradeCosts();
+      return plannerCatalog;
     } catch {
       return null;
     }
@@ -208,160 +104,30 @@
     plannerBusy = true;
     plannerError = null;
     try {
-      const ready = await readyPlanner();
-      if (!ready) {
+      const catalog = await readyCatalog();
+      if (!catalog || !goals.hydrated) {
         plannerError = "Couldn’t load the Planner right now";
         return;
       }
-      const landed = readGoalsIfChanged(ready.snapshot);
-      const result = appendAuditSuggestions(
-        landed?.state ?? ready.state,
-        ready.catalog,
-        rows,
-        {
-          owned: untrack(() => $charactersOwned),
-          weapons: getRosterWeaponsCached(),
-        },
-      );
-      if (result.added === 0) return;
-      const state = result.state;
-      const snapshot = landed?.json ?? ready.snapshot;
-      const sessionUserId = $session.isPending
-        ? null
-        : ($session.data?.user?.id ?? null);
-      const syncing =
-        plannerPostCloud &&
-        sessionUserId != null &&
-        sessionUserId === auditUserId;
-      const save = await saveGoalsState({
-        state,
-        pendingRemoveIds: new Set(),
-        savedSnapshot: snapshot,
-        cloud: syncing,
-        userId: sessionUserId,
+      const result = appendAuditSuggestions(goals.state, catalog, rows, {
+        owned: untrack(() => $charactersOwned),
+        weapons: getRosterWeaponsCached(),
       });
-      if (!save.ok) {
-        plannerError = save.message;
-        return;
-      }
-      plannerGoals = save.capture.state;
-      plannerSnapshot = save.capture.json;
-      seenPlannerRevision = untrack(() => $goalsLocalRevision);
-      if (syncing) plannerSyncError = "";
-      else if (sessionUserId) {
-        plannerSyncError =
-          plannerSyncError || "Sync failed (0) — goals not synced";
-      }
+      if (result.added === 0) return;
+      goals.state = result.state;
+      await goals.save();
     } finally {
       plannerBusy = false;
     }
   }
 
-  /**
-   * A later sign-in repeats the cloud read, and so does a session or revision
-   * change after a failed read. A failed read still does not POST.
-   */
-  $effect(() => {
-    if (!browser || !plannerGoals) return;
-    if ($session.isPending) return;
-    void auditHydrateTick;
-    const id = $session.data?.user?.id ?? null;
-    if (id === auditUserId && !auditUserIdReadFailed) return;
-    const revisionAtRead = $goalsLocalRevision;
-    const replaceLocal =
-      !plannerBusy &&
-      goalsRevisionAllowsCloudReplace(revisionAtRead, seenPlannerRevision);
-    auditUserId = undefined;
-    plannerPostCloud = false;
-    if (!replaceLocal || auditReadFor === id) return;
-    if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
-    auditReadFor = id;
-    const generation = ++auditCloudGeneration;
-    const readFor = id;
-    void (async () => {
-      try {
-        const pending = await hydrateGoalsState(readFor !== null, {
-          replaceLocal: true,
-          userId: readFor,
-          allowWrite: () =>
-            !$session.isPending &&
-            ($session.data?.user?.id ?? null) === readFor,
-        });
-        if (generation !== auditCloudGeneration) return;
-        const sessionUserId = $session.isPending
-          ? null
-          : ($session.data?.user?.id ?? null);
-        if (sessionUserId !== readFor) return;
-        const revisionNow = untrack(() => $goalsLocalRevision);
-        if (
-          plannerBusy ||
-          !goalsRevisionAllowsCloudReplace(revisionNow, revisionAtRead)
-        ) {
-          plannerSyncError = pending.syncError;
-          auditHydrateTick += 1;
-          return;
-        }
-        if (
-          !acceptGoalsHydrationUser({
-            readUserId: readFor,
-            sessionPending: false,
-            sessionUserId,
-            postCloud: pending.postCloud,
-            syncError: pending.syncError,
-          })
-        ) {
-          if (discardedHydrateFor !== readFor) {
-            discardedHydrateFor = readFor;
-            auditHydrateTick += 1;
-          }
-          return;
-        }
-        discardedHydrateFor = undefined;
-        auditUserId = readFor;
-        auditUserIdReadFailed = goalsReadFailed(pending);
-        plannerPostCloud = pending.postCloud;
-        plannerSyncError = pending.cloudDirty
-          ? pending.syncError || "Sync failed (0) — goals not synced"
-          : pending.postCloud
-            ? ""
-            : pending.syncError;
-        plannerGoals = pending.state;
-        plannerSnapshot = pending.json;
-        seenPlannerRevision = untrack(() => $goalsLocalRevision);
-      } finally {
-        if (auditReadFor === readFor) auditReadFor = undefined;
-      }
-    })();
-  });
-
   $effect(() => {
     if (browser) ensureTierList().catch(() => {});
   });
 
-  /** Warm planner state so rows show Add / In Planner before any click. */
+  /** Warm the catalog so rows show Add / In Planner before any click. */
   $effect(() => {
-    if (browser) untrack(() => void readyPlanner());
-  });
-
-  /** Same-tab sync when Planner (or another surface) persists goals. */
-  $effect(() => {
-    void $goalsLocalRevision;
-    untrack(() => {
-      if (!plannerSnapshot) return;
-      const pending = readGoalsIfChanged(plannerSnapshot);
-      if (!pending) {
-        const revision = untrack(() => $goalsLocalRevision);
-        if (seenPlannerRevision !== revision) {
-          seenPlannerRevision = revision;
-          auditHydrateTick += 1;
-        }
-        return;
-      }
-      plannerGoals = pending.state;
-      plannerSnapshot = pending.json;
-      seenPlannerRevision = untrack(() => $goalsLocalRevision);
-      auditHydrateTick += 1;
-    });
+    if (browser) untrack(() => void readyCatalog());
   });
 
   $effect(() => {

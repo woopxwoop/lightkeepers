@@ -72,6 +72,16 @@ export function requireBaseRev(value: unknown): string | null | undefined {
   return value;
 }
 
+/**
+ * Optional `account` on an account-document POST: the user id the client
+ * stored this data for. A different signed-in user means the cookie changed
+ * after the client chose to write, so the write is refused.
+ */
+export function requireExpectedAccount(value: unknown, userId: string): void {
+  if (value === undefined) return;
+  if (value !== userId) throw error(403, "Signed-in account changed.");
+}
+
 /** Parse a request body and require a plain JSON object. */
 export async function requireJsonObject(
   request: Request,

@@ -2,7 +2,7 @@
  * GET/POST/DELETE /api/calculator-goals
  *
  * Auth-gated upgrade-goal sync. Mirrors `/api/roster`.
- * GET → { goals, rev }. POST { goals, baseRev? } → 200 { ok, rev } or
+ * GET → { goals, rev, account }. POST { goals, baseRev?, account? } → 200 { ok, rev } or
  * 409 { goals, rev } when `baseRev` is stale (`#lib/server/account-doc.js`).
  */
 
@@ -16,6 +16,7 @@ import {
 import {
   assertNoDbError,
   requireBaseRev,
+  requireExpectedAccount,
   requireCalculatorGoals,
   requireJsonObject,
   requireUser,
@@ -32,7 +33,7 @@ export const GET: RequestHandler = async ({
   const { data, rev, error: err } = await goalsDoc.read(user.id, "goals");
   assertNoDbError("GET /api/calculator-goals", err);
 
-  return Response.json({ goals: data, rev });
+  return Response.json({ goals: data, rev, account: user.id });
 };
 
 export const POST: RequestHandler = async ({
@@ -46,6 +47,7 @@ export const POST: RequestHandler = async ({
   const body = await requireJsonObject(request);
   const goals = requireCalculatorGoals(body.goals);
   const baseRev = requireBaseRev(body.baseRev);
+  requireExpectedAccount(body.account, user.id);
 
   return accountDocWriteResponse({
     label: "POST /api/calculator-goals",

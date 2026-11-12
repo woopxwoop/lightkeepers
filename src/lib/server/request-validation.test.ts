@@ -9,6 +9,7 @@ import {
   assertNoDbError,
   requireAnalyticsMode,
   requireBaseRev,
+  requireExpectedAccount,
   requireCalculatorGoals,
   requireCharacterNameId,
   requireCharacterNameIds,
@@ -706,6 +707,13 @@ describe("request validation", () => {
       () => requireBaseRev("2026-11-12".padEnd(65, "0")),
       isBadRequest,
     );
+  });
+
+  it("requireExpectedAccount allows absent or matching ids only", () => {
+    assert.doesNotThrow(() => requireExpectedAccount(undefined, "u1"));
+    assert.doesNotThrow(() => requireExpectedAccount("u1", "u1"));
+    assert.throws(() => requireExpectedAccount("u2", "u1"), hasStatus(403));
+    assert.throws(() => requireExpectedAccount(null, "u1"), hasStatus(403));
   });
 
   it("assertNoDbError ignores null and maps real errors to 500", () => {
