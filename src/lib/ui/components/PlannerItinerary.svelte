@@ -110,6 +110,10 @@
   let goalsUserId: string | null | undefined = undefined;
   let seenGoalsRevision = 0;
   let goalsCloudGeneration = 0;
+  /** Account whose cloud read is in flight. Not yet the hydrated account. */
+  let goalsReadFor: string | null | undefined = undefined;
+  /** Bumped when a deferred hydrate should try again. */
+  let goalsHydrateTick = $state(0);
 
   let goals = $derived(goalsState.goals);
   let savedGoals = $derived.by(() => {
@@ -239,37 +243,52 @@
   $effect(() => {
     if (!hydrated) return;
     if ($session.isPending) return;
+    void goalsHydrateTick;
     const id = $session.data?.user?.id ?? null;
     if (id === goalsUserId) return;
-    if (hasUnsavedChanges || pickingGoals) return;
+    const revisionAtRead = $goalsLocalRevision;
+    const replaceLocal =
+      !hasUnsavedChanges &&
+      !pickingGoals &&
+      revisionAtRead === seenGoalsRevision;
+    if (!replaceLocal || goalsReadFor === id) return;
     postCloud = false;
+    goalsReadFor = id;
     const generation = ++goalsCloudGeneration;
     const readFor = id;
-    const replaceLocal = untrack(
-      () => $goalsLocalRevision === seenGoalsRevision,
-    );
     void (async () => {
-      const pending = await hydrateGoalsState(readFor !== null, {
-        replaceLocal,
-        userId: readFor,
-        allowWrite: () =>
-          !$session.isPending && ($session.data?.user?.id ?? null) === readFor,
-      });
-      if (generation !== goalsCloudGeneration) return;
-      const sessionUserId = $session.isPending
-        ? null
-        : ($session.data?.user?.id ?? null);
-      if (sessionUserId !== readFor) return;
-      if (hasUnsavedChanges || pickingGoals) {
+      try {
+        const pending = await hydrateGoalsState(readFor !== null, {
+          replaceLocal: true,
+          userId: readFor,
+          allowWrite: () =>
+            !$session.isPending &&
+            ($session.data?.user?.id ?? null) === readFor,
+        });
+        if (generation !== goalsCloudGeneration) return;
+        const sessionUserId = $session.isPending
+          ? null
+          : ($session.data?.user?.id ?? null);
+        if (sessionUserId !== readFor) return;
+        const revisionNow = untrack(() => $goalsLocalRevision);
+        const ownWrite = revisionNow === revisionAtRead + 1;
+        if (
+          hasUnsavedChanges ||
+          pickingGoals ||
+          (revisionNow !== revisionAtRead && !ownWrite)
+        ) {
+          saveError = pending.syncError;
+          goalsHydrateTick += 1;
+          return;
+        }
+        goalsUserId = readFor;
+        postCloud = pending.postCloud;
         saveError = pending.syncError;
-        return;
+        commitSaved(pending.state);
+        seenGoalsRevision = untrack(() => $goalsLocalRevision);
+      } finally {
+        if (goalsReadFor === readFor) goalsReadFor = undefined;
       }
-      goalsUserId = readFor;
-      postCloud = pending.postCloud;
-      saveError = pending.syncError;
-      if (!replaceLocal) return;
-      commitSaved(pending.state);
-      seenGoalsRevision = untrack(() => $goalsLocalRevision);
     })();
   });
 
@@ -280,6 +299,8 @@
     const pending = readGoalsIfChanged(savedSnapshot);
     if (!pending) return;
     commitSaved(pending.state);
+    seenGoalsRevision = untrack(() => $goalsLocalRevision);
+    goalsHydrateTick += 1;
   });
 
   function toggleStar(id: string) {
@@ -447,6 +468,7 @@
     pendingRemoveIds = new Set();
     savedSnapshot = result.capture.json;
     applySavedGoals(result.capture.state);
+    seenGoalsRevision = untrack(() => $goalsLocalRevision);
     pickingGoals = false;
     picking = null;
     configuringId = null;

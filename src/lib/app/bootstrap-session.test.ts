@@ -1,5 +1,6 @@
 /**
- * Login sync runs only for a later guest → user transition.
+ * Login sync runs for a later guest → user transition and for a direct
+ * account switch. Logout and the first settled id stay quiet.
  *
  * Run: pnpm exec tsx --test src/lib/app/bootstrap-session.test.ts
  */
@@ -13,13 +14,13 @@ describe("shouldSyncCloudRoster", () => {
     assert.equal(shouldSyncCloudRoster(undefined, null), false);
   });
 
-  it("syncs when a settled guest signs in", () => {
+  it("syncs when a settled guest signs in or the account id changes", () => {
     assert.equal(shouldSyncCloudRoster(null, "user-a"), true);
+    assert.equal(shouldSyncCloudRoster("user-a", "user-b"), true);
   });
 
-  it("does not sync logout, account switch, or a repeat of the same id", () => {
+  it("does not sync logout, the first settled id, or a repeat of the same id", () => {
     assert.equal(shouldSyncCloudRoster("user-a", null), false);
-    assert.equal(shouldSyncCloudRoster("user-a", "user-b"), false);
     assert.equal(shouldSyncCloudRoster("user-a", "user-a"), false);
     assert.equal(shouldSyncCloudRoster(null, null), false);
   });

@@ -600,4 +600,200 @@ describe("hydrateGoalsState cloud read", () => {
     assert.equal(result.syncError, "");
     assert.equal(result.state.goals[0]?.id, "local");
   });
+
+  it("does not treat a cloud apply as a local edit when an overlapping read fails", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "local")).json);
+
+    let releaseApply!: (value: Response) => void;
+    let releaseFail!: (value: Response) => void;
+    let calls = 0;
+    mock.method(globalThis, "fetch", () => {
+      calls += 1;
+      return calls === 1
+        ? new Promise<Response>((resolve) => {
+            releaseApply = resolve;
+          })
+        : new Promise<Response>((resolve) => {
+            releaseFail = resolve;
+          });
+    });
+
+    const applying = hydrateGoalsState(true, { userId: "account-a" });
+    const failing = hydrateGoalsState(true, { userId: "account-a" });
+    releaseApply(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Xingqiu", "c1").goals }),
+        { status: 200 },
+      ),
+    );
+    await applying;
+    releaseFail(new Response("nope", { status: 500 }));
+    const failed = await failing;
+    assert.equal(failed.postCloud, false);
+
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({ goals: goalsWith("Yelan", "c2").goals }),
+          { status: 200 },
+        ),
+    );
+    const again = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.deepEqual(
+      again.state.goals.map((goal) => goal.id),
+      ["c2"],
+    );
+    assert.equal(again.postCloud, true);
+  });
+
+  it("merges a same-tab save with cloud goals that the save does not contain", async () => {
+    installLocalStorage();
+    const older = captureGoals(goalsWith("Hutao", "hutao"));
+    writeGoalsLocal(older.json);
+
+    let release!: (value: Response) => void;
+    mock.method(
+      globalThis,
+      "fetch",
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = hydrateGoalsState(true, { userId: "account-a" });
+    const saved = captureGoals({
+      ...emptyGoalsState(),
+      goals: [
+        createCharacterGoal("Hutao", { id: "hutao" }),
+        createCharacterGoal("Yelan", { id: "added" }),
+      ],
+      selectedId: "added",
+    });
+    writeGoalsLocal(saved.json);
+    release(
+      new Response(
+        JSON.stringify({
+          goals: [
+            createCharacterGoal("Hutao", { id: "hutao", starred: true }),
+            createCharacterGoal("Furina", { id: "cloud-only" }),
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    const result = await pending;
+
+    assert.equal(result.postCloud, true);
+    assert.deepEqual(
+      result.state.goals.map((goal) => goal.id),
+      ["hutao", "cloud-only", "added"],
+    );
+    assert.equal(result.state.goals[0]?.starred, true);
+    assert.equal(
+      readGoalsLocal().goals.some((goal) => goal.id === "added"),
+      true,
+    );
+  });
+
+  it("does not drop another account's recovery when a no-row read is stale", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "b-base")).json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+    await hydrateGoalsState(true, { userId: "account-b" });
+    writeGoalsLocal(captureGoals(goalsWith("Yelan", "b-edited")).json);
+
+    let allowA = true;
+    let release!: (value: Response) => void;
+    mock.method(
+      globalThis,
+      "fetch",
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = hydrateGoalsState(true, {
+      userId: "account-a",
+      allowWrite: () => allowA,
+    });
+    allowA = false;
+    release(new Response(JSON.stringify({ goals: null }), { status: 200 }));
+    const stale = await pending;
+    assert.equal(stale.postCloud, false);
+
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({ goals: goalsWith("Xingqiu", "cloud").goals }),
+          { status: 200 },
+        ),
+    );
+    const merged = await hydrateGoalsState(true, { userId: "account-b" });
+    assert.equal(
+      merged.state.goals.some((goal) => goal.id === "b-edited"),
+      true,
+    );
+  });
+
+  it("keeps a newer recovery for the same user when an older save finishes", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "a-local")).json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+    await hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(captureGoals(goalsWith("Yelan", "a-edited")).json);
+
+    let releasePost!: (value: Response) => void;
+    mock.method(globalThis, "fetch", (_url, init) => {
+      if (init?.method === "POST") {
+        return new Promise<Response>((resolve) => {
+          releasePost = resolve;
+        });
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ goals: goalsWith("Xingqiu", "cloud").goals }),
+          { status: 200 },
+        ),
+      );
+    });
+    const saving = saveGoalsState({
+      state: readGoalsLocal(),
+      pendingRemoveIds: new Set(),
+      savedSnapshot: captureGoals(readGoalsLocal()).json,
+      cloud: true,
+      userId: "account-a",
+    });
+    await hydrateGoalsState(true, { userId: "account-a" });
+    releasePost(new Response("{}", { status: 200 }));
+    const saved = await saving;
+    assert.equal(saved.ok, true);
+
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({ goals: goalsWith("Xingqiu", "cloud").goals }),
+          { status: 200 },
+        ),
+    );
+    const merged = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(
+      merged.state.goals.some((goal) => goal.id === "a-edited"),
+      true,
+    );
+  });
 });

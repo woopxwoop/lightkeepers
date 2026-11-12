@@ -59,6 +59,10 @@
   let auditUserId: string | null | undefined = undefined;
   let seenPlannerRevision = 0;
   let auditCloudGeneration = 0;
+  /** Account whose cloud read is in flight. Not yet the hydrated account. */
+  let auditReadFor: string | null | undefined = undefined;
+  /** Bumped when a deferred hydrate should try again. */
+  let auditHydrateTick = $state(0);
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
   /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
@@ -225,6 +229,7 @@
       }
       plannerGoals = save.capture.state;
       plannerSnapshot = save.capture.json;
+      seenPlannerRevision = untrack(() => $goalsLocalRevision);
     } finally {
       plannerBusy = false;
     }
@@ -234,36 +239,46 @@
   $effect(() => {
     if (!browser || !plannerGoals) return;
     if ($session.isPending) return;
+    void auditHydrateTick;
     const id = $session.data?.user?.id ?? null;
     if (id === auditUserId) return;
-    auditUserId = id;
+    const revisionAtRead = $goalsLocalRevision;
+    const replaceLocal = !plannerBusy && revisionAtRead === seenPlannerRevision;
+    if (!replaceLocal || auditReadFor === id) return;
+    auditReadFor = id;
     plannerPostCloud = false;
     const generation = ++auditCloudGeneration;
     const readFor = id;
-    const replaceLocal = untrack(
-      () => !plannerBusy && $goalsLocalRevision === seenPlannerRevision,
-    );
     void (async () => {
-      const pending = await hydrateGoalsState(readFor !== null, {
-        replaceLocal,
-        userId: readFor,
-        allowWrite: () =>
-          !$session.isPending && ($session.data?.user?.id ?? null) === readFor,
-      });
-      if (generation !== auditCloudGeneration) return;
-      const sessionUserId = $session.isPending
-        ? null
-        : ($session.data?.user?.id ?? null);
-      if (sessionUserId !== readFor) return;
-      if (!replaceLocal || plannerBusy) {
-        plannerSyncError = pending.syncError;
-        return;
+      try {
+        const pending = await hydrateGoalsState(readFor !== null, {
+          replaceLocal: true,
+          userId: readFor,
+          allowWrite: () =>
+            !$session.isPending &&
+            ($session.data?.user?.id ?? null) === readFor,
+        });
+        if (generation !== auditCloudGeneration) return;
+        const sessionUserId = $session.isPending
+          ? null
+          : ($session.data?.user?.id ?? null);
+        if (sessionUserId !== readFor) return;
+        const revisionNow = untrack(() => $goalsLocalRevision);
+        const ownWrite = revisionNow === revisionAtRead + 1;
+        if (plannerBusy || (revisionNow !== revisionAtRead && !ownWrite)) {
+          plannerSyncError = pending.syncError;
+          auditHydrateTick += 1;
+          return;
+        }
+        auditUserId = readFor;
+        plannerPostCloud = pending.postCloud;
+        plannerSyncError = pending.postCloud ? "" : pending.syncError;
+        plannerGoals = pending.state;
+        plannerSnapshot = pending.json;
+        seenPlannerRevision = untrack(() => $goalsLocalRevision);
+      } finally {
+        if (auditReadFor === readFor) auditReadFor = undefined;
       }
-      plannerPostCloud = pending.postCloud;
-      plannerSyncError = pending.postCloud ? "" : pending.syncError;
-      plannerGoals = pending.state;
-      plannerSnapshot = pending.json;
-      seenPlannerRevision = untrack(() => $goalsLocalRevision);
     })();
   });
 
@@ -285,6 +300,8 @@
       if (!pending) return;
       plannerGoals = pending.state;
       plannerSnapshot = pending.json;
+      seenPlannerRevision = untrack(() => $goalsLocalRevision);
+      auditHydrateTick += 1;
     });
   });
 

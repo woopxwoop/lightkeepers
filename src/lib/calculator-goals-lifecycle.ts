@@ -15,6 +15,7 @@ import {
   captureGoals,
   fetchGoalsCloud,
   goalsLocalRevision,
+  localRevisionWasCloudApply,
   persistGoalsLocal,
   postGoals,
   readGoalsLocal,
@@ -82,27 +83,56 @@ export type GoalsHydration = GoalsCapture & {
  */
 const GOALS_RECOVERY_KEY = "calculatorGoalsRecovery";
 
-type GoalsRecovery = { userId: string; baseJson: string };
+type GoalsRecovery = {
+  userId: string;
+  baseJson: string;
+  /** Bumps on every write so a later snapshot is not cleared by an older save. */
+  generation: number;
+};
+
+let recoveryGenerationCounter = 0;
 
 function readRecovery(): GoalsRecovery | null {
   try {
     const raw = localStorage.getItem(GOALS_RECOVERY_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { userId?: unknown; baseJson?: unknown };
+    const parsed = JSON.parse(raw) as {
+      userId?: unknown;
+      baseJson?: unknown;
+      generation?: unknown;
+    };
     if (typeof parsed.userId !== "string" || parsed.userId.length === 0)
       return null;
     if (typeof parsed.baseJson !== "string" || parsed.baseJson.length === 0)
       return null;
-    return { userId: parsed.userId, baseJson: parsed.baseJson };
+    const generation =
+      typeof parsed.generation === "number" && parsed.generation >= 0
+        ? parsed.generation
+        : 0;
+    if (generation > recoveryGenerationCounter) {
+      recoveryGenerationCounter = generation;
+    }
+    return { userId: parsed.userId, baseJson: parsed.baseJson, generation };
   } catch {
     return null;
   }
 }
 
-function writeRecovery(record: GoalsRecovery | null): void {
+function writeRecovery(
+  record: { userId: string; baseJson: string } | null,
+): void {
   try {
-    if (!record) localStorage.removeItem(GOALS_RECOVERY_KEY);
-    else localStorage.setItem(GOALS_RECOVERY_KEY, JSON.stringify(record));
+    if (!record) {
+      localStorage.removeItem(GOALS_RECOVERY_KEY);
+      return;
+    }
+    recoveryGenerationCounter += 1;
+    const stored: GoalsRecovery = {
+      userId: record.userId,
+      baseJson: record.baseJson,
+      generation: recoveryGenerationCounter,
+    };
+    localStorage.setItem(GOALS_RECOVERY_KEY, JSON.stringify(stored));
   } catch {
     /* the merged goals list is still in local storage */
   }
@@ -161,11 +191,21 @@ export function clearPendingGoalsRecovery(): void {
   writeRecovery(null);
 }
 
-/** A finished save covers only the account that posted it. */
-function clearRecoveryOwnedBy(userId: string | null | undefined): void {
+/**
+ * Drop recovery only when this POST is still the account's current list.
+ * A newer snapshot for the same user, or local goals saved after the POST
+ * body was captured, stays for the next merge.
+ */
+function clearRecoveryOwnedBy(
+  userId: string | null | undefined,
+  covered: { generation: number | null; goalsJson: string },
+): void {
   if (!userId) return;
   const existing = readRecovery();
-  if (existing?.userId === userId) writeRecovery(null);
+  if (!existing || existing.userId !== userId) return;
+  if (existing.generation !== covered.generation) return;
+  if (captureGoals(readGoalsLocal()).json !== covered.goalsJson) return;
+  writeRecovery(null);
 }
 
 /**
@@ -215,12 +255,33 @@ function reconcilePendingGoals(
 }
 
 /**
+ * Store `next` when it adds goals the current local list does not have.
+ * `postCloud` is true only once that full list is the one a later POST would send.
+ */
+function hydrationFromReconciled(
+  current: CalculatorGoalsState,
+  next: CalculatorGoalsState,
+): GoalsHydration {
+  const reconciled = captureGoals(next);
+  const storedNow = captureGoals(current);
+  if (reconciled.json === storedNow.json) {
+    return { ...storedNow, postCloud: true, syncError: "" };
+  }
+  const stored = persistGoalsLocal(next);
+  return {
+    ...captureGoals(stored ? next : current),
+    postCloud: stored,
+    syncError: stored ? "" : "Sync failed (0) — goals not synced",
+  };
+}
+
+/**
  * Local → optional cloud (signed-in). A stored cloud list wins, including
  * an empty one, when no local-only edits are waiting. No row keeps local.
  * A failed read keeps local, reports `syncError`, and sets `postCloud` false.
- * A same-tab save during the read bumps `goalsLocalRevision`; that older
- * response is discarded and does not replace the save. A failed read still
- * does not POST, including when the revision moved.
+ * A same-tab save during the read is merged with the cloud list. A revision
+ * bump from applying cloud goals is not a local edit. A failed read still
+ * does not POST.
  * `replaceLocal: false` keeps the local list and leaves posting disabled
  * until a later read reconciles it with the cloud list.
  * `allowWrite` runs after the response arrives and before any cloud list or
@@ -253,13 +314,19 @@ export async function hydrateGoalsState(
     };
   }
   const keepUnreconciled = opts?.replaceLocal === false;
-  if (get(goalsLocalRevision) !== revision) {
-    const current = captureGoals(readGoalsLocal());
+  const allowWrite = !opts?.allowWrite || opts.allowWrite();
+  const revisionNow = get(goalsLocalRevision);
+  const currentState = readGoalsLocal();
+  const current = captureGoals(currentState);
+  const cloudApplied =
+    revisionNow !== revision &&
+    localRevisionWasCloudApply(revisionNow, current.json);
+
+  if (revisionNow !== revision) {
     if (cloud.status === "error" || keepUnreconciled) {
-      if (
-        cloud.status === "error" &&
-        (!opts?.allowWrite || opts.allowWrite())
-      ) {
+      // A cloud apply bumped the revision. Recording `local` from before
+      // that write would classify the applied list as a local edit.
+      if (cloud.status === "error" && allowWrite && !cloudApplied) {
         noteFailedRead(userId, local);
       }
       return {
@@ -268,13 +335,28 @@ export async function hydrateGoalsState(
         syncError: cloud.status === "error" ? cloud.message : "",
       };
     }
-    if (cloud.status === "goals" && recoveryPending(userId)) {
+    if (cloud.status === "goals") {
+      if (!allowWrite || recoveryPending(userId)) {
+        return { ...current, postCloud: false, syncError: "" };
+      }
+      if (cloudApplied) {
+        const next = applyCloudGoals(currentState, cloud.goals);
+        return hydrationFromReconciled(currentState, next);
+      }
+      const reconciled = reconcilePendingGoals(
+        local,
+        currentState,
+        cloud.goals,
+      );
+      return hydrationFromReconciled(currentState, reconciled);
+    }
+    if (!allowWrite) {
       return { ...current, postCloud: false, syncError: "" };
     }
     return { ...current, postCloud: true, syncError: "" };
   }
   if (cloud.status === "error") {
-    if (!opts?.allowWrite || opts.allowWrite()) noteFailedRead(userId, local);
+    if (allowWrite) noteFailedRead(userId, local);
     return {
       ...captureGoals(local),
       postCloud: false,
@@ -282,25 +364,17 @@ export async function hydrateGoalsState(
     };
   }
   if (cloud.status === "goals") {
-    if (keepUnreconciled) {
+    if (keepUnreconciled || !allowWrite) {
       return {
         ...captureGoals(readGoalsLocal()),
         postCloud: false,
         syncError: "",
       };
     }
-    if (opts?.allowWrite && !opts.allowWrite()) {
-      return {
-        ...captureGoals(readGoalsLocal()),
-        postCloud: false,
-        syncError: "",
-      };
-    }
-    const current = readGoalsLocal();
-    const pendingBase = peekPendingLocal(userId, current);
-    const cloudSide = applyCloudGoals(current, cloud.goals);
+    const pendingBase = peekPendingLocal(userId, currentState);
+    const cloudSide = applyCloudGoals(currentState, cloud.goals);
     const next = pendingBase
-      ? reconcilePendingGoals(pendingBase, current, cloud.goals)
+      ? reconcilePendingGoals(pendingBase, currentState, cloud.goals)
       : cloudSide;
     const stored = persistGoalsLocal(next);
     if (pendingBase && userId && stored) rebaseRecovery(userId, cloudSide);
@@ -309,6 +383,13 @@ export async function hydrateGoalsState(
       postCloud: !pendingBase || stored,
       syncError:
         pendingBase && !stored ? "Sync failed (0) — goals not synced" : "",
+    };
+  }
+  if (!allowWrite) {
+    return {
+      ...captureGoals(readGoalsLocal()),
+      postCloud: false,
+      syncError: "",
     };
   }
   peekPendingLocal(userId, local);
@@ -346,6 +427,11 @@ export async function saveGoalsState(input: {
       console.warn("localStorage unavailable — saving to memory only");
     }
     if (input.cloud) {
+      const recoveryAtStart = readRecovery();
+      const coveredGeneration =
+        recoveryAtStart?.userId === input.userId
+          ? recoveryAtStart.generation
+          : null;
       const result = await postGoals(pending.state);
       if (!result.ok) {
         writeGoalsLocal(input.savedSnapshot);
@@ -356,7 +442,10 @@ export async function saveGoalsState(input: {
             : `Sync failed (${result.status}) — goals not saved to cloud`,
         };
       }
-      clearRecoveryOwnedBy(input.userId);
+      clearRecoveryOwnedBy(input.userId, {
+        generation: coveredGeneration,
+        goalsJson: pending.json,
+      });
       return { ok: true, capture: pending };
     }
     if (!localOk) {

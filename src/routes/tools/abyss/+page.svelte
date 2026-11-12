@@ -3,6 +3,8 @@
     teamsOwned,
     allTeamsAbyss,
     abyssEnemiesBoard,
+    abyssVersionNumber,
+    stygianVersionNumber,
     staticBoardsPhase,
     staticBoardsView,
     charactersOwned,
@@ -64,7 +66,11 @@
   // posts an empty character list, which the teams RPC treats as "all teams".
   $effect(() => {
     ensureStaticBoards().catch(() => {});
+    // Re-subscribe when boards settle so a new cycle refetches owned teams.
+    // Versions are module state; don't POST /api/teams with the -1 sentinel.
+    void $staticBoardsPhase;
     if (!$charactersHydrated) return;
+    if (abyssVersionNumber < 0 || stygianVersionNumber < 0) return;
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
 

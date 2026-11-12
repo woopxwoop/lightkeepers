@@ -8,13 +8,19 @@ import { writable } from "svelte/store";
 export type CloudRosterProbe =
   "unknown" | "checking" | "backed-up" | "empty" | "unreachable";
 
-/** Map one `/api/roster` response. A missing `roster` key still counts as backed up. */
+/**
+ * Map one `/api/roster` response.
+ * `null` means no cloud row. An array, including `[]`, is a stored roster.
+ * A missing or non-array `roster` is not a roster we can trust.
+ */
 export function cloudRosterProbeFromBody(input: {
   ok: boolean;
   roster: unknown;
 }): "backed-up" | "empty" | "unreachable" {
   if (!input.ok) return "unreachable";
-  return input.roster !== null ? "backed-up" : "empty";
+  if (input.roster === null) return "empty";
+  if (!Array.isArray(input.roster)) return "unreachable";
+  return "backed-up";
 }
 
 /** Bumped after a roster sync writes the cloud row, so a probe re-reads. */

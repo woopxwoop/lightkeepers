@@ -86,6 +86,10 @@
   let goalsUserId: string | null | undefined = undefined;
   let seenGoalsRevision = 0;
   let goalsCloudGeneration = 0;
+  /** Account whose cloud read is in flight. Not yet the hydrated account. */
+  let goalsReadFor: string | null | undefined = undefined;
+  /** Bumped when a deferred hydrate should try again. */
+  let goalsHydrateTick = $state(0);
   let addError = $state("");
   /** Character name_id from `?add=` — consumed after catalog + goals hydrate. */
   let pendingPlannerAdd = $state<string | null>(null);
@@ -206,40 +210,50 @@
   $effect(() => {
     if (!browser || !goalsHydrated) return;
     if ($session.isPending) return;
+    void goalsHydrateTick;
     const id = $session.data?.user?.id ?? null;
     if (id === goalsUserId) return;
-    goalsUserId = id;
+    const revisionAtRead = $goalsLocalRevision;
+    const replaceLocal =
+      !hasUnsavedChanges && revisionAtRead === seenGoalsRevision;
+    if (!replaceLocal || goalsReadFor === id) return;
+    goalsReadFor = id;
     postCloud = false;
     const generation = ++goalsCloudGeneration;
     const readFor = id;
-    const revisionAtRead = untrack(() => $goalsLocalRevision);
-    const replaceLocal = untrack(
-      () => !hasUnsavedChanges && revisionAtRead === seenGoalsRevision,
-    );
     void (async () => {
-      const pending = await hydrateGoalsState(readFor !== null, {
-        replaceLocal,
-        userId: readFor,
-        allowWrite: () =>
-          !$session.isPending && ($session.data?.user?.id ?? null) === readFor,
-      });
-      if (generation !== goalsCloudGeneration) return;
-      const sessionUserId = $session.isPending
-        ? null
-        : ($session.data?.user?.id ?? null);
-      if (sessionUserId !== readFor) return;
-      const revisionNow = untrack(() => $goalsLocalRevision);
-      const ownWrite = replaceLocal && revisionNow === revisionAtRead + 1;
-      if (hasUnsavedChanges || (revisionNow !== revisionAtRead && !ownWrite)) {
+      try {
+        const pending = await hydrateGoalsState(readFor !== null, {
+          replaceLocal: true,
+          userId: readFor,
+          allowWrite: () =>
+            !$session.isPending &&
+            ($session.data?.user?.id ?? null) === readFor,
+        });
+        if (generation !== goalsCloudGeneration) return;
+        const sessionUserId = $session.isPending
+          ? null
+          : ($session.data?.user?.id ?? null);
+        if (sessionUserId !== readFor) return;
+        const revisionNow = untrack(() => $goalsLocalRevision);
+        const ownWrite = revisionNow === revisionAtRead + 1;
+        if (
+          hasUnsavedChanges ||
+          (revisionNow !== revisionAtRead && !ownWrite)
+        ) {
+          saveError = pending.syncError;
+          goalsHydrateTick += 1;
+          return;
+        }
+        goalsUserId = readFor;
+        postCloud = pending.postCloud;
         saveError = pending.syncError;
-        return;
+        goalsState = pending.state;
+        savedSnapshot = pending.json;
+        seenGoalsRevision = untrack(() => $goalsLocalRevision);
+      } finally {
+        if (goalsReadFor === readFor) goalsReadFor = undefined;
       }
-      postCloud = pending.postCloud;
-      saveError = pending.syncError;
-      if (!replaceLocal) return;
-      goalsState = pending.state;
-      savedSnapshot = pending.json;
-      seenGoalsRevision = untrack(() => $goalsLocalRevision);
     })();
   });
 
@@ -251,6 +265,8 @@
     if (!pending) return;
     goalsState = pending.state;
     savedSnapshot = pending.json;
+    seenGoalsRevision = untrack(() => $goalsLocalRevision);
+    goalsHydrateTick += 1;
   });
 
   $effect(() => {
@@ -340,6 +356,7 @@
     } else {
       commitSaved(result.capture);
     }
+    seenGoalsRevision = untrack(() => $goalsLocalRevision);
     isSaving = false;
   }
 

@@ -33,10 +33,14 @@ describe("cloudRosterProbeFromBody", () => {
     );
   });
 
-  it("treats a missing roster key as backed up", () => {
+  it("is unreachable when the roster key is omitted or not a list", () => {
     assert.equal(
       cloudRosterProbeFromBody({ ok: true, roster: undefined }),
-      "backed-up",
+      "unreachable",
+    );
+    assert.equal(
+      cloudRosterProbeFromBody({ ok: true, roster: { name_id: "hu_tao" } }),
+      "unreachable",
     );
   });
 });

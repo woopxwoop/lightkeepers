@@ -43,8 +43,11 @@ export let abyssVersionNumber = -1;
 export let stygianVersionNumber = -1;
 
 export function setVersionNumbers(abyss: number, stygian: number) {
+  const stygianChanged =
+    stygianVersionNumber >= 0 && stygian !== stygianVersionNumber;
   abyssVersionNumber = abyss;
   stygianVersionNumber = stygian;
+  if (stygianChanged) invalidateNearMissTeams();
 }
 
 /** Roster-keyed fetches must never post the unseeded -1 sentinel. */
@@ -622,11 +625,27 @@ function applyStaticBoardsIfCurrent(data: StaticBoardsPayload): boolean {
   return true;
 }
 
+/**
+ * Owned-team and near-miss requests follow the boards on screen.
+ * While a stale cycle is retained, that cycle's versions — not the newer
+ * layout numbers — are what `/api/teams` and `/api/nearmiss` must use.
+ */
+function versionsForRosterRequest(): { abyss: number; stygian: number } {
+  if (staticBoardsAbyssVersion >= 0 && staticBoardsStygianVersion >= 0) {
+    return {
+      abyss: staticBoardsAbyssVersion,
+      stygian: staticBoardsStygianVersion,
+    };
+  }
+  return { abyss: abyssVersionNumber, stygian: stygianVersionNumber };
+}
+
 function applyStaticBoardsPayload(
   data: StaticBoardsPayload,
   abyssVer: number,
   stygianVer: number,
 ): void {
+  const previous = versionsForRosterRequest();
   allTeamsAbyss.set(data.allTeamsAbyss ?? []);
   allTeamsStygian.set(data.allTeamsStygian ?? []);
   abyssEnemiesBoard.set(data.abyssEnemies ?? emptyAbyssEnemies);
@@ -639,6 +658,11 @@ function applyStaticBoardsPayload(
     Math.max(abyssVer, abyssVersionNumber),
     Math.max(stygianVer, stygianVersionNumber),
   );
+  const next = versionsForRosterRequest();
+  if (previous.abyss !== next.abyss || previous.stygian !== next.stygian) {
+    if (get(teamsOwnedStatus) !== "idle") invalidateTeamsOwned();
+    if (get(nearMissStatus) !== "idle") invalidateNearMissTeams();
+  }
   if (
     staticBoardsAbyssVersion === abyssVersionNumber &&
     staticBoardsStygianVersion === stygianVersionNumber
@@ -676,9 +700,10 @@ function ownedTeamsRosterKey(owned: CharacterOwned[]): string {
     .join("\0");
 }
 
-/** Roster plus both board versions. A cycle change must not reuse a fetch. */
+/** Roster plus the board versions the lists were fetched against. */
 function ownedTeamsRequestKey(owned: CharacterOwned[]): string {
-  return `${abyssVersionNumber}:${stygianVersionNumber}:${ownedTeamsRosterKey(owned)}`;
+  const versions = versionsForRosterRequest();
+  return `${versions.abyss}:${versions.stygian}:${ownedTeamsRosterKey(owned)}`;
 }
 
 // ── Write functions ────────────────────────────────────────────────────────
@@ -704,6 +729,7 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   assertVersionsSeeded();
   const id = ++teamsRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
+  const versions = versionsForRosterRequest();
   const requestKey = ownedTeamsRequestKey(owned);
 
   teamsOwnedStatus.set("loading");
@@ -726,8 +752,8 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
       stygianTeams: StygianTeam[];
     }>("/api/teams", {
       characters,
-      abyssVersion: abyssVersionNumber,
-      stygianVersion: stygianVersionNumber,
+      abyssVersion: versions.abyss,
+      stygianVersion: versions.stygian,
     });
 
     if (id !== teamsRequestId) return; // superseded
@@ -797,6 +823,7 @@ export async function writeNearMissTeams(
   assertVersionsSeeded();
   const id = ++nearMissRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
+  const versions = versionsForRosterRequest();
 
   nearMissStatus.set("loading");
 
@@ -806,7 +833,7 @@ export async function writeNearMissTeams(
       nearMissPairs: NearMissPairTeam[];
     }>("/api/nearmiss", {
       characters,
-      stygianVersion: stygianVersionNumber,
+      stygianVersion: versions.stygian,
       minPmi: 0.3,
     });
 
@@ -844,6 +871,26 @@ export async function ensureNearMissTeams(
     .catch(() => {});
   return pending;
 }
+
+/**
+ * A roster write can land outside Abyss / Pulls. Drop ready lists so the
+ * next ensure — which no-ops while status is `ready` — fetches the new roster.
+ */
+let rosterFetchIdentity = "";
+charactersOwned.subscribe((owned) => {
+  const next = ownedTeamsRosterKey(owned);
+  if (next === rosterFetchIdentity) return;
+  rosterFetchIdentity = next;
+  if (
+    get(teamsOwnedStatus) === "ready" ||
+    get(teamsOwnedStatus) === "loading"
+  ) {
+    invalidateTeamsOwned();
+  }
+  if (get(nearMissStatus) === "ready" || get(nearMissStatus) === "loading") {
+    invalidateNearMissTeams();
+  }
+});
 
 // ── Stygian tier list (roster-independent) ─────────────────────────────────
 export const tierList = writable<TierListPayload | null>(null);

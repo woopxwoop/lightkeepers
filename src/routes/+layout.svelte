@@ -75,9 +75,14 @@
       lastRosterUserId = id;
       if (shouldSyncCloudRoster(previous, id)) {
         const rosterCharacters = untrack(() => characters);
-        void syncCloudRoster(rosterCharacters).then((synced) => {
-          if (synced) noteCloudRosterSynced();
-        });
+        void syncCloudRoster(rosterCharacters).then(
+          (synced) => {
+            if (synced) noteCloudRosterSynced();
+          },
+          (error: unknown) => {
+            console.error("[roster sync] failed", error);
+          },
+        );
       }
     }
   });

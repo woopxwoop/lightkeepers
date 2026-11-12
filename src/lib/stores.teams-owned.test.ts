@@ -12,11 +12,14 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import { get } from "svelte/store";
 import type { CharacterOwned } from "./definitions.ts";
 import {
+  charactersOwned,
   ensureNearMissTeams,
+  ensureStaticBoards,
   ensureTeamsOwned,
   invalidateNearMissTeams,
   invalidateTeamsOwned,
   nearMissStatus,
+  resetStaticBoards,
   setVersionNumbers,
   teamsOwned,
   teamsOwnedStatus,
@@ -171,5 +174,80 @@ describe("ensureNearMissTeams", () => {
     await ensureNearMissTeams([row("Furina", true)]);
     assert.equal(calls, 2);
     assert.equal(get(nearMissStatus), "ready");
+  });
+
+  it("refetches after the stygian version changes", async () => {
+    const versions: number[] = [];
+    globalThis.fetch = async (_url, init) => {
+      const body = JSON.parse(String(init?.body)) as {
+        stygianVersion: number;
+      };
+      versions.push(body.stygianVersion);
+      return jsonResponse({ nearMissTeams: [], nearMissPairs: [] });
+    };
+
+    await ensureNearMissTeams([row("Furina", true)]);
+    assert.equal(get(nearMissStatus), "ready");
+    setVersionNumbers(6, 4);
+    assert.equal(get(nearMissStatus), "idle");
+    await ensureNearMissTeams([row("Furina", true)]);
+    assert.deepEqual(versions, [3, 4]);
+  });
+
+  it("drops ready lists when the roster store changes", async () => {
+    globalThis.fetch = async () =>
+      jsonResponse({
+        abyssTeams: [],
+        stygianTeams: [],
+        nearMissTeams: [],
+        nearMissPairs: [],
+      });
+    charactersOwned.set([row("Furina", true)]);
+    await ensureTeamsOwned([row("Furina", true)]);
+    await ensureNearMissTeams([row("Furina", true)]);
+    assert.equal(get(teamsOwnedStatus), "ready");
+    assert.equal(get(nearMissStatus), "ready");
+
+    charactersOwned.set([row("Furina", true), row("Xingqiu", true)]);
+    assert.equal(get(teamsOwnedStatus), "idle");
+    assert.equal(get(nearMissStatus), "idle");
+    charactersOwned.set([]);
+  });
+});
+
+describe("owned team requests while boards are stale", () => {
+  beforeEach(() => {
+    resetStaticBoards();
+    invalidateTeamsOwned();
+    setVersionNumbers(6, 3);
+  });
+
+  afterEach(() => {
+    resetStaticBoards();
+    invalidateTeamsOwned();
+  });
+
+  it("posts the retained board version instead of the newer layout version", async () => {
+    const posted: number[] = [];
+    globalThis.fetch = async (input, init) => {
+      const url = String(input);
+      if (url.includes("/api/teams")) {
+        const body = JSON.parse(String(init?.body)) as { abyssVersion: number };
+        posted.push(body.abyssVersion);
+        return jsonResponse({ abyssTeams: [], stygianTeams: [] });
+      }
+      return jsonResponse({
+        allTeamsAbyss: [{ team_key: "abyss-6" }],
+        allTeamsStygian: [{ team_key: "stygian-3" }],
+        latestAbyssVersion: { version_number: 6 },
+        latestStygianVersion: { version_number: 3 },
+      });
+    };
+
+    setVersionNumbers(7, 4);
+    await ensureStaticBoards();
+    await ensureTeamsOwned([row("Furina", true)]);
+
+    assert.deepEqual(posted, [6]);
   });
 });

@@ -3,7 +3,7 @@
  * Mirrors `roster-snapshot.ts`.
  */
 
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import {
   CALCULATOR_GOALS_VERSION,
   emptyGoalsState,
@@ -54,10 +54,29 @@ export function writeGoalsLocal(json: string): boolean {
   return true;
 }
 
+/**
+ * Revision last produced by `persistGoalsLocal`. A same-tab edit also bumps
+ * `goalsLocalRevision`, so callers can tell a cloud apply from a local save.
+ */
+let cloudAppliedRevision = -1;
+let cloudAppliedJson = "";
+
+/** True when `revision` is the cloud hydrate write of `json`, not a local edit. */
+export function localRevisionWasCloudApply(
+  revision: number,
+  json: string,
+): boolean {
+  return revision === cloudAppliedRevision && json === cloudAppliedJson;
+}
+
 /** Normalize + write full local state (includes selectedId). */
 export function persistGoalsLocal(state: CalculatorGoalsState): boolean {
   const capture = captureGoals(state);
-  return writeGoalsLocal(capture.json);
+  const ok = writeGoalsLocal(capture.json);
+  if (!ok) return false;
+  cloudAppliedRevision = get(goalsLocalRevision);
+  cloudAppliedJson = capture.json;
+  return true;
 }
 
 export function readGoalsLocal(): CalculatorGoalsState {

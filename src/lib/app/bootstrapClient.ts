@@ -162,7 +162,7 @@ async function fetchCloudRoster(
     const roster = (body as { roster: unknown }).roster;
     if (roster === null) return { status: "missing", userId };
     if (!Array.isArray(roster)) return { status: "error" };
-    if (roster.length === 0) return { status: "missing", userId };
+    // `[]` is a stored roster. Uploading local over it skips the conflict prompt.
     return {
       status: "ok",
       userId,
@@ -187,14 +187,23 @@ async function uploadLocalRoster(
   | { ok: true; inventoryOmitted?: boolean }
   | { ok: false; status: number; message?: string }
 > {
-  const result = await postRoster(roster);
-  if (!result.ok) {
-    console.error("[roster sync] upload failed", {
-      status: result.status,
-      message: result.message,
-    });
+  try {
+    const result = await postRoster(roster);
+    if (!result.ok) {
+      console.error("[roster sync] upload failed", {
+        status: result.status,
+        message: result.message,
+      });
+    }
+    return result;
+  } catch (err) {
+    console.error("[roster sync] upload failed", err);
+    return {
+      ok: false,
+      status: 0,
+      message: "Network error — roster not saved",
+    };
   }
-  return result;
 }
 
 function uploadFailureMessage(result: {
@@ -255,15 +264,42 @@ async function resolveRosterConflict(args: {
   }
 }
 
+const ROSTER_OWNER_KEY = "rosterOwnerUserId";
+
+function readRosterOwnerUserId(): string | null {
+  try {
+    const value = localStorage.getItem(ROSTER_OWNER_KEY);
+    return value && value.length > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberRosterOwner(userId: string): void {
+  try {
+    localStorage.setItem(ROSTER_OWNER_KEY, userId);
+  } catch {
+    /* the roster is still local; the next sync asks again */
+  }
+}
+
+function rosterBelongsToOtherAccount(sessionUserId: string): boolean {
+  const owner = readRosterOwnerUserId();
+  return owner !== null && owner !== sessionUserId;
+}
+
 /**
- * True only when a settled guest becomes a signed-in user.
- * The first settled id is a no-op so mount bootstrap is not prompted twice.
+ * True when a settled session changes to a different signed-in user.
+ * Includes guest → user and a direct user A → user B switch (no null in
+ * between). The first settled id is a no-op so mount bootstrap is not
+ * prompted twice. Logout does not sync.
  */
 export function shouldSyncCloudRoster(
   previousUserId: string | null | undefined,
   nextUserId: string | null,
 ): boolean {
-  return previousUserId === null && nextUserId !== null;
+  if (previousUserId === undefined || nextUserId === null) return false;
+  return previousUserId !== nextUserId;
 }
 
 /**
@@ -292,29 +328,48 @@ export async function syncCloudRoster(
   if (cloud.status === "guest" || cloud.status === "error") return false;
 
   const localRoster = get(charactersOwned);
+  const foreign = rosterBelongsToOtherAccount(cloud.userId);
 
   if (cloud.status === "missing") {
+    if (foreign) {
+      const confirmed = await resolveRosterConflict({
+        userId: cloud.userId,
+        local: localRoster,
+        cloud: [],
+        uploadRetry: true,
+      });
+      if (confirmed) rememberRosterOwner(cloud.userId);
+      return confirmed;
+    }
     const result = await uploadLocalRoster(localRoster);
     if (result.ok) {
+      rememberRosterOwner(cloud.userId);
       setHasSavedRoster();
       return true;
     }
-    return resolveRosterConflict({
+    const confirmed = await resolveRosterConflict({
       userId: cloud.userId,
       local: localRoster,
       cloud: [],
       error: uploadFailureMessage(result),
       uploadRetry: true,
     });
+    if (confirmed) rememberRosterOwner(cloud.userId);
+    return confirmed;
   }
 
-  if (!rostersDifferForSync(localRoster, cloud.roster)) return false;
+  if (!rostersDifferForSync(localRoster, cloud.roster)) {
+    rememberRosterOwner(cloud.userId);
+    return false;
+  }
 
-  return resolveRosterConflict({
+  const confirmed = await resolveRosterConflict({
     userId: cloud.userId,
     local: localRoster,
     cloud: cloud.roster,
   });
+  if (confirmed) rememberRosterOwner(cloud.userId);
+  return confirmed;
 }
 
 /**

@@ -66,6 +66,7 @@
     if (id !== seenAccountId) {
       seenAccountId = id;
       accountGeneration += 1;
+      confirmReset = false;
     }
     if ($session.data) {
       const version = ++cloudRosterVersion;
@@ -112,7 +113,10 @@
     rosterError = "";
     try {
       const res = await fetch("/api/roster", { method: "DELETE" });
-      if (account !== accountGeneration) return;
+      if (account !== accountGeneration) {
+        confirmReset = false;
+        return;
+      }
       if (res.ok) {
         cloudRosterVersion += 1;
         probe = "empty";
@@ -124,7 +128,10 @@
         console.error("resetCloudRoster: unexpected status", res.status);
       }
     } catch (err) {
-      if (account !== accountGeneration) return;
+      if (account !== accountGeneration) {
+        confirmReset = false;
+        return;
+      }
       rosterError = "Network error — could not reset cloud roster";
       confirmReset = false;
       console.error("resetCloudRoster: network error", err);
