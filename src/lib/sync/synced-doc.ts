@@ -69,6 +69,8 @@ export type SyncStatus =
   | "ask";
 
 export type SyncView<T> = {
+  /** `setAccount` has run: `data` is this account's own copy, not a placeholder. */
+  ready: boolean;
   /** Account this view's slot belongs to. `null` is the guest slot. */
   account: string | null;
   data: T;
@@ -107,8 +109,17 @@ export interface SyncedDoc<T> {
    * `basedOn` is the view data a page draft started from. If the slot moved
    * since (another surface saved, or a read landed), the draft is merged
    * onto the current data with `spec.merge` instead of replacing it.
+   *
+   * Saving while status is `ask` answers it: this copy wins.
+   *
+   * `attach` adds fields to the body of the next write only (the GOOD
+   * inventory beside the roster). It forces that write even when `next`
+   * equals the stored copy, and is never stored.
    */
-  commit(next: T, opts?: { basedOn?: T }): Promise<void>;
+  commit(
+    next: T,
+    opts?: { basedOn?: T; attach?: Record<string, unknown> },
+  ): Promise<void>;
   /**
    * Re-read the server copy (visibility change, retry button). Never sends:
    * unsent edits are merged onto the server copy and stay unsent.
@@ -171,8 +182,11 @@ export function createSyncedDoc<T>(
   /** `undefined` until the layout knows the session. */
   let active: string | null | undefined = undefined;
   let queue: Promise<void> = Promise.resolve();
+  /** Extra body fields for an account's next write. Memory only. */
+  const attachments = new Map<string, Record<string, unknown>>();
 
   const view = writable<SyncView<T>>({
+    ready: false,
     account: null,
     data: spec.empty(),
     status: "loading",
@@ -263,6 +277,7 @@ export function createSyncedDoc<T>(
     if (account !== active) return;
     const state = stateOf(account);
     view.set({
+      ready: true,
       account,
       data: slotOf(account).data,
       status: statusOf(account),
@@ -306,35 +321,71 @@ export function createSyncedDoc<T>(
       if (dirty && continueSave !== null) schedulePush(account, continueSave);
     };
 
+    // This device holds nothing of the account's own yet (first read here).
+    const untouched =
+      !slot.dirty && slot.base === null && spec.equal(slot.data, spec.empty());
+    const guest = slotOf(null);
+    const offerGuest =
+      continueSave === null &&
+      untouched &&
+      !spec.equal(guest.data, spec.empty());
+
     if (wire === null || rev === null) {
-      // No server copy and nothing of this account's own on the device:
-      // guest data becomes the account's first copy without asking. There
-      // is nothing to overwrite or compare. The guest slot is emptied so
-      // another account cannot silently take the same data later.
-      const untouched =
-        !slot.dirty &&
-        slot.base === null &&
-        spec.equal(slot.data, spec.empty());
-      const guest = slotOf(null);
-      if (
-        continueSave === null &&
-        untouched &&
-        !spec.equal(guest.data, spec.empty())
-      ) {
+      // No server copy: guest data becomes the account's first copy without
+      // asking. There is nothing to overwrite or compare. The guest slot is
+      // emptied so another account cannot silently take the same data later.
+      if (offerGuest) {
         storeSlot(account, { ...slot, data: guest.data, dirty: true });
         storeSlot(null, emptySlot());
         schedulePush(account, 0);
         return;
       }
-      // Otherwise what this device has is unsent until the user saves.
       const dirty = slot.dirty || !spec.equal(slot.data, spec.empty());
       storeSlot(account, { ...slot, base: null, baseRev: null, dirty });
+      // The server never had a copy and this device never saw one: what is
+      // here is the account's first copy, sent without asking. A copy that
+      // existed and was deleted (base set) stays unsent until the user saves.
+      if (continueSave === null && slot.base === null && dirty) {
+        schedulePush(account, 0);
+        return;
+      }
       finishSave(dirty);
       return;
     }
 
     const remote = spec.fromWire(wire, slot.data);
-    if (!slot.dirty) {
+
+    // Guest data meets an account that already has a server copy. The spec
+    // decides: a merge (kept unsent for the user to save) or "ask". The guest
+    // slot is emptied either way; it has been offered to this account.
+    if (offerGuest) {
+      storeSlot(null, emptySlot());
+      if (!spec.equal(guest.data, remote)) {
+        const merged = spec.merge(null, guest.data, remote);
+        if (merged === "ask") {
+          storeSlot(account, {
+            ...slot,
+            data: guest.data,
+            base: remote,
+            baseRev: rev,
+            dirty: true,
+          });
+          setState(account, { ask: { remote, rev } });
+          return;
+        }
+        storeSlot(account, {
+          ...slot,
+          data: merged,
+          base: remote,
+          baseRev: rev,
+          dirty: !spec.equal(merged, remote),
+        });
+        return;
+      }
+    }
+
+    // Nothing unsent, or the unsent edits already match: take the server copy.
+    if (!slot.dirty || spec.equal(slot.data, remote)) {
       storeSlot(account, {
         ...slot,
         data: remote,
@@ -392,11 +443,18 @@ export function createSyncedDoc<T>(
     if (!slot.dirty || stateOf(account).ask) return;
 
     const sent = slot.data;
+    const attach = attachments.get(account);
     setState(account, { busy: "write" });
-    const res = await transport.write(spec.toWire(sent), slot.baseRev, account);
+    const res = await transport.write(
+      spec.toWire(sent),
+      slot.baseRev,
+      account,
+      attach,
+    );
     setState(account, { busy: null });
 
     if (res.status === "written") {
+      if (attachments.get(account) === attach) attachments.delete(account);
       const now = slotOf(account);
       const dirty = !spec.equal(now.data, sent);
       setState(account, { offline: false, error: null });
@@ -447,10 +505,26 @@ export function createSyncedDoc<T>(
 
     commit(next, opts) {
       const account = requireActive();
-      const slot = slotOf(account);
+      let slot = slotOf(account);
+      const pendingAsk = account === null ? null : stateOf(account).ask;
+      if (account !== null && pendingAsk) {
+        // Saving is the user's answer to the open question: their copy wins.
+        setState(account, { ask: null });
+        slot = { ...slot, base: pendingAsk.remote, baseRev: pendingAsk.rev };
+      }
+      if (account !== null && opts?.attach) {
+        attachments.set(account, {
+          ...attachments.get(account),
+          ...opts.attach,
+        });
+      }
       let data = next;
       const basedOn = opts?.basedOn;
-      if (basedOn !== undefined && !spec.equal(basedOn, slot.data)) {
+      if (
+        basedOn !== undefined &&
+        !pendingAsk &&
+        !spec.equal(basedOn, slot.data)
+      ) {
         const merged = spec.merge(basedOn, next, slot.data);
         if (merged !== "ask") {
           data = merged;
@@ -465,7 +539,9 @@ export function createSyncedDoc<T>(
       }
       const dirty =
         account !== null &&
-        (slot.base === null || !spec.equal(data, slot.base));
+        (slot.base === null ||
+          !spec.equal(data, slot.base) ||
+          attachments.has(account));
       storeSlot(account, { ...slot, data, dirty });
       if (account === null || !dirty) return Promise.resolve();
       setState(account, { error: null });

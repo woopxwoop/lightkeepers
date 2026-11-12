@@ -1,7 +1,8 @@
 <script lang="ts">
   /**
    * Root shell: seed stores from SSR, then bootstrapClient on mount
-   * (roster + background /api/static warm). Page chrome is NavBar + slot.
+   * (background /api/static warm). Synced documents (roster, goals) follow
+   * the session from here. Page chrome is NavBar + slot.
    */
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
@@ -11,12 +12,13 @@
   import type { Character } from "#lib/definitions.js";
   import {
     bootstrapClient,
-    retainUnownedRosterOnLogout,
     seedClientStores,
-    shouldSyncCloudRoster,
-    syncCloudRoster,
   } from "#lib/app/bootstrapClient.js";
-  import { noteCloudRosterSynced } from "#lib/app/cloud-roster-probe.js";
+  import {
+    feedRosterStores,
+    rosterSync,
+    watchRosterConflicts,
+  } from "#lib/app/roster-sync.js";
   import { clearRosterInventory } from "#lib/app/roster-inventory.js";
   import { cancelRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
   import { authClient } from "#lib/auth-client.js";
@@ -62,36 +64,26 @@
   let characters: Character[] = $derived(data.characters);
 
   const session = authClient.useSession();
-  let lastRosterUserId: string | null | undefined = undefined;
+  const rosterView = rosterSync().view;
+  /** Account the per-account caches (inventory, open popup) belong to. */
+  let lastUserId: string | null | undefined = undefined;
   $effect(() => {
     if ($session.isPending) return;
     const id = $session.data?.user?.id ?? null;
     // Synced documents follow every settled session, the first one included.
+    // Each account reads and writes only its own slot.
     goalsSync().setAccount(id);
-    if (lastRosterUserId === undefined) {
-      lastRosterUserId = id;
-      return;
-    }
-    if (lastRosterUserId !== id) {
-      const previous = lastRosterUserId;
+    rosterSync().setAccount(id);
+    if (lastUserId !== undefined && lastUserId !== id) {
       clearRosterInventory();
       cancelRosterSyncConflict();
-      if (id === null && previous) retainUnownedRosterOnLogout(previous);
-      lastRosterUserId = id;
-      if (shouldSyncCloudRoster(previous, id)) {
-        const rosterCharacters = untrack(() => characters);
-        void syncCloudRoster(rosterCharacters, {
-          directAccountSwitch: previous !== null,
-        }).then(
-          (synced) => {
-            if (synced) noteCloudRosterSynced();
-          },
-          (error: unknown) => {
-            console.error("[roster sync] failed", error);
-          },
-        );
-      }
     }
+    lastUserId = id;
+  });
+
+  // Pages read `charactersOwned`; it is fed from the roster document only.
+  $effect(() => {
+    feedRosterStores(characters, $rosterView);
   });
 
   // Route defaults while following route; after a manual toggle, persisted choice wins.
@@ -101,8 +93,8 @@
   });
 
   // Version globals are module-level and child effects can run before this
-  // layout's, so seed them before those components exist. Leave the roster and
-  // charactersHydrated false until the effect below, after hydration, so
+  // layout's, so seed them before those components exist. The roster and
+  // charactersHydrated wait for the session (feedRosterStores), so
   // /characters still renders LoadingState for the server HTML.
   if (browser) {
     untrack(() =>
@@ -111,7 +103,6 @@
   }
   $effect(() => {
     seedClientStores({
-      characters,
       abyssVersionNumber: data.abyssVersionNumber,
       stygianVersionNumber: data.stygianVersionNumber,
     });
@@ -123,9 +114,15 @@
     const onVisible = () => {
       if (document.visibilityState !== "visible" || $session.isPending) return;
       void goalsSync().refresh();
+      void rosterSync().refresh();
     };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    // The roster's "Use cloud / Upload this device" question → popup.
+    const stopConflicts = watchRosterConflicts(() => characters);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      stopConflicts();
+    };
   });
 
   onMount(() => {
@@ -134,10 +131,9 @@
     syncBackgroundToPath(page.url.pathname);
 
     bootstrapClient({
-      characters,
       abyssVersionNumber: data.abyssVersionNumber,
       stygianVersionNumber: data.stygianVersionNumber,
-    }).catch(console.error);
+    });
 
     return detachDebug;
   });

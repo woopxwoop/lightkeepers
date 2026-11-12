@@ -318,36 +318,15 @@ export function areAnimationsEnabled(): boolean {
 export const faviconDataUri = readable("/lightkeepers-mark.png");
 
 // ── Character store ────────────────────────────────────────────────────────
+// Fed from the roster synced document by the root layout. Read-only elsewhere.
 export const charactersOwned = writable<CharacterOwned[]>([]);
 export const charactersHydrated = writable<boolean>(false);
 
-/** Whether the user has ever saved a roster. Persisted in localStorage. */
+/**
+ * The active account's roster slot holds a saved roster (the default roster
+ * is never stored). Fed by `feedRosterStores` (`#lib/app/roster-sync.js`).
+ */
 export const hasSavedRoster = writable<boolean>(false);
-
-export function initHasSavedRoster(): void {
-  try {
-    if (localStorage.getItem("hasSavedRoster") === "true") {
-      hasSavedRoster.set(true);
-      return;
-    }
-    // Persisted roster without the flag (cloud apply, older clients).
-    // Presence of `charactersOwned` means the user already configured ownership.
-    if (localStorage.getItem("charactersOwned")) {
-      setHasSavedRoster();
-      return;
-    }
-    hasSavedRoster.set(false);
-  } catch {
-    // localStorage unavailable — assume not saved
-  }
-}
-
-export function setHasSavedRoster(): void {
-  hasSavedRoster.set(true);
-  try {
-    localStorage.setItem("hasSavedRoster", "true");
-  } catch {}
-}
 
 // ── Abyss stores ──────────────────────────────────────────────────────────
 export const teamsOwned = writable<AbyssTeam[]>([]);

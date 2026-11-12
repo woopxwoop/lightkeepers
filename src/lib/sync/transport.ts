@@ -27,11 +27,15 @@ export type TransportWrite =
 
 export interface SyncTransport {
   read(): Promise<TransportRead>;
-  /** `baseRev` null = create only. `account` must still be signed in. */
+  /**
+   * `baseRev` null = create only. `account` must still be signed in.
+   * `attach` adds fields to this request body only.
+   */
   write(
     wire: unknown,
     baseRev: string | null,
     account: string,
+    attach?: Record<string, unknown>,
   ): Promise<TransportWrite>;
 }
 
@@ -90,12 +94,12 @@ export function fetchTransport(endpoint: string, field: string): SyncTransport {
       }
     },
 
-    async write(wire, baseRev, account) {
+    async write(wire, baseRev, account, attach) {
       try {
         const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ [field]: wire, baseRev, account }),
+          body: JSON.stringify({ ...attach, [field]: wire, baseRev, account }),
           signal: AbortSignal.timeout(TIMEOUT_MS),
         });
         const body = await bodyOf(res);

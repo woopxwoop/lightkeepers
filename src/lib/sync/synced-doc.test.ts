@@ -71,6 +71,7 @@ function fakeServer() {
     session: null as string | null,
     failReads: false,
     failWrites: false,
+    attached: [] as Record<string, unknown>[],
     /** Hold every request until the returned release() runs. */
     hold(): () => void {
       let release!: () => void;
@@ -100,8 +101,9 @@ function fakeServer() {
         account: session,
       };
     },
-    async write(wire, baseRev, account) {
+    async write(wire, baseRev, account, attach) {
       calls.push(`write:${account}:${baseRev}`);
+      if (attach) server.attached.push(attach);
       await gate;
       if (server.failWrites) return { status: "error", message: "offline" };
       if (account !== server.session) {
@@ -151,6 +153,14 @@ describe("guest", () => {
 });
 
 describe("signed in", () => {
+  it("is not ready until the session is known", async () => {
+    const { synced, signIn, view } = setup();
+    assert.equal(view().ready, false);
+    signIn(null);
+    assert.equal(view().ready, true);
+    void synced;
+  });
+
   it("takes the server copy when nothing is pending locally", async () => {
     const { synced, signIn, server, view } = setup();
     server.put("a", ["x", "y"]);
@@ -425,15 +435,60 @@ describe("accounts", () => {
     assert.equal(server.rows.has("b"), false);
   });
 
-  it("with a server copy, adopting guest data is the user's choice", async () => {
-    const { synced, signIn, server, view } = setup();
+  it("guest data meeting a server copy is merged and left unsent", async () => {
+    const { synced, signIn, server, view, storage } = setup();
     server.put("a", ["server"]);
     signIn(null);
     await synced.commit(doc("guest-1"));
     signIn("a");
     await synced.idle();
-    assert.deepEqual(view().data.items, ["server"]);
+    assert.deepEqual(view().data.items, ["server", "guest-1"]);
+    assert.equal(view().status, "dirty");
     assert.deepEqual(server.rows.get("a")?.items, ["server"]);
+    assert.equal(storage.read("lk:t:guest") === null, false);
+    assert.deepEqual(
+      (storage.read("lk:t:guest") as { data: Doc }).data.items,
+      [],
+    );
+    await synced.commit(view().data);
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["server", "guest-1"]);
+  });
+
+  it("guest data equal to the server copy changes nothing", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["same"]);
+    signIn(null);
+    await synced.commit(doc("same"));
+    signIn("a");
+    await synced.idle();
+    assert.equal(view().status, "synced");
+  });
+
+  it("a spec that asks gets the guest-vs-server question", async () => {
+    const { synced, signIn, server, view } = setup({ ask: true });
+    server.put("a", ["server"]);
+    signIn(null);
+    await synced.commit(doc("guest-1"));
+    signIn("a");
+    await synced.idle();
+    assert.equal(view().status, "ask");
+    assert.deepEqual(view().data.items, ["guest-1"]);
+    assert.deepEqual(view().remote?.items, ["server"]);
+    await synced.resolve("local");
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["guest-1"]);
+  });
+
+  it("explicit adoption replaces the account's copy", async () => {
+    const { synced, signIn, server } = setup();
+    server.put("a", ["server"]);
+    signIn("a");
+    await synced.idle();
+    signIn(null);
+    await synced.commit(doc("guest-1"));
+    signIn("a");
+    await synced.idle();
     await synced.adoptGuest();
     await synced.idle();
     assert.deepEqual(server.rows.get("a")?.items, ["guest-1"]);
@@ -471,6 +526,36 @@ describe("ask", () => {
     await synced.idle();
     assert.deepEqual(view().data.items, ["theirs"]);
     assert.equal(view().status, "synced");
+  });
+});
+
+describe("save answers and attachments", () => {
+  it("saving while asked sends the saved copy", async () => {
+    const { synced, signIn, server, view } = setup({ ask: true });
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["theirs"]);
+    await synced.commit(doc("mine"));
+    await synced.idle();
+    assert.equal(view().status, "ask");
+    await synced.commit(doc("mine", "more"));
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["mine", "more"]);
+    assert.equal(view().status, "synced");
+  });
+
+  it("an attachment rides one write, even with no data change", async () => {
+    const { synced, signIn, server } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    await synced.commit(doc("x"), { attach: { weapons: [1] } });
+    await synced.idle();
+    assert.deepEqual(server.attached, [{ weapons: [1] }]);
+    await synced.commit(doc("x", "y"));
+    await synced.idle();
+    assert.equal(server.attached.length, 1);
   });
 });
 

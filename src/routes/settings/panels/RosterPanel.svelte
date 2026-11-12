@@ -2,13 +2,7 @@
   import { tick, untrack } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import {
-    charactersOwned,
-    charactersHydrated,
-    setHasSavedRoster,
-    invalidateNearMissTeams,
-    invalidateTeamsOwned,
-  } from "#lib/stores.js";
+  import { charactersOwned, charactersHydrated } from "#lib/stores.js";
   import { authClient } from "#lib/auth-client.js";
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
@@ -42,19 +36,17 @@
     type CharacterSortKey,
     type OwnershipFilter,
   } from "#lib/character-filter.js";
-  import { rememberRosterOwner } from "#lib/app/bootstrapClient.js";
+  import { rosterSync } from "#lib/app/roster-sync.js";
+  import { rosterDocOf } from "#lib/sync/roster-doc.js";
   import {
     captureRoster,
-    postRoster,
     rosterDiffersFromSnapshot,
-    rosterLocalIs,
-    writeRosterLocal,
-    type RosterCapture,
   } from "#lib/roster-snapshot.js";
   import { trapTabKey } from "#lib/ui/focus-trap.js";
   import { resolve } from "$app/paths";
 
   const session = authClient.useSession();
+  const rosterView = rosterSync().view;
 
   let tempCharactersOwned: CharacterOwned[] = $state([]);
   let synced = $state(false);
@@ -64,8 +56,9 @@
   let rosterError = $state("");
   let savedSnapshot = $state("");
   /**
-   * Account the draft was loaded for. A different signed-in account drops
-   * the draft so one account's unsaved edits never post to another's cloud.
+   * Account the draft was loaded for (the roster document's account). A
+   * different account drops the draft, so one account's unsaved edits never
+   * save as another's.
    */
   let draftOwner: string | null | undefined = undefined;
   let hasUnsavedChanges = $derived(
@@ -118,29 +111,15 @@
     );
   }
 
-  /** Undo this save's local write while it is still the stored roster. */
-  function restoreSavedSnapshot(pendingJson: string) {
-    if (rosterLocalIs(pendingJson)) writeRosterLocal(savedSnapshot);
-  }
-
-  function sessionUserId(): string | null | undefined {
-    return $session.isPending ? undefined : ($session.data?.user?.id ?? null);
-  }
-
   function loadDraft(owned: CharacterOwned[]) {
     const pending = captureRoster(owned);
     tempCharactersOwned = pending.roster;
     savedSnapshot = pending.json;
   }
 
-  function commitSaved(pending: RosterCapture) {
-    savedSnapshot = pending.json;
-    charactersOwned.set(pending.roster);
-    invalidateTeamsOwned();
-    invalidateNearMissTeams();
+  function flashSaved() {
     const generation = ++savedGeneration;
     showSaved = true;
-    setHasSavedRoster();
     setTimeout(() => {
       if (generation === savedGeneration) showSaved = false;
     }, 2000);
@@ -158,43 +137,37 @@
     }
   }
 
+  /**
+   * Save through the roster document. A draft started from an older roster
+   * is compared with the newer one (`basedOn`); a difference opens the
+   * "Use cloud / Upload this device" popup instead of overwriting.
+   */
   async function saveCharacters() {
     if (isSaving) return;
+    const view = $rosterView;
+    if (!view.ready || view.account !== draftOwner) {
+      rosterError = "Account changed — review the roster before saving.";
+      return;
+    }
     isSaving = true;
     rosterError = "";
 
     // Freeze the editor state before any await so concurrent toggles stay unsaved.
     const pending = captureRoster(tempCharactersOwned);
-    const ownerId = sessionUserId();
-    if (ownerId === undefined || ownerId !== draftOwner) {
-      rosterError = "Account changed — review the roster before saving.";
-      isSaving = false;
-      return;
-    }
+    const basedOn = rosterDocOf(JSON.parse(savedSnapshot) as CharacterOwned[]);
 
     try {
-      if (!writeRosterLocal(pending.json)) {
-        console.warn("localStorage unavailable — saving to memory only");
+      await rosterSync().commit(rosterDocOf(pending.roster), { basedOn });
+      const after = $rosterView;
+      if (after.account !== view.account) return;
+      savedSnapshot = pending.json;
+      if (after.status === "ask") return; // the popup takes it from here
+      if (after.error) {
+        rosterError = `Saved on this device — not synced: ${after.error}`;
+        return;
       }
-
-      if (ownerId) {
-        const result = await postRoster(pending.roster);
-        // A result for an account that is gone must not touch the new one.
-        if (sessionUserId() !== ownerId) return;
-        if (!result.ok) {
-          restoreSavedSnapshot(pending.json);
-          rosterError = result.message
-            ? `Sync failed (${result.status}): ${result.message}`
-            : `Sync failed (${result.status}) — roster not saved to cloud`;
-          return;
-        }
-        rememberRosterOwner(ownerId);
-        commitSaved(pending);
-      } else {
-        commitSaved(pending);
-      }
+      flashSaved();
     } catch (e) {
-      if (sessionUserId() === ownerId) restoreSavedSnapshot(pending.json);
       console.error("Roster save error:", e);
       rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
     } finally {
@@ -213,16 +186,16 @@
   });
 
   $effect(() => {
-    const id = sessionUserId();
-    if (id === undefined || id === draftOwner) return;
-    // First settled account adopts the draft; a later switch discards it.
+    const view = $rosterView;
+    if (!view.ready || view.account === draftOwner) return;
+    // First known account adopts the draft; a later switch discards it.
     if (draftOwner !== undefined && synced) {
       untrack(() => {
         loadDraft($charactersOwned);
         rosterError = "";
       });
     }
-    draftOwner = id;
+    draftOwner = view.account;
   });
 
   $effect(() => {

@@ -5,20 +5,9 @@
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import IconGoogle from "#lib/ui/icons/IconGoogle.svelte";
   import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";
-  import {
-    charactersHydrated,
-    charactersOwned,
-    invalidateNearMissTeams,
-    invalidateTeamsOwned,
-    setHasSavedRoster,
-  } from "#lib/stores.js";
-  import { rememberRosterOwner } from "#lib/app/bootstrapClient.js";
-  import {
-    captureRoster,
-    postRoster,
-    rosterLocalIs,
-    writeRosterLocal,
-  } from "#lib/roster-snapshot.js";
+  import { charactersHydrated, charactersOwned } from "#lib/stores.js";
+  import { rosterSync } from "#lib/app/roster-sync.js";
+  import { rosterDocOf } from "#lib/sync/roster-doc.js";
   import { applyGoodRoster, parseGoodText } from "#lib/good-import.js";
   import { serializeGoodDocument } from "#lib/good-export.js";
   import {
@@ -32,7 +21,6 @@
   import GoodImportModal from "#lib/ui/components/GoodImportModal.svelte";
   import {
     cloudRosterProbeFromBody,
-    cloudRosterProbeRevision,
     type CloudRosterProbe,
   } from "#lib/app/cloud-roster-probe.js";
 
@@ -47,6 +35,11 @@
   } = $props();
 
   const session = authClient.useSession();
+  const rosterView = rosterSync().view;
+  /** Changes each time the roster finishes syncing, so the probe re-reads. */
+  let rosterSyncedFor = $derived(
+    $rosterView.status === "synced" ? $rosterView.account : null,
+  );
 
   let probe = $state<CloudRosterProbe>("unknown");
   let rosterError = $state("");
@@ -63,7 +56,7 @@
   let importNote = $state("");
 
   $effect(() => {
-    void $cloudRosterProbeRevision;
+    void rosterSyncedFor;
     const id = $session.data?.user?.id ?? null;
     if (id !== seenAccountId) {
       seenAccountId = id;
@@ -163,8 +156,6 @@
     importError = "";
     importNote = "";
 
-    let written: string | null = null;
-    let previousJson: string | null = null;
     try {
       const parsed = parseGoodText(text);
       if (!parsed.ok) {
@@ -174,58 +165,23 @@
 
       const next = applyGoodRoster($charactersOwned, parsed.characters);
       const ownedCount = next.filter((c) => c.isOwned).length;
-      const pending = captureRoster(next);
-      const previous = captureRoster($charactersOwned);
       const inventory = {
         weapons: parsed.weapons,
         artifacts: parsed.artifacts,
       };
 
-      previousJson = previous.json;
-      if (writeRosterLocal(pending.json)) {
-        written = pending.json;
-      } else {
-        console.warn("localStorage unavailable — saving to memory only");
-      }
-
-      const ownerId = $session.data?.user?.id ?? null;
-      if (ownerId) {
-        const result = await postRoster(pending.roster, inventory);
-        // Resolved: the branches below own any rollback from here on.
-        written = null;
-        if (!result.ok) {
-          if (rosterLocalIs(pending.json)) writeRosterLocal(previous.json);
-          importError = result.message
-            ? `Sync failed (${result.status}): ${result.message}`
-            : `Sync failed (${result.status}) — roster not saved to cloud`;
-          return;
-        }
-        if (($session.data?.user?.id ?? null) !== ownerId) {
-          if (rosterLocalIs(pending.json)) writeRosterLocal(previous.json);
-          return;
-        }
-        rememberRosterOwner(ownerId);
-        cloudRosterVersion += 1;
-        probe = "backed-up";
-        if (result.inventoryOmitted) {
-          importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}. Cloud saved roster only — inventory columns are not migrated.`;
-        }
-      }
-
+      // The inventory rides along with this one roster write when signed in.
+      const signedIn = $rosterView.account !== null;
+      await rosterSync().commit(rosterDocOf(next), {
+        attach: signedIn ? inventory : undefined,
+      });
       setRosterInventory(inventory);
-      charactersOwned.set(pending.roster);
-      invalidateTeamsOwned();
-      invalidateNearMissTeams();
-      setHasSavedRoster();
       pickingGood = false;
-      if (!importNote) {
-        importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
-      }
+      const error = $rosterView.error;
+      importNote = error
+        ? `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"} on this device — not synced: ${error}`
+        : `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
     } catch (err) {
-      // postRoster rejects on network failure. Undo only our own write.
-      if (written !== null && previousJson !== null && rosterLocalIs(written)) {
-        writeRosterLocal(previousJson);
-      }
       console.error("GOOD import error:", err);
       importError = "Could not import that GOOD JSON.";
     } finally {
