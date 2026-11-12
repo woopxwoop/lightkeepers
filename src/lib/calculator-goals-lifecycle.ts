@@ -372,12 +372,20 @@ function restoreGoalsIfCurrent(
   writeGoalsLocal(snapshot);
 }
 
-function goalsAbsentFromCloud(
+/**
+ * Remember the cloud side when the merge kept a local add or a local edit
+ * of a goal the cloud already had. A later read merges against that side
+ * until a matching POST. Identical goal lists do not need a base.
+ */
+function keepMergedEdits(
+  userId: string | null,
   merged: CalculatorGoalsState,
   cloudGoals: CalculatorGoalsState["goals"],
-): boolean {
-  const cloudIds = new Set(cloudGoals.map((goal) => goal.id));
-  return merged.goals.some((goal) => !cloudIds.has(goal.id));
+): void {
+  if (!userId) return;
+  const cloudSide = applyCloudGoals(merged, cloudGoals);
+  if (JSON.stringify(merged.goals) === JSON.stringify(cloudSide.goals)) return;
+  rebaseRecovery(userId, cloudSide);
 }
 
 /**
@@ -503,12 +511,8 @@ export async function hydrateGoalsState(
           reconciled,
           userId,
         );
-        if (
-          hydration.postCloud &&
-          userId &&
-          goalsAbsentFromCloud(reconciled, cloud.goals)
-        ) {
-          rebaseRecovery(userId, applyCloudGoals(savedDuringRead, cloud.goals));
+        if (hydration.postCloud) {
+          keepMergedEdits(userId, reconciled, cloud.goals);
         }
         return hydration;
       }
@@ -520,12 +524,19 @@ export async function hydrateGoalsState(
           userId,
         );
       }
-      return appliedHydration(
+      const reconciled = reconcilePendingGoals(
+        local,
+        currentState,
+        cloud.goals,
+      );
+      const hydration = appliedHydration(
         readSerial,
         currentState,
-        reconcilePendingGoals(local, currentState, cloud.goals),
+        reconciled,
         userId,
       );
+      if (hydration.postCloud) keepMergedEdits(userId, reconciled, cloud.goals);
+      return hydration;
     }
     if (!allowWrite) {
       return { ...current, postCloud: false, syncError: "" };

@@ -82,6 +82,14 @@ function goalsWith(nameId: string, id: string): CalculatorGoalsState {
   };
 }
 
+function goalsWithStarred(nameId: string, id: string): CalculatorGoalsState {
+  return {
+    ...emptyGoalsState(),
+    goals: [createCharacterGoal(nameId, { id, starred: true })],
+    selectedId: id,
+  };
+}
+
 function installLocalStorage(): Map<string, string> {
   const storage = new Map<string, string>();
   Object.defineProperty(globalThis, "localStorage", {
@@ -756,6 +764,45 @@ describe("hydrateGoalsState cloud read", () => {
       again.state.goals.some((goal) => goal.id === "added"),
       true,
     );
+  });
+
+  it("keeps a star saved during a read when a later cloud list omits it", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "hutao")).json);
+
+    let release!: (value: Response) => void;
+    mock.method(
+      globalThis,
+      "fetch",
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(captureGoals(goalsWithStarred("Hutao", "hutao")).json);
+    release(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Hutao", "hutao").goals }),
+        { status: 200 },
+      ),
+    );
+    const first = await pending;
+    assert.equal(first.state.goals[0]?.starred, true);
+
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({ goals: goalsWith("Hutao", "hutao").goals }),
+          { status: 200 },
+        ),
+    );
+    const again = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(again.postCloud, true);
+    assert.equal(again.state.goals[0]?.id, "hutao");
+    assert.equal(again.state.goals[0]?.starred, true);
   });
 
   it("does not post when the reconciled list cannot be stored", async () => {
