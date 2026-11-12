@@ -117,16 +117,17 @@
     ]);
     const userId = sess?.user?.id ?? null;
     const pending = await hydrateGoalsState(userId !== null, {
+      userId,
       allowWrite: () =>
         $session.isPending || ($session.data?.user?.id ?? null) === userId,
     });
     plannerCatalog = catalog;
-    auditUserId = $session.isPending
-      ? userId
-      : ($session.data?.user?.id ?? null);
+    auditUserId = userId;
     plannerGoals = pending.state;
     plannerSnapshot = pending.json;
-    plannerPostCloud = pending.postCloud && auditUserId === userId;
+    plannerPostCloud =
+      pending.postCloud &&
+      ($session.isPending || ($session.data?.user?.id ?? null) === userId);
     plannerSyncError = pending.postCloud ? "" : pending.syncError;
     seenPlannerRevision = untrack(() => $goalsLocalRevision);
     return {
@@ -244,6 +245,7 @@
     void (async () => {
       const pending = await hydrateGoalsState(readFor !== null, {
         replaceLocal,
+        userId: readFor,
         allowWrite: () =>
           !$session.isPending && ($session.data?.user?.id ?? null) === readFor,
       });

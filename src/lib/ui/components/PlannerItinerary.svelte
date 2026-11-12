@@ -211,13 +211,14 @@
         const { data: sess } = await authClient.getSession();
         const userId = sess?.user?.id ?? null;
         const pending = await hydrateGoalsState(userId !== null, {
+          userId,
           allowWrite: () =>
             $session.isPending || ($session.data?.user?.id ?? null) === userId,
         });
-        goalsUserId = $session.isPending
-          ? userId
-          : ($session.data?.user?.id ?? null);
-        postCloud = pending.postCloud && goalsUserId === userId;
+        goalsUserId = userId;
+        postCloud =
+          pending.postCloud &&
+          ($session.isPending || ($session.data?.user?.id ?? null) === userId);
         seenGoalsRevision = untrack(() => $goalsLocalRevision);
         if (pending.syncError) saveError = pending.syncError;
         commitSaved(pending.state);
@@ -240,19 +241,17 @@
     if ($session.isPending) return;
     const id = $session.data?.user?.id ?? null;
     if (id === goalsUserId) return;
-    goalsUserId = id;
+    if (hasUnsavedChanges || pickingGoals) return;
     postCloud = false;
     const generation = ++goalsCloudGeneration;
     const readFor = id;
     const replaceLocal = untrack(
-      () =>
-        !hasUnsavedChanges &&
-        !pickingGoals &&
-        $goalsLocalRevision === seenGoalsRevision,
+      () => $goalsLocalRevision === seenGoalsRevision,
     );
     void (async () => {
       const pending = await hydrateGoalsState(readFor !== null, {
         replaceLocal,
+        userId: readFor,
         allowWrite: () =>
           !$session.isPending && ($session.data?.user?.id ?? null) === readFor,
       });
@@ -265,6 +264,7 @@
         saveError = pending.syncError;
         return;
       }
+      goalsUserId = readFor;
       postCloud = pending.postCloud;
       saveError = pending.syncError;
       if (!replaceLocal) return;

@@ -75,36 +75,90 @@ export type GoalsHydration = GoalsCapture & {
 };
 
 /**
- * Local list at the last signed-in read failure. A later local write differs
- * from this snapshot and must be merged with the next successful cloud list
- * instead of being replaced by it.
+ * Failed-read recovery for one account. The base is that user's list at the
+ * failure, then the cloud side of the last merge, so a copied cloud goal is
+ * not treated as a local edit later. Stored locally so a reload can merge
+ * again until a cloud save clears it.
  */
-let failedReadLocal: GoalsCapture | null = null;
+const GOALS_RECOVERY_KEY = "calculatorGoalsRecovery";
 
-function noteFailedRead(local: CalculatorGoalsState): void {
-  if (failedReadLocal) return;
-  failedReadLocal = captureGoals(local);
+type GoalsRecovery = { userId: string; baseJson: string };
+
+function readRecovery(): GoalsRecovery | null {
+  try {
+    const raw = localStorage.getItem(GOALS_RECOVERY_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { userId?: unknown; baseJson?: unknown };
+    if (typeof parsed.userId !== "string" || parsed.userId.length === 0)
+      return null;
+    if (typeof parsed.baseJson !== "string" || parsed.baseJson.length === 0)
+      return null;
+    return { userId: parsed.userId, baseJson: parsed.baseJson };
+  } catch {
+    return null;
+  }
+}
+
+function writeRecovery(record: GoalsRecovery | null): void {
+  try {
+    if (!record) localStorage.removeItem(GOALS_RECOVERY_KEY);
+    else localStorage.setItem(GOALS_RECOVERY_KEY, JSON.stringify(record));
+  } catch {
+    /* the merged goals list is still in local storage */
+  }
+}
+
+function noteFailedRead(
+  userId: string | null | undefined,
+  local: CalculatorGoalsState,
+): void {
+  if (!userId) return;
+  const existing = readRecovery();
+  if (existing?.userId === userId) return;
+  writeRecovery({ userId, baseJson: captureGoals(local).json });
 }
 
 /**
  * Pending edits stay until a cloud save lands. A read that finds no local
- * change since the failure drops the snapshot; a merge only peeks at it.
+ * change since the failure drops the snapshot. Another account's snapshot
+ * is dropped instead of being merged into this read.
  */
 function peekPendingLocal(
+  userId: string | null | undefined,
   current: CalculatorGoalsState,
 ): CalculatorGoalsState | null {
-  const base = failedReadLocal;
-  if (!base) return null;
-  if (base.json === captureGoals(current).json) {
-    failedReadLocal = null;
+  if (!userId) return null;
+  const existing = readRecovery();
+  if (!existing) return null;
+  if (existing.userId !== userId) {
+    writeRecovery(null);
     return null;
   }
-  return base.state;
+  if (existing.baseJson === captureGoals(current).json) {
+    writeRecovery(null);
+    return null;
+  }
+  try {
+    return parseGoalsState(JSON.parse(existing.baseJson) as unknown);
+  } catch {
+    writeRecovery(null);
+    return null;
+  }
+}
+
+function recoveryPending(userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  return readRecovery()?.userId === userId;
+}
+
+/** The next merge compares local edits with this read's cloud list. */
+function rebaseRecovery(userId: string, cloudSide: CalculatorGoalsState): void {
+  writeRecovery({ userId, baseJson: captureGoals(cloudSide).json });
 }
 
 /** Drop the recovery snapshot after the merged list has been stored in the cloud. */
 export function clearPendingGoalsRecovery(): void {
-  failedReadLocal = null;
+  writeRecovery(null);
 }
 
 /**
@@ -164,15 +218,22 @@ function reconcilePendingGoals(
  * until a later read reconciles it with the cloud list.
  * `allowWrite` runs after the response arrives and before any cloud list is
  * stored. A stale account returns the local list and does not write.
+ * `userId` scopes failed-read recovery so one account's edits are not merged
+ * into another's cloud list.
  */
 export async function hydrateGoalsState(
   signedIn: boolean,
-  opts?: { replaceLocal?: boolean; allowWrite?: () => boolean },
+  opts?: {
+    replaceLocal?: boolean;
+    allowWrite?: () => boolean;
+    userId?: string | null;
+  },
 ): Promise<GoalsHydration> {
   const local = readGoalsLocal();
   if (!signedIn) {
     return { ...captureGoals(local), postCloud: false, syncError: "" };
   }
+  const userId = opts?.userId ?? null;
   const revision = get(goalsLocalRevision);
   let cloud: GoalsCloudRead;
   try {
@@ -187,17 +248,20 @@ export async function hydrateGoalsState(
   if (get(goalsLocalRevision) !== revision) {
     const current = captureGoals(readGoalsLocal());
     if (cloud.status === "error" || keepUnreconciled) {
-      if (cloud.status === "error") noteFailedRead(local);
+      if (cloud.status === "error") noteFailedRead(userId, local);
       return {
         ...current,
         postCloud: false,
         syncError: cloud.status === "error" ? cloud.message : "",
       };
     }
+    if (cloud.status === "goals" && recoveryPending(userId)) {
+      return { ...current, postCloud: false, syncError: "" };
+    }
     return { ...current, postCloud: true, syncError: "" };
   }
   if (cloud.status === "error") {
-    noteFailedRead(local);
+    noteFailedRead(userId, local);
     return {
       ...captureGoals(local),
       postCloud: false,
@@ -220,14 +284,21 @@ export async function hydrateGoalsState(
       };
     }
     const current = readGoalsLocal();
-    const pendingBase = peekPendingLocal(current);
+    const pendingBase = peekPendingLocal(userId, current);
+    const cloudSide = applyCloudGoals(current, cloud.goals);
     const next = pendingBase
       ? reconcilePendingGoals(pendingBase, current, cloud.goals)
-      : applyCloudGoals(current, cloud.goals);
-    persistGoalsLocal(next);
-    return { ...captureGoals(next), postCloud: true, syncError: "" };
+      : cloudSide;
+    const stored = persistGoalsLocal(next);
+    if (pendingBase && userId && stored) rebaseRecovery(userId, cloudSide);
+    return {
+      ...captureGoals(next),
+      postCloud: !pendingBase || stored,
+      syncError:
+        pendingBase && !stored ? "Sync failed (0) — goals not synced" : "",
+    };
   }
-  failedReadLocal = null;
+  peekPendingLocal(userId, local);
   return { ...captureGoals(local), postCloud: true, syncError: "" };
 }
 

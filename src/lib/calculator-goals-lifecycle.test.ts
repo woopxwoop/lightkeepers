@@ -240,7 +240,7 @@ describe("hydrateGoalsState cloud read", () => {
       "fetch",
       async () => new Response("nope", { status: 500 }),
     );
-    const failed = await hydrateGoalsState(true);
+    const failed = await hydrateGoalsState(true, { userId: "user-a" });
     assert.equal(failed.postCloud, false);
 
     const edited = captureGoals({
@@ -273,24 +273,35 @@ describe("hydrateGoalsState cloud read", () => {
         ),
     );
 
-    const result = await hydrateGoalsState(true);
-
-    assert.equal(result.postCloud, true);
-    assert.deepEqual(
-      result.state.goals.map((goal) => goal.id),
-      ["hutao", "cloud-only", "added"],
-    );
+    const result = await hydrateGoalsState(true, { userId: "user-a" });
     assert.equal(result.state.goals[0]?.starred, true);
     assert.equal(
       readGoalsLocal().goals.some((goal) => goal.id === "drop"),
       false,
     );
 
-    const again = await hydrateGoalsState(true);
+    const newerHutao = createCharacterGoal("Hutao", { id: "hutao" });
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({
+            goals: [
+              newerHutao,
+              cloudOnly,
+              createCharacterGoal("Xingqiu", { id: "drop" }),
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+    const again = await hydrateGoalsState(true, { userId: "user-a" });
     assert.deepEqual(
       again.state.goals.map((goal) => goal.id),
       ["hutao", "cloud-only", "added"],
     );
+    assert.equal(again.state.goals[0]?.starred, undefined);
 
     mock.method(globalThis, "fetch", async (_url, init) => {
       if (init?.method === "POST") return new Response("{}", { status: 200 });
@@ -305,11 +316,77 @@ describe("hydrateGoalsState cloud read", () => {
       cloud: true,
     });
     assert.equal(saved.ok, true);
-    const afterSave = await hydrateGoalsState(true);
+    const afterSave = await hydrateGoalsState(true, { userId: "user-a" });
     assert.deepEqual(
       afterSave.state.goals.map((goal) => goal.id),
       ["hutao", "cloud-only"],
     );
+  });
+
+  it("does not carry one account's pending edits into another account", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "local")).json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+    await hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(
+      captureGoals({
+        ...emptyGoalsState(),
+        goals: [
+          createCharacterGoal("Hutao", { id: "local" }),
+          createCharacterGoal("Yelan", { id: "added" }),
+        ],
+        selectedId: "added",
+      }).json,
+    );
+    const cloud = goalsWith("Xingqiu", "cloud");
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(JSON.stringify({ goals: cloud.goals }), { status: 200 }),
+    );
+
+    const result = await hydrateGoalsState(true, { userId: "account-b" });
+
+    assert.deepEqual(
+      result.state.goals.map((goal) => goal.id),
+      ["cloud"],
+    );
+    assert.equal(result.postCloud, true);
+  });
+
+  it("keeps posting off when pending recovery changes during the read", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "local")).json);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("nope", { status: 500 }),
+    );
+    await hydrateGoalsState(true, { userId: "account-a" });
+
+    let release!: (value: Response) => void;
+    const gate = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    mock.method(globalThis, "fetch", () => gate);
+    const pending = hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(captureGoals(goalsWith("Yelan", "edited")).json);
+    release(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Xingqiu", "cloud").goals }),
+        { status: 200 },
+      ),
+    );
+    const result = await pending;
+
+    assert.equal(result.postCloud, false);
+    assert.equal(result.state.goals[0]?.id, "edited");
+    assert.equal(readGoalsLocal().goals[0]?.id, "edited");
   });
 
   it("does not store cloud goals when the account check fails", async () => {
