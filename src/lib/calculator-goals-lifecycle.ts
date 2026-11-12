@@ -86,14 +86,25 @@ function noteFailedRead(local: CalculatorGoalsState): void {
   failedReadLocal = captureGoals(local);
 }
 
-function consumePendingLocal(
+/**
+ * Pending edits stay until a cloud save lands. A read that finds no local
+ * change since the failure drops the snapshot; a merge only peeks at it.
+ */
+function peekPendingLocal(
   current: CalculatorGoalsState,
 ): CalculatorGoalsState | null {
   const base = failedReadLocal;
-  failedReadLocal = null;
   if (!base) return null;
-  if (base.json === captureGoals(current).json) return null;
+  if (base.json === captureGoals(current).json) {
+    failedReadLocal = null;
+    return null;
+  }
   return base.state;
+}
+
+/** Drop the recovery snapshot after the merged list has been stored in the cloud. */
+export function clearPendingGoalsRecovery(): void {
+  failedReadLocal = null;
 }
 
 /**
@@ -151,14 +162,15 @@ function reconcilePendingGoals(
  * does not POST, including when the revision moved.
  * `replaceLocal: false` keeps the local list and leaves posting disabled
  * until a later read reconciles it with the cloud list.
+ * `allowWrite` runs after the response arrives and before any cloud list is
+ * stored. A stale account returns the local list and does not write.
  */
 export async function hydrateGoalsState(
   signedIn: boolean,
-  opts?: { replaceLocal?: boolean },
+  opts?: { replaceLocal?: boolean; allowWrite?: () => boolean },
 ): Promise<GoalsHydration> {
   const local = readGoalsLocal();
   if (!signedIn) {
-    failedReadLocal = null;
     return { ...captureGoals(local), postCloud: false, syncError: "" };
   }
   const revision = get(goalsLocalRevision);
@@ -200,8 +212,15 @@ export async function hydrateGoalsState(
         syncError: "",
       };
     }
+    if (opts?.allowWrite && !opts.allowWrite()) {
+      return {
+        ...captureGoals(readGoalsLocal()),
+        postCloud: false,
+        syncError: "",
+      };
+    }
     const current = readGoalsLocal();
-    const pendingBase = consumePendingLocal(current);
+    const pendingBase = peekPendingLocal(current);
     const next = pendingBase
       ? reconcilePendingGoals(pendingBase, current, cloud.goals)
       : applyCloudGoals(current, cloud.goals);
@@ -251,6 +270,7 @@ export async function saveGoalsState(input: {
             : `Sync failed (${result.status}) — goals not saved to cloud`,
         };
       }
+      clearPendingGoalsRecovery();
       return { ok: true, capture: pending };
     }
     if (!localOk) {

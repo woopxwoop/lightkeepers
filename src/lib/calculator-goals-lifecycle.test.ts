@@ -19,6 +19,7 @@ import {
   goalsWithoutPendingRemoves,
   hydrateGoalsState,
   saveGoalsState,
+  clearPendingGoalsRecovery,
 } from "./calculator-goals-lifecycle.ts";
 import type { CalculatorGoalsState } from "./types/calculator-goals.ts";
 
@@ -103,7 +104,7 @@ describe("hydrateGoalsState cloud read", () => {
 
   afterEach(async () => {
     mock.restoreAll();
-    await hydrateGoalsState(false);
+    clearPendingGoalsRecovery();
     if (originalStorage) {
       Object.defineProperty(globalThis, "localStorage", originalStorage);
     } else {
@@ -284,6 +285,59 @@ describe("hydrateGoalsState cloud read", () => {
       readGoalsLocal().goals.some((goal) => goal.id === "drop"),
       false,
     );
+
+    const again = await hydrateGoalsState(true);
+    assert.deepEqual(
+      again.state.goals.map((goal) => goal.id),
+      ["hutao", "cloud-only", "added"],
+    );
+
+    mock.method(globalThis, "fetch", async (_url, init) => {
+      if (init?.method === "POST") return new Response("{}", { status: 200 });
+      return new Response(JSON.stringify({ goals: [cloudHutao, cloudOnly] }), {
+        status: 200,
+      });
+    });
+    const saved = await saveGoalsState({
+      state: again.state,
+      pendingRemoveIds: new Set(),
+      savedSnapshot: again.json,
+      cloud: true,
+    });
+    assert.equal(saved.ok, true);
+    const afterSave = await hydrateGoalsState(true);
+    assert.deepEqual(
+      afterSave.state.goals.map((goal) => goal.id),
+      ["hutao", "cloud-only"],
+    );
+  });
+
+  it("does not store cloud goals when the account check fails", async () => {
+    installLocalStorage();
+    const local = captureGoals(goalsWith("Hutao", "local"));
+    writeGoalsLocal(local.json);
+    const revision = get(goalsLocalRevision);
+    let accept = true;
+    let release!: (value: Response) => void;
+    const gate = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    mock.method(globalThis, "fetch", () => gate);
+
+    const pending = hydrateGoalsState(true, { allowWrite: () => accept });
+    accept = false;
+    release(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Xingqiu", "cloud").goals }),
+        { status: 200 },
+      ),
+    );
+    const result = await pending;
+
+    assert.equal(result.postCloud, false);
+    assert.equal(result.state.goals[0]?.id, "local");
+    assert.equal(readGoalsLocal().goals[0]?.id, "local");
+    assert.equal(get(goalsLocalRevision), revision);
   });
 
   it("keeps local and does not POST after a failed cloud read", async () => {

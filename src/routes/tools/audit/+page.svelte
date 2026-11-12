@@ -115,12 +115,18 @@
       loadUpgradeCosts(),
       authClient.getSession(),
     ]);
-    const pending = await hydrateGoalsState(Boolean(sess));
+    const userId = sess?.user?.id ?? null;
+    const pending = await hydrateGoalsState(userId !== null, {
+      allowWrite: () =>
+        $session.isPending || ($session.data?.user?.id ?? null) === userId,
+    });
     plannerCatalog = catalog;
-    auditUserId = sess?.user?.id ?? null;
+    auditUserId = $session.isPending
+      ? userId
+      : ($session.data?.user?.id ?? null);
     plannerGoals = pending.state;
     plannerSnapshot = pending.json;
-    plannerPostCloud = pending.postCloud;
+    plannerPostCloud = pending.postCloud && auditUserId === userId;
     plannerSyncError = pending.postCloud ? "" : pending.syncError;
     seenPlannerRevision = untrack(() => $goalsLocalRevision);
     return {
@@ -238,6 +244,8 @@
     void (async () => {
       const pending = await hydrateGoalsState(readFor !== null, {
         replaceLocal,
+        allowWrite: () =>
+          !$session.isPending && ($session.data?.user?.id ?? null) === readFor,
       });
       if (generation !== auditCloudGeneration) return;
       const sessionUserId = $session.isPending
