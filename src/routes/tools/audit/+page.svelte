@@ -65,6 +65,8 @@
   let auditReadFor: string | null | undefined = undefined;
   /** Bumped when a deferred hydrate should try again. */
   let auditHydrateTick = $state(0);
+  /** Account whose discarded read already got one retry. */
+  let discardedHydrateFor: string | null | undefined = undefined;
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
   /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
@@ -203,27 +205,18 @@
         plannerError = "Couldn’t load the Planner right now";
         return;
       }
-      const result = appendAuditSuggestions(ready.state, ready.catalog, rows, {
-        owned: untrack(() => $charactersOwned),
-        weapons: getRosterWeaponsCached(),
-      });
-      if (result.added === 0) return;
       const landed = readGoalsIfChanged(ready.snapshot);
-      const added = result.state.goals.filter(
-        (goal) => !ready.state.goals.some((prev) => prev.id === goal.id),
+      const result = appendAuditSuggestions(
+        landed?.state ?? ready.state,
+        ready.catalog,
+        rows,
+        {
+          owned: untrack(() => $charactersOwned),
+          weapons: getRosterWeaponsCached(),
+        },
       );
-      const state = landed
-        ? {
-            ...landed.state,
-            goals: [
-              ...landed.state.goals,
-              ...added.filter(
-                (goal) =>
-                  !landed.state.goals.some((prev) => prev.id === goal.id),
-              ),
-            ],
-          }
-        : result.state;
+      if (result.added === 0) return;
+      const state = result.state;
       const snapshot = landed?.json ?? ready.snapshot;
       const sessionUserId = $session.isPending
         ? null
@@ -262,6 +255,8 @@
       !plannerBusy &&
       goalsRevisionAllowsCloudReplace(revisionAtRead, seenPlannerRevision);
     if (!replaceLocal || auditReadFor === id) return;
+    if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
+    auditUserId = undefined;
     auditReadFor = id;
     plannerPostCloud = false;
     const generation = ++auditCloudGeneration;
@@ -289,6 +284,22 @@
           auditHydrateTick += 1;
           return;
         }
+        if (
+          !acceptGoalsHydrationUser({
+            readUserId: readFor,
+            sessionPending: false,
+            sessionUserId,
+            postCloud: pending.postCloud,
+            syncError: pending.syncError,
+          })
+        ) {
+          if (discardedHydrateFor !== readFor) {
+            discardedHydrateFor = readFor;
+            auditHydrateTick += 1;
+          }
+          return;
+        }
+        discardedHydrateFor = undefined;
         auditUserId = readFor;
         plannerPostCloud = pending.postCloud;
         plannerSyncError = pending.postCloud ? "" : pending.syncError;

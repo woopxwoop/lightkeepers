@@ -213,6 +213,25 @@ describe("ensureNearMissTeams", () => {
     assert.equal(get(nearMissStatus), "idle");
     charactersOwned.set([]);
   });
+
+  it("drops ready owned and near-miss lists when boards reset", async () => {
+    globalThis.fetch = async () =>
+      jsonResponse({
+        abyssTeams: [],
+        stygianTeams: [],
+        nearMissTeams: [],
+        nearMissPairs: [],
+      });
+    await ensureTeamsOwned([row("Furina", true)]);
+    await ensureNearMissTeams([row("Furina", true)]);
+    assert.equal(get(teamsOwnedStatus), "ready");
+    assert.equal(get(nearMissStatus), "ready");
+
+    resetStaticBoards();
+
+    assert.equal(get(teamsOwnedStatus), "idle");
+    assert.equal(get(nearMissStatus), "idle");
+  });
 });
 
 describe("owned team requests while boards are stale", () => {

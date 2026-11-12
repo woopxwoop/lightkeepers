@@ -192,9 +192,11 @@
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
-        if (($session.data?.user?.id ?? null) === ownerId) {
-          rememberRosterOwner(ownerId);
+        if (($session.data?.user?.id ?? null) !== ownerId) {
+          writeRosterLocal(previous.json);
+          return;
         }
+        rememberRosterOwner(ownerId);
         probe = "backed-up";
         if (result.inventoryOmitted) {
           importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}. Cloud saved roster only — inventory columns are not migrated.`;

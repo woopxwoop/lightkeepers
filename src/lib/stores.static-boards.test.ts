@@ -193,4 +193,38 @@ describe("ensureStaticBoards", () => {
     assert.equal(get(staticBoardsPhase).phase, "current");
     assert.equal(get(allTeamsAbyss)[0]?.team_key, "abyss-7");
   });
+
+  it("marks current boards stale as soon as layout versions move ahead", async () => {
+    globalThis.fetch = async () => jsonResponse(payload(6, 3));
+    await ensureStaticBoards();
+    assert.equal(get(staticBoardsPhase).phase, "current");
+
+    setVersionNumbers(7, 3);
+
+    assert.equal(get(staticBoardsPhase).phase, "stale");
+    assert.equal(get(allTeamsAbyss)[0]?.team_key, "abyss-6");
+  });
+
+  it("keeps an applied empty board when a later fetch fails", async () => {
+    globalThis.fetch = async () =>
+      jsonResponse({
+        allTeamsAbyss: [],
+        allTeamsStygian: [],
+        latestAbyssVersion: { version_number: 6 },
+        latestStygianVersion: { version_number: 3 },
+      });
+    await ensureStaticBoards();
+    assert.equal(get(allTeamsAbyss).length, 0);
+    assert.equal(get(staticBoardsPhase).phase, "current");
+
+    globalThis.fetch = async () => new Response("nope", { status: 500 });
+    setVersionNumbers(7, 3);
+    await assert.rejects(() => ensureStaticBoards());
+
+    assert.deepEqual(get(staticBoardsPhase), {
+      phase: "error",
+      retained: true,
+    });
+    assert.equal(staticBoardsView(get(staticBoardsPhase)).kind, "board");
+  });
 });

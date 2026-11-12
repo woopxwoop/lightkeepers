@@ -48,6 +48,15 @@ export function setVersionNumbers(abyss: number, stygian: number) {
   abyssVersionNumber = abyss;
   stygianVersionNumber = stygian;
   if (stygianChanged) invalidateNearMissTeams();
+  if (
+    staticBoardsAbyssVersion >= 0 &&
+    staticBoardsStygianVersion >= 0 &&
+    (staticBoardsAbyssVersion !== abyss ||
+      staticBoardsStygianVersion !== stygian) &&
+    get(staticBoardsPhase).phase === "current"
+  ) {
+    staticBoardsPhase.set({ phase: "stale" });
+  }
 }
 
 /** Roster-keyed fetches must never post the unseeded -1 sentinel. */
@@ -443,6 +452,8 @@ let staticBoardsGeneration = 0;
 /** Versions the current allTeams* stores were fetched for. */
 let staticBoardsAbyssVersion = -1;
 let staticBoardsStygianVersion = -1;
+/** A payload was applied, including an empty board. */
+let staticBoardsApplied = false;
 /** Don't hammer /api/static while CDN/L1 is still on the previous cycle. */
 let staticBoardsRetryAfterMs = 0;
 let staticBoardsRetryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -459,7 +470,7 @@ function staticBoardsMatchCurrentVersions(): boolean {
 }
 
 function staticBoardsRetained(): boolean {
-  return get(allTeamsAbyss).length > 0 || get(allTeamsStygian).length > 0;
+  return staticBoardsApplied;
 }
 
 /** Drops board stores and a scheduled rollover retry. */
@@ -469,6 +480,9 @@ export function resetStaticBoards(): void {
   staticBoardsInFlight = null;
   staticBoardsAbyssVersion = -1;
   staticBoardsStygianVersion = -1;
+  staticBoardsApplied = false;
+  invalidateTeamsOwned();
+  invalidateNearMissTeams();
   allTeamsAbyss.set([]);
   allTeamsStygian.set([]);
   abyssEnemiesBoard.set(emptyAbyssEnemies);
@@ -669,6 +683,7 @@ function applyStaticBoardsPayload(
   ) {
     clearStaticBoardsRetry();
   }
+  staticBoardsApplied = true;
 }
 
 // ── Near-miss stores ───────────────────────────────────────────────────────

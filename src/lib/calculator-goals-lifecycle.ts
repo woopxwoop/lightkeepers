@@ -90,6 +90,11 @@ type GoalsRecovery = {
   baseJson: string;
   /** Bumps on every write so a later snapshot is not cleared by an older save. */
   generation: number;
+  /**
+   * A failed read holds posting until the next merge. A rebased cloud base
+   * only feeds that merge and must not block a newer cloud response.
+   */
+  holdPost: boolean;
 };
 
 let recoveryGenerationCounter = 0;
@@ -102,6 +107,7 @@ function readRecovery(): GoalsRecovery | null {
       userId?: unknown;
       baseJson?: unknown;
       generation?: unknown;
+      holdPost?: unknown;
     };
     if (typeof parsed.userId !== "string" || parsed.userId.length === 0)
       return null;
@@ -114,14 +120,19 @@ function readRecovery(): GoalsRecovery | null {
     if (generation > recoveryGenerationCounter) {
       recoveryGenerationCounter = generation;
     }
-    return { userId: parsed.userId, baseJson: parsed.baseJson, generation };
+    return {
+      userId: parsed.userId,
+      baseJson: parsed.baseJson,
+      generation,
+      holdPost: parsed.holdPost !== false,
+    };
   } catch {
     return null;
   }
 }
 
 function writeRecovery(
-  record: { userId: string; baseJson: string } | null,
+  record: { userId: string; baseJson: string; holdPost?: boolean } | null,
 ): void {
   try {
     if (!record) {
@@ -133,6 +144,7 @@ function writeRecovery(
       userId: record.userId,
       baseJson: record.baseJson,
       generation: recoveryGenerationCounter,
+      holdPost: record.holdPost !== false,
     };
     localStorage.setItem(GOALS_RECOVERY_KEY, JSON.stringify(stored));
   } catch {
@@ -147,7 +159,11 @@ function noteFailedRead(
   if (!userId) return;
   const existing = readRecovery();
   if (existing?.userId === userId) return;
-  writeRecovery({ userId, baseJson: captureGoals(local).json });
+  writeRecovery({
+    userId,
+    baseJson: captureGoals(local).json,
+    holdPost: true,
+  });
 }
 
 /**
@@ -180,12 +196,17 @@ function peekPendingLocal(
 
 function recoveryPending(userId: string | null | undefined): boolean {
   if (!userId) return false;
-  return readRecovery()?.userId === userId;
+  const existing = readRecovery();
+  return existing?.userId === userId && existing.holdPost;
 }
 
 /** The next merge compares local edits with this read's cloud list. */
 function rebaseRecovery(userId: string, cloudSide: CalculatorGoalsState): void {
-  writeRecovery({ userId, baseJson: captureGoals(cloudSide).json });
+  writeRecovery({
+    userId,
+    baseJson: captureGoals(cloudSide).json,
+    holdPost: false,
+  });
 }
 
 /** Drop the recovery snapshot after the merged list has been stored in the cloud. */
@@ -314,10 +335,49 @@ function appliedHydration(
   readSerial: number,
   currentState: CalculatorGoalsState,
   next: CalculatorGoalsState,
+  userId: string | null,
 ): GoalsHydration {
+  const revisionBefore = get(goalsLocalRevision);
   const hydration = hydrationFromReconciled(currentState, next);
   if (hydration.postCloud) noteGoalsReadApplied(readSerial);
+  if (hydration.postCloud && get(goalsLocalRevision) !== revisionBefore) {
+    rememberGoalsWrite(userId);
+  }
   return hydration;
+}
+
+/** Revision and account of the local goals write a cloud save may roll back. */
+let goalsWriteOwner: { revision: number; userId: string | null } | null = null;
+
+function rememberGoalsWrite(userId: string | null | undefined): void {
+  goalsWriteOwner = {
+    revision: get(goalsLocalRevision),
+    userId: userId ?? null,
+  };
+}
+
+/**
+ * Restore `snapshot` only when this save's revision and account are still
+ * the latest local write. A newer save or hydration keeps its goals.
+ */
+function restoreGoalsIfCurrent(
+  revision: number,
+  userId: string | null | undefined,
+  snapshot: string,
+): void {
+  if (get(goalsLocalRevision) !== revision) return;
+  const owner = goalsWriteOwner;
+  if (!owner || owner.revision !== revision) return;
+  if ((owner.userId ?? null) !== (userId ?? null)) return;
+  writeGoalsLocal(snapshot);
+}
+
+function goalsAbsentFromCloud(
+  merged: CalculatorGoalsState,
+  cloudGoals: CalculatorGoalsState["goals"],
+): boolean {
+  const cloudIds = new Set(cloudGoals.map((goal) => goal.id));
+  return merged.goals.some((goal) => !cloudIds.has(goal.id));
 }
 
 /**
@@ -432,23 +492,39 @@ export async function hydrateGoalsState(
       }
       const savedDuringRead = savedStateDuringRead(editRevision);
       if (savedDuringRead) {
-        return appliedHydration(
+        const reconciled = reconcilePendingGoals(
+          local,
+          savedDuringRead,
+          cloud.goals,
+        );
+        const hydration = appliedHydration(
           readSerial,
           currentState,
-          reconcilePendingGoals(local, savedDuringRead, cloud.goals),
+          reconciled,
+          userId,
         );
+        if (
+          hydration.postCloud &&
+          userId &&
+          goalsAbsentFromCloud(reconciled, cloud.goals)
+        ) {
+          rebaseRecovery(userId, applyCloudGoals(savedDuringRead, cloud.goals));
+        }
+        return hydration;
       }
       if (cloudApplied) {
         return appliedHydration(
           readSerial,
           currentState,
           applyCloudGoals(currentState, cloud.goals),
+          userId,
         );
       }
       return appliedHydration(
         readSerial,
         currentState,
         reconcilePendingGoals(local, currentState, cloud.goals),
+        userId,
       );
     }
     if (!allowWrite) {
@@ -480,18 +556,16 @@ export async function hydrateGoalsState(
     const next = pendingBase
       ? reconcilePendingGoals(pendingBase, currentState, cloud.goals)
       : cloudSide;
-    const stored = persistGoalsLocal(next);
-    if (pendingBase && userId && stored) rebaseRecovery(userId, cloudSide);
-    const storedList = stored ? next : readGoalsLocal();
-    const postCloud = !pendingBase || stored;
-    if (postCloud && (stored || captureGoals(next).json === current.json)) {
-      noteGoalsReadApplied(readSerial);
-    }
+    const alreadyStored = captureGoals(next).json === current.json;
+    const wrote = alreadyStored ? false : persistGoalsLocal(next);
+    if (pendingBase && userId && wrote) rebaseRecovery(userId, cloudSide);
+    const postCloud = alreadyStored || wrote;
+    if (postCloud) noteGoalsReadApplied(readSerial);
+    if (wrote) rememberGoalsWrite(userId);
     return {
-      ...captureGoals(storedList),
+      ...captureGoals(postCloud ? next : readGoalsLocal()),
       postCloud,
-      syncError:
-        pendingBase && !stored ? "Sync failed (0) — goals not synced" : "",
+      syncError: postCloud ? "" : "Sync failed (0) — goals not synced",
     };
   }
   if (!allowWrite) {
@@ -530,10 +604,25 @@ export async function saveGoalsState(input: {
   const pending = captureGoals(
     goalsWithoutPendingRemoves(input.state, input.pendingRemoveIds),
   );
+  const userId = input.userId ?? null;
+  let writtenRevision: number | null = null;
   try {
+    if (!input.cloud && userId) {
+      try {
+        noteFailedRead(
+          userId,
+          parseGoalsState(JSON.parse(input.savedSnapshot) as unknown),
+        );
+      } catch {
+        /* a later read replaces a baseline it cannot parse */
+      }
+    }
     const localOk = writeGoalsLocal(pending.json);
     if (!localOk) {
       console.warn("localStorage unavailable — saving to memory only");
+    } else {
+      writtenRevision = get(goalsLocalRevision);
+      rememberGoalsWrite(userId);
     }
     if (input.cloud) {
       const recoveryAtStart = readRecovery();
@@ -543,7 +632,9 @@ export async function saveGoalsState(input: {
           : null;
       const result = await postGoals(pending.state);
       if (!result.ok) {
-        writeGoalsLocal(input.savedSnapshot);
+        if (writtenRevision !== null) {
+          restoreGoalsIfCurrent(writtenRevision, userId, input.savedSnapshot);
+        }
         return {
           ok: false,
           message: result.message
@@ -565,7 +656,9 @@ export async function saveGoalsState(input: {
     }
     return { ok: true, capture: pending };
   } catch (e) {
-    writeGoalsLocal(input.savedSnapshot);
+    if (writtenRevision !== null) {
+      restoreGoalsIfCurrent(writtenRevision, userId, input.savedSnapshot);
+    }
     console.error("Goals save error:", e);
     return {
       ok: false,

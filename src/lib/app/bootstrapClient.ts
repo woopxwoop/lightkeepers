@@ -227,6 +227,8 @@ async function resolveRosterConflict(args: {
   cloud: CharacterOwned[];
   error?: string | null;
   uploadRetry?: boolean;
+  /** The local roster is stored for a different account. */
+  foreignOwner?: boolean;
 }): Promise<boolean> {
   let error: string | null = args.error ?? null;
   const uploadRetry = args.uploadRetry === true;
@@ -236,7 +238,7 @@ async function resolveRosterConflict(args: {
       args.local,
       args.cloud,
       error,
-      { uploadRetry },
+      { uploadRetry, foreignOwner: args.foreignOwner === true },
     );
 
     // Dismiss needs no session revalidation — leave both sides unchanged.
@@ -301,6 +303,22 @@ export function missingCloudRosterNeedsConfirm(
 }
 
 /**
+ * Logout leaves the local roster in place. Bind an unowned roster to the
+ * account that just signed out so the next account has to confirm before
+ * an empty cloud row receives it. A roster already owned by someone stays.
+ */
+export function retainUnownedRosterOnLogout(userId: string): void {
+  if (readRosterOwnerUserId() !== null) return;
+  rememberRosterOwner(userId);
+}
+
+/** The cloud read's account is still the signed-in one. */
+async function rosterSessionStill(userId: string): Promise<boolean> {
+  const session = await activeSessionUserId();
+  return session.status === "ok" && session.userId === userId;
+}
+
+/**
  * True when a settled session changes to a different signed-in user.
  * Includes guest → user and a direct user A → user B switch (no null in
  * between). The first settled id is a no-op so mount bootstrap is not
@@ -339,6 +357,7 @@ export async function syncCloudRoster(
 ): Promise<boolean> {
   const cloud = await fetchCloudRoster(characters);
   if (cloud.status === "guest" || cloud.status === "error") return false;
+  if (!(await rosterSessionStill(cloud.userId))) return false;
 
   const localRoster = get(charactersOwned);
   const confirmMissing = missingCloudRosterNeedsConfirm(
@@ -353,13 +372,17 @@ export async function syncCloudRoster(
         local: localRoster,
         cloud: [],
         uploadRetry: true,
+        foreignOwner: readRosterOwnerUserId() !== null,
       });
       if (confirmed) rememberRosterOwner(cloud.userId);
       return confirmed;
     }
+    if (!(await rosterSessionStill(cloud.userId))) return false;
     const result = await uploadLocalRoster(localRoster);
     if (result.ok) {
-      rememberRosterOwner(cloud.userId);
+      if (await rosterSessionStill(cloud.userId)) {
+        rememberRosterOwner(cloud.userId);
+      }
       setHasSavedRoster();
       return true;
     }

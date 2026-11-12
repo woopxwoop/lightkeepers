@@ -4,6 +4,9 @@
   import {
     charactersOwned,
     charactersHydrated,
+    abyssVersionNumber,
+    stygianVersionNumber,
+    staticBoardsPhase,
     teamsOwnedStatus,
     nearMissStygianTeams,
     nearMissPairTeams,
@@ -168,7 +171,9 @@
   // Read `idle` only. `loading` and `error` must not re-enter this effect —
   // a failure would retry forever, and a join would stack calls.
   $effect(() => {
+    void $staticBoardsPhase;
     if (!$charactersHydrated) return;
+    if (abyssVersionNumber < 0 || stygianVersionNumber < 0) return;
     if (ownedCount === 0) return;
     const owned = $charactersOwned;
     if ($teamsOwnedStatus === "idle") {

@@ -18,6 +18,8 @@ export type RosterSyncConflict = {
    * Dialog omits “Use cloud”; upload-local retries the upload.
    */
   uploadRetry: boolean;
+  /** Upload prompt knows the roster was stored for a different account. */
+  foreignOwner: boolean;
   resolve: (choice: RosterSyncChoice) => void;
 };
 
@@ -28,7 +30,7 @@ export function promptRosterSyncConflict(
   local: CharacterOwned[],
   cloud: CharacterOwned[],
   error: string | null = null,
-  opts?: { uploadRetry?: boolean },
+  opts?: { uploadRetry?: boolean; foreignOwner?: boolean },
 ): Promise<RosterSyncChoice> {
   const previous = get(rosterSyncConflict);
   if (previous) {
@@ -36,6 +38,7 @@ export function promptRosterSyncConflict(
   }
 
   const uploadRetry = opts?.uploadRetry === true;
+  const foreignOwner = opts?.foreignOwner === true;
 
   return new Promise((resolve) => {
     const conflict: RosterSyncConflict = {
@@ -43,6 +46,7 @@ export function promptRosterSyncConflict(
       cloud,
       error,
       uploadRetry,
+      foreignOwner,
       resolve: (choice) => {
         // Only clear if this conflict is still the active one — a newer prompt
         // may have already replaced the store entry.

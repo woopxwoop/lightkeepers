@@ -9,6 +9,7 @@ import { afterEach, describe, it } from "node:test";
 import {
   missingCloudRosterNeedsConfirm,
   rememberRosterOwner,
+  retainUnownedRosterOnLogout,
   shouldSyncCloudRoster,
 } from "./bootstrapClient.ts";
 
@@ -72,5 +73,20 @@ describe("missingCloudRosterNeedsConfirm", () => {
     rememberRosterOwner("user-a");
     assert.equal(missingCloudRosterNeedsConfirm("user-b", false), true);
     assert.equal(missingCloudRosterNeedsConfirm("user-a", true), false);
+  });
+
+  it("binds an unowned roster to the account that logged out", () => {
+    installLocalStorage();
+    retainUnownedRosterOnLogout("user-a");
+    assert.equal(missingCloudRosterNeedsConfirm("user-b", false), true);
+    assert.equal(missingCloudRosterNeedsConfirm("user-a", false), false);
+  });
+
+  it("leaves a roster that already has an owner on logout", () => {
+    installLocalStorage();
+    rememberRosterOwner("user-a");
+    retainUnownedRosterOnLogout("user-b");
+    assert.equal(missingCloudRosterNeedsConfirm("user-a", true), false);
+    assert.equal(missingCloudRosterNeedsConfirm("user-c", false), true);
   });
 });

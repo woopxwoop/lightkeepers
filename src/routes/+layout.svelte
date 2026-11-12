@@ -11,6 +11,7 @@
   import type { Character } from "#lib/definitions.js";
   import {
     bootstrapClient,
+    retainUnownedRosterOnLogout,
     seedClientStores,
     shouldSyncCloudRoster,
     syncCloudRoster,
@@ -72,6 +73,7 @@
       const previous = lastRosterUserId;
       clearRosterInventory();
       cancelRosterSyncConflict();
+      if (id === null && previous) retainUnownedRosterOnLogout(previous);
       lastRosterUserId = id;
       if (shouldSyncCloudRoster(previous, id)) {
         const rosterCharacters = untrack(() => characters);

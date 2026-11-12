@@ -173,6 +173,8 @@
   }
 
   let cheapRequestKey = $derived.by(() => {
+    // Phase updates after the version let, so a new cycle recomputes the key.
+    void $staticBoardsPhase;
     const ids = bossIds(enemies);
     ids.sort((a, b) => a - b);
     return [

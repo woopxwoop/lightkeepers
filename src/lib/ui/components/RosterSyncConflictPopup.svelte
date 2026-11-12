@@ -201,16 +201,23 @@
       </button>
       <p class="popup-eyebrow">Roster sync</p>
       <h2 id="roster-sync-conflict-title" class="section-title popup-title">
-        {uploadRetry && !$rosterSyncConflict.error
+        {uploadRetry &&
+        !$rosterSyncConflict.error &&
+        $rosterSyncConflict.foreignOwner
           ? "Roster belongs to another account"
-          : uploadRetry
-            ? "Cloud upload failed"
-            : "Local and cloud differ"}
+          : uploadRetry && !$rosterSyncConflict.error
+            ? "Upload this roster?"
+            : uploadRetry
+              ? "Cloud upload failed"
+              : "Local and cloud differ"}
       </h2>
       <p class="section-lede popup-summary">
-        {#if uploadRetry && !$rosterSyncConflict.error}
+        {#if uploadRetry && !$rosterSyncConflict.error && $rosterSyncConflict.foreignOwner}
           This device's roster was saved for a different account. Upload it to
           the signed-in account, or dismiss and leave the cloud unchanged.
+        {:else if uploadRetry && !$rosterSyncConflict.error}
+          This device's roster isn't tied to the signed-in account. Upload it to
+          the cloud, or dismiss and leave the cloud unchanged.
         {:else if uploadRetry}
           Couldn't save this device's roster to the cloud. Retry the upload, or
           dismiss and keep using the local roster.

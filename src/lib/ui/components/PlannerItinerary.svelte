@@ -116,6 +116,8 @@
   let goalsReadFor: string | null | undefined = undefined;
   /** Bumped when a deferred hydrate should try again. */
   let goalsHydrateTick = $state(0);
+  /** Account whose discarded read already got one retry. */
+  let discardedHydrateFor: string | null | undefined = undefined;
 
   let goals = $derived(goalsState.goals);
   let savedGoals = $derived.by(() => {
@@ -267,6 +269,8 @@
       !pickingGoals &&
       goalsRevisionAllowsCloudReplace(revisionAtRead, seenGoalsRevision);
     if (!replaceLocal || goalsReadFor === id) return;
+    if (discardedHydrateFor !== id) discardedHydrateFor = undefined;
+    goalsUserId = undefined;
     postCloud = false;
     goalsReadFor = id;
     const generation = ++goalsCloudGeneration;
@@ -295,6 +299,22 @@
           goalsHydrateTick += 1;
           return;
         }
+        if (
+          !acceptGoalsHydrationUser({
+            readUserId: readFor,
+            sessionPending: false,
+            sessionUserId,
+            postCloud: pending.postCloud,
+            syncError: pending.syncError,
+          })
+        ) {
+          if (discardedHydrateFor !== readFor) {
+            discardedHydrateFor = readFor;
+            goalsHydrateTick += 1;
+          }
+          return;
+        }
+        discardedHydrateFor = undefined;
         goalsUserId = readFor;
         postCloud = pending.postCloud;
         saveError = pending.syncError;

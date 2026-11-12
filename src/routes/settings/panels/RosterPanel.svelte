@@ -164,9 +164,8 @@
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
         }
-        if (($session.data?.user?.id ?? null) === ownerId) {
-          rememberRosterOwner(ownerId);
-        }
+        if (($session.data?.user?.id ?? null) !== ownerId) return;
+        rememberRosterOwner(ownerId);
         commitSaved(pending);
       } else {
         commitSaved(pending);

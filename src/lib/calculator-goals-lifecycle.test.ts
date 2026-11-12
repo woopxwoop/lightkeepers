@@ -701,6 +701,144 @@ describe("hydrateGoalsState cloud read", () => {
     );
   });
 
+  it("keeps a goal merged during hydration when a later cloud list omits it", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "hutao")).json);
+
+    let release!: (value: Response) => void;
+    mock.method(
+      globalThis,
+      "fetch",
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(
+      captureGoals({
+        ...emptyGoalsState(),
+        goals: [
+          createCharacterGoal("Hutao", { id: "hutao" }),
+          createCharacterGoal("Yelan", { id: "added" }),
+        ],
+        selectedId: "added",
+      }).json,
+    );
+    release(
+      new Response(
+        JSON.stringify({
+          goals: [createCharacterGoal("Hutao", { id: "hutao" })],
+        }),
+        { status: 200 },
+      ),
+    );
+    const first = await pending;
+    assert.equal(
+      first.state.goals.some((goal) => goal.id === "added"),
+      true,
+    );
+
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({
+            goals: [createCharacterGoal("Hutao", { id: "hutao" })],
+          }),
+          { status: 200 },
+        ),
+    );
+    const again = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(again.postCloud, true);
+    assert.equal(
+      again.state.goals.some((goal) => goal.id === "added"),
+      true,
+    );
+  });
+
+  it("does not post when the reconciled list cannot be stored", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "local")).json);
+    const storage = globalThis.localStorage;
+    const setItem = storage.setItem.bind(storage);
+    storage.setItem = (key: string, value: string) => {
+      if (key === CALCULATOR_GOALS_STORAGE_KEY) {
+        throw new Error("full");
+      }
+      setItem(key, value);
+    };
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({ goals: goalsWith("Yelan", "cloud").goals }),
+          { status: 200 },
+        ),
+    );
+    const result = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(result.postCloud, false);
+    assert.equal(result.syncError, "Sync failed (0) — goals not synced");
+    assert.equal(result.state.goals[0]?.id, "local");
+  });
+
+  it("does not roll back a newer local write when the cloud save fails", async () => {
+    installLocalStorage();
+    const baseline = captureGoals(goalsWith("Hutao", "base"));
+    writeGoalsLocal(baseline.json);
+    let release!: (value: Response) => void;
+    mock.method(
+      globalThis,
+      "fetch",
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = saveGoalsState({
+      state: goalsWith("Yelan", "edited"),
+      pendingRemoveIds: new Set(),
+      savedSnapshot: baseline.json,
+      cloud: true,
+      userId: "account-a",
+    });
+    writeGoalsLocal(captureGoals(goalsWith("Furina", "newer")).json);
+    release(new Response("nope", { status: 500 }));
+    const result = await pending;
+    assert.equal(result.ok, false);
+    assert.equal(readGoalsLocal().goals[0]?.id, "newer");
+  });
+
+  it("keeps a signed-in local save when the next cloud list omits it", async () => {
+    installLocalStorage();
+    const baseline = captureGoals(goalsWith("Hutao", "base"));
+    writeGoalsLocal(baseline.json);
+    const saved = await saveGoalsState({
+      state: goalsWith("Yelan", "saved"),
+      pendingRemoveIds: new Set(),
+      savedSnapshot: baseline.json,
+      cloud: false,
+      userId: "account-a",
+    });
+    assert.equal(saved.ok, true);
+    mock.method(
+      globalThis,
+      "fetch",
+      async () =>
+        new Response(JSON.stringify({ goals: baseline.goals }), {
+          status: 200,
+        }),
+    );
+    const hydrated = await hydrateGoalsState(true, { userId: "account-a" });
+    assert.equal(hydrated.postCloud, true);
+    assert.equal(
+      hydrated.state.goals.some((goal) => goal.id === "saved"),
+      true,
+    );
+  });
+
   it("does not drop another account's recovery when a no-row read is stale", async () => {
     installLocalStorage();
     writeGoalsLocal(captureGoals(goalsWith("Hutao", "b-base")).json);
