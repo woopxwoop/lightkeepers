@@ -13,7 +13,9 @@ import {
 } from "#lib/calculator-goals.js";
 import {
   captureGoals,
+  captureGoalsEditRevision,
   fetchGoalsCloud,
+  goalsLocalEditSince,
   goalsLocalRevision,
   localRevisionWasCloudApply,
   persistGoalsLocal,
@@ -276,12 +278,94 @@ function hydrationFromReconciled(
 }
 
 /**
+ * Read order for overlapping hydrates. A cloud-applied revision only means
+ * the latest local write came from a hydrate; an older response still must
+ * not replace a list a newer read already stored.
+ */
+let goalsReadSerial = 0;
+let appliedGoalsReadSerial = 0;
+
+function takeGoalsReadSerial(): number {
+  goalsReadSerial += 1;
+  return goalsReadSerial;
+}
+
+function noteGoalsReadApplied(serial: number): void {
+  if (serial > appliedGoalsReadSerial) appliedGoalsReadSerial = serial;
+}
+
+function goalsReadWasSuperseded(serial: number): boolean {
+  return serial < appliedGoalsReadSerial;
+}
+
+function savedStateDuringRead(
+  editRevision: number,
+): CalculatorGoalsState | null {
+  const json = goalsLocalEditSince(editRevision);
+  if (json == null) return null;
+  try {
+    return parseGoalsState(JSON.parse(json) as unknown);
+  } catch {
+    return null;
+  }
+}
+
+function appliedHydration(
+  readSerial: number,
+  currentState: CalculatorGoalsState,
+  next: CalculatorGoalsState,
+): GoalsHydration {
+  const hydration = hydrationFromReconciled(currentState, next);
+  if (hydration.postCloud) noteGoalsReadApplied(readSerial);
+  return hydration;
+}
+
+/**
+ * True when the editor may take a cloud read at `revision`.
+ * Equality with the revision already shown is safe. A later cloud apply is
+ * safe too. A same-tab save is not — that revision is a local edit.
+ */
+export function goalsRevisionAllowsCloudReplace(
+  revision: number,
+  baselineRevision: number,
+): boolean {
+  if (revision === baselineRevision) return true;
+  return localRevisionWasCloudApply(
+    revision,
+    captureGoals(readGoalsLocal()).json,
+  );
+}
+
+/**
+ * The visible session owns this hydration. Pending and mismatched stores do
+ * not, so a later session update can repeat the read. A signed-in read that
+ * neither applied nor failed was discarded and must not stick. A failed read
+ * does stick, with `postCloud` left false.
+ */
+export function acceptGoalsHydrationUser(input: {
+  readUserId: string | null;
+  sessionPending: boolean;
+  sessionUserId: string | null;
+  postCloud: boolean;
+  syncError: string;
+}): boolean {
+  if (input.sessionPending || input.sessionUserId !== input.readUserId) {
+    return false;
+  }
+  if (input.readUserId !== null && !input.postCloud && input.syncError === "") {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Local → optional cloud (signed-in). A stored cloud list wins, including
  * an empty one, when no local-only edits are waiting. No row keeps local.
  * A failed read keeps local, reports `syncError`, and sets `postCloud` false.
  * A same-tab save during the read is merged with the cloud list. A revision
- * bump from applying cloud goals is not a local edit. A failed read still
- * does not POST.
+ * bump from applying cloud goals is not a local edit. An older response
+ * keeps the list a newer read already stored. A failed read still does not
+ * POST.
  * `replaceLocal: false` keeps the local list and leaves posting disabled
  * until a later read reconciles it with the cloud list.
  * `allowWrite` runs after the response arrives and before any cloud list or
@@ -303,6 +387,8 @@ export async function hydrateGoalsState(
     return { ...captureGoals(local), postCloud: false, syncError: "" };
   }
   const userId = opts?.userId ?? null;
+  const readSerial = takeGoalsReadSerial();
+  const editRevision = captureGoalsEditRevision();
   const revision = get(goalsLocalRevision);
   let cloud: GoalsCloudRead;
   try {
@@ -339,16 +425,31 @@ export async function hydrateGoalsState(
       if (!allowWrite || recoveryPending(userId)) {
         return { ...current, postCloud: false, syncError: "" };
       }
-      if (cloudApplied) {
-        const next = applyCloudGoals(currentState, cloud.goals);
-        return hydrationFromReconciled(currentState, next);
+      // A newer read already stored its list. `cloudApplied` is true for that
+      // write too, and applying this older cloud list would drop the save.
+      if (goalsReadWasSuperseded(readSerial)) {
+        return { ...current, postCloud: true, syncError: "" };
       }
-      const reconciled = reconcilePendingGoals(
-        local,
+      const savedDuringRead = savedStateDuringRead(editRevision);
+      if (savedDuringRead) {
+        return appliedHydration(
+          readSerial,
+          currentState,
+          reconcilePendingGoals(local, savedDuringRead, cloud.goals),
+        );
+      }
+      if (cloudApplied) {
+        return appliedHydration(
+          readSerial,
+          currentState,
+          applyCloudGoals(currentState, cloud.goals),
+        );
+      }
+      return appliedHydration(
+        readSerial,
         currentState,
-        cloud.goals,
+        reconcilePendingGoals(local, currentState, cloud.goals),
       );
-      return hydrationFromReconciled(currentState, reconciled);
     }
     if (!allowWrite) {
       return { ...current, postCloud: false, syncError: "" };
@@ -371,6 +472,9 @@ export async function hydrateGoalsState(
         syncError: "",
       };
     }
+    if (goalsReadWasSuperseded(readSerial)) {
+      return { ...current, postCloud: true, syncError: "" };
+    }
     const pendingBase = peekPendingLocal(userId, currentState);
     const cloudSide = applyCloudGoals(currentState, cloud.goals);
     const next = pendingBase
@@ -378,9 +482,14 @@ export async function hydrateGoalsState(
       : cloudSide;
     const stored = persistGoalsLocal(next);
     if (pendingBase && userId && stored) rebaseRecovery(userId, cloudSide);
+    const storedList = stored ? next : readGoalsLocal();
+    const postCloud = !pendingBase || stored;
+    if (postCloud && (stored || captureGoals(next).json === current.json)) {
+      noteGoalsReadApplied(readSerial);
+    }
     return {
-      ...captureGoals(next),
-      postCloud: !pendingBase || stored,
+      ...captureGoals(storedList),
+      postCloud,
       syncError:
         pendingBase && !stored ? "Sync failed (0) — goals not synced" : "",
     };

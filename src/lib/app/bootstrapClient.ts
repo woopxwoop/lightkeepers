@@ -8,7 +8,8 @@
  * Owned teams stay lazy (Abyss / Stygian / Pulls call ensureTeamsOwned).
  *
  * Roster sync on login:
- * - no cloud row → upload local
+ * - no cloud row → upload local, unless a direct account switch has no
+ *   trusted owner for this roster (or it belongs to someone else)
  * - cloud differs from local → confirm use-cloud vs upload-local
  * - same → no-op
  */
@@ -275,7 +276,8 @@ function readRosterOwnerUserId(): string | null {
   }
 }
 
-function rememberRosterOwner(userId: string): void {
+/** Record the account whose roster was just stored on this device. */
+export function rememberRosterOwner(userId: string): void {
   try {
     localStorage.setItem(ROSTER_OWNER_KEY, userId);
   } catch {
@@ -283,9 +285,19 @@ function rememberRosterOwner(userId: string): void {
   }
 }
 
-function rosterBelongsToOtherAccount(sessionUserId: string): boolean {
+/**
+ * Missing cloud row. Upload without asking when this device already stored
+ * the roster for `sessionUserId`. A direct account switch with no owner, or
+ * a roster stored for someone else, has to be confirmed first.
+ */
+export function missingCloudRosterNeedsConfirm(
+  sessionUserId: string,
+  directAccountSwitch: boolean,
+): boolean {
   const owner = readRosterOwnerUserId();
-  return owner !== null && owner !== sessionUserId;
+  if (owner === sessionUserId) return false;
+  if (owner !== null) return true;
+  return directAccountSwitch;
 }
 
 /**
@@ -323,15 +335,19 @@ export function seedClientStores(data: LayoutHydration): void {
  */
 export async function syncCloudRoster(
   characters: Character[],
+  opts?: { directAccountSwitch?: boolean },
 ): Promise<boolean> {
   const cloud = await fetchCloudRoster(characters);
   if (cloud.status === "guest" || cloud.status === "error") return false;
 
   const localRoster = get(charactersOwned);
-  const foreign = rosterBelongsToOtherAccount(cloud.userId);
+  const confirmMissing = missingCloudRosterNeedsConfirm(
+    cloud.userId,
+    opts?.directAccountSwitch === true,
+  );
 
   if (cloud.status === "missing") {
-    if (foreign) {
+    if (confirmMissing) {
       const confirmed = await resolveRosterConflict({
         userId: cloud.userId,
         local: localRoster,

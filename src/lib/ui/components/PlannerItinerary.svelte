@@ -24,8 +24,10 @@
     toggleGoalStarred,
   } from "#lib/calculator-goals.js";
   import {
+    acceptGoalsHydrationUser,
     autofillCharacterGoalState,
     goalsHaveUnsavedChanges,
+    goalsRevisionAllowsCloudReplace,
     hydrateGoalsState,
     readGoalsIfChanged,
     saveGoalsState,
@@ -219,10 +221,23 @@
           allowWrite: () =>
             $session.isPending || ($session.data?.user?.id ?? null) === userId,
         });
-        goalsUserId = userId;
+        const sessionPending = $session.isPending;
+        const sessionUserId = sessionPending
+          ? null
+          : ($session.data?.user?.id ?? null);
+        if (
+          acceptGoalsHydrationUser({
+            readUserId: userId,
+            sessionPending,
+            sessionUserId,
+            postCloud: pending.postCloud,
+            syncError: pending.syncError,
+          })
+        ) {
+          goalsUserId = userId;
+        }
         postCloud =
-          pending.postCloud &&
-          ($session.isPending || ($session.data?.user?.id ?? null) === userId);
+          pending.postCloud && (sessionPending || sessionUserId === userId);
         seenGoalsRevision = untrack(() => $goalsLocalRevision);
         if (pending.syncError) saveError = pending.syncError;
         commitSaved(pending.state);
@@ -250,7 +265,7 @@
     const replaceLocal =
       !hasUnsavedChanges &&
       !pickingGoals &&
-      revisionAtRead === seenGoalsRevision;
+      goalsRevisionAllowsCloudReplace(revisionAtRead, seenGoalsRevision);
     if (!replaceLocal || goalsReadFor === id) return;
     postCloud = false;
     goalsReadFor = id;
@@ -271,11 +286,10 @@
           : ($session.data?.user?.id ?? null);
         if (sessionUserId !== readFor) return;
         const revisionNow = untrack(() => $goalsLocalRevision);
-        const ownWrite = revisionNow === revisionAtRead + 1;
         if (
           hasUnsavedChanges ||
           pickingGoals ||
-          (revisionNow !== revisionAtRead && !ownWrite)
+          !goalsRevisionAllowsCloudReplace(revisionNow, revisionAtRead)
         ) {
           saveError = pending.syncError;
           goalsHydrateTick += 1;

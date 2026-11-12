@@ -44,13 +44,21 @@ export function goalsDiffersFromSnapshot(
   return JSON.stringify(parseGoalsState(state)) !== savedJson;
 }
 
-export function writeGoalsLocal(json: string): boolean {
+function storeGoalsJson(json: string): boolean {
   try {
     localStorage.setItem(CALCULATOR_GOALS_STORAGE_KEY, json);
   } catch {
     return false;
   }
   goalsLocalRevision.update((n) => n + 1);
+  return true;
+}
+
+/** Local edit (save, restore). Does not count as a cloud apply. */
+export function writeGoalsLocal(json: string): boolean {
+  if (!storeGoalsJson(json)) return false;
+  localEditRevision = get(goalsLocalRevision);
+  localEditJson = json;
   return true;
 }
 
@@ -61,6 +69,13 @@ export function writeGoalsLocal(json: string): boolean {
 let cloudAppliedRevision = -1;
 let cloudAppliedJson = "";
 
+/**
+ * Last `writeGoalsLocal` revision. Cloud applies bump `goalsLocalRevision`
+ * without moving this, so a hydrate can still see a save that landed first.
+ */
+let localEditRevision = -1;
+let localEditJson = "";
+
 /** True when `revision` is the cloud hydrate write of `json`, not a local edit. */
 export function localRevisionWasCloudApply(
   revision: number,
@@ -69,11 +84,24 @@ export function localRevisionWasCloudApply(
   return revision === cloudAppliedRevision && json === cloudAppliedJson;
 }
 
+/** Snapshot for `goalsLocalEditSince` around an awaited cloud read. */
+export function captureGoalsEditRevision(): number {
+  return localEditRevision;
+}
+
+/**
+ * JSON written by `writeGoalsLocal` after `editRevision`.
+ * Null when the only revision bumps since then were cloud applies.
+ */
+export function goalsLocalEditSince(editRevision: number): string | null {
+  if (localEditRevision === editRevision || localEditRevision < 0) return null;
+  return localEditJson;
+}
+
 /** Normalize + write full local state (includes selectedId). */
 export function persistGoalsLocal(state: CalculatorGoalsState): boolean {
   const capture = captureGoals(state);
-  const ok = writeGoalsLocal(capture.json);
-  if (!ok) return false;
+  if (!storeGoalsJson(capture.json)) return false;
   cloudAppliedRevision = get(goalsLocalRevision);
   cloudAppliedJson = capture.json;
   return true;

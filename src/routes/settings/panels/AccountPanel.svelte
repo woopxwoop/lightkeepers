@@ -12,6 +12,7 @@
     invalidateTeamsOwned,
     setHasSavedRoster,
   } from "#lib/stores.js";
+  import { rememberRosterOwner } from "#lib/app/bootstrapClient.js";
   import {
     captureRoster,
     postRoster,
@@ -181,7 +182,8 @@
         console.warn("localStorage unavailable — saving to memory only");
       }
 
-      if ($session.data) {
+      const ownerId = $session.data?.user?.id ?? null;
+      if (ownerId) {
         const result = await postRoster(pending.roster, inventory);
         if (!result.ok) {
           writeRosterLocal(previous.json);
@@ -189,6 +191,9 @@
             ? `Sync failed (${result.status}): ${result.message}`
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
+        }
+        if (($session.data?.user?.id ?? null) === ownerId) {
+          rememberRosterOwner(ownerId);
         }
         probe = "backed-up";
         if (result.inventoryOmitted) {

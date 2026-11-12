@@ -19,6 +19,8 @@
   } from "#lib/audit-planner-goals.js";
   import { authClient } from "#lib/auth-client.js";
   import {
+    acceptGoalsHydrationUser,
+    goalsRevisionAllowsCloudReplace,
     hydrateGoalsState,
     readGoalsIfChanged,
     saveGoalsState,
@@ -126,12 +128,25 @@
         $session.isPending || ($session.data?.user?.id ?? null) === userId,
     });
     plannerCatalog = catalog;
-    auditUserId = userId;
+    const sessionPending = $session.isPending;
+    const sessionUserId = sessionPending
+      ? null
+      : ($session.data?.user?.id ?? null);
+    if (
+      acceptGoalsHydrationUser({
+        readUserId: userId,
+        sessionPending,
+        sessionUserId,
+        postCloud: pending.postCloud,
+        syncError: pending.syncError,
+      })
+    ) {
+      auditUserId = userId;
+    }
     plannerGoals = pending.state;
     plannerSnapshot = pending.json;
     plannerPostCloud =
-      pending.postCloud &&
-      ($session.isPending || ($session.data?.user?.id ?? null) === userId);
+      pending.postCloud && (sessionPending || sessionUserId === userId);
     plannerSyncError = pending.postCloud ? "" : pending.syncError;
     seenPlannerRevision = untrack(() => $goalsLocalRevision);
     return {
@@ -243,7 +258,9 @@
     const id = $session.data?.user?.id ?? null;
     if (id === auditUserId) return;
     const revisionAtRead = $goalsLocalRevision;
-    const replaceLocal = !plannerBusy && revisionAtRead === seenPlannerRevision;
+    const replaceLocal =
+      !plannerBusy &&
+      goalsRevisionAllowsCloudReplace(revisionAtRead, seenPlannerRevision);
     if (!replaceLocal || auditReadFor === id) return;
     auditReadFor = id;
     plannerPostCloud = false;
@@ -264,8 +281,10 @@
           : ($session.data?.user?.id ?? null);
         if (sessionUserId !== readFor) return;
         const revisionNow = untrack(() => $goalsLocalRevision);
-        const ownWrite = revisionNow === revisionAtRead + 1;
-        if (plannerBusy || (revisionNow !== revisionAtRead && !ownWrite)) {
+        if (
+          plannerBusy ||
+          !goalsRevisionAllowsCloudReplace(revisionNow, revisionAtRead)
+        ) {
           plannerSyncError = pending.syncError;
           auditHydrateTick += 1;
           return;

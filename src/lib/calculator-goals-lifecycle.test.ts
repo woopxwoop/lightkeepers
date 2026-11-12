@@ -10,16 +10,19 @@ import {
   CALCULATOR_GOALS_STORAGE_KEY,
   captureGoals,
   goalsLocalRevision,
+  persistGoalsLocal,
   readGoalsLocal,
   writeGoalsLocal,
 } from "./calculator-goals-snapshot.ts";
 import {
+  acceptGoalsHydrationUser,
+  clearPendingGoalsRecovery,
   goalsHaveUnsavedChanges,
   goalsListDiffersFromSnapshot,
+  goalsRevisionAllowsCloudReplace,
   goalsWithoutPendingRemoves,
   hydrateGoalsState,
   saveGoalsState,
-  clearPendingGoalsRecovery,
 } from "./calculator-goals-lifecycle.ts";
 import type { CalculatorGoalsState } from "./types/calculator-goals.ts";
 
@@ -795,5 +798,188 @@ describe("hydrateGoalsState cloud read", () => {
       merged.state.goals.some((goal) => goal.id === "a-edited"),
       true,
     );
+  });
+
+  it("does not let an older cloud read replace a newer read that merged a save", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "hutao")).json);
+
+    let releaseOlder!: (value: Response) => void;
+    let releaseNewer!: (value: Response) => void;
+    let calls = 0;
+    mock.method(globalThis, "fetch", () => {
+      calls += 1;
+      return calls === 1
+        ? new Promise<Response>((resolve) => {
+            releaseOlder = resolve;
+          })
+        : new Promise<Response>((resolve) => {
+            releaseNewer = resolve;
+          });
+    });
+
+    const older = hydrateGoalsState(true, { userId: "account-a" });
+    const newer = hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(captureGoals(goalsWith("Yelan", "saved")).json);
+
+    releaseNewer(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Furina", "fresh").goals }),
+        { status: 200 },
+      ),
+    );
+    const newerResult = await newer;
+    assert.deepEqual(
+      newerResult.state.goals.map((goal) => goal.id),
+      ["fresh", "saved"],
+    );
+
+    releaseOlder(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Xingqiu", "stale").goals }),
+        { status: 200 },
+      ),
+    );
+    const olderResult = await older;
+    assert.deepEqual(
+      olderResult.state.goals.map((goal) => goal.id),
+      ["fresh", "saved"],
+    );
+    assert.deepEqual(
+      readGoalsLocal().goals.map((goal) => goal.id),
+      ["fresh", "saved"],
+    );
+  });
+
+  it("merges a newer cloud read with the save after an older read applied", async () => {
+    installLocalStorage();
+    writeGoalsLocal(captureGoals(goalsWith("Hutao", "hutao")).json);
+
+    let releaseOlder!: (value: Response) => void;
+    let releaseNewer!: (value: Response) => void;
+    let calls = 0;
+    mock.method(globalThis, "fetch", () => {
+      calls += 1;
+      return calls === 1
+        ? new Promise<Response>((resolve) => {
+            releaseOlder = resolve;
+          })
+        : new Promise<Response>((resolve) => {
+            releaseNewer = resolve;
+          });
+    });
+
+    const older = hydrateGoalsState(true, { userId: "account-a" });
+    const newer = hydrateGoalsState(true, { userId: "account-a" });
+    writeGoalsLocal(captureGoals(goalsWith("Yelan", "saved")).json);
+
+    releaseOlder(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Xingqiu", "stale").goals }),
+        { status: 200 },
+      ),
+    );
+    await older;
+    releaseNewer(
+      new Response(
+        JSON.stringify({ goals: goalsWith("Furina", "fresh").goals }),
+        { status: 200 },
+      ),
+    );
+    const newerResult = await newer;
+
+    assert.deepEqual(
+      newerResult.state.goals.map((goal) => goal.id),
+      ["fresh", "saved"],
+    );
+    assert.equal(
+      readGoalsLocal().goals.some((goal) => goal.id === "stale"),
+      false,
+    );
+  });
+});
+
+describe("goals cloud read guards", () => {
+  const originalStorage = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "localStorage",
+  );
+
+  afterEach(() => {
+    if (originalStorage) {
+      Object.defineProperty(globalThis, "localStorage", originalStorage);
+    } else {
+      delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
+  });
+
+  it("accepts a signed-out read and a failed signed-in read", () => {
+    assert.equal(
+      acceptGoalsHydrationUser({
+        readUserId: null,
+        sessionPending: false,
+        sessionUserId: null,
+        postCloud: false,
+        syncError: "",
+      }),
+      true,
+    );
+    assert.equal(
+      acceptGoalsHydrationUser({
+        readUserId: "account-a",
+        sessionPending: false,
+        sessionUserId: "account-a",
+        postCloud: false,
+        syncError: "Sync failed (500) — goals not synced",
+      }),
+      true,
+    );
+  });
+
+  it("does not accept a signed-in read the visible session has not caught up to", () => {
+    assert.equal(
+      acceptGoalsHydrationUser({
+        readUserId: "account-a",
+        sessionPending: false,
+        sessionUserId: null,
+        postCloud: true,
+        syncError: "",
+      }),
+      false,
+    );
+    assert.equal(
+      acceptGoalsHydrationUser({
+        readUserId: "account-a",
+        sessionPending: true,
+        sessionUserId: null,
+        postCloud: true,
+        syncError: "",
+      }),
+      false,
+    );
+    assert.equal(
+      acceptGoalsHydrationUser({
+        readUserId: "account-a",
+        sessionPending: false,
+        sessionUserId: "account-a",
+        postCloud: false,
+        syncError: "",
+      }),
+      false,
+    );
+  });
+
+  it("treats a cloud apply as safe to replace and a local save as not", () => {
+    installLocalStorage();
+    const baseline = get(goalsLocalRevision);
+    assert.equal(goalsRevisionAllowsCloudReplace(baseline, baseline), true);
+
+    persistGoalsLocal(goalsWith("Furina", "fresh"));
+    const applied = get(goalsLocalRevision);
+    assert.equal(goalsRevisionAllowsCloudReplace(applied, baseline), true);
+
+    writeGoalsLocal(captureGoals(goalsWith("Yelan", "saved")).json);
+    const saved = get(goalsLocalRevision);
+    assert.equal(goalsRevisionAllowsCloudReplace(saved, baseline), false);
   });
 });

@@ -75,7 +75,9 @@
       lastRosterUserId = id;
       if (shouldSyncCloudRoster(previous, id)) {
         const rosterCharacters = untrack(() => characters);
-        void syncCloudRoster(rosterCharacters).then(
+        void syncCloudRoster(rosterCharacters, {
+          directAccountSwitch: previous !== null,
+        }).then(
           (synced) => {
             if (synced) noteCloudRosterSynced();
           },

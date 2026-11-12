@@ -42,6 +42,7 @@
     type CharacterSortKey,
     type OwnershipFilter,
   } from "#lib/character-filter.js";
+  import { rememberRosterOwner } from "#lib/app/bootstrapClient.js";
   import {
     captureRoster,
     postRoster,
@@ -147,13 +148,14 @@
 
     // Freeze the editor state before any await so concurrent toggles stay unsaved.
     const pending = captureRoster(tempCharactersOwned);
+    const ownerId = $session.data?.user?.id ?? null;
 
     try {
       if (!writeRosterLocal(pending.json)) {
         console.warn("localStorage unavailable — saving to memory only");
       }
 
-      if ($session.data) {
+      if (ownerId) {
         const result = await postRoster(pending.roster);
         if (!result.ok) {
           restoreSavedSnapshot();
@@ -161,6 +163,9 @@
             ? `Sync failed (${result.status}): ${result.message}`
             : `Sync failed (${result.status}) — roster not saved to cloud`;
           return;
+        }
+        if (($session.data?.user?.id ?? null) === ownerId) {
+          rememberRosterOwner(ownerId);
         }
         commitSaved(pending);
       } else {
