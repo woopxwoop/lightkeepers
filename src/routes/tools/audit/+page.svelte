@@ -217,6 +217,7 @@
           plannerPostCloud &&
           sessionUserId != null &&
           sessionUserId === auditUserId,
+        userId: sessionUserId,
       });
       if (!save.ok) {
         plannerError = save.message;

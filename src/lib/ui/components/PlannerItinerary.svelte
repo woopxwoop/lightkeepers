@@ -437,6 +437,7 @@
       pendingRemoveIds,
       savedSnapshot,
       cloud: syncing,
+      userId: sessionUserId,
     });
     if (!result.ok) {
       saveError = result.message;

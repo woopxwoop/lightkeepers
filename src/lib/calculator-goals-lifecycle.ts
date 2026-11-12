@@ -161,6 +161,13 @@ export function clearPendingGoalsRecovery(): void {
   writeRecovery(null);
 }
 
+/** A finished save covers only the account that posted it. */
+function clearRecoveryOwnedBy(userId: string | null | undefined): void {
+  if (!userId) return;
+  const existing = readRecovery();
+  if (existing?.userId === userId) writeRecovery(null);
+}
+
 /**
  * Cloud is the base. Edits saved after a failed signed-in read stay:
  * local adds and local changes win, and a goal removed since that failure
@@ -216,8 +223,9 @@ function reconcilePendingGoals(
  * does not POST, including when the revision moved.
  * `replaceLocal: false` keeps the local list and leaves posting disabled
  * until a later read reconciles it with the cloud list.
- * `allowWrite` runs after the response arrives and before any cloud list is
- * stored. A stale account returns the local list and does not write.
+ * `allowWrite` runs after the response arrives and before any cloud list or
+ * recovery snapshot is stored. A stale account returns the local list and
+ * does not write.
  * `userId` scopes failed-read recovery so one account's edits are not merged
  * into another's cloud list.
  */
@@ -248,7 +256,12 @@ export async function hydrateGoalsState(
   if (get(goalsLocalRevision) !== revision) {
     const current = captureGoals(readGoalsLocal());
     if (cloud.status === "error" || keepUnreconciled) {
-      if (cloud.status === "error") noteFailedRead(userId, local);
+      if (
+        cloud.status === "error" &&
+        (!opts?.allowWrite || opts.allowWrite())
+      ) {
+        noteFailedRead(userId, local);
+      }
       return {
         ...current,
         postCloud: false,
@@ -261,7 +274,7 @@ export async function hydrateGoalsState(
     return { ...current, postCloud: true, syncError: "" };
   }
   if (cloud.status === "error") {
-    noteFailedRead(userId, local);
+    if (!opts?.allowWrite || opts.allowWrite()) noteFailedRead(userId, local);
     return {
       ...captureGoals(local),
       postCloud: false,
@@ -321,6 +334,8 @@ export async function saveGoalsState(input: {
   pendingRemoveIds: ReadonlySet<string>;
   savedSnapshot: string;
   cloud: boolean;
+  /** Account this cloud save covers. Another account's recovery stays. */
+  userId?: string | null;
 }): Promise<SaveGoalsResult> {
   const pending = captureGoals(
     goalsWithoutPendingRemoves(input.state, input.pendingRemoveIds),
@@ -341,7 +356,7 @@ export async function saveGoalsState(input: {
             : `Sync failed (${result.status}) — goals not saved to cloud`,
         };
       }
-      clearPendingGoalsRecovery();
+      clearRecoveryOwnedBy(input.userId);
       return { ok: true, capture: pending };
     }
     if (!localOk) {
