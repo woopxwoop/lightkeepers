@@ -21,7 +21,17 @@
  */
 
 import { writable, type Readable } from "svelte/store";
-import { decideReconcile, type Ask } from "#lib/sync/reconcile.js";
+import { decideReconcile } from "#lib/sync/reconcile.js";
+import {
+  answerAsk,
+  baseOf,
+  decodeSlot as decodeStoredSlot,
+  emptySlot as emptySlotOf,
+  revOf,
+  tracked,
+  type Ask,
+  type SyncSlot,
+} from "#lib/sync/slot.js";
 import type { SlotStorage } from "#lib/sync/storage.js";
 import type { SyncTransport } from "#lib/sync/transport.js";
 
@@ -88,17 +98,7 @@ export type SyncView<T> = {
   remoteSource: "server" | "device" | null;
 };
 
-/** What storage holds for one account. */
-export type SyncSlot<T> = {
-  v: number;
-  data: T;
-  /** Last copy both sides agreed on. The merge base. */
-  base: T | null;
-  /** Server revision of `base`. Null: no server copy known (create only). */
-  baseRev: string | null;
-  /** `data` has edits the server has not accepted. */
-  dirty: boolean;
-};
+export type { ServerCopy, SyncSlot } from "#lib/sync/slot.js";
 
 export interface SyncedDoc<T> {
   readonly view: Readable<SyncView<T>>;
@@ -182,12 +182,6 @@ type Transient<T> = {
   ask: Ask<T> | null;
 };
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
 export function createSyncedDoc<T>(
   spec: SyncedDocSpec<T>,
   deps: SyncedDocDeps,
@@ -221,27 +215,10 @@ export function createSyncedDoc<T>(
 
   // ── Slots ────────────────────────────────────────────────────────────────
 
-  function emptySlot(): SyncSlot<T> {
-    return {
-      v: spec.schemaVersion,
-      data: spec.empty(),
-      base: null,
-      baseRev: null,
-      dirty: false,
-    };
-  }
-
-  function decodeSlot(raw: unknown): SyncSlot<T> {
-    const record = asRecord(raw);
-    if (!record) return emptySlot();
-    return {
-      v: spec.schemaVersion,
-      data: spec.parse(record.data),
-      base: record.base == null ? null : spec.parse(record.base),
-      baseRev: typeof record.baseRev === "string" ? record.baseRev : null,
-      dirty: record.dirty === true,
-    };
-  }
+  const emptySlot = (): SyncSlot<T> =>
+    emptySlotOf(spec.empty(), spec.schemaVersion);
+  const decodeSlot = (raw: unknown): SyncSlot<T> =>
+    decodeStoredSlot(raw, spec.parse, spec.empty, spec.schemaVersion);
 
   /** Stored JSON this tab last wrote or saw per slot key. */
   const lastSeen = new Map<string, string>();
@@ -323,7 +300,7 @@ export function createSyncedDoc<T>(
       dirty: account !== null && slotOf(account).dirty,
       error: state.error,
       remote: state.ask?.remote ?? null,
-      remoteSource: state.ask ? (state.ask.local ? "device" : "server") : null,
+      remoteSource: state.ask?.source ?? null,
     });
   }
 
@@ -379,13 +356,13 @@ export function createSyncedDoc<T>(
    * least as recent, and the older copy would read as removed edits.
    */
   function serverViewMoved(account: string, askedAt: string | null): boolean {
-    return slotOf(account).baseRev !== askedAt;
+    return revOf(slotOf(account).server) !== askedAt;
   }
 
   async function pull(account: string): Promise<void> {
     // The cookie now belongs to someone else. Their own read is queued.
     if (account !== active) return;
-    const askedAt = slotOf(account).baseRev;
+    const askedAt = revOf(slotOf(account).server);
     setState(account, { busy: "read" });
     const res = await transport.read();
     setState(account, { busy: null });
@@ -402,7 +379,7 @@ export function createSyncedDoc<T>(
     setState(account, { loaded: true, offline: false, error: null });
     if (
       serverViewMoved(account, askedAt) &&
-      res.rev !== slotOf(account).baseRev
+      res.rev !== revOf(slotOf(account).server)
     ) {
       emit({ account, step: "read", detail: "stale" });
       return;
@@ -422,7 +399,7 @@ export function createSyncedDoc<T>(
     setState(account, { busy: "write" });
     const res = await transport.write(
       spec.toWire(sent),
-      slot.baseRev,
+      revOf(slot.server),
       account,
       attach,
     );
@@ -435,7 +412,7 @@ export function createSyncedDoc<T>(
       const dirty = !spec.equal(now.data, sent);
       setState(account, { offline: false, error: null });
       // Edits made while this was in flight wait for their own Save.
-      storeSlot(account, { ...now, base: sent, baseRev: res.rev, dirty });
+      storeSlot(account, { ...now, server: tracked(sent, res.rev), dirty });
       return;
     }
     if (res.status === "conflict") {
@@ -446,7 +423,7 @@ export function createSyncedDoc<T>(
       }
       // Another tab moved the slot past the copy this rejection carries:
       // retry on what it learned instead of merging an older copy.
-      if (serverViewMoved(account, slot.baseRev)) {
+      if (serverViewMoved(account, revOf(slot.server))) {
         emit({ account, step: "write", detail: "conflict: stale, retry" });
         schedulePush(account, attempt + 1);
         return;
@@ -498,11 +475,7 @@ export function createSyncedDoc<T>(
       if (account !== null && pendingAsk) {
         // Saving is the user's answer to the open question: their copy wins.
         setState(account, { ask: null });
-        slot = {
-          ...slot,
-          base: pendingAsk.local ? pendingAsk.local.base : pendingAsk.remote,
-          baseRev: pendingAsk.rev,
-        };
+        slot = answerAsk(slot, pendingAsk, "local");
       }
       if (account !== null && opts?.attach) {
         attachments.set(account, {
@@ -528,22 +501,25 @@ export function createSyncedDoc<T>(
           storeSlot(account, { ...slot, data: next, dirty: true });
           setState(account, {
             ask: {
+              source: "device",
               remote: slot.data,
-              rev: slot.baseRev,
-              local: { base: slot.base, dirty: slot.dirty },
+              server: slot.server,
+              dirty: slot.dirty,
             },
           });
           return Promise.resolve();
         }
       }
       // Unsent edits are flushed even when unchanged (a retry). A write in
-      // flight moves the base, so a save during it is sent after it.
+      // flight moves the base, so a save during it is sent after it. With no
+      // agreed copy (`unseen`), there is nothing to be equal to.
+      const base = baseOf(slot.server);
       const dirty =
         account !== null &&
         (slot.dirty ||
           stateOf(account).busy === "write" ||
-          slot.base === null ||
-          !spec.equal(data, slot.base) ||
+          base === null ||
+          !spec.equal(data, base) ||
           attachments.has(account));
       storeSlot(account, { ...slot, data, dirty });
       if (account === null || !dirty) return Promise.resolve();
@@ -563,25 +539,8 @@ export function createSyncedDoc<T>(
       const ask = stateOf(account).ask;
       if (!ask) return Promise.resolve();
       setState(account, { ask: null });
-      const slot = slotOf(account);
-      if (choice === "remote") {
-        // A device copy keeps its own base and unsent state; a server copy
-        // is the new agreed copy.
-        storeSlot(account, {
-          ...slot,
-          data: ask.remote,
-          base: ask.local ? ask.local.base : ask.remote,
-          baseRev: ask.rev,
-          dirty: ask.local ? ask.local.dirty : false,
-        });
-        return Promise.resolve();
-      }
-      storeSlot(account, {
-        ...slot,
-        base: ask.local ? ask.local.base : ask.remote,
-        baseRev: ask.rev,
-        dirty: true,
-      });
+      storeSlot(account, answerAsk(slotOf(account), ask, choice));
+      if (choice === "remote") return Promise.resolve();
       return enqueue(() => push(account, 0));
     },
 

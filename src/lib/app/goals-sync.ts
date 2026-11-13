@@ -15,6 +15,7 @@ import {
   memorySlotStorage,
   type SlotStorage,
 } from "#lib/sync/storage.js";
+import type { SyncSlot } from "#lib/sync/slot.js";
 import { createSyncedDoc, type SyncedDoc } from "#lib/sync/synced-doc.js";
 import { fetchTransport, type SyncTransport } from "#lib/sync/transport.js";
 import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
@@ -33,7 +34,7 @@ const LEGACY_RECOVERY_KEY = "calculatorGoalsRecovery";
  * same as the old first upload. An existing slot is never overwritten.
  *
  * The recovery record's `baseJson` is the copy both sides last agreed on.
- * It becomes the slot's merge base, so the first read keeps local deletes
+ * It becomes the slot's `detached` base (no revision is known), so the first read keeps local deletes
  * and lets newer cloud changes win over untouched goals.
  *
  * The old keys are removed only once the slot is stored. A full storage
@@ -52,13 +53,16 @@ export function migrateLegacyGoals(storage: SlotStorage): void {
         : null;
     const key = `lk:${goalsDocSpec.key}:${owner ?? "guest"}`;
     if (storage.read(key) === null) {
-      const stored = storage.write(key, {
+      const base =
+        owner !== null ? legacyRecoveryBase(recovery?.baseJson) : null;
+      const slot: SyncSlot<CalculatorGoalsState> = {
         v: goalsDocSpec.schemaVersion,
         data: parseGoalsState(legacy),
-        base: owner !== null ? legacyRecoveryBase(recovery?.baseJson) : null,
-        baseRev: null,
         dirty: owner !== null,
-      });
+        // The agreed copy is known, its revision is not.
+        server: base ? { state: "detached", base } : { state: "unseen" },
+      };
+      const stored = storage.write(key, slot);
       if (!stored) return;
     }
   }

@@ -58,10 +58,11 @@ describe("migrateLegacyGoals", () => {
     });
     migrateLegacyGoals(storage);
     const slot = storage.read("lk:goals:u1") as Slot & {
-      base: { goals: { id: string }[] } | null;
+      server: { state: string; base?: { goals: { id: string }[] } };
     };
+    assert.equal(slot.server.state, "detached");
     assert.deepEqual(
-      slot.base?.goals.map((g) => g.id),
+      slot.server.base?.goals.map((g) => g.id),
       ["g1", "g2"],
     );
   });

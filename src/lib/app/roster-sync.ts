@@ -22,6 +22,7 @@ import {
   rosterOwnedFrom,
   type RosterDoc,
 } from "#lib/sync/roster-doc.js";
+import type { SyncSlot } from "#lib/sync/slot.js";
 import {
   browserSlotStorage,
   memorySlotStorage,
@@ -62,13 +63,13 @@ export function migrateLegacyRoster(storage: SlotStorage): void {
     const owner = typeof rawOwner === "string" ? rawOwner : null;
     const key = `lk:${rosterDocSpec.key}:${owner ?? "guest"}`;
     if (storage.read(key) === null) {
-      const stored = storage.write(key, {
+      const slot: SyncSlot<RosterDoc> = {
         v: rosterDocSpec.schemaVersion,
         data: legacy,
-        base: null,
-        baseRev: null,
         dirty: owner !== null,
-      });
+        server: { state: "unseen" },
+      };
+      const stored = storage.write(key, slot);
       if (!stored) return;
     }
   }

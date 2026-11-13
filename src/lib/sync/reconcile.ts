@@ -12,7 +12,7 @@
  *   no server copy
  *     first-copy-from-guest  untouched account, guest data → send it
  *     first-upload           never had a server copy, data here → send it
- *     no-server-copy         keep data unsent (a deleted copy stays deleted)
+ *     no-server-copy         keep data unsent; an agreed copy is `detached`
  *   server copy
  *     guest-asks / guest-merged  untouched account meets guest data
  *     attachment-owed        data matches but an attachment is unsent
@@ -22,17 +22,15 @@
  *     merged                 unsent edits merged onto the server copy
  */
 
-import type { SyncedDocSpec, SyncSlot } from "#lib/sync/synced-doc.js";
-
-/**
- * An open question. `local` is set when `remote` is this device's stored copy,
- * not the server's: answering keeps that copy's own base and unsent state.
- */
-export type Ask<T> = {
-  remote: T;
-  rev: string | null;
-  local?: { base: T | null; dirty: boolean };
-};
+import {
+  baseOf,
+  detached,
+  revOf,
+  tracked,
+  type Ask,
+  type SyncSlot,
+} from "#lib/sync/slot.js";
+import type { SyncedDocSpec } from "#lib/sync/synced-doc.js";
 
 export type ReconcileRule =
   | "first-copy-from-guest"
@@ -80,7 +78,9 @@ export function decideReconcile<T>(
 
   // This device holds nothing of the account's own yet (first read here).
   const untouched =
-    !slot.dirty && slot.base === null && spec.equal(slot.data, spec.empty());
+    !slot.dirty &&
+    slot.server.state === "unseen" &&
+    spec.equal(slot.data, spec.empty());
   const offerGuest =
     continueSave === null && untouched && !spec.equal(guest.data, spec.empty());
 
@@ -109,12 +109,12 @@ export function decideReconcile<T>(
       });
     }
     const dirty = slot.dirty || !spec.equal(slot.data, spec.empty());
-    // `base` stays: a copy that existed and was deleted is remembered, so a
-    // later read does not take this device's copy for a first upload.
-    const next = { ...slot, baseRev: null, dirty };
-    // Never had a server copy, never saw one: this is the account's first
-    // copy, sent without asking.
-    if (continueSave === null && slot.base === null && dirty) {
+    // A copy agreed on before is now `detached`, so a later read does not
+    // take this device's copy for a first upload.
+    const next = { ...slot, server: detached(slot.server), dirty };
+    // Never saw a server copy: this is the account's first copy, sent
+    // without asking.
+    if (continueSave === null && slot.server.state === "unseen" && dirty) {
       return plan("first-upload", { slot: next, push: 0 });
     }
     return plan("no-server-copy", { slot: next, push: continueIf(dirty) });
@@ -131,19 +131,17 @@ export function decideReconcile<T>(
         slot: {
           ...slot,
           data: guest.data,
-          base: remote,
-          baseRev: rev,
+          server: tracked(remote, rev),
           dirty: true,
         },
-        ask: { remote, rev },
+        ask: { source: "server", remote, rev },
       });
     }
     return plan("guest-merged", {
       slot: {
         ...slot,
         data: merged,
-        base: remote,
-        baseRev: rev,
+        server: tracked(remote, rev),
         dirty: !spec.equal(merged, remote),
       },
     });
@@ -154,26 +152,33 @@ export function decideReconcile<T>(
   // commit already queued finds the slot still dirty.
   if (slot.dirty && input.attachmentPending && spec.equal(slot.data, remote)) {
     return plan("attachment-owed", {
-      slot: { ...slot, base: remote, baseRev: rev },
+      slot: { ...slot, server: tracked(remote, rev) },
       push: continueIf(true),
     });
   }
 
   if (!slot.dirty || spec.equal(slot.data, remote)) {
     return plan("take-server", {
-      slot: { ...slot, data: remote, base: remote, baseRev: rev, dirty: false },
+      slot: {
+        ...slot,
+        data: remote,
+        server: tracked(remote, rev),
+        dirty: false,
+      },
     });
   }
 
-  if (rev === slot.baseRev) {
+  if (rev === revOf(slot.server)) {
     return plan("server-unmoved", { push: continueIf(true) });
   }
 
-  const merged = spec.merge(slot.base, slot.data, remote);
-  if (merged === "ask") return plan("ask", { ask: { remote, rev } });
+  const merged = spec.merge(baseOf(slot.server), slot.data, remote);
+  if (merged === "ask") {
+    return plan("ask", { ask: { source: "server", remote, rev } });
+  }
   const dirty = !spec.equal(merged, remote);
   return plan("merged", {
-    slot: { ...slot, data: merged, base: remote, baseRev: rev, dirty },
+    slot: { ...slot, data: merged, server: tracked(remote, rev), dirty },
     push: continueIf(dirty),
   });
 }

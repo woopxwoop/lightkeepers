@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { decideReconcile, type ReconcileInput } from "./reconcile.ts";
 import { doc, makeSpec, type Doc } from "./synced-doc.fixtures.ts";
-import type { SyncSlot } from "./synced-doc.ts";
+import { tracked, type SyncSlot } from "./slot.ts";
 
 const spec = makeSpec();
 
@@ -15,9 +15,8 @@ function slot(parts: Partial<SyncSlot<Doc>> = {}): SyncSlot<Doc> {
   return {
     v: 1,
     data: doc(),
-    base: null,
-    baseRev: null,
     dirty: false,
+    server: { state: "unseen" },
     ...parts,
   };
 }
@@ -49,13 +48,12 @@ describe("decideReconcile: no server copy", () => {
     assert.equal(plan.push, 0);
   });
 
-  it("a deleted copy keeps its base and waits for Save", () => {
+  it("a deleted copy is detached and waits for Save", () => {
     const plan = decide({
-      slot: slot({ data: doc("x"), base: doc("x"), baseRev: "r1" }),
+      slot: slot({ data: doc("x"), server: tracked(doc("x"), "r1") }),
     });
     assert.equal(plan.rule, "no-server-copy");
-    assert.deepEqual(plan.slot?.base?.items, ["x"]);
-    assert.equal(plan.slot?.baseRev, null);
+    assert.deepEqual(plan.slot?.server, { state: "detached", base: doc("x") });
     assert.equal(plan.slot?.dirty, true);
     assert.equal(plan.push, null);
   });
@@ -64,8 +62,7 @@ describe("decideReconcile: no server copy", () => {
     const plan = decide({
       slot: slot({
         data: doc("x"),
-        base: doc("x"),
-        baseRev: "r1",
+        server: tracked(doc("x"), "r1"),
         dirty: true,
       }),
       continueSave: 2,
@@ -104,7 +101,7 @@ describe("decideReconcile: server copy", () => {
 
   it("matching data that owes an attachment stays unsent", () => {
     const plan = decide({
-      slot: slot({ data: doc("x"), base: doc(), baseRev: "r1", dirty: true }),
+      slot: slot({ data: doc("x"), server: tracked(doc(), "r1"), dirty: true }),
       wire: ["x"],
       rev: "r2",
       continueSave: 1,
@@ -112,13 +109,13 @@ describe("decideReconcile: server copy", () => {
     });
     assert.equal(plan.rule, "attachment-owed");
     assert.equal(plan.slot?.dirty, true);
-    assert.equal(plan.slot?.baseRev, "r2");
+    assert.deepEqual(plan.slot?.server, tracked(doc("x"), "r2"));
     assert.equal(plan.push, 1);
   });
 
   it("nothing unsent takes the server copy", () => {
     const plan = decide({
-      slot: slot({ data: doc("x"), base: doc("x"), baseRev: "r1" }),
+      slot: slot({ data: doc("x"), server: tracked(doc("x"), "r1") }),
       wire: ["x", "y"],
       rev: "r2",
     });
@@ -131,8 +128,7 @@ describe("decideReconcile: server copy", () => {
     const plan = decide({
       slot: slot({
         data: doc("x", "y"),
-        base: doc("x"),
-        baseRev: "r1",
+        server: tracked(doc("x"), "r1"),
         dirty: true,
       }),
       wire: ["x"],
@@ -147,8 +143,7 @@ describe("decideReconcile: server copy", () => {
     const plan = decide({
       slot: slot({
         data: doc("x", "mine"),
-        base: doc("x"),
-        baseRev: "r1",
+        server: tracked(doc("x"), "r1"),
         dirty: true,
       }),
       wire: ["x", "theirs"],
@@ -164,8 +159,7 @@ describe("decideReconcile: server copy", () => {
     const plan = decideReconcile(makeSpec({ ask: true }), {
       slot: slot({
         data: doc("x", "mine"),
-        base: doc("x"),
-        baseRev: "r1",
+        server: tracked(doc("x"), "r1"),
         dirty: true,
       }),
       guest: slot(),
