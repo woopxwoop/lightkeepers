@@ -38,7 +38,6 @@
     displayPreferences,
     initDisplayPreferences,
     setVersionNumbers,
-    faviconDataUri,
     backgroundVisible,
     syncBackgroundToPath,
   } from "#lib/stores.js";
@@ -153,7 +152,6 @@
 </script>
 
 <svelte:head>
-  <link rel="icon" href={$faviconDataUri} type="image/png" />
   <title>{page.data.seo?.title ?? "Lightkeepers"}</title>
   <meta
     name="description"

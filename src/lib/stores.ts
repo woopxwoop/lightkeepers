@@ -314,9 +314,6 @@ export function areAnimationsEnabled(): boolean {
   return get(animationsEnabled);
 }
 
-/** Designed lighthouse mark — same asset as the navbar logo. */
-export const faviconDataUri = readable("/lightkeepers-mark.png");
-
 // ── Character store ────────────────────────────────────────────────────────
 // Fed from the roster synced document by the root layout. Read-only elsewhere.
 export const charactersOwned = writable<CharacterOwned[]>([]);
