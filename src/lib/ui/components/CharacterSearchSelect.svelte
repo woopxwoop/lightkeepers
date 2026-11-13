@@ -223,11 +223,12 @@
   </div>
 
   {#if showSuggestions}
-    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <!-- Focus stays on the combobox input (aria-activedescendant); -1 keeps the listbox out of tab order. -->
     <div
       id={listboxId}
       class="char-search-menu"
       role="listbox"
+      tabindex="-1"
       use:portal
       bind:this={menuEl}
       onpointerdown={(e) => e.preventDefault()}

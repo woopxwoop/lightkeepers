@@ -182,6 +182,8 @@
 
   {#if viewMode === "timeline"}
     <div class="lanes-panel">
+      <!-- Horizontal scroller — must be focusable so keyboard users can scroll it. -->
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
       <div
         class="lanes-scroll"
         role="region"

@@ -43,7 +43,10 @@
 
   const INITIAL_ANALYTICS_MODE: CharacterAnalyticsMode = "stygian";
   let analyticsMode = $state<CharacterAnalyticsMode>(INITIAL_ANALYTICS_MODE);
-  const seedKey = analyticsCacheKey(INITIAL_ANALYTICS_MODE, nameId);
+  // First-paint seed only; the $effect below tracks later nameId changes.
+  const seedKey = untrack(() =>
+    analyticsCacheKey(INITIAL_ANALYTICS_MODE, nameId),
+  );
   const seedPayload = getCharacterAnalyticsCached(seedKey);
   let analyticsPayload = $state<CharacterAnalyticsPayload | null>(seedPayload);
   let analyticsError = $state<string | null>(null);

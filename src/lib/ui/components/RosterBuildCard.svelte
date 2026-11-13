@@ -611,6 +611,8 @@
           <div class="level" class:level-edit={editMode}>
             Lv.
             {#if editMode && levelField === "level"}
+              <!-- Focus follows the "Edit level" click that swapped this input in. -->
+              <!-- svelte-ignore a11y_autofocus -->
               <input
                 class="level-input"
                 type="text"
@@ -636,6 +638,7 @@
             {/if}
             /
             {#if editMode && levelField === "cap"}
+              <!-- svelte-ignore a11y_autofocus -->
               <input
                 class="level-input level-input-cap"
                 type="text"
