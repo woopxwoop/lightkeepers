@@ -171,12 +171,17 @@
       };
 
       // The inventory rides along with this one roster write when signed in.
-      const signedIn = $rosterView.account !== null;
+      const owner = $rosterView.account;
       await rosterSync().commit(rosterDocOf(next), {
-        attach: signedIn ? inventory : undefined,
+        attach: owner !== null ? inventory : undefined,
       });
-      setRosterInventory(inventory);
       pickingGood = false;
+      // The inventory cache has no account key: never fill it for another.
+      if ($rosterView.account !== owner) {
+        importError = "Account changed during import — import again.";
+        return;
+      }
+      setRosterInventory(inventory);
       const error = $rosterView.error;
       importNote = error
         ? `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"} on this device — not synced: ${error}`

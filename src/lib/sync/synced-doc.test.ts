@@ -557,6 +557,22 @@ describe("save answers and attachments", () => {
     await synced.idle();
     assert.equal(server.attached.length, 1);
   });
+
+  it("a conflict whose data already matches still sends the attachment", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["x"]); // same data, newer revision
+    await synced.commit(doc("x"), { attach: { weapons: [1] } });
+    await synced.idle();
+    assert.ok(server.calls.includes("write:a:r2"));
+    assert.equal(server.rows.get("a")?.rev, "r3");
+    assert.equal(view().status, "synced");
+    await synced.commit(doc("x", "y"));
+    await synced.idle();
+    assert.equal(server.attached.length, 2); // r1 rejected, r2 written
+  });
 });
 
 describe("other tabs", () => {
@@ -571,6 +587,31 @@ describe("other tabs", () => {
       dirty: false,
     });
     assert.deepEqual(view().data.items, ["from-tab"]);
+    synced.dispose();
+  });
+
+  it("a read never replaces another tab's unsent edits it has not seen yet", async () => {
+    const { synced, signIn, server, storage, view } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    // Another tab stored offline edits; its storage event has not arrived.
+    storage.entries.set(
+      "lk:t:a",
+      JSON.stringify({
+        v: 1,
+        data: { items: ["x", "mine"], pick: null },
+        base: { items: ["x"], pick: null },
+        baseRev: "r1",
+        dirty: true,
+      }),
+    );
+    server.put("a", ["x", "theirs"]);
+    await synced.refresh();
+    await synced.idle();
+    assert.deepEqual(view().data.items, ["x", "theirs", "mine"]);
+    assert.equal(view().dirty, true);
+    assert.deepEqual(server.rows.get("a")?.items, ["x", "theirs"]);
     synced.dispose();
   });
 });

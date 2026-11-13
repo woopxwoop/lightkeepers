@@ -100,4 +100,13 @@ describe("migrateLegacyRoster", () => {
     migrateLegacyRoster(storage);
     assert.deepEqual((storage.read("lk:roster:guest") as Slot).data, []);
   });
+
+  it("keeps the old keys when the slot cannot be stored", () => {
+    const storage = memorySlotStorage();
+    storage.write("charactersOwned", legacy);
+    storage.failWrites = true;
+    migrateLegacyRoster(storage);
+    assert.equal(storage.read("lk:roster:guest"), null);
+    assert.notEqual(storage.read("charactersOwned"), null);
+  });
 });

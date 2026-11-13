@@ -222,20 +222,33 @@ export function createSyncedDoc<T>(
     };
   }
 
+  /** Stored JSON this tab last wrote or saw per slot key. */
+  const lastSeen = new Map<string, string>();
+
+  /**
+   * The slot every decision starts from. Another tab may have stored a newer
+   * copy whose `storage` event has not arrived yet; that copy wins, so a
+   * merge or a clean server copy never lands on top of edits it never saw.
+   * Unchanged storage keeps memory in charge (a failed write stays here).
+   */
   function slotOf(account: string | null): SyncSlot<T> {
     const key = slotKey(account);
+    const raw = storage.read(key);
+    const json = raw === null ? null : JSON.stringify(raw);
     let slot = slots.get(key);
-    if (!slot) {
-      slot = decodeSlot(storage.read(key));
+    if (!slot || (json !== null && json !== lastSeen.get(key))) {
+      slot = decodeSlot(raw);
       slots.set(key, slot);
+      if (json !== null) lastSeen.set(key, json);
     }
     return slot;
   }
 
   /** Memory first; a failed storage write still updates this tab. */
   function storeSlot(account: string | null, slot: SyncSlot<T>): void {
-    slots.set(slotKey(account), slot);
-    storage.write(slotKey(account), slot);
+    const key = slotKey(account);
+    slots.set(key, slot);
+    if (storage.write(key, slot)) lastSeen.set(key, JSON.stringify(slot));
     publish(account);
   }
 
@@ -384,6 +397,19 @@ export function createSyncedDoc<T>(
       }
     }
 
+    // Matching data still owes an unsent attachment (the GOOD inventory):
+    // stay unsent on the new revision. A rejected save retries now; the
+    // push a commit already queued finds the slot still dirty.
+    if (
+      slot.dirty &&
+      attachments.has(account) &&
+      spec.equal(slot.data, remote)
+    ) {
+      storeSlot(account, { ...slot, base: remote, baseRev: rev });
+      finishSave(true);
+      return;
+    }
+
     // Nothing unsent, or the unsent edits already match: take the server copy.
     if (!slot.dirty || spec.equal(slot.data, remote)) {
       storeSlot(account, {
@@ -478,6 +504,8 @@ export function createSyncedDoc<T>(
   const unwatch = storage.watch((key, value) => {
     if (!key.startsWith(`lk:${spec.key}:`)) return;
     slots.set(key, decodeSlot(value));
+    if (value === null) lastSeen.delete(key);
+    else lastSeen.set(key, JSON.stringify(value));
     if (active !== undefined && key === slotKey(active)) publish(active);
   });
 

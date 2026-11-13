@@ -65,6 +65,11 @@
     synced && rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
   );
   let savedVisible = $derived(showSaved && !hasUnsavedChanges);
+  /** Stored edits the server has not accepted (a failed upload): Save retries. */
+  let unsent = $derived(
+    $rosterView.dirty && $rosterView.status !== "saving" && !hasUnsavedChanges,
+  );
+  let canSave = $derived(hasUnsavedChanges || unsent);
 
   let rarityFilter = $state<Set<string>>(new Set());
   let elementFilter = $state<Set<string>>(new Set());
@@ -367,7 +372,7 @@
       <span class="owned-count">{ownedCount} / {totalCount}</span>
     </div>
 
-    {#if hasUnsavedChanges || isSaving || savedVisible || rosterError}
+    {#if canSave || isSaving || savedVisible || rosterError}
       <div class="save-bar">
         <div class="save-status">
           <span
@@ -385,15 +390,19 @@
                 ? "Saved"
                 : rosterError
                   ? rosterError
-                  : "Unsaved changes"}
+                  : unsent
+                    ? "Not synced"
+                    : "Unsaved changes"}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
           {/if}
         </div>
-        {#if hasUnsavedChanges && !isSaving}
+        {#if canSave && !isSaving}
           <div class="save-actions">
-            <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
+            {#if hasUnsavedChanges}
+              <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
+            {/if}
             <Button variant="primary" onclick={saveCharacters}>Save</Button>
             <div class="save-cue" aria-hidden="true">
               <IconChevronDown

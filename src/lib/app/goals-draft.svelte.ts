@@ -11,6 +11,7 @@
  * - Switching accounts drops the draft. One account's edits never save as
  *   another's.
  * - Removes are staged in `pendingRemoveIds` and applied on Save.
+ * - Edits made while Save runs stay in the draft, unsaved.
  *
  * Call during component initialization.
  */
@@ -21,6 +22,7 @@ import { goalsSync } from "#lib/app/goals-sync.js";
 import { emptyGoalsState, parseGoalsState } from "#lib/calculator-goals.js";
 import {
   goalsHaveUnsavedChanges,
+  goalsListDiffersFromSnapshot,
   goalsWithoutPendingRemoves,
 } from "#lib/calculator-goals-lifecycle.js";
 import { captureGoals } from "#lib/calculator-goals-snapshot.js";
@@ -145,16 +147,34 @@ export function useGoalsDraft(): GoalsDraft {
     async save() {
       if (saving || live.current.account !== account) return false;
       saving = true;
+      const owner = account;
       try {
-        const next = captureGoals(
-          goalsWithoutPendingRemoves(state, pendingRemoveIds),
-        ).state;
+        // Capture before the await; edits made while it runs stay unsaved.
+        const sentRemoves = pendingRemoveIds;
+        const sent = captureGoals(goalsWithoutPendingRemoves(state, sentRemoves));
         const basedOn = savedJson
           ? parseGoalsState(JSON.parse(savedJson) as unknown)
           : undefined;
-        await sync.commit(next, { basedOn });
-        pendingRemoveIds = new Set();
-        adopt(live.current.data);
+        await sync.commit(sent.state, { basedOn });
+        // An account switch already replaced the draft.
+        if (account !== owner) return false;
+        const current = goalsWithoutPendingRemoves(state, sentRemoves);
+        const newRemoves = new Set(
+          [...pendingRemoveIds].filter((id) => !sentRemoves.has(id)),
+        );
+        if (
+          newRemoves.size === 0 &&
+          !goalsListDiffersFromSnapshot(current, sent.json)
+        ) {
+          pendingRemoveIds = new Set();
+          adopt(live.current.data);
+        } else {
+          // Keep the newer edits as a draft on top of what was sent. The
+          // next Save merges them onto the stored copy (`basedOn` = sent).
+          state = current;
+          pendingRemoveIds = newRemoves;
+          savedJson = sent.json;
+        }
         return live.current.error === null;
       } finally {
         saving = false;

@@ -42,6 +42,39 @@ describe("migrateLegacyGoals", () => {
     assert.equal(storage.read("calculatorGoalsRecovery"), null);
   });
 
+  it("keeps the recovery base so local deletes survive the first read", () => {
+    const storage = memorySlotStorage();
+    const base = {
+      ...emptyGoalsState(),
+      goals: [
+        createCharacterGoal("Furina", { id: "g1" }),
+        createCharacterGoal("Neuvillette", { id: "g2" }),
+      ],
+    };
+    storage.write("calculatorGoals", legacy);
+    storage.write("calculatorGoalsRecovery", {
+      userId: "u1",
+      baseJson: JSON.stringify(base),
+    });
+    migrateLegacyGoals(storage);
+    const slot = storage.read("lk:goals:u1") as Slot & {
+      base: { goals: { id: string }[] } | null;
+    };
+    assert.deepEqual(
+      slot.base?.goals.map((g) => g.id),
+      ["g1", "g2"],
+    );
+  });
+
+  it("keeps the old keys when the slot cannot be stored", () => {
+    const storage = memorySlotStorage();
+    storage.write("calculatorGoals", legacy);
+    storage.failWrites = true;
+    migrateLegacyGoals(storage);
+    assert.equal(storage.read("lk:goals:guest"), null);
+    assert.notEqual(storage.read("calculatorGoals"), null);
+  });
+
   it("never overwrites an existing slot", () => {
     const storage = memorySlotStorage();
     storage.write("lk:goals:guest", { v: 1, data: emptyGoalsState() });

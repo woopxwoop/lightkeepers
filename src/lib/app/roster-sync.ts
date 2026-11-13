@@ -51,7 +51,8 @@ const LEGACY_SAVED_FLAG_KEY = "hasSavedRoster";
  * unsent: its next read takes the server copy when they match, asks when
  * they differ, and sends it when the account has no server copy, which is
  * what the old sign-in sync did. An unstamped roster goes to the guest slot.
- * An existing slot is never overwritten.
+ * An existing slot is never overwritten. The old keys are removed only once
+ * the slot is stored, so a full storage keeps the roster for the next load.
  */
 export function migrateLegacyRoster(storage: SlotStorage): void {
   const legacy = parseRosterDoc(storage.read(LEGACY_ROSTER_KEY));
@@ -61,13 +62,14 @@ export function migrateLegacyRoster(storage: SlotStorage): void {
     const owner = typeof rawOwner === "string" ? rawOwner : null;
     const key = `lk:${rosterDocSpec.key}:${owner ?? "guest"}`;
     if (storage.read(key) === null) {
-      storage.write(key, {
+      const stored = storage.write(key, {
         v: rosterDocSpec.schemaVersion,
         data: legacy,
         base: null,
         baseRev: null,
         dirty: owner !== null,
       });
+      if (!stored) return;
     }
   }
   storage.remove(LEGACY_ROSTER_KEY);
