@@ -864,6 +864,11 @@ describe("durable questions", () => {
     await synced.commit(doc("guest-1"));
     const release = server.hold();
     signIn("a");
+    // The read must be in flight for A before the sign-out, or it never runs.
+    for (let i = 0; i < 20 && !server.calls.includes("read:a"); i++) {
+      await Promise.resolve();
+    }
+    assert.ok(server.calls.includes("read:a"));
     signIn(null);
     await synced.commit(doc("guest-1", "more"));
     release();
@@ -1027,5 +1032,196 @@ describe("durable questions", () => {
     assert.equal(result.removed, false);
     assert.equal(server.rows.has("a"), true);
     await synced.idle();
+  });
+});
+
+describe("open device questions", () => {
+  /** Union merge that asks once the result is over three items. */
+  function cappedSpec() {
+    return defineSyncedDocSpec<Doc>({
+      ...makeSpec(),
+      saveAnswersAsk: false,
+      merge: (base, local, remote) => {
+        const merged = unionMerge(base, local, remote);
+        return merged.items.length > 3 ? "ask" : merged;
+      },
+    });
+  }
+
+  it("a guest slot with an open question is not adopted on sign-in", async () => {
+    const { synced, signIn, server, storage } = setup({ ask: true });
+    signIn(null);
+    await synced.commit(doc("stored"));
+    await synced.commit(doc("draft"), { basedOn: doc("other") });
+    signIn("a");
+    await synced.idle();
+    assert.equal(server.rows.has("a"), false);
+    const guest = storage.read("lk:t:guest") as {
+      data: Doc;
+      ask?: { remote: Doc };
+    };
+    assert.deepEqual(guest.data.items, ["draft"]);
+    assert.deepEqual(guest.ask?.remote.items, ["stored"]);
+  });
+
+  it("saving the unchanged draft keeps the question's own base", async () => {
+    const synced = createSyncedDoc(cappedSpec(), {
+      storage: memorySlotStorage(),
+      transport: fakeServer().transport,
+    });
+    synced.setAccount(null);
+    await synced.commit(doc("x", "s1", "s2"));
+    const asked = await synced.commit(doc("x", "d1", "d2"), {
+      basedOn: doc("x"),
+    });
+    assert.equal(asked.status, "ask");
+    // The editor adopted its own draft, so its base now holds its additions.
+    const again = await synced.commit(doc("x", "d1", "d2"), {
+      basedOn: doc("x", "d1", "d2"),
+    });
+    assert.equal(again.status, "ask");
+    assert.deepEqual(get(synced.view).data.items, ["x", "d1", "d2"]);
+    assert.deepEqual(get(synced.view).remote?.items, ["x", "s1", "s2"]);
+    synced.dispose();
+  });
+
+  it("a question asked while a write is in flight survives the write", async () => {
+    const { synced, signIn, server, storage, view } = setup({ ask: true });
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    const release = server.hold();
+    const first = synced.commit(doc("x", "1"));
+    for (let i = 0; i < 20 && !server.calls.includes("write:a:r1"); i++) {
+      await Promise.resolve();
+    }
+    assert.ok(server.calls.includes("write:a:r1"));
+    const asked = await synced.commit(doc("x", "draft"), {
+      basedOn: doc("x"),
+    });
+    assert.equal(asked.status, "ask");
+    release();
+    await first;
+    await synced.idle();
+    assert.equal(view().status, "ask");
+    assert.deepEqual(view().remote?.items, ["x", "1"]);
+    const stored = storage.read("lk:t:a") as { ask?: { source: string } };
+    assert.equal(stored.ask?.source, "device");
+  });
+
+  it("a read keeps an open device question and its other copy", async () => {
+    const { synced, signIn, server, view } = setup({ ask: true });
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.failWrites = true;
+    await synced.commit(doc("x", "other"));
+    await synced.commit(doc("x", "draft"), { basedOn: doc("x") });
+    assert.equal(view().remoteSource, "device");
+    server.failWrites = false;
+    server.put("a", ["x", "theirs"]);
+    await synced.refresh();
+    await synced.idle();
+    assert.equal(view().status, "ask");
+    assert.equal(view().remoteSource, "device");
+    assert.deepEqual(view().remote?.items, ["x", "other"]);
+    assert.deepEqual(view().data.items, ["x", "draft"]);
+  });
+
+  it("a question stored by another tab while inactive asks on activation", async () => {
+    const { synced, signIn, storage, view } = setup();
+    signIn(null);
+    storage.emit("lk:t:a", {
+      v: 1,
+      data: { items: ["mine"], pick: null },
+      dirty: true,
+      server: { state: "unseen" },
+      ask: {
+        source: "device",
+        remote: { items: ["other"], pick: null },
+        server: { state: "unseen" },
+        dirty: true,
+      },
+    });
+    signIn("a");
+    assert.equal(view().status, "ask");
+    assert.deepEqual(view().remote?.items, ["other"]);
+    synced.dispose();
+  });
+
+  it("an answer reads the question another tab stored", async () => {
+    const { synced, signIn, server, storage, view } = setup({ ask: true });
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["theirs"]);
+    await synced.commit(doc("mine"));
+    await synced.idle();
+    assert.deepEqual(view().remote?.items, ["theirs"]);
+    // Another tab replaced the question; its event has not arrived.
+    storage.entries.set(
+      "lk:t:a",
+      JSON.stringify({
+        v: 1,
+        data: { items: ["mine"], pick: null },
+        dirty: true,
+        server: {
+          state: "tracked",
+          base: { items: ["x"], pick: null },
+          rev: "r1",
+        },
+        ask: {
+          source: "server",
+          remote: { items: ["second"], pick: null },
+          rev: "r9",
+        },
+      }),
+    );
+    const result = await synced.resolve("remote", doc("theirs"));
+    assert.equal(result.status, "unchanged");
+    assert.deepEqual(view().data.items, ["mine"]);
+    assert.deepEqual(view().remote?.items, ["second"]);
+    synced.dispose();
+  });
+});
+
+describe("attachments and answers", () => {
+  it("taking the server copy drops the attachment for the local copy", async () => {
+    const { synced, signIn, server, storage } = setup({ ask: true });
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["theirs"]);
+    await synced.commit(doc("mine"), { attach: { weapons: [1] } });
+    await synced.idle();
+    const sentWith = server.attached.length;
+    await synced.resolve("remote");
+    const stored = storage.read("lk:t:a") as { attach?: unknown };
+    assert.equal(stored.attach, undefined);
+    await synced.commit(doc("theirs", "new"));
+    await synced.idle();
+    assert.equal(server.attached.length, sentWith);
+    assert.deepEqual(server.rows.get("a")?.items, ["theirs", "new"]);
+  });
+
+  it("an attachment-only save during a delete is still uploaded", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    const release = server.hold();
+    const removed = synced.discardServer();
+    for (let i = 0; i < 20 && !server.calls.includes("remove:a"); i++) {
+      await Promise.resolve();
+    }
+    assert.ok(server.calls.includes("remove:a"));
+    const saved = synced.commit(doc("x"), { attach: { weapons: [2] } });
+    release();
+    assert.deepEqual(await removed, { removed: true });
+    await saved;
+    await synced.idle();
+    assert.deepEqual(server.attached.at(-1), { weapons: [2] });
+    assert.deepEqual(server.rows.get("a")?.items, ["x"]);
+    assert.equal(view().dirty, false);
   });
 });

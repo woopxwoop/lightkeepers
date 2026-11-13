@@ -86,8 +86,11 @@ export function decideReconcile<T>(
     !slot.dirty &&
     slot.server.state === "unseen" &&
     spec.equal(slot.data, spec.empty());
+  // A guest slot with an open question holds two copies. Offering it would
+  // empty the slot and drop the other one, so it waits until answered.
   const offerGuest =
     guest !== null &&
+    !guest.ask &&
     continueSave === null &&
     untouched &&
     !spec.equal(guest.data, spec.empty());

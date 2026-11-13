@@ -127,8 +127,12 @@ export function useGoalsDraft(): GoalsDraft {
       }
       const sentRemoves = new Set(pendingRemoveIds);
       const result = await sync.save();
-      // A switch already dropped the draft and the staged removes.
-      if (switches !== mark) return { ...result, kept: false };
+      // A switch already dropped the draft and the staged removes. The
+      // editor now shows another account, so this save is not reported as
+      // saved there.
+      if (switches !== mark) {
+        return { status: "unchanged", account: result.account, kept: false };
+      }
       // A staged remove is done only when this save kept the edit and the
       // goal is gone from the editor. The draft decides `kept`.
       if (result.kept) {

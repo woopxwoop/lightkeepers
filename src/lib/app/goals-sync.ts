@@ -44,8 +44,9 @@ const LEGACY_RECOVERY_KEY = "calculatorGoalsRecovery";
  * unsent (a read merges them, the user saves). Otherwise they go to the
  * guest slot: an account with no server copy adopts them on sign-in, the
  * same as the old first upload. An existing slot keeps its goals; legacy
- * goals it does not already contain are added. The old keys are removed
- * only once that data is stored.
+ * goals it does not already contain are added. When they do not fit under
+ * the cap, the slot asks (a device question, legacy goals as the other
+ * copy) instead. The old keys are removed only once that data is stored.
  *
  * The recovery record's `baseJson` is the copy both sides last agreed on.
  * It becomes the slot's `detached` base (no revision is known), so the first read keeps local deletes
@@ -100,9 +101,28 @@ export function migrateLegacyGoals(
           selectedId: slot.data.selectedId ?? legacyState.selectedId,
         });
         const retained = new Set(mergedState.goals.map((goal) => goal.id));
-        // Normalization dropped a legacy goal (the slot is full). Leave the
-        // old keys so that goal is still there on the next load.
-        if (missing.some((goal) => !retained.has(goal.id))) return null;
+        if (missing.some((goal) => !retained.has(goal.id))) {
+          // Both lists do not fit under the cap. Ask, the same as any other
+          // over-cap question: the legacy goals are the other copy. Storing
+          // the question completes the move, so the old keys go.
+          // An open question already holds that place; try on the next load.
+          if (slot.ask) return null;
+          const asked: SyncSlot<CalculatorGoalsState> = {
+            ...slot,
+            ask: {
+              source: "device",
+              remote: legacyState,
+              server: slot.server,
+              dirty: true,
+              // No common copy: every goal on either side counts as added.
+              base: null,
+            },
+          };
+          const stored = storage.write(key, asked);
+          if (!stored) return { key, slot: asked };
+          clearLegacyGoalsKeys(storage);
+          return null;
+        }
         const merged: SyncSlot<CalculatorGoalsState> = {
           ...slot,
           data: mergedState,

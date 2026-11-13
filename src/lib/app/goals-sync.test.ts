@@ -180,7 +180,7 @@ describe("migrateLegacyGoals", () => {
     );
   });
 
-  it("keeps a legacy-only goal when the slot is already full", () => {
+  it("asks when legacy goals do not fit beside a full slot", async () => {
     const storage = memorySlotStorage();
     const goals = Array.from({ length: MAX_CALCULATOR_GOALS }, (_, i) =>
       createCharacterGoal("Zhongli", { id: `full-${i}` }),
@@ -191,16 +191,38 @@ describe("migrateLegacyGoals", () => {
     });
     storage.write("calculatorGoals", legacy);
     assert.equal(migrateLegacyGoals(storage), null);
-    assert.equal(
-      (storage.read("calculatorGoals") as typeof legacy).goals[0]?.id,
-      "g1",
+    // The question holds the legacy goals, so the old keys are done.
+    assert.equal(storage.read("calculatorGoals"), null);
+    const doc = createSyncedDoc(goalsDocSpec, {
+      storage,
+      transport: {
+        read: async () => ({ status: "error", message: "unavailable" }),
+        write: async () => ({ status: "error", message: "unavailable" }),
+        remove: async () => ({ status: "error", message: "unavailable" }),
+      },
+    });
+    doc.setAccount(null);
+    const view = () => get(doc.view);
+    assert.equal(view().status, "ask");
+    assert.equal(view().remoteSource, "device");
+    assert.equal(view().data.goals.length, MAX_CALCULATOR_GOALS);
+    assert.deepEqual(
+      view().remote?.goals.map((goal) => goal.id),
+      ["g1"],
     );
-    const slot = storage.read("lk:goals:guest") as Slot;
-    assert.equal(slot.data.goals.length, MAX_CALCULATOR_GOALS);
-    assert.equal(
-      slot.data.goals.some((goal) => goal.id === "g1"),
-      false,
+    // Saving the full list unchanged leaves the question open.
+    const again = await doc.commit(view().data, { basedOn: view().data });
+    assert.equal(again.status, "ask");
+    await doc.resolve("remote");
+    assert.deepEqual(
+      view().data.goals.map((goal) => goal.id),
+      ["g1"],
     );
+    // A later empty save does not bring the legacy goals back.
+    await doc.commit(emptyGoalsState());
+    migrateLegacyGoals(storage);
+    assert.deepEqual((storage.read("lk:goals:guest") as Slot).data.goals, []);
+    doc.dispose();
   });
 
   it("does nothing without old data", () => {

@@ -198,22 +198,26 @@ export function useSyncedDraft<T, D = T>(
         ) {
           return { ...result, kept: false };
         }
-        // Edits made while this ran stay unsaved. The snapshot that was
-        // submitted is their base, so that edit was kept.
-        if (
-          !opts.sameContent(
+        // What this save stored, in editor shape (fromDraft may already have
+        // applied removes).
+        const submitted = opts.toDraft(payload);
+        // Edits made while this ran stay unsaved. Compare what the editor
+        // would store now, so a change beside the draft (a staged remove
+        // undone) counts too. The submitted copy is their base, so that edit
+        // was kept.
+        const now = opts.toDraft(
+          opts.fromDraft(
             untrack(() => draft),
-            sent,
-          )
-        ) {
-          base = sent;
+            basedOn,
+          ),
+        );
+        if (!opts.sameContent(now, submitted)) {
+          base = clone(submitted);
           baseDoc = payload;
           return { ...result, kept: true };
         }
         // Ask / unchanged count as kept only when the stored copy is the
-        // payload this save submitted (fromDraft may already have applied
-        // removes).
-        const submitted = opts.toDraft(payload);
+        // payload this save submitted.
         const kept =
           result.status === "sent" ||
           result.status === "local" ||

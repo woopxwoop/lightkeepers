@@ -487,14 +487,20 @@ export function createSyncedDoc<T>(
     emit({ account, step: "reconcile", detail: plan.rule });
     // A plan that names a slot or a question replaces the stored question.
     // `server-unmoved` names neither, so an open question stays until answered.
+    // An open device question is never replaced: its other copy exists only
+    // here. It keeps its own server state, so answering it merges with this
+    // server copy on the next write.
     if (plan.slot || plan.ask) {
-      const base = plan.slot ?? slotOf(account);
-      const next = plan.ask ? { ...base, ask: plan.ask } : withoutAsk(base);
+      const current = slotOf(account);
+      const ask =
+        current.ask?.source === "device" ? current.ask : plan.ask;
+      const base = plan.slot ?? current;
+      const next = ask ? { ...base, ask } : withoutAsk(base);
       const wrote = storeSlot(account, next);
       // The guest copy is the only other durable copy. Drop it only after
       // the destination write landed.
       if (plan.clearGuest && wrote) storeSlot(null, emptySlot());
-      setState(account, { ask: plan.ask });
+      setState(account, { ask });
     }
     if (plan.push !== null) schedulePush(account, plan.push, carried);
     else settleIdle(account, carried);
@@ -590,9 +596,10 @@ export function createSyncedDoc<T>(
         // Same document, but an attachment queued in flight has not been sent.
         const dirty = !spec.equal(now.data, sent) || attachments.has(account);
         setState(account, { offline: false, error: null });
-        // Edits made while this was in flight wait for their own Save.
+        // Edits made while this was in flight wait for their own Save. A
+        // device question asked meanwhile is not answered by this write.
         const stored = {
-          ...withoutAsk(now),
+          ...(now.ask?.source === "device" ? now : withoutAsk(now)),
           server: tracked(sent, res.rev),
           dirty,
         };
@@ -667,6 +674,9 @@ export function createSyncedDoc<T>(
     setAccount(id) {
       if (id === active) return;
       active = id;
+      // The watcher may have cached this slot while another account was
+      // active. Its question and attachment become this tab's again.
+      rememberStored(id, slotOf(id));
       // The server copy may have moved while this account was inactive.
       if (id !== null)
         transients.set(slotKey(id), { ...stateOf(id), loaded: false });
@@ -693,10 +703,14 @@ export function createSyncedDoc<T>(
         // device question. A draft that now merges under the spec's limit
         // is stored; one that still asks is left open.
         const remote = pendingAsk.remote;
+        // A device question keeps the copy both sides started from. The
+        // editor's `basedOn` already holds its own side's additions.
         const base =
           pendingAsk.source === "server"
             ? baseOf(slot.server)
-            : (opts?.basedOn ?? null);
+            : pendingAsk.base !== undefined
+              ? pendingAsk.base
+              : (opts?.basedOn ?? null);
         const merged = spec.merge(base, next, remote);
         if (merged === "ask") {
           storeSlot(account, {
@@ -749,6 +763,7 @@ export function createSyncedDoc<T>(
             remote: slot.data,
             server: slot.server,
             dirty: slot.dirty,
+            base: basedOn,
           };
           storeSlot(account, {
             ...slot,
@@ -791,9 +806,14 @@ export function createSyncedDoc<T>(
 
     resolve(choice, expected) {
       const account = requireActive();
-      const ask = stateOf(account).ask ?? slotOf(account).ask;
+      // Read storage first: another tab may have replaced the question, and
+      // `slotOf` updates this tab's copy of it.
+      const current = slotOf(account);
+      const ask = stateOf(account).ask ?? current.ask;
       if (!ask) return Promise.resolve({ status: "unchanged", account });
       if (expected !== undefined && !spec.equal(ask.remote, expected)) {
+        // Show the question that replaced it, so it can be answered.
+        publish(account);
         return Promise.resolve({ status: "unchanged", account });
       }
       if (account === null && ask.source !== "device") {
@@ -801,6 +821,7 @@ export function createSyncedDoc<T>(
       }
       setState(account, { ask: null });
       const answered = answerAsk(slotOf(account), ask, choice);
+      if (account !== null && !answered.attach) attachments.delete(account);
       if (account === null) {
         storeSlot(account, { ...answered, dirty: false });
         return Promise.resolve({
@@ -850,6 +871,7 @@ export function createSyncedDoc<T>(
         // The cookie now belongs to someone else. Their row is not deleted.
         if (account !== active) return;
         const before = slotOf(account).data;
+        const attachBefore = attachments.get(account);
         try {
           const res = await transport.remove(account);
           if (res.status !== "removed") {
@@ -867,7 +889,13 @@ export function createSyncedDoc<T>(
         outcome = { removed: true };
         const now = slotOf(account);
         // A save during the delete is a new upload, not the copy we removed.
-        if (!spec.equal(now.data, before)) return;
+        // That includes one that only attached new inventory.
+        if (
+          !spec.equal(now.data, before) ||
+          attachments.get(account) !== attachBefore
+        ) {
+          return;
+        }
         const next = withoutAsk({
           ...now,
           dirty: false,

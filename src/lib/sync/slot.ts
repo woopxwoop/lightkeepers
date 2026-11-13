@@ -56,7 +56,18 @@ export type SyncSlot<T> = {
  */
 export type Ask<T> =
   | { source: "server"; remote: T; rev: string }
-  | { source: "device"; remote: T; server: ServerCopy<T>; dirty: boolean };
+  | {
+      source: "device";
+      remote: T;
+      server: ServerCopy<T>;
+      dirty: boolean;
+      /**
+       * The copy both sides started from, when known. A later Save merges
+       * against it, not against the editor's own (already edited) baseline.
+       * `null`: no common copy, every item counts as added.
+       */
+      base?: T | null;
+    };
 
 export function unseen<T>(): ServerCopy<T> {
   return { state: "unseen" };
@@ -97,6 +108,9 @@ export function answerAsk<T>(
   const server =
     ask.source === "server" ? tracked(ask.remote, ask.rev) : ask.server;
   if (choice === "local") return { ...rest, server, dirty: true };
+  // The server copy wins: an attachment queued for the dropped copy must not
+  // ride the next write.
+  if (ask.source === "server") delete rest.attach;
   return {
     ...rest,
     data: ask.remote,
@@ -158,6 +172,11 @@ function decodeAsk<T>(
       remote: parse(ask.remote),
       server: decodeServerValue(ask.server, parse),
       dirty: ask.dirty === true,
+      ...(ask.base === null
+        ? { base: null }
+        : ask.base !== undefined
+          ? { base: parse(ask.base) }
+          : {}),
     };
   }
   return null;
