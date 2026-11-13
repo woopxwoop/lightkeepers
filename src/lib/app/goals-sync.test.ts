@@ -91,6 +91,7 @@ describe("migrateLegacyGoals", () => {
       transport: {
         read: async () => ({ status: "error", message: "unavailable" }),
         write: async () => ({ status: "error", message: "unavailable" }),
+        remove: async () => ({ status: "error", message: "unavailable" }),
       },
     });
     doc.setAccount(null);
@@ -111,13 +112,37 @@ describe("migrateLegacyGoals", () => {
     doc.dispose();
   });
 
-  it("never overwrites an existing slot", () => {
+  it("adds legacy goals an existing slot does not already contain", () => {
     const storage = memorySlotStorage();
-    storage.write("lk:goals:guest", { v: 1, data: emptyGoalsState() });
+    storage.write("lk:goals:guest", {
+      v: 1,
+      data: {
+        ...emptyGoalsState(),
+        goals: [createCharacterGoal("Zhongli", { id: "keep" })],
+      },
+    });
     storage.write("calculatorGoals", legacy);
     migrateLegacyGoals(storage);
     const slot = storage.read("lk:goals:guest") as Slot;
-    assert.deepEqual(slot.data.goals, []);
+    assert.deepEqual(
+      slot.data.goals.map((goal) => goal.id),
+      ["keep", "g1"],
+    );
+    assert.equal(storage.read("calculatorGoals"), null);
+  });
+
+  it("keeps the legacy keys when the existing slot cannot store the merge", () => {
+    const storage = memorySlotStorage();
+    storage.write("lk:goals:guest", { v: 1, data: emptyGoalsState() });
+    storage.write("calculatorGoals", legacy);
+    storage.failWrites = true;
+    const pending = migrateLegacyGoals(storage);
+    assert.equal(pending?.key, "lk:goals:guest");
+    assert.notEqual(storage.read("calculatorGoals"), null);
+    assert.deepEqual(
+      (storage.read("lk:goals:guest") as Slot).data.goals,
+      [],
+    );
   });
 
   it("does nothing without old data", () => {

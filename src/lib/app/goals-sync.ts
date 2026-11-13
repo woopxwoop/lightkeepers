@@ -10,7 +10,7 @@
  */
 
 import { get } from "svelte/store";
-import { parseGoalsState } from "#lib/calculator-goals.js";
+import { emptyGoalsState, parseGoalsState } from "#lib/calculator-goals.js";
 import {
   cancelGoalsSyncConflict,
   goalsSyncConflict,
@@ -23,7 +23,7 @@ import {
   retainUntilStored,
   type SlotStorage,
 } from "#lib/sync/storage.js";
-import type { SyncSlot } from "#lib/sync/slot.js";
+import { decodeSlot, type SyncSlot } from "#lib/sync/slot.js";
 import {
   createSyncedDoc,
   type SyncedDoc,
@@ -43,7 +43,9 @@ const LEGACY_RECOVERY_KEY = "calculatorGoalsRecovery";
  * whose edits were still unsent, so those goals go to that account's slot as
  * unsent (a read merges them, the user saves). Otherwise they go to the
  * guest slot: an account with no server copy adopts them on sign-in, the
- * same as the old first upload. An existing slot is never overwritten.
+ * same as the old first upload. An existing slot keeps its goals; legacy
+ * goals it does not already contain are added. The old keys are removed
+ * only once that data is stored.
  *
  * The recovery record's `baseJson` is the copy both sides last agreed on.
  * It becomes the slot's `detached` base (no revision is known), so the first read keeps local deletes
@@ -69,18 +71,42 @@ export function migrateLegacyGoals(
         ? recovery.userId
         : null;
     const key = `lk:${goalsDocSpec.key}:${owner ?? "guest"}`;
-    if (storage.read(key) === null) {
-      const base =
-        owner !== null ? legacyRecoveryBase(recovery?.baseJson) : null;
-      const slot: SyncSlot<CalculatorGoalsState> = {
-        v: goalsDocSpec.schemaVersion,
-        data: parseGoalsState(legacy),
-        dirty: owner !== null,
-        // The agreed copy is known, its revision is not.
-        server: base ? { state: "detached", base } : { state: "unseen" },
-      };
-      const stored = storage.write(key, slot);
-      if (!stored) return { key, slot };
+    const legacyState = parseGoalsState(legacy);
+    const base =
+      owner !== null ? legacyRecoveryBase(recovery?.baseJson) : null;
+    const fresh: SyncSlot<CalculatorGoalsState> = {
+      v: goalsDocSpec.schemaVersion,
+      data: legacyState,
+      dirty: owner !== null,
+      // The agreed copy is known, its revision is not.
+      server: base ? { state: "detached", base } : { state: "unseen" },
+    };
+    const existing = storage.read(key);
+    if (existing === null) {
+      const stored = storage.write(key, fresh);
+      if (!stored) return { key, slot: fresh };
+    } else {
+      const slot = decodeSlot(
+        existing,
+        (value) => parseGoalsState(value),
+        emptyGoalsState,
+        goalsDocSpec.schemaVersion,
+      );
+      const ids = new Set(slot.data.goals.map((goal) => goal.id));
+      const missing = legacyState.goals.filter((goal) => !ids.has(goal.id));
+      // The slot already holds these goals. The legacy keys can go.
+      if (missing.length > 0) {
+        const merged: SyncSlot<CalculatorGoalsState> = {
+          ...slot,
+          data: parseGoalsState({
+            goals: [...slot.data.goals, ...missing],
+            selectedId: slot.data.selectedId ?? legacyState.selectedId,
+          }),
+          dirty: slot.dirty || missing.length > 0,
+        };
+        const stored = storage.write(key, merged);
+        if (!stored) return { key, slot: merged };
+      }
     }
   }
   storage.remove(LEGACY_GOALS_KEY);
@@ -102,6 +128,7 @@ function legacyRecoveryBase(baseJson: unknown): CalculatorGoalsState | null {
 const offlineTransport: SyncTransport = {
   read: async () => ({ status: "error", message: "unavailable" }),
   write: async () => ({ status: "error", message: "unavailable" }),
+  remove: async () => ({ status: "error", message: "unavailable" }),
 };
 
 let instance: SyncedDoc<CalculatorGoalsState> | null = null;

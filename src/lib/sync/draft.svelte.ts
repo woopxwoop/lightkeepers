@@ -43,6 +43,8 @@ export type SyncedDraftOptions<T, D> = {
   onSwitch?(): void;
 };
 
+export type DraftSave = CommitOutcome & { kept: boolean };
+
 export type SyncedDraft<T, D> = {
   /** The editor's copy. Assign to edit. */
   draft: D;
@@ -57,8 +59,11 @@ export type SyncedDraft<T, D> = {
   readonly saving: boolean;
   readonly status: SyncStatus;
   readonly error: string | null;
-  /** Store and send the draft. */
-  save(): Promise<CommitOutcome>;
+  /**
+   * Store and send the draft. `kept` means the submitted edit stayed in
+   * the editor. It is false when this save did not take it.
+   */
+  save(): Promise<DraftSave>;
   /** Drop unsaved edits and show the current stored copy. */
   cancel(): void;
 };
@@ -149,30 +154,49 @@ export function useSyncedDraft<T, D = T>(
 
     async save() {
       if (saving || live.current.account !== account) {
-        return { status: "unchanged", account: live.current.account };
+        return {
+          status: "unchanged",
+          account: live.current.account,
+          kept: false,
+        };
       }
       saving = true;
       const owner = account;
-      // Capture before the await; edits made while it runs stay unsaved.
-      const sent = clone(untrack(() => draft));
-      const basedOn = clone(untrack(() => baseDoc));
-      const payload = opts.fromDraft(sent, basedOn);
       try {
+        // Capture before the await; edits made while it runs stay unsaved.
+        // Inside the try so a throw still clears `saving`.
+        const sent = clone(untrack(() => draft));
+        const basedOn = clone(untrack(() => baseDoc));
+        const payload = opts.fromDraft(sent, basedOn);
         const result = await doc.commit(payload, { basedOn });
         // An account switch already replaced the draft.
-        if (account !== owner || result.account !== account) return result;
+        if (account !== owner || result.account !== account) {
+          return { ...result, kept: false };
+        }
+        // Edits made while this ran stay unsaved. The snapshot that was
+        // submitted is their base, so that edit was kept.
         if (
-          opts.sameContent(
+          !opts.sameContent(
             untrack(() => draft),
             sent,
           )
         ) {
-          adopt(live.current.data);
-        } else {
           base = sent;
           baseDoc = payload;
+          return { ...result, kept: true };
         }
-        return result;
+        // Ask / unchanged count as kept only when the stored copy is the
+        // payload this save submitted (fromDraft may already have applied
+        // removes).
+        const submitted = opts.toDraft(payload);
+        const kept =
+          result.status === "sent" ||
+          result.status === "local" ||
+          result.status === "unsent" ||
+          ((result.status === "unchanged" || result.status === "ask") &&
+            opts.sameContent(opts.toDraft(live.current.data), submitted));
+        if (kept) adopt(live.current.data);
+        return { ...result, kept };
       } finally {
         saving = false;
       }

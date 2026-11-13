@@ -22,7 +22,11 @@ export function unionMerge(base: Doc | null, local: Doc, remote: Doc): Doc {
   const localSet = new Set(local.items);
   const removed = new Set([...before].filter((x) => !localSet.has(x)));
   const items = remote.items.filter((x) => !removed.has(x));
-  for (const x of local.items) if (!items.includes(x)) items.push(x);
+  // Only local adds. An item that was already in the base and that remote
+  // deleted stays deleted.
+  for (const x of local.items) {
+    if (!items.includes(x) && !before.has(x)) items.push(x);
+  }
   return { items, pick: local.pick };
 }
 
@@ -107,6 +111,14 @@ export function fakeServer() {
       }
       server.put(account, strings(wire));
       return { status: "written", rev: rows.get(account)!.rev };
+    },
+    async remove() {
+      const session = server.session;
+      calls.push(`remove:${session}`);
+      await gate;
+      if (session === null) return { status: "error", message: "401" };
+      rows.delete(session);
+      return { status: "removed" };
     },
   };
   return { server, transport };

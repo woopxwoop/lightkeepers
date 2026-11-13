@@ -114,8 +114,18 @@
         weapons: getRosterWeaponsCached(),
       });
       if (result.added === 0) return;
+      const previous = goals.state;
       goals.state = result.state;
-      await goals.save();
+      try {
+        const saved = await goals.save();
+        if (saved.kept) return;
+      } catch {
+        goals.state = previous;
+        plannerError = "Couldn't add those to the Planner — try again";
+        return;
+      }
+      goals.state = previous;
+      plannerError = "Couldn't add those to the Planner — try again";
     } finally {
       plannerBusy = false;
     }

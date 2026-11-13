@@ -21,8 +21,14 @@
     watchRosterConflicts,
   } from "#lib/app/roster-sync.js";
   import { clearRosterInventory } from "#lib/app/roster-inventory.js";
-  import { cancelGoalsSyncConflict } from "#lib/app/goals-sync-conflict.js";
-  import { cancelRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
+  import {
+    cancelGoalsSyncConflict,
+    goalsSyncConflict,
+  } from "#lib/app/goals-sync-conflict.js";
+  import {
+    cancelRosterSyncConflict,
+    rosterSyncConflict,
+  } from "#lib/app/roster-sync-conflict.js";
   import { authClient } from "#lib/auth-client.js";
   import { installChunkLoadRecovery } from "#lib/app/chunkLoadRecovery.js";
   import { installDebugHitTest } from "#lib/app/debugHitTest.js";
@@ -181,8 +187,11 @@
     <ResearchChatSheet />
   {/if}
   <AccountSettingsModal />
-  <RosterSyncConflictPopup />
-  <GoalsSyncConflictPopup />
+  {#if $rosterSyncConflict}
+    <RosterSyncConflictPopup />
+  {:else if $goalsSyncConflict}
+    <GoalsSyncConflictPopup />
+  {/if}
   <PatchNotesPopup note={data.latestPatchNote} />
 
   <div class="h-12 w-full"></div>

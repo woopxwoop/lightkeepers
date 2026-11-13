@@ -112,12 +112,35 @@ describe("migrateLegacyRoster", () => {
     assert.equal(storage.read("rosterOwnerUserId"), null);
   });
 
-  it("never overwrites an existing slot", () => {
+  it("adds legacy characters an existing slot does not already contain", () => {
     const storage = memorySlotStorage();
-    storage.write("lk:roster:guest", { v: 1, data: [] });
+    storage.write("lk:roster:guest", {
+      v: 1,
+      data: [{ name_id: "Zhongli", isOwned: true, progress: null }],
+    });
     storage.write("charactersOwned", legacy);
     migrateLegacyRoster(storage);
-    assert.deepEqual((storage.read("lk:roster:guest") as Slot).data, []);
+    assert.deepEqual(
+      (storage.read("lk:roster:guest") as Slot).data.map(
+        (entry) => entry.name_id,
+      ),
+      ["Albedo", "Zhongli"],
+    );
+    assert.equal(storage.read("charactersOwned"), null);
+  });
+
+  it("replaces a stored value that is not a roster", () => {
+    const storage = memorySlotStorage();
+    storage.write("lk:roster:guest", { not: "a roster" });
+    storage.write("charactersOwned", legacy);
+    migrateLegacyRoster(storage);
+    assert.deepEqual(
+      (storage.read("lk:roster:guest") as Slot).data.map(
+        (entry) => entry.name_id,
+      ),
+      ["Albedo"],
+    );
+    assert.equal(storage.read("charactersOwned"), null);
   });
 
   it("keeps the old keys when the slot cannot be stored", () => {
@@ -141,6 +164,7 @@ describe("migrateLegacyRoster", () => {
       transport: {
         read: async () => ({ status: "error", message: "unavailable" }),
         write: async () => ({ status: "error", message: "unavailable" }),
+        remove: async () => ({ status: "error", message: "unavailable" }),
       },
     });
     doc.setAccount(null);

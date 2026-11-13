@@ -46,7 +46,12 @@ export type ReconcileRule =
 
 export type ReconcileInput<T> = {
   slot: SyncSlot<T>;
-  guest: SyncSlot<T>;
+  /**
+   * The guest slot, or null when this response must not offer it. Null is
+   * not an empty guest: an empty guest is a real document and can still be
+   * compared. Null is never read and never cleared.
+   */
+  guest: SyncSlot<T> | null;
   /** The server's `field`, or null when it has no copy. */
   wire: unknown;
   rev: string | null;
@@ -82,7 +87,10 @@ export function decideReconcile<T>(
     slot.server.state === "unseen" &&
     spec.equal(slot.data, spec.empty());
   const offerGuest =
-    continueSave === null && untouched && !spec.equal(guest.data, spec.empty());
+    guest !== null &&
+    continueSave === null &&
+    untouched &&
+    !spec.equal(guest.data, spec.empty());
 
   const plan = (
     rule: ReconcileRule,
@@ -127,12 +135,15 @@ export function decideReconcile<T>(
   if (offerGuest && !spec.equal(guest.data, remote)) {
     const merged = spec.merge(null, guest.data, remote);
     if (merged === "ask") {
+      // The remote revision is not the agreed base until the user answers.
+      // Recording it now would let a later read look unmoved and a Save
+      // replace the server copy without asking again.
       return plan("guest-asks", {
         slot: {
           ...slot,
           data: guest.data,
-          server: tracked(remote, rev),
           dirty: true,
+          ask: { source: "server", remote, rev },
         },
         ask: { source: "server", remote, rev },
       });
@@ -176,7 +187,7 @@ export function decideReconcile<T>(
   if (merged === "ask") {
     return plan("ask", { ask: { source: "server", remote, rev } });
   }
-  const dirty = !spec.equal(merged, remote);
+  const dirty = !spec.equal(merged, remote) || input.attachmentPending;
   return plan("merged", {
     slot: { ...slot, data: merged, server: tracked(remote, rev), dirty },
     push: continueIf(dirty),

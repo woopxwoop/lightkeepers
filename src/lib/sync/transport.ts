@@ -21,9 +21,26 @@ export type TransportRead =
   | { status: "error"; message: string };
 
 export type TransportWrite =
-  | { status: "written"; rev: string }
+  | {
+      status: "written";
+      rev: string;
+      /** The document was stored and the attachment on this write was not. */
+      attachmentOmitted?: boolean;
+    }
   | { status: "conflict"; wire: unknown; rev: string | null }
   | { status: "error"; message: string };
+
+export type TransportRemove =
+  | { status: "removed" }
+  | { status: "error"; message: string };
+
+/**
+ * Facts a route adds to a successful write. The engine only knows that an
+ * attachment was dropped; the document's transport reads its own body.
+ */
+export type WriteReport = {
+  attachmentOmitted?: boolean;
+};
 
 export interface SyncTransport {
   read(): Promise<TransportRead>;
@@ -37,6 +54,8 @@ export interface SyncTransport {
     account: string,
     attach?: Record<string, unknown>,
   ): Promise<TransportWrite>;
+  /** Delete the signed-in account's server row. */
+  remove(): Promise<TransportRemove>;
 }
 
 const TIMEOUT_MS = 15_000;
@@ -72,7 +91,11 @@ function failure(status: number, body: Record<string, unknown> | null): string {
 }
 
 /** `fetch` transport for `endpoint`, whose body field is `field`. */
-export function fetchTransport(endpoint: string, field: string): SyncTransport {
+export function fetchTransport(
+  endpoint: string,
+  field: string,
+  reportOf?: (body: Record<string, unknown>) => WriteReport,
+): SyncTransport {
   return {
     async read() {
       try {
@@ -111,8 +134,27 @@ export function fetchTransport(endpoint: string, field: string): SyncTransport {
           };
         }
         if (res.ok && body && typeof body.rev === "string") {
-          return { status: "written", rev: body.rev };
+          const report = reportOf?.(body);
+          return {
+            status: "written",
+            rev: body.rev,
+            ...(report?.attachmentOmitted ? { attachmentOmitted: true } : {}),
+          };
         }
+        return { status: "error", message: failure(res.status, body) };
+      } catch {
+        return { status: "error", message: "Sync failed (0) — offline?" };
+      }
+    },
+
+    async remove() {
+      try {
+        const res = await fetch(endpoint, {
+          method: "DELETE",
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+        if (res.ok) return { status: "removed" };
+        const body = await bodyOf(res);
         return { status: "error", message: failure(res.status, body) };
       } catch {
         return { status: "error", message: "Sync failed (0) — offline?" };

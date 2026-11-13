@@ -26,9 +26,11 @@ import {
   answerAsk,
   baseOf,
   decodeSlot as decodeStoredSlot,
+  detached,
   emptySlot as emptySlotOf,
   revOf,
   tracked,
+  withoutAsk,
   type Ask,
   type SyncSlot,
 } from "#lib/sync/slot.js";
@@ -113,8 +115,11 @@ export type { ServerCopy, SyncSlot } from "#lib/sync/slot.js";
 export type CommitResult =
   /** Guest: stored on this device only. */
   | { status: "local" }
-  /** The server accepted this save. */
-  | { status: "sent"; rev: string }
+  /**
+   * The server accepted this save. `attachmentOmitted` means the document
+   * was stored and the attachment on that write was not.
+   */
+  | { status: "sent"; rev: string; attachmentOmitted?: boolean }
   /** Stored here; the server did not accept it. */
   | { status: "unsent"; error: string | null }
   /** The spec asked the user; the popup takes over. */
@@ -123,6 +128,11 @@ export type CommitResult =
   | { status: "unchanged" };
 
 export type CommitOutcome = CommitResult & { account: string | null };
+
+/** What `discardServer` did. `message` is null when no delete was attempted. */
+export type DiscardResult =
+  | { removed: true }
+  | { removed: false; message: string | null };
 
 export interface SyncedDoc<T> {
   readonly view: Readable<SyncView<T>>;
@@ -144,9 +154,9 @@ export interface SyncedDoc<T> {
    * Saving while status is `ask` answers it: this copy wins, unless the
    * spec sets `saveAnswersAsk: false`. Then Save leaves the question open.
    *
-   * `attach` adds fields to the body of the next write only (the GOOD
-   * inventory beside the roster). It forces that write even when `next`
-   * equals the stored copy, and is never stored.
+   * `attach` adds fields to the body of the next write (the GOOD inventory
+   * beside the roster). It forces that write even when `next` equals the
+   * stored copy, and stays on the slot until the server accepts it.
    *
    * The promise settles when this save's chain finishes (a conflict merges
    * and pushes again), not when the first push returns. A later save that
@@ -173,6 +183,14 @@ export interface SyncedDoc<T> {
    * server copy. Returns the same outcome as `commit`.
    */
   adoptGuest(): Promise<CommitOutcome>;
+  /**
+   * Delete this account's server row after saves already queued. When the
+   * delete succeeds and the document did not change during it, the slot is
+   * detached and not dirty, so a save that already ran cannot be followed
+   * by another upload of the same copy. A different signed-in account is
+   * not deleted: the cookie would be theirs.
+   */
+  discardServer(): Promise<DiscardResult>;
   /** Resolves when queued work has finished. */
   idle(): Promise<void>;
   /** Stop watching other tabs. */
@@ -330,16 +348,37 @@ export function createSyncedDoc<T>(
       slot = decodeSlot(raw);
       slots.set(key, slot);
       if (json !== null) lastSeen.set(key, json);
+      rememberStored(account, slot);
     }
     return slot;
   }
 
-  /** Memory first; a failed storage write still updates this tab. */
-  function storeSlot(account: string | null, slot: SyncSlot<T>): void {
+  /**
+   * A slot just read from storage. Its question and attachment become this
+   * tab's, so a reload still asks and still retries the inventory write.
+   */
+  function rememberStored(account: string | null, slot: SyncSlot<T>): void {
+    if (account !== null) {
+      if (slot.attach) attachments.set(account, slot.attach);
+      else attachments.delete(account);
+    }
+    transients.set(slotKey(account), {
+      ...stateOf(account),
+      ask: slot.ask ?? null,
+    });
+  }
+
+  /**
+   * Memory first. Returns whether storage kept the copy. A failed write still
+   * updates this tab, and is not proof the value will be there after reload.
+   */
+  function storeSlot(account: string | null, slot: SyncSlot<T>): boolean {
     const key = slotKey(account);
     slots.set(key, slot);
-    if (storage.write(key, slot)) lastSeen.set(key, JSON.stringify(slot));
+    const stored = storage.write(key, slot);
+    if (stored) lastSeen.set(key, JSON.stringify(slot));
     publish(account);
+    return stored;
   }
 
   // ── Transient state + view ───────────────────────────────────────────────
@@ -366,9 +405,9 @@ export function createSyncedDoc<T>(
   }
 
   function statusOf(account: string | null): SyncStatus {
-    if (account === null) return "local";
     const state = stateOf(account);
     if (state.ask) return "ask";
+    if (account === null) return "local";
     if (state.busy === "read" || !state.loaded) return "loading";
     if (state.busy === "write") return "saving";
     if (state.offline) return "offline";
@@ -381,8 +420,8 @@ export function createSyncedDoc<T>(
   /** Only the active account is ever shown. */
   function publish(account: string | null): void {
     if (account !== active) return;
-    const state = stateOf(account);
     const data = slotOf(account).data;
+    const state = stateOf(account);
     shown = { account, data };
     view.set({
       ready: true,
@@ -434,16 +473,27 @@ export function createSyncedDoc<T>(
   ): void {
     const plan = decideReconcile(spec, {
       slot: slotOf(account),
-      guest: slotOf(null),
+      // Only the active account may be offered the guest slot. A response
+      // for anyone else still updates that account, and does not read or
+      // clear the guest document (it may now be the signed-out user's).
+      guest: account === active ? slotOf(null) : null,
       wire,
       rev,
       continueSave,
       attachmentPending: attachments.has(account),
     });
     emit({ account, step: "reconcile", detail: plan.rule });
-    if (plan.slot) storeSlot(account, plan.slot);
-    if (plan.clearGuest) storeSlot(null, emptySlot());
-    if (plan.ask) setState(account, { ask: plan.ask });
+    // A plan that names a slot or a question replaces the stored question.
+    // `server-unmoved` names neither, so an open question stays until answered.
+    if (plan.slot || plan.ask) {
+      const base = plan.slot ?? slotOf(account);
+      const next = plan.ask ? { ...base, ask: plan.ask } : withoutAsk(base);
+      const wrote = storeSlot(account, next);
+      // The guest copy is the only other durable copy. Drop it only after
+      // the destination write landed.
+      if (plan.clearGuest && wrote) storeSlot(null, emptySlot());
+      setState(account, { ask: plan.ask });
+    }
     if (plan.push !== null) schedulePush(account, plan.push, carried);
     else settleIdle(account, carried);
   }
@@ -486,6 +536,7 @@ export function createSyncedDoc<T>(
       return;
     }
     emit({ account, step: "read", detail: `ok ${res.rev}` });
+    if (account !== active) emit({ account, step: "read", detail: "inactive" });
     reconcile(account, res.wire, res.rev, null, []);
   }
 
@@ -511,6 +562,7 @@ export function createSyncedDoc<T>(
 
       const sent = slot.data;
       const attach = attachments.get(account);
+      const askedAt = revOf(slot.server);
       setState(account, { busy: "write" });
       const res = await transport.write(
         spec.toWire(sent),
@@ -522,16 +574,34 @@ export function createSyncedDoc<T>(
 
       if (res.status === "written") {
         emit({ account, step: "write", detail: `written ${res.rev}` });
+        const now = slotOf(account);
+        // Another tab already recorded a newer server revision. Keep that
+        // merge base; this response is for an older write.
+        if (serverViewMoved(account, askedAt) && res.rev !== revOf(now.server)) {
+          emit({ account, step: "write", detail: "written: stale" });
+          settle(tokens, { status: "unsent", error: null });
+          return;
+        }
         // A commit during this write may have replaced the attachment.
         // Drop it only when it is still the one this request carried.
         if (attachments.get(account) === attach) attachments.delete(account);
-        const now = slotOf(account);
         // Same document, but an attachment queued in flight has not been sent.
         const dirty = !spec.equal(now.data, sent) || attachments.has(account);
         setState(account, { offline: false, error: null });
         // Edits made while this was in flight wait for their own Save.
-        storeSlot(account, { ...now, server: tracked(sent, res.rev), dirty });
-        settle(tokens, { status: "sent", rev: res.rev });
+        const stored = {
+          ...withoutAsk(now),
+          server: tracked(sent, res.rev),
+          dirty,
+        };
+        if (attachments.has(account)) stored.attach = attachments.get(account);
+        else delete stored.attach;
+        storeSlot(account, stored);
+        settle(tokens, {
+          status: "sent",
+          rev: res.rev,
+          ...(res.attachmentOmitted ? { attachmentOmitted: true } : {}),
+        });
         return;
       }
       if (res.status === "conflict") {
@@ -570,10 +640,14 @@ export function createSyncedDoc<T>(
 
   const unwatch = storage.watch((key, value) => {
     if (!key.startsWith(`lk:${spec.key}:`)) return;
-    slots.set(key, decodeSlot(value));
+    const slot = decodeSlot(value);
+    slots.set(key, slot);
     if (value === null) lastSeen.delete(key);
     else lastSeen.set(key, JSON.stringify(value));
-    if (active !== undefined && key === slotKey(active)) publish(active);
+    if (active !== undefined && key === slotKey(active)) {
+      rememberStored(active, slot);
+      publish(active);
+    }
   });
 
   function requireActive(): string | null {
@@ -607,6 +681,7 @@ export function createSyncedDoc<T>(
           ...attachments.get(account),
           ...opts.attach,
         });
+        slot = { ...slot, attach: attachments.get(account) };
       }
       let data = next;
       if (account !== null && pendingAsk && spec.saveAnswersAsk === false) {
@@ -620,7 +695,7 @@ export function createSyncedDoc<T>(
             : (opts?.basedOn ?? null);
         const merged = spec.merge(base, next, remote);
         if (merged === "ask") {
-          storeSlot(account, { ...slot, data: next, dirty: true });
+          storeSlot(account, { ...slot, data: next, dirty: true, ask: pendingAsk });
           return Promise.resolve({ status: "ask", account });
         }
         setState(account, { ask: null });
@@ -630,14 +705,14 @@ export function createSyncedDoc<T>(
             : pendingAsk.server;
         const agreed =
           pendingAsk.source === "server" ? remote : baseOf(pendingAsk.server);
-        slot = {
+        slot = withoutAsk({
           ...slot,
           data: merged,
           server,
           dirty: agreed === null || !spec.equal(merged, agreed),
-        };
+        });
         data = merged;
-      } else if (account !== null && pendingAsk) {
+      } else if (pendingAsk) {
         // Saving is the user's answer to the open question: their copy wins.
         setState(account, { ask: null });
         slot = answerAsk(slot, pendingAsk, "local");
@@ -654,17 +729,22 @@ export function createSyncedDoc<T>(
         const merged = spec.merge(basedOn, next, slot.data);
         if (merged !== "ask") {
           data = merged;
-        } else if (account !== null) {
-          // The user picks between their draft and the newer copy.
-          storeSlot(account, { ...slot, data: next, dirty: true });
-          setState(account, {
-            ask: {
-              source: "device",
-              remote: slot.data,
-              server: slot.server,
-              dirty: slot.dirty,
-            },
+        } else {
+          // Keep the stored copy as the other side. Both live on the slot,
+          // including for a guest, where there is no server to send to.
+          const ask: Ask<T> = {
+            source: "device",
+            remote: slot.data,
+            server: slot.server,
+            dirty: slot.dirty,
+          };
+          storeSlot(account, {
+            ...slot,
+            data: next,
+            dirty: account !== null,
+            ask,
           });
+          setState(account, { ask });
           return Promise.resolve({ status: "ask", account });
         }
       }
@@ -679,7 +759,11 @@ export function createSyncedDoc<T>(
           base === null ||
           !spec.equal(data, base) ||
           attachments.has(account));
-      storeSlot(account, { ...slot, data, dirty });
+      const saved = withoutAsk({ ...slot, data, dirty });
+      if (account !== null && attachments.has(account)) {
+        saved.attach = attachments.get(account);
+      }
+      storeSlot(account, saved);
       if (account === null)
         return Promise.resolve({ status: "local", account });
       if (!dirty) return Promise.resolve({ status: "unchanged", account });
@@ -695,13 +779,21 @@ export function createSyncedDoc<T>(
 
     resolve(choice) {
       const account = requireActive();
-      if (account === null) {
+      const ask = stateOf(account).ask ?? slotOf(account).ask;
+      if (!ask) return Promise.resolve({ status: "unchanged", account });
+      if (account === null && ask.source !== "device") {
         return Promise.resolve({ status: "unchanged", account });
       }
-      const ask = stateOf(account).ask;
-      if (!ask) return Promise.resolve({ status: "unchanged", account });
       setState(account, { ask: null });
-      storeSlot(account, answerAsk(slotOf(account), ask, choice));
+      const answered = answerAsk(slotOf(account), ask, choice);
+      if (account === null) {
+        storeSlot(account, { ...answered, dirty: false });
+        return Promise.resolve({
+          status: choice === "local" ? "local" : "unchanged",
+          account,
+        });
+      }
+      storeSlot(account, answered);
       if (choice === "remote") {
         return Promise.resolve({ status: "unchanged", account });
       }
@@ -719,10 +811,59 @@ export function createSyncedDoc<T>(
         return Promise.resolve({ status: "unchanged", account });
       }
       const slot = slotOf(account);
-      storeSlot(account, { ...slot, data: guest.data, dirty: true });
+      const wrote = storeSlot(account, {
+        ...withoutAsk(slot),
+        data: guest.data,
+        dirty: true,
+      });
       // Adopted once: another account cannot take the same data later.
-      storeSlot(null, emptySlot());
+      // Keep the guest slot when the destination write did not land.
+      if (wrote) storeSlot(null, emptySlot());
       return send(account);
+    },
+
+    discardServer() {
+      const account = requireActive();
+      if (account === null) {
+        return Promise.resolve<DiscardResult>({
+          removed: false,
+          message: null,
+        });
+      }
+      let outcome: DiscardResult = { removed: false, message: null };
+      const run = enqueue(async () => {
+        // The cookie now belongs to someone else. Their row is not deleted.
+        if (account !== active) return;
+        const before = slotOf(account).data;
+        try {
+          const res = await transport.remove();
+          if (res.status !== "removed") {
+            outcome = { removed: false, message: res.message };
+            return;
+          }
+        } catch (err) {
+          console.error(`[sync:${spec.key}] discard failed:`, err);
+          outcome = {
+            removed: false,
+            message: err instanceof Error ? err.message : "Sync failed",
+          };
+          return;
+        }
+        outcome = { removed: true };
+        const now = slotOf(account);
+        // A save during the delete is a new upload, not the copy we removed.
+        if (!spec.equal(now.data, before)) return;
+        const next = withoutAsk({
+          ...now,
+          dirty: false,
+          server: detached(now.server),
+        });
+        delete next.attach;
+        attachments.delete(account);
+        storeSlot(account, next);
+        setState(account, { ask: null, error: null, offline: false });
+      });
+      return run.then(() => outcome);
     },
 
     async idle() {

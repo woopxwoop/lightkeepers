@@ -22,7 +22,7 @@ import {
   rosterOwnedFrom,
   type RosterDoc,
 } from "#lib/sync/roster-doc.js";
-import type { SyncSlot } from "#lib/sync/slot.js";
+import { decodeSlot, type SyncSlot } from "#lib/sync/slot.js";
 import {
   browserSlotStorage,
   memorySlotStorage,
@@ -34,7 +34,11 @@ import {
   type SyncedDoc,
   type SyncView,
 } from "#lib/sync/synced-doc.js";
-import { fetchTransport, type SyncTransport } from "#lib/sync/transport.js";
+import {
+  fetchTransport,
+  type SyncTransport,
+  type WriteReport,
+} from "#lib/sync/transport.js";
 import {
   cancelRosterSyncConflict,
   promptRosterSyncConflict,
@@ -54,8 +58,10 @@ const LEGACY_SAVED_FLAG_KEY = "hasSavedRoster";
  * unsent: its next read takes the server copy when they match, asks when
  * they differ, and sends it when the account has no server copy, which is
  * what the old sign-in sync did. An unstamped roster goes to the guest slot.
- * An existing slot is never overwritten. The old keys are removed only once
- * the slot is stored, so a full storage keeps the roster for the next load.
+ * An existing slot keeps its entries; legacy characters it does not already
+ * contain are added. A slot that does not decode as a roster is replaced.
+ * The old keys are removed only once the slot is stored, so a full storage
+ * keeps the roster for the next load.
  * When the slot cannot be stored, the migrated slot is returned so this tab
  * shows it until a write succeeds.
  */
@@ -68,15 +74,34 @@ export function migrateLegacyRoster(
     // The owner was stored as a bare string, which is not JSON.
     const owner = typeof rawOwner === "string" ? rawOwner : null;
     const key = `lk:${rosterDocSpec.key}:${owner ?? "guest"}`;
-    if (storage.read(key) === null) {
-      const slot: SyncSlot<RosterDoc> = {
-        v: rosterDocSpec.schemaVersion,
-        data: legacy,
-        dirty: owner !== null,
-        server: { state: "unseen" },
-      };
-      const stored = storage.write(key, slot);
-      if (!stored) return { key, slot };
+    const fresh: SyncSlot<RosterDoc> = {
+      v: rosterDocSpec.schemaVersion,
+      data: legacy,
+      dirty: owner !== null,
+      server: { state: "unseen" },
+    };
+    const existing = storage.read(key);
+    if (existing === null) {
+      const stored = storage.write(key, fresh);
+      if (!stored) return { key, slot: fresh };
+    } else {
+      const slot = decodeSlot(
+        existing,
+        parseRosterDoc,
+        () => [],
+        rosterDocSpec.schemaVersion,
+      );
+      const ids = new Set(slot.data.map((entry) => entry.name_id));
+      const missing = legacy.filter((entry) => !ids.has(entry.name_id));
+      if (missing.length > 0) {
+        const merged: SyncSlot<RosterDoc> = {
+          ...slot,
+          data: parseRosterDoc([...slot.data, ...missing]),
+          dirty: slot.dirty || owner !== null,
+        };
+        const stored = storage.write(key, merged);
+        if (!stored) return { key, slot: merged };
+      }
     }
   }
   storage.remove(LEGACY_ROSTER_KEY);
@@ -101,9 +126,15 @@ function legacyAwareStorage(storage: SlotStorage): SlotStorage {
   };
 }
 
+/** The roster route names a dropped inventory attachment `inventoryOmitted`. */
+function rosterWriteReport(body: Record<string, unknown>): WriteReport {
+  return { attachmentOmitted: body.inventoryOmitted === true };
+}
+
 const offlineTransport: SyncTransport = {
   read: async () => ({ status: "error", message: "unavailable" }),
   write: async () => ({ status: "error", message: "unavailable" }),
+  remove: async () => ({ status: "error", message: "unavailable" }),
 };
 
 let instance: SyncedDoc<RosterDoc> | null = null;
@@ -123,7 +154,11 @@ export function rosterSync(): SyncedDoc<RosterDoc> {
       storage: pending
         ? retainUntilStored(storage, pending.key, pending.slot)
         : storage,
-      transport: fetchTransport(rosterDocSpec.endpoint, rosterDocSpec.field),
+      transport: fetchTransport(
+        rosterDocSpec.endpoint,
+        rosterDocSpec.field,
+        rosterWriteReport,
+      ),
     });
   }
   return instance;
@@ -142,7 +177,7 @@ export function feedRosterStores(
   view: SyncView<RosterDoc>,
 ): void {
   if (!view.ready) return;
-  const json = JSON.stringify([characters.length, view.account, view.data]);
+  const json = JSON.stringify([characters, view.account, view.data]);
   if (json !== fedJson || !get(charactersHydrated)) {
     fedJson = json;
     charactersOwned.set(rosterOwnedFrom(characters, view.data));
@@ -214,7 +249,7 @@ export function watchRosterConflicts(
       return;
     }
     if (!view.remote) return;
-    const key = JSON.stringify([view.account, view.remote]);
+    const key = JSON.stringify([view.account, view.data, view.remote]);
     if (key === shown) return;
     shown = key;
     void ask(view);

@@ -39,7 +39,11 @@
     const pending = $goalsSyncConflict;
     if (!pending || busy) return;
     busy = true;
-    pending.resolve(choice);
+    try {
+      pending.resolve(choice);
+    } catch {
+      busy = false;
+    }
   }
 
   function dismiss(): void {

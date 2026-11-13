@@ -34,6 +34,13 @@ function decide(parts: Partial<ReconcileInput<Doc>>) {
 }
 
 describe("decideReconcile: no server copy", () => {
+  it("a response that must not offer the guest leaves an empty account alone", () => {
+    const plan = decide({ guest: null });
+    assert.equal(plan.rule, "no-server-copy");
+    assert.equal(plan.clearGuest, false);
+    assert.equal(plan.push, null);
+  });
+
   it("an untouched account takes guest data and sends it", () => {
     const plan = decide({ guest: slot({ data: doc("g") }) });
     assert.equal(plan.rule, "first-copy-from-guest");
@@ -84,6 +91,13 @@ describe("decideReconcile: server copy", () => {
     assert.equal(plan.slot?.dirty, true);
     assert.equal(plan.clearGuest, true);
     assert.equal(plan.push, null);
+  });
+
+  it("a server copy is taken when no guest slot is offered", () => {
+    const plan = decide({ guest: null, wire: ["s"], rev: "r1" });
+    assert.equal(plan.rule, "take-server");
+    assert.equal(plan.clearGuest, false);
+    assert.deepEqual(plan.slot?.data.items, ["s"]);
   });
 
   it("an asking spec asks about guest data", () => {

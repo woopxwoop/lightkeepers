@@ -107,20 +107,24 @@
     resetting = true;
     rosterError = "";
     try {
-      const res = await fetch("/api/roster", { method: "DELETE" });
+      // Queued roster uploads run before the delete. When the row is gone
+      // and this device's copy did not change during the delete, the slot
+      // is detached so that upload is not sent again.
+      const removed = await rosterSync().discardServer();
       if (account !== accountGeneration) {
         confirmReset = false;
         return;
       }
-      if (res.ok) {
+      if (removed.removed) {
         cloudRosterVersion += 1;
         probe = "empty";
         confirmReset = false;
         clearRosterInventory();
       } else {
-        rosterError = `Server error (${res.status}) — roster not reset`;
         confirmReset = false;
-        console.error("resetCloudRoster: unexpected status", res.status);
+        if (removed.message) {
+          rosterError = `${removed.message} — roster not reset`;
+        }
       }
     } catch (err) {
       if (account !== accountGeneration) {
@@ -184,9 +188,12 @@
         importError = "Account changed during import — import again.";
         return;
       }
-      setRosterInventory(inventory);
-      importNote =
-        result.status === "unsent"
+      const attachmentOmitted =
+        result.status === "sent" && result.attachmentOmitted === true;
+      if (!attachmentOmitted) setRosterInventory(inventory);
+      importNote = attachmentOmitted
+        ? `Imported ${countLabel} — weapons and artifacts were not saved on the server`
+        : result.status === "unsent"
           ? result.error
             ? `Imported ${countLabel} on this device — not synced: ${result.error}`
             : `Imported ${countLabel} on this device — not synced`

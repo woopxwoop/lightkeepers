@@ -33,6 +33,16 @@ export type SyncSlot<T> = {
   /** `data` has edits the server has not accepted. */
   dirty: boolean;
   server: ServerCopy<T>;
+  /**
+   * Open question, stored with the slot so a reload still has both copies.
+   * Absent once the user has answered.
+   */
+  ask?: Ask<T>;
+  /**
+   * Body fields for the next write (GOOD inventory). Kept until that write
+   * is accepted so a reload can retry them. Not part of `data`.
+   */
+  attach?: Record<string, unknown>;
 };
 
 /**
@@ -77,21 +87,29 @@ export function emptySlot<T>(data: T, v: number): SyncSlot<T> {
   return { v, data, dirty: false, server: unseen() };
 }
 
-/** The slot once `choice` answers `ask`. */
+/** The slot once `choice` answers `ask`. The question itself is dropped. */
 export function answerAsk<T>(
   slot: SyncSlot<T>,
   ask: Ask<T>,
   choice: "local" | "remote",
 ): SyncSlot<T> {
+  const { ask: _drop, ...rest } = slot;
   const server =
     ask.source === "server" ? tracked(ask.remote, ask.rev) : ask.server;
-  if (choice === "local") return { ...slot, server, dirty: true };
+  if (choice === "local") return { ...rest, server, dirty: true };
   return {
-    ...slot,
+    ...rest,
     data: ask.remote,
     server,
     dirty: ask.source === "device" ? ask.dirty : false,
   };
+}
+
+/** Slot with no open question. */
+export function withoutAsk<T>(slot: SyncSlot<T>): SyncSlot<T> {
+  if (!slot.ask) return slot;
+  const { ask: _drop, ...rest } = slot;
+  return rest;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -113,28 +131,58 @@ export function decodeSlot<T>(
 ): SyncSlot<T> {
   const record = asRecord(raw);
   if (!record) return emptySlot(empty(), v);
+  const ask = decodeAsk(record.ask, parse);
+  const attach = asRecord(record.attach);
   return {
     v,
     data: parse(record.data),
     dirty: record.dirty === true,
     server: decodeServer(record, parse),
+    ...(ask ? { ask } : {}),
+    ...(attach ? { attach } : {}),
   };
+}
+
+function decodeAsk<T>(
+  raw: unknown,
+  parse: (raw: unknown) => T,
+): Ask<T> | null {
+  const ask = asRecord(raw);
+  if (!ask) return null;
+  if (ask.source === "server" && typeof ask.rev === "string") {
+    return { source: "server", remote: parse(ask.remote), rev: ask.rev };
+  }
+  if (ask.source === "device") {
+    return {
+      source: "device",
+      remote: parse(ask.remote),
+      server: decodeServerValue(ask.server, parse),
+      dirty: ask.dirty === true,
+    };
+  }
+  return null;
+}
+
+function decodeServerValue<T>(
+  value: unknown,
+  parse: (raw: unknown) => T,
+): ServerCopy<T> {
+  const server = asRecord(value);
+  if (!server) return unseen();
+  if (server.state === "tracked" && typeof server.rev === "string") {
+    return tracked(parse(server.base), server.rev);
+  }
+  if (server.state === "detached") {
+    return { state: "detached", base: parse(server.base) };
+  }
+  return unseen();
 }
 
 function decodeServer<T>(
   record: Record<string, unknown>,
   parse: (raw: unknown) => T,
 ): ServerCopy<T> {
-  const server = asRecord(record.server);
-  if (server) {
-    if (server.state === "tracked" && typeof server.rev === "string") {
-      return tracked(parse(server.base), server.rev);
-    }
-    if (server.state === "detached") {
-      return { state: "detached", base: parse(server.base) };
-    }
-    return unseen();
-  }
+  if (record.server) return decodeServerValue(record.server, parse);
   // Stored before `server` existed.
   if (record.base == null) return unseen();
   const base = parse(record.base);

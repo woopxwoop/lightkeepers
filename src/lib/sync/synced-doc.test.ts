@@ -697,11 +697,12 @@ describe("other tabs", () => {
     const late = new Promise<void>((r) => (releaseLate = r));
     const delayed: typeof transport = {
       read: transport.read,
-      async write(...args) {
+      write: async (...args) => {
         const res = await transport.write(...args);
         await late;
         return res;
       },
+      remove: transport.remove,
     };
     const tab0 = createSyncedDoc(makeSpec(), { storage, transport });
     const tab1 = createSyncedDoc(makeSpec(), { storage, transport: delayed });
@@ -835,5 +836,105 @@ describe("commit result", () => {
       status: "ask",
       account: "a",
     });
+  });
+});
+
+describe("unionMerge", () => {
+  it("keeps a remote deletion of an unchanged base item", () => {
+    assert.deepEqual(unionMerge(doc("x"), doc("x"), doc()).items, []);
+  });
+});
+
+describe("durable questions", () => {
+  it("a failed account write does not drop the guest slot", async () => {
+    const { storage, synced, signIn } = setup();
+    signIn(null);
+    await synced.commit(doc("guest-1"));
+    storage.failWrites = true;
+    signIn("a");
+    await synced.idle();
+    const guest = storage.read("lk:t:guest") as { data: Doc } | null;
+    assert.deepEqual(guest?.data.items, ["guest-1"]);
+  });
+
+  it("a read that finishes after sign-out does not clear the guest slot", async () => {
+    const { synced, signIn, server, view } = setup({ ask: true });
+    server.put("a", ["server"]);
+    signIn(null);
+    await synced.commit(doc("guest-1"));
+    const release = server.hold();
+    signIn("a");
+    signIn(null);
+    await synced.commit(doc("guest-1", "more"));
+    release();
+    await synced.idle();
+    assert.equal(view().account, null);
+    assert.deepEqual(view().data.items, ["guest-1", "more"]);
+  });
+
+  it("a guest draft that conflicts keeps both copies", async () => {
+    const { synced, signIn, view } = setup({ ask: true });
+    signIn(null);
+    await synced.commit(doc("stored"));
+    const result = await synced.commit(doc("draft"), { basedOn: doc("other") });
+    assert.equal(result.status, "ask");
+    assert.deepEqual(view().data.items, ["draft"]);
+    assert.deepEqual(view().remote?.items, ["stored"]);
+  });
+
+  it("a device question keeps both copies across a reload", async () => {
+    const storage = memorySlotStorage();
+    const { server, transport } = fakeServer();
+    server.session = "a";
+    server.put("a", ["x"]);
+    const first = createSyncedDoc(makeSpec({ ask: true }), {
+      storage,
+      transport,
+    });
+    first.setAccount("a");
+    await first.idle();
+    server.failWrites = true;
+    await first.commit(doc("x", "stored"));
+    await first.commit(doc("x", "draft"), { basedOn: doc("x") });
+    assert.equal(get(first.view).status, "ask");
+    first.dispose();
+    const reopened = createSyncedDoc(makeSpec({ ask: true }), {
+      storage,
+      transport,
+    });
+    reopened.setAccount("a");
+    assert.equal(get(reopened.view).status, "ask");
+    assert.deepEqual(get(reopened.view).data.items, ["x", "draft"]);
+    assert.deepEqual(get(reopened.view).remote?.items, ["x", "stored"]);
+    await reopened.idle();
+    reopened.dispose();
+  });
+
+  it("a delete after a queued upload leaves the server row gone", async () => {
+    const { synced, signIn, server } = setup();
+    signIn("a");
+    await synced.idle();
+    const release = server.hold();
+    const pending = synced.commit(doc("uploaded"));
+    const removed = synced.discardServer();
+    release();
+    await pending;
+    assert.deepEqual(await removed, { removed: true });
+    await synced.idle();
+    assert.equal(server.rows.has("a"), false);
+  });
+
+  it("a delete does not run for an account that is no longer signed in", async () => {
+    const { synced, signIn, server } = setup();
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["cloud"]);
+    const release = server.hold();
+    const removed = synced.discardServer();
+    signIn("b");
+    release();
+    assert.deepEqual(await removed, { removed: false, message: null });
+    await synced.idle();
+    assert.equal(server.rows.has("a"), true);
   });
 });

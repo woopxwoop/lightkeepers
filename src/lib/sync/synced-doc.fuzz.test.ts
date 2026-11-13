@@ -148,6 +148,12 @@ function jittered(
       await ticks();
       return res;
     },
+    async remove() {
+      await ticks();
+      const res = await transport.remove();
+      await ticks();
+      return res;
+    },
   };
 }
 

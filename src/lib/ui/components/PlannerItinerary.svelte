@@ -302,7 +302,8 @@
 
   async function saveStars() {
     if (draft.saving || (!hasUnsavedChanges && !draft.unsent)) return;
-    if (!(await draft.save())) return;
+    const saved = await draft.save();
+    if (saved.status !== "sent" && saved.status !== "local") return;
     pickingGoals = false;
     picking = null;
     configuringId = null;

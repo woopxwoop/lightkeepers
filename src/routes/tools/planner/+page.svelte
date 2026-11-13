@@ -169,7 +169,8 @@
   }
 
   async function saveGoals() {
-    if (await goals.save()) flashSaved();
+    const result = await goals.save();
+    if (result.status === "sent" || result.status === "local") flashSaved();
   }
 
   let selectedGoal = $derived(findGoal(goals.state, goals.state.selectedId));
