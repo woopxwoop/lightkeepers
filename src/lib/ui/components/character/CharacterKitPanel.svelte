@@ -498,14 +498,6 @@
     box-shadow: var(--focus-ring);
   }
 
-  .section-title {
-    margin-bottom: var(--space-3);
-  }
-
-  .board-section {
-    padding: var(--space-4);
-  }
-
   .card-title {
     font-size: var(--text-sm);
     font-weight: 500;

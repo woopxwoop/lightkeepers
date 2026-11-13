@@ -254,10 +254,6 @@
 </div>
 
 <style>
-  .board-section {
-    padding: var(--space-4);
-  }
-
   .teams-head {
     display: flex;
     flex-wrap: wrap;

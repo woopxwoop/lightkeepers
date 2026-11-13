@@ -2,8 +2,8 @@
   import { useWeapon } from "#lib/equipment-data.svelte.js";
   import type { WeaponData } from "#lib/equipment-data.js";
   import { weaponTypeLabel } from "#lib/utils.js";
-  import GameText from "./GameText.svelte";
-  import HoverTooltip from "./HoverTooltip.svelte";
+  import GameText from "#lib/ui/components/GameText.svelte";
+  import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
 
   let {
     weaponKey,

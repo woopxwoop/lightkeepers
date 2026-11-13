@@ -760,14 +760,6 @@
 </div>
 
 <style>
-  .section-title {
-    margin-bottom: var(--space-3);
-  }
-
-  .board-section {
-    padding: var(--space-4);
-  }
-
   .slot-label {
     font-size: 0.65rem;
     letter-spacing: 0.08em;

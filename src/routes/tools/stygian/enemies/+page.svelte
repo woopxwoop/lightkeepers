@@ -110,15 +110,6 @@
     gap: var(--space-2);
   }
 
-  .page-title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3vw, 2rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--foreground-color);
-  }
-
   .page-lede {
     margin: 0;
     max-width: 36rem;

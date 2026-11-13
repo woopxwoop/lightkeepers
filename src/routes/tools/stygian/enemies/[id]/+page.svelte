@@ -193,7 +193,7 @@
       {/if}
     </header>
 
-    <section class="board-section">
+    <section class="enemy-section">
       {#if teamsLoading && !teamsPayload}
         <LoadingState variant="pulse" message="Loading historical teams…" />
       {:else if teamsError && !teamsPayload}
@@ -307,7 +307,7 @@
     color: var(--foreground-mid);
   }
 
-  .board-section {
+  .enemy-section {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);

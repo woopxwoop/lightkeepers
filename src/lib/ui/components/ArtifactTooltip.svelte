@@ -1,8 +1,8 @@
 <script lang="ts">
   import { useArtifactSet } from "#lib/equipment-data.svelte.js";
   import type { ArtifactSetData } from "#lib/equipment-data.js";
-  import GameText from "./GameText.svelte";
-  import HoverTooltip from "./HoverTooltip.svelte";
+  import GameText from "#lib/ui/components/GameText.svelte";
+  import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
 
   let {
     setKey,

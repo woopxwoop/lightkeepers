@@ -8,7 +8,6 @@
   import PageTrail from "#lib/ui/components/PageTrail.svelte";
   import ActionMenu from "#lib/ui/components/ActionMenu.svelte";
   import Button from "#lib/ui/components/Button.svelte";
-  import BuildResearchSheet from "#lib/ui/components/BuildResearchSheet.svelte";
   import CharacterKitPanel from "#lib/ui/components/character/CharacterKitPanel.svelte";
   import CharacterTeamsPanel from "#lib/ui/components/character/CharacterTeamsPanel.svelte";
   import CharacterAnalyticsPanel from "#lib/ui/components/character/CharacterAnalyticsPanel.svelte";
@@ -291,11 +290,14 @@
 </PageShell>
 
 {#if dev}
-  <BuildResearchSheet
-    bind:open={buildResearchOpen}
-    focusNameId={kit.name_id}
-    characterName={kit.name}
-  />
+  <!-- Dev-only: dynamic import keeps research out of production chunks. -->
+  {#await import("#lib/ui/components/BuildResearchSheet.svelte") then { default: BuildResearchSheet }}
+    <BuildResearchSheet
+      bind:open={buildResearchOpen}
+      focusNameId={kit.name_id}
+      characterName={kit.name}
+    />
+  {/await}
 {/if}
 
 <style>

@@ -410,6 +410,15 @@ a:focus-visible {
   color: var(--foreground-mid);
 }
 
+/* Padded section inside a board/panel surface; title spaced from content. */
+.board-section {
+  padding: var(--space-4);
+}
+
+.board-section .section-title {
+  margin-bottom: var(--space-3);
+}
+
 .meta-name {
   font-size: 0.7rem;
   font-weight: 500;

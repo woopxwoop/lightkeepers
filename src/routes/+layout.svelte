@@ -44,7 +44,6 @@
   import NavBar from "#lib/ui/NavBar.svelte";
   import PatchNotesPopup from "#lib/ui/components/PatchNotesPopup.svelte";
   import PlannerItinerarySheet from "#lib/ui/components/PlannerItinerarySheet.svelte";
-  import ResearchChatSheet from "#lib/ui/components/ResearchChatSheet.svelte";
   import AccountSettingsModal from "#lib/ui/components/AccountSettingsModal.svelte";
   import GoalsSyncConflictPopup from "#lib/ui/components/GoalsSyncConflictPopup.svelte";
   import RosterSyncConflictPopup from "#lib/ui/components/RosterSyncConflictPopup.svelte";
@@ -182,7 +181,10 @@
   <NavBar />
   <PlannerItinerarySheet />
   {#if dev}
-    <ResearchChatSheet />
+    <!-- Dev-only: dynamic import keeps research out of production chunks. -->
+    {#await import("#lib/ui/components/ResearchChatSheet.svelte") then { default: ResearchChatSheet }}
+      <ResearchChatSheet />
+    {/await}
   {/if}
   <AccountSettingsModal />
   {#if $rosterSyncConflict}

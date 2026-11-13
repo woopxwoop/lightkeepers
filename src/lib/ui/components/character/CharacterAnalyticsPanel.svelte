@@ -239,14 +239,6 @@
 </div>
 
 <style>
-  .section-title {
-    margin-bottom: var(--space-3);
-  }
-
-  .board-section {
-    padding: var(--space-4);
-  }
-
   .teams-head {
     display: flex;
     flex-wrap: wrap;

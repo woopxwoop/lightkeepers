@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import type { Snippet } from "svelte";
   import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
-  import IconX from "../icons/IconX.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
 
   let {
     children,
