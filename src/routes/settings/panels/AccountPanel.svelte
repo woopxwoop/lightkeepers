@@ -169,23 +169,27 @@
         weapons: parsed.weapons,
         artifacts: parsed.artifacts,
       };
+      const countLabel = `${ownedCount} owned character${ownedCount === 1 ? "" : "s"}`;
 
       // The inventory rides along with this one roster write when signed in.
-      const owner = $rosterView.account;
-      await rosterSync().commit(rosterDocOf(next), {
-        attach: owner !== null ? inventory : undefined,
+      const result = await rosterSync().commit(rosterDocOf(next), {
+        attach: $rosterView.account !== null ? inventory : undefined,
       });
       pickingGood = false;
       // The inventory cache has no account key: never fill it for another.
-      if ($rosterView.account !== owner) {
+      if (result.account !== $rosterView.account) {
         importError = "Account changed during import — import again.";
         return;
       }
       setRosterInventory(inventory);
-      const error = $rosterView.error;
-      importNote = error
-        ? `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"} on this device — not synced: ${error}`
-        : `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
+      importNote =
+        result.status === "unsent"
+          ? result.error
+            ? `Imported ${countLabel} on this device — not synced: ${result.error}`
+            : `Imported ${countLabel} on this device — not synced`
+          : result.status === "ask"
+            ? ""
+            : `Imported ${countLabel}.`;
     } catch (err) {
       console.error("GOOD import error:", err);
       importError = "Could not import that GOOD JSON.";

@@ -184,7 +184,7 @@ async function run(seed: number): Promise<void> {
     ACCOUNTS.map((account) => [account, new Set<string>()]),
   );
   const guestTokens = new Set<string>();
-  const inFlight: Promise<void>[] = [];
+  const inFlight: Promise<unknown>[] = [];
   let tokenN = 0;
   const token = (owner: string) => `${owner}:${++tokenN}`;
 
@@ -287,14 +287,15 @@ async function run(seed: number): Promise<void> {
       const t = token(account);
       expected.get(account)!.add(t);
       const data = view(tab).data;
-      await tab.doc.commit(
+      const result = await tab.doc.commit(
         { ...data, items: [...data.items, t] },
         { attach: { inv: t } },
       );
-      await tab.doc.idle();
-      const after = view(tab);
-      if (after.dirty)
-        fail(`probe save left ${account} unsent (${after.error})`);
+      if (result.status !== "sent") {
+        const detail =
+          result.status === "unsent" ? (result.error ?? "unsent") : result.status;
+        fail(`probe save was ${detail}`);
+      }
       if (!server.rows.get(account)?.items.includes(t)) {
         fail(`probe save did not send ${t}`);
       }

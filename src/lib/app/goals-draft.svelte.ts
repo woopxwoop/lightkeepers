@@ -2,30 +2,18 @@
  * A page's editable copy of the calculator goals.
  *
  * Planner, itinerary, and audit all edit goals through this. The synced
- * document (`goals-sync.ts`) owns storage, accounts, and the server; this
- * owns only the UI draft:
- *
- * - The draft follows the stored goals until the user changes something.
- * - Unsaved changes stay put when the stored goals move. Save merges them
- *   onto the newer goals (`commit` with `basedOn`), so nothing is replaced.
- * - Switching accounts drops the draft. One account's edits never save as
- *   another's.
- * - Removes are staged in `pendingRemoveIds` and applied on Save.
- * - Edits made while Save runs stay in the draft, unsaved.
+ * document (`goals-sync.ts`) owns storage, accounts, and the server. The
+ * shared draft (`draft.svelte.ts`) owns following that document; this adds
+ * staged removes, which are applied on Save.
  *
  * Call during component initialization.
  */
 
-import { untrack } from "svelte";
-import { fromStore } from "svelte/store";
 import { goalsSync } from "#lib/app/goals-sync.js";
-import { emptyGoalsState, parseGoalsState } from "#lib/calculator-goals.js";
-import {
-  goalsHaveUnsavedChanges,
-  goalsListDiffersFromSnapshot,
-  goalsWithoutPendingRemoves,
-} from "#lib/calculator-goals-lifecycle.js";
+import { parseGoalsState } from "#lib/calculator-goals.js";
+import { goalsWithoutPendingRemoves } from "#lib/calculator-goals-lifecycle.js";
 import { captureGoals } from "#lib/calculator-goals-snapshot.js";
+import { useSyncedDraft } from "#lib/sync/draft.svelte.js";
 import type { SyncStatus } from "#lib/sync/synced-doc.js";
 import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
 
@@ -62,59 +50,36 @@ function withSelection(
     : next;
 }
 
-export function useGoalsDraft(): GoalsDraft {
-  const sync = goalsSync();
-  const live = fromStore(sync.view);
-
-  let state = $state<CalculatorGoalsState>(emptyGoalsState());
-  let savedJson = $state("");
-  let pendingRemoveIds = $state(new Set<string>());
-  let hydrated = $state(false);
-  let saving = $state(false);
-  /** Account the draft belongs to. */
-  let account: string | null | undefined = undefined;
-
-  const unsaved = $derived(
-    goalsHaveUnsavedChanges({
-      hydrated,
-      state,
-      savedSnapshot: savedJson,
-      pendingRemoveIds,
-    }),
+function sameGoals(a: CalculatorGoalsState, b: CalculatorGoalsState): boolean {
+  return (
+    JSON.stringify(parseGoalsState(a).goals) ===
+    JSON.stringify(parseGoalsState(b).goals)
   );
+}
 
-  function adopt(data: CalculatorGoalsState) {
-    const stored = captureGoals(data);
-    state = withSelection(
-      stored.state,
-      untrack(() => state.selectedId),
-    );
-    savedJson = stored.json;
-  }
+export function useGoalsDraft(): GoalsDraft {
+  let pendingRemoveIds = $state(new Set<string>());
+  /** Account switches since init. A save that spans one does not report success. */
+  let switches = 0;
 
-  // Follow the stored goals while there is nothing unsaved.
-  $effect(() => {
-    const view = live.current;
-    if (view.status === "loading" && !untrack(() => hydrated)) return;
-    const switched = view.account !== account;
-    if (switched) {
-      account = view.account;
+  const sync = useSyncedDraft(goalsSync(), {
+    toDraft: (data) => data,
+    fromDraft: (draft) => goalsWithoutPendingRemoves(draft, pendingRemoveIds),
+    sameContent: sameGoals,
+    keepLocal: (prev, next) => withSelection(next, prev.selectedId),
+    pinned: () => pendingRemoveIds.size > 0,
+    onSwitch: () => {
       pendingRemoveIds = new Set();
-    } else if (untrack(() => unsaved || saving)) {
-      return;
-    }
-    if (switched || captureGoals(view.data).json !== untrack(() => savedJson)) {
-      adopt(view.data);
-    }
-    hydrated = true;
+      switches += 1;
+    },
   });
 
   return {
     get state() {
-      return state;
+      return sync.draft;
     },
     set state(next) {
-      state = next;
+      sync.draft = next;
     },
     get pendingRemoveIds() {
       return pendingRemoveIds;
@@ -123,72 +88,45 @@ export function useGoalsDraft(): GoalsDraft {
       pendingRemoveIds = next;
     },
     get savedJson() {
-      return savedJson;
+      return sync.hydrated ? captureGoals(sync.baseline).json : "";
     },
     get hydrated() {
-      return hydrated;
+      return sync.hydrated;
     },
     get unsaved() {
-      return unsaved;
+      return sync.unsaved || (sync.hydrated && pendingRemoveIds.size > 0);
     },
     get unsent() {
-      return live.current.dirty;
+      return sync.unsent;
     },
     get saving() {
-      return saving;
+      return sync.saving;
     },
     get status() {
-      return live.current.status;
+      return sync.status;
     },
     get error() {
-      return live.current.error;
+      return sync.error;
     },
 
     async save() {
-      if (saving || live.current.account !== account) return false;
-      saving = true;
-      const owner = account;
-      try {
-        // Capture before the await; edits made while it runs stay unsaved.
-        const sentRemoves = pendingRemoveIds;
-        const sent = captureGoals(goalsWithoutPendingRemoves(state, sentRemoves));
-        const basedOn = savedJson
-          ? parseGoalsState(JSON.parse(savedJson) as unknown)
-          : undefined;
-        await sync.commit(sent.state, { basedOn });
-        // An account switch already replaced the draft.
-        if (account !== owner) return false;
-        const current = goalsWithoutPendingRemoves(state, sentRemoves);
-        const newRemoves = new Set(
-          [...pendingRemoveIds].filter((id) => !sentRemoves.has(id)),
-        );
-        if (
-          newRemoves.size === 0 &&
-          !goalsListDiffersFromSnapshot(current, sent.json)
-        ) {
-          pendingRemoveIds = new Set();
-          adopt(live.current.data);
-        } else {
-          // Keep the newer edits as a draft on top of what was sent. The
-          // next Save merges them onto the stored copy (`basedOn` = sent).
-          state = current;
-          pendingRemoveIds = newRemoves;
-          savedJson = sent.json;
-        }
-        return live.current.error === null;
-      } finally {
-        saving = false;
+      const mark = switches;
+      const sentRemoves = new Set(pendingRemoveIds);
+      if (sentRemoves.size > 0) {
+        sync.draft = goalsWithoutPendingRemoves(sync.draft, sentRemoves);
       }
+      const result = await sync.save();
+      // A switch already dropped the draft and the staged removes.
+      if (switches !== mark) return false;
+      pendingRemoveIds = new Set(
+        [...pendingRemoveIds].filter((id) => !sentRemoves.has(id)),
+      );
+      return result.status === "sent" || result.status === "local";
     },
 
     cancel() {
-      // The stored goals may have moved while the draft was unsaved.
-      if (live.current.account === account) {
-        adopt(live.current.data);
-      } else if (savedJson) {
-        state = parseGoalsState(JSON.parse(savedJson) as unknown);
-      }
       pendingRemoveIds = new Set();
+      sync.cancel();
     },
   };
 }

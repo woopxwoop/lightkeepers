@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { tick, untrack } from "svelte";
+  import { page } from "$app/state";
+  import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { charactersOwned, charactersHydrated } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores.js";
   import { authClient } from "#lib/auth-client.js";
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
@@ -16,6 +17,7 @@
   import RosterProgressFields from "#lib/ui/components/RosterProgressFields.svelte";
   import Toggle from "#lib/ui/components/Toggle.svelte";
   import type {
+    Character,
     CharacterOwned,
     InventoryArtifact,
     InventoryWeapon,
@@ -37,37 +39,34 @@
     type OwnershipFilter,
   } from "#lib/character-filter.js";
   import { rosterSync } from "#lib/app/roster-sync.js";
-  import { rosterDocOf } from "#lib/sync/roster-doc.js";
+  import { useSyncedDraft } from "#lib/sync/draft.svelte.js";
   import {
-    captureRoster,
-    rosterDiffersFromSnapshot,
-  } from "#lib/roster-snapshot.js";
+    rosterDocOf,
+    rosterDocSpec,
+    rosterOwnedFrom,
+  } from "#lib/sync/roster-doc.js";
   import { trapTabKey } from "#lib/ui/focus-trap.js";
   import { resolve } from "$app/paths";
 
   const session = authClient.useSession();
-  const rosterView = rosterSync().view;
+  const rosterSyncDoc = rosterSync();
+  const rosterView = rosterSyncDoc.view;
+  const characters = $derived((page.data.characters ?? []) as Character[]);
+  /** Editor copy of the roster document. Joined onto the catalog here. */
+  const roster = useSyncedDraft(rosterSyncDoc, {
+    toDraft: (doc) => rosterOwnedFrom(characters, doc),
+    fromDraft: rosterDocOf,
+    sameContent: (a, b) => rosterDocSpec.equal(rosterDocOf(a), rosterDocOf(b)),
+  });
 
-  let tempCharactersOwned: CharacterOwned[] = $state([]);
-  let synced = $state(false);
   let showSaved = $state(false);
   let savedGeneration = 0;
-  let isSaving = $state(false);
   let rosterError = $state("");
-  let savedSnapshot = $state("");
-  /**
-   * Account the draft was loaded for (the roster document's account). A
-   * different account drops the draft, so one account's unsaved edits never
-   * save as another's.
-   */
-  let draftOwner: string | null | undefined = undefined;
-  let hasUnsavedChanges = $derived(
-    synced && rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
-  );
+  let hasUnsavedChanges = $derived(roster.unsaved);
   let savedVisible = $derived(showSaved && !hasUnsavedChanges);
   /** Stored edits the server has not accepted (a failed upload): Save retries. */
   let unsent = $derived(
-    $rosterView.dirty && $rosterView.status !== "saving" && !hasUnsavedChanges,
+    roster.unsent && roster.status !== "saving" && !hasUnsavedChanges,
   );
   let canSave = $derived(hasUnsavedChanges || unsent);
 
@@ -85,7 +84,7 @@
   let simpleConfig = $state(false);
 
   let visibleCharacters = $derived(
-    filterAndSortCharacters(tempCharactersOwned, {
+    filterAndSortCharacters(roster.draft, {
       search,
       rarity: rarityFilter,
       elements: elementFilter,
@@ -97,29 +96,23 @@
   );
 
   function toggleOwned(name_id: string) {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
     );
   }
 
   function selectAll() {
     const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: true } : c,
     );
   }
 
   function deselectAll() {
     const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: false } : c,
     );
-  }
-
-  function loadDraft(owned: CharacterOwned[]) {
-    const pending = captureRoster(owned);
-    tempCharactersOwned = pending.roster;
-    savedSnapshot = pending.json;
   }
 
   function flashSaved() {
@@ -131,15 +124,8 @@
   }
 
   function cancelEdits() {
-    try {
-      const pending = captureRoster(
-        JSON.parse(savedSnapshot) as CharacterOwned[],
-      );
-      tempCharactersOwned = pending.roster;
-      rosterError = "";
-    } catch {
-      /* ignore */
-    }
+    roster.cancel();
+    rosterError = "";
   }
 
   /**
@@ -148,63 +134,34 @@
    * "Use cloud / Upload this device" popup instead of overwriting.
    */
   async function saveCharacters() {
-    if (isSaving) return;
-    const view = $rosterView;
-    if (!view.ready || view.account !== draftOwner) {
-      rosterError = "Account changed — review the roster before saving.";
-      return;
-    }
-    isSaving = true;
+    if (roster.saving) return;
     rosterError = "";
     // A previous save's "Saved" must not cover this one's result.
     savedGeneration += 1;
     showSaved = false;
 
-    // Freeze the editor state before any await so concurrent toggles stay unsaved.
-    const pending = captureRoster(tempCharactersOwned);
-    const basedOn = rosterDocOf(JSON.parse(savedSnapshot) as CharacterOwned[]);
-
     try {
-      await rosterSync().commit(rosterDocOf(pending.roster), { basedOn });
-      const after = $rosterView;
-      if (after.account !== view.account) return;
-      savedSnapshot = pending.json;
-      if (after.status === "ask") return; // the popup takes it from here
-      if (after.error) {
-        rosterError = `Saved on this device — not synced: ${after.error}`;
-        return;
+      const result = await roster.save();
+      if (result.account !== $rosterView.account) return;
+      switch (result.status) {
+        case "sent":
+        case "local":
+          flashSaved();
+          break;
+        case "unsent":
+          rosterError = result.error
+            ? `Saved on this device — not synced: ${result.error}`
+            : "Saved on this device — not synced";
+          break;
+        case "ask":
+        case "unchanged":
+          break;
       }
-      flashSaved();
     } catch (e) {
       console.error("Roster save error:", e);
       rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
-    } finally {
-      isSaving = false;
     }
   }
-
-  $effect(() => {
-    if ($charactersHydrated && !synced) {
-      loadDraft($charactersOwned);
-      synced = true;
-    } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
-      const storeJson = JSON.stringify($charactersOwned);
-      if (storeJson !== savedSnapshot) loadDraft($charactersOwned);
-    }
-  });
-
-  $effect(() => {
-    const view = $rosterView;
-    if (!view.ready || view.account === draftOwner) return;
-    // First known account adopts the draft; a later switch discards it.
-    if (draftOwner !== undefined && synced) {
-      untrack(() => {
-        loadDraft($charactersOwned);
-        rosterError = "";
-      });
-    }
-    draftOwner = view.account;
-  });
 
   $effect(() => {
     // After session resolves (and on login/logout), refresh uncached inventory.
@@ -243,18 +200,18 @@
   );
 
   let ownedCount = $derived(
-    tempCharactersOwned.filter((c) => c.isOwned).length,
+    roster.draft.filter((c) => c.isOwned).length,
   );
-  let totalCount = $derived(tempCharactersOwned.length);
+  let totalCount = $derived(roster.draft.length);
   let visibleOwnedCount = $derived(
     visibleCharacters.filter((c) => c.isOwned).length,
   );
   let changedCount = $derived(
-    tempCharactersOwned.reduce((count, c) => {
+    roster.draft.reduce((count, c) => {
       const prev = savedById.get(c.name_id);
       if (!prev) return count + 1;
       if (c.isOwned !== prev.isOwned) return count + 1;
-      // Same progress clone as captureRoster / rosterDiffersFromSnapshot.
+      // Same progress clone the snapshot uses for equality.
       if (
         JSON.stringify(cloneRosterProgress(c.progress) ?? null) !==
         JSON.stringify(cloneRosterProgress(prev.progress) ?? null)
@@ -266,7 +223,7 @@
   );
   let configuringId = $state<string | null>(null);
   let configuring = $derived(
-    tempCharactersOwned.find((c) => c.name_id === configuringId) ?? null,
+    roster.draft.find((c) => c.name_id === configuringId) ?? null,
   );
   let configuringView = $derived(
     configuring
@@ -283,7 +240,7 @@
   }
 
   function openConfig(nameId: string) {
-    const row = tempCharactersOwned.find((c) => c.name_id === nameId);
+    const row = roster.draft.find((c) => c.name_id === nameId);
     if (!row?.isOwned) return;
     configuringId = nameId;
   }
@@ -291,12 +248,12 @@
   function applyProgress(next: RosterProgress) {
     const id = configuringId;
     if (!id) return;
-    const row = tempCharactersOwned.find((c) => c.name_id === id);
+    const row = roster.draft.find((c) => c.name_id === id);
     if (!row?.isOwned) {
       closeConfig();
       return;
     }
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       c.name_id === id
         ? { ...c, progress: cloneRosterProgress(next) ?? next }
         : c,
@@ -340,7 +297,7 @@
   );
 </script>
 
-{#if synced}
+{#if roster.hydrated}
   <div class="roster-page">
     <header class="panel-head">
       <div>
@@ -375,19 +332,19 @@
       <span class="owned-count">{ownedCount} / {totalCount}</span>
     </div>
 
-    {#if canSave || isSaving || savedVisible || rosterError}
+    {#if canSave || roster.saving || savedVisible || rosterError}
       <div class="save-bar">
         <div class="save-status">
           <span
             class="save-dot"
-            class:saving={isSaving}
+            class:saving={roster.saving}
             class:saved={savedVisible}
           ></span>
           <span
             class="save-label"
-            class:save-error={!!rosterError && !isSaving && !savedVisible}
+            class:save-error={!!rosterError && !roster.saving && !savedVisible}
           >
-            {isSaving
+            {roster.saving
               ? "Saving..."
               : savedVisible
                 ? "Saved"
@@ -401,7 +358,7 @@
             <span class="save-changed">({changedCount} changed)</span>
           {/if}
         </div>
-        {#if canSave && !isSaving}
+        {#if canSave && !roster.saving}
           <div class="save-actions">
             {#if hasUnsavedChanges}
               <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>

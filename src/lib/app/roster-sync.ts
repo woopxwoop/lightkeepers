@@ -170,18 +170,20 @@ export function watchRosterConflicts(
       return;
     }
     if (choice !== "upload-local") return;
-    await sync.resolve("local");
-    let error = get(sync.view).error;
-    while (error && get(sync.view).account === view.account) {
+    let result = await sync.resolve("local");
+    while (
+      result.status === "unsent" &&
+      result.account === get(sync.view).account
+    ) {
       const retry = await promptRosterSyncConflict(
         rosterOwnedFrom(characters(), get(sync.view).data),
         [],
-        error,
+        result.error,
         { uploadRetry: true },
       );
       if (retry !== "upload-local") return;
-      await sync.commit(get(sync.view).data);
-      error = get(sync.view).error;
+      if (get(sync.view).account !== view.account) return;
+      result = await sync.commit(get(sync.view).data);
     }
   }
 

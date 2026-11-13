@@ -620,3 +620,110 @@ describe("other tabs", () => {
     tab1.dispose();
   });
 });
+
+describe("commit result", () => {
+  it("a guest save is local", async () => {
+    const { synced, signIn } = setup();
+    signIn(null);
+    assert.deepEqual(await synced.commit(doc("a")), {
+      status: "local",
+      account: null,
+    });
+  });
+
+  it("an unchanged save sends nothing", async () => {
+    const { synced, signIn, server } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    assert.deepEqual(await synced.commit(doc("x")), {
+      status: "unchanged",
+      account: "a",
+    });
+    assert.equal(server.calls.filter((c) => c.startsWith("write")).length, 0);
+  });
+
+  it("a conflict merges and resolves sent with the final revision", async () => {
+    const { synced, signIn, server } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["x", "other-device"]);
+    const result = await synced.commit(doc("x", "mine"));
+    assert.deepEqual(server.rows.get("a")?.items, [
+      "x",
+      "other-device",
+      "mine",
+    ]);
+    assert.deepEqual(result, {
+      status: "sent",
+      rev: server.rows.get("a")?.rev,
+      account: "a",
+    });
+  });
+
+  it("a network failure resolves unsent", async () => {
+    const { synced, signIn, server } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.failWrites = true;
+    assert.deepEqual(await synced.commit(doc("x", "mine")), {
+      status: "unsent",
+      error: "offline",
+      account: "a",
+    });
+  });
+
+  it("an account switch while a push is waiting resolves unsent", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    const pending = synced.commit(doc("x", "edit"));
+    signIn("b");
+    assert.deepEqual(await pending, {
+      status: "unsent",
+      error: null,
+      account: "a",
+    });
+    assert.deepEqual(server.rows.get("a")?.items, ["x"]);
+    signIn("a");
+    await synced.idle();
+    assert.equal(view().account, "a");
+    assert.equal(view().dirty, true);
+    assert.deepEqual(view().data.items, ["x", "edit"]);
+  });
+
+  it("a save superseded before its push resolves with the newer push", async () => {
+    const { synced, signIn, server } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    const release = server.hold();
+    const first = synced.commit(doc("x", "1"));
+    const second = synced.commit(doc("x", "1", "2"));
+    release();
+    const [earlier, later] = await Promise.all([first, second]);
+    assert.equal(earlier.status, "sent");
+    assert.equal(later.status, "sent");
+    if (earlier.status === "sent" && later.status === "sent") {
+      assert.equal(earlier.rev, later.rev);
+      assert.equal(earlier.rev, server.rows.get("a")?.rev);
+    }
+    assert.equal(earlier.account, "a");
+    assert.deepEqual(server.rows.get("a")?.items, ["x", "1", "2"]);
+  });
+
+  it("a spec that asks resolves ask", async () => {
+    const { synced, signIn, server } = setup({ ask: true });
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["theirs"]);
+    assert.deepEqual(await synced.commit(doc("mine")), {
+      status: "ask",
+      account: "a",
+    });
+  });
+});

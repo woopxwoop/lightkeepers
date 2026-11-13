@@ -100,6 +100,24 @@ export type SyncView<T> = {
 
 export type { ServerCopy, SyncSlot } from "#lib/sync/slot.js";
 
+/**
+ * What a save did. `account` is the slot that was written, so a caller can
+ * compare it with the account it sees now instead of one captured beforehand.
+ */
+export type CommitResult =
+  /** Guest: stored on this device only. */
+  | { status: "local" }
+  /** The server accepted this save. */
+  | { status: "sent"; rev: string }
+  /** Stored here; the server did not accept it. */
+  | { status: "unsent"; error: string | null }
+  /** The spec asked the user; the popup takes over. */
+  | { status: "ask" }
+  /** Nothing to send. */
+  | { status: "unchanged" };
+
+export type CommitOutcome = CommitResult & { account: string | null };
+
 export interface SyncedDoc<T> {
   readonly view: Readable<SyncView<T>>;
   /**
@@ -122,25 +140,32 @@ export interface SyncedDoc<T> {
    * `attach` adds fields to the body of the next write only (the GOOD
    * inventory beside the roster). It forces that write even when `next`
    * equals the stored copy, and is never stored.
+   *
+   * The promise settles when this save's chain finishes (a conflict merges
+   * and pushes again), not when the first push returns. A later save that
+   * sends this one's data resolves it with that result.
    */
   commit(
     next: T,
     opts?: { basedOn?: T; attach?: Record<string, unknown> },
-  ): Promise<void>;
+  ): Promise<CommitOutcome>;
   /**
    * Re-read the server copy (visibility change, retry button). Never sends:
    * unsent edits are merged onto the server copy and stay unsent.
    */
   refresh(): Promise<void>;
-  /** Answers status `ask`: keep this device's copy, or take the server's. */
-  resolve(choice: "local" | "remote"): Promise<void>;
+  /**
+   * Answers status `ask`: keep this device's copy, or take the server's.
+   * "Keep mine" sends, so it returns the same outcome as `commit`.
+   */
+  resolve(choice: "local" | "remote"): Promise<CommitOutcome>;
   /**
    * Replace the active account's copy with the guest slot's (the roster
    * "upload this device" choice). The only cross-account copy. Callers
    * decide when: after the user chose it, or when the account has no
-   * server copy.
+   * server copy. Returns the same outcome as `commit`.
    */
-  adoptGuest(): Promise<void>;
+  adoptGuest(): Promise<CommitOutcome>;
   /** Resolves when queued work has finished. */
   idle(): Promise<void>;
   /** Stop watching other tabs. */
@@ -198,6 +223,66 @@ export function createSyncedDoc<T>(
   let queue: Promise<void> = Promise.resolve();
   /** Extra body fields for an account's next write. Memory only. */
   const attachments = new Map<string, Record<string, unknown>>();
+  /**
+   * Saves waiting for a push that has not started. A push collects them when
+   * it begins; a follow-up push keeps the ones it was given and leaves newer
+   * saves for their own push.
+   */
+  const pendingTokens = new Map<string, Token[]>();
+
+  /** One save's promise. Settled once, by the push that finishes its chain. */
+  type Token = {
+    account: string;
+    done: boolean;
+    resolve: (result: CommitOutcome) => void;
+  };
+
+  function addToken(account: string): Promise<CommitOutcome> {
+    const list = pendingTokens.get(account) ?? [];
+    let resolve!: (result: CommitOutcome) => void;
+    const promise = new Promise<CommitOutcome>((settle) => {
+      resolve = settle;
+    });
+    list.push({ account, done: false, resolve });
+    pendingTokens.set(account, list);
+    return promise;
+  }
+
+  function takeTokens(account: string): Token[] {
+    const list = pendingTokens.get(account) ?? [];
+    pendingTokens.set(account, []);
+    return list;
+  }
+
+  function settle(tokens: Token[], result: CommitResult): void {
+    for (const token of tokens) {
+      if (token.done) continue;
+      token.done = true;
+      token.resolve({ ...result, account: token.account });
+    }
+  }
+
+  /** A push ended without a write: already accepted, asking, or still unsent. */
+  function settleIdle(account: string, tokens: Token[]): void {
+    if (tokens.length === 0) return;
+    if (stateOf(account).ask) {
+      settle(tokens, { status: "ask" });
+      return;
+    }
+    const rev = revOf(slotOf(account).server);
+    if (!slotOf(account).dirty && rev) {
+      settle(tokens, { status: "sent", rev });
+      return;
+    }
+    settle(tokens, { status: "unsent", error: stateOf(account).error });
+  }
+
+  /** Queue a push and resolve when that save's chain finishes. */
+  function send(account: string): Promise<CommitOutcome> {
+    const result = addToken(account);
+    void enqueue(() => push(account, 0, null));
+    return result;
+  }
 
   const view = writable<SyncView<T>>({
     ready: false,
@@ -314,9 +399,16 @@ export function createSyncedDoc<T>(
     return run;
   }
 
-  /** Only from a user action already in progress (commit, resolve, adopt). */
-  function schedulePush(account: string, attempt: number): void {
-    void enqueue(() => push(account, attempt));
+  /**
+   * `carried` null: this push collects saves still waiting (a new send).
+   * An array: a follow-up for those saves only. A read passes `[]`.
+   */
+  function schedulePush(
+    account: string,
+    attempt: number,
+    carried: Token[] | null,
+  ): void {
+    void enqueue(() => push(account, attempt, carried));
   }
 
   // ── Reconcile a server copy into an account's slot ──────────────────────
@@ -331,6 +423,7 @@ export function createSyncedDoc<T>(
     wire: unknown,
     rev: string | null,
     continueSave: number | null,
+    carried: Token[],
   ): void {
     const plan = decideReconcile(spec, {
       slot: slotOf(account),
@@ -344,7 +437,8 @@ export function createSyncedDoc<T>(
     if (plan.slot) storeSlot(account, plan.slot);
     if (plan.clearGuest) storeSlot(null, emptySlot());
     if (plan.ask) setState(account, { ask: plan.ask });
-    if (plan.push !== null) schedulePush(account, plan.push);
+    if (plan.push !== null) schedulePush(account, plan.push, carried);
+    else settleIdle(account, carried);
   }
 
   // ── Tasks (run only from the queue) ──────────────────────────────────────
@@ -385,55 +479,81 @@ export function createSyncedDoc<T>(
       return;
     }
     emit({ account, step: "read", detail: `ok ${res.rev}` });
-    reconcile(account, res.wire, res.rev, null);
+    reconcile(account, res.wire, res.rev, null, []);
   }
 
-  async function push(account: string, attempt: number): Promise<void> {
-    // Pushing needs this account's cookie. The slot stays dirty until then.
-    if (account !== active) return;
-    const slot = slotOf(account);
-    if (!slot.dirty || stateOf(account).ask) return;
-
-    const sent = slot.data;
-    const attach = attachments.get(account);
-    setState(account, { busy: "write" });
-    const res = await transport.write(
-      spec.toWire(sent),
-      revOf(slot.server),
-      account,
-      attach,
-    );
-    setState(account, { busy: null });
-
-    if (res.status === "written") {
-      emit({ account, step: "write", detail: `written ${res.rev}` });
-      if (attachments.get(account) === attach) attachments.delete(account);
-      const now = slotOf(account);
-      const dirty = !spec.equal(now.data, sent);
-      setState(account, { offline: false, error: null });
-      // Edits made while this was in flight wait for their own Save.
-      storeSlot(account, { ...now, server: tracked(sent, res.rev), dirty });
-      return;
-    }
-    if (res.status === "conflict") {
-      if (attempt >= maxConflictRetries) {
-        emit({ account, step: "write", detail: "conflict: gave up" });
-        setState(account, { error: "Sync conflict — try again" });
+  async function push(
+    account: string,
+    attempt: number,
+    carried: Token[] | null,
+  ): Promise<void> {
+    // null collects saves queued since the last push. A follow-up keeps only
+    // the saves it was given, so a newer save is resolved by its own push.
+    const tokens = carried ?? takeTokens(account);
+    try {
+      // Pushing needs this account's cookie. The slot stays dirty until then.
+      if (account !== active) {
+        settle(tokens, { status: "unsent", error: null });
         return;
       }
-      // Another tab moved the slot past the copy this rejection carries:
-      // retry on what it learned instead of merging an older copy.
-      if (serverViewMoved(account, revOf(slot.server))) {
-        emit({ account, step: "write", detail: "conflict: stale, retry" });
-        schedulePush(account, attempt + 1);
+      const slot = slotOf(account);
+      if (!slot.dirty || stateOf(account).ask) {
+        settleIdle(account, tokens);
         return;
       }
-      emit({ account, step: "write", detail: `conflict ${res.rev}` });
-      reconcile(account, res.wire, res.rev, attempt + 1);
-      return;
+
+      const sent = slot.data;
+      const attach = attachments.get(account);
+      setState(account, { busy: "write" });
+      const res = await transport.write(
+        spec.toWire(sent),
+        revOf(slot.server),
+        account,
+        attach,
+      );
+      setState(account, { busy: null });
+
+      if (res.status === "written") {
+        emit({ account, step: "write", detail: `written ${res.rev}` });
+        if (attachments.get(account) === attach) attachments.delete(account);
+        const now = slotOf(account);
+        const dirty = !spec.equal(now.data, sent);
+        setState(account, { offline: false, error: null });
+        // Edits made while this was in flight wait for their own Save.
+        storeSlot(account, { ...now, server: tracked(sent, res.rev), dirty });
+        settle(tokens, { status: "sent", rev: res.rev });
+        return;
+      }
+      if (res.status === "conflict") {
+        if (attempt >= maxConflictRetries) {
+          emit({ account, step: "write", detail: "conflict: gave up" });
+          setState(account, { error: "Sync conflict — try again" });
+          settle(tokens, {
+            status: "unsent",
+            error: "Sync conflict — try again",
+          });
+          return;
+        }
+        // Another tab moved the slot past the copy this rejection carries:
+        // retry on what it learned instead of merging an older copy.
+        if (serverViewMoved(account, revOf(slot.server))) {
+          emit({ account, step: "write", detail: "conflict: stale, retry" });
+          schedulePush(account, attempt + 1, tokens);
+          return;
+        }
+        emit({ account, step: "write", detail: `conflict ${res.rev}` });
+        reconcile(account, res.wire, res.rev, attempt + 1, tokens);
+        return;
+      }
+      emit({ account, step: "write", detail: `error: ${res.message}` });
+      setState(account, { error: res.message });
+      settle(tokens, { status: "unsent", error: res.message });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Sync failed";
+      setState(account, { busy: null, error: message });
+      settle(tokens, { status: "unsent", error: message });
+      throw err;
     }
-    emit({ account, step: "write", detail: `error: ${res.message}` });
-    setState(account, { error: res.message });
   }
 
   // ── Other tabs ───────────────────────────────────────────────────────────
@@ -507,7 +627,7 @@ export function createSyncedDoc<T>(
               dirty: slot.dirty,
             },
           });
-          return Promise.resolve();
+          return Promise.resolve({ status: "ask", account });
         }
       }
       // Unsent edits are flushed even when unchanged (a retry). A write in
@@ -522,9 +642,10 @@ export function createSyncedDoc<T>(
           !spec.equal(data, base) ||
           attachments.has(account));
       storeSlot(account, { ...slot, data, dirty });
-      if (account === null || !dirty) return Promise.resolve();
+      if (account === null) return Promise.resolve({ status: "local", account });
+      if (!dirty) return Promise.resolve({ status: "unchanged", account });
       setState(account, { error: null });
-      return enqueue(() => push(account, 0));
+      return send(account);
     },
 
     refresh() {
@@ -535,26 +656,34 @@ export function createSyncedDoc<T>(
 
     resolve(choice) {
       const account = requireActive();
-      if (account === null) return Promise.resolve();
+      if (account === null) {
+        return Promise.resolve({ status: "unchanged", account });
+      }
       const ask = stateOf(account).ask;
-      if (!ask) return Promise.resolve();
+      if (!ask) return Promise.resolve({ status: "unchanged", account });
       setState(account, { ask: null });
       storeSlot(account, answerAsk(slotOf(account), ask, choice));
-      if (choice === "remote") return Promise.resolve();
-      return enqueue(() => push(account, 0));
+      if (choice === "remote") {
+        return Promise.resolve({ status: "unchanged", account });
+      }
+      return send(account);
     },
 
     adoptGuest() {
       const account = requireActive();
-      if (account === null) return Promise.resolve();
+      if (account === null) {
+        return Promise.resolve({ status: "unchanged", account });
+      }
       const guest = slotOf(null);
       // An empty guest slot has nothing to upload and must not wipe this copy.
-      if (spec.equal(guest.data, spec.empty())) return Promise.resolve();
+      if (spec.equal(guest.data, spec.empty())) {
+        return Promise.resolve({ status: "unchanged", account });
+      }
       const slot = slotOf(account);
       storeSlot(account, { ...slot, data: guest.data, dirty: true });
       // Adopted once: another account cannot take the same data later.
       storeSlot(null, emptySlot());
-      return enqueue(() => push(account, 0));
+      return send(account);
     },
 
     async idle() {
