@@ -4,12 +4,92 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  carryPaths,
   classifyAgentFile,
   envKey,
   keepAgentFile,
   keptAgentName,
+  liveBranches,
   mergeEnvText,
+  parseWorktrees,
+  shouldPruneBranch,
+  uncarriedIgnored,
+  unionPaths,
 } from "./worktree.mjs";
+
+describe("carryPaths", () => {
+  const gitignore = [
+    "node_modules",
+    "AGENTS.md",
+    "",
+    "# worktree:carry — local-only paths",
+    "# Plain root paths only",
+    "AGENTS.md",
+    ".claude/",
+    "/docs",
+    "AGENTS.md",
+    "*.md",
+    "!keep.md",
+    "../outside",
+    "# worktree:end",
+    "/scripts/",
+  ].join("\r\n");
+
+  it("reads plain paths between the markers, normalised and deduped", () => {
+    assert.deepEqual(carryPaths(gitignore).paths, [
+      "AGENTS.md",
+      ".claude",
+      "docs",
+    ]);
+  });
+
+  it("reports globs, negations, and parent escapes instead of carrying them", () => {
+    assert.deepEqual(carryPaths(gitignore).skipped, [
+      "*.md",
+      "!keep.md",
+      "../outside",
+    ]);
+  });
+
+  it("carries nothing without a block", () => {
+    assert.deepEqual(carryPaths("AGENTS.md\n/docs\n"), {
+      paths: [],
+      skipped: [],
+    });
+  });
+
+  it("unions develop and worktree lists so branch-only paths come back", () => {
+    assert.deepEqual(unionPaths(["AGENTS.md", "docs"], ["docs", "notes"]), [
+      "AGENTS.md",
+      "docs",
+      "notes",
+    ]);
+  });
+});
+
+describe("uncarriedIgnored", () => {
+  it("lists ignored entries that are neither carried nor build noise", () => {
+    const ignored = [
+      ".env",
+      ".claude/",
+      "docs/",
+      "node_modules/",
+      ".svelte-kit/",
+      "scripts/",
+      "src/lib/__pycache__/",
+      "dev.server.log",
+      "Me_export.json",
+    ];
+    assert.deepEqual(uncarriedIgnored(ignored, [".claude", "docs"]), [
+      "scripts/",
+      "Me_export.json",
+    ]);
+  });
+
+  it("treats a collapsed parent of a carried path as covered", () => {
+    assert.deepEqual(uncarriedIgnored(["docs/"], ["docs/design"]), []);
+  });
+});
 
 describe("mergeEnvText", () => {
   it("appends keys develop does not have", () => {
@@ -130,5 +210,53 @@ describe("agent path filters", () => {
       ),
       true,
     );
+  });
+});
+
+describe("prune", () => {
+  const porcelain = [
+    "worktree C:/repo/lightkeepers-develop",
+    "HEAD d96223e",
+    "branch refs/heads/develop",
+    "",
+    "worktree C:/repo/lightkeepers-implicit-states",
+    "HEAD 438bcad",
+    "branch refs/heads/implicit-states",
+    "",
+    "worktree C:/repo/lightkeepers-tier-list",
+    "HEAD 83a2e35",
+    "branch refs/heads/tier-list",
+    "prunable gitdir file points to non-existent location",
+    "",
+  ].join("\r\n");
+
+  it("marks worktree entries whose folder is gone as prunable", () => {
+    const entries = parseWorktrees(porcelain);
+    assert.deepEqual(
+      entries.map((e) => [e.branch, e.prunable]),
+      [
+        ["refs/heads/develop", false],
+        ["refs/heads/implicit-states", false],
+        ["refs/heads/tier-list", true],
+      ],
+    );
+  });
+
+  it("treats only branches in existing worktrees as live", () => {
+    assert.deepEqual(
+      [...liveBranches(parseWorktrees(porcelain))],
+      ["develop", "implicit-states"],
+    );
+  });
+
+  it("never prunes develop, main, or a live worktree branch", () => {
+    const live = new Set(["develop", "implicit-states"]);
+    assert.equal(shouldPruneBranch("develop", live), false);
+    assert.equal(shouldPruneBranch("main", live), false);
+    assert.equal(shouldPruneBranch("implicit-states", live), false);
+  });
+
+  it("prunes an ordinary merged feature branch", () => {
+    assert.equal(shouldPruneBranch("tier-list", new Set(["develop"])), true);
   });
 });

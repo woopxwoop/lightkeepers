@@ -21,25 +21,118 @@ import {
 import { fileURLToPath } from "node:url";
 
 /**
+ * Local-only paths ("carried" paths) are listed once, in .gitignore, between
+ * `# worktree:carry` and `# worktree:end`. Ignoring a path there is also what
+ * registers it for carrying.
+ *
  * pnpm worktree <name>
  *   New branch from develop at ../lightkeepers-<name>.
- *   Copies .env, AGENTS.md, CLAUDE.md, .cursor, and .claude.
+ *   Copies .env and every carried path.
  *
  * pnpm worktree remove <name>
- *   Copies agent learnings back onto the main worktree, appends .env keys
- *   that develop does not have yet, then removes the worktree. The branch
- *   stays. A newer file on develop is left in place; the worktree copy is
- *   kept beside it as <name>.from-<worktree>.
+ *   Copies carried paths back onto the main worktree (using the union of
+ *   develop's and the worktree's carry blocks, so a path the branch just
+ *   started ignoring still comes back), appends .env keys that develop does
+ *   not have yet, then removes the worktree. The branch stays. A newer file on
+ *   develop is left in place; the worktree copy is kept beside it as
+ *   <name>.from-<worktree>. Other ignored files are listed before removal.
+ *
+ * pnpm worktree prune [--yes]
+ *   Lists local branches already merged into develop that are safe to delete,
+ *   plus worktree entries whose folders are gone. Dry run by default; --yes
+ *   runs `git worktree prune` and then `git branch -d` on each one, so git
+ *   still refuses anything that turns out not to be merged.
  */
 
-const agentPaths = ["AGENTS.md", "CLAUDE.md", ".cursor", ".claude"];
+const CARRY_START = "# worktree:carry";
+const CARRY_END = "# worktree:end";
+
+/** Build/cache output that is never worth warning about on remove. */
+const NOISE_SEGMENTS = new Set([
+  "node_modules",
+  ".svelte-kit",
+  ".output",
+  ".vercel",
+  ".netlify",
+  ".wrangler",
+  "build",
+  "cache",
+  "test-results",
+  "playwright-report",
+  "blob-report",
+  "__pycache__",
+  ".pytest_cache",
+]);
 
 const USAGE = `Usage: pnpm worktree <name>
        pnpm worktree remove <name>
+       pnpm worktree prune [--yes]
 
-Creates ../lightkeepers-<name> on a new branch from develop and copies .env, AGENTS.md, CLAUDE.md, .cursor, and .claude.
+Creates ../lightkeepers-<name> on a new branch from develop and copies .env plus the paths in the "# worktree:carry" block of .gitignore.
 
-remove folds those copies back into the main worktree first. New .env keys are appended. Existing keys are left as they are on develop. The branch is not deleted.`;
+remove folds those paths back into the main worktree first. New .env keys are appended. Existing keys are left as they are on develop. The branch is not deleted.
+
+prune lists branches merged into develop and worktree entries whose folders are gone. Add --yes to delete them.`;
+
+/** Branches prune never deletes, even when merged into develop. */
+export const KEEP_BRANCHES = new Set(["develop", "main"]);
+
+/**
+ * Whether `pnpm worktree prune` deletes a branch that is already merged into
+ * develop. `live` holds branch names checked out in a worktree whose folder
+ * still exists — git refuses to delete those, and they are usually in use.
+ */
+export function shouldPruneBranch(branch, live) {
+  if (KEEP_BRANCHES.has(branch) || live.has(branch)) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Root-relative paths between the worktree:carry markers. Only plain paths
+ * are accepted; globs, negations, and escapes land in `skipped`.
+ */
+export function carryPaths(gitignoreText) {
+  const paths = [];
+  const skipped = [];
+  let inside = false;
+  for (const raw of gitignoreText.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!inside) {
+      if (line.startsWith(CARRY_START)) inside = true;
+      continue;
+    }
+    if (line.startsWith(CARRY_END)) break;
+    if (!line || line.startsWith("#")) continue;
+    const path = line.replace(/^\/+/, "").replace(/\/+$/, "");
+    if (!path || /[*?[\]!\\]/.test(line) || path.split("/").includes("..")) {
+      skipped.push(line);
+      continue;
+    }
+    if (!paths.includes(path)) paths.push(path);
+  }
+  return { paths, skipped };
+}
+
+export function unionPaths(...lists) {
+  return [...new Set(lists.flat())];
+}
+
+/**
+ * Entries from `git ls-files --others --ignored --directory` that are neither
+ * carried nor build noise — files that would vanish with the worktree.
+ */
+export function uncarriedIgnored(ignored, carry) {
+  return ignored.filter((entry) => {
+    const path = entry.replace(/\/+$/, "");
+    if (!path || path === ".env" || path.endsWith(".log")) return false;
+    if (path.split("/").some((part) => NOISE_SEGMENTS.has(part))) return false;
+    return !carry.some(
+      (c) => path === c || path.startsWith(`${c}/`) || c.startsWith(`${path}/`),
+    );
+  });
+}
 
 export function envKey(line) {
   const trimmed = line.trim();
@@ -173,21 +266,37 @@ function agentSource(cwd, mainRoot, rel) {
   return existsSync(main) ? main : null;
 }
 
-function parseWorktrees(porcelain) {
+export function parseWorktrees(porcelain) {
   const entries = [];
   let current = null;
   for (const line of porcelain.split(/\r?\n/)) {
     if (line.startsWith("worktree ")) {
       if (current) entries.push(current);
-      current = { path: line.slice("worktree ".length), branch: null };
+      current = {
+        path: line.slice("worktree ".length),
+        branch: null,
+        prunable: false,
+      };
       continue;
     }
     if (current && line.startsWith("branch ")) {
       current.branch = line.slice("branch ".length);
     }
+    if (current && (line === "prunable" || line.startsWith("prunable "))) {
+      current.prunable = true;
+    }
   }
   if (current) entries.push(current);
   return entries;
+}
+
+/** Short names of branches checked out in a worktree whose folder exists. */
+export function liveBranches(entries) {
+  return new Set(
+    entries
+      .filter((entry) => entry.branch && !entry.prunable)
+      .map((entry) => entry.branch.replace(/^refs\/heads\//, "")),
+  );
 }
 
 function filesUnder(top, dir = top) {
@@ -216,10 +325,43 @@ function sameBytes(a, b) {
   return left.equals(right);
 }
 
-function syncAgents(workRoot, mainRoot, name) {
+function carryFrom(root) {
+  const file = join(root, ".gitignore");
+  if (!existsSync(file)) return { paths: [], skipped: [] };
+  return carryPaths(readFileSync(file, "utf8"));
+}
+
+function warnSkipped(skipped) {
+  for (const line of new Set(skipped)) {
+    console.log(
+      `Ignoring "${line}" in the worktree:carry block — use a plain path`,
+    );
+  }
+}
+
+function listIgnored(root) {
+  try {
+    return git(
+      [
+        "ls-files",
+        "--others",
+        "--ignored",
+        "--exclude-standard",
+        "--directory",
+      ],
+      root,
+    )
+      .split(/\r?\n/)
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function syncCarried(workRoot, mainRoot, name, carry) {
   const copied = [];
   const kept = [];
-  for (const rel of agentPaths) {
+  for (const rel of carry) {
     const sourceRoot = join(workRoot, rel);
     if (!existsSync(sourceRoot)) continue;
     for (const src of filesUnder(sourceRoot)) {
@@ -315,9 +457,17 @@ function createWorktree(name) {
 
   copyFileSync(envSource, join(dest, ".env"));
 
+  const { paths: carry, skipped } = carryFrom(dest);
+  warnSkipped(skipped);
+  if (carry.length === 0) {
+    console.log(
+      "No # worktree:carry block in .gitignore; nothing else to copy",
+    );
+  }
+
   const copied = [];
   const missing = [];
-  for (const rel of agentPaths) {
+  for (const rel of carry) {
     const source = agentSource(process.cwd(), mainRoot, rel);
     if (!source) {
       missing.push(rel);
@@ -363,16 +513,28 @@ function removeWorktree(name) {
     process.exit(1);
   }
 
+  const fromDevelop = carryFrom(mainRoot);
+  const fromWorktree = carryFrom(dest);
+  warnSkipped([...fromDevelop.skipped, ...fromWorktree.skipped]);
+  const carry = unionPaths(fromDevelop.paths, fromWorktree.paths);
+
   syncEnv(dest, mainRoot, name);
-  const agents = syncAgents(dest, mainRoot, name);
-  if (agents.copied.length) {
-    console.log(`Brought back ${agents.copied.join(", ")}`);
+  const carried = syncCarried(dest, mainRoot, name, carry);
+  if (carried.copied.length) {
+    console.log(`Brought back ${carried.copied.join(", ")}`);
   } else {
-    console.log("No newer agent files to bring back");
+    console.log("No newer carried files to bring back");
   }
-  for (const item of agents.kept) {
+  for (const item of carried.kept) {
     console.log(
       `Kept newer ${item.develop} on develop; worktree copy saved as ${item.backup}`,
+    );
+  }
+
+  const left = uncarriedIgnored(listIgnored(dest), carry);
+  if (left.length) {
+    console.log(
+      `Not carried (deleted with the worktree): ${left.join(", ")}. Add a path to the # worktree:carry block in .gitignore to keep it next time.`,
     );
   }
 
@@ -382,12 +544,80 @@ function removeWorktree(name) {
     });
   } catch {
     console.error(
-      "Worktree was not removed. Commit or stash its tracked changes, then run remove again. Env keys and agent files already brought back stay on develop.",
+      "Worktree was not removed. Commit or stash its tracked changes, then run remove again. Env keys and carried files already brought back stay on develop.",
     );
     process.exit(1);
   }
   console.log(`Removed ${dest}`);
   console.log(`Branch ${name} still exists`);
+}
+
+function branchesAgainstDevelop(flag, root) {
+  return git(
+    [
+      "for-each-ref",
+      `${flag}=refs/heads/develop`,
+      "--format=%(refname:lstrip=2)",
+      "refs/heads/",
+    ],
+    root,
+  )
+    .split(/\r?\n/)
+    .filter(Boolean);
+}
+
+function pruneBranches(apply) {
+  const mainRoot = mainRootFrom(process.cwd());
+  if (!refExists("refs/heads/develop")) {
+    console.error("Local branch develop was not found.");
+    process.exit(1);
+  }
+
+  const entries = parseWorktrees(
+    git(["worktree", "list", "--porcelain"], mainRoot),
+  );
+  const stale = entries.filter((entry) => entry.prunable);
+  const live = liveBranches(entries);
+  const merged = branchesAgainstDevelop("--merged", mainRoot);
+  const unmerged = branchesAgainstDevelop("--no-merged", mainRoot);
+  const targets = merged.filter((branch) => shouldPruneBranch(branch, live));
+  const kept = merged.filter((branch) => !targets.includes(branch));
+
+  if (stale.length) {
+    console.log(
+      `Worktree entries with no folder: ${stale.map((e) => e.path).join(", ")}`,
+    );
+  }
+  if (kept.length) console.log(`Merged but kept: ${kept.join(", ")}`);
+  if (unmerged.length) console.log(`Not merged: ${unmerged.join(", ")}`);
+  if (targets.length === 0 && stale.length === 0) {
+    console.log("Nothing to prune");
+    return;
+  }
+  if (targets.length) console.log(`Merged into develop: ${targets.join(", ")}`);
+
+  if (!apply) {
+    console.log("Dry run. Run pnpm worktree prune --yes to delete these.");
+    return;
+  }
+
+  if (stale.length) {
+    git(["worktree", "prune"], mainRoot);
+    console.log(`Pruned ${stale.length} worktree entries`);
+  }
+
+  const deleted = [];
+  const refused = [];
+  for (const branch of targets) {
+    try {
+      git(["branch", "-d", "--", branch], mainRoot);
+      deleted.push(branch);
+    } catch (error) {
+      refused.push(`${branch} (${String(error.stderr ?? "").trim()})`);
+    }
+  }
+  if (deleted.length) console.log(`Deleted ${deleted.join(", ")}`);
+  for (const item of refused) console.log(`Git kept ${item}`);
 }
 
 function main() {
@@ -404,6 +634,16 @@ function main() {
       process.exit(1);
     }
     removeWorktree(name);
+    return;
+  }
+
+  if (args[0] === "prune") {
+    const rest = args.slice(1);
+    if (rest.some((arg) => arg !== "--yes")) {
+      console.error(USAGE);
+      process.exit(1);
+    }
+    pruneBranches(rest.includes("--yes"));
     return;
   }
 
