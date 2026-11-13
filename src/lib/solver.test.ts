@@ -551,6 +551,43 @@ describe("solveAbyssWithFallback", () => {
     assert.equal(solutions[0].unfilled.length, 0);
   });
 
+  it("does not seat unowned members that slipped into the owned-team list", () => {
+    const poisoned = abyssTeam({
+      team_key: "stranger",
+      members: ["a", "b", "c", "stranger"],
+      usage_rate: 99,
+      field_1_rate: 95,
+      field_2_rate: 10,
+    });
+    const top = abyssTeam({
+      team_key: "owned-top",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 80,
+      field_1_rate: 90,
+      field_2_rate: 10,
+    });
+    const bottom = abyssTeam({
+      team_key: "owned-bottom",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 70,
+      field_1_rate: 10,
+      field_2_rate: 90,
+    });
+    const ownedNames = new Set(["a", "b", "c", "d", "e", "f", "g", "h"]);
+    const solutions = solveAbyssWithFallback(
+      [poisoned, top, bottom],
+      [poisoned, top, bottom],
+      ownedNames,
+      1,
+    );
+    assert.equal(solutions.length, 1);
+    assert.equal(solutions[0].isFallback, false);
+    const members = solutions[0].assignments.flatMap(
+      (assignment) => assignment.team.members ?? [],
+    );
+    assert.equal(members.includes("stranger"), false);
+  });
+
   it("falls back when owned teams cannot fill both slots", () => {
     const owned = [
       abyssTeam({
@@ -580,6 +617,63 @@ describe("solveAbyssWithFallback", () => {
 });
 
 describe("solveStygianWithFallback", () => {
+  it("does not seat unowned members that slipped into the owned-team list", () => {
+    const poisoned = stygianTeam({
+      team_key: "stranger",
+      members: ["a", "b", "c", "stranger"],
+      usage_rate: 99,
+      field_1_rate: 90,
+      field_2_rate: 90,
+      field_3_rate: 90,
+    });
+    const top = stygianTeam({
+      team_key: "owned-top",
+      members: ["a", "b", "c", "d"],
+      usage_rate: 80,
+      field_1_rate: 90,
+      field_2_rate: 10,
+      field_3_rate: 10,
+    });
+    const middle = stygianTeam({
+      team_key: "owned-middle",
+      members: ["e", "f", "g", "h"],
+      usage_rate: 70,
+      field_1_rate: 10,
+      field_2_rate: 10,
+      field_3_rate: 90,
+    });
+    const bottom = stygianTeam({
+      team_key: "owned-bottom",
+      members: ["i", "j", "k", "l"],
+      usage_rate: 60,
+      field_1_rate: 10,
+      field_2_rate: 90,
+      field_3_rate: 10,
+    });
+    const ownedNames = new Set([
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+    ]);
+    const teams = [poisoned, top, middle, bottom];
+    const solutions = solveStygianWithFallback(teams, teams, ownedNames, 1);
+    assert.equal(solutions.length, 1);
+    assert.equal(solutions[0].isFallback, false);
+    const members = solutions[0].assignments.flatMap(
+      (assignment) => assignment.team.members ?? [],
+    );
+    assert.equal(members.includes("stranger"), false);
+  });
+
   it("keeps partial boards when no complete seating exists", () => {
     // Every team is under MIN_SLOT_RATE on middle — no complete board possible.
     const all = [

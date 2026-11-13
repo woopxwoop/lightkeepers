@@ -8,17 +8,9 @@
 import type {
   CharacterOwned,
   CharacterPortraitRef,
-  InventoryArtifact,
-  InventoryWeapon,
   RosterProgress,
 } from "#lib/definitions.js";
 import { cloneRosterProgress } from "#lib/roster-progress.js";
-import {
-  cloneInventoryArtifact,
-  cloneInventoryWeapon,
-} from "#lib/roster-inventory.js";
-
-export const ROSTER_STORAGE_KEY = "charactersOwned";
 
 export type RosterCapture = {
   /** Cloned roster frozen at capture time (including progress). */
@@ -216,101 +208,4 @@ export function diffRostersForSync(
     return a.name.localeCompare(b.name, "en", { sensitivity: "base" });
   });
   return diffs;
-}
-
-/** Persist roster JSON to localStorage. Returns false if storage is unavailable. */
-export function writeRosterLocal(json: string): boolean {
-  try {
-    localStorage.setItem(ROSTER_STORAGE_KEY, json);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** POST a captured roster to `/api/roster`. Optional inventory slices ride along on GOOD import. */
-export async function postRoster(
-  roster: CharacterOwned[],
-  inventory?: {
-    weapons?: InventoryWeapon[];
-    artifacts?: InventoryArtifact[];
-  },
-): Promise<
-  | { ok: true; inventoryOmitted?: boolean }
-  | { ok: false; status: number; message?: string }
-> {
-  const entries = roster.map((c) => {
-    const entry: {
-      name_id: string;
-      isOwned: boolean;
-      progress?: RosterProgress | null;
-    } = {
-      name_id: c.name_id,
-      isOwned: c.isOwned,
-    };
-    if (c.progress !== undefined) {
-      entry.progress = cloneRosterProgress(c.progress);
-    }
-    return entry;
-  });
-  const body: {
-    roster: typeof entries;
-    weapons?: InventoryWeapon[];
-    artifacts?: InventoryArtifact[];
-  } = { roster: entries };
-  if (inventory?.weapons) {
-    body.weapons = inventory.weapons.map(cloneInventoryWeapon);
-  }
-  if (inventory?.artifacts) {
-    body.artifacts = inventory.artifacts.map(cloneInventoryArtifact);
-  }
-  const res = await fetch("/api/roster", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (res.ok) {
-    let inventoryOmitted = false;
-    try {
-      const parsed = (await res.json()) as { inventoryOmitted?: unknown };
-      inventoryOmitted = parsed.inventoryOmitted === true;
-    } catch {
-      /* ignore parse failures */
-    }
-    return inventoryOmitted
-      ? { ok: true, inventoryOmitted: true }
-      : { ok: true };
-  }
-
-  let message: string | undefined;
-  try {
-    const text = await res.text();
-    if (text) {
-      try {
-        const parsed = JSON.parse(text) as { message?: unknown };
-        message =
-          typeof parsed.message === "string" && parsed.message
-            ? parsed.message
-            : text;
-      } catch {
-        message = text;
-      }
-    }
-  } catch {
-    /* ignore body read failures */
-  }
-
-  if (res.status === 400) {
-    const sample = entries[0];
-    console.error("[roster sync] 400 Bad Request", {
-      message: message ?? "(no body)",
-      count: entries.length,
-      weapons: body.weapons?.length ?? 0,
-      artifacts: body.artifacts?.length ?? 0,
-      sampleKeys: sample ? Object.keys(sample) : [],
-      sample,
-    });
-  }
-
-  return { ok: false, status: res.status, message };
 }

@@ -5,18 +5,9 @@
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import IconGoogle from "#lib/ui/icons/IconGoogle.svelte";
   import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";
-  import {
-    charactersHydrated,
-    charactersOwned,
-    invalidateNearMissTeams,
-    invalidateTeamsOwned,
-    setHasSavedRoster,
-  } from "#lib/stores.js";
-  import {
-    captureRoster,
-    postRoster,
-    writeRosterLocal,
-  } from "#lib/roster-snapshot.js";
+  import { charactersHydrated, charactersOwned } from "#lib/stores.js";
+  import { rosterSync } from "#lib/app/roster-sync.js";
+  import { rosterDocOf } from "#lib/sync/roster-doc.js";
   import { applyGoodRoster, parseGoodText } from "#lib/good-import.js";
   import { serializeGoodDocument } from "#lib/good-export.js";
   import {
@@ -28,6 +19,10 @@
     setRosterInventory,
   } from "#lib/app/roster-inventory.js";
   import GoodImportModal from "#lib/ui/components/GoodImportModal.svelte";
+  import {
+    cloudRosterProbeFromBody,
+    type CloudRosterProbe,
+  } from "#lib/app/cloud-roster-probe.js";
 
   let {
     showHeading = true,
@@ -40,47 +35,61 @@
   } = $props();
 
   const session = authClient.useSession();
+  const rosterView = rosterSync().view;
+  /** Changes each time the roster finishes syncing, so the probe re-reads. */
+  let rosterSyncedFor = $derived(
+    $rosterView.status === "synced" ? $rosterView.account : null,
+  );
 
-  let hasCloudRoster = $state<boolean | null>(null);
-  let rosterLoading = $state(true);
+  let probe = $state<CloudRosterProbe>("unknown");
   let rosterError = $state("");
   let confirmReset = $state(false);
+  let resetting = $state(false);
 
   let cloudRosterVersion = 0;
+  /** Changes only when the signed-in account changes, not on a probe refresh. */
+  let accountGeneration = 0;
+  let seenAccountId: string | null | undefined = undefined;
   let pickingGood = $state(false);
   let importing = $state(false);
   let importError = $state("");
   let importNote = $state("");
 
   $effect(() => {
+    void rosterSyncedFor;
+    const id = $session.data?.user?.id ?? null;
+    if (id !== seenAccountId) {
+      seenAccountId = id;
+      accountGeneration += 1;
+      confirmReset = false;
+    }
     if ($session.data) {
-      cloudRosterVersion++;
-      checkCloudRoster(cloudRosterVersion);
+      const version = ++cloudRosterVersion;
+      probe = "checking";
+      void checkCloudRoster(version);
     } else {
-      hasCloudRoster = null;
-      rosterLoading = false;
+      cloudRosterVersion += 1;
+      confirmReset = false;
+      probe = "unknown";
     }
   });
 
   async function checkCloudRoster(version: number) {
-    rosterLoading = true;
     try {
       const res = await fetch("/api/roster");
       if (version !== cloudRosterVersion) return;
       if (!res.ok) {
         console.error("checkCloudRoster: unexpected status", res.status);
-        hasCloudRoster = null;
+        probe = cloudRosterProbeFromBody({ ok: false, roster: null });
         return;
       }
       const { roster } = await res.json();
       if (version !== cloudRosterVersion) return;
-      hasCloudRoster = roster !== null;
+      probe = cloudRosterProbeFromBody({ ok: true, roster });
     } catch (err) {
       if (version !== cloudRosterVersion) return;
       console.error("checkCloudRoster: network error", err);
-      hasCloudRoster = null;
-    } finally {
-      if (version === cloudRosterVersion) rosterLoading = false;
+      probe = "unreachable";
     }
   }
 
@@ -93,20 +102,40 @@
   }
 
   async function executeReset() {
+    if (resetting) return;
+    const account = accountGeneration;
+    resetting = true;
     rosterError = "";
-    confirmReset = false;
     try {
-      const res = await fetch("/api/roster", { method: "DELETE" });
-      if (res.ok) {
-        hasCloudRoster = false;
+      // Queued roster uploads run before the delete. When the row is gone
+      // and this device's copy did not change during the delete, the slot
+      // is detached so that upload is not sent again.
+      const removed = await rosterSync().discardServer();
+      if (account !== accountGeneration) {
+        confirmReset = false;
+        return;
+      }
+      if (removed.removed) {
+        cloudRosterVersion += 1;
+        probe = "empty";
+        confirmReset = false;
         clearRosterInventory();
       } else {
-        rosterError = `Server error (${res.status}) — roster not reset`;
-        console.error("resetCloudRoster: unexpected status", res.status);
+        confirmReset = false;
+        if (removed.message) {
+          rosterError = `${removed.message} — roster not reset`;
+        }
       }
     } catch (err) {
+      if (account !== accountGeneration) {
+        confirmReset = false;
+        return;
+      }
       rosterError = "Network error — could not reset cloud roster";
+      confirmReset = false;
       console.error("resetCloudRoster: network error", err);
+    } finally {
+      resetting = false;
     }
   }
 
@@ -140,41 +169,37 @@
 
       const next = applyGoodRoster($charactersOwned, parsed.characters);
       const ownedCount = next.filter((c) => c.isOwned).length;
-      const pending = captureRoster(next);
-      const previous = captureRoster($charactersOwned);
       const inventory = {
         weapons: parsed.weapons,
         artifacts: parsed.artifacts,
       };
+      const countLabel = `${ownedCount} owned character${ownedCount === 1 ? "" : "s"}`;
 
-      if (!writeRosterLocal(pending.json)) {
-        console.warn("localStorage unavailable — saving to memory only");
-      }
-
-      if ($session.data) {
-        const result = await postRoster(pending.roster, inventory);
-        if (!result.ok) {
-          writeRosterLocal(previous.json);
-          importError = result.message
-            ? `Sync failed (${result.status}): ${result.message}`
-            : `Sync failed (${result.status}) — roster not saved to cloud`;
-          return;
-        }
-        hasCloudRoster = true;
-        if (result.inventoryOmitted) {
-          importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}. Cloud saved roster only — inventory columns are not migrated.`;
-        }
-      }
-
-      setRosterInventory(inventory);
-      charactersOwned.set(pending.roster);
-      invalidateTeamsOwned();
-      invalidateNearMissTeams();
-      setHasSavedRoster();
+      // The inventory rides along with this one roster write when signed in.
+      const result = await rosterSync().commit(
+        rosterDocOf(next, $rosterView.data),
+        {
+          attach: $rosterView.account !== null ? inventory : undefined,
+        },
+      );
       pickingGood = false;
-      if (!importNote) {
-        importNote = `Imported ${ownedCount} owned character${ownedCount === 1 ? "" : "s"}.`;
+      // The inventory cache has no account key: never fill it for another.
+      if (result.account !== $rosterView.account) {
+        importError = "Account changed during import — import again.";
+        return;
       }
+      const attachmentOmitted =
+        result.status === "sent" && result.attachmentOmitted === true;
+      if (!attachmentOmitted) setRosterInventory(inventory);
+      importNote = attachmentOmitted
+        ? `Imported ${countLabel} — weapons and artifacts were not saved on the server`
+        : result.status === "unsent"
+          ? result.error
+            ? `Imported ${countLabel} on this device — not synced: ${result.error}`
+            : `Imported ${countLabel} on this device — not synced`
+          : result.status === "ask"
+            ? ""
+            : `Imported ${countLabel}.`;
     } catch (err) {
       console.error("GOOD import error:", err);
       importError = "Could not import that GOOD JSON.";
@@ -297,19 +322,31 @@
         </Button>
       </div>
 
-      {#if rosterLoading}
+      {#if probe === "checking" || probe === "unknown"}
         <p class="status-note">Checking cloud roster…</p>
-      {:else if hasCloudRoster === null}
+      {:else if probe === "unreachable"}
         <p class="status-note">Could not reach sync service.</p>
-      {:else if hasCloudRoster}
+      {:else if probe === "backed-up"}
         <div class="sync-status">
           <span class="status-dot" aria-hidden="true"></span>
           <p class="status-note sync-label">Cloud roster backed up</p>
           {#if confirmReset}
             <div class="confirm-row">
               <span class="status-note">Delete cloud roster?</span>
-              <Button variant="ghost" onclick={executeReset}>Yes</Button>
-              <Button variant="secondary" onclick={cancelReset}>No</Button>
+              <Button
+                variant="ghost"
+                disabled={resetting}
+                onclick={executeReset}
+              >
+                {resetting ? "Resetting…" : "Yes"}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={resetting}
+                onclick={cancelReset}
+              >
+                No
+              </Button>
             </div>
           {:else}
             <Button variant="secondary" onclick={promptReset}>Reset</Button>

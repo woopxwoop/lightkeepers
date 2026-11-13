@@ -2,7 +2,6 @@
   import { browser } from "$app/env";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { authClient } from "#lib/auth-client.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
@@ -24,7 +23,6 @@
     aggregateGoalCosts,
     costsForGoal,
     emptyAggregate,
-    emptyGoalsState,
     findGoal,
     moveGoal,
     parseGoalsState,
@@ -40,19 +38,8 @@
     plannerWeaponOptions,
     resolveCatalogCharacterId,
   } from "#lib/planner-goal-edits.js";
-  import {
-    autofillCharacterGoalState,
-    goalsHaveUnsavedChanges,
-    hydrateGoalsState,
-    readGoalsIfChanged,
-    saveGoalsState,
-  } from "#lib/calculator-goals-lifecycle.js";
-  import {
-    captureGoals,
-    goalsLocalRevision,
-    readGoalsLocal,
-    type GoalsCapture,
-  } from "#lib/calculator-goals-snapshot.js";
+  import { autofillCharacterGoalState } from "#lib/calculator-goals-lifecycle.js";
+  import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import { addressUrl, nextSearchPath } from "#lib/query-state.js";
   import { auditPath } from "#lib/ui/nav-links.js";
   import type {
@@ -71,13 +58,10 @@
   let catalog = $state<UpgradeCostsCatalog | null>(null);
   let loadError = $state<string | null>(null);
   let loading = $state(true);
-  let goalsHydrated = $state(false);
-
-  let goalsState = $state<CalculatorGoalsState>(emptyGoalsState());
-  let savedSnapshot = $state("");
+  /** The editable goals: follows storage, merges on Save (`goals-draft`). */
+  const goals = useGoalsDraft();
   let showSaved = $state(false);
-  let isSaving = $state(false);
-  let saveError = $state("");
+  let savedGeneration = 0;
   let addError = $state("");
   /** Character name_id from `?add=` — consumed after catalog + goals hydrate. */
   let pendingPlannerAdd = $state<string | null>(null);
@@ -86,39 +70,30 @@
   let sortOwnedFirst = $state(true);
   /** Configure dialog open (gear on a goal row). */
   let configuring = $state(false);
-  /** Soft-deleted rows; applied on Save. */
-  let pendingRemoveIds = $state(new Set<string>());
-
-  const session = authClient.useSession();
 
   /** Dirty ignores selectedId — picking a row shouldn't demand Save. */
-  let hasUnsavedChanges = $derived(
-    goalsHaveUnsavedChanges({
-      hydrated: goalsHydrated,
-      state: goalsState,
-      savedSnapshot,
-      pendingRemoveIds,
-    }),
-  );
+  let hasUnsavedChanges = $derived(goals.unsaved);
+  /** Why the last read or send failed. */
+  let saveError = $derived(goals.error ?? "");
   let savedVisible = $derived(showSaved && !hasUnsavedChanges);
   let parsedSavedSnapshot = $derived.by((): CalculatorGoalsState | null => {
-    if (!savedSnapshot) return null;
+    if (!goals.savedJson) return null;
     try {
-      return parseGoalsState(JSON.parse(savedSnapshot) as unknown);
+      return parseGoalsState(JSON.parse(goals.savedJson) as unknown);
     } catch {
       return null;
     }
   });
   let changedCount = $derived.by(() => {
-    if (!savedSnapshot) return 0;
-    if (!parsedSavedSnapshot) return goalsState.goals.length;
-    const current = parseGoalsState(goalsState).goals;
+    if (!goals.savedJson) return 0;
+    if (!parsedSavedSnapshot) return goals.state.goals.length;
+    const current = parseGoalsState(goals.state).goals;
     const savedMap = new Map(parsedSavedSnapshot.goals.map((g) => [g.id, g]));
     let n = 0;
     const seen = new Set<string>();
     for (const g of current) {
       seen.add(g.id);
-      if (pendingRemoveIds.has(g.id)) {
+      if (goals.pendingRemoveIds.has(g.id)) {
         n += 1;
         continue;
       }
@@ -155,42 +130,6 @@
   });
 
   $effect(() => {
-    if (!browser || goalsHydrated) return;
-    let cancelled = false;
-
-    async function hydrate() {
-      const { data: sess } = await authClient.getSession();
-      if (cancelled) return;
-      const pending = await hydrateGoalsState(Boolean(sess));
-      if (cancelled) return;
-      goalsState = pending.state;
-      savedSnapshot = pending.json;
-      goalsHydrated = true;
-    }
-
-    void hydrate().catch(() => {
-      if (cancelled) return;
-      const pending = captureGoals(readGoalsLocal());
-      goalsState = pending.state;
-      savedSnapshot = pending.json;
-      goalsHydrated = true;
-    });
-    return () => {
-      cancelled = true;
-    };
-  });
-
-  /** Same-tab sync when itinerary (or another surface) persists goals. */
-  $effect(() => {
-    void $goalsLocalRevision;
-    if (!browser || !goalsHydrated || hasUnsavedChanges) return;
-    const pending = readGoalsIfChanged(savedSnapshot);
-    if (!pending) return;
-    goalsState = pending.state;
-    savedSnapshot = pending.json;
-  });
-
-  $effect(() => {
     if (!browser) return;
     const url = addressUrl(page);
     const nameId = url.searchParams.get("add")?.trim();
@@ -208,63 +147,33 @@
       addError = "Couldn't load planner data.";
       return;
     }
-    if (!catalog || !goalsHydrated) return;
+    if (!catalog || !goals.hydrated) return;
     pendingPlannerAdd = null;
     addOrSelectCharacter(nameId);
   });
 
   function commitGoals(next: CalculatorGoalsState) {
-    goalsState = next;
+    goals.state = next;
   }
 
-  function commitSaved(pending: GoalsCapture) {
-    savedSnapshot = pending.json;
-    goalsState = pending.state;
+  function flashSaved() {
+    const generation = ++savedGeneration;
     showSaved = true;
-  }
-
-  function cancelEdits() {
-    try {
-      const pending = captureGoals(
-        parseGoalsState(JSON.parse(savedSnapshot) as unknown),
-      );
-      goalsState = pending.state;
-      savedSnapshot = pending.json;
-      pendingRemoveIds = new Set();
-      saveError = "";
-    } catch {
-      /* ignore */
-    }
-  }
-
-  async function saveGoals() {
-    if (isSaving) return;
-    isSaving = true;
-    saveError = "";
-
-    const result = await saveGoalsState({
-      state: goalsState,
-      pendingRemoveIds,
-      savedSnapshot,
-      cloud: Boolean($session.data),
-    });
-
-    if (!result.ok) {
-      saveError = result.message;
-      isSaving = false;
-      return;
-    }
-
-    pendingRemoveIds = new Set();
-    commitSaved(result.capture);
-    isSaving = false;
-
     setTimeout(() => {
-      showSaved = false;
+      if (generation === savedGeneration) showSaved = false;
     }, 2000);
   }
 
-  let selectedGoal = $derived(findGoal(goalsState, goalsState.selectedId));
+  function cancelEdits() {
+    goals.cancel();
+  }
+
+  async function saveGoals() {
+    const result = await goals.save();
+    if (result.status === "sent" || result.status === "local") flashSaved();
+  }
+
+  let selectedGoal = $derived(findGoal(goals.state, goals.state.selectedId));
 
   let ownedIds = $derived(ownedNameIds($charactersOwned));
 
@@ -278,13 +187,15 @@
   async function autofillCharacterTarget(nameId: string, goalId: string) {
     if (!catalog) return;
     const seq = ++autofillSeq;
+    // Edits assign a new state object, so identity means the draft moved.
+    const base = goals.state;
     const next = await autofillCharacterGoalState({
-      state: goalsState,
+      state: base,
       catalog,
       nameId,
       goalId,
     });
-    if (seq !== autofillSeq || !next) return;
+    if (seq !== autofillSeq || !next || goals.state !== base) return;
     commitGoals(next);
   }
 
@@ -316,14 +227,14 @@
   function addOrSelectCharacter(nameId: string) {
     if (!catalog) return;
     const resolved = resolveCatalogCharacterId(catalog, nameId) ?? nameId;
-    const existing = goalsState.goals.find(
+    const existing = goals.state.goals.find(
       (g) => g.kind === "character" && g.name_id === resolved,
     );
     if (existing) {
       cancelPick();
       addError = "";
-      if (goalsState.selectedId !== existing.id) {
-        commitGoals({ ...goalsState, selectedId: existing.id });
+      if (goals.state.selectedId !== existing.id) {
+        commitGoals({ ...goals.state, selectedId: existing.id });
       }
       beginConfigure();
       return;
@@ -334,7 +245,7 @@
   function addCharacterWith(nameId: string) {
     if (!catalog) return;
     cancelPick();
-    const result = appendCatalogCharacterGoal(goalsState, catalog, nameId, {
+    const result = appendCatalogCharacterGoal(goals.state, catalog, nameId, {
       owned: $charactersOwned,
       weapons: getRosterWeaponsCached(),
     });
@@ -354,7 +265,7 @@
   function addWeaponWith(weaponId: number) {
     if (!catalog) return;
     cancelPick();
-    const result = appendCatalogWeaponGoal(goalsState, catalog, weaponId, {
+    const result = appendCatalogWeaponGoal(goals.state, catalog, weaponId, {
       owned: $charactersOwned,
       weapons: getRosterWeaponsCached(),
     });
@@ -368,9 +279,9 @@
   }
 
   function selectGoal(id: string) {
-    if (goalsState.selectedId === id) return;
+    if (goals.state.selectedId === id) return;
     cancelPick();
-    commitGoals({ ...goalsState, selectedId: id });
+    commitGoals({ ...goals.state, selectedId: id });
   }
 
   function beginConfigure() {
@@ -378,10 +289,10 @@
   }
 
   function openConfigure(id: string) {
-    if (pendingRemoveIds.has(id)) return;
+    if (goals.pendingRemoveIds.has(id)) return;
     cancelPick();
-    if (goalsState.selectedId !== id) {
-      commitGoals({ ...goalsState, selectedId: id });
+    if (goals.state.selectedId !== id) {
+      commitGoals({ ...goals.state, selectedId: id });
     }
     beginConfigure();
   }
@@ -391,18 +302,18 @@
   }
 
   function deleteGoal(id: string) {
-    if (goalsState.selectedId === id) closeConfigure();
+    if (goals.state.selectedId === id) closeConfigure();
     addError = "";
-    const next = new Set(pendingRemoveIds);
+    const next = new Set(goals.pendingRemoveIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    pendingRemoveIds = next;
+    goals.pendingRemoveIds = next;
   }
 
   function toggleStar(id: string) {
-    const current = findGoal(goalsState, id);
+    const current = findGoal(goals.state, id);
     if (!current) return;
-    commitGoals(replaceGoal(goalsState, toggleGoalStarred(current)));
+    commitGoals(replaceGoal(goals.state, toggleGoalStarred(current)));
   }
 
   function portraitFor(nameId: string) {
@@ -410,16 +321,18 @@
   }
 
   let starredGoalList = $derived(
-    starredGoals(goalsState.goals.filter((g) => !pendingRemoveIds.has(g.id))),
+    starredGoals(
+      goals.state.goals.filter((g) => !goals.pendingRemoveIds.has(g.id)),
+    ),
   );
 
   let aggregate = $derived.by((): AggregatedUpgradeCosts | null => {
-    if (!catalog || !goalsHydrated) return null;
-    const activeGoals = goalsState.goals.filter(
-      (g) => !pendingRemoveIds.has(g.id),
+    if (!catalog || !goals.hydrated) return null;
+    const activeGoals = goals.state.goals.filter(
+      (g) => !goals.pendingRemoveIds.has(g.id),
     );
     if (costScope === "selected") {
-      if (!selectedGoal || pendingRemoveIds.has(selectedGoal.id)) {
+      if (!selectedGoal || goals.pendingRemoveIds.has(selectedGoal.id)) {
         return emptyAggregate();
       }
       return costsForGoal(selectedGoal, catalog);
@@ -495,33 +408,46 @@
     </div>
   </header>
 
-  {#if loading || !goalsHydrated}
+  {#if loading || !goals.hydrated}
     <LoadingState message="Loading upgrade costs…" />
   {:else if loadError}
     <EmptyState message={loadError ?? "Couldn’t load cost data"} />
   {:else if catalog}
-    {#if hasUnsavedChanges || isSaving || savedVisible || saveError}
+    {#if hasUnsavedChanges || goals.unsent || goals.saving || savedVisible || saveError}
       <div class="save-bar">
         <div class="save-status">
           <span
             class="save-dot"
-            class:saving={isSaving}
+            class:saving={goals.saving}
             class:saved={savedVisible}
           ></span>
-          <span class="save-label">
-            {isSaving
+          <span
+            class="save-label"
+            class:save-error={!!saveError &&
+              !goals.saving &&
+              !savedVisible &&
+              !hasUnsavedChanges}
+          >
+            {goals.saving
               ? "Saving..."
               : savedVisible
                 ? "Saved"
-                : "Unsaved changes"}
+                : hasUnsavedChanges
+                  ? "Unsaved changes"
+                  : saveError || "Saved on this device — not synced yet"}
           </span>
+          {#if hasUnsavedChanges && saveError && !goals.saving}
+            <span class="save-error">{saveError}</span>
+          {/if}
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
           {/if}
         </div>
-        {#if hasUnsavedChanges && !isSaving}
+        {#if (hasUnsavedChanges || goals.unsent) && !goals.saving}
           <div class="save-actions">
-            <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
+            {#if hasUnsavedChanges}
+              <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
+            {/if}
             <Button variant="primary" onclick={saveGoals}>Save</Button>
             <div class="save-cue" aria-hidden="true">
               <IconChevronDown
@@ -531,9 +457,6 @@
               />
             </div>
           </div>
-        {/if}
-        {#if saveError}
-          <span class="save-error">{saveError}</span>
         {/if}
       </div>
     {/if}
@@ -566,7 +489,7 @@
           <p class="save-error">{addError}</p>
         {/if}
 
-        {#if goalsState.goals.length === 0}
+        {#if goals.state.goals.length === 0}
           <p class="section-lede">
             Add a character or weapon goal to start planning costs, or
             <a class="lede-link" href={auditPath}
@@ -575,14 +498,14 @@
           </p>
         {:else}
           <GoalList
-            goals={goalsState.goals}
+            goals={goals.state.goals}
             {catalog}
-            selectedId={goalsState.selectedId}
-            removedIds={pendingRemoveIds}
+            selectedId={goals.state.selectedId}
+            removedIds={goals.pendingRemoveIds}
             onSelect={selectGoal}
             onStar={toggleStar}
             onReorder={(from, to) =>
-              commitGoals(moveGoal(goalsState, from, to))}
+              commitGoals(moveGoal(goals.state, from, to))}
             onConfigure={openConfigure}
             onRemove={deleteGoal}
           />
@@ -747,7 +670,7 @@
             </ul>
           {:else if aggregate.mora === 0 && aggregate.characterExp === 0 && aggregate.weaponExp === 0}
             <p class="section-lede">
-              {#if goalsState.goals.length === 0}
+              {#if goals.state.goals.length === 0}
                 Add a goal to see costs.
               {:else if costScope === "starred" && starredGoalList.length === 0}
                 Star a goal to include it here and on the farming itinerary.
@@ -769,7 +692,7 @@
     {weaponOptions}
     getCharacter={portraitFor}
     onClose={closeConfigure}
-    onChange={(next) => commitGoals(replaceGoal(goalsState, next))}
+    onChange={(next) => commitGoals(replaceGoal(goals.state, next))}
     onAutofillCharacter={(nameId, goalId) =>
       void autofillCharacterTarget(nameId, goalId)}
   />
