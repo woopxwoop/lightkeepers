@@ -20,10 +20,6 @@ let pending: Promise<ReadonlySet<string>> | null = null;
 /** True after a successful or soft-failed load. */
 let settled = false;
 
-export function getTcgCardIdsCached(): ReadonlySet<string> | null {
-  return cached;
-}
-
 /**
  * `true` / `false` once the full index is known; `null` while unknown or
  * provisional (manifest not published — may still probe + onerror).

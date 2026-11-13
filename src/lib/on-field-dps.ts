@@ -68,10 +68,6 @@ export const ON_FIELD_DPS_NAME_IDS: ReadonlySet<string> = new Set([
   "Kaveh",
 ]);
 
-export function isOnFieldDps(nameId: string): boolean {
-  return ON_FIELD_DPS_NAME_IDS.has(nameId);
-}
-
 /** On-field DPS members present on a team (order preserved, unique). */
 export function onFieldMembers(
   members: readonly string[],

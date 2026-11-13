@@ -27,7 +27,7 @@ import type { UpgradePromoteStep } from "#lib/types/upgrade-costs.js";
 import { UPGRADE_DEFAULTS } from "#lib/upgrade-costs.js";
 
 /** Unlock table for gating planner targets when the upgrade catalog isn’t loaded. */
-export const GRADE_CHARACTER_PROMOTES: UpgradePromoteStep[] = [
+const GRADE_CHARACTER_PROMOTES: UpgradePromoteStep[] = [
   { promoteLevel: 0, mora: 0, unlockMaxLevel: 20, items: [] },
   { promoteLevel: 1, mora: 0, unlockMaxLevel: 40, items: [] },
   { promoteLevel: 2, mora: 0, unlockMaxLevel: 50, items: [] },
@@ -37,8 +37,8 @@ export const GRADE_CHARACTER_PROMOTES: UpgradePromoteStep[] = [
   { promoteLevel: 6, mora: 0, unlockMaxLevel: 90, items: [] },
 ];
 
-export const WEAPON_OK_MAX_RANK = 3;
-export const MAIN_OK_MAX_RANK = 2;
+const WEAPON_OK_MAX_RANK = 3;
+const MAIN_OK_MAX_RANK = 2;
 
 /** Liked-weapon investment target when measured 80→90 impact clears negligible. */
 export const WEAPON_GRADE_TARGET = UPGRADE_DEFAULTS.weaponTarget;
@@ -103,7 +103,7 @@ export type AccountBuildGrade = {
 };
 
 /** Genshin UI item stems for level / ascension advice icons. */
-export const ACCOUNT_BUILD_ADVICE_UI_ICON: Partial<
+const ACCOUNT_BUILD_ADVICE_UI_ICON: Partial<
   Record<AccountBuildAdviceKind, string>
 > = {
   level: "UI_ItemIcon_104003",
@@ -328,7 +328,7 @@ function progressAdviceSteps(
  * 80→90 impact above negligible, and is underinvested. Wrong / missing /
  * unscored / negligible weapons stay silent (no swap tips).
  */
-export function weaponProgressAdviceSteps(
+function weaponProgressAdviceSteps(
   view: RosterBuildView,
   builds: CharacterIndex,
   getStars: (key: string) => number = () => 0,
@@ -357,7 +357,7 @@ export function weaponProgressAdviceSteps(
 }
 
 /** Measured 80→90 row for one weapon key, if any. */
-export function weaponLevelImportanceForKey(
+function weaponLevelImportanceForKey(
   builds: CharacterIndex,
   weaponKey: string,
 ): CharacterWeaponLevelGain | null {
@@ -366,7 +366,7 @@ export function weaponLevelImportanceForKey(
   return rows.find((row) => row.key === weaponKey) ?? null;
 }
 
-export function resolveWeaponLevelTier(
+function resolveWeaponLevelTier(
   builds: CharacterIndex,
   weaponKey: string,
 ): ImportanceImpactTier | null {
@@ -381,7 +381,7 @@ export function resolveWeaponLevelTier(
   ).tier;
 }
 
-export function shouldRecommendWeaponLevel90(
+function shouldRecommendWeaponLevel90(
   builds: CharacterIndex,
   weaponKey: string,
 ): boolean {
@@ -399,7 +399,7 @@ function slotImpactPct(
 /**
  * Rank Needs work characters by Builds impact of unfinished level/talent work.
  */
-export function progressPriority(
+function progressPriority(
   view: RosterBuildView,
   builds: CharacterIndex,
   promotes: UpgradePromoteStep[] = GRADE_CHARACTER_PROMOTES,
@@ -561,22 +561,3 @@ export function compareGradeRows(
   }
   return a.sortName.localeCompare(b.sortName);
 }
-
-export const ACCOUNT_BUILD_BUCKET_ORDER: AccountBuildBucket[] = [
-  "needs_work",
-  "built_well",
-  "ungraded",
-];
-
-export const ACCOUNT_BUILD_BUCKET_LABEL: Record<AccountBuildBucket, string> = {
-  needs_work: "Needs work",
-  built_well: "Built well",
-  ungraded: "Ungraded",
-};
-
-export const ACCOUNT_BUILD_AXIS_LABEL: Record<AccountBuildAxis, string> = {
-  weapon: "Weapon",
-  set: "Set",
-  mains: "Mains",
-  progress: "Progress",
-};

@@ -11,7 +11,6 @@ import type {
   CharacterAnalyticsMode,
   CharacterAnalyticsPayload,
   Enemy,
-  NearMissStygianPair,
   NearMissStygianTeam,
   StygianEnemies,
   StygianEnemyListItem,
@@ -228,9 +227,6 @@ export function e2eStaticPayload(): E2eStaticPayload {
     stygianSchedule: null,
   };
 }
-
-/** Empty near-miss pair list typed for API mocks. */
-export const E2E_NEAR_MISS_PAIRS: NearMissStygianPair[] = [];
 
 /** Deterministic /api/tierlist body for Playwright. */
 export function e2eTierListPayload(): TierListPayload {

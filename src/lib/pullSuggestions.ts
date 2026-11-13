@@ -30,7 +30,7 @@ export type PairSuggestion = {
 };
 
 /** Unlocked team must itself be meta-relevant (avg usage %). */
-export const MIN_PULL_TEAM_USAGE = 10;
+const MIN_PULL_TEAM_USAGE = 10;
 
 /** Floor so non-positive PMI pairs still order by avgUsage. */
 const PMI_SCORE_FLOOR = 1e-6;

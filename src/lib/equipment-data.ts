@@ -274,7 +274,7 @@ export function weaponIconSrc(weaponKey: string): string | null {
 /**
  * True only for known 5★ weapons. Missing keys are treated as not-5★.
  */
-export function isFiveStarWeapon(weaponKey: string): boolean {
+function isFiveStarWeapon(weaponKey: string): boolean {
   const weapon = weaponByKey.get(weaponKey);
   return weapon?.stars === 5;
 }

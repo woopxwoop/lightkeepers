@@ -138,13 +138,6 @@ export async function getInvestmentFile(): Promise<InvestmentFile> {
   return investmentCache.getOrSet("investment", fetchInvestment);
 }
 
-export function findInvestmentTeam(
-  file: InvestmentFile,
-  teamKey: string,
-): InvestmentTeam | null {
-  return file.teams.find((t) => t.team_key === teamKey) ?? null;
-}
-
 /** Resolve a sim by its unique `state_key` (cons + weapons). */
 export function findInvestmentSim(
   file: InvestmentFile,
@@ -155,14 +148,6 @@ export function findInvestmentSim(
     if (sim) return { team, sim };
   }
   return null;
-}
-
-/** Prefer kind===baseline; else lowest-cost result. */
-export function pickBaselineSim(team: InvestmentTeam): InvestmentSim | null {
-  const baseline = team.results.find((r) => r.kind === "baseline");
-  if (baseline) return baseline;
-  if (!team.results.length) return null;
-  return [...team.results].sort((a, b) => a.cost - b.cost || b.dps - a.dps)[0];
 }
 
 /**

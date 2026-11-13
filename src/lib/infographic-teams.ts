@@ -74,10 +74,7 @@ function teamUsageRate(team: InfographicTeam): number {
 }
 
 /** usage_index = (slot%/100) × overall usage_rate. */
-export function teamUsageIndex(
-  team: InfographicTeam,
-  slot: InfographicSlot,
-): number {
+function teamUsageIndex(team: InfographicTeam, slot: InfographicSlot): number {
   return (teamSlotFieldRate(team, slot) / 100) * teamUsageRate(team);
 }
 
@@ -126,7 +123,7 @@ function passesUsageFloorsForMainDps(
  * True when 2+ allowlisted On-Field DPS share a team and none is Mavuika
  * (wheelchair / dual-carry noise). Mavuika dual-role comps are allowed.
  */
-export function isWheelchairDualDpsTeam(
+function isWheelchairDualDpsTeam(
   members: readonly string[],
   onFieldDpsIds: ReadonlySet<string> = ON_FIELD_DPS_NAME_IDS,
 ): boolean {

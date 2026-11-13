@@ -13,7 +13,7 @@
  * (not this file). Solver: `#lib/solver.js`.
  */
 
-import { writable, derived, get, readable, type Writable } from "svelte/store";
+import { writable, derived, get, readable } from "svelte/store";
 import type {
   CharacterOwned,
   AbyssTeam,
@@ -244,7 +244,7 @@ export function setDisplayPreferences(next: Partial<DisplayPreferences>): void {
 /** Live background visibility for the current route. */
 export const backgroundVisible = writable(true);
 
-export function resolveBackgroundVisible(
+function resolveBackgroundVisible(
   pathname: string,
   prefs: DisplayPreferences,
 ): boolean {
@@ -286,12 +286,8 @@ export const isIconCompact = derived(
   ($preferences) => $preferences.iconStyle === "enka",
 );
 
-export function setIconCompact(compact: boolean) {
-  setDisplayPreferences({ iconStyle: compact ? "enka" : "coop" });
-}
-
 /** OS reduced-motion preference. Stays false during SSR. */
-export const prefersReducedMotion = readable(false, (set) => {
+const prefersReducedMotion = readable(false, (set) => {
   if (typeof window === "undefined" || !window.matchMedia) return;
   const query = window.matchMedia("(prefers-reduced-motion: reduce)");
   set(query.matches);
@@ -310,10 +306,6 @@ export const animationsEnabled = derived(
   ([$preferences, $reduced]) => $preferences.animationsEnabled && !$reduced,
 );
 
-export function areAnimationsEnabled(): boolean {
-  return get(animationsEnabled);
-}
-
 // ── Character store ────────────────────────────────────────────────────────
 // Fed from the roster synced document by the root layout. Read-only elsewhere.
 export const charactersOwned = writable<CharacterOwned[]>([]);
@@ -327,52 +319,9 @@ export const hasSavedRoster = writable<boolean>(false);
 
 // ── Abyss stores ──────────────────────────────────────────────────────────
 export const teamsOwned = writable<AbyssTeam[]>([]);
-export const teamsOwnedTop = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
-  teamsOwned,
-  ($teamsOwned) =>
-    $teamsOwned.filter(
-      (team) =>
-        (team.field_1_rate ?? 0) > 40 && (team.members ?? []).length === 4,
-    ),
-);
-export const teamsOwnedBottom = derived<Writable<AbyssTeam[]>, AbyssTeam[]>(
-  teamsOwned,
-  ($teamsOwned) =>
-    $teamsOwned.filter(
-      (team) =>
-        (team.field_2_rate ?? 0) > 40 && (team.members ?? []).length === 4,
-    ),
-);
 
 // ── Stygian stores ─────────────────────────────────────────────────────────
 export const teamsOwnedStygian = writable<StygianTeam[]>([]);
-export const teamsOwnedStygianTop = derived<
-  Writable<StygianTeam[]>,
-  StygianTeam[]
->(teamsOwnedStygian, ($t) =>
-  $t.filter(
-    (team) =>
-      (team.field_1_rate ?? 0) > 40 && (team.members ?? []).length === 4,
-  ),
-);
-export const teamsOwnedStygianMiddle = derived<
-  Writable<StygianTeam[]>,
-  StygianTeam[]
->(teamsOwnedStygian, ($t) =>
-  $t.filter(
-    (team) =>
-      (team.field_3_rate ?? 0) > 40 && (team.members ?? []).length === 4,
-  ),
-);
-export const teamsOwnedStygianBottom = derived<
-  Writable<StygianTeam[]>,
-  StygianTeam[]
->(teamsOwnedStygian, ($t) =>
-  $t.filter(
-    (team) =>
-      (team.field_2_rate ?? 0) > 40 && (team.members ?? []).length === 4,
-  ),
-);
 
 // ── All-teams stores (warmed from /api/static; not shipped in page __data.json) ─
 export const allTeamsAbyss = writable<AbyssTeam[]>([]);
@@ -741,7 +690,7 @@ export function invalidateTeamsOwned(): void {
  * Fetches both abyss and stygian owned-team lists in a single server round-trip.
  * The server caches results by character list so rapid re-calls are cheap.
  */
-export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
+async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   assertVersionsSeeded();
   const id = ++teamsRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
@@ -833,9 +782,7 @@ export function invalidateNearMissTeams(): void {
  * Fetches near-miss data for the Pulls page.
  * Combines single + pair into one server call.
  */
-export async function writeNearMissTeams(
-  owned: CharacterOwned[],
-): Promise<void> {
+async function writeNearMissTeams(owned: CharacterOwned[]): Promise<void> {
   assertVersionsSeeded();
   const id = ++nearMissRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);

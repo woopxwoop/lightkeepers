@@ -453,7 +453,7 @@ function parseFnDefs(src: string): Map<string, FnDef> {
 }
 
 /** Last `active …;` through EOF — the rotation region of a full gcsim config. */
-export function rotationScriptRegion(src: string): string {
+function rotationScriptRegion(src: string): string {
   const stripped = stripComments(src);
   const matches = [...stripped.matchAll(/\bactive\s+[A-Za-z_][A-Za-z0-9_]*/gi)];
   const last = matches.at(-1);

@@ -58,7 +58,6 @@
     "tailwindcss": "^4.3.3"
   },
   "imports": {
-    "#lib": "./src/lib/index.js",
     "#lib/*": "./src/lib/*"
   }
 }

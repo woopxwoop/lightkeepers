@@ -59,15 +59,6 @@ function materialInCraftChain(
   return craftFromIndex(catalog).has(id);
 }
 
-export const WEEKDAY_ORDER: UpgradeMaterialWeekday[] = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-];
-
 /** Domain rotations share Mon/Thu, Tue/Fri, Wed/Sat (Sunday is every book). */
 export const FARM_WEEK_PAIRS: readonly {
   label: string;
@@ -293,7 +284,7 @@ export function itineraryGoalLabel(
 }
 
 /** Tall gacha splash stem (`UI_Gacha_EquipIcon_*`) from a square equip icon. */
-export function weaponGachaIconName(icon: string): string {
+function weaponGachaIconName(icon: string): string {
   if (!icon.startsWith("UI_EquipIcon_")) return icon;
   return `UI_Gacha_EquipIcon_${icon.slice("UI_EquipIcon_".length)}`;
 }
@@ -306,7 +297,7 @@ function weaponCatalogIcon(
   return catalog?.weapons.find((w) => w.id === goal.weapon_id)?.icon ?? null;
 }
 
-export function itineraryGoalIcon(
+function itineraryGoalIcon(
   goal: CalculatorGoal,
   catalog: UpgradeCostsCatalog | null,
 ): string | null {
@@ -317,7 +308,7 @@ export function itineraryGoalIcon(
 }
 
 /** Square equip icon — used if the gacha splash 404s. */
-export function itineraryGoalFallbackIcon(
+function itineraryGoalFallbackIcon(
   goal: CalculatorGoal,
   catalog: UpgradeCostsCatalog | null,
 ): string | null {
@@ -337,7 +328,7 @@ export type FarmGoalRef = {
 };
 
 /** Same face even when two planner goals share a character or weapon. */
-export function farmGoalFaceKey(g: FarmGoalRef): string {
+function farmGoalFaceKey(g: FarmGoalRef): string {
   if (g.name_id) return `c:${g.name_id}`;
   if (g.weapon_id != null) return `w:${g.weapon_id}`;
   return `g:${g.id}`;

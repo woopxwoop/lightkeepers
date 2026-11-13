@@ -1,5 +1,5 @@
 /** localStorage key for the latest patch-note slug the user has acknowledged. */
-export const PATCH_NOTES_SEEN_KEY = "patchNotesSeenSlug";
+const PATCH_NOTES_SEEN_KEY = "patchNotesSeenSlug";
 
 export function readSeenPatchNoteSlug(): string | null {
   try {

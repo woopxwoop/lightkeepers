@@ -13,28 +13,6 @@ export function weaponTypeLabel(weaponType: string): string {
   );
 }
 
-const ASSOCIATION_LABELS: Record<string, string> = {
-  ASSOC_TYPE_MONDSTADT: "Mondstadt",
-  ASSOC_TYPE_LIYUE: "Liyue",
-  ASSOC_TYPE_INAZUMA: "Inazuma",
-  ASSOC_TYPE_SUMERU: "Sumeru",
-  ASSOC_TYPE_FONTAINE: "Fontaine",
-  ASSOC_TYPE_NATLAN: "Natlan",
-  ASSOC_TYPE_FATUI: "Fatui",
-  ASSOC_TYPE_RANGER: "Ranger",
-  ASSOC_TYPE_MAINACTOR: "Traveler",
-};
-
-/** Region / faction label from Dimbreath `association` enum. */
-export function associationLabel(
-  association: string | null | undefined,
-): string {
-  if (!association) return "";
-  return (
-    ASSOCIATION_LABELS[association] ?? association.replace(/^ASSOC_TYPE_/, "")
-  );
-}
-
 /**
  * `{LINK#S11215}Precision Hydronic Cooler{/LINK}` → inner text, or an
  * in-page `<a>` when `resolveLink` returns an href (e.g. `#kit-S11215`).
@@ -63,7 +41,7 @@ function resolveGameLinks(
  * Web defaults to PC layout (`Press` not `Tap`).
  * Leading `#` is a client marker (not content) — strip when at start.
  */
-export function resolveGamePlaceholders(
+function resolveGamePlaceholders(
   text: string,
   platform: "MOBILE" | "PC" | "PS" = "PC",
 ): string {
@@ -76,15 +54,6 @@ export function resolveGamePlaceholders(
   // Collapse spaces left by dropped layout variants (keep newlines).
   out = out.replace(/[^\S\n]{2,}/g, " ");
   return out;
-}
-
-/** Strip Hoyoverse `<color=#…>…</color>` and `{LINK#…}…{/LINK}` tags; keep inner text. */
-export function stripColorTags(text: string): string {
-  return resolveGameLinks(
-    resolveGamePlaceholders(text)
-      .replace(/<\/?color[^>]*>/gi, "")
-      .replace(/\r\n/g, "\n"),
-  ).trim();
 }
 
 /**
@@ -119,7 +88,6 @@ export function formatGameDescriptionHtml(
 }
 
 /** Characters released within this many days are considered "new". */
-export { NEW_CHARACTER_DAYS, isNewCharacter } from "#lib/is-new-character.js";
 
 const CDN_BASE = "https://api.lightkeepers.moe";
 const GENSIN_UI_BASE = `${CDN_BASE}/genshin/ui`;
@@ -214,7 +182,7 @@ const CRIMSON_WITCH_BASE = "https://www.crimsonwitch.com";
 export const CRIMSON_WITCH_FAVICON_URL = `${CRIMSON_WITCH_BASE}/icon.png`;
 
 /** Elements gcsim models as distinct Traveler characters. */
-export const TRAVELER_ELEMENTS = [
+const TRAVELER_ELEMENTS = [
   "Anemo",
   "Geo",
   "Electro",
@@ -480,53 +448,6 @@ export function statIconUrl(statKey: string): string | null {
   const stem = STAT_ICON_STEM[statKey];
   if (!stem) return null;
   return genshinUiUrl(stem);
-}
-
-/** Element display name → Lunaris icon stem. */
-const ELEMENT_ICON_STEM: Record<string, string> = {
-  Pyro: "pyro",
-  Hydro: "hydro",
-  Anemo: "anemo",
-  Electro: "electro",
-  Dendro: "dendro",
-  Cryo: "cryo",
-  Geo: "geo",
-};
-
-/** CDN URL for an element icon (e.g. `"Anemo"` → `anemo.webp`). */
-export function elementIconUrl(
-  element: string | null | undefined,
-): string | null {
-  if (!element) return null;
-  const stem =
-    ELEMENT_ICON_STEM[element] ??
-    ELEMENT_ICON_STEM[
-      element.charAt(0).toUpperCase() + element.slice(1).toLowerCase()
-    ];
-  return stem ? genshinUiUrl(stem) : null;
-}
-
-/** Excel / label weapon type → Lunaris icon stem. */
-const WEAPON_TYPE_ICON_STEM: Record<string, string> = {
-  WEAPON_SWORD_ONE_HAND: "sword",
-  WEAPON_CLAYMORE: "claymore",
-  WEAPON_POLE: "polearm",
-  WEAPON_CATALYST: "catalyst",
-  WEAPON_BOW: "bow",
-  Sword: "sword",
-  Claymore: "claymore",
-  Polearm: "polearm",
-  Catalyst: "catalyst",
-  Bow: "bow",
-};
-
-/** CDN URL for a weapon-type icon. */
-export function weaponTypeIconUrl(
-  weaponType: string | null | undefined,
-): string | null {
-  if (!weaponType) return null;
-  const stem = WEAPON_TYPE_ICON_STEM[weaponType];
-  return stem ? genshinUiUrl(stem) : null;
 }
 
 /** Artifact slot icon stems (Lunaris `icons/Icon_*`, mirrored to genshin/ui). */

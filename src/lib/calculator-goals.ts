@@ -25,7 +25,7 @@ import type {
   WeaponUpgradeConfig,
 } from "#lib/types/upgrade-costs.js";
 
-export const CALCULATOR_GOALS_VERSION = 1 as const;
+const CALCULATOR_GOALS_VERSION = 1 as const;
 export const MAX_CALCULATOR_GOALS = 64;
 export const MAX_GOAL_ID_LENGTH = 64;
 
@@ -33,7 +33,7 @@ export function emptyGoalsState(): CalculatorGoalsState {
   return { version: CALCULATOR_GOALS_VERSION, goals: [], selectedId: null };
 }
 
-export function newGoalId(): string {
+function newGoalId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
@@ -247,12 +247,6 @@ export function parseGoalsState(raw: unknown): CalculatorGoalsState {
   };
 }
 
-export function cloneGoalsState(
-  state: CalculatorGoalsState,
-): CalculatorGoalsState {
-  return parseGoalsState(JSON.parse(JSON.stringify(state)) as unknown);
-}
-
 /** Deep-clone a single goal (for immutable edits). */
 export function cloneGoal(goal: CalculatorGoal): CalculatorGoal {
   if (goal.kind === "character") {
@@ -287,7 +281,7 @@ export function starredGoals(goals: CalculatorGoal[]): CalculatorGoal[] {
   return goals.filter((g) => g.starred);
 }
 
-export function addMaterials(
+function addMaterials(
   into: Record<string, number>,
   from: Record<string, number>,
 ): void {

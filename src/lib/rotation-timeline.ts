@@ -11,7 +11,7 @@ import type {
   RotationSampleEvent,
 } from "#lib/types/investment.js";
 
-export const ROTATION_ACTION_ABBREV = {
+const ROTATION_ACTION_ABBREV = {
   skill: "E",
   hold_skill: "hE",
   burst: "Q",
@@ -90,7 +90,7 @@ export function formatCollapsedActionLabel(
  * Atomic KQM tokens for one collapsed event (before cancel-jamming /
  * repeat compression). Swaps are omitted — emitted as `>` between blocks.
  */
-export function formatKqmActionTokens(event: CollapsedRotationEvent): string[] {
+function formatKqmActionTokens(event: CollapsedRotationEvent): string[] {
   const n = Math.max(1, event.count);
   switch (event.action) {
     case "attack":
@@ -282,7 +282,7 @@ export type SwapCycleMatch = {
  * Count how many consecutive period-length blocks match `targets[s..s+p)`
  * starting at `s`.
  */
-export function countSwapPeriodsAt(
+function countSwapPeriodsAt(
   swapTargets: readonly string[],
   startIndex: number,
   period: number,

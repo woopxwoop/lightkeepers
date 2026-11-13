@@ -1,5 +1,5 @@
 /** Characters released within this many days are considered "new". */
-export const NEW_CHARACTER_DAYS = 20;
+const NEW_CHARACTER_DAYS = 20;
 
 /**
  * Whether a character was released recently enough to be flagged as "new".

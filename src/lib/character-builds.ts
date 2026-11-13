@@ -37,14 +37,14 @@ export const MAIN_STAT_SLOTS = [
   { key: "circlet" as const, label: "Circlet" },
 ];
 
-export const TALENT_SLOT_LABELS: Record<TalentSlot, string> = {
+const TALENT_SLOT_LABELS: Record<TalentSlot, string> = {
   auto: "Normal",
   skill: "Skill",
   burst: "Burst",
 };
 
 /** Map investment talent slots → kit skill types for icons. */
-export const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
+const TALENT_SLOT_TO_KIT: Record<TalentSlot, string> = {
   auto: "normal",
   skill: "skill",
   burst: "burst",
@@ -650,19 +650,6 @@ export function formatReactionFingerprint(
 }
 
 export type LiquidRollChip = { key: string; rolls: number };
-
-/** Non-zero liquid rolls, highest first (for build-example chips). */
-export function liquidRollChips(
-  rolls: Record<string, number> | null | undefined,
-  limit = 6,
-): LiquidRollChip[] {
-  if (!rolls) return [];
-  return Object.entries(rolls)
-    .filter(([, n]) => typeof n === "number" && n > 0)
-    .map(([key, n]) => ({ key, rolls: n }))
-    .sort((a, b) => b.rolls - a.rolls || a.key.localeCompare(b.key))
-    .slice(0, limit);
-}
 
 export type ExampleRollTier = "mid" | "high";
 

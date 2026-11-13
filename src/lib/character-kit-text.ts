@@ -8,12 +8,12 @@
  */
 
 /** Trailing Hexerei / Polestar Field section (Hoyoverse `\\n` or real newlines). */
-export const ENHANCE_TAIL = new RegExp(
+const ENHANCE_TAIL = new RegExp(
   "((?:\\\\r\\\\n|\\\\n|\\\\r|\\n|\\r)+((?:<color=[^>]+>)?(?:Hexerei|Radiance:\\s*Stellar-Conduct|Polestar Field)\\b[\\s\\S]*))$",
   "i",
 );
 
-export const ENHANCE_SEP = /^(?:\r\n|\r|\n|\\r\\n|\\r|\\n)+/;
+const ENHANCE_SEP = /^(?:\r\n|\r|\n|\\r\\n|\\r|\\n)+/;
 
 export type EnhanceExtra = {
   mode: "extra" | "replace";

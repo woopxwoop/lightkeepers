@@ -11,26 +11,26 @@
  */
 
 /** Documented averaging window for the usage view (matches DB). */
-export const TIER_LIST_WINDOW_CYCLES = 5;
+const TIER_LIST_WINDOW_CYCLES = 5;
 
 /** Hard floor / ceiling on how many characters we show (limited 5★). */
-export const CREAM_MIN = 8;
-export const CREAM_MAX = 16;
+const CREAM_MIN = 8;
+const CREAM_MAX = 16;
 /** Inclusive search window for the gap cut (1-based ranks). */
-export const CREAM_SEARCH_LO = CREAM_MIN;
-export const CREAM_SEARCH_HI = CREAM_MAX;
+const CREAM_SEARCH_LO = CREAM_MIN;
+const CREAM_SEARCH_HI = CREAM_MAX;
 /** Non-limited board can run longer — more 4★ / standard 5★ to surface. */
-export const CREAM_NONLIMITED_MIN = 24;
-export const CREAM_NONLIMITED_MAX = 32;
-export const CREAM_NONLIMITED_SEARCH_LO = CREAM_NONLIMITED_MIN;
-export const CREAM_NONLIMITED_SEARCH_HI = CREAM_NONLIMITED_MAX;
+const CREAM_NONLIMITED_MIN = 24;
+const CREAM_NONLIMITED_MAX = 32;
+const CREAM_NONLIMITED_SEARCH_LO = CREAM_NONLIMITED_MIN;
+const CREAM_NONLIMITED_SEARCH_HI = CREAM_NONLIMITED_MAX;
 
 /**
  * Permanently available 5★ on the standard wish.
  * Keep in sync when Mihoyo adds a new standard-pool 5★.
  * (Jean = Qin, Yumemizuki Mizuki = Mizuki in our name_ids.)
  */
-export const STANDARD_BANNER_5STAR_IDS = new Set([
+const STANDARD_BANNER_5STAR_IDS = new Set([
   "Qin",
   "Diluc",
   "Qiqi",
@@ -131,7 +131,7 @@ export function isLimitedFiveStar(c: CharacterMeta): boolean {
 }
 
 /** 4★ + standard / free 5★ (build priorities, not wish targets). */
-export function isNonLimited(c: CharacterMeta): boolean {
+function isNonLimited(c: CharacterMeta): boolean {
   if (c.rarity === 4) return true;
   if (c.rarity !== 5) return false;
   return !isLimitedFiveStar(c);
@@ -182,7 +182,7 @@ type ScoredChar = {
 /**
  * Rank one board and keep only the cream cut.
  */
-export function computeCreamBoard(
+function computeCreamBoard(
   usageByGameId: Map<number, CharacterUsageRow>,
   characters: CharacterMeta[],
   opts?: {

@@ -1,0 +1,29 @@
+// Dead-code audit: `pnpm dlx knip@5`
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    // Kit 3 config lives in vite.config.ts, so knip's SvelteKit plugin doesn't
+    // pick up route/hook entry points on its own.
+    "src/routes/**/+*.{ts,js,svelte}",
+    "src/hooks.{client,server}.ts",
+    "src/instrumentation.server.ts",
+    "src/env.ts",
+    "*.mjs",
+    "src/**/*.test.ts",
+    "tests/**/*.ts",
+    // Shared contract with the (gitignored) scripts/ pipeline, which imports
+    // these types directly — knip can't see that repo, so treat them as public.
+    "src/lib/types/**/*.ts",
+  ],
+  "project": ["src/**/*.{ts,js,svelte}", "*.mjs", "tests/**/*.ts"],
+  // SvelteKit virtual modules ($app/env, $app/state, …) have no file on disk.
+  "ignoreUnresolved": ["^\\$app/"],
+  "ignoreDependencies": [
+    // Imported from CSS (`@import "tailwindcss"`).
+    "tailwindcss",
+    // CLI used by update-types.mjs via its dist path.
+    "supabase",
+    // Used by the local scripts/ image sync.
+    "sharp",
+  ],
+}

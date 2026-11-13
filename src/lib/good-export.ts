@@ -15,8 +15,8 @@ import type {
   IWeapon,
 } from "#lib/types/good/good.js";
 
-export const GOOD_EXPORT_SOURCE = "Lightkeepers";
-export const GOOD_EXPORT_VERSION = 3;
+const GOOD_EXPORT_SOURCE = "Lightkeepers";
+const GOOD_EXPORT_VERSION = 3;
 
 function goodExportCharacterKey(row: CharacterOwned): string | null {
   const kit = row.name_id.match(/^Player(?:Boy|Girl)-([A-Za-z]+)$/);

@@ -23,10 +23,6 @@ function pairKey(teamKey: string, enemyId: number): string {
 const cache = new Map<string, StygianClearVideo[]>();
 const inflight = new Map<string, Promise<void>>();
 
-export function clearVideosCacheKey(teamKey: string, enemyId: number): string {
-  return pairKey(teamKey, enemyId);
-}
-
 /** YouTube video id from a watch / youtu.be / Shorts URL, or null. */
 function youtubeVideoId(videoUrl: string): string | null {
   try {

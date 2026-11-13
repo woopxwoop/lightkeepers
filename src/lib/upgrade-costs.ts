@@ -20,7 +20,7 @@ export const MAX_ASCENSION = 6;
 export const MAX_TALENT = 10;
 
 /** Standard character/weapon level caps by promote (ascension) 0–6. */
-export const LEVEL_CAP_BY_ASCENSION = [20, 40, 50, 60, 70, 80, 90] as const;
+const LEVEL_CAP_BY_ASCENSION = [20, 40, 50, 60, 70, 80, 90] as const;
 
 function clamp(n: number, min: number, max: number): number {
   if (!Number.isFinite(n)) return min;
@@ -239,7 +239,7 @@ export function gateWeaponConfig(
 }
 
 /** Raise each target axis so it is not behind start. */
-export function characterTargetAtLeastStart(
+function characterTargetAtLeastStart(
   start: CharacterUpgradeConfig,
   target: CharacterUpgradeConfig,
 ): CharacterUpgradeConfig {
@@ -255,7 +255,7 @@ export function characterTargetAtLeastStart(
 }
 
 /** Raise each target axis so it is not behind start. */
-export function weaponTargetAtLeastStart(
+function weaponTargetAtLeastStart(
   start: WeaponUpgradeConfig,
   target: WeaponUpgradeConfig,
 ): WeaponUpgradeConfig {
@@ -481,7 +481,7 @@ export function expItemsNeeded(
 }
 
 /** 3 lower-rank talent books / weapon mats / gems / elite / common craft into 1 of the next rank. */
-export const CRAFT_RANK_RATIO = 3;
+const CRAFT_RANK_RATIO = 3;
 
 const craftChainsCache = new WeakMap<UpgradeCostsCatalog, number[][]>();
 

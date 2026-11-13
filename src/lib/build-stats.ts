@@ -212,14 +212,14 @@ export const SUBSTAT_ROLL_VALUE: Record<string, number> = {
 };
 
 /** Artifact substat keys only (excludes elemental DMG / heal / physical mains). */
-export const ARTIFACT_SUBSTAT_KEYS = new Set(Object.keys(SUBSTAT_ROLL_VALUE));
+const ARTIFACT_SUBSTAT_KEYS = new Set(Object.keys(SUBSTAT_ROLL_VALUE));
 
 /**
  * Max rolls of one substat on one piece for goal display. OptimFull ignores
  * piece mains and can over-allocate — UI clamps to 3 × eligible pieces
  * (e.g. EM/EM/EM → 6 EM on flower+plume; ATK/ATK/CR → 12 CR max).
  */
-export const MAX_SUBSTAT_ROLLS_PER_PIECE = 3;
+const MAX_SUBSTAT_ROLLS_PER_PIECE = 3;
 
 export function isArtifactSubstatKey(key: string): boolean {
   return ARTIFACT_SUBSTAT_KEYS.has(key);
@@ -235,7 +235,7 @@ export type MainStatSlots = {
  * Pieces that can hold ``stat`` as a substat given flower/plume mains and the
  * three selectable mains (EM/EM/EM → only flower + plume for EM).
  */
-export function eligibleSubstatPieceCount(
+function eligibleSubstatPieceCount(
   stat: string,
   mainStats: MainStatSlots | null | undefined,
 ): number {
@@ -249,7 +249,7 @@ export function eligibleSubstatPieceCount(
   return n;
 }
 
-export function maxSubstatRolls(
+function maxSubstatRolls(
   stat: string,
   mainStats: MainStatSlots | null | undefined,
 ): number {

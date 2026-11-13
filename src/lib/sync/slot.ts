@@ -69,7 +69,7 @@ export type Ask<T> =
       base?: T | null;
     };
 
-export function unseen<T>(): ServerCopy<T> {
+function unseen<T>(): ServerCopy<T> {
   return { state: "unseen" };
 }
 
@@ -157,10 +157,7 @@ export function decodeSlot<T>(
   };
 }
 
-function decodeAsk<T>(
-  raw: unknown,
-  parse: (raw: unknown) => T,
-): Ask<T> | null {
+function decodeAsk<T>(raw: unknown, parse: (raw: unknown) => T): Ask<T> | null {
   const ask = asRecord(raw);
   if (!ask) return null;
   if (ask.source === "server" && typeof ask.rev === "string") {

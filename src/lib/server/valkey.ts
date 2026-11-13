@@ -20,7 +20,7 @@ function redisUrl(): string | undefined {
 }
 
 /** Lazy-connect once per process. Returns null if URL missing or connect fails. */
-export async function getValkey(): Promise<RedisClientType | null> {
+async function getValkey(): Promise<RedisClientType | null> {
   if (client !== undefined) return client;
   if (connecting) return connecting;
 
@@ -60,11 +60,6 @@ export async function getValkey(): Promise<RedisClientType | null> {
   });
 
   return connecting;
-}
-
-export async function valkeyGetJson<T>(key: string): Promise<T | undefined> {
-  const hit = await valkeyGetJsonWithTtl<T>(key);
-  return hit?.value;
 }
 
 /** GET + PTTL so L1 can inherit the Redis entry's remaining lifetime. */

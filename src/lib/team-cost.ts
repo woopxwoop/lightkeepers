@@ -19,7 +19,7 @@ import { isLimitedFiveStar, type CharacterMeta } from "#lib/tierlist.js";
 export const STYGIAN_C0R0_CLEAR_MAX_COST = 4;
 
 /** Standard-weapon scrape slack (stygian.moe labels these +0.5). */
-export const STYGIAN_BASELINE_COST_SLACK = 0.5;
+const STYGIAN_BASELINE_COST_SLACK = 0.5;
 
 /** Character-only C0R0 floor: one per limited event-banner 5★. */
 export function floorTeamCost(
@@ -49,7 +49,7 @@ export function baselineTeamCost(
 }
 
 /** Inclusive scrape-cost limit for a user / floor cap (adds +0.5 slack). */
-export function scrapeCostLimitForCap(maxCost: number): number {
+function scrapeCostLimitForCap(maxCost: number): number {
   if (!Number.isFinite(maxCost) || maxCost < 0)
     return STYGIAN_BASELINE_COST_SLACK;
   return maxCost + STYGIAN_BASELINE_COST_SLACK;
@@ -131,17 +131,6 @@ export function clearTimeAtCostCeiling(
   );
 }
 
-/** Scrape cost of the clear that set {@link clearTimeAtCostCeiling}. */
-export function clearCostAtCostCeiling(
-  row: StygianCheapClearFrontier,
-  ceiling: number,
-): number | null {
-  if (!Number.isFinite(ceiling) || ceiling < 0) return null;
-  return (
-    bestClearUnderLimit(row.frontier, scrapeCostLimitForCap(ceiling))?.c ?? null
-  );
-}
-
 /** True when scrape label ≤ baseline team cost (C0R0 + 0.5). */
 export function labeledCostWithinFloor(
   labeledCost: number,
@@ -156,7 +145,7 @@ export function labeledCostWithinFloor(
  * True when this team×enemy row has a Fearless clear within baseline
  * (scrape cost ≤ C0R0 + 0.5).
  */
-export function hasBaselineClear(
+function hasBaselineClear(
   row: StygianCheapClearFrontier & {
     members: string[] | null;
   },

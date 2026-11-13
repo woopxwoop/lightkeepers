@@ -16,7 +16,7 @@
  */
 import { travelerBaseNameId } from "#lib/traveler-kits.js";
 
-export const STALE_BUILD_SUMMARY_NAME_IDS: ReadonlySet<string> = new Set([
+const STALE_BUILD_SUMMARY_NAME_IDS: ReadonlySet<string> = new Set([
   "Yae",
   "Beidou",
 ]);

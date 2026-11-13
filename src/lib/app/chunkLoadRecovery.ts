@@ -3,7 +3,7 @@ const CHUNK_ERROR_PATTERN =
 
 let reloading = false;
 
-export function reloadOnStaleDeploy(): void {
+function reloadOnStaleDeploy(): void {
   if (reloading || typeof window === "undefined") return;
   reloading = true;
   window.location.reload();
@@ -36,7 +36,12 @@ export function installChunkLoadRecovery(): void {
   });
 }
 
-/** Wrap manual import() calls so stale chunk 404s trigger a full reload. */
+/**
+ * Wrap manual import() calls so stale chunk 404s trigger a full reload.
+ * Unused today, but candidates exist: callers that catch their own import()
+ * failures (e.g. equipment-data) never reach the global unhandledrejection hook.
+ * @public
+ */
 export async function safeDynamicImport<T>(
   importFn: () => Promise<T>,
 ): Promise<T> {

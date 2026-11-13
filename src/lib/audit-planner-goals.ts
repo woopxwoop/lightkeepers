@@ -75,11 +75,11 @@ export type AppendAuditSuggestionsResult = {
   skipped: number;
 };
 
-export function hasCharacterProgressAdvice(grade: AccountBuildGrade): boolean {
+function hasCharacterProgressAdvice(grade: AccountBuildGrade): boolean {
   return grade.adviceSteps.some((s) => CHAR_PROGRESS_KINDS.has(s.kind));
 }
 
-export function hasWeaponProgressAdvice(grade: AccountBuildGrade): boolean {
+function hasWeaponProgressAdvice(grade: AccountBuildGrade): boolean {
   return grade.adviceSteps.some((s) => WEAPON_PROGRESS_KINDS.has(s.kind));
 }
 
@@ -101,7 +101,7 @@ export function hasWeaponGoal(
   );
 }
 
-export function catalogWeaponIdForKey(
+function catalogWeaponIdForKey(
   catalog: UpgradeCostsCatalog,
   weaponKey: string,
 ): number | null {

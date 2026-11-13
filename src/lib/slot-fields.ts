@@ -2,7 +2,7 @@
  * Shared Abyss/Stygian slot → field_*_rate column mapping.
  * Field 1 = top, field 2 = bottom, field 3 = middle (Stygian).
  */
-export const SLOT_FIELD_RATE_KEYS = {
+const SLOT_FIELD_RATE_KEYS = {
   top: "field_1_rate",
   bottom: "field_2_rate",
   middle: "field_3_rate",
@@ -17,7 +17,7 @@ type FieldRateTeam = {
 };
 
 /** Resolve which field_*_rate column a board slot uses. */
-export function slotFieldRateKey(
+function slotFieldRateKey(
   slot: string,
 ): (typeof SLOT_FIELD_RATE_KEYS)[SlotWithFieldRate] {
   return (

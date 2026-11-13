@@ -10,7 +10,7 @@ export type Doc = { items: string[]; pick: string | null };
 
 export const doc = (...items: string[]): Doc => ({ items, pick: null });
 
-export function strings(raw: unknown): string[] {
+function strings(raw: unknown): string[] {
   return Array.isArray(raw)
     ? raw.filter((x): x is string => typeof x === "string")
     : [];

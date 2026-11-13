@@ -59,6 +59,7 @@ export const CONSTELLATION_UPGRADE: UpgradeImpactLadder = [
   { minPct: 0, tier: "negligible", label: "Negligible impact" },
 ];
 
+/** Same ladder today; separate name so signature tuning can diverge. @alias */
 export const SIGNATURE_UPGRADE: UpgradeImpactLadder = CONSTELLATION_UPGRADE;
 
 export const LEVEL_UPGRADE: UpgradeImpactLadder = [

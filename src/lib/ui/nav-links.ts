@@ -3,15 +3,15 @@ import { resolve } from "$app/paths";
 export const homePath = resolve("/");
 export const abyssPath = resolve("tools/abyss");
 export const stygianPath = resolve("tools/stygian");
-export const pullsPath = resolve("tools/pulls");
-export const plannerPath = resolve("tools/planner");
+const pullsPath = resolve("tools/pulls");
+const plannerPath = resolve("tools/planner");
 export const auditPath = resolve("tools/audit");
-export const teamsPath = resolve("teams");
-export const charactersPath = resolve("characters");
+const teamsPath = resolve("teams");
+const charactersPath = resolve("characters");
 export const settingsPath = resolve("settings");
 export const patchNotesPath = resolve("patch-notes");
 const toolsRoot = resolve("tools/abyss");
-export const toolsPrefixPath = toolsRoot.slice(0, -"/abyss".length);
+const toolsPrefixPath = toolsRoot.slice(0, -"/abyss".length);
 
 export const toolsLinks = [
   {

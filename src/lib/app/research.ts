@@ -298,7 +298,7 @@ function rethrowResearchFetchError(err: unknown): never {
   throw err instanceof Error ? err : new Error("Research request failed");
 }
 
-export async function postResearchChat(
+async function postResearchChat(
   body: ResearchRequest,
 ): Promise<ResearchResponse> {
   let res: Response;

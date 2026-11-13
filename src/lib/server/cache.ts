@@ -207,7 +207,7 @@ type RateWindow = {
  * @param maxRequests — allowed requests per window
  * @param windowMs    — window duration in milliseconds
  */
-export class RateLimiter {
+class RateLimiter {
   private windows = new Map<string, RateWindow>();
 
   constructor(
@@ -278,7 +278,7 @@ const API_RATE_WINDOW_MS = 60_000;
  * In-process fallback when Valkey is unset / unreachable.
  * (Still per-process — used only as fallback.)
  */
-export const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
+const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
 
 /**
  * Shared API rate limit (60/min/IP) via Valkey when configured; otherwise
