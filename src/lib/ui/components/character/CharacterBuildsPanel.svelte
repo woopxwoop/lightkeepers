@@ -22,7 +22,7 @@
     translateStatKey,
     type CrimsonWitchLink,
   } from "#lib/utils.js";
-  import { weaponByKey, ensureEquipmentData } from "#lib/equipment-data.js";
+  import { weaponStars } from "#lib/equipment-data.js";
   import { useEquipmentData } from "#lib/equipment-data.svelte.js";
   import {
     MAIN_STAT_SLOTS,
@@ -71,7 +71,6 @@
   const equipment = useEquipmentData();
 
   onMount(() => {
-    void ensureEquipmentData().catch(() => {});
     void loadRosterArtifacts().catch(() => {});
   });
 
@@ -84,7 +83,7 @@
     void equipment.version;
     return rankWeaponsByRarityAndTeams(
       builds?.weapons,
-      (key) => weaponByKey.get(key)?.stars ?? 0,
+      (key) => weaponStars(key) ?? 0,
       builds?.vertical_importance?.sig_weapons?.map((s) => s.key),
     );
   });

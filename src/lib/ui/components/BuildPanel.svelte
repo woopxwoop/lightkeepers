@@ -8,15 +8,23 @@
     type ResearchOwnedGearKeys,
   } from "#lib/app/research.js";
   import {
-    artifactSetByKey,
-    equipmentVersion,
-    weaponByKey,
+    artifactSetName,
+    resolveArtifactSetKey,
+    resolveWeaponKey,
+    weaponName,
   } from "#lib/equipment-data.js";
   import { useEquipmentData } from "#lib/equipment-data.svelte.js";
   import {
     RESEARCH_ENTITY_SLOT_ATTR,
     citationShortLabel,
+    citeDisplayNumbers,
+    citeSupsHtml,
+    citeTokens,
+    indexResearchEntities,
+    isSafeCiteId,
     orderCitationsForDisplay,
+    rankItemsBlob,
+    resolveGearEntity,
     preloadEntityIconData,
     renderResearchAnswer,
     renderResearchInline,
@@ -66,7 +74,7 @@
     characterLabel?: string | null;
   } = $props();
 
-  useEquipmentData();
+  const equipment = useEquipmentData();
 
   const citeInstanceId = $props.id();
   const citeAnchorPrefix = `bp-${citeInstanceId}-`;
@@ -77,59 +85,34 @@
     void preloadEntityIconData();
   });
 
-  function isSafeCiteId(id: unknown): id is number {
-    return typeof id === "number" && Number.isSafeInteger(id) && id >= 0;
-  }
-
-  function ranksBlob(list: ResearchRankItem[]): string[] {
-    const parts: string[] = [];
-    for (const r of list) {
-      if (r.note) parts.push(r.note);
-      for (const id of r.citation_ids ?? []) {
-        if (isSafeCiteId(id)) parts.push(`[[cite:${id}]]`);
-      }
-    }
-    return parts;
-  }
-
   function optionsBlob(list: ResearchArtifactOption[]): string[] {
-    const parts: string[] = [];
-    for (const o of list) {
-      if (o.note) parts.push(o.note);
-      for (const id of o.citation_ids ?? []) {
-        if (isSafeCiteId(id)) parts.push(`[[cite:${id}]]`);
-      }
-    }
-    return parts;
+    return list.flatMap((o) => [
+      ...(o.note ? [o.note] : []),
+      ...citeTokens(o.citation_ids),
+    ]);
   }
 
   function statsBlob(s: ResearchStatPriority): string[] {
-    const parts = [...s.sands, ...s.goblet, ...s.circlet, ...s.substats];
-    if (s.notes) parts.push(s.notes);
-    for (const id of s.citation_ids ?? []) {
-      if (isSafeCiteId(id)) parts.push(`[[cite:${id}]]`);
-    }
-    return parts;
+    return [
+      ...s.sands,
+      ...s.goblet,
+      ...s.circlet,
+      ...s.substats,
+      ...(s.notes ? [s.notes] : []),
+      ...citeTokens(s.citation_ids),
+    ];
   }
 
   let footnotes = $derived(
     orderCitationsForDisplay(citations, markdown, [
-      ...ranksBlob(weapon_ranks),
-      ...ranksBlob(artifact_ranks),
+      ...rankItemsBlob(weapon_ranks),
+      ...rankItemsBlob(artifact_ranks),
       ...optionsBlob(artifact_options),
       ...(stat_priority ? statsBlob(stat_priority) : []),
     ]).filter((cite) => isSafeCiteId(cite.id)),
   );
 
-  let citeNum = $derived.by(() => {
-    const map = new Map<number, number>();
-    let n = 0;
-    for (const cite of footnotes) {
-      n += 1;
-      map.set(cite.id, n);
-    }
-    return map;
-  });
+  let citeNum = $derived(citeDisplayNumbers(footnotes));
 
   let renderOpts = $derived({
     citeAnchorPrefix,
@@ -137,15 +120,11 @@
   });
 
   let ledeHtml = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     return renderResearchAnswer(markdown, entities, citations, renderOpts);
   });
 
-  let entityByKey = $derived.by(() => {
-    const map = new Map<string, ResearchEntity>();
-    for (const e of entities) map.set(e.key, e);
-    return map;
-  });
+  let entityIndex = $derived(indexResearchEntities(entities));
 
   let focusEntity = $derived.by(() => {
     if (!focus_name_id) return null;
@@ -163,100 +142,12 @@
     characterLabel ?? focusEntity?.label ?? focus_name_id ?? "Character",
   );
 
-  let entityByWeapon = $derived.by(() => {
-    const map = new Map<string, ResearchEntity>();
-    for (const e of entities) {
-      if (e.type === "weapon") {
-        if (e.weapon_key) map.set(e.weapon_key.toLowerCase(), e);
-        map.set(e.label.toLowerCase(), e);
-      }
-    }
-    return map;
-  });
-
-  let entityBySet = $derived.by(() => {
-    const map = new Map<string, ResearchEntity>();
-    for (const e of entities) {
-      if (e.type === "artifact_set") {
-        if (e.set_key) map.set(e.set_key.toLowerCase(), e);
-        map.set(e.label.toLowerCase(), e);
-      }
-    }
-    return map;
-  });
-
-  function resolveGearEntity(
-    raw: string,
-    kind: "weapon" | "set",
-  ): ResearchEntity | null {
-    const map = kind === "weapon" ? entityByWeapon : entityBySet;
-    const stripped = raw
-      .replace(/\s*[\(\[]?\s*r\s*[1-5]\s*[\)\]]?\s*$/i, "")
-      .trim();
-    for (const candidate of [raw, stripped]) {
-      if (!candidate) continue;
-      const key = candidate.toLowerCase();
-      const compact = candidate.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
-      const ent =
-        map.get(key) ||
-        map.get(compact) ||
-        [...map.values()].find(
-          (e) =>
-            e.label.toLowerCase() === key ||
-            (e.weapon_key ?? e.set_key ?? "").toLowerCase() === compact ||
-            (e.weapon_key ?? e.set_key ?? "")
-              .replace(/[^A-Za-z0-9]/g, "")
-              .toLowerCase() === compact,
-        );
-      if (ent) return ent;
-    }
-    return null;
-  }
-
   function citeSups(ids: number[] | undefined): string {
-    return (ids ?? [])
-      .filter(isSafeCiteId)
-      .map((id) => {
-        const n = citeNum.get(id);
-        if (!n) return "";
-        return `<sup class="research-cite"><a href="#${citeAnchorPrefix}research-cite-${id}" title="Source ${n}">${n}</a></sup>`;
-      })
-      .join("");
-  }
-
-  function resolveWeaponKey(
-    raw: string,
-    entity: ResearchEntity | null,
-  ): string {
-    if (entity?.weapon_key) return entity.weapon_key;
-    if (weaponByKey.has(raw)) return raw;
-    const compact = raw.replace(/[^A-Za-z0-9]/g, "");
-    for (const key of weaponByKey.keys()) {
-      if (key.toLowerCase() === raw.toLowerCase()) return key;
-      if (
-        key.replace(/[^A-Za-z0-9]/g, "").toLowerCase() === compact.toLowerCase()
-      )
-        return key;
-    }
-    return raw;
-  }
-
-  function resolveSetKey(raw: string, entity: ResearchEntity | null): string {
-    if (entity?.set_key) return entity.set_key;
-    if (artifactSetByKey.has(raw)) return raw;
-    const compact = raw.replace(/[^A-Za-z0-9]/g, "");
-    for (const key of artifactSetByKey.keys()) {
-      if (key.toLowerCase() === raw.toLowerCase()) return key;
-      if (
-        key.replace(/[^A-Za-z0-9]/g, "").toLowerCase() === compact.toLowerCase()
-      )
-        return key;
-    }
-    return raw;
+    return citeSupsHtml(ids, citeNum, citeAnchorPrefix);
   }
 
   let joined = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     const emptyOwned: ResearchOwnedGearKeys = {
       weapons: new Set(),
       artifactSets: new Set(),
@@ -285,14 +176,15 @@
     list: ReturnType<typeof joinBuildInventory>["weapons"],
   ): GearRow[] {
     return list.map((row, idx) => {
-      const entity = resolveGearEntity(row.key, "weapon");
-      const gearKey = resolveWeaponKey(row.key, entity);
+      const entity = resolveGearEntity(entityIndex, "weapon", [row.key]);
+      const gearKey =
+        entity?.weapon_key ?? resolveWeaponKey(row.key) ?? row.key;
       return {
         key: `weapon-${idx}-${row.rank}-${row.key}`,
         rank: row.rank,
         entity,
         gearKey,
-        label: entity?.label ?? weaponByKey.get(gearKey)?.name ?? row.key,
+        label: entity?.label ?? weaponName(gearKey) ?? row.key,
         noteHtml: row.note
           ? renderResearchInline(row.note, entities, citations, renderOpts)
           : null,
@@ -310,15 +202,16 @@
     prefix: string,
   ): GearRow[] {
     return list.map((row, idx) => {
-      const entity = resolveGearEntity(row.key, "set");
-      const gearKey = resolveSetKey(row.key, entity);
+      const entity = resolveGearEntity(entityIndex, "set", [row.key]);
+      const gearKey =
+        entity?.set_key ?? resolveArtifactSetKey(row.key) ?? row.key;
       const rank = "rank" in row ? row.rank : undefined;
       return {
         key: `${prefix}-${idx}-${rank ?? "opt"}-${row.key}`,
         rank,
         entity,
         gearKey,
-        label: entity?.label ?? artifactSetByKey.get(gearKey)?.name ?? row.key,
+        label: entity?.label ?? artifactSetName(gearKey) ?? row.key,
         noteHtml: row.note
           ? renderResearchInline(row.note, entities, citations, renderOpts)
           : null,
@@ -330,22 +223,22 @@
   }
 
   let weaponRows = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     return mapWeaponRows(joined.weapons);
   });
 
   let artifactRows = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     return mapSetRows(joined.artifacts, "artifact");
   });
 
   let optionRows = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     return mapSetRows(joined.options, "option");
   });
 
   let statsView = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     if (!stat_priority) return null;
     const s = stat_priority;
     const emptyMains =
@@ -374,8 +267,8 @@
     void artifactRows;
     void optionRows;
     void statsView;
-    void entityByKey;
-    void $equipmentVersion;
+    void entityIndex;
+    void equipment.version;
 
     const root = answerRoot;
     if (!root) return;
@@ -392,7 +285,7 @@
         if (!(el instanceof HTMLElement)) continue;
         const key = el.getAttribute(RESEARCH_ENTITY_SLOT_ATTR);
         if (!key) continue;
-        const entity = entityByKey.get(key);
+        const entity = entityIndex.byKey.get(key);
         if (!entity) continue;
         const instance = mount(ResearchEntityMention, {
           target: el,

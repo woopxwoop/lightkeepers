@@ -13,8 +13,12 @@
  * Both groups bump the same `equipmentVersion`.
  */
 import { writable } from "svelte/store";
-import { weaponIconUrl } from "#lib/asset-urls.js";
-import { buildGoodKeyMap } from "#lib/utils.js";
+import {
+  artifactIconUrl,
+  artifactPieceIconUrl,
+  weaponIconUrl,
+} from "#lib/asset-urls.js";
+import { buildGoodKeyMap, foldGoodKey } from "#lib/utils.js";
 
 export interface WeaponData {
   id: number;
@@ -271,12 +275,68 @@ export function weaponIconSrc(weaponKey: string): string | null {
   return weaponIconUrl(weapon.awakenIcon);
 }
 
+/** Display name for a GOOD weapon key; null while loading or unknown. */
+export function weaponName(weaponKey: string): string | null {
+  return weaponByKey.get(weaponKey)?.name ?? null;
+}
+
+/** Display name for a GOOD artifact set key; null while loading or unknown. */
+export function artifactSetName(setKey: string): string | null {
+  return artifactSetByKey.get(setKey)?.name ?? null;
+}
+
+/**
+ * Match free text (agent output, pasted names, odd casing) to a known GOOD key:
+ * exact, then case-insensitive, then {@link foldGoodKey}. Null when nothing
+ * matches or the tables have not loaded.
+ */
+function resolveGoodKey(
+  raw: string,
+  table: ReadonlyMap<string, unknown>,
+): string | null {
+  if (table.has(raw)) return raw;
+  const lower = raw.toLowerCase();
+  for (const key of table.keys()) if (key.toLowerCase() === lower) return key;
+  const fold = foldGoodKey(raw);
+  if (!fold) return null;
+  for (const key of table.keys()) if (foldGoodKey(key) === fold) return key;
+  return null;
+}
+
+/** Free-text weapon name/key → GOOD weapon key (see `resolveGoodKey`). */
+export function resolveWeaponKey(raw: string): string | null {
+  return resolveGoodKey(raw, weaponByKey);
+}
+
+/** Free-text artifact set name/key → GOOD set key (see `resolveGoodKey`). */
+export function resolveArtifactSetKey(raw: string): string | null {
+  return resolveGoodKey(raw, artifactSetByKey);
+}
+
+/** Weapon rarity (1–5); null while loading or unknown. */
+export function weaponStars(weaponKey: string): number | null {
+  return weaponByKey.get(weaponKey)?.stars ?? null;
+}
+
+/** Set icon URL for a GOOD artifact set key; null while loading or unknown. */
+export function artifactSetIconSrc(setKey: string): string | null {
+  const set = artifactSetByKey.get(setKey);
+  return set ? artifactIconUrl(set.icon) : null;
+}
+
+/** Per-slot piece icon for a set (flower, plume, …); null while loading or unknown. */
+export function artifactPieceIconSrc(
+  setKey: string,
+  slot: Parameters<typeof artifactPieceIconUrl>[1],
+): string | null {
+  return artifactPieceIconUrl(artifactSetByKey.get(setKey)?.icon, slot);
+}
+
 /**
  * True only for known 5★ weapons. Missing keys are treated as not-5★.
  */
 function isFiveStarWeapon(weaponKey: string): boolean {
-  const weapon = weaponByKey.get(weaponKey);
-  return weapon?.stars === 5;
+  return weaponStars(weaponKey) === 5;
 }
 
 /**

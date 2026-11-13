@@ -14,11 +14,18 @@
   } from "#lib/app/roster-inventory.js";
   import { handCharactersFromMembers } from "#lib/character-teams.js";
   import type { Character } from "#lib/definitions.js";
-  import { equipmentVersion } from "#lib/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
   import {
     RESEARCH_ENTITY_SLOT_ATTR,
     citationShortLabel,
+    citeDisplayNumbers,
+    citeSupsHtml,
+    citeTokens,
+    indexResearchEntities,
+    isSafeCiteId,
     orderCitationsForDisplay,
+    rankItemsBlob,
+    resolveGearEntity,
     preloadEntityIconData,
     renderResearchAnswer,
     renderResearchInline,
@@ -114,6 +121,8 @@
     };
   });
 
+  const equipment = useEquipmentData();
+
   const citeInstanceId = $props.id();
   const citeAnchorPrefix = `ra-${citeInstanceId}-`;
 
@@ -137,73 +146,41 @@
     return parts;
   }
 
-  function isSafeCiteId(id: unknown): id is number {
-    return typeof id === "number" && Number.isSafeInteger(id) && id >= 0;
-  }
-
   function teamsBlob(list: ResearchTeamLineup[]): string[] {
-    const parts: string[] = [];
-    for (const t of list) {
-      parts.push(t.label);
-      if (t.notes) parts.push(t.notes);
-      for (const id of t.citation_ids ?? []) {
-        if (isSafeCiteId(id)) parts.push(`[[cite:${id}]]`);
-      }
-    }
-    return parts;
-  }
-
-  function ranksBlob(list: ResearchRankItem[]): string[] {
-    const parts: string[] = [];
-    for (const r of list) {
-      if (r.note) parts.push(r.note);
-      for (const id of r.citation_ids ?? []) {
-        if (isSafeCiteId(id)) parts.push(`[[cite:${id}]]`);
-      }
-    }
-    return parts;
+    return list.flatMap((t) => [
+      t.label,
+      ...(t.notes ? [t.notes] : []),
+      ...citeTokens(t.citation_ids),
+    ]);
   }
 
   function erBlob(list: ResearchErTarget[]): string[] {
-    const parts: string[] = [];
-    for (const t of list) {
-      if (t.context) parts.push(t.context);
-      for (const id of t.citation_ids ?? []) {
-        if (isSafeCiteId(id)) parts.push(`[[cite:${id}]]`);
-      }
-    }
-    return parts;
+    return list.flatMap((t) => [
+      ...(t.context ? [t.context] : []),
+      ...citeTokens(t.citation_ids),
+    ]);
   }
 
   function rotationBlob(r: ResearchRotation): string[] {
-    const parts = [...r.steps];
-    if (r.notes) parts.push(r.notes);
-    for (const id of r.citation_ids ?? []) {
-      if (isSafeCiteId(id)) parts.push(`[[cite:${id}]]`);
-    }
-    return parts;
+    return [
+      ...r.steps,
+      ...(r.notes ? [r.notes] : []),
+      ...citeTokens(r.citation_ids),
+    ];
   }
 
   let footnotes = $derived(
     orderCitationsForDisplay(citations, markdown, [
       ...(comparison ? comparisonBlob(comparison) : []),
       ...(teams?.length ? teamsBlob(teams) : []),
-      ...(weapon_ranks?.length ? ranksBlob(weapon_ranks) : []),
-      ...(artifact_ranks?.length ? ranksBlob(artifact_ranks) : []),
+      ...(weapon_ranks?.length ? rankItemsBlob(weapon_ranks) : []),
+      ...(artifact_ranks?.length ? rankItemsBlob(artifact_ranks) : []),
       ...(er_targets?.length ? erBlob(er_targets) : []),
       ...(rotation ? rotationBlob(rotation) : []),
     ]).filter((cite) => isSafeCiteId(cite.id)),
   );
 
-  let citeNum = $derived.by(() => {
-    const map = new Map<number, number>();
-    let n = 0;
-    for (const cite of footnotes) {
-      n += 1;
-      map.set(cite.id, n);
-    }
-    return map;
-  });
+  let citeNum = $derived(citeDisplayNumbers(footnotes));
 
   let renderOpts = $derived({
     citeAnchorPrefix,
@@ -211,12 +188,12 @@
   });
 
   let html = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     return renderResearchAnswer(markdown, entities, citations, renderOpts);
   });
 
   let verdictHtml = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     if (!comparison?.verdict) return null;
     return renderResearchInline(
       comparison.verdict,
@@ -227,7 +204,7 @@
   });
 
   let sides = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     if (!comparison) return [];
     return [
       { key: "a" as const, side: comparison.option_a },
@@ -252,84 +229,10 @@
     }));
   });
 
-  let entityByKey = $derived.by(() => {
-    const map = new Map<string, ResearchEntity>();
-    for (const e of entities) map.set(e.key, e);
-    return map;
-  });
-
-  let entityByNameId = $derived.by(() => {
-    const map = new Map<string, ResearchEntity>();
-    for (const e of entities) {
-      if (e.type === "character" && e.name_id) map.set(e.name_id, e);
-    }
-    return map;
-  });
-
-  let entityByWeapon = $derived.by(() => {
-    const map = new Map<string, ResearchEntity>();
-    for (const e of entities) {
-      if (e.type === "weapon") {
-        if (e.weapon_key) map.set(e.weapon_key.toLowerCase(), e);
-        map.set(e.label.toLowerCase(), e);
-      }
-    }
-    return map;
-  });
-
-  let entityBySet = $derived.by(() => {
-    const map = new Map<string, ResearchEntity>();
-    for (const e of entities) {
-      if (e.type === "artifact_set") {
-        if (e.set_key) map.set(e.set_key.toLowerCase(), e);
-        map.set(e.label.toLowerCase(), e);
-      }
-    }
-    return map;
-  });
-
-  function resolveGearEntity(
-    raw: string | null | undefined,
-    kind: "weapon" | "set",
-    resolvedKey?: string | null,
-  ): ResearchEntity | null {
-    const map = kind === "weapon" ? entityByWeapon : entityBySet;
-    const candidates = [resolvedKey, raw].filter(Boolean) as string[];
-    for (const rawVal of candidates) {
-      // Personalize sometimes appends (R1)/(R5) onto keys — strip for lookup.
-      const stripped = rawVal
-        .replace(/\s*[\(\[]?\s*r\s*[1-5]\s*[\)\]]?\s*$/i, "")
-        .trim();
-      for (const candidate of [rawVal, stripped]) {
-        if (!candidate) continue;
-        const key = candidate.toLowerCase();
-        const compact = candidate.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
-        const ent =
-          map.get(key) ||
-          map.get(compact) ||
-          [...map.values()].find(
-            (e) =>
-              e.label.toLowerCase() === key ||
-              (e.weapon_key ?? e.set_key ?? "").toLowerCase() === compact ||
-              (e.weapon_key ?? e.set_key ?? "")
-                .replace(/[^A-Za-z0-9]/g, "")
-                .toLowerCase() === compact,
-          );
-        if (ent) return ent;
-      }
-    }
-    return null;
-  }
+  let entityIndex = $derived(indexResearchEntities(entities));
 
   function citeSups(ids: number[] | undefined): string {
-    return (ids ?? [])
-      .filter(isSafeCiteId)
-      .map((id) => {
-        const n = citeNum.get(id);
-        if (!n) return "";
-        return `<sup class="research-cite"><a href="#${citeAnchorPrefix}research-cite-${id}" title="Source ${n}">${n}</a></sup>`;
-      })
-      .join("");
+    return citeSupsHtml(ids, citeNum, citeAnchorPrefix);
   }
 
   let characterMap = $derived.by(() => {
@@ -338,13 +241,13 @@
   });
 
   let lineupCards = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     if (!teams?.length) return [];
     return teams.map((team, idx) => {
       const hand = handCharactersFromMembers(team.members, characterMap);
       const hasPortraits = hand.some((c) => c != null);
       const members = team.members.map((id) => {
-        const ent = entityByNameId.get(id);
+        const ent = entityIndex.byNameId.get(id);
         return {
           id,
           entity: ent ?? null,
@@ -357,9 +260,15 @@
         hand,
         hasPortraits,
         members,
-        weaponEntity: resolveGearEntity(team.weapon, "weapon", team.weapon_key),
+        weaponEntity: resolveGearEntity(entityIndex, "weapon", [
+          team.weapon_key,
+          team.weapon,
+        ]),
         weaponLabel: team.weapon,
-        setEntity: resolveGearEntity(team.artifact_set, "set", team.set_key),
+        setEntity: resolveGearEntity(entityIndex, "set", [
+          team.set_key,
+          team.artifact_set,
+        ]),
         setLabel: team.artifact_set,
         notesHtml: team.notes
           ? renderResearchInline(team.notes, entities, citations, renderOpts)
@@ -375,7 +284,7 @@
   ) {
     if (!list?.length) return [];
     return list.map((row, idx) => {
-      const entity = resolveGearEntity(row.key, kind, row.key);
+      const entity = resolveGearEntity(entityIndex, kind, [row.key]);
       return {
         key: `${kind}-${idx}-${row.rank}-${row.key}`,
         rank: row.rank,
@@ -390,12 +299,12 @@
   }
 
   let weaponRankRows = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     return mapRankRows(weapon_ranks, "weapon");
   });
 
   let artifactRankRows = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     return mapRankRows(artifact_ranks, "set");
   });
 
@@ -409,10 +318,10 @@
   }
 
   let erRows = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     if (!er_targets?.length) return [];
     return er_targets.map((t, idx) => {
-      const ent = entityByNameId.get(t.name_id);
+      const ent = entityIndex.byNameId.get(t.name_id);
       return {
         key: `${idx}-${t.name_id}`,
         entity: ent ?? null,
@@ -427,7 +336,7 @@
   });
 
   let rotationView = $derived.by(() => {
-    void $equipmentVersion;
+    void equipment.version;
     if (!rotation?.steps?.length) return null;
     return {
       steps: rotation.steps.map((s) =>
@@ -451,8 +360,8 @@
     void artifactRankRows;
     void erRows;
     void rotationView;
-    void entityByKey;
-    void $equipmentVersion;
+    void entityIndex;
+    void equipment.version;
 
     const root = answerRoot;
     if (!root) return;
@@ -469,7 +378,7 @@
         if (!(el instanceof HTMLElement)) continue;
         const key = el.getAttribute(RESEARCH_ENTITY_SLOT_ATTR);
         if (!key) continue;
-        const entity = entityByKey.get(key);
+        const entity = entityIndex.byKey.get(key);
         if (!entity) continue;
         const instance = mount(ResearchEntityMention, {
           target: el,

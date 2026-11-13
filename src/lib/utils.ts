@@ -176,6 +176,15 @@ export function toGoodKey(name: string | null): string {
     .join("");
 }
 
+/**
+ * Loose comparison form for GOOD keys and display names: alphanumerics only,
+ * lower-cased — `"Wolf's Gravestone"`, `"wolfsgravestone"` and
+ * `"WolfsGravestone"` all fold to the same string. Compare folds, never show them.
+ */
+export function foldGoodKey(key: string): string {
+  return key.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+}
+
 const CRIMSON_WITCH_BASE = "https://www.crimsonwitch.com";
 
 /** Site favicon (`rel="icon"` on crimsonwitch.com). */

@@ -12,13 +12,13 @@
     toGoodKey,
     translateStatKey,
   } from "#lib/utils.js";
-  import { artifactSetByKey, weaponByKey } from "#lib/equipment-data.js";
-  import { useEquipmentData, useWeapon } from "#lib/equipment-data.svelte.js";
   import {
-    artifactIconUrl,
-    artifactPieceIconUrl,
-    weaponIconUrl,
-  } from "#lib/asset-urls.js";
+    artifactPieceIconSrc,
+    artifactSetIconSrc,
+    artifactSetName,
+  } from "#lib/equipment-data.js";
+  import { useEquipmentData, useWeapon } from "#lib/equipment-data.svelte.js";
+  import { weaponIconUrl } from "#lib/asset-urls.js";
   import avatarImg from "#lib/assets/default-avatar.jpg";
   import shadeImg from "#lib/assets/enka-shade.svg";
   import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
@@ -364,13 +364,12 @@
 
   function setName(setKey: string): string {
     void equipment.version;
-    return artifactSetByKey.get(setKey)?.name ?? setKey;
+    return artifactSetName(setKey) ?? setKey;
   }
 
   function setIcon(setKey: string): string | null {
     void equipment.version;
-    const row = artifactSetByKey.get(setKey);
-    return row ? artifactIconUrl(row.icon) : null;
+    return artifactSetIconSrc(setKey);
   }
 
   function pieceIcon(
@@ -378,8 +377,7 @@
     slot: InventoryArtifactSlot,
   ): string | null {
     void equipment.version;
-    const row = artifactSetByKey.get(setKey);
-    return artifactPieceIconUrl(row?.icon, slot);
+    return artifactPieceIconSrc(setKey, slot);
   }
 
   function emptySlotIcon(slot: InventoryArtifactSlot): string {
@@ -527,11 +525,6 @@
         : String(Math.round(s.value)),
       iconKey: goodKey,
     };
-  });
-
-  $effect(() => {
-    void equipment.version;
-    void weaponByKey.size;
   });
 
   /** Enka: font-size ≈ cardHeight / 30 (em layout scales with it). */

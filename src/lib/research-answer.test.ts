@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   citationShortLabel,
+  citeDisplayNumbers,
+  citeSupsHtml,
+  citeTokens,
   entityHref,
+  indexResearchEntities,
+  isSafeCiteId,
+  rankItemsBlob,
+  resolveGearEntity,
   orderCitationsForDisplay,
   renderEntityChip,
   renderResearchAnswer,
@@ -225,5 +232,119 @@ describe("research answer embeddings", () => {
     );
     assert.match(html, /research-cite/);
     assert.match(html, /#research-cite-2316/);
+  });
+});
+
+describe("citation helpers", () => {
+  it("accepts only non-negative safe integer cite ids", () => {
+    assert.equal(isSafeCiteId(0), true);
+    assert.equal(isSafeCiteId(2297), true);
+    for (const bad of [-1, 1.5, "3", null, Number.MAX_SAFE_INTEGER + 1]) {
+      assert.equal(isSafeCiteId(bad), false, String(bad));
+    }
+  });
+
+  it("turns safe ids into cite tokens and skips the rest", () => {
+    assert.deepEqual(citeTokens([4, -1, "x", 7]), ["[[cite:4]]", "[[cite:7]]"]);
+    assert.deepEqual(citeTokens(undefined), []);
+  });
+
+  it("blobs rank rows as note then tokens, in order", () => {
+    assert.deepEqual(
+      rankItemsBlob([
+        { rank: 1, key: "A", note: "best", citation_ids: [3] },
+        { rank: 2, key: "B", citation_ids: [5, 6] },
+      ] as never),
+      ["best", "[[cite:3]]", "[[cite:5]]", "[[cite:6]]"],
+    );
+  });
+
+  it("numbers footnotes 1-based in display order", () => {
+    const nums = citeDisplayNumbers([
+      { id: 40 },
+      { id: 12 },
+    ] as ResearchCitation[]);
+    assert.deepEqual(
+      [...nums],
+      [
+        [40, 1],
+        [12, 2],
+      ],
+    );
+  });
+
+  it("renders sups only for numbered, safe ids", () => {
+    const nums = new Map([[40, 1]]);
+    assert.equal(
+      citeSupsHtml([40, 99, -3], nums, "ra-x-"),
+      '<sup class="research-cite"><a href="#ra-x-research-cite-40" title="Source 1">1</a></sup>',
+    );
+    assert.equal(citeSupsHtml(undefined, nums, "ra-x-"), "");
+  });
+});
+
+describe("resolveGearEntity", () => {
+  const entities = [
+    {
+      key: "weapon:FavoniusSword",
+      type: "weapon",
+      label: "Favonius Sword",
+      weapon_key: "FavoniusSword",
+    },
+    {
+      key: "set:GladiatorsFinale",
+      type: "artifact_set",
+      label: "Gladiator's Finale",
+      set_key: "GladiatorsFinale",
+    },
+    {
+      key: "c:Xingqiu",
+      type: "character",
+      label: "Xingqiu",
+      name_id: "Xingqiu",
+    },
+  ] as ResearchEntity[];
+  const index = indexResearchEntities(entities);
+
+  it("indexes by key, name_id, and lower-cased weapon / set key + label", () => {
+    assert.equal(index.byKey.get("c:Xingqiu")?.label, "Xingqiu");
+    assert.equal(index.byNameId.get("Xingqiu")?.key, "c:Xingqiu");
+    assert.equal(
+      index.byWeapon.get("favoniussword")?.key,
+      "weapon:FavoniusSword",
+    );
+    assert.equal(
+      index.bySet.get("gladiator's finale")?.key,
+      "set:GladiatorsFinale",
+    );
+  });
+
+  it("matches label, GOOD key, folded text, and strips a refinement suffix", () => {
+    for (const raw of [
+      "Favonius Sword",
+      "FavoniusSword",
+      "favonius-sword",
+      "Favonius Sword (R5)",
+      "FavoniusSword [r1]",
+    ]) {
+      assert.equal(
+        resolveGearEntity(index, "weapon", [raw])?.key,
+        "weapon:FavoniusSword",
+        raw,
+      );
+    }
+    assert.equal(
+      resolveGearEntity(index, "set", ["Gladiators Finale"])?.key,
+      "set:GladiatorsFinale",
+    );
+  });
+
+  it("tries candidates in order and keeps kinds apart", () => {
+    assert.equal(
+      resolveGearEntity(index, "weapon", [null, "", "FavoniusSword"])?.key,
+      "weapon:FavoniusSword",
+    );
+    assert.equal(resolveGearEntity(index, "set", ["Favonius Sword"]), null);
+    assert.equal(resolveGearEntity(index, "weapon", ["Mistsplitter"]), null);
   });
 });

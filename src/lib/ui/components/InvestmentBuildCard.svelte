@@ -14,7 +14,6 @@
     useEquipmentData,
     useWeapon,
   } from "#lib/equipment-data.svelte.js";
-  import { artifactIconUrl, weaponIconUrl } from "#lib/asset-urls.js";
   import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
@@ -69,9 +68,9 @@
     void equipment.version;
     return computeBuildSheetStats(build);
   });
-  let wIcon = $derived(weapon ? weaponIconUrl(weapon.awakenIcon) : null);
-  let sIcon = $derived(set ? artifactIconUrl(set.icon) : null);
-  let s2Icon = $derived(set2 ? artifactIconUrl(set2.icon) : null);
+  let wIcon = $derived(weaponLookup.icon);
+  let sIcon = $derived(setLookup.icon);
+  let s2Icon = $derived(build.set2 ? set2Lookup.icon : null);
   let relevantKeySet = $derived.by(() => {
     if (relevantKeys == null) return null;
     return relevantKeys instanceof Set ? relevantKeys : new Set(relevantKeys);

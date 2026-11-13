@@ -14,6 +14,7 @@ import type {
   ResearchResponse,
   ResearchLlmProvider,
 } from "#lib/research-types.js";
+import { foldGoodKey } from "#lib/utils.js";
 
 /**
  * Match server research-agent budget. Two LLM passes (corpus + personalize)
@@ -149,11 +150,6 @@ export function buildResearchPersonalization(input: {
   return fields;
 }
 
-/** Case-fold helper for GOOD key membership (agent may return display-ish casing). */
-function gearKeyFold(key: string): string {
-  return key.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
-}
-
 /**
  * Collect owned weapon GOOD keys + artifact set keys from local inventory
  * (and equipped weapons on roster progress). Used only for Build panel badges —
@@ -183,9 +179,9 @@ export function collectOwnedResearchGearKeys(input: {
 
 function ownedSetHas(owned: ReadonlySet<string>, key: string): boolean {
   if (owned.has(key)) return true;
-  const fold = gearKeyFold(key);
+  const fold = foldGoodKey(key);
   for (const candidate of owned) {
-    if (gearKeyFold(candidate) === fold) return true;
+    if (foldGoodKey(candidate) === fold) return true;
   }
   return false;
 }
@@ -216,14 +212,14 @@ export function annotateOwnedRankRows<T extends { key: string; rank?: number }>(
       bestOwnedRank = rank;
     }
   }
-  const bestFold = bestOwnedKey ? gearKeyFold(bestOwnedKey) : null;
+  const bestFold = bestOwnedKey ? foldGoodKey(bestOwnedKey) : null;
   return rows.map((row) => {
     const owned = ownedSetHas(ownedKeys, row.key);
     return {
       ...row,
       owned,
       bestOwned:
-        owned && bestFold !== null && gearKeyFold(row.key) === bestFold,
+        owned && bestFold !== null && foldGoodKey(row.key) === bestFold,
     };
   });
 }

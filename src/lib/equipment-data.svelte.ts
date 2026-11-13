@@ -20,10 +20,10 @@ import {
   weaponByKey,
   weaponIconSrc,
   artifactSetByKey,
+  artifactSetIconSrc,
   type WeaponData,
   type ArtifactSetData,
 } from "#lib/equipment-data.js";
-import { artifactIconUrl } from "#lib/asset-urls.js";
 
 export type EquipmentData = {
   /** Bumps when a load commits. Unchanged when a load fails. */
@@ -126,9 +126,7 @@ export function useArtifactSet(setKey: () => string): ArtifactSetLookup {
       void equipment.version;
       void equipment.failed;
       const key = setKey();
-      if (!key) return null;
-      const set = artifactSetByKey.get(key);
-      return set ? artifactIconUrl(set.icon) : null;
+      return key ? artifactSetIconSrc(key) : null;
     },
   };
 }

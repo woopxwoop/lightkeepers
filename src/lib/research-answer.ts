@@ -11,8 +11,12 @@ import {
   weaponIconSrc,
 } from "#lib/equipment-data.js";
 import { renderPatchNoteBody } from "#lib/patch-notes.js";
-import type { ResearchCitation, ResearchEntity } from "#lib/research-types.js";
-import { getCharacterPortrait } from "#lib/utils.js";
+import type {
+  ResearchCitation,
+  ResearchEntity,
+  ResearchRankItem,
+} from "#lib/research-types.js";
+import { foldGoodKey, getCharacterPortrait } from "#lib/utils.js";
 
 const ENTITY_TOKEN_RE = /\[\[(?!cite:)([^\]]+)\]\]/gi;
 /** Single id or comma cluster: `[[cite:2297]]` / `[[cite:2297, 2300]]`. */
@@ -269,4 +273,128 @@ export function renderResearchInline(
     .replace(/^<p>/i, "")
     .replace(/<\/p>$/i, "")
     .replace(/<\/p>\s*<p>/gi, " ");
+}
+
+// ── Citation numbering (shared by every research surface) ──────────────────
+
+/** Citation ids safe to render as anchors: non-negative safe integers. */
+export function isSafeCiteId(id: unknown): id is number {
+  return typeof id === "number" && Number.isSafeInteger(id) && id >= 0;
+}
+
+/**
+ * `[[cite:id]]` tokens for a row's safe citation ids. Section "blobs" are
+ * text + these tokens, fed to {@link orderCitationsForDisplay} so footnotes
+ * number in reading order.
+ */
+export function citeTokens(
+  ids: readonly unknown[] | null | undefined,
+): string[] {
+  return (ids ?? []).filter(isSafeCiteId).map((id) => `[[cite:${id}]]`);
+}
+
+/** Text blob for weapon / artifact rank rows (notes + cite tokens). */
+export function rankItemsBlob(list: readonly ResearchRankItem[]): string[] {
+  return list.flatMap((r) => [
+    ...(r.note ? [r.note] : []),
+    ...citeTokens(r.citation_ids),
+  ]);
+}
+
+/** 1-based display number for each cited id, in footnote order. */
+export function citeDisplayNumbers(
+  footnotes: readonly ResearchCitation[],
+): Map<number, number> {
+  return new Map(footnotes.map((cite, i) => [cite.id, i + 1]));
+}
+
+/**
+ * Superscript links for a row's citations. Ids without a footnote number are
+ * skipped; `anchorPrefix` keeps anchors unique per rendered answer.
+ */
+export function citeSupsHtml(
+  ids: readonly unknown[] | null | undefined,
+  citeNum: ReadonlyMap<number, number>,
+  anchorPrefix: string,
+): string {
+  return (ids ?? [])
+    .filter(isSafeCiteId)
+    .map((id) => {
+      const n = citeNum.get(id);
+      if (!n) return "";
+      return `<sup class="research-cite"><a href="#${anchorPrefix}research-cite-${id}" title="Source ${n}">${n}</a></sup>`;
+    })
+    .join("");
+}
+
+// ── Entity lookup ──────────────────────────────────────────────────────────
+
+/** Answer entities indexed for row → entity resolution. */
+export type ResearchEntityIndex = {
+  byKey: ReadonlyMap<string, ResearchEntity>;
+  /** Characters by `name_id`. */
+  byNameId: ReadonlyMap<string, ResearchEntity>;
+  /** Weapons by lower-cased GOOD key and lower-cased label. */
+  byWeapon: ReadonlyMap<string, ResearchEntity>;
+  /** Artifact sets by lower-cased GOOD key and lower-cased label. */
+  bySet: ReadonlyMap<string, ResearchEntity>;
+};
+
+export function indexResearchEntities(
+  entities: readonly ResearchEntity[],
+): ResearchEntityIndex {
+  const byKey = new Map<string, ResearchEntity>();
+  const byNameId = new Map<string, ResearchEntity>();
+  const byWeapon = new Map<string, ResearchEntity>();
+  const bySet = new Map<string, ResearchEntity>();
+  for (const e of entities) {
+    byKey.set(e.key, e);
+    if (e.type === "character" && e.name_id) byNameId.set(e.name_id, e);
+    if (e.type === "weapon") {
+      if (e.weapon_key) byWeapon.set(e.weapon_key.toLowerCase(), e);
+      byWeapon.set(e.label.toLowerCase(), e);
+    }
+    if (e.type === "artifact_set") {
+      if (e.set_key) bySet.set(e.set_key.toLowerCase(), e);
+      bySet.set(e.label.toLowerCase(), e);
+    }
+  }
+  return { byKey, byNameId, byWeapon, bySet };
+}
+
+/** Agents sometimes append a refinement — "Favonius Sword (R5)", "… [r1]". */
+const REFINEMENT_SUFFIX_RE = /\s*[\(\[]?\s*r\s*[1-5]\s*[\)\]]?\s*$/i;
+
+/**
+ * Resolve a row's weapon / set text to an answer entity. Tries each candidate
+ * as given and without a trailing refinement, matching key or label exactly,
+ * then by {@link foldGoodKey}. First hit wins.
+ */
+export function resolveGearEntity(
+  index: ResearchEntityIndex,
+  kind: "weapon" | "set",
+  candidates: readonly (string | null | undefined)[],
+): ResearchEntity | null {
+  const map = kind === "weapon" ? index.byWeapon : index.bySet;
+  for (const raw of candidates) {
+    if (!raw) continue;
+    for (const candidate of [
+      raw,
+      raw.replace(REFINEMENT_SUFFIX_RE, "").trim(),
+    ]) {
+      if (!candidate) continue;
+      const lower = candidate.toLowerCase();
+      const fold = foldGoodKey(candidate);
+      const hit =
+        map.get(lower) ??
+        map.get(fold) ??
+        [...map.values()].find(
+          (e) =>
+            e.label.toLowerCase() === lower ||
+            foldGoodKey(e.weapon_key ?? e.set_key ?? "") === fold,
+        );
+      if (hit) return hit;
+    }
+  }
+  return null;
 }

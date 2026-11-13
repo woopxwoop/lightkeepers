@@ -12,7 +12,7 @@
     loadRosterWeapons,
   } from "#lib/app/roster-inventory.js";
   import type { InventoryArtifact, InventoryWeapon } from "#lib/definitions.js";
-  import { artifactSetByKey } from "#lib/equipment-data.js";
+  import { artifactSetName } from "#lib/equipment-data.js";
   import { useEquipmentData } from "#lib/equipment-data.svelte.js";
   import ArtifactIcon from "#lib/ui/components/ArtifactIcon.svelte";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
@@ -67,9 +67,9 @@
 
   let empty = $derived(weapons.length === 0 && artifacts.length === 0);
 
-  function artifactSetName(setKey: string): string {
+  function setLabel(setKey: string): string {
     void equipment.version;
-    return artifactSetByKey.get(setKey)?.name ?? setKey;
+    return artifactSetName(setKey) ?? setKey;
   }
 </script>
 
@@ -152,7 +152,7 @@
                 <ArtifactIcon setKey={artifact.setKey} class="inv-icon-img" />
               </div>
               <div class="inv-meta">
-                <div class="meta-name">{artifactSetName(artifact.setKey)}</div>
+                <div class="meta-name">{setLabel(artifact.setKey)}</div>
                 <div class="meta-sub">
                   {artifact.slotKey} · +{artifact.level} · {artifact.mainStatKey}{#if artifact.location}
                     · on {artifact.location}{/if}
