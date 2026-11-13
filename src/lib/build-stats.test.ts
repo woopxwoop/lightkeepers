@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it, before } from "node:test";
 import type { InventoryArtifact } from "./definitions.ts";
-import { ensureEquipmentData, weaponByKey } from "./equipment-data.ts";
+import {
+  characterBaseByKey,
+  ensureBaseStatData,
+  ensureEquipmentData,
+  weaponByKey,
+} from "./equipment-data.ts";
 import type { CharacterBuild } from "./types/investment.ts";
 import {
   ARTIFACT_MAIN_STAT_VALUE,
@@ -14,8 +19,12 @@ import {
   goodInventoryStatToSheet,
   resolveCharacterBaseStats,
   resolveWeaponStats,
-  characterBaseByKey,
 } from "./build-stats.ts";
+
+// Base-stat tables are lazy; every suite below reads them.
+before(async () => {
+  await ensureBaseStatData();
+});
 
 function piece(
   partial: Pick<InventoryArtifact, "slotKey" | "mainStatKey"> &

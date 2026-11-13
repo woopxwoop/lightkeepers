@@ -13,6 +13,7 @@
 import { onMount } from "svelte";
 import { get } from "svelte/store";
 import {
+  ensureBaseStatData,
   ensureEquipmentData,
   equipmentLoadFailed,
   equipmentVersion,
@@ -31,8 +32,13 @@ export type EquipmentData = {
   readonly failed: boolean;
 };
 
-/** Trigger the lazy load and track load completion. */
-export function useEquipmentData(): EquipmentData {
+/**
+ * Trigger the lazy load and track load completion.
+ * `baseStats: true` also loads the stat-sheet tables (build-stats consumers).
+ */
+export function useEquipmentData(
+  opts: { baseStats?: boolean } = {},
+): EquipmentData {
   let version = $state(get(equipmentVersion));
   let failed = $state(get(equipmentLoadFailed));
 
@@ -46,6 +52,11 @@ export function useEquipmentData(): EquipmentData {
     void ensureEquipmentData().catch((error) => {
       console.error("[equipment-data] load failed:", error);
     });
+    if (opts.baseStats) {
+      void ensureBaseStatData().catch((error) => {
+        console.error("[equipment-data] base stats load failed:", error);
+      });
+    }
     return () => {
       unsubscribeVersion();
       unsubscribeFailed();

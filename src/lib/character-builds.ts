@@ -4,12 +4,7 @@
  * Pure helpers so the character page stays props → $derived → markup.
  */
 
-import {
-  clampSubstatRolls,
-  computeBuildSheetStats,
-  isArtifactSubstatKey,
-} from "#lib/build-stats.js";
-import { translateStatKey } from "#lib/utils.js";
+import { clampSubstatRolls, isArtifactSubstatKey } from "#lib/build-stats.js";
 import {
   CONSTELLATION_UPGRADE,
   LEVEL_UPGRADE,
@@ -669,24 +664,7 @@ export function liquidRollChips(
     .slice(0, limit);
 }
 
-export type ExampleSheetRow = {
-  /** Sheet / format key (e.g. ``critRate``, ``pyro_dmg_``). */
-  key: string;
-  /** GOOD key for ``statIconUrl``. */
-  iconKey: string;
-  label: string;
-  value: number;
-};
-
 export type ExampleRollTier = "mid" | "high";
-
-function sheetIconKey(stat: string): string {
-  if (stat === "critRate") return "critRate_";
-  if (stat === "critDMG") return "critDMG_";
-  if (stat === "enerRech") return "enerRech_";
-  if (stat === "heal") return "heal_";
-  return stat;
-}
 
 /** True when the example carries a distinct high-invest roll sheet. */
 export function exampleHasHighConfig(example: CharacterBuildExample): boolean {
@@ -754,61 +732,6 @@ function uniformMainStatKey(example: CharacterBuildExample): string | null {
   const first = mains[0];
   if (typeof first !== "string" || !first) return null;
   return mains.every((m) => m === first) ? first : null;
-}
-
-/**
- * Numerical sheet lines for mains + assigned substats only (not the full
- * default sheet). Flat/percent pairs collapse to one total (ATK, HP, DEF).
- */
-export function exampleRelevantSheetRows(
-  example: CharacterBuildExample,
-  tier: ExampleRollTier = "mid",
-): ExampleSheetRow[] {
-  const relevant = exampleRelevantGoodKeys(example, tier);
-  if (relevant.size === 0) return [];
-
-  const sheet = computeBuildSheetStats(
-    characterBuildFromExample(example, tier),
-  );
-  if (!sheet) return [];
-
-  const rows: ExampleSheetRow[] = [];
-  const push = (key: string, label: string, value: number) => {
-    rows.push({ key, iconKey: sheetIconKey(key), label, value });
-  };
-
-  if (relevant.has("hp") || relevant.has("hp_")) {
-    push("hp", "HP", sheet.hp);
-  }
-  if (relevant.has("atk") || relevant.has("atk_")) {
-    push("atk", "ATK", sheet.atk);
-  }
-  if (relevant.has("def") || relevant.has("def_")) {
-    push("def", "DEF", sheet.def);
-  }
-  if (relevant.has("eleMas")) {
-    push("eleMas", "Elemental Mastery", sheet.eleMas);
-  }
-  if (relevant.has("critRate_")) {
-    push("critRate", "CRIT Rate", sheet.critRate);
-  }
-  if (relevant.has("critDMG_")) {
-    push("critDMG", "CRIT DMG", sheet.critDMG);
-  }
-  if (relevant.has("enerRech_")) {
-    push("enerRech", "Energy Recharge", sheet.enerRech);
-  }
-  if (relevant.has("heal_")) {
-    push("heal", translateStatKey("heal_"), sheet.heal);
-  }
-
-  for (const [key, value] of Object.entries(sheet.dmgBonus)
-    .filter(([k, v]) => relevant.has(k) && v > 0)
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
-    push(key, translateStatKey(key), value);
-  }
-
-  return rows;
 }
 
 function isCompleteBuildExample(example: CharacterBuildExample): boolean {

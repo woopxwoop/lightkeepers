@@ -15,89 +15,23 @@
  * - {@link computeRosterSheetStats} — GOOD inventory + roster level curve
  *
  * Does **not** include artifact set bonuses or weapon passives (conditional).
+ *
+ * Tables are lazy (`ensureBaseStatData()` in equipment-data). UI leaves get
+ * them via `useEquipmentData({ baseStats: true })` and re-derive on
+ * `equipment.version`; until then sheets return null / L90 fallbacks.
  */
-import characterBasesRaw from "#lib/data/character-bases.json";
-import characterStatCurvesRaw from "#lib/data/character-stat-curves.json";
-import weaponBasesRaw from "#lib/data/weapon-bases.json";
-import weaponStatCurvesRaw from "#lib/data/weapon-stat-curves.json";
-import artifactMainStatsRaw from "#lib/data/artifact-main-stats.json";
-import { weaponByKey, type WeaponData } from "#lib/equipment-data.js";
+import {
+  artifactMainStats,
+  characterBaseByKey,
+  characterStatCurves,
+  weaponBaseByKey,
+  weaponByKey,
+  weaponStatCurves,
+  type CharacterBaseStats,
+  type WeaponData,
+} from "#lib/equipment-data.js";
 import type { InventoryArtifact } from "#lib/definitions.js";
 import type { CharacterBuild } from "#lib/types/investment.js";
-
-export type CharacterPromoteStep = {
-  asc: number;
-  hp: number;
-  atk: number;
-  def: number;
-  stats: Record<string, number>;
-};
-
-export interface CharacterBaseStats {
-  name_id: string;
-  name: string;
-  level: number;
-  hp: number;
-  atk: number;
-  def: number;
-  ascension: Record<string, number>;
-  baseCritRate: number;
-  baseCritDMG: number;
-  /** Pre-curve AvatarExcel flats (present after curve extract). */
-  hpBase?: number;
-  atkBase?: number;
-  defBase?: number;
-  growCurves?: { hp: string; atk: string; def: string };
-  promotes?: CharacterPromoteStep[];
-}
-
-export const characterBaseByKey = new Map(
-  Object.entries(characterBasesRaw as Record<string, CharacterBaseStats>),
-);
-
-/** GROW_CURVE_* → level string → multiplier. */
-export const characterStatCurves = characterStatCurvesRaw as Record<
-  string,
-  Record<string, number>
->;
-
-export type WeaponPromoteStep = {
-  asc: number;
-  atk: number;
-};
-
-export type WeaponSubBase = {
-  propType: string;
-  initValue: number;
-  curve: string;
-  isPercent: boolean;
-};
-
-export interface WeaponBaseRow {
-  key: string;
-  name: string;
-  stars: number;
-  atkBase: number;
-  atkCurve: string;
-  subStat: WeaponSubBase | null;
-  promotes: WeaponPromoteStep[];
-}
-
-export const weaponBaseByKey = new Map(
-  Object.entries(weaponBasesRaw as Record<string, WeaponBaseRow>),
-);
-
-/** Weapon GROW_CURVE_* → level string → multiplier. */
-export const weaponStatCurves = weaponStatCurvesRaw as Record<
-  string,
-  Record<string, number>
->;
-
-/** rarity → GOOD level → main-stat map (from ReliquaryLevel). */
-export const artifactMainStats = artifactMainStatsRaw as Record<
-  string,
-  Record<string, Record<string, number>>
->;
 
 function roundStat(n: number): number {
   return Math.round(n * 10) / 10;

@@ -7,7 +7,7 @@ import {
   getSimRotationSample,
 } from "#lib/server/team-config.js";
 import { getCharacterKit } from "#lib/server/character-kit.js";
-import { characterBaseByKey } from "#lib/build-stats.js";
+import { characterBaseByKey, ensureBaseStatData } from "#lib/equipment-data.js";
 import { getSimConfigUrl } from "#lib/utils.js";
 import {
   kitIconsFromCharacterKit,
@@ -32,7 +32,12 @@ export const load: PageServerLoad = async ({ params }) => {
   if (!match) error(404, `Config "${slug}" not found`);
 
   const { team, sim } = match;
-  const [configText, rotation] = await Promise.all([
+  const [, configText, rotation] = await Promise.all([
+    // Process-wide one-time load; kit lookups below need name_id. Icons are
+    // decorative, so a failed load drops them rather than the page.
+    ensureBaseStatData().catch((err) => {
+      console.warn("[team-configs] base stats unavailable:", err);
+    }),
     getSimConfigText(sim.state_key).catch((err) => {
       console.warn(
         `[team-configs] sim config ${sim.state_key} unavailable:`,

@@ -275,7 +275,7 @@
     }
   }
 
-  const equipment = useEquipmentData();
+  const equipment = useEquipmentData({ baseStats: true });
   const weaponLookup = useWeapon(() => view.weapon?.key ?? "");
 
   let weapon = $derived(weaponLookup.weapon);
@@ -392,6 +392,7 @@
     rarity: number;
     level: number;
   }): string {
+    void equipment.version;
     const key = piece.mainStatKey;
     const v =
       artifactMainValue(key, piece.rarity, piece.level) ??

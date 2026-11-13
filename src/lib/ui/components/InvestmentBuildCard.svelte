@@ -9,7 +9,11 @@
     statIconUrl,
     artifactSlotIconUrl,
   } from "#lib/utils.js";
-  import { useWeapon, useArtifactSet } from "#lib/equipment-data.svelte.js";
+  import {
+    useArtifactSet,
+    useEquipmentData,
+    useWeapon,
+  } from "#lib/equipment-data.svelte.js";
   import { artifactIconUrl, weaponIconUrl } from "#lib/asset-urls.js";
   import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
@@ -49,6 +53,7 @@
 
   let iconStyle = $derived($displayPreferences.iconStyle);
 
+  const equipment = useEquipmentData({ baseStats: true });
   const weaponLookup = useWeapon(() => build.weapon.key);
   const setLookup = useArtifactSet(() => build.set.key);
   const set2Lookup = useArtifactSet(() => build.set2 ?? "");
@@ -60,7 +65,10 @@
   let set2Count = $derived(
     build.set2 ? normalizeSetPieceCount(build.set2_count ?? 2) : null,
   );
-  let sheet = $derived(computeBuildSheetStats(build));
+  let sheet = $derived.by(() => {
+    void equipment.version;
+    return computeBuildSheetStats(build);
+  });
   let wIcon = $derived(weapon ? weaponIconUrl(weapon.awakenIcon) : null);
   let sIcon = $derived(set ? artifactIconUrl(set.icon) : null);
   let s2Icon = $derived(set2 ? artifactIconUrl(set2.icon) : null);
