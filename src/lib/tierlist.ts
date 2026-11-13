@@ -114,6 +114,35 @@ export type CharacterUsageRow = {
   cycles: number;
 };
 
+/** `character_usage_avg_stygian` as PostgREST returns it (view columns are nullable). */
+export type CharacterUsageViewRow = {
+  character_id: unknown;
+  avg_usage_rate: unknown;
+  cycles: unknown;
+};
+
+/**
+ * Keep rows the view could attribute and score. Checks are runtime `typeof`
+ * (not just null) so a numeric column serialized as a string is dropped
+ * rather than poisoning the ranking. Missing cycles count as 0.
+ */
+export function usageRowsFromView(
+  rows: readonly CharacterUsageViewRow[],
+): CharacterUsageRow[] {
+  return rows.flatMap((row) =>
+    typeof row.character_id === "number" &&
+    typeof row.avg_usage_rate === "number"
+      ? [
+          {
+            character_id: row.character_id,
+            avg_usage_rate: row.avg_usage_rate,
+            cycles: typeof row.cycles === "number" ? row.cycles : 0,
+          },
+        ]
+      : [],
+  );
+}
+
 export type CharacterMeta = {
   game_id: number;
   name_id: string;

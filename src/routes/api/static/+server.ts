@@ -16,6 +16,7 @@ import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "#lib/server/supabaseServer.js";
 import { LRUCache } from "#lib/server/cache.js";
+import { assertNoDbError } from "#lib/server/request-validation.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { e2eStaticPayload } from "#lib/e2e/fixtures.js";
 import type { Tables } from "#lib/types/database.types.js";
@@ -64,17 +65,8 @@ async function fetchStaticData(): Promise<StaticPayload> {
 
   // Transient query failures must not become version_number: -1 — that yields
   // empty team payloads which getOrSet would cache in L1/L2.
-  if (abyssVerRes.error) {
-    console.error("fetchStaticData: abyss_versions error", abyssVerRes.error);
-    throw error(500, "Failed to fetch Abyss version");
-  }
-  if (stygianVerRes.error) {
-    console.error(
-      "fetchStaticData: stygian_versions error",
-      stygianVerRes.error,
-    );
-    throw error(500, "Failed to fetch Stygian version");
-  }
+  assertNoDbError("static abyss_versions", abyssVerRes.error);
+  assertNoDbError("static stygian_versions", stygianVerRes.error);
 
   const latestAbyssVersion = abyssVerRes.data?.[0];
   const latestStygianVersion = stygianVerRes.data?.[0];
@@ -119,35 +111,11 @@ async function fetchStaticData(): Promise<StaticPayload> {
       .maybeSingle(),
   ]);
 
-  if (abyssTeamsRes.error) {
-    console.error("fetchStaticData: abyss RPC error", abyssTeamsRes.error);
-    throw error(500, "Failed to fetch Abyss team data");
-  }
-  if (stygianTeamsRes.error) {
-    console.error("fetchStaticData: stygian RPC error", stygianTeamsRes.error);
-    throw error(500, "Failed to fetch Stygian team data");
-  }
-  if (versionEnemiesRes.error) {
-    console.error(
-      "fetchStaticData: stygian_version_enemies error",
-      versionEnemiesRes.error,
-    );
-    throw error(500, "Failed to fetch Stygian version enemies");
-  }
-  if (abyssScheduleRes.error) {
-    console.error(
-      "fetchStaticData: lunaris_abyss_versions error",
-      abyssScheduleRes.error,
-    );
-    throw error(500, "Failed to fetch Abyss schedule data");
-  }
-  if (stygianScheduleRes.error) {
-    console.error(
-      "fetchStaticData: lunaris_stygian_versions error",
-      stygianScheduleRes.error,
-    );
-    throw error(500, "Failed to fetch Stygian schedule data");
-  }
+  assertNoDbError("static abyss teams RPC", abyssTeamsRes.error);
+  assertNoDbError("static stygian teams RPC", stygianTeamsRes.error);
+  assertNoDbError("static stygian_version_enemies", versionEnemiesRes.error);
+  assertNoDbError("static lunaris_abyss_versions", abyssScheduleRes.error);
+  assertNoDbError("static lunaris_stygian_versions", stygianScheduleRes.error);
 
   const versionEnemyRows = versionEnemiesRes.data;
   const enemyIds = versionEnemyRows
@@ -159,10 +127,7 @@ async function fetchStaticData(): Promise<StaticPayload> {
       ? await serverDb.from("enemies").select("*").in("id", enemyIds)
       : { data: [], error: null };
 
-  if (enemiesRes.error) {
-    console.error("fetchStaticData: enemies query error", enemiesRes.error);
-    throw error(500, "Failed to fetch enemy data");
-  }
+  assertNoDbError("static enemies", enemiesRes.error);
 
   const enemyMap = new Map(enemiesRes.data.map((e: Enemy) => [e.id, e]));
 

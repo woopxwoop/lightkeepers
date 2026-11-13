@@ -44,8 +44,14 @@ export function requireUser(locals: App.Locals): User {
   return locals.user;
 }
 
-/** Log the real PostgREST error, return a generic 500. */
-export function assertNoDbError(label: string, err: unknown): void {
+/**
+ * Log the real PostgREST error, return a generic 500. An assertion so callers
+ * keep narrowing: after `assertNoDbError(label, res.error)`, `res.data` is set.
+ */
+export function assertNoDbError<E>(
+  label: string,
+  err: E,
+): asserts err is Extract<E, null | undefined> {
   if (!err) return;
   console.error(`${label} failed:`, err);
   throw error(500, "Internal server error");

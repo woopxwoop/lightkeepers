@@ -8,16 +8,16 @@
  * Independent of roster — cache hard like /api/static.
  */
 
-import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "#lib/server/supabaseServer.js";
 import { LRUCache } from "#lib/server/cache.js";
 import { loadCharacters } from "#lib/server/characters.js";
+import { assertNoDbError } from "#lib/server/request-validation.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { e2eTierListPayload } from "#lib/e2e/fixtures.js";
 import {
   computeTierList,
-  type CharacterUsageRow,
+  usageRowsFromView,
   type TierListPayload,
 } from "#lib/tierlist.js";
 
@@ -35,33 +35,9 @@ async function fetchTierList(): Promise<TierListPayload> {
     loadCharacters(),
   ]);
 
-  if (usageRes.error) {
-    console.error(
-      "[tierlist] character_usage_avg_stygian error:",
-      usageRes.error,
-    );
-    throw error(500, "Failed to fetch character usage averages");
-  }
+  assertNoDbError("tierlist character_usage_avg_stygian", usageRes.error);
 
-  const usageRows: CharacterUsageRow[] = (usageRes.data ?? []).flatMap(
-    (row) => {
-      if (
-        typeof row.character_id !== "number" ||
-        typeof row.avg_usage_rate !== "number"
-      ) {
-        return [];
-      }
-      return [
-        {
-          character_id: row.character_id,
-          avg_usage_rate: row.avg_usage_rate,
-          cycles: typeof row.cycles === "number" ? row.cycles : 0,
-        },
-      ];
-    },
-  );
-
-  return computeTierList(usageRows, characters);
+  return computeTierList(usageRowsFromView(usageRes.data), characters);
 }
 
 export const GET: RequestHandler = async () => {

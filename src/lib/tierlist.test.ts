@@ -11,6 +11,7 @@ import {
   creamUsageByNameId,
   computeTierList,
   stygianUsageByNameId,
+  usageRowsFromView,
   type CharacterMeta,
   type CharacterUsageRow,
 } from "./tierlist.ts";
@@ -268,5 +269,32 @@ describe("stygianUsageByNameId", () => {
     });
     assert.equal(usage.get("Furina"), 90);
     assert.equal(usage.get("Xingqiu"), 80);
+  });
+});
+
+describe("usageRowsFromView", () => {
+  it("keeps scored rows and defaults missing cycles to 0", () => {
+    assert.deepEqual(
+      usageRowsFromView([
+        { character_id: 1, avg_usage_rate: 42.5, cycles: 5 },
+        { character_id: 2, avg_usage_rate: 10, cycles: null },
+      ]),
+      [
+        { character_id: 1, avg_usage_rate: 42.5, cycles: 5 },
+        { character_id: 2, avg_usage_rate: 10, cycles: 0 },
+      ],
+    );
+  });
+
+  it("drops rows the view could not attribute or score", () => {
+    assert.deepEqual(
+      usageRowsFromView([
+        { character_id: null, avg_usage_rate: 50, cycles: 5 },
+        { character_id: 3, avg_usage_rate: null, cycles: 5 },
+        // numeric serialized as text must not poison the ranking
+        { character_id: 4, avg_usage_rate: "12.5", cycles: 5 },
+      ]),
+      [],
+    );
   });
 });
