@@ -20,7 +20,7 @@
   } from "#lib/app/roster-inventory.js";
   import GoodImportModal from "#lib/ui/components/GoodImportModal.svelte";
   import {
-    cloudRosterProbeFromBody,
+    probeCloudRoster,
     type CloudRosterProbe,
   } from "#lib/app/cloud-roster-probe.js";
 
@@ -75,22 +75,9 @@
   });
 
   async function checkCloudRoster(version: number) {
-    try {
-      const res = await fetch("/api/roster");
-      if (version !== cloudRosterVersion) return;
-      if (!res.ok) {
-        console.error("checkCloudRoster: unexpected status", res.status);
-        probe = cloudRosterProbeFromBody({ ok: false, roster: null });
-        return;
-      }
-      const { roster } = await res.json();
-      if (version !== cloudRosterVersion) return;
-      probe = cloudRosterProbeFromBody({ ok: true, roster });
-    } catch (err) {
-      if (version !== cloudRosterVersion) return;
-      console.error("checkCloudRoster: network error", err);
-      probe = "unreachable";
-    }
+    const result = await probeCloudRoster();
+    // A newer probe (or sign-out) started while this one was in flight.
+    if (version === cloudRosterVersion) probe = result;
   }
 
   function promptReset() {

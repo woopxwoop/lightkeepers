@@ -15,10 +15,13 @@ import {
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import {
+  requireJsonObject,
+  requireResearchRequest,
+} from "#lib/server/request-validation.js";
+import {
   ResearchAgentError,
   fetchResearch,
 } from "#lib/server/research-agent.js";
-import type { ResearchRequest } from "#lib/research-types.js";
 
 /** SvelteKit `error()` only accepts 400–599. */
 function httpErrorStatus(status: number): number {
@@ -107,41 +110,16 @@ export const GET: RequestHandler = async () => {
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   if (!dev) error(404, "Not found");
 
-  let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
-    error(400, "Invalid JSON body");
-  }
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
-    error(400, "Request body must be a JSON object");
-  }
-  const body = raw as ResearchRequest;
-  const topic = body.topic === "build" ? "build" : undefined;
-  const focusNameIds = Array.isArray(body.focus_name_ids)
-    ? body.focus_name_ids.filter(
-        (id): id is string => typeof id === "string" && id.trim().length > 0,
-      )
-    : [];
-
-  if (topic === "build" && focusNameIds.length === 0) {
-    error(400, "topic=build requires focus_name_ids");
-  }
-
-  const questionRaw =
-    typeof body.question === "string" ? body.question.trim() : "";
-  const question =
-    questionRaw ||
-    (topic === "build" ? `How should I build ${focusNameIds[0]}?` : "");
-  if (!question) error(400, "question is required");
+  const research = requireResearchRequest(await requireJsonObject(request));
 
   if (isPlaywrightE2e()) {
     const fixture =
-      topic === "build"
+      research.topic === "build"
         ? {
             ...E2E_RESEARCH_BUILD_RESPONSE,
             focus_name_id:
-              focusNameIds[0] ?? E2E_RESEARCH_BUILD_RESPONSE.focus_name_id,
+              research.focus_name_ids?.[0] ??
+              E2E_RESEARCH_BUILD_RESPONSE.focus_name_id,
           }
         : E2E_RESEARCH_RESPONSE;
     return Response.json(fixture, {
@@ -153,15 +131,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 
   try {
     // General-facts oracle: never forward inventory / personalize.
-    const result = await fetchResearch({
-      topic,
-      question_kind: topic === "build" ? "ask" : (body.question_kind ?? "ask"),
-      question,
-      focus_name_ids: focusNameIds,
-      llm_provider: body.llm_provider,
-      mode: body.mode,
-      answer_style: body.answer_style,
-    });
+    const result = await fetchResearch(research);
     return Response.json(result, {
       headers: { "Cache-Control": "no-store" },
     });
@@ -171,8 +141,6 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
       error(httpErrorStatus(err.status), err.message);
     }
     console.error("[api/research] unexpected error", err);
-    const message =
-      err instanceof Error ? err.message : "Research proxy failed unexpectedly";
-    error(500, message);
+    error(500, "Research proxy failed.");
   }
 };
