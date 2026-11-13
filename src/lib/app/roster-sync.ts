@@ -104,10 +104,15 @@ export function migrateLegacyRoster(
       }
     }
   }
+  clearLegacyRosterKeys(storage);
+  return null;
+}
+
+/** Drop the pre-slot keys once their characters are in a slot. */
+export function clearLegacyRosterKeys(storage: SlotStorage): void {
   storage.remove(LEGACY_ROSTER_KEY);
   storage.remove(LEGACY_OWNER_KEY);
   storage.remove(LEGACY_SAVED_FLAG_KEY);
-  return null;
 }
 
 /** Reads the bare owner string the old code stored (not JSON). */
@@ -152,7 +157,9 @@ export function rosterSync(): SyncedDoc<RosterDoc> {
     const pending = migrateLegacyRoster(legacyAwareStorage(storage));
     instance = createSyncedDoc(rosterDocSpec, {
       storage: pending
-        ? retainUntilStored(storage, pending.key, pending.slot)
+        ? retainUntilStored(storage, pending.key, pending.slot, () =>
+            clearLegacyRosterKeys(storage),
+          )
         : storage,
       transport: fetchTransport(
         rosterDocSpec.endpoint,
@@ -210,15 +217,14 @@ export function watchRosterConflicts(
     );
     if (get(sync.view).account !== view.account) return;
     if (choice === "use-cloud") {
-      // The cached GOOD slices belong to the roster being replaced. Drop
-      // them before taking the server copy so the next read fetches it.
-      // A device-vs-device question is not the server inventory.
-      if (view.remoteSource !== "device") clearRosterInventory();
-      await sync.resolve("remote");
+      // The cache has no roster-copy key. The import bag must not stay
+      // beside the copy the user just chose.
+      clearRosterInventory();
+      await sync.resolve("remote", remote);
       return;
     }
     if (choice !== "upload-local") return;
-    let result = await sync.resolve("local");
+    let result = await sync.resolve("local", remote);
     while (
       result.status === "unsent" &&
       result.account === get(sync.view).account

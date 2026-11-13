@@ -82,6 +82,11 @@ export function requireExpectedAccount(value: unknown, userId: string): void {
   if (value !== userId) throw error(403, "Signed-in account changed.");
 }
 
+/** DELETE must name the account. A missing or different id is refused. */
+export function requireMatchingAccount(value: unknown, userId: string): void {
+  if (value !== userId) throw error(403, "Signed-in account changed.");
+}
+
 /** Parse a request body and require a plain JSON object. */
 export async function requireJsonObject(
   request: Request,

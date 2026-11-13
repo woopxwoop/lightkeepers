@@ -112,12 +112,15 @@ export function fakeServer() {
       server.put(account, strings(wire));
       return { status: "written", rev: rows.get(account)!.rev };
     },
-    async remove() {
-      const session = server.session;
-      calls.push(`remove:${session}`);
+    async remove(account) {
+      calls.push(`remove:${account}`);
       await gate;
-      if (session === null) return { status: "error", message: "401" };
-      rows.delete(session);
+      if (server.session === null) return { status: "error", message: "401" };
+      // The cookie changed after this client chose the row. Leave both rows.
+      if (account !== server.session) {
+        return { status: "error", message: "Sync failed (403)" };
+      }
+      rows.delete(account);
       return { status: "removed" };
     },
   };

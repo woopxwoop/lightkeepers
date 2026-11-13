@@ -117,6 +117,23 @@ describe("ensureStaticBoards", () => {
     assert.equal(staticBoardsView(get(staticBoardsPhase)).kind, "empty-error");
   });
 
+  it("does not refetch an error until retry is forced", async () => {
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response("nope", { status: 500 });
+    };
+
+    await assert.rejects(() => ensureStaticBoards());
+    assert.equal(calls, 1);
+    await ensureStaticBoards();
+    assert.equal(calls, 1);
+    assert.equal(get(staticBoardsPhase).phase, "error");
+
+    await assert.rejects(() => ensureStaticBoards({ force: true }));
+    assert.equal(calls, 2);
+  });
+
   it("keeps teams when a later fetch fails", async () => {
     let calls = 0;
     globalThis.fetch = async () => {

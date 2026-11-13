@@ -54,8 +54,8 @@ export interface SyncTransport {
     account: string,
     attach?: Record<string, unknown>,
   ): Promise<TransportWrite>;
-  /** Delete the signed-in account's server row. */
-  remove(): Promise<TransportRemove>;
+  /** Delete the signed-in account's server row. `account` must still be that session. */
+  remove(account: string): Promise<TransportRemove>;
 }
 
 const TIMEOUT_MS = 15_000;
@@ -147,10 +147,12 @@ export function fetchTransport(
       }
     },
 
-    async remove() {
+    async remove(account) {
       try {
         const res = await fetch(endpoint, {
           method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account }),
           signal: AbortSignal.timeout(TIMEOUT_MS),
         });
         if (res.ok) return { status: "removed" };

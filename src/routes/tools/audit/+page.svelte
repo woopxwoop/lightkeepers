@@ -2,6 +2,7 @@
   import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
+import { get } from "svelte/store";
   import { loadAuditGrades } from "#lib/app/audit-grades.js";
   import { getRosterWeaponsCached } from "#lib/app/roster-inventory.js";
   import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
@@ -17,7 +18,8 @@
     auditRowPlannerState,
     type AuditPlannerState,
   } from "#lib/audit-planner-goals.js";
-  import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
+  import { goalsSync } from "#lib/app/goals-sync.js";
+import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import {
     charactersHydrated,
     charactersOwned,
@@ -103,8 +105,10 @@
     if (plannerBusy || rows.length === 0) return;
     plannerBusy = true;
     plannerError = null;
+    const goalsAccount = get(goalsSync().view).account;
     try {
       const catalog = await readyCatalog();
+      if (get(goalsSync().view).account !== goalsAccount) return;
       if (!catalog || !goals.hydrated) {
         plannerError = "Couldn’t load the Planner right now";
         return;

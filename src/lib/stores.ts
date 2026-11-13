@@ -530,6 +530,9 @@ export async function ensureStaticBoards(opts?: {
 }): Promise<void> {
   if (opts?.force) {
     clearStaticBoardsRetry();
+  } else if (get(staticBoardsPhase).phase === "error") {
+    // A failed load stays failed until the user chooses Try again.
+    return;
   }
   if (staticBoardsMatchCurrentVersions()) return;
   // Backoff after a stale/failed fetch — skip whether boards loaded or not.
@@ -578,7 +581,6 @@ export async function ensureStaticBoards(opts?: {
         phase: "error",
         retained: staticBoardsRetained(),
       });
-      scheduleStaticBoardsRetry();
       throw err;
     }
   })();

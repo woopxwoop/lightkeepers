@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { get } from "svelte/store";
-import { createCharacterGoal, emptyGoalsState } from "../calculator-goals.ts";
+import { createCharacterGoal, emptyGoalsState, MAX_CALCULATOR_GOALS } from "../calculator-goals.ts";
 import { goalsDocSpec } from "../sync/goals-doc.ts";
 import { memorySlotStorage, retainUntilStored } from "../sync/storage.ts";
 import { createSyncedDoc } from "../sync/synced-doc.ts";
@@ -142,6 +142,29 @@ describe("migrateLegacyGoals", () => {
     assert.deepEqual(
       (storage.read("lk:goals:guest") as Slot).data.goals,
       [],
+    );
+  });
+
+  it("keeps a legacy-only goal when the slot is already full", () => {
+    const storage = memorySlotStorage();
+    const goals = Array.from({ length: MAX_CALCULATOR_GOALS }, (_, i) =>
+      createCharacterGoal("Zhongli", { id: `full-${i}` }),
+    );
+    storage.write("lk:goals:guest", {
+      v: 1,
+      data: { ...emptyGoalsState(), goals, selectedId: goals[0]?.id ?? null },
+    });
+    storage.write("calculatorGoals", legacy);
+    assert.equal(migrateLegacyGoals(storage), null);
+    assert.equal(
+      (storage.read("calculatorGoals") as typeof legacy).goals[0]?.id,
+      "g1",
+    );
+    const slot = storage.read("lk:goals:guest") as Slot;
+    assert.equal(slot.data.goals.length, MAX_CALCULATOR_GOALS);
+    assert.equal(
+      slot.data.goals.some((goal) => goal.id === "g1"),
+      false,
     );
   });
 

@@ -993,4 +993,39 @@ describe("durable questions", () => {
     await synced.idle();
     assert.equal(server.rows.has("a"), true);
   });
+
+  it("an answer for an earlier conflict does not resolve its replacement", async () => {
+    const { synced, signIn, server, view } = setup({ ask: true });
+    server.put("a", ["base"]);
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["first"]);
+    await synced.commit(doc("mine"));
+    await synced.idle();
+    const first = view().remote;
+    assert.deepEqual(first?.items, ["first"]);
+    server.put("a", ["second"]);
+    await synced.refresh();
+    await synced.idle();
+    assert.deepEqual(view().remote?.items, ["second"]);
+    const result = await synced.resolve("remote", first ?? undefined);
+    assert.equal(result.status, "unchanged");
+    assert.deepEqual(view().data.items, ["mine"]);
+    assert.deepEqual(view().remote?.items, ["second"]);
+  });
+
+  it("a delete for A does not remove the row when the session is B", async () => {
+    const { synced, signIn, server } = setup();
+    signIn("a");
+    await synced.idle();
+    server.put("a", ["cloud"]);
+    const release = server.hold();
+    const removed = synced.discardServer();
+    server.session = "b";
+    release();
+    const result = await removed;
+    assert.equal(result.removed, false);
+    assert.equal(server.rows.has("a"), true);
+    await synced.idle();
+  });
 });

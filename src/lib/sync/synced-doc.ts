@@ -174,8 +174,10 @@ export interface SyncedDoc<T> {
   /**
    * Answers status `ask`: keep this device's copy, or take the server's.
    * "Keep mine" sends, so it returns the same outcome as `commit`.
+   * `expected` is the other copy the user was shown. A conflict that
+   * replaced it is left unanswered.
    */
-  resolve(choice: "local" | "remote"): Promise<CommitOutcome>;
+  resolve(choice: "local" | "remote", expected?: T): Promise<CommitOutcome>;
   /**
    * Replace the active account's copy with the guest slot's (the roster
    * "upload this device" choice). The only cross-account copy. Callers
@@ -787,10 +789,13 @@ export function createSyncedDoc<T>(
       return enqueue(() => pull(account));
     },
 
-    resolve(choice) {
+    resolve(choice, expected) {
       const account = requireActive();
       const ask = stateOf(account).ask ?? slotOf(account).ask;
       if (!ask) return Promise.resolve({ status: "unchanged", account });
+      if (expected !== undefined && !spec.equal(ask.remote, expected)) {
+        return Promise.resolve({ status: "unchanged", account });
+      }
       if (account === null && ask.source !== "device") {
         return Promise.resolve({ status: "unchanged", account });
       }
@@ -846,7 +851,7 @@ export function createSyncedDoc<T>(
         if (account !== active) return;
         const before = slotOf(account).data;
         try {
-          const res = await transport.remove();
+          const res = await transport.remove(account);
           if (res.status !== "removed") {
             outcome = { removed: false, message: res.message };
             return;

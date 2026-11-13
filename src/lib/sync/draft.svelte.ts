@@ -60,6 +60,11 @@ export type SyncedDraft<T, D> = {
   readonly status: SyncStatus;
   readonly error: string | null;
   /**
+   * Bumps whenever the editor copy is replaced. A save that restores the
+   * previous copy checks this so a newer edit or Cancel is left in place.
+   */
+  readonly revision: number;
+  /**
    * Store and send the draft. `kept` means the submitted edit stayed in
    * the editor. It is false when this save did not take it.
    */
@@ -87,6 +92,14 @@ export function useSyncedDraft<T, D = T>(
   let saving = $state(false);
   /** Account the draft belongs to. `undefined` until the view has been shown. */
   let account: string | null | undefined = undefined;
+  /**
+   * How many times this draft's account has been entered, including a return
+   * to an account that was already active. An in-flight save from the earlier
+   * visit must not apply when the id matches again.
+   */
+  let activation = 0;
+  /** Replacements of the editor copy. See `SyncedDraft.revision`. */
+  let revision = 0;
   /** JSON of the projection last adopted, before `keepLocal`. */
   let followedKey = "";
 
@@ -100,6 +113,7 @@ export function useSyncedDraft<T, D = T>(
     const detached = clone(projected);
     const current = untrack(() => draft);
     const kept = opts.keepLocal ? opts.keepLocal(current, detached) : detached;
+    revision += 1;
     draft = kept;
     base = clone(kept);
     baseDoc = clone(data);
@@ -112,10 +126,12 @@ export function useSyncedDraft<T, D = T>(
     if (view.status === "loading" && !untrack(() => hydrated)) return;
     const switched = view.account !== account;
     const pinned = opts.pinned?.() ?? false;
+    const busy = saving;
     if (switched) {
       account = view.account;
+      activation += 1;
       opts.onSwitch?.();
-    } else if (untrack(() => saving) || unsaved || pinned) {
+    } else if (busy || unsaved || pinned) {
       return;
     }
     const key = JSON.stringify(projected);
@@ -128,6 +144,7 @@ export function useSyncedDraft<T, D = T>(
       return draft;
     },
     set draft(next) {
+      revision += 1;
       draft = next;
     },
     get baseline() {
@@ -151,6 +168,9 @@ export function useSyncedDraft<T, D = T>(
     get error() {
       return live.current.error;
     },
+    get revision() {
+      return revision;
+    },
 
     async save() {
       if (saving || live.current.account !== account) {
@@ -162,6 +182,7 @@ export function useSyncedDraft<T, D = T>(
       }
       saving = true;
       const owner = account;
+      const generation = activation;
       try {
         // Capture before the await; edits made while it runs stay unsaved.
         // Inside the try so a throw still clears `saving`.
@@ -170,7 +191,11 @@ export function useSyncedDraft<T, D = T>(
         const payload = opts.fromDraft(sent, basedOn);
         const result = await doc.commit(payload, { basedOn });
         // An account switch already replaced the draft.
-        if (account !== owner || result.account !== account) {
+        if (
+          account !== owner ||
+          activation !== generation ||
+          result.account !== account
+        ) {
           return { ...result, kept: false };
         }
         // Edits made while this ran stay unsaved. The snapshot that was
@@ -204,7 +229,10 @@ export function useSyncedDraft<T, D = T>(
 
     cancel() {
       if (live.current.account === account) adopt(live.current.data);
-      else draft = clone(untrack(() => base));
+      else {
+        revision += 1;
+        draft = clone(untrack(() => base));
+      }
     },
   };
 }

@@ -94,14 +94,18 @@ export function migrateLegacyGoals(
       );
       const ids = new Set(slot.data.goals.map((goal) => goal.id));
       const missing = legacyState.goals.filter((goal) => !ids.has(goal.id));
-      // The slot already holds these goals. The legacy keys can go.
       if (missing.length > 0) {
+        const mergedState = parseGoalsState({
+          goals: [...slot.data.goals, ...missing],
+          selectedId: slot.data.selectedId ?? legacyState.selectedId,
+        });
+        const retained = new Set(mergedState.goals.map((goal) => goal.id));
+        // Normalization dropped a legacy goal (the slot is full). Leave the
+        // old keys so that goal is still there on the next load.
+        if (missing.some((goal) => !retained.has(goal.id))) return null;
         const merged: SyncSlot<CalculatorGoalsState> = {
           ...slot,
-          data: parseGoalsState({
-            goals: [...slot.data.goals, ...missing],
-            selectedId: slot.data.selectedId ?? legacyState.selectedId,
-          }),
+          data: mergedState,
           dirty: slot.dirty || missing.length > 0,
         };
         const stored = storage.write(key, merged);
@@ -109,9 +113,14 @@ export function migrateLegacyGoals(
       }
     }
   }
+  clearLegacyGoalsKeys(storage);
+  return null;
+}
+
+/** Drop the pre-slot keys once their goals are in a slot. */
+export function clearLegacyGoalsKeys(storage: SlotStorage): void {
   storage.remove(LEGACY_GOALS_KEY);
   storage.remove(LEGACY_RECOVERY_KEY);
-  return null;
 }
 
 /** The old recovery record's agreed copy, or null when unreadable. */
@@ -146,7 +155,9 @@ export function goalsSync(): SyncedDoc<CalculatorGoalsState> {
     const pending = migrateLegacyGoals(storage);
     instance = createSyncedDoc(goalsDocSpec, {
       storage: pending
-        ? retainUntilStored(storage, pending.key, pending.slot)
+        ? retainUntilStored(storage, pending.key, pending.slot, () =>
+            clearLegacyGoalsKeys(storage),
+          )
         : storage,
       transport: fetchTransport(goalsDocSpec.endpoint, goalsDocSpec.field),
     });
@@ -177,10 +188,10 @@ export function watchGoalsConflicts(): () => void {
     if (get(sync.view).account !== view.account) return;
     if (get(sync.view).status !== "ask") return;
     if (choice === "keep-local") {
-      await sync.resolve("local");
+      await sync.resolve("local", remote);
       return;
     }
-    if (choice === "keep-remote") await sync.resolve("remote");
+    if (choice === "keep-remote") await sync.resolve("remote", remote);
   }
 
   reopenGoalsConflict = () => {

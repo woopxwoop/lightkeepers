@@ -16,7 +16,7 @@ import {
   rosterOwnedFrom,
 } from "../sync/roster-doc.ts";
 import { createSyncedDoc } from "../sync/synced-doc.ts";
-import { migrateLegacyRoster } from "./roster-sync.ts";
+import { migrateLegacyRoster, clearLegacyRosterKeys } from "./roster-sync.ts";
 
 const character = (name_id: string, released_at = "2020-09-28") =>
   ({ name_id, name: name_id, released_at }) as unknown as Character;
@@ -160,7 +160,9 @@ describe("migrateLegacyRoster", () => {
     const pending = migrateLegacyRoster(storage);
     assert.ok(pending);
     const doc = createSyncedDoc(rosterDocSpec, {
-      storage: retainUntilStored(storage, pending.key, pending.slot),
+      storage: retainUntilStored(storage, pending.key, pending.slot, () =>
+        clearLegacyRosterKeys(storage),
+      ),
       transport: {
         read: async () => ({ status: "error", message: "unavailable" }),
         write: async () => ({ status: "error", message: "unavailable" }),
@@ -180,13 +182,17 @@ describe("migrateLegacyRoster", () => {
       ),
       ["Albedo"],
     );
-    migrateLegacyRoster(storage);
     assert.equal(storage.read("charactersOwned"), null);
+    storage.write("lk:roster:guest", {
+      v: 1,
+      data: [],
+      dirty: false,
+      server: { state: "unseen" },
+    });
+    migrateLegacyRoster(storage);
     assert.deepEqual(
-      (storage.read("lk:roster:guest") as Slot).data.map(
-        (entry) => entry.name_id,
-      ),
-      ["Albedo"],
+      (storage.read("lk:roster:guest") as Slot).data,
+      [],
     );
     doc.dispose();
   });

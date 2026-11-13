@@ -147,14 +147,24 @@ export function useGoalsDraft(): GoalsDraft {
       const mark = switches;
       const previous = sync.draft;
       sync.draft = next;
+      const owned = sync.revision;
       try {
         const result = await this.save();
         // The switch already installed the new account's draft.
         if (switches !== mark) return null;
-        if (!result.kept) sync.draft = previous;
+        // An edit or Cancel during this save replaced the editor copy.
+        if (!result.kept && sync.revision === owned && sameGoals(sync.draft, next)) {
+          sync.draft = previous;
+        }
         return result;
       } catch (err) {
-        if (switches === mark) sync.draft = previous;
+        if (
+          switches === mark &&
+          sync.revision === owned &&
+          sameGoals(sync.draft, next)
+        ) {
+          sync.draft = previous;
+        }
         throw err;
       }
     },

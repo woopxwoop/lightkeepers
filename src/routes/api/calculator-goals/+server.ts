@@ -19,6 +19,7 @@ import {
   requireExpectedAccount,
   requireCalculatorGoals,
   requireJsonObject,
+  requireMatchingAccount,
   requireUser,
 } from "#lib/server/request-validation.js";
 
@@ -65,6 +66,8 @@ export const DELETE: RequestHandler = async ({
 }) => {
   await enforceApiRateLimit({ request, getClientAddress });
   const user = requireUser(locals);
+  const body = await requireJsonObject(request);
+  requireMatchingAccount(body.account, user.id);
 
   const { error: err } = await serverDb
     .from("user_calculator_goals")

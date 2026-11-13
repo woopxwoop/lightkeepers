@@ -148,9 +148,9 @@ function jittered(
       await ticks();
       return res;
     },
-    async remove() {
+    async remove(account) {
       await ticks();
-      const res = await transport.remove();
+      const res = await transport.remove(account);
       await ticks();
       return res;
     },
