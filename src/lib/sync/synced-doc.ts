@@ -21,6 +21,7 @@
  */
 
 import { writable, type Readable } from "svelte/store";
+import { decideReconcile, type Ask } from "#lib/sync/reconcile.js";
 import type { SlotStorage } from "#lib/sync/storage.js";
 import type { SyncTransport } from "#lib/sync/transport.js";
 
@@ -111,9 +112,10 @@ export interface SyncedDoc<T> {
    * edits leave the device (with `resolve("local")` and `adoptGuest`).
    * `commit(get(view).data)` sends edits that are already unsent.
    *
-   * `basedOn` is the view data a page draft started from. If the slot moved
-   * since (another surface saved, or a read landed), the draft is merged
-   * onto the current data with `spec.merge` instead of replacing it.
+   * `basedOn` is the view data a page draft started from; it defaults to
+   * the data this tab last showed. If the slot moved since (another surface
+   * or tab saved, or a read landed), the draft is merged onto the current
+   * data with `spec.merge` instead of replacing it.
    *
    * Saving while status is `ask` answers it: this copy wins.
    *
@@ -150,6 +152,17 @@ export type SyncedDocDeps = {
   transport: SyncTransport;
   /** 409 → merge → retry rounds before giving up for now. */
   maxConflictRetries?: number;
+  /** Every request outcome and reconcile rule, for debugging and tests. */
+  trace?: (event: SyncTraceEvent) => void;
+};
+
+export type SyncTraceEvent = {
+  /** The spec's `key`. */
+  doc: string;
+  account: string;
+  step: "read" | "write" | "reconcile";
+  /** The outcome, or the reconcile rule that fired. */
+  detail: string;
 };
 
 /** Typed identity for specs, so a spec is checked where it is declared. */
@@ -169,16 +182,6 @@ type Transient<T> = {
   ask: Ask<T> | null;
 };
 
-/**
- * An open question. `local` is set when `remote` is this device's stored copy,
- * not the server's: answering keeps that copy's own base and unsent state.
- */
-type Ask<T> = {
-  remote: T;
-  rev: string | null;
-  local?: { base: T | null; dirty: boolean };
-};
-
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -191,6 +194,8 @@ export function createSyncedDoc<T>(
 ): SyncedDoc<T> {
   const { storage, transport } = deps;
   const maxConflictRetries = deps.maxConflictRetries ?? 3;
+  const emit = (event: Omit<SyncTraceEvent, "doc">) =>
+    deps.trace?.({ doc: spec.key, ...event });
 
   const slots = new Map<string, SyncSlot<T>>();
   const transients = new Map<string, Transient<T>>();
@@ -301,14 +306,19 @@ export function createSyncedDoc<T>(
     return slotOf(account).dirty ? "dirty" : "synced";
   }
 
+  /** What this tab last showed: the default base of a `commit`. */
+  let shown: { account: string | null; data: T } | null = null;
+
   /** Only the active account is ever shown. */
   function publish(account: string | null): void {
     if (account !== active) return;
     const state = stateOf(account);
+    const data = slotOf(account).data;
+    shown = { account, data };
     view.set({
       ready: true,
       account,
-      data: slotOf(account).data,
+      data,
       status: statusOf(account),
       dirty: account !== null && slotOf(account).dirty,
       error: state.error,
@@ -335,10 +345,9 @@ export function createSyncedDoc<T>(
   // ── Reconcile a server copy into an account's slot ──────────────────────
 
   /**
-   * Fold a server copy into the slot. A read passes `continueSave: null`
-   * and never sends: unsent edits are merged onto the new server copy and
-   * stay unsent until the user saves. A conflict during a save passes the
-   * retry count so that save can finish with the merged list.
+   * Fold a server copy into the slot. The decision is `decideReconcile`
+   * (`reconcile.ts`); this applies it. A read passes `continueSave: null`
+   * and never sends on its own; a rejected save passes its retry count.
    */
   function reconcile(
     account: string,
@@ -346,138 +355,59 @@ export function createSyncedDoc<T>(
     rev: string | null,
     continueSave: number | null,
   ): void {
-    const slot = slotOf(account);
-    const finishSave = (dirty: boolean) => {
-      if (dirty && continueSave !== null) schedulePush(account, continueSave);
-    };
-
-    // This device holds nothing of the account's own yet (first read here).
-    const untouched =
-      !slot.dirty && slot.base === null && spec.equal(slot.data, spec.empty());
-    const guest = slotOf(null);
-    const offerGuest =
-      continueSave === null &&
-      untouched &&
-      !spec.equal(guest.data, spec.empty());
-
-    if (wire === null || rev === null) {
-      // No server copy: guest data becomes the account's first copy without
-      // asking. There is nothing to overwrite or compare. The guest slot is
-      // emptied so another account cannot silently take the same data later.
-      if (offerGuest) {
-        storeSlot(account, { ...slot, data: guest.data, dirty: true });
-        storeSlot(null, emptySlot());
-        schedulePush(account, 0);
-        return;
-      }
-      const dirty = slot.dirty || !spec.equal(slot.data, spec.empty());
-      // `base` stays: a copy that existed and was deleted is remembered, so a
-      // later read does not take this device's copy for a first upload.
-      storeSlot(account, { ...slot, baseRev: null, dirty });
-      // The server never had a copy and this device never saw one: what is
-      // here is the account's first copy, sent without asking. A copy that
-      // existed and was deleted (base set) stays unsent until the user saves.
-      if (continueSave === null && slot.base === null && dirty) {
-        schedulePush(account, 0);
-        return;
-      }
-      finishSave(dirty);
-      return;
-    }
-
-    const remote = spec.fromWire(wire, slot.data);
-
-    // Guest data meets an account that already has a server copy. The spec
-    // decides: a merge (kept unsent for the user to save) or "ask". The guest
-    // slot is emptied either way; it has been offered to this account.
-    if (offerGuest) {
-      storeSlot(null, emptySlot());
-      if (!spec.equal(guest.data, remote)) {
-        const merged = spec.merge(null, guest.data, remote);
-        if (merged === "ask") {
-          storeSlot(account, {
-            ...slot,
-            data: guest.data,
-            base: remote,
-            baseRev: rev,
-            dirty: true,
-          });
-          setState(account, { ask: { remote, rev } });
-          return;
-        }
-        storeSlot(account, {
-          ...slot,
-          data: merged,
-          base: remote,
-          baseRev: rev,
-          dirty: !spec.equal(merged, remote),
-        });
-        return;
-      }
-    }
-
-    // Matching data still owes an unsent attachment (the GOOD inventory):
-    // stay unsent on the new revision. A rejected save retries now; the
-    // push a commit already queued finds the slot still dirty.
-    if (
-      slot.dirty &&
-      attachments.has(account) &&
-      spec.equal(slot.data, remote)
-    ) {
-      storeSlot(account, { ...slot, base: remote, baseRev: rev });
-      finishSave(true);
-      return;
-    }
-
-    // Nothing unsent, or the unsent edits already match: take the server copy.
-    if (!slot.dirty || spec.equal(slot.data, remote)) {
-      storeSlot(account, {
-        ...slot,
-        data: remote,
-        base: remote,
-        baseRev: rev,
-        dirty: false,
-      });
-      return;
-    }
-
-    // The server has not moved since our base. Nothing to merge.
-    if (rev === slot.baseRev) {
-      finishSave(true);
-      return;
-    }
-
-    const merged = spec.merge(slot.base, slot.data, remote);
-    if (merged === "ask") {
-      setState(account, { ask: { remote, rev } });
-      return;
-    }
-    const dirty = !spec.equal(merged, remote);
-    storeSlot(account, {
-      ...slot,
-      data: merged,
-      base: remote,
-      baseRev: rev,
-      dirty,
+    const plan = decideReconcile(spec, {
+      slot: slotOf(account),
+      guest: slotOf(null),
+      wire,
+      rev,
+      continueSave,
+      attachmentPending: attachments.has(account),
     });
-    finishSave(dirty);
+    emit({ account, step: "reconcile", detail: plan.rule });
+    if (plan.slot) storeSlot(account, plan.slot);
+    if (plan.clearGuest) storeSlot(null, emptySlot());
+    if (plan.ask) setState(account, { ask: plan.ask });
+    if (plan.push !== null) schedulePush(account, plan.push);
   }
 
   // ── Tasks (run only from the queue) ──────────────────────────────────────
 
+  /**
+   * A server copy answers the slot it was asked for only while the slot's
+   * server revision has not moved. Another tab shares the slot and its own
+   * queue: if it read or wrote meanwhile, it already knows a server state at
+   * least as recent, and the older copy would read as removed edits.
+   */
+  function serverViewMoved(account: string, askedAt: string | null): boolean {
+    return slotOf(account).baseRev !== askedAt;
+  }
+
   async function pull(account: string): Promise<void> {
     // The cookie now belongs to someone else. Their own read is queued.
     if (account !== active) return;
+    const askedAt = slotOf(account).baseRev;
     setState(account, { busy: "read" });
     const res = await transport.read();
     setState(account, { busy: null });
     if (res.status === "error") {
+      emit({ account, step: "read", detail: `error: ${res.message}` });
       setState(account, { loaded: true, offline: true, error: res.message });
       return;
     }
     // Another session answered. The account switch queues its own read.
-    if (res.account !== null && res.account !== account) return;
+    if (res.account !== null && res.account !== account) {
+      emit({ account, step: "read", detail: "other-session" });
+      return;
+    }
     setState(account, { loaded: true, offline: false, error: null });
+    if (
+      serverViewMoved(account, askedAt) &&
+      res.rev !== slotOf(account).baseRev
+    ) {
+      emit({ account, step: "read", detail: "stale" });
+      return;
+    }
+    emit({ account, step: "read", detail: `ok ${res.rev}` });
     reconcile(account, res.wire, res.rev, null);
   }
 
@@ -499,6 +429,7 @@ export function createSyncedDoc<T>(
     setState(account, { busy: null });
 
     if (res.status === "written") {
+      emit({ account, step: "write", detail: `written ${res.rev}` });
       if (attachments.get(account) === attach) attachments.delete(account);
       const now = slotOf(account);
       const dirty = !spec.equal(now.data, sent);
@@ -509,12 +440,22 @@ export function createSyncedDoc<T>(
     }
     if (res.status === "conflict") {
       if (attempt >= maxConflictRetries) {
+        emit({ account, step: "write", detail: "conflict: gave up" });
         setState(account, { error: "Sync conflict — try again" });
         return;
       }
+      // Another tab moved the slot past the copy this rejection carries:
+      // retry on what it learned instead of merging an older copy.
+      if (serverViewMoved(account, slot.baseRev)) {
+        emit({ account, step: "write", detail: "conflict: stale, retry" });
+        schedulePush(account, attempt + 1);
+        return;
+      }
+      emit({ account, step: "write", detail: `conflict ${res.rev}` });
       reconcile(account, res.wire, res.rev, attempt + 1);
       return;
     }
+    emit({ account, step: "write", detail: `error: ${res.message}` });
     setState(account, { error: res.message });
   }
 
@@ -570,7 +511,10 @@ export function createSyncedDoc<T>(
         });
       }
       let data = next;
-      const basedOn = opts?.basedOn;
+      // Without a draft base, the edit was made from what this tab showed.
+      // Another tab may have stored newer data since (its event is late).
+      const basedOn =
+        opts?.basedOn ?? (shown?.account === account ? shown.data : undefined);
       if (
         basedOn !== undefined &&
         !pendingAsk &&
