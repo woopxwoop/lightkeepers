@@ -172,9 +172,12 @@
       const countLabel = `${ownedCount} owned character${ownedCount === 1 ? "" : "s"}`;
 
       // The inventory rides along with this one roster write when signed in.
-      const result = await rosterSync().commit(rosterDocOf(next), {
-        attach: $rosterView.account !== null ? inventory : undefined,
-      });
+      const result = await rosterSync().commit(
+        rosterDocOf(next, $rosterView.data),
+        {
+          attach: $rosterView.account !== null ? inventory : undefined,
+        },
+      );
       pickingGood = false;
       // The inventory cache has no account key: never fill it for another.
       if (result.account !== $rosterView.account) {

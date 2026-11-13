@@ -5,7 +5,7 @@
  * Writes are compare-and-swap on that revision (design:
  * docs/design/account-sync.md, "Server contract"):
  *
- *   baseRev absent  → unconditional upsert (clients that predate `rev`)
+ *   baseRev absent  → legacy write: compare-and-swap retry, never a conflict
  *   baseRev null    → create only; an existing row is a conflict
  *   baseRev string  → update only while `updated_at` still equals it
  *
@@ -35,6 +35,14 @@ export type AccountDocWrite =
 
 /** PostgreSQL unique violation: create-only insert found an existing row. */
 const UNIQUE_VIOLATION = "23505";
+
+/**
+ * How many times a legacy write reloads the stored revision after losing a
+ * race. Legacy clients do not handle 409, so a lost race retries instead of
+ * reporting a conflict. Each attempt recomputes `rev` from the row it
+ * actually replaces.
+ */
+const LEGACY_WRITE_ATTEMPTS = 5;
 
 type Result<T> = PromiseLike<{ data: T; error: unknown }>;
 
@@ -97,6 +105,58 @@ function errorCode(err: unknown): string {
 }
 
 /**
+ * Replace the row for a client that predates `rev`. The write still always
+ * means "store this", but it lands with `update … where updated_at = stored`
+ * or an insert when no row exists. A zero-row update or duplicate insert
+ * means someone else committed; reload and try again so the revision that
+ * sticks is strictly after the one it replaced, even when the clock does not
+ * move. Giving up is an error, not a conflict.
+ */
+async function writeLegacy(
+  db: AccountDocDb,
+  table: AccountDocTable,
+  userId: string,
+  columns: Record<string, unknown>,
+  now: () => number,
+): Promise<AccountDocWrite> {
+  for (let attempt = 0; attempt < LEGACY_WRITE_ATTEMPTS; attempt++) {
+    const stored = await db
+      .from(table)
+      .select("updated_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (stored.error) return { status: "error", error: stored.error };
+    const storedRev = stored.data?.updated_at;
+    const base = typeof storedRev === "string" ? storedRev : undefined;
+    const updated_at = nextRev(base, now());
+
+    if (base === undefined) {
+      const { data, error } = await db
+        .from(table)
+        .insert({ ...columns, user_id: userId, updated_at })
+        .select("updated_at");
+      if (errorCode(error) === UNIQUE_VIOLATION) continue;
+      if (error) return { status: "error", error };
+      return { status: "written", rev: firstRev(data) ?? updated_at };
+    }
+
+    const { data, error } = await db
+      .from(table)
+      .update({ ...columns, updated_at })
+      .eq("user_id", userId)
+      .eq("updated_at", base)
+      .select("updated_at");
+    if (error) return { status: "error", error };
+    const rev = firstRev(data);
+    if (rev !== null) return { status: "written", rev };
+  }
+  return {
+    status: "error",
+    error: new Error("legacy write did not commit a new revision"),
+  };
+}
+
+/**
  * Read and conditional write for one account-document table. `now` is the
  * clock revisions are made from (tests fix it).
  */
@@ -132,26 +192,7 @@ export function accountDocTable(
       baseRev: BaseRev,
     ): Promise<AccountDocWrite> {
       if (baseRev === undefined) {
-        // Revise past the stored row, so this write's rev never equals the
-        // one it replaces (a write in the same millisecond, a clock behind).
-        const stored = await db
-          .from(table)
-          .select("updated_at")
-          .eq("user_id", userId)
-          .maybeSingle();
-        if (stored.error) return { status: "error", error: stored.error };
-        const storedRev = stored.data?.updated_at;
-        const updated_at = nextRev(
-          typeof storedRev === "string" ? storedRev : undefined,
-          now(),
-        );
-        const row = { ...columns, user_id: userId, updated_at };
-        const { data, error } = await db
-          .from(table)
-          .upsert(row, { onConflict: "user_id" })
-          .select("updated_at");
-        if (error) return { status: "error", error };
-        return { status: "written", rev: firstRev(data) ?? updated_at };
+        return writeLegacy(db, table, userId, columns, now);
       }
 
       const updated_at = nextRev(baseRev, now());

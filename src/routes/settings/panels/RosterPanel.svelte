@@ -55,7 +55,7 @@
   /** Editor copy of the roster document. Joined onto the catalog here. */
   const roster = useSyncedDraft(rosterSyncDoc, {
     toDraft: (doc) => rosterOwnedFrom(characters, doc),
-    fromDraft: rosterDocOf,
+    fromDraft: (owned, baseline) => rosterDocOf(owned, baseline),
     sameContent: (a, b) => rosterDocSpec.equal(rosterDocOf(a), rosterDocOf(b)),
   });
 
@@ -199,9 +199,7 @@
     new Map($charactersOwned.map((c) => [c.name_id, c])),
   );
 
-  let ownedCount = $derived(
-    roster.draft.filter((c) => c.isOwned).length,
-  );
+  let ownedCount = $derived(roster.draft.filter((c) => c.isOwned).length);
   let totalCount = $derived(roster.draft.length);
   let visibleOwnedCount = $derived(
     visibleCharacters.filter((c) => c.isOwned).length,

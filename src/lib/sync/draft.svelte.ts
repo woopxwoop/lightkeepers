@@ -25,8 +25,11 @@ import type {
 export type SyncedDraftOptions<T, D> = {
   /** Stored document → editor shape. */
   toDraft(data: T): D;
-  /** Editor shape → document. */
-  fromDraft(draft: D): T;
+  /**
+   * Editor shape → document. `baseline` is the stored document this draft
+   * started from, so fields the editor does not show can be kept.
+   */
+  fromDraft(draft: D, baseline: T): T;
   /** Sync-relevant equality. Ignores device-only parts (a selection). */
   sameContent(a: D, b: D): boolean;
   /** Carry device-only parts across an adopt (the editor's selection). */
@@ -153,12 +156,17 @@ export function useSyncedDraft<T, D = T>(
       // Capture before the await; edits made while it runs stay unsaved.
       const sent = clone(untrack(() => draft));
       const basedOn = clone(untrack(() => baseDoc));
-      const payload = opts.fromDraft(sent);
+      const payload = opts.fromDraft(sent, basedOn);
       try {
         const result = await doc.commit(payload, { basedOn });
         // An account switch already replaced the draft.
         if (account !== owner || result.account !== account) return result;
-        if (opts.sameContent(untrack(() => draft), sent)) {
+        if (
+          opts.sameContent(
+            untrack(() => draft),
+            sent,
+          )
+        ) {
           adopt(live.current.data);
         } else {
           base = sent;

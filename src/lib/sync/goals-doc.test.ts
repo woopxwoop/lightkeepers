@@ -5,7 +5,7 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseGoalsState } from "../calculator-goals.ts";
+import { MAX_CALCULATOR_GOALS, parseGoalsState } from "../calculator-goals.ts";
 import type {
   CalculatorGoal,
   CalculatorGoalsState,
@@ -80,6 +80,31 @@ describe("mergeGoals", () => {
   it("with no base, takes the union and local wins on shared ids", () => {
     const result = merged(null, list([edited(a), b]), list([a, c]));
     assert.deepEqual(result.goals, [edited(a), b, c]);
+  });
+
+  it("keeps both additions when they fit the cap", () => {
+    const baseGoals = Array.from({ length: MAX_CALCULATOR_GOALS - 2 }, (_, i) =>
+      goal(`b${i}`),
+    );
+    const result = merged(
+      list(baseGoals),
+      list([...baseGoals, goal("local")]),
+      list([...baseGoals, goal("remote")]),
+    );
+    assert.equal(result.goals.length, MAX_CALCULATOR_GOALS);
+    assert.deepEqual(ids(result).slice(-2), ["local", "remote"]);
+  });
+
+  it("asks instead of dropping additions that would pass the cap", () => {
+    const baseGoals = Array.from({ length: MAX_CALCULATOR_GOALS - 1 }, (_, i) =>
+      goal(`b${i}`),
+    );
+    const result = mergeGoals(
+      list(baseGoals),
+      list([...baseGoals, goal("local")]),
+      list([...baseGoals, goal("remote")]),
+    );
+    assert.equal(result, "ask");
   });
 
   it("keeps the local selection", () => {

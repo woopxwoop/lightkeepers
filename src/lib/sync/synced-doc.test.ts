@@ -509,6 +509,32 @@ describe("save answers and attachments", () => {
     assert.equal(view().status, "synced");
   });
 
+  it("an attachment queued onto an in-flight save of the same data is sent", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    const release = server.hold();
+    const first = synced.commit(doc("x", "y"));
+    for (
+      let i = 0;
+      i < 20 && !server.calls.some((call) => call.startsWith("write"));
+      i++
+    ) {
+      await Promise.resolve();
+    }
+    assert.ok(server.calls.some((call) => call.startsWith("write")));
+    const second = synced.commit(doc("x", "y"), { attach: { weapons: [1] } });
+    assert.deepEqual(server.attached, []);
+    release();
+    await first;
+    await second;
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["x", "y"]);
+    assert.deepEqual(server.attached, [{ weapons: [1] }]);
+    assert.equal(view().status, "synced");
+  });
+
   it("an attachment rides one write, even with no data change", async () => {
     const { synced, signIn, server } = setup();
     server.put("a", ["x"]);

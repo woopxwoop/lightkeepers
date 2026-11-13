@@ -6,13 +6,16 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { Character } from "../definitions.ts";
-import { memorySlotStorage } from "../sync/storage.ts";
+import { get } from "svelte/store";
+import type { Character, CharacterOwned } from "../definitions.ts";
+import { memorySlotStorage, retainUntilStored } from "../sync/storage.ts";
 import {
   parseRosterDoc,
+  rosterDocOf,
   rosterDocSpec,
   rosterOwnedFrom,
 } from "../sync/roster-doc.ts";
+import { createSyncedDoc } from "../sync/synced-doc.ts";
 import { migrateLegacyRoster } from "./roster-sync.ts";
 
 const character = (name_id: string, released_at = "2020-09-28") =>
@@ -40,6 +43,22 @@ describe("parseRosterDoc", () => {
       { name_id: "A", isOwned: false, progress: null },
     ];
     assert.equal(rosterDocSpec.equal(a, [...a].reverse()), true);
+  });
+});
+
+describe("rosterDocOf", () => {
+  it("keeps stored entries the draft's catalog does not cover", () => {
+    const doc = rosterDocOf(
+      [{ name_id: "Albedo", isOwned: false } as CharacterOwned],
+      [
+        { name_id: "Zhongli", isOwned: true, progress: null },
+        { name_id: "Albedo", isOwned: true, progress: null },
+      ],
+    );
+    assert.deepEqual(doc, [
+      { name_id: "Albedo", isOwned: false, progress: null },
+      { name_id: "Zhongli", isOwned: true, progress: null },
+    ]);
   });
 });
 
@@ -105,8 +124,46 @@ describe("migrateLegacyRoster", () => {
     const storage = memorySlotStorage();
     storage.write("charactersOwned", legacy);
     storage.failWrites = true;
-    migrateLegacyRoster(storage);
+    const pending = migrateLegacyRoster(storage);
+    assert.equal(pending?.key, "lk:roster:guest");
     assert.equal(storage.read("lk:roster:guest"), null);
     assert.notEqual(storage.read("charactersOwned"), null);
+  });
+
+  it("shows the unstored roster so a later save does not replace it with empty", async () => {
+    const storage = memorySlotStorage();
+    storage.write("charactersOwned", legacy);
+    storage.failWrites = true;
+    const pending = migrateLegacyRoster(storage);
+    assert.ok(pending);
+    const doc = createSyncedDoc(rosterDocSpec, {
+      storage: retainUntilStored(storage, pending.key, pending.slot),
+      transport: {
+        read: async () => ({ status: "error", message: "unavailable" }),
+        write: async () => ({ status: "error", message: "unavailable" }),
+      },
+    });
+    doc.setAccount(null);
+    assert.deepEqual(
+      get(doc.view).data.map((entry) => entry.name_id),
+      ["Albedo"],
+    );
+    storage.failWrites = false;
+    await doc.commit(get(doc.view).data);
+    assert.deepEqual(
+      (storage.read("lk:roster:guest") as Slot).data.map(
+        (entry) => entry.name_id,
+      ),
+      ["Albedo"],
+    );
+    migrateLegacyRoster(storage);
+    assert.equal(storage.read("charactersOwned"), null);
+    assert.deepEqual(
+      (storage.read("lk:roster:guest") as Slot).data.map(
+        (entry) => entry.name_id,
+      ),
+      ["Albedo"],
+    );
+    doc.dispose();
   });
 });

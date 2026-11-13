@@ -5,8 +5,11 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { get } from "svelte/store";
 import { createCharacterGoal, emptyGoalsState } from "../calculator-goals.ts";
-import { memorySlotStorage } from "../sync/storage.ts";
+import { goalsDocSpec } from "../sync/goals-doc.ts";
+import { memorySlotStorage, retainUntilStored } from "../sync/storage.ts";
+import { createSyncedDoc } from "../sync/synced-doc.ts";
 import { migrateLegacyGoals } from "./goals-sync.ts";
 
 const legacy = {
@@ -71,9 +74,41 @@ describe("migrateLegacyGoals", () => {
     const storage = memorySlotStorage();
     storage.write("calculatorGoals", legacy);
     storage.failWrites = true;
-    migrateLegacyGoals(storage);
+    const pending = migrateLegacyGoals(storage);
+    assert.equal(pending?.key, "lk:goals:guest");
     assert.equal(storage.read("lk:goals:guest"), null);
     assert.notEqual(storage.read("calculatorGoals"), null);
+  });
+
+  it("shows the unstored goals so a later save does not replace them with empty", async () => {
+    const storage = memorySlotStorage();
+    storage.write("calculatorGoals", legacy);
+    storage.failWrites = true;
+    const pending = migrateLegacyGoals(storage);
+    assert.ok(pending);
+    const doc = createSyncedDoc(goalsDocSpec, {
+      storage: retainUntilStored(storage, pending.key, pending.slot),
+      transport: {
+        read: async () => ({ status: "error", message: "unavailable" }),
+        write: async () => ({ status: "error", message: "unavailable" }),
+      },
+    });
+    doc.setAccount(null);
+    assert.equal(get(doc.view).data.goals[0]?.id, "g1");
+    assert.equal(storage.read("lk:goals:guest"), null);
+    storage.failWrites = false;
+    await doc.commit(get(doc.view).data);
+    assert.equal(
+      (storage.read("lk:goals:guest") as Slot).data.goals[0]?.id,
+      "g1",
+    );
+    migrateLegacyGoals(storage);
+    assert.equal(storage.read("calculatorGoals"), null);
+    assert.equal(
+      (storage.read("lk:goals:guest") as Slot).data.goals[0]?.id,
+      "g1",
+    );
+    doc.dispose();
   });
 
   it("never overwrites an existing slot", () => {

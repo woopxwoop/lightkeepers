@@ -515,9 +515,12 @@ export function createSyncedDoc<T>(
 
       if (res.status === "written") {
         emit({ account, step: "write", detail: `written ${res.rev}` });
+        // A commit during this write may have replaced the attachment.
+        // Drop it only when it is still the one this request carried.
         if (attachments.get(account) === attach) attachments.delete(account);
         const now = slotOf(account);
-        const dirty = !spec.equal(now.data, sent);
+        // Same document, but an attachment queued in flight has not been sent.
+        const dirty = !spec.equal(now.data, sent) || attachments.has(account);
         setState(account, { offline: false, error: null });
         // Edits made while this was in flight wait for their own Save.
         storeSlot(account, { ...now, server: tracked(sent, res.rev), dirty });
@@ -642,7 +645,8 @@ export function createSyncedDoc<T>(
           !spec.equal(data, base) ||
           attachments.has(account));
       storeSlot(account, { ...slot, data, dirty });
-      if (account === null) return Promise.resolve({ status: "local", account });
+      if (account === null)
+        return Promise.resolve({ status: "local", account });
       if (!dirty) return Promise.resolve({ status: "unchanged", account });
       setState(account, { error: null });
       return send(account);

@@ -186,13 +186,15 @@
   async function autofillCharacterTarget(nameId: string, goalId: string) {
     if (!catalog) return;
     const seq = ++autofillSeq;
+    // Edits assign a new state object, so identity means the draft moved.
+    const base = goals.state;
     const next = await autofillCharacterGoalState({
-      state: goals.state,
+      state: base,
       catalog,
       nameId,
       goalId,
     });
-    if (seq !== autofillSeq || !next) return;
+    if (seq !== autofillSeq || !next || goals.state !== base) return;
     commitGoals(next);
   }
 

@@ -13,6 +13,7 @@ import { goalsDocSpec } from "#lib/sync/goals-doc.js";
 import {
   browserSlotStorage,
   memorySlotStorage,
+  retainUntilStored,
   type SlotStorage,
 } from "#lib/sync/storage.js";
 import type { SyncSlot } from "#lib/sync/slot.js";
@@ -38,9 +39,14 @@ const LEGACY_RECOVERY_KEY = "calculatorGoalsRecovery";
  * and lets newer cloud changes win over untouched goals.
  *
  * The old keys are removed only once the slot is stored. A full storage
- * leaves them for the next load instead of losing the goals.
+ * leaves them for the next load instead of losing the goals. When the slot
+ * cannot be stored, the migrated slot is returned so this tab can show it
+ * until a write succeeds — an empty in-memory guest would let a later save
+ * create a slot and the next load would then delete the legacy copy.
  */
-export function migrateLegacyGoals(storage: SlotStorage): void {
+export function migrateLegacyGoals(
+  storage: SlotStorage,
+): { key: string; slot: SyncSlot<CalculatorGoalsState> } | null {
   const legacy = storage.read(LEGACY_GOALS_KEY);
   if (legacy !== null) {
     const recovery = storage.read(LEGACY_RECOVERY_KEY) as {
@@ -63,11 +69,12 @@ export function migrateLegacyGoals(storage: SlotStorage): void {
         server: base ? { state: "detached", base } : { state: "unseen" },
       };
       const stored = storage.write(key, slot);
-      if (!stored) return;
+      if (!stored) return { key, slot };
     }
   }
   storage.remove(LEGACY_GOALS_KEY);
   storage.remove(LEGACY_RECOVERY_KEY);
+  return null;
 }
 
 /** The old recovery record's agreed copy, or null when unreadable. */
@@ -98,9 +105,11 @@ export function goalsSync(): SyncedDoc<CalculatorGoalsState> {
   }
   if (!instance) {
     const storage = browserSlotStorage();
-    migrateLegacyGoals(storage);
+    const pending = migrateLegacyGoals(storage);
     instance = createSyncedDoc(goalsDocSpec, {
-      storage,
+      storage: pending
+        ? retainUntilStored(storage, pending.key, pending.slot)
+        : storage,
       transport: fetchTransport(goalsDocSpec.endpoint, goalsDocSpec.field),
     });
   }

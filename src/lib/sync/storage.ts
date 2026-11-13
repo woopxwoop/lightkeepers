@@ -64,6 +64,43 @@ export function browserSlotStorage(): SlotStorage {
   };
 }
 
+/**
+ * Serve `value` at `key` until that key is stored. A failed migration write
+ * uses this so the tab shows the migrated document instead of an empty one.
+ * A later successful write of the key drops the hold; until then the legacy
+ * copy stays the source for the next load.
+ */
+export function retainUntilStored(
+  storage: SlotStorage,
+  key: string,
+  value: unknown,
+): SlotStorage {
+  let retained: unknown = value;
+  return {
+    read(k) {
+      if (k === key && retained !== undefined && storage.read(k) === null) {
+        return retained;
+      }
+      return storage.read(k);
+    },
+    write(k, v) {
+      const ok = storage.write(k, v);
+      if (ok && k === key) retained = undefined;
+      return ok;
+    },
+    remove(k) {
+      if (k === key) retained = undefined;
+      storage.remove(k);
+    },
+    watch(onChange) {
+      return storage.watch((k, v) => {
+        if (k === key) retained = undefined;
+        onChange(k, v);
+      });
+    },
+  };
+}
+
 /** In-memory storage for tests and SSR. `emit` simulates another tab. */
 export function memorySlotStorage(): SlotStorage & {
   entries: Map<string, string>;

@@ -98,7 +98,7 @@ describe("accountDocTable.read", () => {
 });
 
 describe("accountDocTable.write", () => {
-  it("upserts without a condition when baseRev is absent", async () => {
+  it("inserts when a legacy write finds no row", async () => {
     const { db, calls } = fakeDb({ data: [{ updated_at: NEXT }], error: null });
     const result = await accountDocTable(db, "user_rosters").write(
       "u1",
@@ -106,8 +106,131 @@ describe("accountDocTable.write", () => {
       undefined,
     );
     assert.deepEqual(result, { status: "written", rev: NEXT });
-    assert.equal(calls[1].op, "upsert");
+    assert.equal(calls[0].op, "select");
+    assert.equal(calls[1].op, "insert");
     assert.equal(calls[1].row?.user_id, "u1");
+  });
+
+  it("retries a legacy write when the stored revision moves", async () => {
+    let rev: string | null = REV;
+    let raced = false;
+    const db = {
+      from() {
+        const eqs: [string, string][] = [];
+        let op = "";
+        let row: Record<string, unknown> | undefined;
+        const chain = {
+          eq(column: string, value: string) {
+            eqs.push([column, value]);
+            return chain;
+          },
+          select() {
+            return chain;
+          },
+          maybeSingle() {
+            return chain;
+          },
+          then<R>(resolve: (value: { data: unknown; error: unknown }) => R) {
+            if (op === "update") {
+              const expected = eqs.find(
+                ([column]) => column === "updated_at",
+              )?.[1];
+              if (expected !== rev) {
+                return Promise.resolve({ data: [], error: null }).then(resolve);
+              }
+              if (!raced) {
+                raced = true;
+                rev = (row?.updated_at as string) ?? rev;
+                return Promise.resolve({ data: [], error: null }).then(resolve);
+              }
+              rev = (row?.updated_at as string) ?? rev;
+              return Promise.resolve({
+                data: [{ updated_at: rev }],
+                error: null,
+              }).then(resolve);
+            }
+            return Promise.resolve({
+              data: rev === null ? null : { updated_at: rev },
+              error: null,
+            }).then(resolve);
+          },
+        };
+        return {
+          select() {
+            op = "select";
+            return chain;
+          },
+          insert(next: Record<string, unknown>) {
+            op = "insert";
+            row = next;
+            return chain;
+          },
+          update(next: Record<string, unknown>) {
+            op = "update";
+            row = next;
+            return chain;
+          },
+          upsert(next: Record<string, unknown>) {
+            op = "upsert";
+            row = next;
+            return chain;
+          },
+        };
+      },
+    } as unknown as AccountDocDb;
+    const clock = () => Date.parse(REV);
+    const result = await accountDocTable(db, "user_rosters", clock).write(
+      "u1",
+      { roster: [1] },
+      undefined,
+    );
+    assert.equal(result.status, "written");
+    assert.equal(raced, true);
+    const written = result.status === "written" ? result.rev : "";
+    assert.notEqual(written, REV);
+    assert.equal(written, new Date(Date.parse(REV) + 2).toISOString());
+  });
+
+  it("a legacy write that keeps losing the race is an error, not a conflict", async () => {
+    const db = {
+      from() {
+        const chain = {
+          eq() {
+            return chain;
+          },
+          select() {
+            return chain;
+          },
+          maybeSingle() {
+            return chain;
+          },
+          then<R>(resolve: (value: { data: unknown; error: unknown }) => R) {
+            return Promise.resolve({
+              data: { updated_at: REV },
+              error: null,
+            }).then(resolve);
+          },
+        };
+        return {
+          select: () => chain,
+          insert: () => chain,
+          update: () => ({
+            eq: () => ({
+              eq: () => ({
+                select: () => Promise.resolve({ data: [], error: null }),
+              }),
+            }),
+          }),
+          upsert: () => chain,
+        };
+      },
+    } as unknown as AccountDocDb;
+    const result = await accountDocTable(db, "user_rosters").write(
+      "u1",
+      { roster: [] },
+      undefined,
+    );
+    assert.equal(result.status, "error");
   });
 
   it("a legacy upsert in the same millisecond still changes the revision", async () => {
@@ -141,7 +264,12 @@ describe("accountDocTable.write", () => {
           pending = next;
           return chain;
         };
-        return { select: () => chain, upsert: write, insert: write, update: write };
+        return {
+          select: () => chain,
+          upsert: write,
+          insert: write,
+          update: write,
+        };
       },
     } as unknown as AccountDocDb;
     const clock = () => Date.parse(REV) + 1;

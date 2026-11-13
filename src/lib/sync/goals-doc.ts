@@ -3,7 +3,11 @@
  * Not wired yet — phase 2 moves Planner, Audit, and the itinerary onto it.
  */
 
-import { emptyGoalsState, parseGoalsState } from "#lib/calculator-goals.js";
+import {
+  emptyGoalsState,
+  MAX_CALCULATOR_GOALS,
+  parseGoalsState,
+} from "#lib/calculator-goals.js";
 import type {
   CalculatorGoal,
   CalculatorGoalsState,
@@ -33,6 +37,10 @@ function sameGoals(a: CalculatorGoalsState, b: CalculatorGoalsState): boolean {
  *
  * Order: `local` order, then goals only `remote` added. `selectedId` stays
  * local.
+ *
+ * If that list would exceed `MAX_CALCULATOR_GOALS`, return `"ask"` before
+ * normalization. `parseGoalsState` would otherwise drop the tail, and
+ * reconciliation would write the shortened list.
  */
 export function mergeGoals(
   base: CalculatorGoalsState | null,
@@ -64,6 +72,7 @@ export function mergeGoals(
     if (!baseById.has(goal.id)) goals.push(goal);
   }
 
+  if (goals.length > MAX_CALCULATOR_GOALS) return "ask";
   return parseGoalsState({ goals, selectedId: local.selectedId });
 }
 

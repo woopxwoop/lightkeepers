@@ -59,9 +59,24 @@ export function parseRosterDoc(raw: unknown): RosterDoc {
   return [...byId.values()].sort(byNameId);
 }
 
-/** Entries for an edited roster (Settings save, GOOD import). */
-export function rosterDocOf(owned: CharacterOwned[]): RosterDoc {
-  return parseRosterDoc(owned);
+/**
+ * Entries for an edited roster (Settings save, GOOD import).
+ *
+ * `retained` is the stored document the edit started from. Rows whose
+ * `name_id` is not in `owned` are characters the current catalog does not
+ * show; the draft cannot edit them, so the save keeps their ownership and
+ * progress. Catalog rows keep the draft's values.
+ */
+export function rosterDocOf(
+  owned: CharacterOwned[],
+  retained: RosterDoc = [],
+): RosterDoc {
+  const current = parseRosterDoc(owned);
+  if (retained.length === 0) return current;
+  const covered = new Set(current.map((entry) => entry.name_id));
+  const kept = retained.filter((entry) => !covered.has(entry.name_id));
+  if (kept.length === 0) return current;
+  return [...current, ...kept].sort(byNameId);
 }
 
 /**

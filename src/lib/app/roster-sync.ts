@@ -26,6 +26,7 @@ import type { SyncSlot } from "#lib/sync/slot.js";
 import {
   browserSlotStorage,
   memorySlotStorage,
+  retainUntilStored,
   type SlotStorage,
 } from "#lib/sync/storage.js";
 import {
@@ -38,6 +39,7 @@ import {
   cancelRosterSyncConflict,
   promptRosterSyncConflict,
 } from "#lib/app/roster-sync-conflict.js";
+import { clearRosterInventory } from "#lib/app/roster-inventory.js";
 
 /** Keys from before per-account slots. Read once, then removed. */
 const LEGACY_ROSTER_KEY = "charactersOwned";
@@ -54,8 +56,12 @@ const LEGACY_SAVED_FLAG_KEY = "hasSavedRoster";
  * what the old sign-in sync did. An unstamped roster goes to the guest slot.
  * An existing slot is never overwritten. The old keys are removed only once
  * the slot is stored, so a full storage keeps the roster for the next load.
+ * When the slot cannot be stored, the migrated slot is returned so this tab
+ * shows it until a write succeeds.
  */
-export function migrateLegacyRoster(storage: SlotStorage): void {
+export function migrateLegacyRoster(
+  storage: SlotStorage,
+): { key: string; slot: SyncSlot<RosterDoc> } | null {
   const legacy = parseRosterDoc(storage.read(LEGACY_ROSTER_KEY));
   if (legacy.length > 0) {
     const rawOwner = storage.read(LEGACY_OWNER_KEY);
@@ -70,12 +76,13 @@ export function migrateLegacyRoster(storage: SlotStorage): void {
         server: { state: "unseen" },
       };
       const stored = storage.write(key, slot);
-      if (!stored) return;
+      if (!stored) return { key, slot };
     }
   }
   storage.remove(LEGACY_ROSTER_KEY);
   storage.remove(LEGACY_OWNER_KEY);
   storage.remove(LEGACY_SAVED_FLAG_KEY);
+  return null;
 }
 
 /** Reads the bare owner string the old code stored (not JSON). */
@@ -111,9 +118,11 @@ export function rosterSync(): SyncedDoc<RosterDoc> {
   }
   if (!instance) {
     const storage = browserSlotStorage();
-    migrateLegacyRoster(legacyAwareStorage(storage));
+    const pending = migrateLegacyRoster(legacyAwareStorage(storage));
     instance = createSyncedDoc(rosterDocSpec, {
-      storage,
+      storage: pending
+        ? retainUntilStored(storage, pending.key, pending.slot)
+        : storage,
       transport: fetchTransport(rosterDocSpec.endpoint, rosterDocSpec.field),
     });
   }
@@ -152,7 +161,7 @@ export function watchRosterConflicts(
   characters: () => Character[],
 ): () => void {
   const sync = rosterSync();
-  /** Account + server copy already shown, so one question shows once. */
+  /** Account + server copy already prompted, while that conflict is still open. */
   let shown = "";
 
   async function ask(view: SyncView<RosterDoc>) {
@@ -166,6 +175,10 @@ export function watchRosterConflicts(
     );
     if (get(sync.view).account !== view.account) return;
     if (choice === "use-cloud") {
+      // The cached GOOD slices belong to the roster being replaced. Drop
+      // them before taking the server copy so the next read fetches it.
+      // A device-vs-device question is not the server inventory.
+      if (view.remoteSource !== "device") clearRosterInventory();
       await sync.resolve("remote");
       return;
     }
@@ -194,7 +207,13 @@ export function watchRosterConflicts(
       shown = "";
       cancelRosterSyncConflict();
     }
-    if (view.status !== "ask" || !view.remote) return;
+    // Dedup only while this conflict is still unanswered. Once status
+    // leaves `ask`, the same server copy must be able to ask again.
+    if (view.status !== "ask") {
+      shown = "";
+      return;
+    }
+    if (!view.remote) return;
     const key = JSON.stringify([view.account, view.remote]);
     if (key === shown) return;
     shown = key;
