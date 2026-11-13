@@ -15,7 +15,6 @@
   import {
     aggregateGoalCosts,
     cloneGoal,
-    emptyGoalsState,
     findGoal,
     moveGoal,
     parseGoalsState,
@@ -23,19 +22,8 @@
     starredGoals,
     toggleGoalStarred,
   } from "#lib/calculator-goals.js";
-  import {
-    autofillCharacterGoalState,
-    goalsHaveUnsavedChanges,
-    hydrateGoalsState,
-    readGoalsIfChanged,
-    saveGoalsState,
-  } from "#lib/calculator-goals-lifecycle.js";
-  import {
-    captureGoals,
-    goalsLocalRevision,
-    readGoalsLocal,
-  } from "#lib/calculator-goals-snapshot.js";
-  import { authClient } from "#lib/auth-client.js";
+  import { autofillCharacterGoalState } from "#lib/calculator-goals-lifecycle.js";
+  import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import type { Character, CharacterPortraitRef } from "#lib/definitions.js";
   import {
     appendCatalogCharacterGoal,
@@ -85,10 +73,7 @@
   } = $props();
 
   const plannerPath = resolve("tools/planner");
-  const session = authClient.useSession();
 
-  let goalsState = $state<CalculatorGoalsState>(emptyGoalsState());
-  let hydrated = $state(false);
   let catalog = $state<UpgradeCostsCatalog | null>(null);
   let catalogError = $state("");
   let weekExpanded = $state(false);
@@ -98,30 +83,23 @@
   let pickQuery = $state("");
   let sortOwnedFirst = $state(true);
   let configuringId = $state<string | null>(null);
-  let pendingRemoveIds = $state(new Set<string>());
   let addError = $state("");
   let autofillSeq = 0;
-  let savedSnapshot = $state("");
-  let isSaving = $state(false);
-  let saveError = $state("");
+  /** The editable goals: follows storage, merges on Save (`goals-draft`). */
+  const draft = useGoalsDraft();
+  /** Why the last read or send failed. */
+  let saveError = $derived(draft.error ?? "");
 
-  let goals = $derived(goalsState.goals);
+  let goals = $derived(draft.state.goals);
   let savedGoals = $derived.by(() => {
-    if (!savedSnapshot) return goalsState.goals;
+    if (!draft.savedJson) return draft.state.goals;
     try {
-      return parseGoalsState(JSON.parse(savedSnapshot) as unknown).goals;
+      return parseGoalsState(JSON.parse(draft.savedJson) as unknown).goals;
     } catch {
-      return goalsState.goals;
+      return draft.state.goals;
     }
   });
-  let hasUnsavedChanges = $derived(
-    goalsHaveUnsavedChanges({
-      hydrated,
-      state: goalsState,
-      savedSnapshot,
-      pendingRemoveIds,
-    }),
-  );
+  let hasUnsavedChanges = $derived(draft.unsaved);
   let focusedGoals = $derived(starredGoals(savedGoals));
 
   function ensureCatalog() {
@@ -136,35 +114,32 @@
   }
 
   function applySavedGoals(next: CalculatorGoalsState) {
-    goalsState = next;
+    draft.state = next;
     ensureCatalog();
   }
 
-  function commitSaved(next: CalculatorGoalsState) {
-    const pending = captureGoals(next);
-    savedSnapshot = pending.json;
-    applySavedGoals(pending.state);
-  }
-
   function cancelEdits() {
-    try {
-      applySavedGoals(parseGoalsState(JSON.parse(savedSnapshot) as unknown));
-      pendingRemoveIds = new Set();
-      saveError = "";
-    } catch {
-      /* ignore */
-    }
+    draft.cancel();
   }
 
-  function closePicker() {
-    if (hasUnsavedChanges) cancelEdits();
+  function finishClose() {
     pickingGoals = false;
     picking = null;
     pickQuery = "";
     configuringId = null;
-    pendingRemoveIds = new Set();
+    draft.pendingRemoveIds = new Set();
     addError = "";
-    saveError = "";
+  }
+
+  /** Backdrop, Escape, and the close button leave a dirty editor open. */
+  function closePicker() {
+    if (hasUnsavedChanges) return;
+    finishClose();
+  }
+
+  function cancelAndClose() {
+    cancelEdits();
+    finishClose();
   }
 
   function openPicker() {
@@ -175,51 +150,27 @@
   }
 
   onMount(() => {
+    // The day column moves at midnight. Re-reading goals on return is the
+    // layout's job (one refresh for every surface).
     const onVisible = () => {
-      if (document.visibilityState !== "visible") return;
-      weekdayTick += 1;
-      if (hydrated && !hasUnsavedChanges && !pickingGoals) {
-        const pending = readGoalsIfChanged(savedSnapshot);
-        if (pending) commitSaved(pending.state);
-      }
+      if (document.visibilityState === "visible") weekdayTick += 1;
     };
     document.addEventListener("visibilitychange", onVisible);
-
-    void (async () => {
-      try {
-        const { data: sess } = await authClient.getSession();
-        const pending = await hydrateGoalsState(Boolean(sess));
-        commitSaved(pending.state);
-      } catch {
-        commitSaved(readGoalsLocal());
-      }
-      hydrated = true;
-      ensureCatalog();
-      void loadRosterWeapons().catch(() => {});
-    })();
-
+    ensureCatalog();
+    void loadRosterWeapons().catch(() => {});
     return () => document.removeEventListener("visibilitychange", onVisible);
   });
 
-  /** Same-tab sync when the planner page persists goals. */
-  $effect(() => {
-    void $goalsLocalRevision;
-    if (!hydrated || hasUnsavedChanges || pickingGoals) return;
-    const pending = readGoalsIfChanged(savedSnapshot);
-    if (!pending) return;
-    commitSaved(pending.state);
-  });
-
   function toggleStar(id: string) {
-    const current = findGoal(goalsState, id);
+    const current = findGoal(draft.state, id);
     if (!current) return;
-    applySavedGoals(replaceGoal(goalsState, toggleGoalStarred(current)));
+    applySavedGoals(replaceGoal(draft.state, toggleGoalStarred(current)));
   }
 
   function starAll() {
     applySavedGoals({
-      ...goalsState,
-      goals: goalsState.goals.map((g) => {
+      ...draft.state,
+      goals: draft.state.goals.map((g) => {
         const next = cloneGoal(g);
         next.starred = true;
         return next;
@@ -229,8 +180,8 @@
 
   function starNone() {
     applySavedGoals({
-      ...goalsState,
-      goals: goalsState.goals.map((g) => {
+      ...draft.state,
+      goals: draft.state.goals.map((g) => {
         const next = cloneGoal(g);
         delete next.starred;
         return next;
@@ -239,7 +190,7 @@
   }
 
   function reorderGoals(from: number, to: number) {
-    applySavedGoals(moveGoal(goalsState, from, to));
+    applySavedGoals(moveGoal(draft.state, from, to));
   }
 
   let ownedIds = $derived(ownedNameIds($charactersOwned));
@@ -251,7 +202,7 @@
     picking === "weapon" ? weaponOptions : characterOptions,
   );
   let configuringGoal = $derived(
-    configuringId ? findGoal(goalsState, configuringId) : null,
+    configuringId ? findGoal(draft.state, configuringId) : null,
   );
 
   function portraitFor(nameId: string) {
@@ -280,20 +231,22 @@
   async function autofillCharacterTarget(nameId: string, goalId: string) {
     if (!catalog) return;
     const seq = ++autofillSeq;
+    // Edits assign a new state object, so identity means the draft moved.
+    const base = draft.state;
     const next = await autofillCharacterGoalState({
-      state: goalsState,
+      state: base,
       catalog,
       nameId,
       goalId,
     });
-    if (seq !== autofillSeq || !next) return;
+    if (seq !== autofillSeq || !next || draft.state !== base) return;
     applySavedGoals(next);
   }
 
   function addCharacterWith(nameId: string) {
     if (!catalog) return;
     cancelPick();
-    const result = appendCatalogCharacterGoal(goalsState, catalog, nameId, {
+    const result = appendCatalogCharacterGoal(draft.state, catalog, nameId, {
       owned: $charactersOwned,
       weapons: getRosterWeaponsCached(),
       starred: true,
@@ -314,7 +267,7 @@
   function addWeaponWith(weaponId: number) {
     if (!catalog) return;
     cancelPick();
-    const result = appendCatalogWeaponGoal(goalsState, catalog, weaponId, {
+    const result = appendCatalogWeaponGoal(draft.state, catalog, weaponId, {
       owned: $charactersOwned,
       weapons: getRosterWeaponsCached(),
       starred: true,
@@ -329,7 +282,7 @@
   }
 
   function openConfigure(id: string) {
-    if (pendingRemoveIds.has(id)) return;
+    if (draft.pendingRemoveIds.has(id)) return;
     cancelPick();
     configuringId = id;
   }
@@ -341,35 +294,20 @@
   function deleteGoal(id: string) {
     if (configuringId === id) configuringId = null;
     addError = "";
-    const next = new Set(pendingRemoveIds);
+    const next = new Set(draft.pendingRemoveIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    pendingRemoveIds = next;
+    draft.pendingRemoveIds = next;
   }
 
   async function saveStars() {
-    if (isSaving || !hasUnsavedChanges) return;
-    isSaving = true;
-    saveError = "";
-    const result = await saveGoalsState({
-      state: goalsState,
-      pendingRemoveIds,
-      savedSnapshot,
-      cloud: Boolean($session.data),
-    });
-    if (!result.ok) {
-      saveError = result.message;
-      isSaving = false;
-      return;
-    }
-    pendingRemoveIds = new Set();
-    savedSnapshot = result.capture.json;
-    applySavedGoals(result.capture.state);
+    if (draft.saving || (!hasUnsavedChanges && !draft.unsent)) return;
+    const saved = await draft.save();
+    if (saved.status !== "sent" && saved.status !== "local") return;
     pickingGoals = false;
     picking = null;
     configuringId = null;
     addError = "";
-    isSaving = false;
   }
 
   let focusedMaterials = $derived.by((): Record<string, number> => {
@@ -436,13 +374,16 @@
   }
 </script>
 
-{#if hydrated && (goals.length > 0 || showEmpty)}
+{#if draft.hydrated && (goals.length > 0 || showEmpty)}
   {@const needsGoalSetup = goals.length === 0 || focusedGoals.length === 0}
   <section
     class="itinerary"
     class:itinerary-card={chrome === "card"}
     class:itinerary-empty-state={needsGoalSetup}
   >
+    {#if saveError && !pickingGoals}
+      <p class="sync-note" role="status">{saveError}</p>
+    {/if}
     {#if !needsGoalSetup && (showHeading || !hasDomainWeek)}
       <div class="itinerary-head">
         {#if showHeading}
@@ -658,11 +599,11 @@
   open={pickingGoals}
   {goals}
   {catalog}
-  dirty={hasUnsavedChanges}
-  saving={isSaving}
+  dirty={hasUnsavedChanges || draft.unsent}
+  saving={draft.saving}
   {saveError}
   {addError}
-  removedIds={pendingRemoveIds}
+  removedIds={draft.pendingRemoveIds}
   suspendKeys={picking !== null || configuringId !== null}
   onClose={closePicker}
   onStar={toggleStar}
@@ -674,7 +615,7 @@
   onConfigure={openConfigure}
   onRemove={deleteGoal}
   onSave={() => void saveStars()}
-  onCancel={closePicker}
+  onCancel={cancelAndClose}
 />
 <GoalConfigureModal
   open={configuringId !== null && !!configuringGoal}
@@ -684,7 +625,7 @@
   {weaponOptions}
   getCharacter={portraitFor}
   onClose={closeConfigure}
-  onChange={(next) => applySavedGoals(replaceGoal(goalsState, next))}
+  onChange={(next) => applySavedGoals(replaceGoal(draft.state, next))}
   onAutofillCharacter={(nameId, goalId) =>
     void autofillCharacterTarget(nameId, goalId)}
 />
@@ -724,6 +665,12 @@
     border-radius: var(--radius-lg);
     background: var(--background-mid);
     border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .sync-note {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: color-mix(in srgb, #e07070 85%, var(--foreground-color));
   }
 
   .itinerary-head {

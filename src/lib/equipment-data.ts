@@ -50,6 +50,12 @@ export const artifactSetByKey = new Map<string, ArtifactSetData>();
 /** Bumps when maps finish loading — subscribe in $derived for reactivity. */
 export const equipmentVersion = writable(0);
 
+/**
+ * True after a load fails. `equipmentVersion` stays on the last successful
+ * tables, so a failed first load is visible here instead of as "still loading".
+ */
+export const equipmentLoadFailed = writable(false);
+
 let weaponKeysByLength: string[] = [];
 let loadPromise: Promise<void> | null = null;
 
@@ -76,22 +82,34 @@ export function ensureEquipmentData(): Promise<void> {
       (artifactsMod as { default?: ArtifactSetData[] }).default ??
       (artifactsMod as unknown as ArtifactSetData[]);
 
+    const nextWeapons = new Map<string, WeaponData>();
+    const nextWeaponIds = new Map<number, WeaponData>();
+    for (const [key, value] of buildGoodKeyMap(weaponsRaw)) {
+      nextWeapons.set(key, value);
+      nextWeaponIds.set(value.id, value);
+    }
+    const nextSets = new Map<string, ArtifactSetData>();
+    for (const [key, value] of buildGoodKeyMap(artifactSetsRaw)) {
+      nextSets.set(key, value);
+    }
+    const nextKeys = [...nextWeapons.keys()].sort(
+      (a, b) => b.length - a.length,
+    );
+
     weaponByKey.clear();
     weaponById.clear();
-    for (const [key, value] of buildGoodKeyMap(weaponsRaw)) {
+    for (const [key, value] of nextWeapons) {
       weaponByKey.set(key, value);
       weaponById.set(value.id, value);
     }
     artifactSetByKey.clear();
-    for (const [key, value] of buildGoodKeyMap(artifactSetsRaw)) {
-      artifactSetByKey.set(key, value);
-    }
-    weaponKeysByLength = [...weaponByKey.keys()].sort(
-      (a, b) => b.length - a.length,
-    );
+    for (const [key, value] of nextSets) artifactSetByKey.set(key, value);
+    weaponKeysByLength = nextKeys;
+    equipmentLoadFailed.set(false);
     equipmentVersion.update((n) => n + 1);
   })().catch((err) => {
     loadPromise = null;
+    equipmentLoadFailed.set(true);
     throw err;
   });
 

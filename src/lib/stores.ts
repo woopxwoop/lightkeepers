@@ -43,8 +43,36 @@ export let abyssVersionNumber = -1;
 export let stygianVersionNumber = -1;
 
 export function setVersionNumbers(abyss: number, stygian: number) {
+  const previous = versionsForRosterRequest();
   abyssVersionNumber = abyss;
   stygianVersionNumber = stygian;
+  // Roster reads follow the board on screen. A layout-only advance keeps the
+  // applied cycle, so those results stay until that cycle actually changes.
+  // Reset to idle even from `ready`: Pulls only ensures from idle.
+  const next = versionsForRosterRequest();
+  if (previous.stygian >= 0 && next.stygian !== previous.stygian) {
+    invalidateNearMissTeams();
+  }
+  if (
+    previous.abyss >= 0 &&
+    previous.stygian >= 0 &&
+    (next.abyss !== previous.abyss || next.stygian !== previous.stygian) &&
+    get(teamsOwnedStatus) !== "idle"
+  ) {
+    invalidateTeamsOwned();
+  }
+  if (
+    staticBoardsAbyssVersion >= 0 &&
+    staticBoardsStygianVersion >= 0 &&
+    (staticBoardsAbyssVersion !== abyss ||
+      staticBoardsStygianVersion !== stygian) &&
+    get(staticBoardsPhase).phase === "current"
+  ) {
+    staticBoardsPhase.set({ phase: "stale" });
+    if (typeof globalThis.window !== "undefined") {
+      void ensureStaticBoards().catch(() => {});
+    }
+  }
 }
 
 /** Roster-keyed fetches must never post the unseeded -1 sentinel. */
@@ -290,36 +318,15 @@ export function areAnimationsEnabled(): boolean {
 export const faviconDataUri = readable("/lightkeepers-mark.png");
 
 // ── Character store ────────────────────────────────────────────────────────
+// Fed from the roster synced document by the root layout. Read-only elsewhere.
 export const charactersOwned = writable<CharacterOwned[]>([]);
 export const charactersHydrated = writable<boolean>(false);
 
-/** Whether the user has ever saved a roster. Persisted in localStorage. */
+/**
+ * The active account's roster slot holds a saved roster (the default roster
+ * is never stored). Fed by `feedRosterStores` (`#lib/app/roster-sync.js`).
+ */
 export const hasSavedRoster = writable<boolean>(false);
-
-export function initHasSavedRoster(): void {
-  try {
-    if (localStorage.getItem("hasSavedRoster") === "true") {
-      hasSavedRoster.set(true);
-      return;
-    }
-    // Persisted roster without the flag (cloud apply, older clients).
-    // Presence of `charactersOwned` means the user already configured ownership.
-    if (localStorage.getItem("charactersOwned")) {
-      setHasSavedRoster();
-      return;
-    }
-    hasSavedRoster.set(false);
-  } catch {
-    // localStorage unavailable — assume not saved
-  }
-}
-
-export function setHasSavedRoster(): void {
-  hasSavedRoster.set(true);
-  try {
-    localStorage.setItem("hasSavedRoster", "true");
-  } catch {}
-}
 
 // ── Abyss stores ──────────────────────────────────────────────────────────
 export const teamsOwned = writable<AbyssTeam[]>([]);
@@ -391,19 +398,57 @@ export const stygianEnemiesBoard =
   writable<StygianEnemies>(emptyStygianEnemies);
 export const stygianScheduleBoard = writable<StygianSchedule>(null);
 
-/** True after a successful /api/static boards fetch (or empty payload). */
-export const staticBoardsLoaded = writable(false);
+/**
+ * Static-board fetch. `current` matches the layout versions. `stale` is a
+ * previous cycle kept on screen while a backoff retry is scheduled. `error`
+ * keeps any teams already applied (`retained`) and shows that same warning.
+ */
+export type StaticBoardsPhase =
+  | { phase: "cold" }
+  | { phase: "loading" }
+  | { phase: "current" }
+  | { phase: "stale" }
+  | { phase: "error"; retained: boolean };
 
-/** Last warm-up failure; cleared on success or a new attempt. */
-export const staticBoardsError = writable<string | null>(null);
+export type StaticBoardsView =
+  | { kind: "loading" }
+  | { kind: "empty-error" }
+  | { kind: "board"; notice: "stale" | "retry" | null };
 
-/** True after a successful /api/teams fetch (or empty owned roster short-circuit). */
-export const teamsOwnedLoaded = writable(false);
+export const staticBoardsPhase = writable<StaticBoardsPhase>({ phase: "cold" });
+
+/** What Abyss, Stygian, Summary, and character teams should render. */
+export function staticBoardsView(phase: StaticBoardsPhase): StaticBoardsView {
+  if (phase.phase === "cold" || phase.phase === "loading") {
+    return { kind: "loading" };
+  }
+  if (phase.phase === "error" && !phase.retained) {
+    return { kind: "empty-error" };
+  }
+  if (phase.phase === "stale" || phase.phase === "error") {
+    return { kind: "board", notice: "stale" };
+  }
+  return { kind: "board", notice: null };
+}
+
+/**
+ * Owned-team fetch for `teamsOwnedRosterKey`.
+ * `ready` is the only state whose lists match that key — including the
+ * empty-roster short-circuit, whose key is `""`. `error` clears the lists
+ * and does not match any roster, so the next ensure retries.
+ */
+export type RosterFetchStatus = "idle" | "loading" | "ready" | "error";
+
+export const teamsOwnedStatus = writable<RosterFetchStatus>("idle");
 
 let staticBoardsInFlight: Promise<void> | null = null;
+/** Bumped by reset so an older fetch cannot write boards or schedule a retry. */
+let staticBoardsGeneration = 0;
 /** Versions the current allTeams* stores were fetched for. */
 let staticBoardsAbyssVersion = -1;
 let staticBoardsStygianVersion = -1;
+/** A payload was applied, including an empty board. */
+let staticBoardsApplied = false;
 /** Don't hammer /api/static while CDN/L1 is still on the previous cycle. */
 let staticBoardsRetryAfterMs = 0;
 let staticBoardsRetryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -413,10 +458,32 @@ const STATIC_BOARDS_RETRY_MAX_MS = 5 * 60_000;
 
 function staticBoardsMatchCurrentVersions(): boolean {
   return (
-    get(staticBoardsLoaded) &&
+    get(staticBoardsPhase).phase === "current" &&
     staticBoardsAbyssVersion === abyssVersionNumber &&
     staticBoardsStygianVersion === stygianVersionNumber
   );
+}
+
+function staticBoardsRetained(): boolean {
+  return staticBoardsApplied;
+}
+
+/** Drops board stores and a scheduled rollover retry. */
+export function resetStaticBoards(): void {
+  staticBoardsGeneration += 1;
+  clearStaticBoardsRetry();
+  staticBoardsInFlight = null;
+  staticBoardsAbyssVersion = -1;
+  staticBoardsStygianVersion = -1;
+  staticBoardsApplied = false;
+  invalidateTeamsOwned();
+  invalidateNearMissTeams();
+  allTeamsAbyss.set([]);
+  allTeamsStygian.set([]);
+  abyssEnemiesBoard.set(emptyAbyssEnemies);
+  stygianEnemiesBoard.set(emptyStygianEnemies);
+  stygianScheduleBoard.set(null);
+  staticBoardsPhase.set({ phase: "cold" });
 }
 
 function clearStaticBoardsRetry(): void {
@@ -463,35 +530,57 @@ export async function ensureStaticBoards(opts?: {
 }): Promise<void> {
   if (opts?.force) {
     clearStaticBoardsRetry();
+  } else if (get(staticBoardsPhase).phase === "error") {
+    // A failed load stays failed until the user chooses Try again.
+    return;
   }
   if (staticBoardsMatchCurrentVersions()) return;
   // Backoff after a stale/failed fetch — skip whether boards loaded or not.
   if (Date.now() < staticBoardsRetryAfterMs) return;
   if (staticBoardsInFlight) return staticBoardsInFlight;
 
-  staticBoardsError.set(null);
+  const phase = get(staticBoardsPhase);
+  const keepBoards =
+    phase.phase === "current" ||
+    phase.phase === "stale" ||
+    (phase.phase === "error" && phase.retained);
+  const generation = staticBoardsGeneration;
+  if (!keepBoards) staticBoardsPhase.set({ phase: "loading" });
+  else if (phase.phase === "current") staticBoardsPhase.set({ phase: "stale" });
 
   const pending = (async () => {
     try {
       const data = await fetchStaticBoardsPayload(false);
+      if (generation !== staticBoardsGeneration) return;
       if (applyStaticBoardsIfCurrent(data)) return;
 
       // Edge/CDN may still be serving the previous cycle — bust once.
       const fresh = await fetchStaticBoardsPayload(true);
+      if (generation !== staticBoardsGeneration) return;
       if (applyStaticBoardsIfCurrent(fresh)) return;
 
       // Still behind — show last cycle with honest stamps; match stays false.
       const abyssVer = fresh.latestAbyssVersion?.version_number;
       const stygianVer = fresh.latestStygianVersion?.version_number;
-      if (typeof abyssVer === "number" && typeof stygianVer === "number") {
+      // Never replace retained boards with an older cycle of either mode.
+      if (
+        generation === staticBoardsGeneration &&
+        typeof abyssVer === "number" &&
+        typeof stygianVer === "number" &&
+        abyssVer >= staticBoardsAbyssVersion &&
+        stygianVer >= staticBoardsStygianVersion
+      ) {
         applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
+        staticBoardsPhase.set({ phase: "stale" });
       }
+      if (generation !== staticBoardsGeneration) return;
       scheduleStaticBoardsRetry();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load team boards";
-      staticBoardsError.set(message);
-      scheduleStaticBoardsRetry();
+      if (generation !== staticBoardsGeneration) return;
+      staticBoardsPhase.set({
+        phase: "error",
+        retained: staticBoardsRetained(),
+      });
       throw err;
     }
   })();
@@ -540,12 +629,33 @@ function applyStaticBoardsIfCurrent(data: StaticBoardsPayload): boolean {
       return false;
     }
     applyStaticBoardsPayload(data, abyssVer, stygianVer);
+    staticBoardsPhase.set({ phase: "current" });
     return true;
   }
 
   // No version payload — keep whatever layout has now, still seed boards.
   applyStaticBoardsPayload(data, currentAbyss, currentStygian);
+  staticBoardsPhase.set({ phase: "current" });
   return true;
+}
+
+/**
+ * Versions for roster-keyed reads of the boards currently on screen.
+ * While a stale cycle is retained, that cycle's versions — not the newer
+ * layout numbers — are what `/api/teams`, `/api/nearmiss`, and cheap clears use.
+ */
+export function rosterBoardVersions(): { abyss: number; stygian: number } {
+  return versionsForRosterRequest();
+}
+
+function versionsForRosterRequest(): { abyss: number; stygian: number } {
+  if (staticBoardsAbyssVersion >= 0 && staticBoardsStygianVersion >= 0) {
+    return {
+      abyss: staticBoardsAbyssVersion,
+      stygian: staticBoardsStygianVersion,
+    };
+  }
+  return { abyss: abyssVersionNumber, stygian: stygianVersionNumber };
 }
 
 function applyStaticBoardsPayload(
@@ -553,6 +663,7 @@ function applyStaticBoardsPayload(
   abyssVer: number,
   stygianVer: number,
 ): void {
+  const previous = versionsForRosterRequest();
   allTeamsAbyss.set(data.allTeamsAbyss ?? []);
   allTeamsStygian.set(data.allTeamsStygian ?? []);
   abyssEnemiesBoard.set(data.abyssEnemies ?? emptyAbyssEnemies);
@@ -565,27 +676,54 @@ function applyStaticBoardsPayload(
     Math.max(abyssVer, abyssVersionNumber),
     Math.max(stygianVer, stygianVersionNumber),
   );
-  staticBoardsError.set(null);
-  staticBoardsLoaded.set(true);
+  const next = versionsForRosterRequest();
+  if (previous.abyss !== next.abyss || previous.stygian !== next.stygian) {
+    if (get(teamsOwnedStatus) !== "idle") invalidateTeamsOwned();
+    if (get(nearMissStatus) !== "idle") invalidateNearMissTeams();
+  }
   if (
     staticBoardsAbyssVersion === abyssVersionNumber &&
     staticBoardsStygianVersion === stygianVersionNumber
   ) {
     clearStaticBoardsRetry();
   }
+  staticBoardsApplied = true;
 }
 
 // ── Near-miss stores ───────────────────────────────────────────────────────
 export const nearMissStygianTeams = writable<NearMissStygianTeam[]>([]);
-export const nearMissStygianLoaded = writable(false);
 export const nearMissPairTeams = writable<NearMissPairTeam[]>([]);
-export const nearMissPairLoaded = writable(false);
+/** Both near-miss lists move together. `ready` stays until invalidate. */
+export const nearMissStatus = writable<RosterFetchStatus>("idle");
 
 // ── Request ID counters ────────────────────────────────────────────────────
 // Discard responses from superseded requests (fast roster changes).
 let teamsRequestId = 0;
 let nearMissRequestId = 0;
 let teamsInFlight: Promise<void> | null = null;
+/** Roster key of `teamsInFlight`, when a fetch is running. */
+let teamsInFlightKey = "";
+/**
+ * Request key the current lists were fetched for: both board versions plus
+ * the owned name_ids. Meaningful only while `teamsOwnedStatus` is `ready`.
+ * The roster portion is `""` when the roster owns nobody.
+ */
+let teamsOwnedRosterKey = "";
+
+/** Stable key for the owned slice. Order-independent. */
+function ownedTeamsRosterKey(owned: CharacterOwned[]): string {
+  return owned
+    .filter((character) => character.isOwned)
+    .map((character) => character.name_id)
+    .sort()
+    .join("\0");
+}
+
+/** Roster plus the board versions the lists were fetched against. */
+function ownedTeamsRequestKey(owned: CharacterOwned[]): string {
+  const versions = versionsForRosterRequest();
+  return `${versions.abyss}:${versions.stygian}:${ownedTeamsRosterKey(owned)}`;
+}
 
 // ── Write functions ────────────────────────────────────────────────────────
 
@@ -595,7 +733,9 @@ let teamsInFlight: Promise<void> | null = null;
 export function invalidateTeamsOwned(): void {
   teamsRequestId++;
   teamsInFlight = null;
-  teamsOwnedLoaded.set(false);
+  teamsInFlightKey = "";
+  teamsOwnedRosterKey = "";
+  teamsOwnedStatus.set("idle");
   teamsOwned.set([]);
   teamsOwnedStygian.set([]);
 }
@@ -608,8 +748,22 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
   assertVersionsSeeded();
   const id = ++teamsRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
+  const versions = versionsForRosterRequest();
+  const requestKey = ownedTeamsRequestKey(owned);
 
-  teamsOwnedLoaded.set(false);
+  teamsOwnedStatus.set("loading");
+
+  // Empty `p_name_ids` is the all-teams sentinel (/api/static). Posting it
+  // here would store every meta team as "owned" and the solver would seat
+  // characters this roster does not have.
+  if (characters.length === 0) {
+    if (id !== teamsRequestId) return;
+    teamsOwned.set([]);
+    teamsOwnedStygian.set([]);
+    teamsOwnedRosterKey = requestKey;
+    teamsOwnedStatus.set("ready");
+    return;
+  }
 
   try {
     const { abyssTeams, stygianTeams } = await postJson<{
@@ -617,22 +771,22 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
       stygianTeams: StygianTeam[];
     }>("/api/teams", {
       characters,
-      abyssVersion: abyssVersionNumber,
-      stygianVersion: stygianVersionNumber,
+      abyssVersion: versions.abyss,
+      stygianVersion: versions.stygian,
     });
 
     if (id !== teamsRequestId) return; // superseded
     teamsOwned.set(abyssTeams);
     teamsOwnedStygian.set(stygianTeams);
-    teamsOwnedLoaded.set(true);
+    teamsOwnedRosterKey = requestKey;
+    teamsOwnedStatus.set("ready");
   } catch (err) {
     console.error("[stores] writeTeamsOwned failed:", err);
     if (id !== teamsRequestId) return;
-    // Don't leave Abyss/Stygian on an infinite Loading gate — empty owned
-    // lists let the solver fall through to allTeams / pull CTA.
     teamsOwned.set([]);
     teamsOwnedStygian.set([]);
-    teamsOwnedLoaded.set(true);
+    teamsOwnedRosterKey = "";
+    teamsOwnedStatus.set("error");
     throw err;
   }
 }
@@ -642,15 +796,25 @@ export async function writeTeamsOwned(owned: CharacterOwned[]): Promise<void> {
  * No-ops if already loaded; coalesces concurrent callers.
  */
 export async function ensureTeamsOwned(owned: CharacterOwned[]): Promise<void> {
-  if (get(teamsOwnedLoaded)) return;
-  if (teamsInFlight) return teamsInFlight;
+  const requestKey = ownedTeamsRequestKey(owned);
+  if (get(teamsOwnedStatus) === "ready" && teamsOwnedRosterKey === requestKey) {
+    return;
+  }
+  if (teamsInFlight && teamsInFlightKey === requestKey) return teamsInFlight;
+  // A fetch already running for a different roster is superseded inside
+  // writeTeamsOwned (request id). Don't join that promise — its body is the
+  // earlier roster, including the pre-seed empty list.
   const pending = writeTeamsOwned(owned);
   teamsInFlight = pending;
+  teamsInFlightKey = requestKey;
   // Consume rejection on the finally-derived promise so cleanup cannot
   // surface as an unhandled rejection; callers still await `pending`.
   void pending
     .finally(() => {
-      if (teamsInFlight === pending) teamsInFlight = null;
+      if (teamsInFlight === pending) {
+        teamsInFlight = null;
+        teamsInFlightKey = "";
+      }
     })
     .catch(() => {});
   return pending;
@@ -663,8 +827,7 @@ export async function ensureTeamsOwned(owned: CharacterOwned[]): Promise<void> {
 export function invalidateNearMissTeams(): void {
   nearMissRequestId++;
   nearMissInFlight = null;
-  nearMissStygianLoaded.set(false);
-  nearMissPairLoaded.set(false);
+  nearMissStatus.set("idle");
   nearMissStygianTeams.set([]);
   nearMissPairTeams.set([]);
 }
@@ -679,9 +842,9 @@ export async function writeNearMissTeams(
   assertVersionsSeeded();
   const id = ++nearMissRequestId;
   const characters = owned.filter((c) => c.isOwned).map((c) => c.name_id);
+  const versions = versionsForRosterRequest();
 
-  nearMissStygianLoaded.set(false);
-  nearMissPairLoaded.set(false);
+  nearMissStatus.set("loading");
 
   try {
     const { nearMissTeams, nearMissPairs } = await postJson<{
@@ -689,18 +852,20 @@ export async function writeNearMissTeams(
       nearMissPairs: NearMissPairTeam[];
     }>("/api/nearmiss", {
       characters,
-      stygianVersion: stygianVersionNumber,
+      stygianVersion: versions.stygian,
       minPmi: 0.3,
     });
 
     if (id !== nearMissRequestId) return; // superseded
     nearMissStygianTeams.set(nearMissTeams);
     nearMissPairTeams.set(nearMissPairs);
-    nearMissStygianLoaded.set(true);
-    nearMissPairLoaded.set(true);
+    nearMissStatus.set("ready");
   } catch (err) {
     console.error("[stores] writeNearMissTeams failed:", err);
-    // Leave loaded=false so ensureNearMissTeams can retry; rethrow for callers.
+    if (id !== nearMissRequestId) return;
+    nearMissStygianTeams.set([]);
+    nearMissPairTeams.set([]);
+    nearMissStatus.set("error");
     throw err;
   }
 }
@@ -714,7 +879,7 @@ let nearMissInFlight: Promise<void> | null = null;
 export async function ensureNearMissTeams(
   owned: CharacterOwned[],
 ): Promise<void> {
-  if (get(nearMissStygianLoaded) && get(nearMissPairLoaded)) return;
+  if (get(nearMissStatus) === "ready") return;
   if (nearMissInFlight) return nearMissInFlight;
   const pending = writeNearMissTeams(owned);
   nearMissInFlight = pending;
@@ -725,6 +890,21 @@ export async function ensureNearMissTeams(
     .catch(() => {});
   return pending;
 }
+
+/**
+ * A roster write can land outside Abyss / Pulls. Drop ready lists so the
+ * next ensure — which no-ops while status is `ready` — fetches the new roster.
+ */
+let rosterFetchIdentity = "";
+charactersOwned.subscribe((owned) => {
+  const next = ownedTeamsRosterKey(owned);
+  if (next === rosterFetchIdentity) return;
+  rosterFetchIdentity = next;
+  // The identity check above leaves `error` in place for this roster.
+  // A different roster leaves `error` so idle-only callers fetch it.
+  if (get(teamsOwnedStatus) !== "idle") invalidateTeamsOwned();
+  if (get(nearMissStatus) !== "idle") invalidateNearMissTeams();
+});
 
 // ── Stygian tier list (roster-independent) ─────────────────────────────────
 export const tierList = writable<TierListPayload | null>(null);

@@ -1,6 +1,6 @@
 /**
  * Calculator goals — create, normalize, and aggregate upgrade costs.
- * Persistence lives in `calculator-goals-snapshot.ts`.
+ * Storage and sync live in `#lib/app/goals-sync.js`.
  */
 
 import {

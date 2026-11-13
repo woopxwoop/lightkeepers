@@ -355,7 +355,7 @@ const MIN_ABYSS_USAGE_TOTAL = 0.001;
 /** Drop near-zero meta teams — shown as "0.0% usage" and not worth recommending. */
 export const MIN_USAGE_RATE = 0.1;
 /** Bump when solver policy changes so page memos cannot reuse stale boards. */
-export const SOLVER_REVISION = 7;
+export const SOLVER_REVISION = 8;
 
 function teamUsageRate(team: { usage_rate?: number | null }): number {
   const value = Number(team.usage_rate);
@@ -460,16 +460,28 @@ export function solveStygian(
   );
 }
 
+/** Drop teams that include anyone outside the roster. Owned passes must not trust the list. */
+function fullyOwnedTeams<T extends { members: string[] | null }>(
+  teams: T[],
+  ownedNames: Set<string>,
+): T[] {
+  return teams.filter(
+    (team) => getMissingForTeam(team, ownedNames).length === 0,
+  );
+}
+
 export function solveAbyssWithFallback(
   ownedTeams: AbyssTeam[],
   allTeams: AbyssTeam[],
   ownedNames: Set<string>,
   count = 3,
 ): Solution<AbyssAssignment>[] {
-  const owned = solveAbyss(ownedTeams, count).map((solution) => ({
-    ...solution,
-    isFallback: false,
-  }));
+  const owned = solveAbyss(fullyOwnedTeams(ownedTeams, ownedNames), count).map(
+    (solution) => ({
+      ...solution,
+      isFallback: false,
+    }),
+  );
 
   const completeOwned = owned.filter(
     (solution) => solution.unfilled.length === 0,
@@ -508,7 +520,10 @@ export function solveStygianWithFallback(
   ownedNames: Set<string>,
   count = 3,
 ): Solution<StygianAssignment>[] {
-  const owned = solveStygian(ownedTeams, count).map((solution) => ({
+  const owned = solveStygian(
+    fullyOwnedTeams(ownedTeams, ownedNames),
+    count,
+  ).map((solution) => ({
     ...solution,
     isFallback: false,
   }));
@@ -681,7 +696,9 @@ export function solveStygianHybrid(
   c0r0Pairs: ReadonlySet<string>,
   count = 3,
 ): Solution<StygianAssignment>[] {
-  const validOwned = byUsageDesc(ownedTeams.filter(isRecommendableTeam));
+  const validOwned = byUsageDesc(
+    fullyOwnedTeams(ownedTeams, ownedNames).filter(isRecommendableTeam),
+  );
   const candidates = validOwned.slice(0, CANDIDATE_DEPTH);
 
   const ownedSolutions = deduplicateSolutions(

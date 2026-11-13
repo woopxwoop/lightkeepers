@@ -4,6 +4,8 @@
  * Starts the one-time JSON load and tracks `equipmentVersion` so leaf
  * components re-resolve weapons once the data arrives, without any
  * caller-side `{#key $equipmentVersion}` wrapper.
+ * A failed load leaves the version on the last successful tables and sets
+ * `failed`, so a first load that never succeeds is still finished.
  *
  * Call from component initialization (these register an `onMount` hook).
  */
@@ -12,6 +14,7 @@ import { onMount } from "svelte";
 import { get } from "svelte/store";
 import {
   ensureEquipmentData,
+  equipmentLoadFailed,
   equipmentVersion,
   weaponByKey,
   weaponIconSrc,
@@ -22,28 +25,39 @@ import {
 import { artifactIconUrl } from "#lib/asset-urls.js";
 
 export type EquipmentData = {
-  /** Bumps when the tables finish loading. Read it to take a dependency. */
+  /** Bumps when a load commits. Unchanged when a load fails. */
   readonly version: number;
+  /** True when the latest load failed. Version still means the last success. */
+  readonly failed: boolean;
 };
 
 /** Trigger the lazy load and track load completion. */
 export function useEquipmentData(): EquipmentData {
   let version = $state(get(equipmentVersion));
+  let failed = $state(get(equipmentLoadFailed));
 
   onMount(() => {
-    const unsubscribe = equipmentVersion.subscribe((next) => {
+    const unsubscribeVersion = equipmentVersion.subscribe((next) => {
       version = next;
+    });
+    const unsubscribeFailed = equipmentLoadFailed.subscribe((next) => {
+      failed = next;
     });
     void ensureEquipmentData().catch((error) => {
       console.error("[equipment-data] load failed:", error);
-      version += 1;
     });
-    return unsubscribe;
+    return () => {
+      unsubscribeVersion();
+      unsubscribeFailed();
+    };
   });
 
   return {
     get version() {
       return version;
+    },
+    get failed() {
+      return failed;
     },
   };
 }
@@ -65,10 +79,12 @@ export function useWeapon(weaponKey: () => string): WeaponLookup {
   return {
     get weapon() {
       void equipment.version;
+      void equipment.failed;
       return weaponByKey.get(weaponKey()) ?? null;
     },
     get icon() {
       void equipment.version;
+      void equipment.failed;
       return weaponIconSrc(weaponKey());
     },
   };
@@ -91,11 +107,13 @@ export function useArtifactSet(setKey: () => string): ArtifactSetLookup {
   return {
     get set() {
       void equipment.version;
+      void equipment.failed;
       const key = setKey();
       return key ? (artifactSetByKey.get(key) ?? null) : null;
     },
     get icon() {
       void equipment.version;
+      void equipment.failed;
       const key = setKey();
       if (!key) return null;
       const set = artifactSetByKey.get(key);

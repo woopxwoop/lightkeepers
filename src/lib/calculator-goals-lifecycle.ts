@@ -1,26 +1,18 @@
 /**
- * Shared calculator-goals lifecycle for planner + itinerary.
- * Hydration, same-tab sync, pending removes, save, character autofill.
+ * Pure goal-editor helpers shared by Planner, itinerary, and audit:
+ * pending removes, the unsaved check, and character autofill.
+ *
+ * Loading, saving, accounts, and the server live in the synced document
+ * (`#lib/app/goals-sync.js`, `#lib/app/goals-draft.svelte.js`).
  */
 
-import { get } from "svelte/store";
 import {
-  applyCloudGoals,
   findGoal,
   parseGoalsState,
   removeGoal,
   replaceGoal,
 } from "#lib/calculator-goals.js";
-import {
-  captureGoals,
-  fetchGoalsCloud,
-  goalsLocalRevision,
-  persistGoalsLocal,
-  postGoals,
-  readGoalsLocal,
-  writeGoalsLocal,
-  type GoalsCapture,
-} from "#lib/calculator-goals-snapshot.js";
+import { captureGoals } from "#lib/calculator-goals-snapshot.js";
 import {
   fetchPlannerTargetFromBuilds,
   simKeyForCatalogCharacter,
@@ -65,91 +57,6 @@ export function goalsHaveUnsavedChanges(input: {
   if (!input.hydrated || !input.savedSnapshot) return false;
   if (input.pendingRemoveIds.size > 0) return true;
   return goalsListDiffersFromSnapshot(input.state, input.savedSnapshot);
-}
-
-/**
- * Local → optional cloud (signed-in). Cloud list wins when a row exists.
- * A same-tab save during the read bumps `goalsLocalRevision`; that older
- * response is discarded and does not replace the save.
- * Always returns a capture ready to commit as the saved baseline.
- */
-export async function hydrateGoalsState(
-  signedIn: boolean,
-): Promise<GoalsCapture> {
-  let local = readGoalsLocal();
-  if (signedIn) {
-    const revision = get(goalsLocalRevision);
-    try {
-      const cloud = await fetchGoalsCloud();
-      if (get(goalsLocalRevision) !== revision) {
-        local = readGoalsLocal();
-      } else if (cloud) {
-        local = applyCloudGoals(local, cloud);
-        persistGoalsLocal(local);
-      }
-    } catch {
-      if (get(goalsLocalRevision) !== revision) local = readGoalsLocal();
-    }
-  }
-  return captureGoals(local);
-}
-
-/** Same-tab sync: re-read local only when it differs from the saved baseline. */
-export function readGoalsIfChanged(savedSnapshot: string): GoalsCapture | null {
-  const pending = captureGoals(readGoalsLocal());
-  if (pending.json === savedSnapshot) return null;
-  return pending;
-}
-
-export type SaveGoalsResult =
-  { ok: true; capture: GoalsCapture } | { ok: false; message: string };
-
-/**
- * Persist pending removes + editor state. On cloud failure, restores
- * `savedSnapshot` to localStorage so other tabs stay consistent.
- */
-export async function saveGoalsState(input: {
-  state: CalculatorGoalsState;
-  pendingRemoveIds: ReadonlySet<string>;
-  savedSnapshot: string;
-  cloud: boolean;
-}): Promise<SaveGoalsResult> {
-  const pending = captureGoals(
-    goalsWithoutPendingRemoves(input.state, input.pendingRemoveIds),
-  );
-  try {
-    const localOk = writeGoalsLocal(pending.json);
-    if (!localOk) {
-      console.warn("localStorage unavailable — saving to memory only");
-    }
-    if (input.cloud) {
-      const result = await postGoals(pending.state);
-      if (!result.ok) {
-        writeGoalsLocal(input.savedSnapshot);
-        return {
-          ok: false,
-          message: result.message
-            ? `Sync failed (${result.status}): ${result.message}`
-            : `Sync failed (${result.status}) — goals not saved to cloud`,
-        };
-      }
-      return { ok: true, capture: pending };
-    }
-    if (!localOk) {
-      return {
-        ok: false,
-        message: "Could not save goals locally",
-      };
-    }
-    return { ok: true, capture: pending };
-  } catch (e) {
-    writeGoalsLocal(input.savedSnapshot);
-    console.error("Goals save error:", e);
-    return {
-      ok: false,
-      message: `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`,
-    };
-  }
 }
 
 /** Apply build-summary autofill onto a character goal when still current. */

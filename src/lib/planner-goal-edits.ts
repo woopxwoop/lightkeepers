@@ -1,6 +1,6 @@
 /**
  * Shared planner goal add / retarget / side-patch helpers.
- * Persistence stays in `calculator-goals-snapshot.ts`.
+ * Storage and sync stay in `#lib/app/goals-sync.js`.
  */
 
 import { loadCharacterSummary } from "#lib/app/character-summary.js";

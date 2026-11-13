@@ -34,6 +34,9 @@
   });
 
   let uploadRetry = $derived($rosterSyncConflict?.uploadRetry === true);
+  /** The other side is this device's saved roster, not the cloud's. */
+  let savedCopy = $derived($rosterSyncConflict?.savedCopy === true);
+  let otherLabel = $derived(savedCopy ? "Saved" : "Cloud");
 
   function choose(choice: RosterSyncChoice): void {
     const pending = $rosterSyncConflict;
@@ -201,12 +204,31 @@
       </button>
       <p class="popup-eyebrow">Roster sync</p>
       <h2 id="roster-sync-conflict-title" class="section-title popup-title">
-        {uploadRetry ? "Cloud upload failed" : "Local and cloud differ"}
+        {uploadRetry &&
+        !$rosterSyncConflict.error &&
+        $rosterSyncConflict.foreignOwner
+          ? "Roster belongs to another account"
+          : uploadRetry && !$rosterSyncConflict.error
+            ? "Upload this roster?"
+            : uploadRetry
+              ? "Cloud upload failed"
+              : savedCopy
+                ? "Roster changed while editing"
+                : "Local and cloud differ"}
       </h2>
       <p class="section-lede popup-summary">
-        {#if uploadRetry}
+        {#if uploadRetry && !$rosterSyncConflict.error && $rosterSyncConflict.foreignOwner}
+          This device's roster was saved for a different account. Upload it to
+          the signed-in account, or dismiss and leave the cloud unchanged.
+        {:else if uploadRetry && !$rosterSyncConflict.error}
+          This device's roster isn't tied to the signed-in account. Upload it to
+          the cloud, or dismiss and leave the cloud unchanged.
+        {:else if uploadRetry}
           Couldn't save this device's roster to the cloud. Retry the upload, or
           dismiss and keep using the local roster.
+        {:else if savedCopy}
+          The saved roster changed after you started editing. Keep your edits
+          and upload them, or use the saved roster.
         {:else}
           Your device roster doesn't match the cloud backup. Use the cloud copy
           here, or upload this device's roster to the cloud.
@@ -242,7 +264,7 @@
                   <tr>
                     <th scope="col">Character</th>
                     <th scope="col">Local</th>
-                    <th scope="col">Cloud</th>
+                    <th scope="col">{otherLabel}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -268,7 +290,7 @@
                           progressChanged: row.progressChanged,
                         })}
                       </td>
-                      <td class="diff-side-cell" data-label="Cloud">
+                      <td class="diff-side-cell" data-label={otherLabel}>
                         {@render sideCell({
                           owned: row.cloudOwned,
                           ownedChanged: row.ownedChanged,
@@ -292,7 +314,11 @@
           disabled={busy}
           onclick={() => choose("upload-local")}
         >
-          {uploadRetry ? "Retry upload" : "Upload local"}
+          {uploadRetry && $rosterSyncConflict.error
+            ? "Retry upload"
+            : savedCopy
+              ? "Keep my edits"
+              : "Upload local"}
         </Button>
         {#if !uploadRetry}
           <Button
@@ -300,7 +326,7 @@
             disabled={busy}
             onclick={() => choose("use-cloud")}
           >
-            Use cloud
+            {savedCopy ? "Use saved" : "Use cloud"}
           </Button>
         {/if}
       </div>

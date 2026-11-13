@@ -4,17 +4,18 @@
     teamsOwnedStygian,
     allTeamsStygian,
     stygianEnemiesBoard,
-    staticBoardsLoaded,
-    staticBoardsError,
+    staticBoardsPhase,
+    staticBoardsView,
     charactersOwned,
     charactersHydrated,
-    teamsOwnedLoaded,
+    teamsOwnedStatus,
     ensureTeamsOwned,
     ensureStaticBoards,
     displayPreferences,
     setDisplayPreferences,
     stygianVersionNumber,
     abyssVersionNumber,
+    rosterBoardVersions,
     hasSavedRoster,
   } from "#lib/stores.js";
   import { stygianSlotLabel } from "#lib/slotLabels.js";
@@ -28,6 +29,7 @@
     SOLUTIONS_COUNT,
     boardSlotRate,
     filterDisplaySolutions,
+    boardOutcome,
     clampSolutionIndex,
     stepSolutionIndex,
     assignmentKeyFor,
@@ -77,7 +79,10 @@
     youtubeThumbnailFallbackUrl,
     youtubeThumbnailUrl,
   } from "#lib/app/stygian-clear-videos.js";
-  import { ensureCheapClears } from "#lib/app/stygian-cheap-clears.js";
+  import {
+    cheapClearsStatus,
+    ensureCheapClears,
+  } from "#lib/app/stygian-cheap-clears.js";
 
   const SLOTS = ["top", "middle", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -107,29 +112,46 @@
   let videoClearsMode = $derived(solverMode === "video-c0r0");
   let needsCheapClears = $derived(videoClearsMode || solverMode === "hybrid");
   let modeHint = $derived(STYGIAN_SOLVER_MODE_HELP[solverMode]);
+  let boards = $derived(staticBoardsView($staticBoardsPhase));
 
   $effect(() => {
     ensureStaticBoards().catch(() => {});
     // Versions seed from layout / static boards — don't POST /api/teams with -1.
-    // Re-subscribe when boards load so we retry after setVersionNumbers.
-    void $staticBoardsLoaded;
+    // Re-subscribe when boards settle so we retry after setVersionNumbers.
+    // Wait for roster seed too: an empty character list is the all-teams sentinel.
+    void $staticBoardsPhase;
+    if (!$charactersHydrated) return;
     if (abyssVersionNumber < 0 || stygianVersionNumber < 0) return;
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
+
+  async function retryTeamsOwned() {
+    try {
+      await ensureTeamsOwned($charactersOwned);
+    } catch {
+      // teamsOwnedStatus already set
+    }
+  }
 
   async function retryStaticBoards() {
     try {
       await ensureStaticBoards({ force: true });
     } catch {
-      // staticBoardsError already set
+      // staticBoardsPhase already set
     }
   }
 
   let selectedIndex = $state(0);
   let clearVideosRevision = $state(0);
   let clearVideosShown = $state<Partial<Record<Slot, number>>>({});
-  /** null = not loaded yet; [] = loaded empty / error. */
-  let cheapClearsRows = $state<StygianCheapClearRow[] | null>(null);
+  type CheapClearsFetch =
+    | { phase: "idle" }
+    | { phase: "loading"; key: string }
+    | { phase: "settled"; key: string; rows: StygianCheapClearRow[] }
+    | { phase: "failed"; key: string };
+  let cheapClearsFetch = $state<CheapClearsFetch>({ phase: "idle" });
+  let cheapClearsAttempt = $state(0);
+  let cheapClearsRequest = 0;
 
   let hasOwnedCharacters = $derived(
     $charactersOwned.some((character) => character.isOwned),
@@ -145,70 +167,102 @@
     }),
   );
 
-  $effect(() => {
-    if (!needsCheapClears) {
-      untrack(() => {
-        if (cheapClearsRows !== null) cheapClearsRows = null;
-      });
-      return;
-    }
-
-    // Module version ints aren't reactive — re-run when boards finish applying
-    // (that path also seeds stygianVersionNumber).
-    void $staticBoardsLoaded;
-    if (!$staticBoardsLoaded || stygianVersionNumber < 0) return;
-
-    const board = enemies;
-    if (!board || !hasOwnedCharacters) {
-      untrack(() => {
-        if (cheapClearsRows !== null) cheapClearsRows = null;
-      });
-      return;
-    }
-    const enemyIds = SLOTS.map((slot) => board[slot]?.id).filter(
+  function bossIds(board: typeof enemies): number[] {
+    return SLOTS.map((slot) => board?.[slot]?.id).filter(
       (id): id is number => typeof id === "number" && id > 0,
     );
-    if (enemyIds.length < 3) {
-      untrack(() => {
-        if (cheapClearsRows === null || cheapClearsRows.length > 0) {
-          cheapClearsRows = [];
-        }
-      });
-      return;
-    }
+  }
 
+  let cheapBoardVersion = $derived.by(() => {
+    // Phase updates when the retained board is replaced, after its version.
+    void $staticBoardsPhase;
+    return rosterBoardVersions().stygian;
+  });
+
+  let cheapRequestKey = $derived.by(() => {
+    void $staticBoardsPhase;
+    const ids = bossIds(enemies);
+    ids.sort((a, b) => a - b);
+    return [
+      String(cheapBoardVersion),
+      clearDifficulty,
+      String(cheapClearsFetchMaxCost),
+      ids.join(","),
+      rosterFingerprint($charactersOwned),
+      String(cheapClearsAttempt),
+    ].join(":");
+  });
+
+  let cheapStatus = $derived(
+    cheapClearsStatus({
+      active:
+        needsCheapClears &&
+        hasOwnedCharacters &&
+        boards.kind === "board" &&
+        stygianVersionNumber >= 0,
+      bossCount: bossIds(enemies).length,
+      fetch:
+        cheapClearsFetch.phase === "settled"
+          ? "settled"
+          : cheapClearsFetch.phase === "failed"
+            ? "failed"
+            : cheapClearsFetch.phase === "loading"
+              ? "loading"
+              : "idle",
+      fetchKey: cheapClearsFetch.phase === "idle" ? null : cheapClearsFetch.key,
+      requestKey: cheapRequestKey,
+      rowCount:
+        cheapClearsFetch.phase === "settled" ? cheapClearsFetch.rows.length : 0,
+    }),
+  );
+
+  function retryCheapClears() {
+    cheapClearsAttempt += 1;
+  }
+
+  $effect(() => {
+    const active =
+      needsCheapClears &&
+      hasOwnedCharacters &&
+      boards.kind === "board" &&
+      stygianVersionNumber >= 0;
     const owned = $charactersOwned;
-    const version = stygianVersionNumber;
-    const costCap = cheapClearsFetchMaxCost;
-    const difficulty = clearDifficulty;
-    untrack(() => {
-      cheapClearsRows = null;
-    });
-    const ac = new AbortController();
+    const ids = bossIds(enemies);
+    const key = cheapRequestKey;
+    // Version ints update when boards apply — phase is the reactive hook.
+    void $staticBoardsPhase;
+    if (!active || ids.length < 3) return;
+
+    const current = untrack(() => cheapClearsFetch);
+    if (current.phase !== "idle" && current.key === key) return;
+
+    const id = ++cheapClearsRequest;
+    cheapClearsFetch = { phase: "loading", key };
     ensureCheapClears({
       owned,
-      stygianVersion: version,
-      enemyIds,
-      maxCost: costCap,
-      difficulty,
-      signal: ac.signal,
+      stygianVersion: cheapBoardVersion,
+      enemyIds: ids,
+      maxCost: cheapClearsFetchMaxCost,
+      difficulty: clearDifficulty,
     })
       .then((rows) => {
-        if (ac.signal.aborted) return;
-        cheapClearsRows = rows;
+        if (cheapClearsRequest !== id) return;
+        cheapClearsFetch = { phase: "settled", key, rows };
       })
       .catch(() => {
-        if (ac.signal.aborted) return;
-        cheapClearsRows = [];
+        if (cheapClearsRequest !== id) return;
+        cheapClearsFetch = { phase: "failed", key };
       });
-
-    return () => ac.abort();
   });
 
   let solutionsResult = $derived.by(() => {
     const needsOwnedTeams =
       solverMode === "yshelper" || solverMode === "hybrid";
-    if (needsOwnedTeams && hasOwnedCharacters && !$teamsOwnedLoaded) {
+    if (
+      needsOwnedTeams &&
+      hasOwnedCharacters &&
+      $teamsOwnedStatus !== "ready"
+    ) {
       return { solutions: [], mode: solverMode };
     }
 
@@ -223,10 +277,12 @@
         ? { top: topId, middle: middleId, bottom: bottomId }
         : null;
 
+    const settledRows =
+      cheapClearsFetch.phase === "settled" ? cheapClearsFetch.rows : null;
     const cheapKey =
-      cheapClearsRows === null
-        ? "null"
-        : cheapClearsFingerprint(cheapClearsRows);
+      cheapStatus === "ready" && settledRows
+        ? cheapClearsFingerprint(settledRows)
+        : cheapStatus;
     const key = [
       SOLVER_REVISION,
       solverMode,
@@ -243,10 +299,15 @@
 
     return memoSolutions(key, () => {
       if (solverMode === "hybrid") {
-        if (!slotEnemies || cheapClearsRows === null) {
+        if (
+          !slotEnemies ||
+          cheapStatus === "idle" ||
+          cheapStatus === "loading" ||
+          cheapStatus === "error"
+        ) {
           return { solutions: [], mode: "hybrid" as const };
         }
-        const c0r0Pairs = c0r0ClearPairKeys(cheapClearsRows, mapping);
+        const c0r0Pairs = c0r0ClearPairKeys(settledRows ?? [], mapping);
         return {
           solutions: solveStygianHybrid(
             teams,
@@ -260,10 +321,15 @@
         };
       }
 
-      if (videoClearsMode && cheapClearsRows && slotEnemies) {
+      if (
+        videoClearsMode &&
+        cheapStatus === "ready" &&
+        settledRows &&
+        slotEnemies
+      ) {
         return {
           solutions: solveStygianCheapClears(
-            cheapClearsRows,
+            settledRows,
             slotEnemies,
             SOLUTIONS_COUNT,
             mapping,
@@ -293,6 +359,7 @@
   let solutions = $derived(solutionsResult.solutions);
   let showingVideoClears = $derived(videoClearsMode);
   let displaySolutions = $derived(filterDisplaySolutions(solutions));
+  let outcome = $derived(boardOutcome(solutions));
   let safeIndex = $derived(
     clampSolutionIndex(selectedIndex, displaySolutions.length),
   );
@@ -343,25 +410,22 @@
     return () => ac.abort();
   });
 
-  let loading = $derived(
-    !$charactersHydrated ||
-      (!$staticBoardsError &&
-        !$staticBoardsLoaded &&
-        $allTeamsStygian.length === 0),
+  let loading = $derived(!$charactersHydrated || boards.kind === "loading");
+  let ownedRosterPending = $derived(
+    hasOwnedCharacters &&
+      ($teamsOwnedStatus === "idle" || $teamsOwnedStatus === "loading"),
   );
   let waitingForOwned = $derived(
     (solverMode === "yshelper" || solverMode === "hybrid") &&
-      hasOwnedCharacters &&
-      !$teamsOwnedLoaded,
+      ownedRosterPending,
   );
-  let waitingForCheapClears = $derived(
-    needsCheapClears &&
+  let ownedTeamsFailed = $derived(
+    (solverMode === "yshelper" || solverMode === "hybrid") &&
       hasOwnedCharacters &&
-      cheapClearsRows === null &&
-      $staticBoardsLoaded &&
-      !!enemies?.top?.id &&
-      !!enemies?.middle?.id &&
-      !!enemies?.bottom?.id,
+      $teamsOwnedStatus === "error",
+  );
+  let cheapClearBlocking = $derived(
+    needsCheapClears && (cheapStatus === "loading" || cheapStatus === "error"),
   );
 
   function slotRate(team: StygianTeam, slot: Slot): number {
@@ -391,11 +455,14 @@
   function timeForSlot(slot: Slot): number | null {
     const assignment = solution?.assignments.find((a) => a.slot === slot);
     const enemy = enemies?.[slot];
-    const row = cheapClearsRows?.find(
-      (candidate) =>
-        candidate.team_key === assignment?.team.team_key &&
-        candidate.enemy_id === enemy?.id,
-    );
+    const row =
+      cheapClearsFetch.phase === "settled"
+        ? cheapClearsFetch.rows.find(
+            (candidate) =>
+              candidate.team_key === assignment?.team.team_key &&
+              candidate.enemy_id === enemy?.id,
+          )
+        : undefined;
     if (!row || !assignment) return null;
     if (solverMode === "video-c0r0") {
       return clearTimeAtCostCeiling(
@@ -558,9 +625,16 @@
   </section>
 {/snippet}
 
+{#if boards.kind === "board" && boards.notice && !loading}
+  {#if boards.notice === "stale"}
+    <p class="page-meta">Showing the previous cycle.</p>
+  {/if}
+  <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
+{/if}
+
 {#if loading}
   <LoadingState />
-{:else if $staticBoardsError && $allTeamsStygian.length === 0}
+{:else if boards.kind === "empty-error"}
   <EmptyState message="Could not load Stygian teams right now.">
     {#snippet action()}
       <Button variant="secondary" onclick={retryStaticBoards}>Try again</Button>
@@ -578,7 +652,7 @@
   <Surface flush class="solution-board">
     <div class="board-head">
       <div class="board-head-left">
-        {#if displaySolutions.length > 0 && !waitingForOwned && !waitingForCheapClears}
+        {#if displaySolutions.length > 0 && !waitingForOwned && !cheapClearBlocking && !ownedTeamsFailed}
           <span class="eyebrow board-eyebrow">
             Solution {safeIndex + 1}
             <span class="board-eyebrow-total">of {displaySolutions.length}</span
@@ -602,7 +676,7 @@
               setDisplayPreferences({ stygianSolverMode: value })
           }
         />
-        {#if displaySolutions.length > 1 && !waitingForOwned && !waitingForCheapClears}
+        {#if displaySolutions.length > 1 && !waitingForOwned && !cheapClearBlocking && !ownedTeamsFailed}
           <div class="pager">
             <button
               type="button"
@@ -633,15 +707,39 @@
       </div>
     </div>
 
-    {#if waitingForOwned}
+    {#if ownedTeamsFailed}
+      <div class="board-status">
+        <EmptyState message="Could not match your roster right now.">
+          {#snippet action()}
+            <Button variant="secondary" onclick={retryTeamsOwned}
+              >Try again</Button
+            >
+          {/snippet}
+        </EmptyState>
+      </div>
+    {:else if waitingForOwned}
       <div class="board-status">
         <LoadingState variant="pulse" message="Matching your roster…" />
       </div>
-    {:else if waitingForCheapClears}
+    {:else if needsCheapClears && cheapStatus === "error"}
+      <div class="board-status">
+        <EmptyState message="Could not load clears right now.">
+          {#snippet action()}
+            <Button variant="secondary" onclick={retryCheapClears}
+              >Try again</Button
+            >
+          {/snippet}
+        </EmptyState>
+      </div>
+    {:else if needsCheapClears && cheapStatus === "loading"}
       <div class="board-status">
         <LoadingState variant="pulse" message="Matching fastest clears…" />
       </div>
-    {:else if displaySolutions.length === 0}
+    {:else if needsCheapClears && cheapStatus === "unavailable"}
+      <div class="board-status">
+        <EmptyState message="This boss lineup is incomplete." />
+      </div>
+    {:else if outcome === "none"}
       <div class="board-status">
         {#if videoClearsMode}
           <EmptyState
