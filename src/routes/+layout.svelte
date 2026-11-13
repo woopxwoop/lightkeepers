@@ -211,13 +211,13 @@
   >
     <span>© Lightkeepers</span>
     <span aria-hidden="true">·</span>
-    <a href={patchNotesPath} class="footer-link">Patch notes</a>
+    <a href={patchNotesPath} class="footer-link text-link">Patch notes</a>
     <span aria-hidden="true">·</span>
     <a
       href="https://github.com/woopxwoop/lightkeepers"
       target="_blank"
       rel="noopener noreferrer"
-      class="footer-link"
+      class="footer-link text-link"
     >
       GitHub
     </a>
@@ -226,7 +226,7 @@
       href={DISCORD_INVITE_URL}
       target="_blank"
       rel="noopener noreferrer"
-      class="footer-link"
+      class="footer-link text-link"
     >
       Discord
     </a>
@@ -246,10 +246,7 @@
   }
 
   .footer-link {
-    color: var(--accent-1);
-    text-decoration: none;
-  }
-  .footer-link:hover {
-    text-decoration: underline;
+    /* Cream, not gold — the footer sits on the black page base. */
+    color: var(--foreground-color);
   }
 </style>

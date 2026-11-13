@@ -953,7 +953,7 @@
     gap: 0.4rem;
     min-height: 2.75rem;
     padding: 0.55rem 0.85rem;
-    color: var(--accent-1);
+    color: var(--foreground-mid);
     background: transparent;
     border: none;
     border-radius: var(--radius-md);

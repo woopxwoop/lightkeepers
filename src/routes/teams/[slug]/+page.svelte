@@ -256,7 +256,7 @@
       {#if baselineSim}
         <a
           href="/teams/configs/{encodeURIComponent(baselineSim.state_key)}"
-          class="config-link"
+          class="config-link text-link"
         >
           View build config →
         </a>
@@ -457,11 +457,7 @@
     width: fit-content;
     font-size: var(--text-xs);
     font-weight: 500;
-    color: var(--accent-1);
-  }
-
-  .config-link:hover {
-    text-decoration: underline;
+    color: var(--foreground-color);
   }
 
   .empty-actions {

@@ -342,6 +342,21 @@ a:focus-visible {
   }
 }
 
+/*
+  Cream text link on dark surfaces. Gold is off-limits on the page base, so a
+  link that shares its surroundings' cream needs a resting underline to read
+  as a link. Same treatment as GameText's in-text links.
+*/
+.text-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.text-link:hover {
+  text-decoration-color: currentColor;
+}
+
 /* ── Page chrome ───────────────────────────────────────────────────────── */
 /* `.page-head` layout stays per-page (column vs. space-between row). */
 .page-head-text {

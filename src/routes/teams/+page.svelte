@@ -320,7 +320,7 @@
                   <CostPopover />
                   · {(displayDps(team, selectedCost) / 1000).toFixed(0)}K DPS
                 </span>
-                <a href="/teams/{team.team_key}" class="team-link">
+                <a href="/teams/{team.team_key}" class="team-link text-link">
                   View details →
                 </a>
               </div>
@@ -531,12 +531,8 @@
     flex-shrink: 0;
     font-size: var(--text-xs);
     font-weight: 500;
-    color: var(--accent-1);
+    color: var(--foreground-color);
     cursor: pointer;
-  }
-
-  .team-link:hover {
-    text-decoration: underline;
   }
 
   .card-enter {
