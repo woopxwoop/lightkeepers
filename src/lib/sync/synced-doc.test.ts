@@ -264,6 +264,24 @@ describe("signed in", () => {
     assert.deepEqual(server.rows.get("a")?.items, ["x", "1", "2"]);
     assert.equal(view().status, "synced");
   });
+
+  it("saving back to the base while a write is in flight is still sent", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    const release = server.hold();
+    const first = synced.commit(doc("x", "1"));
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(view().status, "saving");
+    void synced.commit(doc("x"));
+    release();
+    await first;
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["x"]);
+    assert.equal(view().status, "synced");
+  });
 });
 
 describe("failures", () => {
@@ -286,6 +304,24 @@ describe("failures", () => {
     await synced.idle();
     assert.deepEqual(server.rows.get("a")?.items, ["x", "mine"]);
     assert.equal(view().status, "synced");
+  });
+
+  it("a deleted server copy is never re-uploaded by later reads", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.rows.delete("a");
+    await synced.refresh();
+    await synced.idle();
+    await synced.refresh();
+    await synced.idle();
+    assert.equal(server.rows.has("a"), false);
+    assert.equal(view().dirty, true);
+    // Save creates the copy again.
+    await synced.commit(view().data);
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["x"]);
   });
 
   it("a read merges in the other device's changes but sends nothing", async () => {
@@ -493,6 +529,25 @@ describe("accounts", () => {
     await synced.idle();
     assert.deepEqual(server.rows.get("a")?.items, ["guest-1"]);
   });
+
+  it("adoption empties the guest slot, and an empty guest changes nothing", async () => {
+    const { synced, signIn, server, view } = setup();
+    server.put("a", ["server"]);
+    signIn("a");
+    await synced.idle();
+    signIn(null);
+    await synced.commit(doc("guest-1"));
+    signIn("a");
+    await synced.idle();
+    await synced.adoptGuest();
+    await synced.idle();
+    await synced.adoptGuest();
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["guest-1"]);
+    assert.deepEqual(view().data.items, ["guest-1"]);
+    signIn(null);
+    assert.deepEqual(view().data.items, []);
+  });
 });
 
 describe("ask", () => {
@@ -511,6 +566,25 @@ describe("ask", () => {
     await synced.idle();
     assert.deepEqual(server.rows.get("a")?.items, ["mine"]);
     assert.equal(view().status, "synced");
+  });
+
+  it("taking this device's newer copy keeps it unsent", async () => {
+    const { synced, signIn, server, view } = setup({ ask: true });
+    server.put("a", ["x"]);
+    signIn("a");
+    await synced.idle();
+    server.failWrites = true;
+    await synced.commit(doc("x", "other")); // another surface, not sent
+    await synced.commit(doc("x", "draft"), { basedOn: doc("x") });
+    assert.equal(view().status, "ask");
+    assert.equal(view().remoteSource, "device");
+    await synced.resolve("remote");
+    assert.deepEqual(view().data.items, ["x", "other"]);
+    assert.equal(view().dirty, true);
+    server.failWrites = false;
+    await synced.commit(view().data);
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["x", "other"]);
   });
 
   it("taking the server copy drops local edits", async () => {

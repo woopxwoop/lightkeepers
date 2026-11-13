@@ -34,6 +34,9 @@
   });
 
   let uploadRetry = $derived($rosterSyncConflict?.uploadRetry === true);
+  /** The other side is this device's saved roster, not the cloud's. */
+  let savedCopy = $derived($rosterSyncConflict?.savedCopy === true);
+  let otherLabel = $derived(savedCopy ? "Saved" : "Cloud");
 
   function choose(choice: RosterSyncChoice): void {
     const pending = $rosterSyncConflict;
@@ -209,7 +212,9 @@
             ? "Upload this roster?"
             : uploadRetry
               ? "Cloud upload failed"
-              : "Local and cloud differ"}
+              : savedCopy
+                ? "Roster changed while editing"
+                : "Local and cloud differ"}
       </h2>
       <p class="section-lede popup-summary">
         {#if uploadRetry && !$rosterSyncConflict.error && $rosterSyncConflict.foreignOwner}
@@ -221,6 +226,9 @@
         {:else if uploadRetry}
           Couldn't save this device's roster to the cloud. Retry the upload, or
           dismiss and keep using the local roster.
+        {:else if savedCopy}
+          The saved roster changed after you started editing. Keep your edits
+          and upload them, or use the saved roster.
         {:else}
           Your device roster doesn't match the cloud backup. Use the cloud copy
           here, or upload this device's roster to the cloud.
@@ -256,7 +264,7 @@
                   <tr>
                     <th scope="col">Character</th>
                     <th scope="col">Local</th>
-                    <th scope="col">Cloud</th>
+                    <th scope="col">{otherLabel}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -282,7 +290,7 @@
                           progressChanged: row.progressChanged,
                         })}
                       </td>
-                      <td class="diff-side-cell" data-label="Cloud">
+                      <td class="diff-side-cell" data-label={otherLabel}>
                         {@render sideCell({
                           owned: row.cloudOwned,
                           ownedChanged: row.ownedChanged,
@@ -308,7 +316,9 @@
         >
           {uploadRetry && $rosterSyncConflict.error
             ? "Retry upload"
-            : "Upload local"}
+            : savedCopy
+              ? "Keep my edits"
+              : "Upload local"}
         </Button>
         {#if !uploadRetry}
           <Button
@@ -316,7 +326,7 @@
             disabled={busy}
             onclick={() => choose("use-cloud")}
           >
-            Use cloud
+            {savedCopy ? "Use saved" : "Use cloud"}
           </Button>
         {/if}
       </div>

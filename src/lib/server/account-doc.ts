@@ -96,8 +96,15 @@ function errorCode(err: unknown): string {
   return typeof code === "string" ? code : "";
 }
 
-/** Read and conditional write for one account-document table. */
-export function accountDocTable(db: AccountDocDb, table: AccountDocTable) {
+/**
+ * Read and conditional write for one account-document table. `now` is the
+ * clock revisions are made from (tests fix it).
+ */
+export function accountDocTable(
+  db: AccountDocDb,
+  table: AccountDocTable,
+  now: () => number = Date.now,
+) {
   return {
     /** The user's document column and its revision. */
     async read(userId: string, column: string): Promise<AccountDocRead> {
@@ -124,10 +131,21 @@ export function accountDocTable(db: AccountDocDb, table: AccountDocTable) {
       columns: Record<string, unknown>,
       baseRev: BaseRev,
     ): Promise<AccountDocWrite> {
-      const updated_at = nextRev(baseRev);
-      const row = { ...columns, user_id: userId, updated_at };
-
       if (baseRev === undefined) {
+        // Revise past the stored row, so this write's rev never equals the
+        // one it replaces (a write in the same millisecond, a clock behind).
+        const stored = await db
+          .from(table)
+          .select("updated_at")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (stored.error) return { status: "error", error: stored.error };
+        const storedRev = stored.data?.updated_at;
+        const updated_at = nextRev(
+          typeof storedRev === "string" ? storedRev : undefined,
+          now(),
+        );
+        const row = { ...columns, user_id: userId, updated_at };
         const { data, error } = await db
           .from(table)
           .upsert(row, { onConflict: "user_id" })
@@ -135,6 +153,9 @@ export function accountDocTable(db: AccountDocDb, table: AccountDocTable) {
         if (error) return { status: "error", error };
         return { status: "written", rev: firstRev(data) ?? updated_at };
       }
+
+      const updated_at = nextRev(baseRev, now());
+      const row = { ...columns, user_id: userId, updated_at };
 
       if (baseRev === null) {
         const { data, error } = await db

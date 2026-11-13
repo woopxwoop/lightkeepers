@@ -20,6 +20,11 @@ export type RosterSyncConflict = {
   uploadRetry: boolean;
   /** Upload prompt knows the roster was stored for a different account. */
   foreignOwner: boolean;
+  /**
+   * `cloud` is this device's newer saved roster, not the server's (a draft
+   * saved over edits made elsewhere). Labels say "saved", never "cloud".
+   */
+  savedCopy: boolean;
   resolve: (choice: RosterSyncChoice) => void;
 };
 
@@ -30,7 +35,7 @@ export function promptRosterSyncConflict(
   local: CharacterOwned[],
   cloud: CharacterOwned[],
   error: string | null = null,
-  opts?: { uploadRetry?: boolean; foreignOwner?: boolean },
+  opts?: { uploadRetry?: boolean; foreignOwner?: boolean; savedCopy?: boolean },
 ): Promise<RosterSyncChoice> {
   const previous = get(rosterSyncConflict);
   if (previous) {
@@ -39,6 +44,7 @@ export function promptRosterSyncConflict(
 
   const uploadRetry = opts?.uploadRetry === true;
   const foreignOwner = opts?.foreignOwner === true;
+  const savedCopy = opts?.savedCopy === true;
 
   return new Promise((resolve) => {
     const conflict: RosterSyncConflict = {
@@ -47,6 +53,7 @@ export function promptRosterSyncConflict(
       error,
       uploadRetry,
       foreignOwner,
+      savedCopy,
       resolve: (choice) => {
         // Only clear if this conflict is still the active one — a newer prompt
         // may have already replaced the store entry.

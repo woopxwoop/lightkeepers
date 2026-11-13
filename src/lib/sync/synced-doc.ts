@@ -78,8 +78,13 @@ export type SyncView<T> = {
   /** Stored edits the server has not accepted (also while `offline`). */
   dirty: boolean;
   error: string | null;
-  /** While `status` is `ask`: the server copy the user is choosing against. */
+  /** While `status` is `ask`: the copy the user is choosing against. */
   remote: T | null;
+  /**
+   * Where `remote` came from: the server, or this device's newer stored copy
+   * (a draft saved over edits made elsewhere on the device).
+   */
+  remoteSource: "server" | "device" | null;
 };
 
 /** What storage holds for one account. */
@@ -161,7 +166,17 @@ type Transient<T> = {
   loaded: boolean;
   error: string | null;
   offline: boolean;
-  ask: { remote: T; rev: string | null } | null;
+  ask: Ask<T> | null;
+};
+
+/**
+ * An open question. `local` is set when `remote` is this device's stored copy,
+ * not the server's: answering keeps that copy's own base and unsent state.
+ */
+type Ask<T> = {
+  remote: T;
+  rev: string | null;
+  local?: { base: T | null; dirty: boolean };
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -193,6 +208,7 @@ export function createSyncedDoc<T>(
     dirty: false,
     error: null,
     remote: null,
+    remoteSource: null,
   });
 
   const slotKey = (account: string | null) =>
@@ -297,6 +313,7 @@ export function createSyncedDoc<T>(
       dirty: account !== null && slotOf(account).dirty,
       error: state.error,
       remote: state.ask?.remote ?? null,
+      remoteSource: state.ask ? (state.ask.local ? "device" : "server") : null,
     });
   }
 
@@ -354,7 +371,9 @@ export function createSyncedDoc<T>(
         return;
       }
       const dirty = slot.dirty || !spec.equal(slot.data, spec.empty());
-      storeSlot(account, { ...slot, base: null, baseRev: null, dirty });
+      // `base` stays: a copy that existed and was deleted is remembered, so a
+      // later read does not take this device's copy for a first upload.
+      storeSlot(account, { ...slot, baseRev: null, dirty });
       // The server never had a copy and this device never saw one: what is
       // here is the account's first copy, sent without asking. A copy that
       // existed and was deleted (base set) stays unsent until the user saves.
@@ -538,7 +557,11 @@ export function createSyncedDoc<T>(
       if (account !== null && pendingAsk) {
         // Saving is the user's answer to the open question: their copy wins.
         setState(account, { ask: null });
-        slot = { ...slot, base: pendingAsk.remote, baseRev: pendingAsk.rev };
+        slot = {
+          ...slot,
+          base: pendingAsk.local ? pendingAsk.local.base : pendingAsk.remote,
+          baseRev: pendingAsk.rev,
+        };
       }
       if (account !== null && opts?.attach) {
         attachments.set(account, {
@@ -560,14 +583,22 @@ export function createSyncedDoc<T>(
           // The user picks between their draft and the newer copy.
           storeSlot(account, { ...slot, data: next, dirty: true });
           setState(account, {
-            ask: { remote: slot.data, rev: slot.baseRev },
+            ask: {
+              remote: slot.data,
+              rev: slot.baseRev,
+              local: { base: slot.base, dirty: slot.dirty },
+            },
           });
           return Promise.resolve();
         }
       }
+      // Unsent edits are flushed even when unchanged (a retry). A write in
+      // flight moves the base, so a save during it is sent after it.
       const dirty =
         account !== null &&
-        (slot.base === null ||
+        (slot.dirty ||
+          stateOf(account).busy === "write" ||
+          slot.base === null ||
           !spec.equal(data, slot.base) ||
           attachments.has(account));
       storeSlot(account, { ...slot, data, dirty });
@@ -590,18 +621,20 @@ export function createSyncedDoc<T>(
       setState(account, { ask: null });
       const slot = slotOf(account);
       if (choice === "remote") {
+        // A device copy keeps its own base and unsent state; a server copy
+        // is the new agreed copy.
         storeSlot(account, {
           ...slot,
           data: ask.remote,
-          base: ask.remote,
+          base: ask.local ? ask.local.base : ask.remote,
           baseRev: ask.rev,
-          dirty: false,
+          dirty: ask.local ? ask.local.dirty : false,
         });
         return Promise.resolve();
       }
       storeSlot(account, {
         ...slot,
-        base: ask.remote,
+        base: ask.local ? ask.local.base : ask.remote,
         baseRev: ask.rev,
         dirty: true,
       });
@@ -612,8 +645,12 @@ export function createSyncedDoc<T>(
       const account = requireActive();
       if (account === null) return Promise.resolve();
       const guest = slotOf(null);
+      // An empty guest slot has nothing to upload and must not wipe this copy.
+      if (spec.equal(guest.data, spec.empty())) return Promise.resolve();
       const slot = slotOf(account);
       storeSlot(account, { ...slot, data: guest.data, dirty: true });
+      // Adopted once: another account cannot take the same data later.
+      storeSlot(null, emptySlot());
       return enqueue(() => push(account, 0));
     },
 

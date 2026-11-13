@@ -559,10 +559,13 @@ export async function ensureStaticBoards(opts?: {
       // Still behind — show last cycle with honest stamps; match stays false.
       const abyssVer = fresh.latestAbyssVersion?.version_number;
       const stygianVer = fresh.latestStygianVersion?.version_number;
+      // Never replace retained boards with an older cycle of either mode.
       if (
         generation === staticBoardsGeneration &&
         typeof abyssVer === "number" &&
-        typeof stygianVer === "number"
+        typeof stygianVer === "number" &&
+        abyssVer >= staticBoardsAbyssVersion &&
+        stygianVer >= staticBoardsStygianVersion
       ) {
         applyStaticBoardsPayload(fresh, abyssVer, stygianVer);
         staticBoardsPhase.set({ phase: "stale" });

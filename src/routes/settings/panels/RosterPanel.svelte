@@ -156,6 +156,9 @@
     }
     isSaving = true;
     rosterError = "";
+    // A previous save's "Saved" must not cover this one's result.
+    savedGeneration += 1;
+    showSaved = false;
 
     // Freeze the editor state before any await so concurrent toggles stay unsaved.
     const pending = captureRoster(tempCharactersOwned);

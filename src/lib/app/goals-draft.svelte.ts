@@ -182,7 +182,10 @@ export function useGoalsDraft(): GoalsDraft {
     },
 
     cancel() {
-      if (savedJson) {
+      // The stored goals may have moved while the draft was unsaved.
+      if (live.current.account === account) {
+        adopt(live.current.data);
+      } else if (savedJson) {
         state = parseGoalsState(JSON.parse(savedJson) as unknown);
       }
       pendingRemoveIds = new Set();

@@ -106,8 +106,52 @@ describe("accountDocTable.write", () => {
       undefined,
     );
     assert.deepEqual(result, { status: "written", rev: NEXT });
-    assert.equal(calls[0].op, "upsert");
-    assert.equal(calls[0].row?.user_id, "u1");
+    assert.equal(calls[1].op, "upsert");
+    assert.equal(calls[1].row?.user_id, "u1");
+  });
+
+  it("a legacy upsert in the same millisecond still changes the revision", async () => {
+    const row: { updated_at: string | null } = { updated_at: REV };
+    const reply = (data: unknown) => ({
+      then<R>(resolve: (v: { data: unknown; error: unknown }) => R) {
+        return Promise.resolve({ data, error: null }).then(resolve);
+      },
+    });
+    const db = {
+      from() {
+        const eqs: [string, string][] = [];
+        let pending: Record<string, unknown> | null = null;
+        const chain = {
+          eq(column: string, value: string) {
+            eqs.push([column, value]);
+            return chain;
+          },
+          maybeSingle: () => reply({ updated_at: row.updated_at }),
+          select() {
+            if (!pending) return chain;
+            const match = eqs.every(
+              ([c, v]) => c !== "updated_at" || row.updated_at === v,
+            );
+            if (!match) return reply([]);
+            row.updated_at = pending.updated_at as string;
+            return reply([{ updated_at: row.updated_at }]);
+          },
+        };
+        const write = (next: Record<string, unknown>) => {
+          pending = next;
+          return chain;
+        };
+        return { select: () => chain, upsert: write, insert: write, update: write };
+      },
+    } as unknown as AccountDocDb;
+    const clock = () => Date.parse(REV) + 1;
+    const table = accountDocTable(db, "user_rosters", clock);
+    const conditional = await table.write("u1", { roster: [] }, REV);
+    assert.equal(conditional.status, "written");
+    const first = conditional.status === "written" ? conditional.rev : "";
+    const legacy = await table.write("u1", { roster: [1] }, undefined);
+    assert.equal(legacy.status, "written");
+    assert.notEqual(legacy.status === "written" ? legacy.rev : first, first);
   });
 
   it("creates only when baseRev is null", async () => {

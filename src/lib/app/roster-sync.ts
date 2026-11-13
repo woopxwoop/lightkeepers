@@ -160,6 +160,8 @@ export function watchRosterConflicts(
     const choice = await promptRosterSyncConflict(
       rosterOwnedFrom(characters(), view.data),
       rosterOwnedFrom(characters(), remote),
+      null,
+      { savedCopy: view.remoteSource === "device" },
     );
     if (get(sync.view).account !== view.account) return;
     if (choice === "use-cloud") {
