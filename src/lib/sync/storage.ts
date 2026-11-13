@@ -66,9 +66,11 @@ export function browserSlotStorage(): SlotStorage {
 
 /**
  * Serve `value` at `key` until that key is stored. A failed migration write
- * uses this so the tab shows the migrated document instead of an empty one.
- * A later successful write of the key drops the hold and runs `onStored`,
- * so the caller can drop legacy keys only after the slot is really stored.
+ * uses this so the tab shows the migrated document instead of an empty one,
+ * or instead of the older slot a merge could not replace.
+ * A later successful write drops the hold and runs `onStored` only after
+ * that document has been read, so the caller can drop legacy keys once the
+ * stored slot is the merge and not the copy that omitted it.
  */
 export function retainUntilStored(
   storage: SlotStorage,
@@ -77,17 +79,21 @@ export function retainUntilStored(
   onStored?: () => void,
 ): SlotStorage {
   let retained: unknown = value;
+  /** True once a read has observed `retained`, so a following write is of it. */
+  let served = false;
   return {
     read(k) {
-      if (k === key && retained !== undefined && storage.read(k) === null) {
+      if (k === key && retained !== undefined) {
+        served = true;
         return retained;
       }
       return storage.read(k);
     },
     write(k, v) {
       const ok = storage.write(k, v);
-      if (ok && k === key && retained !== undefined) {
+      if (ok && k === key && retained !== undefined && served) {
         retained = undefined;
+        served = false;
         onStored?.();
       }
       return ok;

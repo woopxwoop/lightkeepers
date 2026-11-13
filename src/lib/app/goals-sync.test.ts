@@ -10,7 +10,7 @@ import { createCharacterGoal, emptyGoalsState, MAX_CALCULATOR_GOALS } from "../c
 import { goalsDocSpec } from "../sync/goals-doc.ts";
 import { memorySlotStorage, retainUntilStored } from "../sync/storage.ts";
 import { createSyncedDoc } from "../sync/synced-doc.ts";
-import { migrateLegacyGoals } from "./goals-sync.ts";
+import { clearLegacyGoalsKeys, migrateLegacyGoals } from "./goals-sync.ts";
 
 const legacy = {
   ...emptyGoalsState(),
@@ -142,6 +142,41 @@ describe("migrateLegacyGoals", () => {
     assert.deepEqual(
       (storage.read("lk:goals:guest") as Slot).data.goals,
       [],
+    );
+  });
+
+  it("serves a failed merge and keeps legacy keys until that merge is stored", () => {
+    const storage = memorySlotStorage();
+    const existing = {
+      v: 1,
+      data: emptyGoalsState(),
+      dirty: false,
+      server: { state: "unseen" },
+    };
+    storage.write("lk:goals:guest", existing);
+    storage.write("calculatorGoals", legacy);
+    storage.failWrites = true;
+    const pending = migrateLegacyGoals(storage);
+    assert.ok(pending);
+    storage.failWrites = false;
+    const wrapped = retainUntilStored(storage, pending.key, pending.slot, () =>
+      clearLegacyGoalsKeys(storage),
+    );
+    assert.equal(wrapped.write(pending.key, existing), true);
+    assert.equal(
+      (storage.read("calculatorGoals") as typeof legacy).goals[0]?.id,
+      "g1",
+    );
+    const shown = wrapped.read(pending.key) as Slot;
+    assert.deepEqual(
+      shown.data.goals.map((goal) => goal.id),
+      ["g1"],
+    );
+    assert.equal(wrapped.write(pending.key, shown), true);
+    assert.equal(storage.read("calculatorGoals"), null);
+    assert.deepEqual(
+      (storage.read("lk:goals:guest") as Slot).data.goals.map((goal) => goal.id),
+      ["g1"],
     );
   });
 
