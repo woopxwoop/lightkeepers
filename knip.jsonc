@@ -14,6 +14,10 @@
     // Shared contract with the (gitignored) scripts/ pipeline, which imports
     // these types directly — knip can't see that repo, so treat them as public.
     "src/lib/types/**/*.ts",
+    // Dev-only research sheets, loaded via `{#await import(...)}` in markup
+    // (+layout.svelte, characters/[slug]) — knip doesn't follow template imports.
+    "src/lib/ui/components/ResearchChatSheet.svelte",
+    "src/lib/ui/components/BuildResearchSheet.svelte",
   ],
   "project": ["src/**/*.{ts,js,svelte}", "*.mjs", "tests/**/*.ts"],
   // SvelteKit virtual modules ($app/env, $app/state, …) have no file on disk.

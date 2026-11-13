@@ -1,12 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  captureRoster,
-  diffRostersForSync,
-  rosterDiffersFromSnapshot,
-  rostersDifferForSync,
-  toRosterSyncEntries,
-} from "./roster-snapshot.ts";
+import { diffRostersForSync } from "./roster-sync-diff.ts";
 import type { CharacterOwned } from "./definitions.ts";
 
 function char(name_id: string, isOwned: boolean): CharacterOwned {
@@ -17,62 +11,22 @@ function char(name_id: string, isOwned: boolean): CharacterOwned {
   } as CharacterOwned;
 }
 
-describe("roster snapshot", () => {
-  it("captureRoster freezes a clone independent of later edits", () => {
-    const editor = [char("a", true), char("b", false)];
-    const pending = captureRoster(editor);
+/** True when diffRostersForSync reports any owned/progress delta. */
+function differ(a: CharacterOwned[], b: CharacterOwned[]): boolean {
+  return diffRostersForSync(a, b).length > 0;
+}
 
-    editor[0]!.isOwned = false;
-    editor.push(char("c", true));
-
-    assert.equal(pending.roster.length, 2);
-    assert.equal(pending.roster[0]!.isOwned, true);
-    assert.equal(pending.differsFrom(editor), true);
-    assert.equal(pending.differsFrom(pending.roster), false);
-  });
-
-  it("captureRoster deep-clones progress so later edits stay unsaved", () => {
-    const editor = [
-      {
-        ...char("a", true),
-        progress: {
-          level: 90,
-          ascension: 6,
-          constellation: 1,
-          talents: { normal: 8, skill: 8, burst: 8 },
-          weapon: null,
-        },
-      },
-    ];
-    const pending = captureRoster(editor);
-    editor[0]!.progress!.constellation = 6;
-    assert.equal(pending.roster[0]!.progress?.constellation, 1);
-    assert.equal(pending.differsFrom(editor), true);
-  });
-
-  it("rosterDiffersFromSnapshot compares against saved JSON", () => {
-    const roster = [char("a", true)];
-    const saved = JSON.stringify(roster);
-    assert.equal(rosterDiffersFromSnapshot(roster, saved), false);
-    assert.equal(rosterDiffersFromSnapshot([char("a", false)], saved), true);
-  });
-
-  it("rostersDifferForSync ignores catalog-only differences", () => {
+describe("diffRostersForSync", () => {
+  it("ignores catalog-only differences", () => {
     const local = [{ ...char("a", true), rarity: 5 }] as CharacterOwned[];
     const cloud = [{ ...char("a", true), rarity: 4 }] as CharacterOwned[];
-    assert.equal(rostersDifferForSync(local, cloud), false);
+    assert.equal(differ(local, cloud), false);
   });
 
-  it("rostersDifferForSync detects owned and progress changes", () => {
+  it("detects owned and progress changes", () => {
     const base = [char("b", true), char("a", false)];
-    assert.equal(
-      rostersDifferForSync(base, [char("a", false), char("b", true)]),
-      false,
-    );
-    assert.equal(
-      rostersDifferForSync(base, [char("a", true), char("b", true)]),
-      true,
-    );
+    assert.equal(differ(base, [char("a", false), char("b", true)]), false);
+    assert.equal(differ(base, [char("a", true), char("b", true)]), true);
 
     const withProgress: CharacterOwned[] = [
       {
@@ -87,18 +41,7 @@ describe("roster snapshot", () => {
       },
     ];
     const withoutProgress = [char("a", true)];
-    assert.equal(rostersDifferForSync(withProgress, withoutProgress), true);
-  });
-
-  it("toRosterSyncEntries sorts by name_id and normalizes null progress", () => {
-    const entries = toRosterSyncEntries([
-      char("b", false),
-      { ...char("a", true), progress: undefined },
-    ]);
-    assert.deepEqual(entries, [
-      { name_id: "a", isOwned: true, progress: null },
-      { name_id: "b", isOwned: false, progress: null },
-    ]);
+    assert.equal(differ(withProgress, withoutProgress), true);
   });
 
   it("diffRostersForSync lists owned and progress deltas only", () => {
@@ -215,7 +158,7 @@ describe("roster snapshot", () => {
     assert.equal(localOnly.cloudProgress, null);
   });
 
-  it("rostersDifferForSync detects weapon level changes", () => {
+  it("detects weapon level changes", () => {
     const baseProgress = {
       level: 90,
       ascension: 6,
@@ -240,11 +183,11 @@ describe("roster snapshot", () => {
         },
       },
     ];
-    assert.equal(rostersDifferForSync(a, b), true);
+    assert.equal(differ(a, b), true);
     assert.equal(diffRostersForSync(a, b).length, 1);
   });
 
-  it("rostersDifferForSync detects weapon ascension changes", () => {
+  it("detects weapon ascension changes", () => {
     const baseProgress = {
       level: 90,
       ascension: 6,
@@ -269,11 +212,11 @@ describe("roster snapshot", () => {
         },
       },
     ];
-    assert.equal(rostersDifferForSync(a, b), true);
+    assert.equal(differ(a, b), true);
     assert.equal(diffRostersForSync(a, b).length, 1);
   });
 
-  it("rostersDifferForSync detects talent-only changes", () => {
+  it("detects talent-only changes", () => {
     const baseProgress = {
       level: 90,
       ascension: 6,
@@ -298,11 +241,11 @@ describe("roster snapshot", () => {
         },
       },
     ];
-    assert.equal(rostersDifferForSync(a, b), true);
+    assert.equal(differ(a, b), true);
     assert.equal(diffRostersForSync(a, b).length, 1);
   });
 
-  it("rostersDifferForSync detects weapon key and refinement changes", () => {
+  it("detects weapon key and refinement changes", () => {
     const baseProgress = {
       level: 90,
       ascension: 6,
@@ -336,9 +279,9 @@ describe("roster snapshot", () => {
         },
       },
     ];
-    assert.equal(rostersDifferForSync(local, keyChanged), true);
+    assert.equal(differ(local, keyChanged), true);
     assert.equal(diffRostersForSync(local, keyChanged).length, 1);
-    assert.equal(rostersDifferForSync(local, refinementChanged), true);
+    assert.equal(differ(local, refinementChanged), true);
     assert.equal(diffRostersForSync(local, refinementChanged).length, 1);
   });
 });

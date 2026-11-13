@@ -20,7 +20,7 @@
     diffRostersForSync,
     type RosterSyncDiff,
     type RosterSyncProgressBits,
-  } from "#lib/roster-snapshot.js";
+  } from "#lib/roster-sync-diff.js";
   import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
 
   let dialogEl: HTMLElement | null = $state(null);

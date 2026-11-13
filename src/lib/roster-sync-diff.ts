@@ -1,8 +1,8 @@
 /**
- * Roster save snapshots.
+ * Local ↔ cloud roster comparison for the sync conflict popup.
  *
- * Capture a frozen clone + JSON *before* any await so a successful response
- * commits exactly what was sent, while later editor edits stay unsaved.
+ * Only sync-relevant fields count (owned flag, level/ascension/constellation,
+ * talents, weapon); catalog metadata differences are ignored.
  */
 
 import type {
@@ -10,73 +10,6 @@ import type {
   CharacterPortraitRef,
   RosterProgress,
 } from "#lib/definitions.js";
-import { cloneRosterProgress } from "#lib/roster-progress.js";
-
-export type RosterCapture = {
-  /** Cloned roster frozen at capture time (including progress). */
-  roster: CharacterOwned[];
-  /** Stable JSON of `roster` for comparison / localStorage. */
-  json: string;
-  /** True when `current` no longer matches this capture. */
-  differsFrom(current: CharacterOwned[]): boolean;
-};
-
-/** Clone the editor roster and freeze it for a pending save. */
-export function captureRoster(roster: CharacterOwned[]): RosterCapture {
-  const cloned = roster.map((c) => ({
-    ...c,
-    progress: cloneRosterProgress(c.progress),
-  }));
-  const json = JSON.stringify(cloned);
-  return {
-    roster: cloned,
-    json,
-    differsFrom(current) {
-      return JSON.stringify(current) !== json;
-    },
-  };
-}
-
-/** Whether the editor differs from a previously saved JSON snapshot. */
-export function rosterDiffersFromSnapshot(
-  roster: CharacterOwned[],
-  savedJson: string,
-): boolean {
-  return JSON.stringify(roster) !== savedJson;
-}
-
-/** Sync-relevant fields only — catalog metadata is ignored for local↔cloud compare. */
-export type RosterSyncEntry = {
-  name_id: string;
-  isOwned: boolean;
-  progress: RosterProgress | null;
-};
-
-/** Shared name_id ordering for sync entry projections. */
-function compareNameId(a: { name_id: string }, b: { name_id: string }): number {
-  return a.name_id < b.name_id ? -1 : a.name_id > b.name_id ? 1 : 0;
-}
-
-/** Normalize a hydrated roster for stable local↔cloud equality checks. */
-export function toRosterSyncEntries(
-  roster: CharacterOwned[],
-): RosterSyncEntry[] {
-  return roster
-    .map((c) => ({
-      name_id: c.name_id,
-      isOwned: c.isOwned,
-      progress: cloneRosterProgress(c.progress) ?? null,
-    }))
-    .sort(compareNameId);
-}
-
-/** True when owned flags or visible progress fields differ between two rosters. */
-export function rostersDifferForSync(
-  a: CharacterOwned[],
-  b: CharacterOwned[],
-): boolean {
-  return diffRostersForSync(a, b).length > 0;
-}
 
 export type RosterSyncWeaponBits = {
   key: string;

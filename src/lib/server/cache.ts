@@ -319,6 +319,9 @@ export function getClientIp(
   const cf = request.headers.get("cf-connecting-ip")?.trim();
   if (cf) return cf;
   // vite dev / non-production only — XFF is not trustworthy on a public bind.
+  // process.env, not `$app/env`: this module runs under plain tsx in
+  // cache.test.ts, where Kit's virtual modules don't resolve (same as e2e.ts).
+  // Production images set NODE_ENV=production (dockerfile).
   if (process.env.NODE_ENV !== "production") {
     return (
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
