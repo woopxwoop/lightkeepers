@@ -114,17 +114,14 @@
         weapons: getRosterWeaponsCached(),
       });
       if (result.added === 0) return;
-      const previous = goals.state;
-      goals.state = result.state;
+      let saved: Awaited<ReturnType<typeof goals.apply>> = null;
       try {
-        const saved = await goals.save();
-        if (saved.kept) return;
+        saved = await goals.apply(result.state);
       } catch {
-        goals.state = previous;
         plannerError = "Couldn't add those to the Planner — try again";
         return;
       }
-      goals.state = previous;
+      if (!saved || saved.kept) return;
       plannerError = "Couldn't add those to the Planner — try again";
     } finally {
       plannerBusy = false;

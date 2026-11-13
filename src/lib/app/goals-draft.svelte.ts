@@ -39,6 +39,12 @@ export type GoalsDraft = {
    * `sent` and `local` are the ones a page treats as saved.
    */
   save(): Promise<DraftSave>;
+  /**
+   * Show `next`, then save it. Restores the editor when this account's save
+   * did not keep the edit. An account switch leaves the new account's draft
+   * alone and resolves `null`.
+   */
+  apply(next: CalculatorGoalsState): Promise<DraftSave | null>;
   /** Drop unsaved edits and staged removes. */
   cancel(): void;
 };
@@ -135,6 +141,22 @@ export function useGoalsDraft(): GoalsDraft {
       }
       if (result.status === "ask") revealGoalsConflict();
       return result;
+    },
+
+    async apply(next) {
+      const mark = switches;
+      const previous = sync.draft;
+      sync.draft = next;
+      try {
+        const result = await this.save();
+        // The switch already installed the new account's draft.
+        if (switches !== mark) return null;
+        if (!result.kept) sync.draft = previous;
+        return result;
+      } catch (err) {
+        if (switches === mark) sync.draft = previous;
+        throw err;
+      }
     },
 
     cancel() {

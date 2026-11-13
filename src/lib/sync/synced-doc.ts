@@ -675,7 +675,9 @@ export function createSyncedDoc<T>(
     commit(next, opts) {
       const account = requireActive();
       let slot = slotOf(account);
-      const pendingAsk = account === null ? null : stateOf(account).ask;
+      // Guests have device questions too. Ignoring them lets Save drop the
+      // other copy while the in-memory question stays open.
+      const pendingAsk = stateOf(account).ask ?? slot.ask;
       if (account !== null && opts?.attach) {
         attachments.set(account, {
           ...attachments.get(account),
@@ -684,10 +686,10 @@ export function createSyncedDoc<T>(
         slot = { ...slot, attach: attachments.get(account) };
       }
       let data = next;
-      if (account !== null && pendingAsk && spec.saveAnswersAsk === false) {
-        // The open question stays until `resolve`. A draft that now merges
-        // under the spec's limit is sent; one that still asks is stored and
-        // left unsent.
+      if (pendingAsk && spec.saveAnswersAsk === false) {
+        // The open question stays until `resolve`, including a guest's
+        // device question. A draft that now merges under the spec's limit
+        // is stored; one that still asks is left open.
         const remote = pendingAsk.remote;
         const base =
           pendingAsk.source === "server"
@@ -695,7 +697,13 @@ export function createSyncedDoc<T>(
             : (opts?.basedOn ?? null);
         const merged = spec.merge(base, next, remote);
         if (merged === "ask") {
-          storeSlot(account, { ...slot, data: next, dirty: true, ask: pendingAsk });
+          storeSlot(account, {
+            ...slot,
+            data: next,
+            dirty: account !== null,
+            ask: pendingAsk,
+          });
+          setState(account, { ask: pendingAsk });
           return Promise.resolve({ status: "ask", account });
         }
         setState(account, { ask: null });
@@ -709,7 +717,9 @@ export function createSyncedDoc<T>(
           ...slot,
           data: merged,
           server,
-          dirty: agreed === null || !spec.equal(merged, agreed),
+          dirty:
+            account !== null &&
+            (agreed === null || !spec.equal(merged, agreed)),
         });
         data = merged;
       } else if (pendingAsk) {

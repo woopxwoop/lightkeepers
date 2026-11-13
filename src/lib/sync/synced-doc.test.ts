@@ -882,6 +882,62 @@ describe("durable questions", () => {
     assert.deepEqual(view().remote?.items, ["stored"]);
   });
 
+  it("a guest save leaves an open device question in place", async () => {
+    const storage = memorySlotStorage();
+    const { transport } = fakeServer();
+    const baseSpec = makeSpec();
+    const synced = createSyncedDoc(
+      defineSyncedDocSpec<Doc>({
+        ...baseSpec,
+        saveAnswersAsk: false,
+        merge: () => "ask",
+      }),
+      { storage, transport },
+    );
+    synced.setAccount(null);
+    await synced.commit(doc("stored"));
+    const asked = await synced.commit(doc("draft"), { basedOn: doc("other") });
+    assert.equal(asked.status, "ask");
+
+    // Dismiss leaves the question open. Save must not drop the other copy.
+    const again = await synced.commit(doc("draft"), { basedOn: doc("draft") });
+    assert.equal(again.status, "ask");
+    assert.deepEqual(get(synced.view).data.items, ["draft"]);
+    assert.deepEqual(get(synced.view).remote?.items, ["stored"]);
+    const stored = storage.read("lk:t:guest") as {
+      ask?: { remote: Doc };
+    };
+    assert.deepEqual(stored.ask?.remote.items, ["stored"]);
+    synced.dispose();
+  });
+
+  it("a guest save that fits clears the device question", async () => {
+    const { transport } = fakeServer();
+    const baseSpec = makeSpec();
+    const synced = createSyncedDoc(
+      defineSyncedDocSpec<Doc>({
+        ...baseSpec,
+        saveAnswersAsk: false,
+        merge: (base, local, remote) =>
+          local.items.includes("draft")
+            ? "ask"
+            : unionMerge(base, local, remote),
+      }),
+      { storage: memorySlotStorage(), transport },
+    );
+    synced.setAccount(null);
+    await synced.commit(doc("stored"));
+    const asked = await synced.commit(doc("draft"), { basedOn: doc("other") });
+    assert.equal(asked.status, "ask");
+
+    const fitted = await synced.commit(doc("fit"), { basedOn: doc("draft") });
+    assert.equal(fitted.status, "local");
+    assert.equal(get(synced.view).status, "local");
+    assert.equal(get(synced.view).remote, null);
+    assert.deepEqual(get(synced.view).data.items, ["stored", "fit"]);
+    synced.dispose();
+  });
+
   it("a device question keeps both copies across a reload", async () => {
     const storage = memorySlotStorage();
     const { server, transport } = fakeServer();
