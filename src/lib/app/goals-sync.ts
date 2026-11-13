@@ -3,12 +3,19 @@
  * (design: docs/design/account-sync.md).
  *
  * The one entry point for goals data. Pages read `goalsSync().view` through
- * `useGoalsDraft` (`goals-draft.svelte.ts`), and the root layout calls
- * `setAccount` when the session settles. Nothing else reads or writes goal
- * storage or calls `/api/calculator-goals`.
+ * `useGoalsDraft` (`goals-draft.svelte.ts`). The root layout calls
+ * `setAccount` when the session settles and `watchGoalsConflicts` for the
+ * over-cap question. Nothing else reads or writes goal storage or calls
+ * `/api/calculator-goals`.
  */
 
+import { get } from "svelte/store";
 import { parseGoalsState } from "#lib/calculator-goals.js";
+import {
+  cancelGoalsSyncConflict,
+  goalsSyncConflict,
+  promptGoalsSyncConflict,
+} from "#lib/app/goals-sync-conflict.js";
 import { goalsDocSpec } from "#lib/sync/goals-doc.js";
 import {
   browserSlotStorage,
@@ -17,7 +24,11 @@ import {
   type SlotStorage,
 } from "#lib/sync/storage.js";
 import type { SyncSlot } from "#lib/sync/slot.js";
-import { createSyncedDoc, type SyncedDoc } from "#lib/sync/synced-doc.js";
+import {
+  createSyncedDoc,
+  type SyncedDoc,
+  type SyncView,
+} from "#lib/sync/synced-doc.js";
 import { fetchTransport, type SyncTransport } from "#lib/sync/transport.js";
 import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
 
@@ -114,4 +125,73 @@ export function goalsSync(): SyncedDoc<CalculatorGoalsState> {
     });
   }
   return instance;
+}
+
+/** Opens the conflict popup again after it was dismissed. Set by the watcher. */
+let reopenGoalsConflict: () => void = () => {};
+
+/**
+ * The layout calls this once. While goals are `ask` (the lists cannot be
+ * combined under the cap), show the choice. Save does not pick a side; this
+ * popup does. Dismiss leaves the question open.
+ */
+export function watchGoalsConflicts(): () => void {
+  const sync = goalsSync();
+  /** Account + other list already showing, so one question shows once. */
+  let shown = "";
+  let account: string | null | undefined;
+
+  async function ask(view: SyncView<CalculatorGoalsState>) {
+    const remote = view.remote;
+    if (!remote) return;
+    const choice = await promptGoalsSyncConflict(
+      view.remoteSource === "device",
+    );
+    if (get(sync.view).account !== view.account) return;
+    if (get(sync.view).status !== "ask") return;
+    if (choice === "keep-local") {
+      await sync.resolve("local");
+      return;
+    }
+    if (choice === "keep-remote") await sync.resolve("remote");
+  }
+
+  reopenGoalsConflict = () => {
+    const view = get(sync.view);
+    if (view.status !== "ask" || !view.remote) return;
+    if (get(goalsSyncConflict)) return;
+    shown = JSON.stringify([view.account, view.remote]);
+    void ask(view);
+  };
+
+  const stop = sync.view.subscribe((view) => {
+    if (view.account !== account) {
+      account = view.account;
+      shown = "";
+      cancelGoalsSyncConflict();
+    }
+    if (view.status !== "ask") {
+      shown = "";
+      cancelGoalsSyncConflict();
+      return;
+    }
+    if (!view.remote) return;
+    const key = JSON.stringify([view.account, view.remote]);
+    // Dedup while this conflict is unanswered. Dismiss leaves it open;
+    // Save calls `revealGoalsConflict` to show it again.
+    if (key === shown) return;
+    shown = key;
+    void ask(view);
+  });
+
+  return () => {
+    reopenGoalsConflict = () => {};
+    stop();
+    cancelGoalsSyncConflict();
+  };
+}
+
+/** Show the goals conflict if it is open and the popup is not. */
+export function revealGoalsConflict(): void {
+  reopenGoalsConflict();
 }

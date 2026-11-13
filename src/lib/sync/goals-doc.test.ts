@@ -10,7 +10,7 @@ import type {
   CalculatorGoal,
   CalculatorGoalsState,
 } from "../types/calculator-goals.ts";
-import { mergeGoals } from "./goals-doc.ts";
+import { goalsDocSpec, mergeGoals } from "./goals-doc.ts";
 
 const goal = (id: string, name_id = "Furina"): CalculatorGoal =>
   parseGoalsState({ goals: [{ id, kind: "character", name_id }] }).goals[0];
@@ -93,6 +93,10 @@ describe("mergeGoals", () => {
     );
     assert.equal(result.goals.length, MAX_CALCULATOR_GOALS);
     assert.deepEqual(ids(result).slice(-2), ["local", "remote"]);
+  });
+
+  it("does not let Save answer an over-cap question", () => {
+    assert.equal(goalsDocSpec.saveAnswersAsk, false);
   });
 
   it("asks instead of dropping additions that would pass the cap", () => {

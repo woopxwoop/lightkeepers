@@ -10,9 +10,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { get } from "svelte/store";
-import { createSyncedDoc } from "./synced-doc.ts";
+import { createSyncedDoc, defineSyncedDocSpec } from "./synced-doc.ts";
 import { memorySlotStorage } from "./storage.ts";
-import { doc, fakeServer, makeSpec, type Doc } from "./synced-doc.fixtures.ts";
+import {
+  doc,
+  fakeServer,
+  makeSpec,
+  unionMerge,
+  type Doc,
+} from "./synced-doc.fixtures.ts";
 
 function setup(mode?: { ask: boolean }) {
   const storage = memorySlotStorage();
@@ -494,6 +500,84 @@ describe("ask", () => {
 });
 
 describe("save answers and attachments", () => {
+  it("a spec that does not answer ask on save keeps the other copy", async () => {
+    const storage = memorySlotStorage();
+    const { server, transport } = fakeServer();
+    const baseSpec = makeSpec();
+    const synced = createSyncedDoc(
+      defineSyncedDocSpec<Doc>({
+        ...baseSpec,
+        saveAnswersAsk: false,
+        merge: (base, local, remote) => {
+          const merged = unionMerge(base, local, remote);
+          return merged.items.length > 2 ? "ask" : merged;
+        },
+      }),
+      { storage, transport },
+    );
+    server.session = "a";
+    server.put("a", ["a"]);
+    synced.setAccount("a");
+    await synced.idle();
+    server.put("a", ["a", "c"]);
+
+    const first = await synced.commit(doc("a", "b"));
+    await synced.idle();
+    assert.equal(first.status, "ask");
+    assert.deepEqual(server.rows.get("a")?.items, ["a", "c"]);
+    const writes = server.calls.filter((call) =>
+      call.startsWith("write"),
+    ).length;
+
+    const second = await synced.commit(doc("a", "b"));
+    await synced.idle();
+    assert.equal(second.status, "ask");
+    assert.equal(
+      server.calls.filter((call) => call.startsWith("write")).length,
+      writes,
+    );
+    assert.deepEqual(server.rows.get("a")?.items, ["a", "c"]);
+    assert.deepEqual(get(synced.view).data.items, ["a", "b"]);
+
+    await synced.resolve("local");
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["a", "b"]);
+    assert.equal(get(synced.view).status, "synced");
+  });
+
+  it("a later save that fits clears the ask and sends the merge", async () => {
+    const storage = memorySlotStorage();
+    const { server, transport } = fakeServer();
+    const baseSpec = makeSpec();
+    const synced = createSyncedDoc(
+      defineSyncedDocSpec<Doc>({
+        ...baseSpec,
+        saveAnswersAsk: false,
+        merge: (base, local, remote) => {
+          const merged = unionMerge(base, local, remote);
+          return merged.items.length > 2 ? "ask" : merged;
+        },
+      }),
+      { storage, transport },
+    );
+    server.session = "a";
+    server.put("a", ["a"]);
+    synced.setAccount("a");
+    await synced.idle();
+    server.put("a", ["a", "c"]);
+    await synced.commit(doc("a", "b"));
+    await synced.idle();
+    assert.equal(get(synced.view).status, "ask");
+
+    // Dropping "a" locally and keeping "b" fits with the remote's "c".
+    const fitted = await synced.commit(doc("b"));
+    await synced.idle();
+    assert.notEqual(fitted.status, "ask");
+    assert.deepEqual(server.rows.get("a")?.items, ["c", "b"]);
+    assert.deepEqual(get(synced.view).data.items, ["c", "b"]);
+    assert.equal(get(synced.view).status, "synced");
+  });
+
   it("saving while asked sends the saved copy", async () => {
     const { synced, signIn, server, view } = setup({ ask: true });
     server.put("a", ["x"]);

@@ -9,7 +9,7 @@
  * Call during component initialization.
  */
 
-import { goalsSync } from "#lib/app/goals-sync.js";
+import { goalsSync, revealGoalsConflict } from "#lib/app/goals-sync.js";
 import { parseGoalsState } from "#lib/calculator-goals.js";
 import { goalsWithoutPendingRemoves } from "#lib/calculator-goals-lifecycle.js";
 import { captureGoals } from "#lib/calculator-goals-snapshot.js";
@@ -121,6 +121,10 @@ export function useGoalsDraft(): GoalsDraft {
       pendingRemoveIds = new Set(
         [...pendingRemoveIds].filter((id) => !sentRemoves.has(id)),
       );
+      if (result.status === "ask") {
+        revealGoalsConflict();
+        return false;
+      }
       return result.status === "sent" || result.status === "local";
     },
 

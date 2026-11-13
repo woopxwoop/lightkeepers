@@ -14,15 +14,16 @@
     bootstrapClient,
     seedClientStores,
   } from "#lib/app/bootstrapClient.js";
+  import { goalsSync, watchGoalsConflicts } from "#lib/app/goals-sync.js";
   import {
     feedRosterStores,
     rosterSync,
     watchRosterConflicts,
   } from "#lib/app/roster-sync.js";
   import { clearRosterInventory } from "#lib/app/roster-inventory.js";
+  import { cancelGoalsSyncConflict } from "#lib/app/goals-sync-conflict.js";
   import { cancelRosterSyncConflict } from "#lib/app/roster-sync-conflict.js";
   import { authClient } from "#lib/auth-client.js";
-  import { goalsSync } from "#lib/app/goals-sync.js";
   import { installChunkLoadRecovery } from "#lib/app/chunkLoadRecovery.js";
   import { installDebugHitTest } from "#lib/app/debugHitTest.js";
   import { rememberNavigation } from "#lib/nav-history.js";
@@ -40,6 +41,7 @@
   import PlannerItinerarySheet from "#lib/ui/components/PlannerItinerarySheet.svelte";
   import ResearchChatSheet from "#lib/ui/components/ResearchChatSheet.svelte";
   import AccountSettingsModal from "#lib/ui/components/AccountSettingsModal.svelte";
+  import GoalsSyncConflictPopup from "#lib/ui/components/GoalsSyncConflictPopup.svelte";
   import RosterSyncConflictPopup from "#lib/ui/components/RosterSyncConflictPopup.svelte";
   import { resolve } from "$app/paths";
   import { DISCORD_INVITE_URL } from "#lib/site.js";
@@ -72,12 +74,15 @@
     const id = $session.data?.user?.id ?? null;
     // Synced documents follow every settled session, the first one included.
     // Each account reads and writes only its own slot.
-    goalsSync().setAccount(id);
-    rosterSync().setAccount(id);
+    // Close the previous account's prompt before switching, so the next
+    // account's open question is not dismissed as soon as it appears.
     if (lastUserId !== undefined && lastUserId !== id) {
       clearRosterInventory();
       cancelRosterSyncConflict();
+      cancelGoalsSyncConflict();
     }
+    goalsSync().setAccount(id);
+    rosterSync().setAccount(id);
     lastUserId = id;
   });
 
@@ -119,9 +124,11 @@
     document.addEventListener("visibilitychange", onVisible);
     // The roster's "Use cloud / Upload this device" question → popup.
     const stopConflicts = watchRosterConflicts(() => characters);
+    const stopGoalsConflicts = watchGoalsConflicts();
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       stopConflicts();
+      stopGoalsConflicts();
     };
   });
 
@@ -175,6 +182,7 @@
   {/if}
   <AccountSettingsModal />
   <RosterSyncConflictPopup />
+  <GoalsSyncConflictPopup />
   <PatchNotesPopup note={data.latestPatchNote} />
 
   <div class="h-12 w-full"></div>

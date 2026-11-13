@@ -1,6 +1,5 @@
 /**
  * Calculator goals as a synced document (design: docs/design/account-sync.md).
- * Not wired yet — phase 2 moves Planner, Audit, and the itinerary onto it.
  */
 
 import {
@@ -40,7 +39,8 @@ function sameGoals(a: CalculatorGoalsState, b: CalculatorGoalsState): boolean {
  *
  * If that list would exceed `MAX_CALCULATOR_GOALS`, return `"ask"` before
  * normalization. `parseGoalsState` would otherwise drop the tail, and
- * reconciliation would write the shortened list.
+ * reconciliation would write the shortened list. The editors show that
+ * question; Save does not pick a side (`saveAnswersAsk` is false).
  */
 export function mergeGoals(
   base: CalculatorGoalsState | null,
@@ -89,4 +89,5 @@ export const goalsDocSpec = defineSyncedDocSpec<CalculatorGoalsState>({
     parseGoalsState({ goals: wire, selectedId: local.selectedId }),
   equal: sameGoals,
   merge: mergeGoals,
+  saveAnswersAsk: false,
 });

@@ -64,6 +64,12 @@ export type SyncedDocSpec<T> = {
    * both sides agreed on, or null when the server never had one.
    */
   merge(base: T | null, local: T, remote: T): MergeResult<T>;
+  /**
+   * Save during `ask` keeps this device's copy and sends it. The default.
+   * Set false when that replacement must wait for `resolve` (goals over the
+   * cap: the editors show a choice, and Save must not pick a side).
+   */
+  saveAnswersAsk?: boolean;
 };
 
 export type SyncStatus =
@@ -135,7 +141,8 @@ export interface SyncedDoc<T> {
    * or tab saved, or a read landed), the draft is merged onto the current
    * data with `spec.merge` instead of replacing it.
    *
-   * Saving while status is `ask` answers it: this copy wins.
+   * Saving while status is `ask` answers it: this copy wins, unless the
+   * spec sets `saveAnswersAsk: false`. Then Save leaves the question open.
    *
    * `attach` adds fields to the body of the next write only (the GOOD
    * inventory beside the roster). It forces that write even when `next`
@@ -595,11 +602,6 @@ export function createSyncedDoc<T>(
       const account = requireActive();
       let slot = slotOf(account);
       const pendingAsk = account === null ? null : stateOf(account).ask;
-      if (account !== null && pendingAsk) {
-        // Saving is the user's answer to the open question: their copy wins.
-        setState(account, { ask: null });
-        slot = answerAsk(slot, pendingAsk, "local");
-      }
       if (account !== null && opts?.attach) {
         attachments.set(account, {
           ...attachments.get(account),
@@ -607,6 +609,39 @@ export function createSyncedDoc<T>(
         });
       }
       let data = next;
+      if (account !== null && pendingAsk && spec.saveAnswersAsk === false) {
+        // The open question stays until `resolve`. A draft that now merges
+        // under the spec's limit is sent; one that still asks is stored and
+        // left unsent.
+        const remote = pendingAsk.remote;
+        const base =
+          pendingAsk.source === "server"
+            ? baseOf(slot.server)
+            : (opts?.basedOn ?? null);
+        const merged = spec.merge(base, next, remote);
+        if (merged === "ask") {
+          storeSlot(account, { ...slot, data: next, dirty: true });
+          return Promise.resolve({ status: "ask", account });
+        }
+        setState(account, { ask: null });
+        const server =
+          pendingAsk.source === "server"
+            ? tracked(remote, pendingAsk.rev)
+            : pendingAsk.server;
+        const agreed =
+          pendingAsk.source === "server" ? remote : baseOf(pendingAsk.server);
+        slot = {
+          ...slot,
+          data: merged,
+          server,
+          dirty: agreed === null || !spec.equal(merged, agreed),
+        };
+        data = merged;
+      } else if (account !== null && pendingAsk) {
+        // Saving is the user's answer to the open question: their copy wins.
+        setState(account, { ask: null });
+        slot = answerAsk(slot, pendingAsk, "local");
+      }
       // Without a draft base, the edit was made from what this tab showed.
       // Another tab may have stored newer data since (its event is late).
       const basedOn =
