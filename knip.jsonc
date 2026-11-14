@@ -14,8 +14,11 @@
     // Shared contract with the (gitignored) scripts/ pipeline, which imports
     // these types directly — knip can't see that repo, so treat them as public.
     "src/lib/types/**/*.ts",
-    // Dev-only research sheets, loaded via `{#await import(...)}` in markup
-    // (+layout.svelte, characters/[slug]) — knip doesn't follow template imports.
+    // Sheets loaded with a dynamic import() in markup (`<LoadOnFirstOpen load=…>`
+    // in +layout.svelte, `{#await import(…)}` in characters/[slug]) — knip
+    // doesn't follow imports written in templates.
+    "src/lib/ui/components/PlannerItinerarySheet.svelte",
+    "src/lib/ui/components/AccountSettingsModal.svelte",
     "src/lib/ui/components/ResearchChatSheet.svelte",
     "src/lib/ui/components/BuildResearchSheet.svelte",
   ],

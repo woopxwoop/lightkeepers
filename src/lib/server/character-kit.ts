@@ -14,30 +14,22 @@ export type CharacterKitResult = {
   channel: CharacterKitChannel;
 };
 
-const kitCache = new LRUCache<CharacterKitResult | null>(200, 15 * 60 * 1000);
-
 /**
- * Concurrent misses for one name_id share a single request. Entries are dropped
- * once settled, so a failed fetch (which is deliberately not cached) retries.
- * `LRUCache.getOrSet` is unusable here because it caches every resolved value,
- * including the transient failures this module must leave uncached.
+ * Kits rarely change, so past the 15 min TTL a cached kit (or a cached "no such
+ * character") is served immediately while a background refresh runs, for up
+ * to a day. A CDN hiccup then degrades to a slightly old kit instead of a 503.
+ * Concurrent misses share one fetch (getOrSet singleflight). CDN failures throw
+ * from loadKitFromCdn, and getOrSet never stores a rejection, so they retry.
  */
-const kitInflight = new Map<string, Promise<CharacterKitResult | null>>();
+const kitCache = new LRUCache<CharacterKitResult | null>(200, 15 * 60 * 1000, {
+  staleWhileRevalidate: true,
+  maxStaleMs: 24 * 60 * 60 * 1000,
+});
 
-export async function getCharacterKitResult(
+export function getCharacterKitResult(
   nameId: string,
 ): Promise<CharacterKitResult | null> {
-  const cached = kitCache.get(nameId);
-  if (cached !== undefined) return cached;
-
-  const inflight = kitInflight.get(nameId);
-  if (inflight) return inflight;
-
-  const pending = loadKitFromCdn(nameId).finally(() => {
-    kitInflight.delete(nameId);
-  });
-  kitInflight.set(nameId, pending);
-  return pending;
+  return kitCache.getOrSet(nameId, () => loadKitFromCdn(nameId));
 }
 
 export async function getCharacterKit(
@@ -66,12 +58,9 @@ async function loadKitFromCdn(
     }
 
     const kit = (await res.json()) as CharacterKit;
-    const result: CharacterKitResult = { kit, channel };
-    kitCache.set(nameId, result);
-    return result;
+    return { kit, channel };
   }
 
-  kitCache.set(nameId, null);
   return null;
 }
 

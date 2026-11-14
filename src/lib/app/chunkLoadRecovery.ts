@@ -12,6 +12,10 @@ function reloadOnStaleDeploy(): void {
 /**
  * Recovers from stale deployments where hashed Vite chunks 404 after a redeploy.
  * Covers vite:preloadError and dynamic import failures SvelteKit does not surface.
+ *
+ * Every built dynamic import goes through Vite's preload helper, which fires
+ * vite:preloadError before rethrowing — even when the caller catches the error
+ * (e.g. equipment-data's lazy tables) — so no per-call wrapper is needed.
  */
 export function installChunkLoadRecovery(): void {
   if (typeof window === "undefined") return;
@@ -34,24 +38,4 @@ export function installChunkLoadRecovery(): void {
       reloadOnStaleDeploy();
     }
   });
-}
-
-/**
- * Wrap manual import() calls so stale chunk 404s trigger a full reload.
- * Unused today, but candidates exist: callers that catch their own import()
- * failures (e.g. equipment-data) never reach the global unhandledrejection hook.
- * @public
- */
-export async function safeDynamicImport<T>(
-  importFn: () => Promise<T>,
-): Promise<T> {
-  try {
-    return await importFn();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (CHUNK_ERROR_PATTERN.test(message)) {
-      reloadOnStaleDeploy();
-    }
-    throw err;
-  }
 }

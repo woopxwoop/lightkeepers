@@ -43,8 +43,9 @@
   } from "#lib/stores.js";
   import NavBar from "#lib/ui/NavBar.svelte";
   import PatchNotesPopup from "#lib/ui/components/PatchNotesPopup.svelte";
-  import PlannerItinerarySheet from "#lib/ui/components/PlannerItinerarySheet.svelte";
-  import AccountSettingsModal from "#lib/ui/components/AccountSettingsModal.svelte";
+  import LoadOnFirstOpen from "#lib/ui/components/LoadOnFirstOpen.svelte";
+  import { plannerItineraryOpen } from "#lib/planner-itinerary-open.js";
+  import { accountSettingsOpen } from "#lib/account-settings-open.js";
   import GoalsSyncConflictPopup from "#lib/ui/components/GoalsSyncConflictPopup.svelte";
   import RosterSyncConflictPopup from "#lib/ui/components/RosterSyncConflictPopup.svelte";
   import { resolve } from "$app/paths";
@@ -179,14 +180,20 @@
     ></div>
   {/if}
   <NavBar />
-  <PlannerItinerarySheet />
-  {#if dev}
-    <!-- Dev-only: dynamic import keeps research out of production chunks. -->
-    {#await import("#lib/ui/components/ResearchChatSheet.svelte") then { default: ResearchChatSheet }}
-      <ResearchChatSheet />
-    {/await}
-  {/if}
-  <AccountSettingsModal />
+  <!-- On-demand sheets: loaded on first open, kept out of every page's upfront JS/CSS. -->
+  <LoadOnFirstOpen
+    when={$plannerItineraryOpen}
+    load={() => import("#lib/ui/components/PlannerItinerarySheet.svelte")}
+  />
+  <LoadOnFirstOpen
+    when={$accountSettingsOpen}
+    load={() => import("#lib/ui/components/AccountSettingsModal.svelte")}
+  />
+  <!-- Dev-only: dynamic import keeps research out of production chunks. -->
+  <LoadOnFirstOpen
+    when={dev}
+    load={() => import("#lib/ui/components/ResearchChatSheet.svelte")}
+  />
   {#if $rosterSyncConflict}
     <RosterSyncConflictPopup />
   {:else if $goalsSyncConflict}
