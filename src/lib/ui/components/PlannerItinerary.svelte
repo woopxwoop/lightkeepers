@@ -132,12 +132,6 @@
     addError = "";
   }
 
-  /** Backdrop, Escape, and the close button leave a dirty editor open. */
-  function closePicker() {
-    if (hasUnsavedChanges) return;
-    finishClose();
-  }
-
   function cancelAndClose() {
     cancelEdits();
     finishClose();
@@ -605,7 +599,8 @@
   {addError}
   removedIds={draft.pendingRemoveIds}
   suspendKeys={picking !== null || configuringId !== null}
-  onClose={closePicker}
+  closeDisabled={hasUnsavedChanges}
+  onClose={finishClose}
   onStar={toggleStar}
   onReorder={reorderGoals}
   onStarAll={starAll}

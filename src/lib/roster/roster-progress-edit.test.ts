@@ -104,29 +104,35 @@ describe("levelFieldDraft", () => {
 
 describe("progressWithLevelInput", () => {
   it("clamps a typed level to the current cap", () => {
-    const next = progressWithLevelInput(base, "level", 95);
+    const next = progressWithLevelInput(base, "level", "95");
     assert.equal(next, null);
-    const lower = progressWithLevelInput(base, "level", 72.4);
+    const lower = progressWithLevelInput(base, "level", "72.4");
     assert.equal(lower?.level, 72);
     assert.equal(lower?.ascension, 5);
     assert.equal(lower?.weapon, base.weapon);
   });
 
   it("raises ascension from a typed cap, keeping level", () => {
-    const next = progressWithLevelInput(base, "cap", 90);
+    const next = progressWithLevelInput(base, "cap", "90");
     assert.equal(next?.ascension, 6);
     assert.equal(next?.level, 80);
   });
 
   it("lowers ascension and clamps level to the new cap", () => {
-    const next = progressWithLevelInput(base, "cap", 60);
+    const next = progressWithLevelInput(base, "cap", "60");
     assert.equal(next?.ascension, 3);
     assert.equal(next?.level, 60);
   });
 
   it("returns null for non-finite input or no change", () => {
-    assert.equal(progressWithLevelInput(base, "level", Number.NaN), null);
-    assert.equal(progressWithLevelInput(base, "level", 80), null);
-    assert.equal(progressWithLevelInput(base, "cap", 80), null);
+    assert.equal(progressWithLevelInput(base, "level", "abc"), null);
+    assert.equal(progressWithLevelInput(base, "level", "80"), null);
+    assert.equal(progressWithLevelInput(base, "cap", "80"), null);
+  });
+
+  it("treats a cleared field as cancel, not level 1 or A0", () => {
+    assert.equal(progressWithLevelInput(base, "level", ""), null);
+    assert.equal(progressWithLevelInput(base, "level", "  "), null);
+    assert.equal(progressWithLevelInput(base, "cap", ""), null);
   });
 });

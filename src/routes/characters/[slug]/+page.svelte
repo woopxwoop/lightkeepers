@@ -23,6 +23,7 @@
     simCharacterKey,
   } from "#lib/utils.js";
   import { travelerElementKitId } from "#lib/characters/traveler-kits.js";
+  import { currentKitHash, onKitHashChange } from "#lib/characters/kit-hash.js";
   import type { CharacterKit } from "#lib/types/character-kit.js";
   import type { CharacterIndex } from "#lib/types/investment.js";
   import type { Character } from "#lib/definitions.js";
@@ -139,21 +140,18 @@
   });
 
   onMount(() => {
-    let hash = window.location.hash;
-    try {
-      hash = decodeURIComponent(hash);
-    } catch {
-      // Keep the raw hash when it is not valid URI encoding.
-    }
-    if (!hash.startsWith("#kit-")) return;
-    selectTab("skills");
-    const id = hash.slice(1);
-    void tick().then(() => {
-      document.getElementById(id)?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
+    const hash = currentKitHash();
+    if (hash) {
+      selectTab("skills");
+      void tick().then(() => {
+        document.getElementById(hash.slice(1))?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
       });
-    });
+    }
+    // Back/forward or an edited `#kit-…` hash opens Kit from any tab.
+    return onKitHashChange(() => selectTab("skills"));
   });
 </script>
 

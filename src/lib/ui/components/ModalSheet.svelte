@@ -1,3 +1,12 @@
+<script module lang="ts">
+  /**
+   * Open modals, oldest first. Independent overlays (the patch notes and a
+   * sync conflict) can be open at once: only the newest takes Escape and
+   * Tab, and it is drawn above the others.
+   */
+  const openModals: symbol[] = [];
+</script>
+
 <script lang="ts">
   /**
    * Modal shell — backdrop, centered dialog panel, head row with close button.
@@ -50,6 +59,8 @@
   let closeEl: HTMLButtonElement | null = $state(null);
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
   let closedByNavigate = false;
+  /** Position in `openModals` when this one opened; raises its z-index. */
+  let depth = $state(0);
 
   afterNavigate(({ shallow, type }) => {
     if (!closeOnNavigate) return;
@@ -68,6 +79,9 @@
         : null;
     const releaseScrollLock = acquireBodyScrollLock();
     const capture = nested;
+    const token = Symbol("modal");
+    openModals.push(token);
+    depth = openModals.length;
     let active = true;
     void tick().then(() => {
       if (!active || !open) return;
@@ -77,7 +91,7 @@
       target?.focus();
     });
     function onKey(e: KeyboardEvent) {
-      if (suspendKeys) return;
+      if (suspendKeys || openModals.at(-1) !== token) return;
       if (e.key === "Escape") {
         e.preventDefault();
         if (capture) e.stopImmediatePropagation();
@@ -89,6 +103,7 @@
     window.addEventListener("keydown", onKey, capture);
     return () => {
       active = false;
+      openModals.splice(openModals.indexOf(token), 1);
       releaseScrollLock();
       window.removeEventListener("keydown", onKey, capture);
       const skipFocus = closedByNavigate;
@@ -99,7 +114,7 @@
 </script>
 
 {#if open}
-  <div class="modal-root {size}" class:nested>
+  <div class="modal-root {size}" class:nested style:--modal-depth={depth}>
     <button
       type="button"
       class="modal-backdrop"
@@ -143,7 +158,7 @@
   .modal-root {
     position: fixed;
     inset: 0;
-    z-index: 120;
+    z-index: calc(120 + var(--modal-depth, 0));
     display: grid;
     place-items: center;
     padding: clamp(0.75rem, 2vw, 1.25rem);
@@ -151,7 +166,7 @@
   }
 
   .modal-root.nested {
-    z-index: 140;
+    z-index: calc(140 + var(--modal-depth, 0));
   }
 
   .modal-backdrop {

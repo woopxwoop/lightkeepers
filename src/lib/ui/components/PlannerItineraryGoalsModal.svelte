@@ -19,6 +19,7 @@
     addError = "",
     removedIds = new Set<string>(),
     suspendKeys = false,
+    closeDisabled = false,
     onClose,
     onStar,
     onReorder,
@@ -41,6 +42,8 @@
     removedIds?: ReadonlySet<string>;
     /** When a nested pick/configure overlay is open, skip Escape / tab trap. */
     suspendKeys?: boolean;
+    /** Unsaved edits: only Cancel or Save leave, so the X shows as disabled. */
+    closeDisabled?: boolean;
     onClose: () => void;
     onStar: (id: string) => void;
     onReorder: (from: number, to: number) => void;
@@ -61,6 +64,7 @@
   label="Goals"
   nested
   {suspendKeys}
+  {closeDisabled}
   size="dialog"
 >
   {#snippet head()}

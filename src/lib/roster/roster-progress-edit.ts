@@ -95,12 +95,19 @@ export function levelFieldDraft(
     : String(levelCapForAscension(progress.ascension));
 }
 
-/** Apply a typed level / cap; `null` when the input is not finite or changes nothing. */
+/**
+ * Apply a typed level / cap. `null` when the text is empty (a cleared field
+ * cancels; `Number("")` would be 0 and save level 1), not a number, or
+ * changes nothing.
+ */
 export function progressWithLevelInput(
   progress: RosterProgress,
   field: LevelField,
-  raw: number,
+  text: string,
 ): RosterProgress | null {
+  const trimmed = text.trim();
+  if (trimmed === "") return null;
+  const raw = Number(trimmed);
   if (!Number.isFinite(raw)) return null;
   const { level, ascension } =
     field === "level"

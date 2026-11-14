@@ -2,7 +2,7 @@
   import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
-import { get } from "svelte/store";
+  import { get } from "svelte/store";
   import { loadAuditGrades } from "#lib/app/audit-grades.js";
   import { getRosterWeaponsCached } from "#lib/app/roster-inventory.js";
   import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
@@ -19,8 +19,14 @@ import { get } from "svelte/store";
     type AuditPlannerState,
   } from "#lib/planner/audit-planner-goals.js";
   import { goalsSync } from "#lib/app/goals-sync.js";
-import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
-  import { charactersHydrated, charactersOwned } from "#lib/stores/roster.js";
+  import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
+  import {
+    charactersHydrated,
+    charactersOwned,
+    hasSavedRoster,
+  } from "#lib/stores/roster.js";
+  import { authClient } from "#lib/auth-client.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
   import {
     ensureTierList,
     tierList,
@@ -51,6 +57,19 @@ import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
 
+  const session = authClient.useSession();
+  /**
+   * Same gate as Abyss and the home-page card. A new guest's default roster
+   * owns nearly everyone, so `owned` alone is never empty for them.
+   */
+  let showRosterSetup = $derived(
+    needsRosterSetup({
+      sessionPending: $session.isPending,
+      hasSavedRoster: $hasSavedRoster,
+      sessionData: $session.data,
+    }),
+  );
+
   let owned = $derived($charactersOwned.filter((c) => c.isOwned));
   /** Regrade when ids or the progress those grades read changes, not on array identity. */
   let ownedFingerprint = $derived(auditRosterFingerprint(owned));
@@ -67,7 +86,7 @@ import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   /** Wait for usage too so the ranking doesn't reshuffle; a usage failure just loses the ordering. */
   let view = $derived.by((): PageView => {
     if (!$charactersHydrated) return "loading";
-    if (owned.length === 0) return "no_roster";
+    if (showRosterSetup || owned.length === 0) return "no_roster";
     if (loadError) return "error";
     if (loading || !grades) return "loading";
     if (!$tierListLoaded && !$tierListError) return "loading";
@@ -169,7 +188,7 @@ import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
     <div class="page-head-text">
       <h1 class="page-title">Build Audit</h1>
       <p class="page-meta">
-        {#if owned.length > 0}
+        {#if view !== "no_roster"}
           Based on your {owned.length} characters · level and talent targets from
           Builds
         {:else}

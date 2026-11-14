@@ -43,11 +43,11 @@
 
   function commitLevelField() {
     if (levelField == null) return;
-    const raw = Number(levelDraft);
+    const typed = levelDraft;
     const field = levelField;
     levelField = null;
     levelDraft = "";
-    const next = progressWithLevelInput(progress, field, raw);
+    const next = progressWithLevelInput(progress, field, typed);
     if (next) onCommit(next);
   }
 

@@ -199,6 +199,14 @@ export function useSyncedDraft<T, D = T>(
         ) {
           return { ...result, kept: false };
         }
+        if (result.status === "local" && !result.stored) {
+          // Browser storage refused the write, but the document holds this
+          // payload in memory. The next save is based on it, so a retry is
+          // not mistaken for another tab's change. `base` stays: the edit
+          // still shows as unsaved and Save stays available.
+          baseDoc = payload;
+          return { ...result, kept: false };
+        }
         // What this save stored, in editor shape (fromDraft may already have
         // applied removes).
         const submitted = opts.toDraft(payload);
