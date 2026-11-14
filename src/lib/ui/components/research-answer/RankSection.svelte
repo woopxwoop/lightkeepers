@@ -31,13 +31,13 @@
         {/if}
       </div>
       {#if row.noteHtml}
-        <p class="research-rank-note">{@html row.noteHtml}</p>
+        <p class="research-rank-note research-note">{@html row.noteHtml}</p>
       {/if}
     </div>
   </li>
 {/snippet}
 
-<section class="research-ranks" aria-label={ariaLabel}>
+<section class="research-ranks research-panel" aria-label={ariaLabel}>
   <h3 class="research-ranks-title">{title}</h3>
   <ol class="research-rank-list">
     {@render rankRow(top)}
@@ -61,11 +61,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    padding: 0.75rem 0.85rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 14%, transparent);
-    background: var(--surface-quiet);
   }
 
   .research-ranks-title {
@@ -158,36 +153,5 @@
   .research-rank-label {
     font-size: var(--text-sm);
     color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
-  }
-
-  .research-rank-note {
-    margin: 0;
-    font-size: var(--text-xs);
-    line-height: 1.45;
-    color: color-mix(in srgb, var(--foreground-color) 72%, transparent);
-  }
-
-  .research-ranks :global(.research-entity-slot) {
-    display: contents;
-  }
-
-  .research-ranks :global(.research-cite) {
-    margin-left: 0.08rem;
-    font-size: 0.65em;
-    line-height: 0;
-    vertical-align: super;
-  }
-
-  .research-ranks :global(.research-cite a) {
-    color: var(--foreground-mid);
-    text-decoration: none;
-    padding: 0 0.1rem;
-    border-radius: 0.15rem;
-    font-weight: 500;
-  }
-
-  .research-ranks :global(.research-cite a:hover) {
-    color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
   }
 </style>

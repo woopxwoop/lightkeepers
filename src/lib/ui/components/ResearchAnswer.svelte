@@ -55,6 +55,7 @@
   import RotationPanel from "#lib/ui/components/research-answer/RotationPanel.svelte";
   import TeamsPanel from "#lib/ui/components/research-answer/TeamsPanel.svelte";
   import { mount, tick, unmount } from "svelte";
+  import "./research-answer/research-shared.css";
 
   let {
     markdown,
@@ -405,29 +406,5 @@
   .research-body :global(h2:first-child),
   .research-body :global(h3:first-child) {
     margin-top: 0;
-  }
-
-  .research-body :global(.research-entity-slot) {
-    display: contents;
-  }
-
-  .research-body :global(.research-cite) {
-    margin-left: 0.08rem;
-    font-size: 0.65em;
-    line-height: 0;
-    vertical-align: super;
-  }
-
-  .research-body :global(.research-cite a) {
-    color: var(--foreground-mid);
-    text-decoration: none;
-    padding: 0 0.1rem;
-    border-radius: 0.15rem;
-    font-weight: 500;
-  }
-
-  .research-body :global(.research-cite a:hover) {
-    color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
   }
 </style>

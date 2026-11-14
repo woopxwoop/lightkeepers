@@ -9,7 +9,7 @@
 
 <section class="research-teams" aria-label="Recommended teams">
   {#each cards as team (team.key)}
-    <article class="research-team-card">
+    <article class="research-team-card research-panel">
       <header class="research-team-header">
         <h3 class="research-team-label">{team.label}</h3>
         {#if team.citeHtml}
@@ -46,7 +46,7 @@
         </div>
       {/if}
       {#if team.notesHtml}
-        <p class="research-team-notes">{@html team.notesHtml}</p>
+        <p class="research-team-notes research-note">{@html team.notesHtml}</p>
       {/if}
     </article>
   {/each}
@@ -63,11 +63,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
-    padding: 0.75rem 0.85rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 14%, transparent);
-    background: var(--surface-quiet);
   }
 
   .research-team-header {
@@ -115,36 +110,5 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.45rem;
-  }
-
-  .research-team-notes {
-    margin: 0;
-    font-size: var(--text-xs);
-    line-height: 1.45;
-    color: color-mix(in srgb, var(--foreground-color) 72%, transparent);
-  }
-
-  .research-teams :global(.research-entity-slot) {
-    display: contents;
-  }
-
-  .research-teams :global(.research-cite) {
-    margin-left: 0.08rem;
-    font-size: 0.65em;
-    line-height: 0;
-    vertical-align: super;
-  }
-
-  .research-teams :global(.research-cite a) {
-    color: var(--foreground-mid);
-    text-decoration: none;
-    padding: 0 0.1rem;
-    border-radius: 0.15rem;
-    font-weight: 500;
-  }
-
-  .research-teams :global(.research-cite a:hover) {
-    color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
   }
 </style>

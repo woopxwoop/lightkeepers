@@ -10,7 +10,10 @@
   } = $props();
 </script>
 
-<section class="research-comparison" aria-label="Option comparison">
+<section
+  class="research-comparison research-panel"
+  aria-label="Option comparison"
+>
   {#if verdictHtml}
     <p class="research-comparison-verdict">{@html verdictHtml}</p>
   {/if}
@@ -41,11 +44,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    padding: 0.75rem 0.85rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 14%, transparent);
-    background: var(--surface-quiet);
   }
 
   .research-comparison-verdict {
@@ -120,29 +118,5 @@
       justify-self: center;
       padding: 0;
     }
-  }
-
-  .research-comparison :global(.research-entity-slot) {
-    display: contents;
-  }
-
-  .research-comparison :global(.research-cite) {
-    margin-left: 0.08rem;
-    font-size: 0.65em;
-    line-height: 0;
-    vertical-align: super;
-  }
-
-  .research-comparison :global(.research-cite a) {
-    color: var(--foreground-mid);
-    text-decoration: none;
-    padding: 0 0.1rem;
-    border-radius: 0.15rem;
-    font-weight: 500;
-  }
-
-  .research-comparison :global(.research-cite a:hover) {
-    color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
   }
 </style>

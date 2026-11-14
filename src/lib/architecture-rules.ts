@@ -467,3 +467,112 @@ export function boardsLane(files: SourceFile[]): Violation[] {
       }));
     });
 }
+
+// ── Rule 8: component size (ratchet) ────────────────────────────────────────
+
+const MAX_COMPONENT_LINES = 600;
+
+// Today's oversized components, each capped at its current line count.
+// Only shrink these budgets or remove entries; never add or raise.
+const LARGE_COMPONENT_BUDGETS: Record<string, number> = {
+  "src/lib/ui/components/PlannerItinerary.svelte": 1005,
+  "src/lib/ui/components/BuildPanel.svelte": 827,
+  "src/routes/dev/ui/sections/SolutionBoardChrome.svelte": 783,
+  "src/routes/teams/[slug]/+page.svelte": 759,
+  "src/lib/ui/components/InvestmentBuildCard.svelte": 732,
+  "src/routes/dev/ui/sections/StatGoalsLayout.svelte": 705,
+  "src/lib/ui/components/character/CharacterKitPanel.svelte": 699,
+  "src/lib/ui/components/ResearchChat.svelte": 696,
+  "src/routes/characters/[slug]/+page.svelte": 693,
+  "src/routes/tools/abyss/+page.svelte": 688,
+  "src/lib/ui/components/NumberSliderField.svelte": 687,
+  "src/routes/settings/panels/RosterPanel.svelte": 644,
+};
+
+const lineCount = (file: SourceFile) => file.text.split("\n").length;
+
+export function componentSize(
+  files: SourceFile[],
+  budgets: Record<string, number> = LARGE_COMPONENT_BUDGETS,
+): Violation[] {
+  return files
+    .filter((f) => f.path.endsWith(".svelte"))
+    .flatMap((f) => {
+      const lines = lineCount(f);
+      const budget = budgets[f.path];
+      if (budget === undefined && lines > MAX_COMPONENT_LINES) {
+        return [
+          {
+            file: f.path,
+            line: 1,
+            message: `Components stay under ${MAX_COMPONENT_LINES} lines (${f.path} has ${lines}): split it (see ARCHITECTURE.md: kebab-case child folder + tested logic modules).`,
+          },
+        ];
+      }
+      if (budget !== undefined && lines > budget) {
+        return [
+          {
+            file: f.path,
+            line: 1,
+            message: `Components stay under ${MAX_COMPONENT_LINES} lines: ${f.path} has ${lines} and grew past its budget ${budget} — split instead of growing.`,
+          },
+        ];
+      }
+      return [];
+    });
+}
+
+/** Every LARGE_COMPONENT_BUDGETS entry must still be oversized, so the list only shrinks. */
+export function staleLargeComponentBudgets(
+  files: SourceFile[],
+  budgets: Record<string, number> = LARGE_COMPONENT_BUDGETS,
+): Violation[] {
+  const byPath = new Map(files.map((f) => [f.path, f]));
+  return Object.keys(budgets)
+    .filter((p) => {
+      const file = byPath.get(p);
+      return !file || lineCount(file) <= MAX_COMPONENT_LINES;
+    })
+    .map((p) => ({
+      file: p,
+      line: 1,
+      message: `${p} is now compliant — remove it from LARGE_COMPONENT_BUDGETS`,
+    }));
+}
+
+// ── Rule 9: one Supabase client ─────────────────────────────────────────────
+
+const SUPABASE_CLIENT_OWNER = "src/lib/server/supabaseServer.ts";
+
+export function oneSupabaseClient(files: SourceFile[]): Violation[] {
+  const message =
+    "Use serverDb from #lib/server/supabaseServer.js — it carries the 20 s request deadline (withDeadline); a second client bypasses it.";
+  return files
+    .filter((f) => !isTest(f.path) && f.path !== SUPABASE_CLIENT_OWNER)
+    .flatMap((f) =>
+      importsOf(f)
+        .filter(({ spec }) => spec === "@supabase/supabase-js")
+        .map(({ line }) => ({ file: f.path, line, message })),
+    );
+}
+
+// ── Rule 10: one Valkey client ──────────────────────────────────────────────
+
+const VALKEY_CLIENT_OWNER = "src/lib/server/valkey.ts";
+
+export function oneValkeyClient(files: SourceFile[]): Violation[] {
+  const message =
+    "Use the helpers in #lib/server/valkey.js — every command there is bounded (withinOr, 1 s) and fails open.";
+  return files
+    .filter((f) => !isTest(f.path) && f.path !== VALKEY_CLIENT_OWNER)
+    .flatMap((f) =>
+      importsOf(f)
+        .filter(
+          ({ spec }) =>
+            spec === "redis" ||
+            spec.startsWith("redis/") ||
+            spec.startsWith("@redis/"),
+        )
+        .map(({ line }) => ({ file: f.path, line, message })),
+    );
+}

@@ -45,6 +45,7 @@
   import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
   import { getCharacterPortrait, translateStatKey } from "#lib/utils.js";
   import { mount, tick, unmount } from "svelte";
+  import "#lib/ui/components/research-answer/research-shared.css";
 
   let {
     focus_name_id = null,
@@ -363,7 +364,7 @@
               {/if}
             </div>
             {#if row.noteHtml}
-              <p class="build-rank-note">{@html row.noteHtml}</p>
+              <p class="build-rank-note research-note">{@html row.noteHtml}</p>
             {/if}
           </div>
         </li>
@@ -397,17 +398,20 @@
     </div>
   {/if}
 
-  <section class="build-section" aria-label="Weapon ranking">
+  <section class="build-section research-panel" aria-label="Weapon ranking">
     <h3 class="build-section-title">Weapons</h3>
     {@render rankedList(weaponRows, "weapon")}
   </section>
 
-  <section class="build-section" aria-label="Artifact ranking">
+  <section class="build-section research-panel" aria-label="Artifact ranking">
     <h3 class="build-section-title">Artifacts</h3>
     {@render rankedList(artifactRows, "set")}
   </section>
 
-  <section class="build-section" aria-label="Situational artifact options">
+  <section
+    class="build-section research-panel"
+    aria-label="Situational artifact options"
+  >
     <h3 class="build-section-title">Situational options</h3>
     {#if optionRows.length === 0}
       <p class="build-empty meta-sub">No situational sets from sources.</p>
@@ -423,7 +427,7 @@
               {/if}
             </div>
             {#if row.noteHtml}
-              <p class="build-rank-note">{@html row.noteHtml}</p>
+              <p class="build-rank-note research-note">{@html row.noteHtml}</p>
             {/if}
           </li>
         {/each}
@@ -431,7 +435,7 @@
     {/if}
   </section>
 
-  <section class="build-section" aria-label="Stat priority">
+  <section class="build-section research-panel" aria-label="Stat priority">
     <h3 class="build-section-title">
       Stat priority
       {#if statsView && !statsView.empty && statsView.citeHtml}
@@ -484,7 +488,7 @@
         </div>
       </dl>
       {#if statsView.notesHtml}
-        <p class="build-rank-note">{@html statsView.notesHtml}</p>
+        <p class="build-rank-note research-note">{@html statsView.notesHtml}</p>
       {/if}
     {/if}
   </section>
@@ -597,11 +601,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    padding: 0.75rem 0.85rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 14%, transparent);
-    background: var(--surface-quiet);
   }
 
   .build-section-title {
@@ -665,13 +664,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem 0.4rem;
-  }
-
-  .build-rank-note {
-    margin: 0;
-    font-size: var(--text-xs);
-    line-height: 1.45;
-    color: color-mix(in srgb, var(--foreground-color) 72%, transparent);
   }
 
   .build-gear-fallback {
@@ -743,30 +735,6 @@
     .build-stats-grid {
       grid-template-columns: 1fr;
     }
-  }
-
-  .build-panel :global(.research-entity-slot) {
-    display: contents;
-  }
-
-  .build-panel :global(.research-cite) {
-    margin-left: 0.08rem;
-    font-size: 0.65em;
-    line-height: 0;
-    vertical-align: super;
-  }
-
-  .build-panel :global(.research-cite a) {
-    color: var(--foreground-mid);
-    text-decoration: none;
-    padding: 0 0.1rem;
-    border-radius: 0.15rem;
-    font-weight: 500;
-  }
-
-  .build-panel :global(.research-cite a:hover) {
-    color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
-    background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
   }
 
   .build-footnotes {

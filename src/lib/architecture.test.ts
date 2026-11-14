@@ -6,14 +6,18 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import {
   boardsLane,
+  componentSize,
   importStyle,
   importsOf,
   loadSourceFiles,
   modalShell,
   noBarrels,
+  oneSupabaseClient,
+  oneValkeyClient,
   resolveSpec,
   rosterStoreOneWriter,
   serverBoundary,
+  staleLargeComponentBudgets,
   staleLegacyModalShells,
   staticDataLane,
   type SourceFile,
@@ -262,6 +266,107 @@ describe("rule 7: boards lane", () => {
         ["src/lib/app/x.ts", 1],
         ["src/lib/app/y.ts", 1],
       ],
+    );
+  });
+});
+
+describe("rule 8: component size", () => {
+  const lines = (n: number) =>
+    Array.from({ length: n }, () => "<p></p>").join("\n");
+
+  it("repo has no violations", () => {
+    assert.deepEqual(componentSize(repo), []);
+  });
+
+  it("flags unlisted components over 600 lines and listed ones over budget", () => {
+    const violations = componentSize(
+      [
+        file("src/lib/ui/components/Big.svelte", lines(601)),
+        file("src/lib/ui/components/Ok.svelte", lines(600)),
+        file("src/lib/ui/components/Listed.svelte", lines(701)),
+        file("src/lib/ui/components/Held.svelte", lines(700)),
+      ],
+      {
+        "src/lib/ui/components/Listed.svelte": 700,
+        "src/lib/ui/components/Held.svelte": 700,
+      },
+    );
+    assert.deepEqual(
+      violations.map((v) => v.file),
+      [
+        "src/lib/ui/components/Big.svelte",
+        "src/lib/ui/components/Listed.svelte",
+      ],
+    );
+  });
+
+  it("ratchet: every LARGE_COMPONENT_BUDGETS entry is still oversized", () => {
+    assert.deepEqual(staleLargeComponentBudgets(repo), []);
+    const split = file("src/lib/ui/components/WasBig.svelte", lines(600));
+    const gone = "src/lib/ui/components/Deleted.svelte";
+    assert.deepEqual(
+      staleLargeComponentBudgets([split], { [split.path]: 900, [gone]: 900 }),
+      [
+        {
+          file: split.path,
+          line: 1,
+          message: `${split.path} is now compliant — remove it from LARGE_COMPONENT_BUDGETS`,
+        },
+        {
+          file: gone,
+          line: 1,
+          message: `${gone} is now compliant — remove it from LARGE_COMPONENT_BUDGETS`,
+        },
+      ],
+    );
+  });
+});
+
+describe("rule 9: one Supabase client", () => {
+  it("repo has no violations", () => {
+    assert.deepEqual(oneSupabaseClient(repo), []);
+  });
+
+  it("flags @supabase/supabase-js outside supabaseServer.ts", () => {
+    const violations = oneSupabaseClient([
+      file(
+        "src/lib/server/x.ts",
+        'import { createClient } from "@supabase/supabase-js";',
+      ),
+      file(
+        "src/lib/y.ts",
+        '// import x from "@supabase/supabase-js";\nimport type { SupabaseClient } from "@supabase/supabase-js";',
+      ),
+      file(
+        "src/lib/server/supabaseServer.ts",
+        'import { createClient } from "@supabase/supabase-js";',
+      ),
+    ]);
+    assert.deepEqual(
+      violations.map((v) => [v.file, v.line]),
+      [
+        ["src/lib/server/x.ts", 1],
+        ["src/lib/y.ts", 2],
+      ],
+    );
+  });
+});
+
+describe("rule 10: one Valkey client", () => {
+  it("repo has no violations", () => {
+    assert.deepEqual(oneValkeyClient(repo), []);
+  });
+
+  it("flags redis / @redis/* outside valkey.ts", () => {
+    const violations = oneValkeyClient([
+      file("src/lib/server/x.ts", 'import { createClient } from "redis";'),
+      file("src/lib/server/y.ts", 'const m = await import("@redis/client");'),
+      file("src/lib/server/valkey.ts", 'import { createClient } from "redis";'),
+      file("src/lib/server/z.ts", 'import x from "redis-mock";'),
+    ]);
+    assert.deepEqual(
+      violations.map((v) => v.file),
+      ["src/lib/server/x.ts", "src/lib/server/y.ts"],
     );
   });
 });

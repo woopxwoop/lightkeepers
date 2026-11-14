@@ -1,6 +1,7 @@
 # Architecture
 
-How Lightkeepers is put together, and where new code goes. If you're adding
+How Lightkeepers is put together, and where new code goes. The decisions
+behind these rules — and their status — are recorded in [`adr/`](adr/README.md). If you're adding
 something, read **Lanes** and **Recipes** first: most work extends an existing
 lane rather than opening a new one.
 
@@ -96,7 +97,11 @@ bug even if it works — it's how caches, versions, and stores drift apart.
 ## Recipes
 
 **Add an API route.** A handler reads as a list of requirements, then a
-response — no inline `try`/`catch`, type checks, or cache plumbing:
+response. Errors become responses through shared helpers — `require*` (400),
+`assertNoDbError` (logged, generic 500), `loadFromCdn` (502) — so each failure
+type has one policy and error details never leak to clients. Don't map errors
+by hand in a handler (a `try` for a health probe or best-effort cleanup is
+fine), and no type checks or cache plumbing:
 
 ```ts
 await enforceApiRateLimit({ request, getClientAddress });
@@ -176,8 +181,11 @@ every `src/**/*.test.ts` automatically. Change the solver? Extend
 fails the build when a lane rule is broken: static JSON imported outside
 `equipment-data.ts`, a copied modal shell, a `#lib` barrel, server-only code
 imported from client code, `../` or extensionless `#lib` imports, a second
-writer to `charactersOwned`, or a second caller of `/api/static`. The messages
-say what to use instead.
+writer to `charactersOwned`, a second caller of `/api/static`, a Svelte
+component over 600 lines (the few existing ones have a fixed budget they may
+shrink but not grow), or a Supabase/Valkey client created outside
+`supabaseServer.ts` / `valkey.ts` (those carry the request deadline and the
+bounded, fail-open commands). The messages say what to use instead.
 
 Also: `pnpm check` (types + Svelte), `pnpm dlx knip@5` (dead code), and the
 Playwright suite in `tests/`.
