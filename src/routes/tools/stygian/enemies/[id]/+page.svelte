@@ -15,7 +15,7 @@
     isAbortError,
     isTimeoutError,
   } from "#lib/app/stygian-enemy-teams.js";
-  import { stygianSlotIndexLabel } from "#lib/slotLabels.js";
+  import { stygianSlotIndexLabel } from "#lib/boards/slotLabels.js";
   import { getEnemyAsset, ownedNameIds } from "#lib/utils.js";
   import type {
     Character,

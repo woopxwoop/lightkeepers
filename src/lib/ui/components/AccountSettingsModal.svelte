@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { accountSettingsOpen } from "#lib/account-settings-open.js";
+  import { accountSettingsOpen } from "#lib/app/account-settings-open.js";
   import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
   import AccountPanel from "#lib/ui/components/settings/AccountPanel.svelte";
 

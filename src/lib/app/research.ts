@@ -13,7 +13,7 @@ import type {
   ResearchRequest,
   ResearchResponse,
   ResearchLlmProvider,
-} from "#lib/research-types.js";
+} from "#lib/research/research-types.js";
 import { foldGoodKey } from "#lib/utils.js";
 
 /**

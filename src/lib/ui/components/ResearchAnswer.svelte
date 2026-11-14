@@ -12,9 +12,9 @@
     loadRosterArtifacts,
     loadRosterWeapons,
   } from "#lib/app/roster-inventory.js";
-  import { handCharactersFromMembers } from "#lib/character-teams.js";
+  import { handCharactersFromMembers } from "#lib/boards/character-teams.js";
   import type { Character } from "#lib/definitions.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import {
     RESEARCH_ENTITY_SLOT_ATTR,
     citationShortLabel,
@@ -30,7 +30,7 @@
     renderResearchAnswer,
     renderResearchInline,
     safeExternalHref,
-  } from "#lib/research-answer.js";
+  } from "#lib/research/research-answer.js";
   import type {
     ResearchArtifactOption,
     ResearchCitation,
@@ -42,7 +42,7 @@
     ResearchStatPriority,
     ResearchTeamLineup,
     ResearchView,
-  } from "#lib/research-types.js";
+  } from "#lib/research/research-types.js";
   import { charactersOwned } from "#lib/stores/roster.js";
   import BuildPanel from "#lib/ui/components/BuildPanel.svelte";
   import ResearchEntityMention from "#lib/ui/components/ResearchEntityMention.svelte";

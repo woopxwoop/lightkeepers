@@ -11,12 +11,16 @@ import type {
   RosterProgress,
   RosterWeapon,
 } from "#lib/definitions.js";
-import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "#lib/upgrade-costs.js";
+import {
+  MAX_ASCENSION,
+  MAX_LEVEL,
+  MAX_TALENT,
+} from "#lib/planner/upgrade-costs.js";
 import {
   MAX_CONSTELLATION,
   MAX_REFINEMENT,
   MAX_WEAPON_KEY_LENGTH,
-} from "#lib/roster-progress.js";
+} from "#lib/roster/roster-progress.js";
 import {
   isArtifactSlot,
   MAX_ARTIFACT_LEVEL,
@@ -28,7 +32,7 @@ import {
   MAX_STAT_KEY_LENGTH,
   MAX_SUBSTAT_INPUT_ROWS,
   MAX_UNACTIVATED_SUBSTATS,
-} from "#lib/roster-inventory.js";
+} from "#lib/roster/roster-inventory.js";
 import {
   MAX_NAME_ID_LENGTH,
   MAX_ROSTER_CHARACTERS,

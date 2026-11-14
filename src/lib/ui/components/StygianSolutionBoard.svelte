@@ -26,13 +26,13 @@
     stygianVersionNumber,
     abyssVersionNumber,
   } from "#lib/stores/versions.js";
-  import { stygianSlotLabel } from "#lib/slotLabels.js";
+  import { stygianSlotLabel } from "#lib/boards/slotLabels.js";
   import {
     solveStygianWithFallback,
     solveStygianCheapClears,
     solveStygianHybrid,
     SOLVER_REVISION,
-  } from "#lib/solver.js";
+  } from "#lib/boards/solver.js";
   import {
     SOLUTIONS_COUNT,
     boardSlotRate,
@@ -46,7 +46,7 @@
     teamsFingerprint,
     characterMetaFingerprint,
     cheapClearsFingerprint,
-  } from "#lib/board-solutions.js";
+  } from "#lib/boards/board-solutions.js";
   import { ownedNameIds, getEnemyAsset } from "#lib/utils.js";
   import Team from "#lib/ui/components/Team.svelte";
   import Surface from "#lib/ui/components/Surface.svelte";
@@ -76,11 +76,11 @@
     clearTimeAtCap,
     clearTimeAtCostCeiling,
     floorTeamCost,
-  } from "#lib/team-cost.js";
+  } from "#lib/boards/team-cost.js";
   import { resolve } from "$app/paths";
   import { settingsPath } from "#lib/ui/nav-links.js";
   import { authClient } from "#lib/auth-client.js";
-  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
   import {
     ensureClearVideos,
     getClearVideosCached,

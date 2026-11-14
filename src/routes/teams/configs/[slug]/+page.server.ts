@@ -7,12 +7,15 @@ import {
   getSimRotationSample,
 } from "#lib/server/team-config.js";
 import { getCharacterKit } from "#lib/server/character-kit.js";
-import { characterBaseByKey, ensureBaseStatData } from "#lib/equipment-data.js";
+import {
+  characterBaseByKey,
+  ensureBaseStatData,
+} from "#lib/equipment/equipment-data.js";
 import { getSimConfigUrl } from "#lib/utils.js";
 import {
   kitIconsFromCharacterKit,
   type InvestmentBuildKitIcons,
-} from "#lib/investment-build-card.js";
+} from "#lib/investment/investment-build-card.js";
 
 export type TeamConfigKitIcons = InvestmentBuildKitIcons;
 

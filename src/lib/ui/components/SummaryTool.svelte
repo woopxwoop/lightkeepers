@@ -17,7 +17,7 @@
     pickTopMainDpsGroups,
     type InfographicSlot,
     type MainDpsTeamGroup,
-  } from "#lib/infographic-teams.js";
+  } from "#lib/boards/infographic-teams.js";
   import { getEnemyAsset } from "#lib/utils.js";
   import type { AbyssTeam, StygianTeam } from "#lib/definitions.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
@@ -37,7 +37,7 @@
   import { isOwnedNameId, ownedNameIds } from "#lib/utils.js";
   import { abyssPath, settingsPath, stygianPath } from "#lib/ui/nav-links.js";
   import { authClient } from "#lib/auth-client.js";
-  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
   import type { Tables } from "#lib/types/database.types.js";
 
   const ABYSS_SLOTS = ["top", "bottom"] as const;

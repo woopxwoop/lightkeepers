@@ -13,7 +13,7 @@ import {
   MAX_INVENTORY_WEAPONS,
   MAX_SUBSTAT_INPUT_ROWS,
   MAX_UNACTIVATED_SUBSTATS,
-} from "../../roster-inventory.ts";
+} from "../../roster/roster-inventory.ts";
 
 const isBadRequest = (value: unknown): boolean =>
   typeof value === "object" &&

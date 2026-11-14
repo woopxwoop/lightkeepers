@@ -24,7 +24,7 @@
     dimmedKeysFromGoodKeys,
     handCharactersFromMembers,
     dimmedKeysFromMembers,
-  } from "#lib/character-teams.js";
+  } from "#lib/boards/character-teams.js";
   import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
   import type { Character, CharacterOwned } from "#lib/definitions.js";
   import type { InvestmentFile } from "#lib/types/investment.js";

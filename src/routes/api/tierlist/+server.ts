@@ -19,7 +19,7 @@ import {
   computeTierList,
   usageRowsFromView,
   type TierListPayload,
-} from "#lib/tierlist.js";
+} from "#lib/boards/tierlist.js";
 
 const tierListCache = new LRUCache<TierListPayload>(1, 15 * 60 * 1000, {
   redisNamespace: "tierlist",

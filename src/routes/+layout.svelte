@@ -44,8 +44,8 @@
   import NavBar from "#lib/ui/NavBar.svelte";
   import PatchNotesPopup from "#lib/ui/components/PatchNotesPopup.svelte";
   import LoadOnFirstOpen from "#lib/ui/components/LoadOnFirstOpen.svelte";
-  import { plannerItineraryOpen } from "#lib/planner-itinerary-open.js";
-  import { accountSettingsOpen } from "#lib/account-settings-open.js";
+  import { plannerItineraryOpen } from "#lib/planner/planner-itinerary-open.js";
+  import { accountSettingsOpen } from "#lib/app/account-settings-open.js";
   import GoalsSyncConflictPopup from "#lib/ui/components/GoalsSyncConflictPopup.svelte";
   import RosterSyncConflictPopup from "#lib/ui/components/RosterSyncConflictPopup.svelte";
   import { resolve } from "$app/paths";

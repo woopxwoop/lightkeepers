@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { researchChatOpen } from "#lib/research-chat-open.js";
+  import { researchChatOpen } from "#lib/research/research-chat-open.js";
   import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
   import ResearchChat from "#lib/ui/components/ResearchChat.svelte";
 

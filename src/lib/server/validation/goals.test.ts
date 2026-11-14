@@ -4,12 +4,12 @@ import { requireCalculatorGoals } from "./goals.ts";
 import {
   MAX_CALCULATOR_GOALS,
   MAX_GOAL_ID_LENGTH,
-} from "../../calculator-goals.ts";
+} from "../../planner/calculator-goals.ts";
 import {
   createCharacterGoal,
   createWeaponGoal,
-} from "../../calculator-goals.ts";
-import { MAX_TALENT } from "../../upgrade-costs.ts";
+} from "../../planner/calculator-goals.ts";
+import { MAX_TALENT } from "../../planner/upgrade-costs.ts";
 
 const isBadRequest = (value: unknown): boolean =>
   typeof value === "object" &&

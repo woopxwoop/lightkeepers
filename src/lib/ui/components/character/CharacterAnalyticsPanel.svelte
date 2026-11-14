@@ -17,7 +17,7 @@
   import {
     dimmedKeysFromMembers,
     handCharactersFromMembers,
-  } from "#lib/character-teams.js";
+  } from "#lib/boards/character-teams.js";
   import type {
     Character,
     CharacterAnalyticsMode,

@@ -22,8 +22,8 @@
     translateStatKey,
     type CrimsonWitchLink,
   } from "#lib/utils.js";
-  import { weaponStars } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import { weaponStars } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import {
     MAIN_STAT_SLOTS,
     buildExamples,
@@ -40,13 +40,13 @@
     recommendedSubstatsFromBuilds,
     sigWeaponPrioritySection,
     talentPrioritySection,
-  } from "#lib/character-builds.js";
-  import { kitIconsFromCharacterKit } from "#lib/investment-build-card.js";
+  } from "#lib/characters/character-builds.js";
+  import { kitIconsFromCharacterKit } from "#lib/investment/investment-build-card.js";
   import { skillIconUrl, talentIconUrl } from "#lib/asset-urls.js";
   import type { CharacterKit } from "#lib/types/character-kit.js";
   import type { CharacterIndex } from "#lib/types/investment.js";
   import type { CharacterOwned } from "#lib/definitions.js";
-  import type { UpgradeTier } from "#lib/upgrade-priority.js";
+  import type { UpgradeTier } from "#lib/investment/upgrade-priority.js";
 
   let {
     kit,

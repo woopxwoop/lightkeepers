@@ -9,8 +9,8 @@
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
-  } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import { onMount } from "svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";

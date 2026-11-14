@@ -15,7 +15,7 @@
     readSeenPatchNoteSlug,
     shouldShowPatchNotesPopup,
     writeSeenPatchNoteSlug,
-  } from "#lib/patch-notes-seen.js";
+  } from "#lib/patch-notes/patch-notes-seen.js";
 
   let {
     note,

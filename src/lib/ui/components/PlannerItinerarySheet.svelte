@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { plannerItineraryOpen } from "#lib/planner-itinerary-open.js";
+  import { plannerItineraryOpen } from "#lib/planner/planner-itinerary-open.js";
   import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
   import PlannerItinerary from "#lib/ui/components/PlannerItinerary.svelte";
 

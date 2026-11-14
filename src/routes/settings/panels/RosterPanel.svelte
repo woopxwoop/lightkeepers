@@ -23,8 +23,8 @@
     InventoryWeapon,
     RosterProgress,
   } from "#lib/definitions.js";
-  import { cloneRosterProgress } from "#lib/roster-progress.js";
-  import { rosterBuildViewFromOwned } from "#lib/roster-build-card.js";
+  import { cloneRosterProgress } from "#lib/roster/roster-progress.js";
+  import { rosterBuildViewFromOwned } from "#lib/roster/roster-build-card.js";
   import {
     getRosterArtifactsCached,
     getRosterWeaponsCached,
@@ -32,12 +32,12 @@
     loadRosterWeapons,
   } from "#lib/app/roster-inventory.js";
   import { weaponTypeLabel, ownedNameIds } from "#lib/utils.js";
-  import { isNewCharacter } from "#lib/is-new-character.js";
+  import { isNewCharacter } from "#lib/characters/is-new-character.js";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "#lib/character-filter.js";
+  } from "#lib/characters/character-filter.js";
   import { rosterSync } from "#lib/app/roster-sync.js";
   import { useSyncedDraft } from "#lib/sync/draft.svelte.js";
   import {

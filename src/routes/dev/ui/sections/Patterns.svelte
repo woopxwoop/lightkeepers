@@ -13,15 +13,15 @@
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import IconCog from "#lib/ui/icons/IconCog.svelte";
-  import { elementColor } from "#lib/element-colors.js";
+  import { elementColor } from "#lib/characters/element-colors.js";
   import type { CharacterOwned } from "#lib/definitions.js";
   import { toGoodKey, weaponTypeLabel } from "#lib/utils.js";
-  import { isNewCharacter } from "#lib/is-new-character.js";
+  import { isNewCharacter } from "#lib/characters/is-new-character.js";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "#lib/character-filter.js";
+  } from "#lib/characters/character-filter.js";
 
   let {
     sampleChars,

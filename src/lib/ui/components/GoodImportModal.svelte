@@ -4,7 +4,7 @@
    */
   import Button from "#lib/ui/components/Button.svelte";
   import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
-  import { MAX_GOOD_FILE_BYTES } from "#lib/good-import.js";
+  import { MAX_GOOD_FILE_BYTES } from "#lib/roster/good-import.js";
 
   let {
     open = false,

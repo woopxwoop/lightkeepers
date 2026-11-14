@@ -18,7 +18,7 @@
     formatMaterialSourceLine,
     collapseCraftRanks,
     craftRanksCanExpand,
-  } from "#lib/upgrade-costs.js";
+  } from "#lib/planner/upgrade-costs.js";
   import {
     aggregateGoalCosts,
     costsForGoal,
@@ -29,7 +29,7 @@
     replaceGoal,
     starredGoals,
     toggleGoalStarred,
-  } from "#lib/calculator-goals.js";
+  } from "#lib/planner/calculator-goals.js";
   import {
     appendCatalogCharacterGoal,
     appendCatalogWeaponGoal,
@@ -37,8 +37,8 @@
     plannerCharacterOptions,
     plannerWeaponOptions,
     resolveCatalogCharacterId,
-  } from "#lib/planner-goal-edits.js";
-  import { autofillCharacterGoalState } from "#lib/calculator-goals-lifecycle.js";
+  } from "#lib/planner/planner-goal-edits.js";
+  import { autofillCharacterGoalState } from "#lib/planner/calculator-goals-lifecycle.js";
   import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import { addressUrl, nextSearchPath } from "#lib/query-state.js";
   import { auditPath } from "#lib/ui/nav-links.js";

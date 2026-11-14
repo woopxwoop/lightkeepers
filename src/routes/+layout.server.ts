@@ -14,7 +14,7 @@ import type { LayoutServerLoad } from "./$types";
 import { loadCharacters } from "#lib/server/characters.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { e2eStaticPayload } from "#lib/e2e/fixtures.js";
-import { listPatchNotes } from "#lib/patch-notes-catalog.js";
+import { listPatchNotes } from "#lib/patch-notes/patch-notes-catalog.js";
 import {
   getLatestAbyssVersionNumber,
   getLatestStygianVersionNumber,

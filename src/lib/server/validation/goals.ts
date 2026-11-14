@@ -6,8 +6,12 @@ import { error } from "@sveltejs/kit";
 import {
   MAX_CALCULATOR_GOALS,
   MAX_GOAL_ID_LENGTH,
-} from "#lib/calculator-goals.js";
-import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "#lib/upgrade-costs.js";
+} from "#lib/planner/calculator-goals.js";
+import {
+  MAX_ASCENSION,
+  MAX_LEVEL,
+  MAX_TALENT,
+} from "#lib/planner/upgrade-costs.js";
 import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
 import {
   requireCharacterNameId,

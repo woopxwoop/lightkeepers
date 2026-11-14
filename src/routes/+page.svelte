@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { hasSavedRoster } from "#lib/stores/roster.js";
-  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
   import { authClient } from "#lib/auth-client.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";

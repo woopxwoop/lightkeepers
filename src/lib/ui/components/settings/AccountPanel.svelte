@@ -8,8 +8,8 @@
   import { charactersHydrated, charactersOwned } from "#lib/stores/roster.js";
   import { rosterSync } from "#lib/app/roster-sync.js";
   import { rosterDocOf } from "#lib/sync/roster-doc.js";
-  import { applyGoodRoster, parseGoodText } from "#lib/good-import.js";
-  import { serializeGoodDocument } from "#lib/good-export.js";
+  import { applyGoodRoster, parseGoodText } from "#lib/roster/good-import.js";
+  import { serializeGoodDocument } from "#lib/roster/good-export.js";
   import {
     clearRosterInventory,
     getRosterArtifactsCached,

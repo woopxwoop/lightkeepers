@@ -17,7 +17,7 @@
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "#lib/character-filter.js";
+  } from "#lib/characters/character-filter.js";
   import {
     addressUrl,
     nextSearchPath,

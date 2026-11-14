@@ -6,7 +6,10 @@ import type { CharacterKit } from "#lib/types/character-kit.js";
 import { characterKitUrl, type CharacterKitChannel } from "#lib/asset-urls.js";
 import { LRUCache } from "#lib/server/cache.js";
 import { fetchWithTimeout } from "#lib/cdn-fetch.js";
-import { mergeTravelerKits, travelerElementKitId } from "#lib/traveler-kits.js";
+import {
+  mergeTravelerKits,
+  travelerElementKitId,
+} from "#lib/characters/traveler-kits.js";
 import { TRAVELER_GUIDE_ELEMENTS } from "#lib/utils.js";
 
 export type CharacterKitResult = {

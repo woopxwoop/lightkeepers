@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Character, CharacterOwned } from "#lib/definitions.js";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
-  import { elementBg } from "#lib/element-colors.js";
+  import { elementBg } from "#lib/characters/element-colors.js";
   import { weaponTypeLabel } from "#lib/utils.js";
-  import { isNewCharacter } from "#lib/is-new-character.js";
-  import { isBetaCharacter } from "#lib/is-beta-character.js";
+  import { isNewCharacter } from "#lib/characters/is-new-character.js";
+  import { isBetaCharacter } from "#lib/characters/is-beta-character.js";
 
   let {
     character,

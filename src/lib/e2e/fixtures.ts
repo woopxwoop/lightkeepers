@@ -20,8 +20,8 @@ import type {
   StygianTeam,
   StygianVersion,
 } from "#lib/definitions.js";
-import type { ResearchResponse } from "#lib/research-types.js";
-import type { TierListPayload } from "#lib/tierlist.js";
+import type { ResearchResponse } from "#lib/research/research-types.js";
+import type { TierListPayload } from "#lib/boards/tierlist.js";
 
 export const E2E_ABYSS_TEAM_TOP = {
   team_key: "test-abyss-top",

@@ -2,7 +2,7 @@
   import {
     primaryUpgradePct,
     type UpgradeTier,
-  } from "#lib/upgrade-priority.js";
+  } from "#lib/investment/upgrade-priority.js";
   import InfoPopover from "#lib/ui/components/InfoPopover.svelte";
 
   let {

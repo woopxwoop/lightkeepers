@@ -12,7 +12,7 @@ import {
   upgradeCostsFileUrl,
   type UpgradeCostsChannel,
 } from "#lib/asset-urls.js";
-import { mergeUpgradeCostCatalogs } from "#lib/upgrade-costs-merge.js";
+import { mergeUpgradeCostCatalogs } from "#lib/planner/upgrade-costs-merge.js";
 import type {
   CharacterUpgradeCosts,
   UpgradeCostsCatalog,

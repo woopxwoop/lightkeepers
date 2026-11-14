@@ -12,12 +12,12 @@
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import IconFilter from "#lib/ui/icons/IconFilter.svelte";
   import IconCog from "#lib/ui/icons/IconCog.svelte";
-  import { ELEMENT_COLORS } from "#lib/element-colors.js";
+  import { ELEMENT_COLORS } from "#lib/characters/element-colors.js";
   import {
     equipmentVersion,
     weaponByKey,
     weaponIconSrc,
-  } from "#lib/equipment-data.js";
+  } from "#lib/equipment/equipment-data.js";
 
   let segment = $state<"roster" | "meta">("roster");
   let selectDemo = $state("stygian");

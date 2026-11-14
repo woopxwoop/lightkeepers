@@ -18,7 +18,7 @@
   import {
     rosterBuildViewFromOwned,
     type RosterBuildView,
-  } from "#lib/roster-build-card.js";
+  } from "#lib/roster/roster-build-card.js";
 
   let rbcShowConstellations = $state(true);
   let rbcShowTalents = $state(true);

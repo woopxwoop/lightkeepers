@@ -16,8 +16,11 @@
     artifactPieceIconSrc,
     artifactSetIconSrc,
     artifactSetName,
-  } from "#lib/equipment-data.js";
-  import { useEquipmentData, useWeapon } from "#lib/equipment-data.svelte.js";
+  } from "#lib/equipment/equipment-data.js";
+  import {
+    useEquipmentData,
+    useWeapon,
+  } from "#lib/equipment/equipment-data.svelte.js";
   import { weaponIconUrl } from "#lib/asset-urls.js";
   import avatarImg from "#lib/assets/default-avatar.jpg";
   import shadeImg from "#lib/assets/enka-shade.svg";
@@ -28,7 +31,7 @@
   import EnkaTalentFrame from "#lib/ui/components/EnkaTalentFrame.svelte";
   import IconCog from "#lib/ui/icons/IconCog.svelte";
   import "#lib/ui/enka-fonts.css";
-  import type { InvestmentBuildKitIcons } from "#lib/investment-build-card.js";
+  import type { InvestmentBuildKitIcons } from "#lib/investment/investment-build-card.js";
   import {
     getCharacterKitIconsCached,
     loadCharacterKitIcons,
@@ -37,7 +40,7 @@
     INVENTORY_ARTIFACT_SLOTS,
     formatGoodStatValue,
     type RosterBuildView,
-  } from "#lib/roster-build-card.js";
+  } from "#lib/roster/roster-build-card.js";
   import type {
     InventoryArtifactSlot,
     RosterProgress,
@@ -47,7 +50,7 @@
     MAX_TALENT,
     clampLevelToAscension,
     levelCapForAscension,
-  } from "#lib/upgrade-costs.js";
+  } from "#lib/planner/upgrade-costs.js";
   import {
     ARTIFACT_MAIN_STAT_VALUE,
     WEAPON_PROP_TO_GOOD,
@@ -55,12 +58,12 @@
     computeRosterSheetStats,
     formatSheetStat,
     resolveWeaponStats,
-  } from "#lib/build-stats.js";
+  } from "#lib/equipment/build-stats.js";
   import {
     DEFAULT_ROSTER_PROGRESS,
     MAX_CONSTELLATION,
     cloneRosterProgress,
-  } from "#lib/roster-progress.js";
+  } from "#lib/roster/roster-progress.js";
 
   let {
     view,

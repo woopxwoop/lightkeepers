@@ -29,9 +29,12 @@
   import {
     computePullSuggestions,
     computePairSuggestions,
-  } from "#lib/pullSuggestions.js";
-  import type { PullSuggestion, PairSuggestion } from "#lib/pullSuggestions.js";
-  import type { TierListEntry } from "#lib/tierlist.js";
+  } from "#lib/boards/pullSuggestions.js";
+  import type {
+    PullSuggestion,
+    PairSuggestion,
+  } from "#lib/boards/pullSuggestions.js";
+  import type { TierListEntry } from "#lib/boards/tierlist.js";
   import type { StygianTeam } from "#lib/definitions.js";
   import WishSlot from "#lib/ui/components/WishSlot.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";

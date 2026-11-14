@@ -22,7 +22,7 @@
     handCharactersFromGoodKeys,
     handBuilds,
     dimmedKeysFromGoodKeys,
-  } from "#lib/character-teams.js";
+  } from "#lib/boards/character-teams.js";
   import {
     allTeamCharacterKeys,
     availableInvestmentCosts,
@@ -31,7 +31,7 @@
     sortTeamsForDisplay,
     teamsMatchingTags,
     type TeamDpsSort,
-  } from "#lib/investment-teams.js";
+  } from "#lib/investment/investment-teams.js";
   import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
   import {
     addressUrl,

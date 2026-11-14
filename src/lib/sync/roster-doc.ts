@@ -14,9 +14,9 @@ import type {
   CharacterOwned,
   RosterProgress,
 } from "#lib/definitions.js";
-import { isBetaCharacter } from "#lib/is-beta-character.js";
-import { isNewCharacter } from "#lib/is-new-character.js";
-import { parseRosterProgress } from "#lib/roster-progress.js";
+import { isBetaCharacter } from "#lib/characters/is-beta-character.js";
+import { isNewCharacter } from "#lib/characters/is-new-character.js";
+import { parseRosterProgress } from "#lib/roster/roster-progress.js";
 import { defineSyncedDocSpec } from "#lib/sync/synced-doc.js";
 
 export type RosterEntry = {

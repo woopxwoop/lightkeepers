@@ -10,9 +10,9 @@
  */
 
 import { goalsSync, revealGoalsConflict } from "#lib/app/goals-sync.js";
-import { parseGoalsState } from "#lib/calculator-goals.js";
-import { goalsWithoutPendingRemoves } from "#lib/calculator-goals-lifecycle.js";
-import { captureGoals } from "#lib/calculator-goals-snapshot.js";
+import { parseGoalsState } from "#lib/planner/calculator-goals.js";
+import { goalsWithoutPendingRemoves } from "#lib/planner/calculator-goals-lifecycle.js";
+import { captureGoals } from "#lib/planner/calculator-goals-snapshot.js";
 import { useSyncedDraft, type DraftSave } from "#lib/sync/draft.svelte.js";
 import type { SyncStatus } from "#lib/sync/synced-doc.js";
 import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
@@ -157,7 +157,11 @@ export function useGoalsDraft(): GoalsDraft {
         // The switch already installed the new account's draft.
         if (switches !== mark) return null;
         // An edit or Cancel during this save replaced the editor copy.
-        if (!result.kept && sync.revision === owned && sameGoals(sync.draft, next)) {
+        if (
+          !result.kept &&
+          sync.revision === owned &&
+          sameGoals(sync.draft, next)
+        ) {
           sync.draft = previous;
         }
         return result;

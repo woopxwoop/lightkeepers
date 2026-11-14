@@ -12,8 +12,8 @@
     resolveArtifactSetKey,
     resolveWeaponKey,
     weaponName,
-  } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import {
     RESEARCH_ENTITY_SLOT_ATTR,
     citationShortLabel,
@@ -29,14 +29,14 @@
     renderResearchAnswer,
     renderResearchInline,
     safeExternalHref,
-  } from "#lib/research-answer.js";
+  } from "#lib/research/research-answer.js";
   import type {
     ResearchArtifactOption,
     ResearchCitation,
     ResearchEntity,
     ResearchRankItem,
     ResearchStatPriority,
-  } from "#lib/research-types.js";
+  } from "#lib/research/research-types.js";
   import ArtifactIcon from "#lib/ui/components/ArtifactIcon.svelte";
   import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
   import ResearchEntityMention from "#lib/ui/components/ResearchEntityMention.svelte";

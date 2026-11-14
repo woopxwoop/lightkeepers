@@ -10,7 +10,10 @@
  */
 
 import { get } from "svelte/store";
-import { emptyGoalsState, parseGoalsState } from "#lib/calculator-goals.js";
+import {
+  emptyGoalsState,
+  parseGoalsState,
+} from "#lib/planner/calculator-goals.js";
 import {
   cancelGoalsSyncConflict,
   goalsSyncConflict,
@@ -73,8 +76,7 @@ export function migrateLegacyGoals(
         : null;
     const key = `lk:${goalsDocSpec.key}:${owner ?? "guest"}`;
     const legacyState = parseGoalsState(legacy);
-    const base =
-      owner !== null ? legacyRecoveryBase(recovery?.baseJson) : null;
+    const base = owner !== null ? legacyRecoveryBase(recovery?.baseJson) : null;
     const fresh: SyncSlot<CalculatorGoalsState> = {
       v: goalsDocSpec.schemaVersion,
       data: legacyState,

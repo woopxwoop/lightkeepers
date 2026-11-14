@@ -20,7 +20,10 @@
     charactersHydrated,
     hasSavedRoster,
   } from "#lib/stores/roster.js";
-  import { solveAbyssWithFallback, SOLVER_REVISION } from "#lib/solver.js";
+  import {
+    solveAbyssWithFallback,
+    SOLVER_REVISION,
+  } from "#lib/boards/solver.js";
   import {
     SOLUTIONS_COUNT,
     boardSlotRate,
@@ -32,7 +35,7 @@
     createMemo,
     rosterFingerprint,
     teamsFingerprint,
-  } from "#lib/board-solutions.js";
+  } from "#lib/boards/board-solutions.js";
   import { ownedNameIds } from "#lib/utils.js";
   import Team from "#lib/ui/components/Team.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
@@ -47,7 +50,7 @@
   import { resolve } from "$app/paths";
   import { settingsPath } from "#lib/ui/nav-links.js";
   import { authClient } from "#lib/auth-client.js";
-  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];

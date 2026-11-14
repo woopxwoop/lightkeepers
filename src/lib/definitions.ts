@@ -332,4 +332,4 @@ export type {
   TierBoard,
   TierListEntry,
   TierListPayload,
-} from "#lib/tierlist.js";
+} from "#lib/boards/tierlist.js";

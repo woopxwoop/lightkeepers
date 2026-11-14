@@ -13,7 +13,7 @@
   import CharacterTeamsPanel from "#lib/ui/components/character/CharacterTeamsPanel.svelte";
   import CharacterAnalyticsPanel from "#lib/ui/components/character/CharacterAnalyticsPanel.svelte";
   import CharacterBuildsPanel from "#lib/ui/components/character/CharacterBuildsPanel.svelte";
-  import { elementColor } from "#lib/element-colors.js";
+  import { elementColor } from "#lib/characters/element-colors.js";
   import {
     buildGoodKeyMap,
     getUiAssetUrl,
@@ -22,11 +22,11 @@
     getCrimsonWitchLinks,
     simCharacterKey,
   } from "#lib/utils.js";
-  import { travelerElementKitId } from "#lib/traveler-kits.js";
+  import { travelerElementKitId } from "#lib/characters/traveler-kits.js";
   import type { CharacterKit } from "#lib/types/character-kit.js";
   import type { CharacterIndex } from "#lib/types/investment.js";
   import type { Character } from "#lib/definitions.js";
-  import { isStaleBuildSummary } from "#lib/stale-build-summary.js";
+  import { isStaleBuildSummary } from "#lib/roster/stale-build-summary.js";
   import type { ActionMenuItem } from "#lib/ui/components/ActionMenu.svelte";
 
   let { data } = $props();

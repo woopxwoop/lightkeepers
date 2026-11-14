@@ -12,8 +12,8 @@
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
-  } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import WeaponBadge from "#lib/ui/components/WeaponBadge.svelte";
   import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
@@ -34,7 +34,7 @@
     ownedVariants,
     findInvestmentTeam,
     groupVerticalSimsByCost,
-  } from "#lib/investment-teams.js";
+  } from "#lib/investment/investment-teams.js";
   import type {
     InvestmentFile,
     InvestmentSim,

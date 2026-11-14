@@ -8,7 +8,7 @@ import {
   parseTcgCardsFile,
   stemHasTcgCard,
   type TcgCardsFile,
-} from "#lib/tcg-cards.js";
+} from "#lib/characters/tcg-cards.js";
 import { uiAssetNameId } from "#lib/utils.js";
 
 /** Bumped after index load/failure so icons re-derive. */

@@ -7,7 +7,7 @@
   import { tick } from "svelte";
   import { scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { MAX_CALCULATOR_GOALS } from "#lib/calculator-goals.js";
+  import { MAX_CALCULATOR_GOALS } from "#lib/planner/calculator-goals.js";
   import { goalsSync } from "#lib/app/goals-sync.js";
   import {
     goalsMissingFrom,

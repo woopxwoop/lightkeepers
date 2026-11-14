@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { useEquipmentData, useWeapon } from "#lib/equipment-data.svelte.js";
+  import {
+    useEquipmentData,
+    useWeapon,
+  } from "#lib/equipment/equipment-data.svelte.js";
   import {
     ensureWeaponRefinements,
     weaponRefinements,
     type WeaponData,
-  } from "#lib/equipment-data.js";
+  } from "#lib/equipment/equipment-data.js";
   import { weaponTypeLabel } from "#lib/utils.js";
   import GameText from "#lib/ui/components/GameText.svelte";
   import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";

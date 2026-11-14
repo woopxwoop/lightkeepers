@@ -17,7 +17,7 @@ import type {
 import type {
   NearMissStygianTeam,
   NearMissPairTeam,
-} from "#lib/pullSuggestions.js";
+} from "#lib/boards/pullSuggestions.js";
 import { postJson } from "#lib/api/http.js";
 import {
   assertVersionsSeeded,

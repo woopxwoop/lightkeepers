@@ -3,10 +3,10 @@
   import { displayPreferences } from "#lib/stores/preferences.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageHeader from "#lib/ui/components/PageHeader.svelte";
-  import { elementColor } from "#lib/element-colors.js";
+  import { elementColor } from "#lib/characters/element-colors.js";
   import type { AbyssTeam } from "#lib/definitions.js";
   import { getNamecardUrl } from "#lib/utils.js";
-  import { ensureEquipmentData } from "#lib/equipment-data.js";
+  import { ensureEquipmentData } from "#lib/equipment/equipment-data.js";
   import UsageSeries from "./sections/UsageSeries.svelte";
   import UnboxedChrome from "./sections/UnboxedChrome.svelte";
   import SolutionBoardChrome from "./sections/SolutionBoardChrome.svelte";

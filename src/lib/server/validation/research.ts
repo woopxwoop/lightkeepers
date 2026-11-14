@@ -8,7 +8,7 @@ import type {
   ResearchLlmProvider,
   ResearchQuestionKind,
   ResearchRequest,
-} from "#lib/research-types.js";
+} from "#lib/research/research-types.js";
 
 export const MAX_RESEARCH_QUESTION_LENGTH = 2000;
 export const MAX_RESEARCH_FOCUS_IDS = 8;

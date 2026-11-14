@@ -12,8 +12,8 @@
     loadRosterWeapons,
   } from "#lib/app/roster-inventory.js";
   import type { InventoryArtifact, InventoryWeapon } from "#lib/definitions.js";
-  import { artifactSetName } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import { artifactSetName } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import ArtifactIcon from "#lib/ui/components/ArtifactIcon.svelte";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
   import LoadingState from "#lib/ui/components/LoadingState.svelte";

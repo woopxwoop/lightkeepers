@@ -2,7 +2,7 @@
   /**
    * Display name for a GOOD weapon key; falls back to the key until loaded.
    */
-  import { useWeapon } from "#lib/equipment-data.svelte.js";
+  import { useWeapon } from "#lib/equipment/equipment-data.svelte.js";
 
   let {
     weaponKey,

@@ -13,7 +13,7 @@
     loadRosterArtifacts,
     loadRosterWeapons,
   } from "#lib/app/roster-inventory.js";
-  import type { ResearchResponse } from "#lib/research-types.js";
+  import type { ResearchResponse } from "#lib/research/research-types.js";
   import { charactersOwned } from "#lib/stores/roster.js";
   import BuildPanel from "#lib/ui/components/BuildPanel.svelte";
   import Button from "#lib/ui/components/Button.svelte";

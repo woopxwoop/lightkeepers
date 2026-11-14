@@ -11,12 +11,16 @@
     type CharacterSidePatch,
     type PlannerPickOption,
     type WeaponSidePatch,
-  } from "#lib/planner-goal-edits.js";
+  } from "#lib/planner/planner-goal-edits.js";
   import { assetUrl } from "#lib/asset-urls.js";
   import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
   import type { CharacterPortraitRef } from "#lib/definitions.js";
   import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
-  import { MAX_ASCENSION, MAX_LEVEL, MAX_TALENT } from "#lib/upgrade-costs.js";
+  import {
+    MAX_ASCENSION,
+    MAX_LEVEL,
+    MAX_TALENT,
+  } from "#lib/planner/upgrade-costs.js";
   import Button from "#lib/ui/components/Button.svelte";
   import CharacterSearchSelect from "#lib/ui/components/CharacterSearchSelect.svelte";
   import ModalSheet from "#lib/ui/components/ModalSheet.svelte";

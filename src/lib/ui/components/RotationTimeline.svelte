@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Character } from "#lib/definitions.js";
-  import { elementColor } from "#lib/element-colors.js";
+  import { elementColor } from "#lib/characters/element-colors.js";
   import {
     collapseRotationEvents,
     DEFAULT_ROTATION_WINDOW_S,
@@ -14,8 +14,8 @@
     rotationHasSetupPrefix,
     rotationSegmentLabel,
     spansForCharacter,
-  } from "#lib/rotation-timeline.js";
-  import { resolveScriptSampleAlignment } from "#lib/rotation-script.js";
+  } from "#lib/characters/rotation-timeline.js";
+  import { resolveScriptSampleAlignment } from "#lib/characters/rotation-script.js";
   import type { RotationSample } from "#lib/types/investment.js";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
   import SegmentedControl from "#lib/ui/components/SegmentedControl.svelte";
