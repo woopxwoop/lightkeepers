@@ -26,6 +26,7 @@
   const tooltipId = $props.id();
 
   let tipEl: HTMLDivElement | undefined = $state();
+  let tipBodyEl: HTMLDivElement | undefined = $state();
   let sheetRootEl: HTMLDivElement | undefined = $state();
   let sheetEl: HTMLDivElement | undefined = $state();
   let tipTriggerEl: HTMLElement | null = null;
@@ -33,6 +34,7 @@
   let open = $state(false);
   let detailOpen = $state(false);
   let truncated = $state(false);
+  let bodyObserver: ResizeObserver | null = null;
 
   function updateTriggerDescription(trigger: HTMLElement | null, add: boolean) {
     if (!trigger) return;
@@ -140,21 +142,28 @@
     truncated = tip.scrollHeight > tip.clientHeight + 2;
   }
 
+  function remeasure(trigger: HTMLElement) {
+    const wasTruncated = truncated;
+    place(trigger);
+    measureTruncation();
+    // Truncation toggles a footer; re-place once layout settles.
+    if (truncated !== wasTruncated) requestAnimationFrame(() => place(trigger));
+  }
+
   function showTip(trigger: HTMLElement) {
     if (detailOpen) return;
     tipTriggerEl = trigger;
     open = true;
     onopen?.();
     updateTriggerDescription(trigger, true);
-    requestAnimationFrame(() => {
-      place(trigger);
-      measureTruncation();
-      // Truncation adds a footer; re-place once layout settles.
-      if (truncated) requestAnimationFrame(() => place(trigger));
-    });
+    // Async tip content (onopen loads) can grow the body after the first frame.
+    bodyObserver?.disconnect();
+    if (tipBodyEl) bodyObserver?.observe(tipBodyEl);
+    requestAnimationFrame(() => remeasure(trigger));
   }
 
   function hideTip() {
+    bodyObserver?.disconnect();
     open = false;
     truncated = false;
     if (!detailOpen) updateTriggerDescription(tipTriggerEl, false);
@@ -217,6 +226,12 @@
     // block so viewport coords from getBoundingClientRect land wrong.
     document.body.appendChild(tip);
 
+    if (typeof ResizeObserver !== "undefined") {
+      bodyObserver = new ResizeObserver(() => {
+        if (open && tipTriggerEl) remeasure(tipTriggerEl);
+      });
+    }
+
     let pointerActive = false;
     let focusActive = false;
 
@@ -278,6 +293,8 @@
     window.addEventListener("keydown", onKey);
 
     return () => {
+      bodyObserver?.disconnect();
+      bodyObserver = null;
       updateTriggerDescription(tipTriggerEl, false);
       updateTriggerDescription(activeTriggerEl, false);
       tipTriggerEl = null;
@@ -316,7 +333,7 @@
   role="tooltip"
 >
   {#if !detailOpen}
-    <div class="hover-tooltip-body">
+    <div class="hover-tooltip-body" bind:this={tipBodyEl}>
       {@render children()}
     </div>
     {#if truncated}

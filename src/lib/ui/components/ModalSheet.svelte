@@ -53,6 +53,7 @@
 
   afterNavigate(({ shallow, type }) => {
     if (!closeOnNavigate) return;
+    if (type === "enter") return;
     if (shallow && type === "goto") return;
     if (!open) return;
     closedByNavigate = true;
