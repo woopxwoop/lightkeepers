@@ -10,6 +10,24 @@
 
 import { createClient, type RedisClientType } from "redis";
 import { VALKEY_URL, REDIS_URL } from "$app/env/private";
+import { withinOr } from "#lib/server/bounded.js";
+
+/**
+ * node-redis has no per-command timeout: a stalled connection would hang the
+ * caller — and through getOrSet coalescing or checkApiRateLimit, every request
+ * behind it. Valkey answers in well under a millisecond locally, so past this
+ * a command counts as unavailable and callers take the same fallback as "no
+ * Valkey configured" (cache miss / skip write / in-process rate limit).
+ */
+const VALKEY_COMMAND_TIMEOUT_MS = 1_000;
+
+function warnStalled(op: string, key: string): () => void {
+  return () =>
+    console.warn(
+      `[valkey] ${op} exceeded ${VALKEY_COMMAND_TIMEOUT_MS} ms — treating as unavailable:`,
+      key,
+    );
+}
 
 let client: RedisClientType | null | undefined;
 let connecting: Promise<RedisClientType | null> | null = null;
@@ -69,7 +87,14 @@ export async function valkeyGetJsonWithTtl<T>(
   const c = await getValkey();
   if (!c) return undefined;
   try {
-    const [raw, pttl] = await Promise.all([c.get(key), c.pTTL(key)]);
+    const reply = await withinOr(
+      Promise.all([c.get(key), c.pTTL(key)]),
+      VALKEY_COMMAND_TIMEOUT_MS,
+      null,
+      warnStalled("GET", key),
+    );
+    if (reply == null) return undefined;
+    const [raw, pttl] = reply;
     if (raw == null || pttl === -2) return undefined;
     // -1 = no expiry on the key; treat as "full window" at the caller.
     const ttlMs = pttl < 0 ? Number.POSITIVE_INFINITY : pttl;
@@ -90,7 +115,12 @@ export async function valkeySetJson(
   if (!c) return;
   try {
     const ttlSec = Math.max(1, Math.ceil(ttlMs / 1000));
-    await c.set(key, JSON.stringify(value), { EX: ttlSec });
+    await withinOr(
+      c.set(key, JSON.stringify(value), { EX: ttlSec }),
+      VALKEY_COMMAND_TIMEOUT_MS,
+      undefined,
+      warnStalled("SET", key),
+    );
   } catch (err) {
     console.error("[valkey] SET failed:", key, err);
   }
@@ -116,10 +146,16 @@ export async function valkeyIncrWithTtl(
   const c = await getValkey();
   if (!c) return null;
   try {
-    const count = await c.eval(INCR_WITH_TTL_LUA, {
-      keys: [key],
-      arguments: [String(Math.max(1, ttlMs))],
-    });
+    const count = await withinOr(
+      c.eval(INCR_WITH_TTL_LUA, {
+        keys: [key],
+        arguments: [String(Math.max(1, ttlMs))],
+      }),
+      VALKEY_COMMAND_TIMEOUT_MS,
+      null,
+      warnStalled("INCR", key),
+    );
+    if (count == null) return null;
     const n = typeof count === "number" ? count : Number(count);
     return Number.isFinite(n) ? n : null;
   } catch (err) {
