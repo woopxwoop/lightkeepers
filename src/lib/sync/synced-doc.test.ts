@@ -310,6 +310,52 @@ describe("failures", () => {
     });
     assert.equal(view().error, null);
   });
+
+  it("a guest answer storage refused is reported", async () => {
+    const { synced, signIn, storage, view } = setup({ ask: true });
+    signIn(null);
+    await synced.commit(doc("stored"));
+    await synced.commit(doc("draft"), { basedOn: doc("other") });
+    assert.equal(view().status, "ask");
+    storage.failWrites = true;
+    assert.deepEqual(await synced.resolve("local"), {
+      status: "local",
+      stored: false,
+      account: null,
+    });
+    assert.equal(view().error, GUEST_STORAGE_ERROR);
+  });
+
+  it("a guest save that asks reports refused storage", async () => {
+    const { synced, signIn, storage, view } = setup({ ask: true });
+    signIn(null);
+    await synced.commit(doc("stored"));
+    storage.failWrites = true;
+    const result = await synced.commit(doc("draft"), {
+      basedOn: doc("other"),
+    });
+    assert.equal(result.status, "ask");
+    assert.equal(view().status, "ask");
+    assert.equal(view().error, GUEST_STORAGE_ERROR);
+  });
+
+  it("a guest save publishes the view once", async () => {
+    const { synced, signIn, storage, view } = setup();
+    storage.failWrites = true;
+    signIn(null);
+    await synced.commit(doc("memory-only"));
+    assert.equal(view().error, GUEST_STORAGE_ERROR);
+    storage.failWrites = false;
+    const seen: (string | null)[] = [];
+    let primed = false;
+    const stop = synced.view.subscribe((v) => {
+      if (primed) seen.push(v.error);
+    });
+    primed = true;
+    await synced.commit(doc("memory-only", "more"));
+    stop();
+    assert.deepEqual(seen, [null]);
+  });
 });
 
 describe("accounts", () => {

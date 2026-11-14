@@ -175,6 +175,11 @@
         importError = "Account changed during import — import again.";
         return;
       }
+      if (result.status === "local" && !result.stored) {
+        importError = $rosterView.error ?? "Couldn't save to this browser.";
+        importNote = "";
+        return;
+      }
       const attachmentOmitted =
         result.status === "sent" && result.attachmentOmitted === true;
       if (!attachmentOmitted) setRosterInventory(inventory);

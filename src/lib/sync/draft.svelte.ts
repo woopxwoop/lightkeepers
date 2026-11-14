@@ -16,10 +16,11 @@
 
 import { untrack } from "svelte";
 import { fromStore } from "svelte/store";
-import type {
-  CommitOutcome,
-  SyncStatus,
-  SyncedDoc,
+import {
+  isSaved,
+  type CommitOutcome,
+  type SyncStatus,
+  type SyncedDoc,
 } from "#lib/sync/synced-doc.js";
 
 export type SyncedDraftOptions<T, D> = {
@@ -217,10 +218,9 @@ export function useSyncedDraft<T, D = T>(
           return { ...result, kept: true };
         }
         // Ask / unchanged count as kept only when the stored copy is the
-        // payload this save submitted.
+        // payload this save submitted; a guest write storage refused is not kept.
         const kept =
-          result.status === "sent" ||
-          result.status === "local" ||
+          isSaved(result) ||
           result.status === "unsent" ||
           ((result.status === "unchanged" || result.status === "ask") &&
             opts.sameContent(opts.toDraft(live.current.data), submitted));

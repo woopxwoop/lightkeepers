@@ -37,6 +37,7 @@
   } from "#lib/characters/character-filter.js";
   import { rosterSync } from "#lib/app/roster-sync.js";
   import { useSyncedDraft } from "#lib/sync/draft.svelte.js";
+  import { isSaved } from "#lib/sync/synced-doc.js";
   import {
     rosterDocOf,
     rosterDocSpec,
@@ -58,6 +59,7 @@
   let showSaved = $state(false);
   let savedGeneration = 0;
   let rosterError = $state("");
+  let shownError = $derived(rosterError || (roster.error ?? ""));
   let hasUnsavedChanges = $derived(roster.unsaved);
   let savedVisible = $derived(showSaved && !hasUnsavedChanges);
   /** Stored edits the server has not accepted (a failed upload): Save retries. */
@@ -143,8 +145,7 @@
         case "sent":
         case "local":
           // A guest save storage refused is not saved; the view says why.
-          if (result.status === "sent" || result.stored) flashSaved();
-          else rosterError = roster.error ?? "";
+          if (isSaved(result)) flashSaved();
           break;
         case "unsent":
           rosterError = result.error
@@ -299,7 +300,7 @@
       <span class="owned-count">{ownedCount} / {totalCount}</span>
     </div>
 
-    {#if canSave || roster.saving || savedVisible || rosterError}
+    {#if canSave || roster.saving || savedVisible || shownError}
       <div class="save-bar">
         <div class="save-status">
           <span
@@ -309,14 +310,14 @@
           ></span>
           <span
             class="save-label"
-            class:save-error={!!rosterError && !roster.saving && !savedVisible}
+            class:save-error={!!shownError && !roster.saving && !savedVisible}
           >
             {roster.saving
               ? "Saving..."
               : savedVisible
                 ? "Saved"
-                : rosterError
-                  ? rosterError
+                : shownError
+                  ? shownError
                   : unsent
                     ? "Not synced"
                     : "Unsaved changes"}

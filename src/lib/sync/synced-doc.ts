@@ -136,6 +136,16 @@ export const GUEST_STORAGE_ERROR =
 
 export type CommitOutcome = CommitResult & { account: string | null };
 
+/**
+ * The save is kept somewhere that survives a reload: the server took it, or
+ * (guest) browser storage did. `unsent` is on this device but not synced.
+ */
+export function isSaved(result: CommitResult): boolean {
+  return (
+    result.status === "sent" || (result.status === "local" && result.stored)
+  );
+}
+
 /** What `discardServer` did. `message` is null when no delete was attempted. */
 export type DiscardResult =
   { removed: true } | { removed: false; message: string | null };
@@ -410,6 +420,24 @@ export function createSyncedDoc<T>(
   function setState(account: string | null, patch: Partial<Transient<T>>) {
     transients.set(slotKey(account), { ...stateOf(account), ...patch });
     publish(account);
+  }
+
+  /** Store a guest slot and its storage warning in one publish. */
+  function storeGuestSlot(
+    slot: SyncSlot<T>,
+    patch: Partial<Transient<T>> = {},
+  ): boolean {
+    const key = slotKey(null);
+    slots.set(key, slot);
+    const stored = storage.write(key, slot);
+    transients.set(key, {
+      ...stateOf(null),
+      ...patch,
+      error: stored ? null : GUEST_STORAGE_ERROR,
+    });
+    if (stored) lastSeen.set(key, JSON.stringify(slot));
+    publish(null);
+    return stored;
   }
 
   function statusOf(account: string | null): SyncStatus {
@@ -721,13 +749,18 @@ export function createSyncedDoc<T>(
               : (opts?.basedOn ?? null);
         const merged = spec.merge(base, next, remote);
         if (merged === "ask") {
-          storeSlot(account, {
+          const asked = {
             ...slot,
             data: next,
             dirty: account !== null,
             ask: pendingAsk,
-          });
-          setState(account, { ask: pendingAsk });
+          };
+          if (account === null) {
+            storeGuestSlot(asked, { ask: pendingAsk });
+          } else {
+            storeSlot(account, asked);
+            setState(account, { ask: pendingAsk });
+          }
           return Promise.resolve({ status: "ask", account });
         }
         setState(account, { ask: null });
@@ -773,13 +806,13 @@ export function createSyncedDoc<T>(
             dirty: slot.dirty,
             base: basedOn,
           };
-          storeSlot(account, {
-            ...slot,
-            data: next,
-            dirty: account !== null,
-            ask,
-          });
-          setState(account, { ask });
+          const asked = { ...slot, data: next, dirty: account !== null, ask };
+          if (account === null) {
+            storeGuestSlot(asked, { ask });
+          } else {
+            storeSlot(account, asked);
+            setState(account, { ask });
+          }
           return Promise.resolve({ status: "ask", account });
         }
       }
@@ -798,11 +831,11 @@ export function createSyncedDoc<T>(
       if (account !== null && attachments.has(account)) {
         saved.attach = attachments.get(account);
       }
-      const stored = storeSlot(account, saved);
       if (account === null) {
-        setState(account, { error: stored ? null : GUEST_STORAGE_ERROR });
+        const stored = storeGuestSlot(saved);
         return Promise.resolve({ status: "local", stored, account });
       }
+      storeSlot(account, saved);
       if (!dirty) return Promise.resolve({ status: "unchanged", account });
       setState(account, { error: null });
       return send(account);
@@ -833,8 +866,7 @@ export function createSyncedDoc<T>(
       const answered = answerAsk(slotOf(account), ask, choice);
       if (account !== null && !answered.attach) attachments.delete(account);
       if (account === null) {
-        const stored = storeSlot(account, { ...answered, dirty: false });
-        setState(account, { error: stored ? null : GUEST_STORAGE_ERROR });
+        const stored = storeGuestSlot({ ...answered, dirty: false });
         return Promise.resolve(
           choice === "local"
             ? { status: "local", stored, account }

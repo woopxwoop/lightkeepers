@@ -37,6 +37,7 @@
     type CostScope,
   } from "#lib/planner/planner-cost-view.js";
   import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
+  import { isSaved } from "#lib/sync/synced-doc.js";
   import { addressUrl, nextSearchPath } from "#lib/query-state.js";
   import type {
     AggregatedUpgradeCosts,
@@ -145,11 +146,7 @@
   async function saveGoals() {
     const result = await goals.save();
     // A guest save storage refused is not saved; `goals.error` explains.
-    if (
-      result.status === "sent" ||
-      (result.status === "local" && result.stored)
-    )
-      flashSaved();
+    if (isSaved(result)) flashSaved();
   }
 
   let selectedGoal = $derived(findGoal(goals.state, goals.state.selectedId));
