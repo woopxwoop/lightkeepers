@@ -9,7 +9,7 @@ import {
   type AccountDocDb,
   type AccountDocWrite,
 } from "#lib/server/account-doc.js";
-import { assertNoDbError } from "#lib/server/request-validation.js";
+import { assertNoDbError } from "#lib/server/validation/core.js";
 
 const db = serverDb as unknown as AccountDocDb;
 

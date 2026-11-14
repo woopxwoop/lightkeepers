@@ -21,8 +21,8 @@
     replaceGoal,
     starredGoals,
     toggleGoalStarred,
-  } from "#lib/calculator-goals.js";
-  import { autofillCharacterGoalState } from "#lib/calculator-goals-lifecycle.js";
+  } from "#lib/planner/calculator-goals.js";
+  import { autofillCharacterGoalState } from "#lib/planner/calculator-goals-lifecycle.js";
   import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import type { Character, CharacterPortraitRef } from "#lib/definitions.js";
   import {
@@ -31,7 +31,7 @@
     pickModalCharacter,
     plannerCharacterOptions,
     plannerWeaponOptions,
-  } from "#lib/planner-goal-edits.js";
+  } from "#lib/planner/planner-goal-edits.js";
   import {
     FARM_KIND_LABEL,
     farmMaterialContributors,
@@ -45,9 +45,9 @@
     type FarmGoalRef,
     type FarmPlace,
     type FarmPlaceMaterial,
-  } from "#lib/planner-itinerary.js";
+  } from "#lib/planner/planner-itinerary.js";
   import { assetUrl } from "#lib/asset-urls.js";
-  import { charactersOwned } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import { ownedNameIds } from "#lib/utils.js";
   import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
   import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";

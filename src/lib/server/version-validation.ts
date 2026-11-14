@@ -58,16 +58,12 @@ const stygianVersions = createVersionDomain("stygian_versions", () =>
 );
 
 /** Whether an Abyss version exists in the database-supported domain. */
-export async function isSupportedAbyssVersion(
-  version: number,
-): Promise<boolean> {
+async function isSupportedAbyssVersion(version: number): Promise<boolean> {
   return abyssVersions.isSupported(version);
 }
 
 /** Whether a Stygian version exists in the database-supported domain. */
-export async function isSupportedStygianVersion(
-  version: number,
-): Promise<boolean> {
+async function isSupportedStygianVersion(version: number): Promise<boolean> {
   return stygianVersions.isSupported(version);
 }
 

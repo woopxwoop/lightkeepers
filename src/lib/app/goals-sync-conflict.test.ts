@@ -9,7 +9,7 @@ import {
   createCharacterGoal,
   emptyGoalsState,
   parseGoalsState,
-} from "../calculator-goals.ts";
+} from "../planner/calculator-goals.ts";
 import { goalConflictLabel, goalsMissingFrom } from "./goals-sync-conflict.ts";
 
 const state = (...goals: Record<string, unknown>[]) =>

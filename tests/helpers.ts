@@ -5,7 +5,7 @@ import type {
   NearMissStygianTeam,
   StygianTeam,
 } from "../src/lib/definitions";
-import type { TierListPayload } from "../src/lib/tierlist";
+import type { TierListPayload } from "../src/lib/boards/tierlist";
 import {
   E2E_ABYSS_TEAM_BOTTOM,
   E2E_ABYSS_TEAM_TOP,

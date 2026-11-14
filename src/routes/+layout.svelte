@@ -37,16 +37,15 @@
   import {
     displayPreferences,
     initDisplayPreferences,
-    setVersionNumbers,
-    faviconDataUri,
     backgroundVisible,
     syncBackgroundToPath,
-  } from "#lib/stores.js";
+  } from "#lib/stores/preferences.js";
+  import { setVersionNumbers } from "#lib/stores/boards.js";
   import NavBar from "#lib/ui/NavBar.svelte";
   import PatchNotesPopup from "#lib/ui/components/PatchNotesPopup.svelte";
-  import PlannerItinerarySheet from "#lib/ui/components/PlannerItinerarySheet.svelte";
-  import ResearchChatSheet from "#lib/ui/components/ResearchChatSheet.svelte";
-  import AccountSettingsModal from "#lib/ui/components/AccountSettingsModal.svelte";
+  import LoadOnFirstOpen from "#lib/ui/components/LoadOnFirstOpen.svelte";
+  import { plannerItineraryOpen } from "#lib/planner/planner-itinerary-open.js";
+  import { accountSettingsOpen } from "#lib/app/account-settings-open.js";
   import GoalsSyncConflictPopup from "#lib/ui/components/GoalsSyncConflictPopup.svelte";
   import RosterSyncConflictPopup from "#lib/ui/components/RosterSyncConflictPopup.svelte";
   import { resolve } from "$app/paths";
@@ -153,7 +152,6 @@
 </script>
 
 <svelte:head>
-  <link rel="icon" href={$faviconDataUri} type="image/png" />
   <title>{page.data.seo?.title ?? "Lightkeepers"}</title>
   <meta
     name="description"
@@ -182,11 +180,22 @@
     ></div>
   {/if}
   <NavBar />
-  <PlannerItinerarySheet />
-  {#if dev}
-    <ResearchChatSheet />
-  {/if}
-  <AccountSettingsModal />
+  <!-- On-demand sheets: loaded on first open, kept out of every page's upfront JS/CSS. -->
+  <LoadOnFirstOpen
+    when={$plannerItineraryOpen}
+    load={() => import("#lib/ui/components/PlannerItinerarySheet.svelte")}
+    onfail={() => plannerItineraryOpen.set(false)}
+  />
+  <LoadOnFirstOpen
+    when={$accountSettingsOpen}
+    load={() => import("#lib/ui/components/AccountSettingsModal.svelte")}
+    onfail={() => accountSettingsOpen.set(false)}
+  />
+  <!-- Dev-only: dynamic import keeps research out of production chunks. -->
+  <LoadOnFirstOpen
+    when={dev}
+    load={() => import("#lib/ui/components/ResearchChatSheet.svelte")}
+  />
   {#if $rosterSyncConflict}
     <RosterSyncConflictPopup />
   {:else if $goalsSyncConflict}
@@ -213,13 +222,13 @@
   >
     <span>© Lightkeepers</span>
     <span aria-hidden="true">·</span>
-    <a href={patchNotesPath} class="footer-link">Patch notes</a>
+    <a href={patchNotesPath} class="footer-link text-link">Patch notes</a>
     <span aria-hidden="true">·</span>
     <a
       href="https://github.com/woopxwoop/lightkeepers"
       target="_blank"
       rel="noopener noreferrer"
-      class="footer-link"
+      class="footer-link text-link"
     >
       GitHub
     </a>
@@ -228,7 +237,7 @@
       href={DISCORD_INVITE_URL}
       target="_blank"
       rel="noopener noreferrer"
-      class="footer-link"
+      class="footer-link text-link"
     >
       Discord
     </a>
@@ -248,10 +257,7 @@
   }
 
   .footer-link {
-    color: var(--accent-1);
-    text-decoration: none;
-  }
-  .footer-link:hover {
-    text-decoration: underline;
+    /* Cream, not gold — the footer sits on the black page base. */
+    color: var(--foreground-color);
   }
 </style>

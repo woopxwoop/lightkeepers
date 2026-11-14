@@ -1,20 +1,29 @@
 <script lang="ts">
   import {
     teamsOwned,
-    allTeamsAbyss,
-    abyssEnemiesBoard,
-    abyssVersionNumber,
-    stygianVersionNumber,
-    staticBoardsPhase,
-    staticBoardsView,
-    charactersOwned,
-    charactersHydrated,
     teamsOwnedStatus,
     ensureTeamsOwned,
+  } from "#lib/stores/teams.js";
+  import {
+    allTeamsAbyss,
+    abyssEnemiesBoard,
+    staticBoardsPhase,
+    staticBoardsView,
     ensureStaticBoards,
+  } from "#lib/stores/boards.js";
+  import {
+    abyssVersionNumber,
+    stygianVersionNumber,
+  } from "#lib/stores/versions.js";
+  import {
+    charactersOwned,
+    charactersHydrated,
     hasSavedRoster,
-  } from "#lib/stores.js";
-  import { solveAbyssWithFallback, SOLVER_REVISION } from "#lib/solver.js";
+  } from "#lib/stores/roster.js";
+  import {
+    solveAbyssWithFallback,
+    SOLVER_REVISION,
+  } from "#lib/boards/solver.js";
   import {
     SOLUTIONS_COUNT,
     boardSlotRate,
@@ -26,7 +35,7 @@
     createMemo,
     rosterFingerprint,
     teamsFingerprint,
-  } from "#lib/board-solutions.js";
+  } from "#lib/boards/board-solutions.js";
   import { ownedNameIds } from "#lib/utils.js";
   import Team from "#lib/ui/components/Team.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
@@ -41,7 +50,7 @@
   import { resolve } from "$app/paths";
   import { settingsPath } from "#lib/ui/nav-links.js";
   import { authClient } from "#lib/auth-client.js";
-  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];

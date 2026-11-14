@@ -6,7 +6,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { get } from "svelte/store";
-import { createCharacterGoal, emptyGoalsState, MAX_CALCULATOR_GOALS } from "../calculator-goals.ts";
+import {
+  createCharacterGoal,
+  emptyGoalsState,
+  MAX_CALCULATOR_GOALS,
+} from "../planner/calculator-goals.ts";
 import { goalsDocSpec } from "../sync/goals-doc.ts";
 import { memorySlotStorage, retainUntilStored } from "../sync/storage.ts";
 import { createSyncedDoc } from "../sync/synced-doc.ts";
@@ -139,10 +143,7 @@ describe("migrateLegacyGoals", () => {
     const pending = migrateLegacyGoals(storage);
     assert.equal(pending?.key, "lk:goals:guest");
     assert.notEqual(storage.read("calculatorGoals"), null);
-    assert.deepEqual(
-      (storage.read("lk:goals:guest") as Slot).data.goals,
-      [],
-    );
+    assert.deepEqual((storage.read("lk:goals:guest") as Slot).data.goals, []);
   });
 
   it("serves a failed merge and keeps legacy keys until that merge is stored", () => {
@@ -175,7 +176,9 @@ describe("migrateLegacyGoals", () => {
     assert.equal(wrapped.write(pending.key, shown), true);
     assert.equal(storage.read("calculatorGoals"), null);
     assert.deepEqual(
-      (storage.read("lk:goals:guest") as Slot).data.goals.map((goal) => goal.id),
+      (storage.read("lk:goals:guest") as Slot).data.goals.map(
+        (goal) => goal.id,
+      ),
       ["g1"],
     );
   });

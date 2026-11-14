@@ -5,7 +5,10 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { MAX_CALCULATOR_GOALS, parseGoalsState } from "../calculator-goals.ts";
+import {
+  MAX_CALCULATOR_GOALS,
+  parseGoalsState,
+} from "../planner/calculator-goals.ts";
 import type {
   CalculatorGoal,
   CalculatorGoalsState,

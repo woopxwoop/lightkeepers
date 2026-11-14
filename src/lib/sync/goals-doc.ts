@@ -6,7 +6,7 @@ import {
   emptyGoalsState,
   MAX_CALCULATOR_GOALS,
   parseGoalsState,
-} from "#lib/calculator-goals.js";
+} from "#lib/planner/calculator-goals.js";
 import type {
   CalculatorGoal,
   CalculatorGoalsState,

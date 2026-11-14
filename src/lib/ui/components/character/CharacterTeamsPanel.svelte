@@ -6,7 +6,7 @@
     staticBoardsPhase,
     staticBoardsView,
     ensureStaticBoards,
-  } from "#lib/stores.js";
+  } from "#lib/stores/boards.js";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import Button from "#lib/ui/components/Button.svelte";
@@ -24,7 +24,7 @@
     dimmedKeysFromGoodKeys,
     handCharactersFromMembers,
     dimmedKeysFromMembers,
-  } from "#lib/character-teams.js";
+  } from "#lib/boards/character-teams.js";
   import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
   import type { Character, CharacterOwned } from "#lib/definitions.js";
   import type { InvestmentFile } from "#lib/types/investment.js";
@@ -254,10 +254,6 @@
 </div>
 
 <style>
-  .board-section {
-    padding: var(--space-4);
-  }
-
   .teams-head {
     display: flex;
     flex-wrap: wrap;

@@ -4,7 +4,8 @@
   import { browser } from "$app/env";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import { buildGoodKeyMap, ownedGoodKeys } from "#lib/utils.js";
   import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "#lib/ui/components/CharacterTagSearch.svelte";
@@ -21,7 +22,7 @@
     handCharactersFromGoodKeys,
     handBuilds,
     dimmedKeysFromGoodKeys,
-  } from "#lib/character-teams.js";
+  } from "#lib/boards/character-teams.js";
   import {
     allTeamCharacterKeys,
     availableInvestmentCosts,
@@ -30,7 +31,7 @@
     sortTeamsForDisplay,
     teamsMatchingTags,
     type TeamDpsSort,
-  } from "#lib/investment-teams.js";
+  } from "#lib/investment/investment-teams.js";
   import { loadInvestment, getInvestmentCached } from "#lib/app/investment.js";
   import {
     addressUrl,
@@ -320,7 +321,7 @@
                   <CostPopover />
                   · {(displayDps(team, selectedCost) / 1000).toFixed(0)}K DPS
                 </span>
-                <a href="/teams/{team.team_key}" class="team-link">
+                <a href="/teams/{team.team_key}" class="team-link text-link">
                   View details →
                 </a>
               </div>
@@ -531,12 +532,8 @@
     flex-shrink: 0;
     font-size: var(--text-xs);
     font-weight: 500;
-    color: var(--accent-1);
+    color: var(--foreground-color);
     cursor: pointer;
-  }
-
-  .team-link:hover {
-    text-decoration: underline;
   }
 
   .card-enter {

@@ -10,11 +10,9 @@ import { serverDb } from "#lib/server/supabaseServer.js";
 import { LRUCache } from "#lib/server/cache.js";
 import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
-import {
-  assertNoDbError,
-  requireEnemyId,
-} from "#lib/server/request-validation.js";
-import { TOP_TEAMS_LIMIT } from "#lib/character-teams.js";
+import { assertNoDbError } from "#lib/server/validation/core.js";
+import { requireEnemyId } from "#lib/server/validation/stygian.js";
+import { TOP_TEAMS_LIMIT } from "#lib/boards/character-teams.js";
 import type { StygianEnemyTeamsPayload } from "#lib/definitions.js";
 import { e2eStygianEnemyTeamsPayload } from "#lib/e2e/fixtures.js";
 

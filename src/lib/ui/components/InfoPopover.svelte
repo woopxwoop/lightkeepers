@@ -180,6 +180,8 @@
   </button>
 
   {#if open}
+    <!-- Panel is overflow:auto — must be focusable so keyboard users can scroll it. -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
     <span
       id={panelId}
       class="info-panel {panelClass}"

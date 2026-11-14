@@ -2,18 +2,18 @@
   import { onMount, tick } from "svelte";
   import { resolve } from "$app/paths";
   import { dev } from "$app/env";
-  import { animationsEnabled, charactersOwned } from "#lib/stores.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";
   import ActionMenu from "#lib/ui/components/ActionMenu.svelte";
   import Button from "#lib/ui/components/Button.svelte";
-  import BuildResearchSheet from "#lib/ui/components/BuildResearchSheet.svelte";
   import CharacterKitPanel from "#lib/ui/components/character/CharacterKitPanel.svelte";
   import CharacterTeamsPanel from "#lib/ui/components/character/CharacterTeamsPanel.svelte";
   import CharacterAnalyticsPanel from "#lib/ui/components/character/CharacterAnalyticsPanel.svelte";
   import CharacterBuildsPanel from "#lib/ui/components/character/CharacterBuildsPanel.svelte";
-  import { elementColor } from "#lib/element-colors.js";
+  import { elementColor } from "#lib/characters/element-colors.js";
   import {
     buildGoodKeyMap,
     getUiAssetUrl,
@@ -22,11 +22,11 @@
     getCrimsonWitchLinks,
     simCharacterKey,
   } from "#lib/utils.js";
-  import { travelerElementKitId } from "#lib/traveler-kits.js";
+  import { travelerElementKitId } from "#lib/characters/traveler-kits.js";
   import type { CharacterKit } from "#lib/types/character-kit.js";
   import type { CharacterIndex } from "#lib/types/investment.js";
   import type { Character } from "#lib/definitions.js";
-  import { isStaleBuildSummary } from "#lib/stale-build-summary.js";
+  import { isStaleBuildSummary } from "#lib/roster/stale-build-summary.js";
   import type { ActionMenuItem } from "#lib/ui/components/ActionMenu.svelte";
 
   let { data } = $props();
@@ -291,11 +291,14 @@
 </PageShell>
 
 {#if dev}
-  <BuildResearchSheet
-    bind:open={buildResearchOpen}
-    focusNameId={kit.name_id}
-    characterName={kit.name}
-  />
+  <!-- Dev-only: dynamic import keeps research out of production chunks. -->
+  {#await import("#lib/ui/components/BuildResearchSheet.svelte") then { default: BuildResearchSheet }}
+    <BuildResearchSheet
+      bind:open={buildResearchOpen}
+      focusNameId={kit.name_id}
+      characterName={kit.name}
+    />
+  {/await}
 {/if}
 
 <style>

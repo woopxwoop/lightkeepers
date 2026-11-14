@@ -9,10 +9,13 @@
   import NavDesktopLinks from "#lib/ui/components/NavDesktopLinks.svelte";
   import NavMobileDrawer from "#lib/ui/components/NavMobileDrawer.svelte";
   import { authClient } from "#lib/auth-client.js";
-  import { backgroundVisible, toggleBackgroundVisible } from "#lib/stores.js";
-  import { plannerItineraryOpen } from "#lib/planner-itinerary-open.js";
-  import { researchChatOpen } from "#lib/research-chat-open.js";
-  import { accountSettingsOpen } from "#lib/account-settings-open.js";
+  import {
+    backgroundVisible,
+    toggleBackgroundVisible,
+  } from "#lib/stores/preferences.js";
+  import { plannerItineraryOpen } from "#lib/planner/planner-itinerary-open.js";
+  import { researchChatOpen } from "#lib/research/research-chat-open.js";
+  import { accountSettingsOpen } from "#lib/app/account-settings-open.js";
   import { homePath } from "#lib/ui/nav-links.js";
 
   const session = authClient.useSession();

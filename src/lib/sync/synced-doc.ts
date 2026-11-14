@@ -106,8 +106,6 @@ export type SyncView<T> = {
   remoteSource: "server" | "device" | null;
 };
 
-export type { ServerCopy, SyncSlot } from "#lib/sync/slot.js";
-
 /**
  * What a save did. `account` is the slot that was written, so a caller can
  * compare it with the account it sees now instead of one captured beforehand.
@@ -131,8 +129,7 @@ export type CommitOutcome = CommitResult & { account: string | null };
 
 /** What `discardServer` did. `message` is null when no delete was attempted. */
 export type DiscardResult =
-  | { removed: true }
-  | { removed: false; message: string | null };
+  { removed: true } | { removed: false; message: string | null };
 
 export interface SyncedDoc<T> {
   readonly view: Readable<SyncView<T>>;
@@ -492,8 +489,7 @@ export function createSyncedDoc<T>(
     // server copy on the next write.
     if (plan.slot || plan.ask) {
       const current = slotOf(account);
-      const ask =
-        current.ask?.source === "device" ? current.ask : plan.ask;
+      const ask = current.ask?.source === "device" ? current.ask : plan.ask;
       const base = plan.slot ?? current;
       const next = ask ? { ...base, ask } : withoutAsk(base);
       const wrote = storeSlot(account, next);
@@ -585,7 +581,10 @@ export function createSyncedDoc<T>(
         const now = slotOf(account);
         // Another tab already recorded a newer server revision. Keep that
         // merge base; this response is for an older write.
-        if (serverViewMoved(account, askedAt) && res.rev !== revOf(now.server)) {
+        if (
+          serverViewMoved(account, askedAt) &&
+          res.rev !== revOf(now.server)
+        ) {
           emit({ account, step: "write", detail: "written: stale" });
           settle(tokens, { status: "unsent", error: null });
           return;

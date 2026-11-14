@@ -2,12 +2,12 @@ import * as Sentry from "@sentry/sveltekit";
 import { PUBLIC_SENTRY_DSN } from "$app/env/public";
 
 // Optional — use dynamic public so builds work when PUBLIC_SENTRY_DSN is unset (e.g. Playwright CI).
-if (PUBLIC_SENTRY_DSN) {
+// Skip init entirely in dev: `enabled: false` still installs Sentry's ESM loader hook
+// (module.register → DEP0205 warning + import-in-the-middle overhead on every SSR import).
+if (PUBLIC_SENTRY_DSN && !import.meta.env.DEV) {
   Sentry.init({
     dsn: PUBLIC_SENTRY_DSN,
-    // Keep DSN in .env for prod parity, but never report from vite/sveltekit dev.
-    enabled: !import.meta.env.DEV,
-    tracesSampleRate: import.meta.env.DEV ? 1.0 : 0.2,
+    tracesSampleRate: 0.2,
     enableLogs: true,
   });
 }

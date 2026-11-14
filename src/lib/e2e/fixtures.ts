@@ -11,7 +11,6 @@ import type {
   CharacterAnalyticsMode,
   CharacterAnalyticsPayload,
   Enemy,
-  NearMissStygianPair,
   NearMissStygianTeam,
   StygianEnemies,
   StygianEnemyListItem,
@@ -21,8 +20,8 @@ import type {
   StygianTeam,
   StygianVersion,
 } from "#lib/definitions.js";
-import type { ResearchResponse } from "#lib/research-types.js";
-import type { TierListPayload } from "#lib/tierlist.js";
+import type { ResearchResponse } from "#lib/research/research-types.js";
+import type { TierListPayload } from "#lib/boards/tierlist.js";
 
 export const E2E_ABYSS_TEAM_TOP = {
   team_key: "test-abyss-top",
@@ -228,9 +227,6 @@ export function e2eStaticPayload(): E2eStaticPayload {
     stygianSchedule: null,
   };
 }
-
-/** Empty near-miss pair list typed for API mocks. */
-export const E2E_NEAR_MISS_PAIRS: NearMissStygianPair[] = [];
 
 /** Deterministic /api/tierlist body for Playwright. */
 export function e2eTierListPayload(): TierListPayload {

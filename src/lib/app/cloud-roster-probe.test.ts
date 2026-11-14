@@ -4,8 +4,61 @@
  * Run: pnpm exec tsx --test src/lib/app/cloud-roster-probe.test.ts
  */
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import { cloudRosterProbeFromBody } from "./cloud-roster-probe.ts";
+import { describe, it, mock } from "node:test";
+import {
+  cloudRosterProbeFromBody,
+  probeCloudRoster,
+} from "./cloud-roster-probe.ts";
+
+/** A stub fetch that answers `/api/roster` with this status + JSON body. */
+const answering =
+  (status: number, body: unknown): typeof fetch =>
+  async (input) => {
+    assert.equal(String(input), "/api/roster");
+    return new Response(JSON.stringify(body), { status });
+  };
+
+describe("probeCloudRoster", () => {
+  it("classifies a stored roster, an empty row, and a missing row", async () => {
+    assert.equal(
+      await probeCloudRoster(
+        answering(200, { roster: [{ name_id: "hu_tao" }] }),
+      ),
+      "backed-up",
+    );
+    assert.equal(
+      await probeCloudRoster(answering(200, { roster: [] })),
+      "backed-up",
+    );
+    assert.equal(
+      await probeCloudRoster(answering(200, { roster: null })),
+      "empty",
+    );
+  });
+
+  it("is unreachable (and logs) on a bad status, network error, or bad body", async () => {
+    const logged = mock.method(console, "error", () => {});
+    try {
+      assert.equal(await probeCloudRoster(answering(500, {})), "unreachable");
+      assert.equal(
+        await probeCloudRoster(async () => {
+          throw new TypeError("Failed to fetch");
+        }),
+        "unreachable",
+      );
+      assert.equal(
+        await probeCloudRoster(
+          async () => new Response("not json", { status: 200 }),
+        ),
+        "unreachable",
+      );
+      assert.equal(await probeCloudRoster(answering(200, null)), "unreachable");
+      assert.equal(logged.mock.callCount(), 3);
+    } finally {
+      logged.mock.restore();
+    }
+  });
+});
 
 describe("cloudRosterProbeFromBody", () => {
   it("is unreachable when the roster read fails", () => {

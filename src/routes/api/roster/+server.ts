@@ -18,15 +18,17 @@ import {
 } from "#lib/server/account-doc-tables.js";
 import {
   assertNoDbError,
+  requireJsonObject,
+  requireUser,
+} from "#lib/server/validation/core.js";
+import {
   requireBaseRev,
   requireExpectedAccount,
   requireInventoryArtifacts,
   requireInventoryWeapons,
-  requireJsonObject,
   requireMatchingAccount,
   requireRosterEntries,
-  requireUser,
-} from "#lib/server/request-validation.js";
+} from "#lib/server/validation/roster.js";
 import { writeUserRoster } from "#lib/server/user-rosters.js";
 
 export const GET: RequestHandler = async ({

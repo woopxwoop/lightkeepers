@@ -6,7 +6,10 @@ import type { CharacterKit } from "#lib/types/character-kit.js";
 import { characterKitUrl, type CharacterKitChannel } from "#lib/asset-urls.js";
 import { LRUCache } from "#lib/server/cache.js";
 import { fetchWithTimeout } from "#lib/cdn-fetch.js";
-import { mergeTravelerKits, travelerElementKitId } from "#lib/traveler-kits.js";
+import {
+  mergeTravelerKits,
+  travelerElementKitId,
+} from "#lib/characters/traveler-kits.js";
 import { TRAVELER_GUIDE_ELEMENTS } from "#lib/utils.js";
 
 export type CharacterKitResult = {
@@ -14,30 +17,36 @@ export type CharacterKitResult = {
   channel: CharacterKitChannel;
 };
 
-const kitCache = new LRUCache<CharacterKitResult | null>(200, 15 * 60 * 1000);
-
 /**
- * Concurrent misses for one name_id share a single request. Entries are dropped
- * once settled, so a failed fetch (which is deliberately not cached) retries.
- * `LRUCache.getOrSet` is unusable here because it caches every resolved value,
- * including the transient failures this module must leave uncached.
+ * Kits rarely change, so past the 15 min TTL a cached kit is served immediately
+ * while a background refresh runs, for up to a day. A CDN hiccup then degrades
+ * to a slightly old kit instead of a 503. Concurrent misses share one fetch
+ * (getOrSet singleflight). CDN failures throw from loadKitFromCdn, and getOrSet
+ * never stores a rejection, so they retry.
+ *
+ * A definitive "no such character" lives in kitMissCache instead, with a hard
+ * 15 min expiry and no SWR, so a newly released kit shows up on the first
+ * request after the miss expires rather than a stale 404.
  */
-const kitInflight = new Map<string, Promise<CharacterKitResult | null>>();
+const kitCache = new LRUCache<CharacterKitResult>(200, 15 * 60 * 1000, {
+  staleWhileRevalidate: true,
+  maxStaleMs: 24 * 60 * 60 * 1000,
+});
+const kitMissCache = new LRUCache<true>(500, 15 * 60 * 1000);
+
+class KitNotFound extends Error {}
 
 export async function getCharacterKitResult(
   nameId: string,
 ): Promise<CharacterKitResult | null> {
-  const cached = kitCache.get(nameId);
-  if (cached !== undefined) return cached;
-
-  const inflight = kitInflight.get(nameId);
-  if (inflight) return inflight;
-
-  const pending = loadKitFromCdn(nameId).finally(() => {
-    kitInflight.delete(nameId);
-  });
-  kitInflight.set(nameId, pending);
-  return pending;
+  if (kitMissCache.get(nameId)) return null;
+  try {
+    return await kitCache.getOrSet(nameId, () => loadKitFromCdn(nameId));
+  } catch (err) {
+    if (!(err instanceof KitNotFound)) throw err;
+    kitMissCache.set(nameId, true);
+    return null;
+  }
 }
 
 export async function getCharacterKit(
@@ -47,9 +56,7 @@ export async function getCharacterKit(
   return result?.kit ?? null;
 }
 
-async function loadKitFromCdn(
-  nameId: string,
-): Promise<CharacterKitResult | null> {
+async function loadKitFromCdn(nameId: string): Promise<CharacterKitResult> {
   // Try live first so release kits stay on the Dimbreath path; fall back to
   // beta for CB-only characters (Alyosha / Odette, …).
   for (const channel of ["live", "beta"] as const) {
@@ -66,13 +73,10 @@ async function loadKitFromCdn(
     }
 
     const kit = (await res.json()) as CharacterKit;
-    const result: CharacterKitResult = { kit, channel };
-    kitCache.set(nameId, result);
-    return result;
+    return { kit, channel };
   }
 
-  kitCache.set(nameId, null);
-  return null;
+  throw new KitNotFound(`character kit ${nameId} not found`);
 }
 
 /**

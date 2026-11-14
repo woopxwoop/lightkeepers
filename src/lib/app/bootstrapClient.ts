@@ -10,7 +10,8 @@
  * Pulls call ensureTeamsOwned).
  */
 
-import { ensureStaticBoards, setVersionNumbers } from "#lib/stores.js";
+import { ensureStaticBoards } from "#lib/stores/boards.js";
+import { setVersionNumbers } from "#lib/stores/boards.js";
 
 type LayoutHydration = {
   abyssVersionNumber: number;

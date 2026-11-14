@@ -12,23 +12,22 @@ import { get } from "svelte/store";
     auditUngradedNote,
     buildNextRows,
     type AuditRow,
-  } from "#lib/audit-grades.js";
+  } from "#lib/roster/audit-grades.js";
   import {
     appendAuditSuggestions,
     auditRowPlannerState,
     type AuditPlannerState,
-  } from "#lib/audit-planner-goals.js";
+  } from "#lib/planner/audit-planner-goals.js";
   import { goalsSync } from "#lib/app/goals-sync.js";
 import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
+  import { charactersHydrated, charactersOwned } from "#lib/stores/roster.js";
   import {
-    charactersHydrated,
-    charactersOwned,
     ensureTierList,
     tierList,
     tierListError,
     tierListLoaded,
-  } from "#lib/stores.js";
-  import { stygianUsageByNameId } from "#lib/tierlist.js";
+  } from "#lib/stores/tierlist.js";
+  import { stygianUsageByNameId } from "#lib/boards/tierlist.js";
   import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
   import { settingsPath } from "#lib/ui/nav-links.js";
   import AuditQueueRow from "#lib/ui/components/AuditQueueRow.svelte";

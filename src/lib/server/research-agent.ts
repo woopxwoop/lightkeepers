@@ -4,7 +4,10 @@
  */
 
 import { RESEARCH_AGENT_URL, RESEARCH_API_TOKEN } from "$app/env/private";
-import type { ResearchRequest, ResearchResponse } from "#lib/research-types.js";
+import type {
+  ResearchRequest,
+  ResearchResponse,
+} from "#lib/research/research-types.js";
 import { readBoundedResponseBody } from "#lib/server/team-config.js";
 
 /** Gemini + retrieval can be slow over a tunnel; two-pass personalize needs ~2×. */

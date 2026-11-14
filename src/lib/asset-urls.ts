@@ -20,23 +20,8 @@
  * Costs:  scripts/sync/upgrade-costs-r2.ts (+ DATA_CHANNEL=beta for CB)
  *
  * Note: weapon/artifact tables are loaded via dynamic import in
- * `#lib/equipment-data.js` (not this module). Character kits + enemy index
- * live on the CDN.
+ * `#lib/equipment-data.js` (not this module). Character kits live on the CDN.
  */
-
-import type {
-  CharacterKit,
-  CharacterKitIndex,
-} from "#lib/types/character-kit.js";
-import type { EnemyIndex } from "#lib/types/enemy.js";
-import type {
-  CharacterUpgradeCosts,
-  UpgradeCostsCatalog,
-  UpgradeCurves,
-  UpgradeMaterialMeta,
-  WeaponUpgradeCosts,
-} from "#lib/types/upgrade-costs.js";
-import { fetchWithTimeout } from "#lib/cdn-fetch.js";
 
 const CDN_BASE = "https://api.lightkeepers.moe";
 const UI_PREFIX = `${CDN_BASE}/genshin/ui`;
@@ -44,7 +29,6 @@ const CHARACTERS_DATA_PREFIX = `${CDN_BASE}/genshin/data/characters`;
 const BETA_CHARACTERS_DATA_PREFIX = `${CDN_BASE}/genshin/data/beta/characters`;
 const UPGRADE_COSTS_DATA_PREFIX = `${CDN_BASE}/genshin/data/upgrade-costs`;
 const BETA_UPGRADE_COSTS_DATA_PREFIX = `${CDN_BASE}/genshin/data/beta/upgrade-costs`;
-const ENEMIES_DATA_PREFIX = `${CDN_BASE}/genshin/data/enemies`;
 
 export type CharacterKitChannel = "live" | "beta";
 export type UpgradeCostsChannel = "live" | "beta";
@@ -138,12 +122,6 @@ export function weaponIconUrl(iconName: string | null): string | null {
   return uiUrl(iconName);
 }
 
-/** Weapon splash / gacha banner art. */
-export function weaponSplashUrl(iconName: string | null): string | null {
-  if (!iconName) return null;
-  return uiUrl(iconName);
-}
-
 /** Skill / burst / NA icon (`UI_SkillIcon_*`). */
 export function skillIconUrl(iconName: string | null): string | null {
   if (!iconName) return null;
@@ -156,23 +134,11 @@ export function talentIconUrl(iconName: string | null): string | null {
   return uiUrl(iconName);
 }
 
-/** Character gacha / wish splash (`UI_Gacha_AvatarImg_*`). */
-export function characterSplashUrl(iconName: string | null): string | null {
-  if (!iconName) return null;
-  return uiUrl(iconName);
-}
-
-/** Wish-result portrait crop (`UI_Gacha_AvatarIcon_*`). */
-export function characterGachaIconUrl(iconName: string | null): string | null {
-  if (!iconName) return null;
-  return uiUrl(iconName);
-}
-
 /**
  * Enemy / leyline challenge icon (`UI_MonsterIcon_*`, `UI_Img_LeyLineChallenge_*`).
  * Same genshin/ui path as other textures.
  */
-export function enemyIconUrl(iconName: string | null): string | null {
+function enemyIconUrl(iconName: string | null): string | null {
   if (!iconName) return null;
   return uiUrl(iconName);
 }
@@ -198,66 +164,12 @@ export function assetUrl(iconName: string | null): string | null {
 
 // ── Character kit JSON (CDN-fetched, not ESM-bundled) ──
 
-/** Roster summary listing (`index.json`). */
-export function characterKitIndexUrl(
-  channel: CharacterKitChannel = "live",
-): string {
-  return `${charactersDataPrefix(channel)}/index.json`;
-}
-
 /** Full kit for one character (`{name_id}.json`). */
 export function characterKitUrl(
   nameId: string,
   channel: CharacterKitChannel = "live",
 ): string {
   return `${charactersDataPrefix(channel)}/${encodeURIComponent(nameId)}.json`;
-}
-
-/** Fetch + parse the character kit index from the CDN. */
-export async function fetchCharacterKitIndex(
-  channel: CharacterKitChannel = "live",
-): Promise<CharacterKitIndex> {
-  const resp = await fetchWithTimeout(characterKitIndexUrl(channel));
-  if (!resp.ok) {
-    throw new Error(
-      `Failed to fetch character kit index: ${resp.status} ${resp.statusText}`,
-    );
-  }
-  return (await resp.json()) as CharacterKitIndex;
-}
-
-/**
- * Fetch + parse one character's kit JSON from the CDN.
- * Tries live first, then beta (`genshin/data/beta/characters/`) on 404/410.
- */
-export async function fetchCharacterKit(nameId: string): Promise<CharacterKit> {
-  for (const channel of ["live", "beta"] as const) {
-    const resp = await fetchWithTimeout(characterKitUrl(nameId, channel));
-    if (resp.ok) return (await resp.json()) as CharacterKit;
-    if (resp.status !== 404 && resp.status !== 410) {
-      throw new Error(
-        `Failed to fetch character kit (${nameId}): ${resp.status} ${resp.statusText}`,
-      );
-    }
-  }
-  throw new Error(`Failed to fetch character kit (${nameId}): not found`);
-}
-
-// ── Enemy index JSON (CDN map; live slots still come from /api/static) ──
-
-export function enemyIndexUrl(): string {
-  return `${ENEMIES_DATA_PREFIX}/index.json`;
-}
-
-/** Fetch + parse the enemy icon index from the CDN. */
-export async function fetchEnemyIndex(): Promise<EnemyIndex> {
-  const resp = await fetchWithTimeout(enemyIndexUrl());
-  if (!resp.ok) {
-    throw new Error(
-      `Failed to fetch enemy index: ${resp.status} ${resp.statusText}`,
-    );
-  }
-  return (await resp.json()) as EnemyIndex;
 }
 
 // ── Upgrade costs (CDN; planner page only) ──
@@ -276,27 +188,4 @@ export function upgradeCostsFileUrl(
       ? BETA_UPGRADE_COSTS_DATA_PREFIX
       : UPGRADE_COSTS_DATA_PREFIX;
   return `${prefix}/${file}`;
-}
-
-/** Fetch the full live upgrade-cost catalog (4 JSON files in parallel). */
-export async function fetchUpgradeCostsCatalog(): Promise<UpgradeCostsCatalog> {
-  const [curves, materials, characters, weapons] = await Promise.all([
-    fetchWithTimeout(upgradeCostsFileUrl("curves.json")).then(async (r) => {
-      if (!r.ok) throw new Error(`upgrade curves: HTTP ${r.status}`);
-      return (await r.json()) as UpgradeCurves;
-    }),
-    fetchWithTimeout(upgradeCostsFileUrl("materials.json")).then(async (r) => {
-      if (!r.ok) throw new Error(`upgrade materials: HTTP ${r.status}`);
-      return (await r.json()) as Record<string, UpgradeMaterialMeta>;
-    }),
-    fetchWithTimeout(upgradeCostsFileUrl("characters.json")).then(async (r) => {
-      if (!r.ok) throw new Error(`upgrade characters: HTTP ${r.status}`);
-      return (await r.json()) as CharacterUpgradeCosts[];
-    }),
-    fetchWithTimeout(upgradeCostsFileUrl("weapons.json")).then(async (r) => {
-      if (!r.ok) throw new Error(`upgrade weapons: HTTP ${r.status}`);
-      return (await r.json()) as WeaponUpgradeCosts[];
-    }),
-  ]);
-  return { curves, materials, characters, weapons };
 }

@@ -7,7 +7,7 @@
 
 import { serverDb } from "#lib/server/supabaseServer.js";
 import type { InventoryArtifact, InventoryWeapon } from "#lib/definitions.js";
-import type { RosterEntry } from "#lib/server/request-validation.js";
+import type { RosterEntry } from "#lib/server/validation/roster.js";
 import type { AccountDocWrite, BaseRev } from "#lib/server/account-doc.js";
 import { rosterDoc } from "#lib/server/account-doc-tables.js";
 

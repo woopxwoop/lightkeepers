@@ -21,12 +21,14 @@ import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   requireCharacterNameIds,
-  requireEnemyIds,
   requireFiniteInteger,
   requireJsonObject,
   requireNumberInRange,
+} from "#lib/server/validation/core.js";
+import {
+  requireEnemyIds,
   requireStygianClearDifficulty,
-} from "#lib/server/request-validation.js";
+} from "#lib/server/validation/stygian.js";
 import { requireSupportedStygianVersion } from "#lib/server/version-validation.js";
 import type {
   StygianCheapClearRow,
