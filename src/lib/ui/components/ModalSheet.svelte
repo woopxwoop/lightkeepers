@@ -1,10 +1,30 @@
 <script module lang="ts">
   /**
    * Open modals, oldest first. Independent overlays (the patch notes and a
-   * sync conflict) can be open at once: only the newest takes Escape and
-   * Tab, and it is drawn above the others.
+   * sync conflict) can be open at once. Each gets a stacking layer when it
+   * opens; that one number is both its z-index and its keyboard priority, so
+   * the dialog drawn on top is always the one taking Escape and Tab.
+   * `nested` overlays sit in a higher band than plain ones: a sync conflict
+   * arriving while a nested Configure dialog is open opens *under* it.
    */
-  const openModals: symbol[] = [];
+  type OpenModal = { token: symbol; layer: number };
+  const openModals: OpenModal[] = [];
+
+  const BASE_LAYER = 120;
+  const NESTED_LAYER = 140;
+
+  function stackLayer(nested: boolean): number {
+    return (nested ? NESTED_LAYER : BASE_LAYER) + openModals.length + 1;
+  }
+
+  /** The visually topmost open modal; ties go to the newer one. */
+  function topModal(): symbol | undefined {
+    let top: OpenModal | undefined;
+    for (const entry of openModals) {
+      if (!top || entry.layer >= top.layer) top = entry;
+    }
+    return top?.token;
+  }
 </script>
 
 <script lang="ts">
@@ -59,8 +79,8 @@
   let closeEl: HTMLButtonElement | null = $state(null);
   const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
   let closedByNavigate = false;
-  /** Position in `openModals` when this one opened; raises its z-index. */
-  let depth = $state(0);
+  /** z-index from `stackLayer` at open; also decides who owns the keyboard. */
+  let layer = $state(BASE_LAYER);
 
   afterNavigate(({ shallow, type }) => {
     if (!closeOnNavigate) return;
@@ -80,18 +100,19 @@
     const releaseScrollLock = acquireBodyScrollLock();
     const capture = nested;
     const token = Symbol("modal");
-    openModals.push(token);
-    depth = openModals.length;
+    layer = stackLayer(capture);
+    openModals.push({ token, layer });
     let active = true;
     void tick().then(() => {
-      if (!active || !open) return;
+      // Opened beneath another dialog: leave focus with the one on top.
+      if (!active || !open || topModal() !== token) return;
       const target = initialFocus
         ? panelEl?.querySelector<HTMLElement>(initialFocus)
         : closeEl;
       target?.focus();
     });
     function onKey(e: KeyboardEvent) {
-      if (suspendKeys || openModals.at(-1) !== token) return;
+      if (suspendKeys || topModal() !== token) return;
       if (e.key === "Escape") {
         e.preventDefault();
         if (capture) e.stopImmediatePropagation();
@@ -103,7 +124,10 @@
     window.addEventListener("keydown", onKey, capture);
     return () => {
       active = false;
-      openModals.splice(openModals.indexOf(token), 1);
+      openModals.splice(
+        openModals.findIndex((entry) => entry.token === token),
+        1,
+      );
       releaseScrollLock();
       window.removeEventListener("keydown", onKey, capture);
       const skipFocus = closedByNavigate;
@@ -114,7 +138,7 @@
 </script>
 
 {#if open}
-  <div class="modal-root {size}" class:nested style:--modal-depth={depth}>
+  <div class="modal-root {size}" style:z-index={layer}>
     <button
       type="button"
       class="modal-backdrop"
@@ -158,15 +182,11 @@
   .modal-root {
     position: fixed;
     inset: 0;
-    z-index: calc(120 + var(--modal-depth, 0));
+    /* z-index is set inline from `stackLayer` (keyboard uses the same number). */
     display: grid;
     place-items: center;
     padding: clamp(0.75rem, 2vw, 1.25rem);
     pointer-events: none;
-  }
-
-  .modal-root.nested {
-    z-index: calc(140 + var(--modal-depth, 0));
   }
 
   .modal-backdrop {
