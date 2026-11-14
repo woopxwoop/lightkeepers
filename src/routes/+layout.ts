@@ -21,8 +21,8 @@ export const load: LayoutLoad = ({ data }) => {
   return {
     mapping,
     characters,
-    abyssVersionNumber: data.abyssVersionNumber as number,
-    stygianVersionNumber: data.stygianVersionNumber as number,
+    abyssVersionNumber: data.abyssVersionNumber as number | null,
+    stygianVersionNumber: data.stygianVersionNumber as number | null,
     latestPatchNote: data.latestPatchNote,
   };
 };

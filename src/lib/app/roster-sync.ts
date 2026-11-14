@@ -42,6 +42,7 @@ import {
 import {
   cancelRosterSyncConflict,
   promptRosterSyncConflict,
+  rosterSyncConflict,
 } from "#lib/app/roster-sync-conflict.js";
 import { clearRosterInventory } from "#lib/app/roster-inventory.js";
 
@@ -216,6 +217,10 @@ export function watchRosterConflicts(
       { savedCopy: view.remoteSource === "device" },
     );
     if (get(sync.view).account !== view.account) return;
+    // Answered elsewhere while the popup was up (a Save, a refresh that
+    // found the copies equal): neither side applies, and the inventory
+    // cache stays.
+    if (get(sync.view).status !== "ask") return;
     if (choice === "use-cloud") {
       // The cache has no roster-copy key. The import bag must not stay
       // beside the copy the user just chose.
@@ -252,6 +257,9 @@ export function watchRosterConflicts(
     // leaves `ask`, the same server copy must be able to ask again.
     if (view.status !== "ask") {
       shown = "";
+      // The question is gone, so its popup is stale. The upload-retry popup
+      // belongs to an unsent save, not a question, and stays.
+      if (!get(rosterSyncConflict)?.uploadRetry) cancelRosterSyncConflict();
       return;
     }
     if (!view.remote) return;

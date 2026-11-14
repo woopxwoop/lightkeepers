@@ -40,7 +40,6 @@
     backgroundVisible,
     syncBackgroundToPath,
   } from "#lib/stores/preferences.js";
-  import { setVersionNumbers } from "#lib/stores/boards.js";
   import NavBar from "#lib/ui/NavBar.svelte";
   import PatchNotesPopup from "#lib/ui/components/PatchNotesPopup.svelte";
   import LoadOnFirstOpen from "#lib/ui/components/LoadOnFirstOpen.svelte";
@@ -108,7 +107,10 @@
   // /characters still renders LoadingState for the server HTML.
   if (browser) {
     untrack(() =>
-      setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber),
+      seedClientStores({
+        abyssVersionNumber: data.abyssVersionNumber,
+        stygianVersionNumber: data.stygianVersionNumber,
+      }),
     );
   }
   $effect(() => {

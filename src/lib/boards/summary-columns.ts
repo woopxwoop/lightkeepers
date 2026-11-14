@@ -26,10 +26,7 @@ export type SummaryRosterFilter = "all" | "owned";
 export const ABYSS_SUMMARY_SLOTS = ["top", "bottom"] as const;
 export const STYGIAN_SUMMARY_SLOTS = ["top", "middle", "bottom"] as const;
 
-const ABYSS_HALF_LABEL: Record<
-  (typeof ABYSS_SUMMARY_SLOTS)[number],
-  string
-> = {
+const ABYSS_HALF_LABEL: Record<(typeof ABYSS_SUMMARY_SLOTS)[number], string> = {
   top: "First Half",
   bottom: "Second Half",
 };
@@ -114,16 +111,23 @@ export function toDisplayGroups(
   }));
 }
 
+/**
+ * With `ownedIds` (the Owned filter), only fully owned teams are grouped, so
+ * each DPS ranks and caps its alternates among teams the player can field,
+ * and the column is ordered by those teams.
+ */
 export function buildAbyssSummaryColumns(
   teams: readonly AbyssTeam[],
   enemies: AbyssEnemies,
   fourStarIds: ReadonlySet<string>,
+  ownedIds?: ReadonlySet<string>,
 ): AbyssSummaryColumn[] {
+  const pool = ownedIds ? ownedTeamsOnly(teams, ownedIds) : teams;
   return ABYSS_SUMMARY_SLOTS.map((slot) => ({
     slot,
     label: ABYSS_HALF_LABEL[slot],
     groups: toDisplayGroups(
-      pickTopMainDpsGroups<BoardTeam>(teams, slot, {
+      pickTopMainDpsGroups<BoardTeam>(pool, slot, {
         ...SUMMARY_GROUP_OPTIONS,
         fourStarNameIds: fourStarIds,
         requireAbyssUsageTotal: true,
@@ -133,11 +137,14 @@ export function buildAbyssSummaryColumns(
   }));
 }
 
+/** Same `ownedIds` rule as `buildAbyssSummaryColumns`. */
 export function buildStygianSummaryColumns(
   teams: readonly StygianTeam[],
   enemies: StygianEnemies,
   fourStarIds: ReadonlySet<string>,
+  ownedIds?: ReadonlySet<string>,
 ): StygianSummaryColumn[] {
+  const pool = ownedIds ? ownedTeamsOnly(teams, ownedIds) : teams;
   return STYGIAN_SUMMARY_SLOTS.map((slot) => {
     const enemy = enemies[slot];
     return {
@@ -145,7 +152,7 @@ export function buildStygianSummaryColumns(
       label: enemy?.enemy_name ?? slotLabel(slot),
       enemy,
       groups: toDisplayGroups(
-        pickTopMainDpsGroups<BoardTeam>(teams, slot, {
+        pickTopMainDpsGroups<BoardTeam>(pool, slot, {
           ...SUMMARY_GROUP_OPTIONS,
           fourStarNameIds: fourStarIds,
         }),
@@ -165,44 +172,25 @@ function teamFullyOwned(
   );
 }
 
-/** Keep only fully owned lineups; promote the best remaining as primary. */
-export function toOwnedGroups(
-  groups: DisplayGroup[],
+/** Teams whose every member is owned (Traveler elements count as owned). */
+export function ownedTeamsOnly<T extends BoardTeam>(
+  teams: readonly T[],
   ownedIds: ReadonlySet<string>,
-): DisplayGroup[] {
-  const next: DisplayGroup[] = [];
-  for (const group of groups) {
-    const ownedTeams = [group.primary, ...group.alternates].filter((team) =>
-      teamFullyOwned(team, ownedIds),
-    );
-    if (ownedTeams.length === 0) continue;
-    const [primary, ...alternates] = ownedTeams;
-    next.push({
-      mainDps: group.mainDps,
-      primary: primary!,
-      alternates,
-    });
-  }
-  return next;
+): T[] {
+  return teams.filter((team) => teamFullyOwned(team, ownedIds));
 }
 
 /**
- * `pool` is the roster-filtered column (autocomplete + raw count); `groups`
- * additionally keeps only the selected DPS tags.
+ * `pool` is the column as built, already roster-filtered by the builder's
+ * `ownedIds` (autocomplete + raw count); `groups` additionally keeps only
+ * the selected DPS tags.
  */
 export function prepareSummaryColumns<C extends { groups: DisplayGroup[] }>(
   columns: C[],
-  filter: {
-    rosterFilter: SummaryRosterFilter;
-    ownedIds: ReadonlySet<string>;
-    dpsTags: readonly string[];
-  },
+  filter: { dpsTags: readonly string[] },
 ): PreparedSummaryColumn<C>[] {
   return columns.map((col) => {
-    const pool =
-      filter.rosterFilter === "owned"
-        ? toOwnedGroups(col.groups, filter.ownedIds)
-        : col.groups;
+    const pool = col.groups;
     return {
       ...col,
       pool,

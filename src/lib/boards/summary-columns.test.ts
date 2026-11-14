@@ -17,7 +17,7 @@ import {
   summaryHeaderMeta,
   summarySideOptions,
   toDisplayGroups,
-  toOwnedGroups,
+  ownedTeamsOnly,
   type BoardTeam,
   type DisplayGroup,
 } from "./summary-columns.ts";
@@ -141,24 +141,36 @@ describe("build*SummaryColumns", () => {
   });
 });
 
-describe("toOwnedGroups", () => {
-  const owned = new Set(["X", "a", "b", "c", "PlayerGirl"]);
+describe("ownedTeamsOnly / Owned columns", () => {
+  const owned = new Set(["Neuvillette", "a", "b", "c", "PlayerGirl"]);
 
-  it("promotes the best fully owned alternate and drops unowned groups", () => {
-    const ownedAlt = team(["X", "a", "b", "c"]);
-    const groups = [
-      group("X", team(["X", "a", "b", "z"]), [ownedAlt]),
-      group("Y", team(["Y", "a", "b", "c"])),
-    ];
-    assert.deepEqual(toOwnedGroups(groups, owned), [group("X", ownedAlt)]);
+  it("keeps fully owned lineups, Traveler elements included", () => {
+    const traveler = team(["Neuvillette", "PlayerBoy-Hydro", "a", "b"]);
+    const missing = team(["Neuvillette", "a", "b", "z"]);
+    assert.deepEqual(ownedTeamsOnly([traveler, missing, team([])], owned), [
+      traveler,
+    ]);
   });
 
-  it("treats Traveler elements as owned and empty lineups as unowned", () => {
-    const traveler = team(["X", "PlayerBoy-Anemo", "a", "b"]);
-    assert.deepEqual(toOwnedGroups([group("X", traveler)], owned), [
-      group("X", traveler),
+  it("finds an owned team below the top 11 for its DPS", () => {
+    const unowned = Array.from({ length: 12 }, (_, i) =>
+      team(["Neuvillette", "a", "b", `u${i}`], { usage_rate: 10 }),
+    );
+    const ownedTeam = team(["Neuvillette", "a", "b", "c"], { usage_rate: 5 });
+    const teams = [...unowned, ownedTeam] as AbyssTeam[];
+    const all = buildAbyssSummaryColumns(teams, emptyAbyss, new Set());
+    const allTop = all[0]!.groups[0]!;
+    assert.equal(allTop.alternates.length, 10);
+    assert.ok(![allTop.primary, ...allTop.alternates].includes(ownedTeam));
+
+    const [col] = buildAbyssSummaryColumns(teams, emptyAbyss, new Set(), owned);
+    assert.equal(col!.groups.length, 1);
+    assert.deepEqual(col!.groups[0]!.primary.members, [
+      "Neuvillette",
+      "a",
+      "b",
+      "c",
     ]);
-    assert.deepEqual(toOwnedGroups([group("X", team([]))], owned), []);
   });
 });
 
@@ -170,34 +182,16 @@ describe("prepareSummaryColumns", () => {
       groups: [group("X", ownedTeam), group("Y", team(["Y", "q", "r", "s"]))],
     },
   ];
-  const ownedIds = new Set(["X", "a", "b", "c"]);
 
   it("keeps everything with no filters", () => {
-    const [col] = prepareSummaryColumns(cols, {
-      rosterFilter: "all",
-      ownedIds,
-      dpsTags: [],
-    });
+    const [col] = prepareSummaryColumns(cols, { dpsTags: [] });
     assert.equal(col!.slot, "top");
     assert.equal(col!.pool, cols[0]!.groups);
     assert.equal(col!.groups, col!.pool);
   });
 
-  it("filters the pool by roster and the groups by DPS tags", () => {
-    const [owned] = prepareSummaryColumns(cols, {
-      rosterFilter: "owned",
-      ownedIds,
-      dpsTags: [],
-    });
-    assert.deepEqual(
-      owned!.pool.map((g) => g.mainDps),
-      ["X"],
-    );
-    const [tagged] = prepareSummaryColumns(cols, {
-      rosterFilter: "all",
-      ownedIds,
-      dpsTags: ["Y"],
-    });
+  it("filters the groups by DPS tags, keeping the pool", () => {
+    const [tagged] = prepareSummaryColumns(cols, { dpsTags: ["Y"] });
     assert.equal(tagged!.pool.length, 2);
     assert.deepEqual(
       tagged!.groups.map((g) => g.mainDps),

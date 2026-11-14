@@ -14,12 +14,20 @@ import { ensureStaticBoards } from "#lib/stores/boards.js";
 import { setVersionNumbers } from "#lib/stores/boards.js";
 
 type LayoutHydration = {
-  abyssVersionNumber: number;
-  stygianVersionNumber: number;
+  /** Null when the server could not read a version table. */
+  abyssVersionNumber: number | null;
+  stygianVersionNumber: number | null;
 };
 
-/** Client-side version numbers from root layout SSR data. */
+/**
+ * Client-side version numbers from root layout SSR data. Without them the
+ * stores stay unseeded and `ensureStaticBoards()` seeds them from the
+ * payload's own versions.
+ */
 export function seedClientStores(data: LayoutHydration): void {
+  if (data.abyssVersionNumber == null || data.stygianVersionNumber == null) {
+    return;
+  }
   setVersionNumbers(data.abyssVersionNumber, data.stygianVersionNumber);
 }
 

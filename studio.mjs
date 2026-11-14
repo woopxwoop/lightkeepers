@@ -5,6 +5,35 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// pnpm studio              → prod      (http://127.0.0.1:18080)
+// pnpm studio --staging    → staging   (http://127.0.0.1:18081)
+// pnpm studio --no-tunnel  → start/update Studio on the server only
+//
+// Each target gets its own folder, containers, and port on the database
+// server, so both can run at once.
+const TARGETS = {
+  prod: {
+    dir: "studio",
+    port: "18080",
+    name: "lightkeepers-studio",
+    project: "Prod",
+    stack: "prod-postgres",
+    gateway: "http://prod-postgrest-gateway:3001",
+  },
+  staging: {
+    dir: "studio-staging",
+    port: "18081",
+    name: "lightkeepers-studio-staging",
+    project: "Staging",
+    stack: "staging-postgres",
+    gateway: "http://staging-postgrest-gateway:3000",
+  },
+};
+
+const target = process.argv.includes("--staging")
+  ? TARGETS.staging
+  : TARGETS.prod;
+
 const root = dirname(fileURLToPath(import.meta.url));
 const key = join(homedir(), ".ssh", "id_ed25519_deploy");
 const host = "deploy@167.233.174.167";
@@ -17,7 +46,7 @@ const sshBase = [
   ...identity,
   host,
 ];
-const port = "18080";
+const port = target.port;
 const url = `http://127.0.0.1:${port}`;
 const noTunnel = process.argv.includes("--no-tunnel");
 
@@ -52,7 +81,9 @@ function pageIsUp() {
   });
 }
 
-run("ssh", ["-n", ...sshBase, "mkdir -p ~/studio"]);
+console.log(`Studio → ${target.project}`);
+
+run("ssh", ["-n", ...sshBase, `mkdir -p ~/${target.dir}`]);
 run("scp", [
   "-o",
   "BatchMode=yes",
@@ -60,7 +91,7 @@ run("scp", [
   "ConnectTimeout=20",
   ...identity,
   join(root, "studio", "docker-compose.yml"),
-  `${host}:studio/docker-compose.yml`,
+  `${host}:${target.dir}/docker-compose.yml`,
 ]);
 
 // Same parser bootstrap uses, so a quoted .env password reaches Studio without the quotes.
@@ -75,15 +106,22 @@ python3 - << 'PY'
   String.raw`
 import secrets
 
-prod = load("/home/deploy/prod-postgres/.env")
-client = load("/home/deploy/prod-postgres/client.env")
-target = Path("/home/deploy/studio/.env")
+stack = "/home/deploy/${target.stack}"
+db = load(f"{stack}/.env")
+client = load(f"{stack}/client.env")
+target = Path("/home/deploy/${target.dir}/.env")
 current = load(target) if target.exists() else {}
 saved = current.get("PG_META_CRYPTO_KEY")
 crypto = saved if saved else secrets.token_hex(16)
 values = {
-    "POSTGRES_PASSWORD": prod["POSTGRES_PASSWORD"],
-    "JWT_SECRET": prod["JWT_SECRET"],
+    "STUDIO_PORT": "${target.port}",
+    "STUDIO_NAME": "${target.name}",
+    "STUDIO_PROJECT": "${target.project}",
+    "DB_HOST": "${target.stack}",
+    "DB_NETWORK": "${target.stack}_default",
+    "GATEWAY_URL": "${target.gateway}",
+    "POSTGRES_PASSWORD": db["POSTGRES_PASSWORD"],
+    "JWT_SECRET": db["JWT_SECRET"],
     "PG_META_CRYPTO_KEY": crypto,
     "ANON_KEY": client["PUBLIC_SUPABASE_KEY"],
     "SERVICE_ROLE_KEY": client["PRIVATE_SUPABASE_KEY"],
@@ -92,13 +130,16 @@ target.write_text("".join(f"{key}={quote(value)}\n" for key, value in values.ite
 target.chmod(0o600)
 print("studio env written")
 PY
-docker compose -f "$HOME/studio/docker-compose.yml" --project-directory "$HOME/studio" up -d
+# Earlier versions published Studio on the tailnet with a persistent
+# 'tailscale serve --bg'. Remove that forward if it is still there.
+tailscale serve --tcp=${port} off >/dev/null 2>&1 || true
+docker compose -f "$HOME/${target.dir}/docker-compose.yml" --project-directory "$HOME/${target.dir}" up -d
 python3 - << 'PY'
 import time
 import urllib.request
 for _ in range(40):
     try:
-        with urllib.request.urlopen("http://127.0.0.1:18080", timeout=3) as response:
+        with urllib.request.urlopen("http://127.0.0.1:${port}", timeout=3) as response:
             print(f"studio_status={response.status}")
             raise SystemExit(0)
     except Exception as exc:
@@ -107,27 +148,17 @@ for _ in range(40):
             print(f"studio_status={code}")
             raise SystemExit(0)
     time.sleep(2)
-print("studio did not answer on 127.0.0.1:18080")
+print("studio did not answer on 127.0.0.1:${port}")
 raise SystemExit(1)
 PY
 `;
 
 run("ssh", [...sshBase, "bash", "-s"], remote);
 
-const serve = spawnSync(
-  "ssh",
-  [
-    "-n",
-    ...sshBase,
-    `tailscale serve --bg --tcp ${port} tcp://127.0.0.1:${port}`,
-  ],
-  { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-);
-if (serve.status === 0) {
-  console.log(`http://100.69.255.83:${port}`);
-  process.exit(0);
-}
-
+// Studio has no login and holds superuser + service-role credentials, so it
+// is reached only through this SSH tunnel: loopback on both ends, gone when
+// this process exits. Never `tailscale serve` it — that publishes it to
+// every tailnet device and persists across reboots.
 if (noTunnel) process.exit(0);
 
 const tunnel = spawn(
@@ -159,4 +190,4 @@ if (!(await pageIsUp())) {
   process.exit(1);
 }
 opened = true;
-console.log(url);
+console.log(`${url}  (${target.project})`);

@@ -11,6 +11,9 @@ import { serverDb } from "#lib/server/supabaseServer.js";
 
 const TTL_15_MIN = 15 * 60 * 1000;
 
+/** A version table read fine but had no rows. Never cached. */
+class EmptyVersionTable extends Error {}
+
 type VersionRows = {
   data: { version_number: number }[] | null;
   error: unknown;
@@ -29,11 +32,20 @@ function createVersionDomain(
   const cache = new LRUCache<number[]>(1, TTL_15_MIN, { redisNamespace });
 
   async function load(): Promise<number[]> {
-    return cache.getOrSet("all", async () => {
-      const { data, error: err } = await fetchVersions();
-      if (err) throw err;
-      return (data ?? []).map((row) => row.version_number);
-    });
+    try {
+      return await cache.getOrSet("all", async () => {
+        const { data, error: err } = await fetchVersions();
+        if (err) throw err;
+        const versions = (data ?? []).map((row) => row.version_number);
+        // Throwing keeps an empty table out of L1 and Valkey: the sync that
+        // fills it shows on the next request, not 15 minutes later.
+        if (versions.length === 0) throw new EmptyVersionTable();
+        return versions;
+      });
+    } catch (err) {
+      if (err instanceof EmptyVersionTable) return [];
+      throw err;
+    }
   }
 
   return {
@@ -75,6 +87,35 @@ export async function getLatestAbyssVersionNumber(): Promise<number | null> {
 /** Latest Stygian version_number, or null when the table is empty. */
 export async function getLatestStygianVersionNumber(): Promise<number | null> {
   return stygianVersions.latest();
+}
+
+/**
+ * Latest versions for the root layout, which every page renders through.
+ * A DB error or an empty table gives null (logged) instead of failing every
+ * page; the client then takes its versions from `/api/static`. Never -1.
+ */
+export async function getLayoutVersionNumbers(): Promise<{
+  abyss: number | null;
+  stygian: number | null;
+}> {
+  const settle = async (
+    label: string,
+    latest: () => Promise<number | null>,
+  ): Promise<number | null> => {
+    try {
+      const version = await latest();
+      if (version == null) console.error(`layout: ${label}_versions is empty`);
+      return version;
+    } catch (err) {
+      console.error(`layout: ${label}_versions lookup failed`, err);
+      return null;
+    }
+  };
+  const [abyss, stygian] = await Promise.all([
+    settle("abyss", getLatestAbyssVersionNumber),
+    settle("stygian", getLatestStygianVersionNumber),
+  ]);
+  return { abyss, stygian };
 }
 
 /**

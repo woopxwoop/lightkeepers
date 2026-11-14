@@ -93,8 +93,16 @@
     { value: "owned" as const, label: "Owned" },
   ];
 
+  /** Owned filter: the builders group only teams the roster can field. */
+  let ownedFilter = $derived(rosterFilter === "owned" ? ownedIds : undefined);
+
   let abyssColumnsRaw = $derived(
-    buildAbyssSummaryColumns($allTeamsAbyss, $abyssEnemiesBoard, fourStarIds),
+    buildAbyssSummaryColumns(
+      $allTeamsAbyss,
+      $abyssEnemiesBoard,
+      fourStarIds,
+      ownedFilter,
+    ),
   );
 
   let stygianColumnsRaw = $derived(
@@ -102,21 +110,14 @@
       $allTeamsStygian,
       $stygianEnemiesBoard,
       fourStarIds,
+      ownedFilter,
     ),
   );
 
   let columns: PreparedSummaryColumn[] = $derived(
     mode === "abyss"
-      ? prepareSummaryColumns(abyssColumnsRaw, {
-          rosterFilter,
-          ownedIds,
-          dpsTags,
-        })
-      : prepareSummaryColumns(stygianColumnsRaw, {
-          rosterFilter,
-          ownedIds,
-          dpsTags,
-        }),
+      ? prepareSummaryColumns(abyssColumnsRaw, { dpsTags })
+      : prepareSummaryColumns(stygianColumnsRaw, { dpsTags }),
   );
 
   /** Autocomplete pool: On-Field DPS on this mode's board (respects owned filter). */
