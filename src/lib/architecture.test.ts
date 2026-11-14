@@ -8,7 +8,6 @@ import {
   boardsLane,
   importStyle,
   importsOf,
-  LEGACY_MODAL_SHELLS,
   loadSourceFiles,
   modalShell,
   noBarrels,
@@ -115,7 +114,10 @@ describe("rule 2: modal shell", () => {
 
   it("ratchet: every LEGACY_MODAL_SHELLS entry still copies the shell", () => {
     assert.deepEqual(staleLegacyModalShells(repo), []);
-    const fixed = file(LEGACY_MODAL_SHELLS[0], '<script lang="ts">\n</script>');
+    const fixed = file(
+      "src/lib/ui/components/OldPopup.svelte",
+      '<script lang="ts">\n</script>',
+    );
     assert.deepEqual(staleLegacyModalShells([fixed], [fixed.path]), [
       {
         file: fixed.path,

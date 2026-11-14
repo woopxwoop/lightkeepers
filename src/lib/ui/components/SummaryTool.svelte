@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount } from "svelte";
   import {
     allTeamsAbyss,
     allTeamsStygian,
@@ -28,12 +28,8 @@
   import SegmentedControl from "#lib/ui/components/SegmentedControl.svelte";
   import CharacterTagSearch from "#lib/ui/components/CharacterTagSearch.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";
-  import IconX from "#lib/ui/icons/IconX.svelte";
+  import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
   import { handleKeyboardClick, handlePointerAction } from "#lib/ui/pointer.js";
-  import { trapTabKey } from "#lib/ui/focus-trap.js";
-  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
-  import { fade, scale } from "svelte/transition";
-  import { prefersReducedMotion } from "svelte/motion";
   import { isOwnedNameId, ownedNameIds } from "#lib/utils.js";
   import { abyssPath, settingsPath, stygianPath } from "#lib/ui/nav-links.js";
   import { authClient } from "#lib/auth-client.js";
@@ -67,10 +63,6 @@
   let dpsTags = $state<string[]>([]);
   let rosterFilter = $state<"all" | "owned">("all");
   let altsModal = $state<DisplayGroup | null>(null);
-  let altsPanelEl: HTMLDivElement | null = $state(null);
-  let altsCloseEl: HTMLButtonElement | null = $state(null);
-
-  const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
 
   /** Algorithm floors — not exposed in the public tool chrome. */
   const topN = null;
@@ -336,36 +328,6 @@
     activeSlot;
     closeAltsModal();
   });
-
-  $effect(() => {
-    if (!altsModal) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    const releaseScrollLock = acquireBodyScrollLock();
-    let active = true;
-    void tick().then(() => {
-      if (!active || !altsModal) return;
-      altsCloseEl?.focus();
-    });
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        closeAltsModal();
-        return;
-      }
-      if (altsPanelEl) trapTabKey(event, altsPanelEl);
-    }
-    window.addEventListener("keydown", onKey, true);
-    return () => {
-      active = false;
-      window.removeEventListener("keydown", onKey, true);
-      releaseScrollLock();
-      if (previous?.isConnected) previous.focus();
-    };
-  });
 </script>
 
 {#snippet featuredTeam(team: BoardTeam, alt = false)}
@@ -580,57 +542,38 @@
   {/if}
 </PageShell>
 
-{#if altsModal}
-  <div class="alts-root">
-    <button
-      type="button"
-      class="alts-backdrop"
-      tabindex="-1"
-      aria-label="Close"
-      onclick={closeAltsModal}
-      transition:fade={{ duration: motion ?? 160 }}
-    ></button>
-    <div
-      class="alts-panel"
-      bind:this={altsPanelEl}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="alts-modal-title"
-      tabindex="-1"
-      transition:scale={{ duration: motion ?? 200, start: 0.98 }}
-    >
-      <header class="alts-head">
-        <h2 id="alts-modal-title" class="section-title">
-          {dpsDisplayName(altsModal.mainDps)} teams
-        </h2>
-        <button
-          type="button"
-          class="alts-close"
-          bind:this={altsCloseEl}
-          onclick={closeAltsModal}
-          aria-label="Close"
-        >
-          <IconX size={16} />
-        </button>
-      </header>
-      <p class="section-lede">
-        {1 + altsModal.alternates.length} team{altsModal.alternates.length === 0
-          ? ""
-          : "s"} for {dpsDisplayName(altsModal.mainDps)}.
-      </p>
-      <ul class="alts-grid">
+<ModalSheet
+  open={!!altsModal}
+  onclose={closeAltsModal}
+  labelledby="alts-modal-title"
+  size="sheet"
+  nested
+>
+  {#snippet head()}
+    {#if altsModal}
+      <h2 id="alts-modal-title" class="section-title alts-title">
+        {dpsDisplayName(altsModal.mainDps)} teams
+      </h2>
+    {/if}
+  {/snippet}
+  {#if altsModal}
+    <p class="section-lede alts-lede">
+      {1 + altsModal.alternates.length} team{altsModal.alternates.length === 0
+        ? ""
+        : "s"} for {dpsDisplayName(altsModal.mainDps)}.
+    </p>
+    <ul class="alts-grid">
+      <li class="alts-grid-item">
+        {@render featuredTeam(altsModal.primary)}
+      </li>
+      {#each altsModal.alternates as alt, j (alt.team_key ?? j)}
         <li class="alts-grid-item">
-          {@render featuredTeam(altsModal.primary)}
+          {@render featuredTeam(alt, true)}
         </li>
-        {#each altsModal.alternates as alt, j (alt.team_key ?? j)}
-          <li class="alts-grid-item">
-            {@render featuredTeam(alt, true)}
-          </li>
-        {/each}
-      </ul>
-    </div>
-  </div>
-{/if}
+      {/each}
+    </ul>
+  {/if}
+</ModalSheet>
 
 <style>
   .page-head {
@@ -948,101 +891,8 @@
     text-align: right;
   }
 
-  .alts-root {
-    position: fixed;
-    inset: 0;
-    z-index: 130;
-    display: grid;
-    place-items: center;
-    padding: clamp(0.75rem, 2vw, 1.25rem);
-    pointer-events: none;
-  }
-
-  .alts-backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    background: color-mix(in oklab, black 62%, transparent);
-    backdrop-filter: blur(4px);
-    pointer-events: auto;
-  }
-
-  .alts-panel {
-    position: relative;
-    z-index: 1;
-    width: min(42rem, 100%);
-    max-height: min(40rem, calc(100vh - 2rem));
-    overflow: auto;
-    padding: 1rem 1.1rem 1.1rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.18);
-    background: var(--background-mid);
-    pointer-events: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(
-        in srgb,
-        var(--foreground-color) 22%,
-        transparent
-      )
-      transparent;
-  }
-
-  .alts-panel::-webkit-scrollbar {
-    width: 0.55rem;
-  }
-
-  .alts-panel::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .alts-panel::-webkit-scrollbar-thumb {
-    border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--foreground-color) 22%, transparent);
-    border: 2px solid transparent;
-    background-clip: padding-box;
-  }
-
-  .alts-panel::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in srgb, var(--foreground-color) 36%, transparent);
-    background-clip: padding-box;
-  }
-
-  .alts-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-
-  .alts-head .section-title {
-    margin: 0;
-  }
-
-  .alts-close {
-    width: 1.85rem;
-    height: 1.85rem;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-  }
-
-  .alts-close:hover {
-    color: var(--foreground-color);
-    background: color-mix(in srgb, var(--foreground-color) 8%, transparent);
-  }
-
-  .alts-panel .section-lede {
+  .alts-title,
+  .alts-lede {
     margin: 0;
   }
 
@@ -1060,18 +910,6 @@
   }
 
   @media (max-width: 36rem) {
-    .alts-root {
-      padding: 0.65rem 1.15rem;
-    }
-
-    .alts-panel {
-      width: min(22rem, 100%);
-      max-height: min(32rem, calc(100vh - 1.3rem));
-      padding: 0.75rem 0.85rem 0.85rem;
-      gap: 0.45rem;
-      border-radius: var(--radius-md);
-    }
-
     .alts-grid {
       gap: 0.4rem;
     }

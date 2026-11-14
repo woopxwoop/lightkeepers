@@ -24,6 +24,7 @@
     initialFocus,
     nested = false,
     suspendKeys = false,
+    closeDisabled = false,
     head,
     children,
   }: {
@@ -39,6 +40,8 @@
     nested?: boolean;
     /** A further overlay above this one owns the keyboard. */
     suspendKeys?: boolean;
+    /** Disables the close button and backdrop and ignores Escape; the Tab trap keeps working. */
+    closeDisabled?: boolean;
     head?: Snippet;
     children: Snippet;
   } = $props();
@@ -77,7 +80,7 @@
       if (e.key === "Escape") {
         e.preventDefault();
         if (capture) e.stopImmediatePropagation();
-        onclose();
+        if (!closeDisabled) onclose();
         return;
       }
       if (panelEl) trapTabKey(e, panelEl);
@@ -101,6 +104,7 @@
       class="modal-backdrop"
       tabindex="-1"
       aria-label="Close"
+      disabled={closeDisabled}
       onclick={onclose}
       transition:fade|global={{ duration: motion ?? 160 }}
     ></button>
@@ -120,6 +124,7 @@
           type="button"
           class="modal-close"
           bind:this={closeEl}
+          disabled={closeDisabled}
           onclick={onclose}
           aria-label="Close"
         >
@@ -217,9 +222,19 @@
     height: 18px;
   }
 
-  .modal-close:hover {
+  .modal-close:hover:not(:disabled) {
     color: var(--foreground-color);
     background: var(--surface-quiet);
+  }
+
+  /* closeDisabled (e.g. a sync choice in flight): visibly inert, no pointer. */
+  .modal-close:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .modal-backdrop:disabled {
+    cursor: default;
   }
 
   .modal-body {

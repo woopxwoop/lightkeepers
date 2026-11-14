@@ -1,8 +1,5 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { tick } from "svelte";
-  import { fade, scale } from "svelte/transition";
-  import { prefersReducedMotion } from "svelte/motion";
   import { charactersOwned } from "#lib/stores/roster.js";
   import { authClient } from "#lib/auth-client.js";
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
@@ -12,7 +9,7 @@
   import Button from "#lib/ui/components/Button.svelte";
   import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
   import IconCog from "#lib/ui/icons/IconCog.svelte";
-  import IconX from "#lib/ui/icons/IconX.svelte";
+  import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
   import RosterBuildCard from "#lib/ui/components/RosterBuildCard.svelte";
   import RosterProgressFields from "#lib/ui/components/RosterProgressFields.svelte";
   import Toggle from "#lib/ui/components/Toggle.svelte";
@@ -45,7 +42,6 @@
     rosterDocSpec,
     rosterOwnedFrom,
   } from "#lib/sync/roster-doc.js";
-  import { trapTabKey } from "#lib/ui/focus-trap.js";
   import { resolve } from "$app/paths";
 
   const session = authClient.useSession();
@@ -229,10 +225,6 @@
       : null,
   );
 
-  let configPanelEl: HTMLDivElement | null = $state(null);
-  let configCloseEl: HTMLButtonElement | null = $state(null);
-  let reduced = $derived(prefersReducedMotion.current);
-
   function closeConfig() {
     configuringId = null;
   }
@@ -262,28 +254,6 @@
     if (configuring && !configuring.isOwned) {
       configuringId = null;
     }
-  });
-
-  $effect(() => {
-    if (!configuringId) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    void tick().then(() => configCloseEl?.focus());
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeConfig();
-        return;
-      }
-      if (configPanelEl) trapTabKey(event, configPanelEl);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      if (previous?.isConnected) previous.focus();
-    };
   });
 
   let isFiltered = $derived(
@@ -426,64 +396,42 @@
       </div>
     {/if}
 
-    {#if configuringView}
-      <div class="config-root">
-        <button
-          type="button"
-          class="config-backdrop"
-          aria-label="Close"
-          onclick={closeConfig}
-          transition:fade={{ duration: reduced ? 0 : 120 }}
-        ></button>
-        <div
-          class="config-panel"
-          class:config-panel--simple={simpleConfig}
-          role="dialog"
-          aria-modal="true"
-          aria-label={configuring?.name ?? "Character"}
-          tabindex="-1"
-          bind:this={configPanelEl}
-          transition:scale={{ duration: reduced ? 0 : 160, start: 0.98 }}
-        >
-          <div class="config-toolbar">
-            <label class="config-layout-toggle">
-              <Toggle
-                bind:pressed={simpleConfig}
-                aria-label="Simple config layout"
-              />
-              <span>Simple</span>
-            </label>
-            <button
-              type="button"
-              class="config-close"
-              aria-label="Close"
-              bind:this={configCloseEl}
-              onclick={closeConfig}
-            >
-              <IconX size={16} />
-            </button>
-          </div>
-          {#if simpleConfig}
-            <RosterProgressFields
-              progress={configuring?.progress ?? null}
-              onChange={applyProgress}
+    <ModalSheet
+      open={!!configuringView}
+      onclose={closeConfig}
+      label={configuring?.name ?? "Character"}
+      size={simpleConfig ? "dialog" : "sheet"}
+    >
+      {#snippet head()}
+        <label class="config-layout-toggle">
+          <Toggle
+            bind:pressed={simpleConfig}
+            aria-label="Simple config layout"
+          />
+          <span>Simple</span>
+        </label>
+      {/snippet}
+      {#if configuringView}
+        {#if simpleConfig}
+          <RosterProgressFields
+            progress={configuring?.progress ?? null}
+            onChange={applyProgress}
+          />
+        {:else}
+          <div class="config-card-stage">
+            <RosterBuildCard
+              view={configuringView}
+              editing="always"
+              onProgressChange={applyProgress}
             />
-          {:else}
-            <div class="config-card-stage">
-              <RosterBuildCard
-                view={configuringView}
-                editing="always"
-                onProgressChange={applyProgress}
-              />
-            </div>
-            <p class="section-lede">
-              Currently can edit constellation, level, and talents. Weapons and
-              Artifacts can only be imported via GOOD for now.
-            </p>
-          {/if}
-        </div>
-      </div>
-    {/if}
+          </div>
+          <p class="section-lede config-note">
+            Currently can edit constellation, level, and talents. Weapons and
+            Artifacts can only be imported via GOOD for now.
+          </p>
+        {/if}
+      {/if}
+    </ModalSheet>
   </div>
 {:else}
   <LoadingState message="Loading characters…" />
@@ -574,59 +522,6 @@
     background: color-mix(in srgb, var(--background-color) 82%, transparent);
   }
 
-  .config-root {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    display: grid;
-    place-items: center;
-    padding: clamp(0.75rem, 2vw, 1.25rem);
-    pointer-events: none;
-  }
-
-  .config-backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    background: color-mix(in oklab, black 62%, transparent);
-    backdrop-filter: blur(4px);
-    pointer-events: auto;
-  }
-
-  .config-panel {
-    position: relative;
-    z-index: 1;
-    width: min(72rem, 100%);
-    max-height: min(46rem, calc(100vh - 2rem));
-    overflow: auto;
-    padding: 0.25rem 0.75rem 0.5rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.18);
-    background: var(--background-mid);
-    pointer-events: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .config-panel--simple {
-    width: min(28rem, 100%);
-    max-height: min(40rem, calc(100vh - 2rem));
-    padding: 0.65rem 0.85rem 0.85rem;
-    gap: var(--space-3);
-  }
-
-  .config-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    min-height: 1.85rem;
-  }
-
   .config-layout-toggle {
     display: inline-flex;
     align-items: center;
@@ -638,30 +533,14 @@
     user-select: none;
   }
 
-  .config-panel > .section-lede {
+  .config-note {
     margin: 0;
   }
 
-  .config-close {
-    width: 1.85rem;
-    height: 1.85rem;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    margin-left: auto;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-  }
-
-  .config-close:hover {
-    color: var(--foreground-color);
-    background: color-mix(in srgb, var(--foreground-color) 10%, transparent);
-  }
-
   .config-card-stage {
+    /* Keep full height inside ModalSheet's flex body: shrinking it would clip
+       the card's own horizontal scrollbar (overflow-y: hidden). */
+    flex-shrink: 0;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
@@ -672,7 +551,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    /* Beneath .config-root (120) so the dialog stays on top while open. */
+    /* Beneath ModalSheet (120) so the dialog stays on top while open. */
     z-index: 40;
     display: flex;
     flex-wrap: wrap;

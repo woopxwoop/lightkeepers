@@ -276,13 +276,8 @@ const MODAL_HELPERS = [
   "src/lib/ui/body-scroll-lock.ts",
 ].map(moduleId);
 
-export const LEGACY_MODAL_SHELLS = [
-  "src/lib/ui/components/GoalsSyncConflictPopup.svelte",
-  "src/lib/ui/components/RosterSyncConflictPopup.svelte",
-  "src/lib/ui/components/PatchNotesPopup.svelte",
-  "src/lib/ui/components/SummaryTool.svelte",
-  "src/routes/settings/panels/RosterPanel.svelte",
-] as const;
+// Empty: every modal uses ModalSheet. Never add to this list.
+const LEGACY_MODAL_SHELLS: readonly string[] = [];
 
 const MODAL_HELPER_OWNERS = new Set<string>([
   "src/lib/ui/components/ModalSheet.svelte",

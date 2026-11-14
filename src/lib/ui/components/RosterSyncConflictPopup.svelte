@@ -4,13 +4,9 @@
    * or dismisses and keeps using the device roster without syncing.
    * Optional Character|Local|Cloud diff table; upload failures reopen with an error.
    */
-  import { browser } from "$app/env";
-  import { tick } from "svelte";
-  import { scale } from "svelte/transition";
-  import { prefersReducedMotion } from "svelte/motion";
   import Button from "#lib/ui/components/Button.svelte";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
-  import IconX from "#lib/ui/icons/IconX.svelte";
+  import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
   import {
     rosterSyncConflict,
     type RosterSyncChoice,
@@ -21,9 +17,7 @@
     type RosterSyncDiff,
     type RosterSyncProgressBits,
   } from "#lib/roster/roster-sync-diff.js";
-  import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
 
-  let dialogEl: HTMLElement | null = $state(null);
   let busy = $state(false);
   let showDiffs = $state(false);
 
@@ -56,59 +50,6 @@
     }
 
     busy = false;
-
-    const previouslyFocused =
-      browser && document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    const focusableSelector =
-      'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        dismiss();
-        return;
-      }
-      if (e.key !== "Tab" || !dialogEl) return;
-
-      const focusable = Array.from(
-        dialogEl.querySelectorAll<HTMLElement>(focusableSelector),
-      );
-      if (focusable.length === 0) {
-        e.preventDefault();
-        return;
-      }
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      } else if (!dialogEl.contains(document.activeElement)) {
-        e.preventDefault();
-        (e.shiftKey ? last : first).focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-
-    const releaseScrollLock = browser ? acquireBodyScrollLock() : () => {};
-
-    void tick().then(() => {
-      const first = dialogEl?.querySelector<HTMLElement>(focusableSelector);
-      first?.focus();
-    });
-
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      releaseScrollLock();
-      if (previouslyFocused?.isConnected) {
-        previouslyFocused.focus();
-      }
-    };
   });
 </script>
 
@@ -171,258 +112,152 @@
   </div>
 {/snippet}
 
-{#if $rosterSyncConflict}
-  <div class="popup-root">
-    <button
-      type="button"
-      class="popup-backdrop"
-      tabindex="-1"
-      aria-label="Dismiss roster sync"
-      disabled={busy}
-      onclick={dismiss}
-    ></button>
-    <div
-      bind:this={dialogEl}
-      class="popup-panel"
-      class:popup-panel-wide={showDiffs}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="roster-sync-conflict-title"
-      transition:scale={{
-        duration: prefersReducedMotion.current ? 0 : 220,
-        start: 0.96,
-      }}
-    >
-      <button
-        type="button"
-        class="popup-close"
-        disabled={busy}
-        onclick={dismiss}
-        aria-label="Close"
-      >
-        <IconX size={16} />
-      </button>
-      <p class="popup-eyebrow">Roster sync</p>
-      <h2 id="roster-sync-conflict-title" class="section-title popup-title">
-        {uploadRetry &&
-        !$rosterSyncConflict.error &&
-        $rosterSyncConflict.foreignOwner
-          ? "Roster belongs to another account"
-          : uploadRetry && !$rosterSyncConflict.error
-            ? "Upload this roster?"
-            : uploadRetry
-              ? "Cloud upload failed"
-              : savedCopy
-                ? "Roster changed while editing"
-                : "Local and cloud differ"}
-      </h2>
-      <p class="section-lede popup-summary">
-        {#if uploadRetry && !$rosterSyncConflict.error && $rosterSyncConflict.foreignOwner}
-          This device's roster was saved for a different account. Upload it to
-          the signed-in account, or dismiss and leave the cloud unchanged.
-        {:else if uploadRetry && !$rosterSyncConflict.error}
-          This device's roster isn't tied to the signed-in account. Upload it to
-          the cloud, or dismiss and leave the cloud unchanged.
-        {:else if uploadRetry}
-          Couldn't save this device's roster to the cloud. Retry the upload, or
-          dismiss and keep using the local roster.
-        {:else if savedCopy}
-          The saved roster changed after you started editing. Keep your edits
-          and upload them, or use the saved roster.
-        {:else}
-          Your device roster doesn't match the cloud backup. Use the cloud copy
-          here, or upload this device's roster to the cloud.
-        {/if}
-      </p>
-      {#if $rosterSyncConflict.error}
-        <p class="popup-error" role="alert">{$rosterSyncConflict.error}</p>
+<ModalSheet
+  open={!!$rosterSyncConflict}
+  onclose={dismiss}
+  labelledby="roster-sync-conflict-title"
+  size="dialog"
+  closeDisabled={busy}
+>
+  {#snippet head()}
+    {#if $rosterSyncConflict}
+      <div>
+        <p class="popup-eyebrow">Roster sync</p>
+        <h2 id="roster-sync-conflict-title" class="section-title popup-title">
+          {uploadRetry &&
+          !$rosterSyncConflict.error &&
+          $rosterSyncConflict.foreignOwner
+            ? "Roster belongs to another account"
+            : uploadRetry && !$rosterSyncConflict.error
+              ? "Upload this roster?"
+              : uploadRetry
+                ? "Cloud upload failed"
+                : savedCopy
+                  ? "Roster changed while editing"
+                  : "Local and cloud differ"}
+        </h2>
+      </div>
+    {/if}
+  {/snippet}
+  {#if $rosterSyncConflict}
+    <p class="section-lede popup-summary">
+      {#if uploadRetry && !$rosterSyncConflict.error && $rosterSyncConflict.foreignOwner}
+        This device's roster was saved for a different account. Upload it to the
+        signed-in account, or dismiss and leave the cloud unchanged.
+      {:else if uploadRetry && !$rosterSyncConflict.error}
+        This device's roster isn't tied to the signed-in account. Upload it to
+        the cloud, or dismiss and leave the cloud unchanged.
+      {:else if uploadRetry}
+        Couldn't save this device's roster to the cloud. Retry the upload, or
+        dismiss and keep using the local roster.
+      {:else if savedCopy}
+        The saved roster changed after you started editing. Keep your edits and
+        upload them, or use the saved roster.
+      {:else}
+        Your device roster doesn't match the cloud backup. Use the cloud copy
+        here, or upload this device's roster to the cloud.
       {/if}
+    </p>
+    {#if $rosterSyncConflict.error}
+      <p class="popup-error" role="alert">{$rosterSyncConflict.error}</p>
+    {/if}
 
-      {#if !uploadRetry}
-        <div class="diff-toggle-row">
-          <Button
-            variant="secondary"
-            class="diff-toggle"
-            disabled={busy || diffs.length === 0}
-            onclick={() => (showDiffs = !showDiffs)}
-            aria-expanded={showDiffs}
-          >
-            {showDiffs ? "Hide diffs" : "Show diffs"}
-            {#if diffs.length > 0}
-              ({diffs.length})
-            {/if}
-          </Button>
-        </div>
-
-        {#if showDiffs}
-          <div class="diff-panel">
-            {#if diffs.length === 0}
-              <p class="diff-empty">No field-level differences found.</p>
-            {:else}
-              <table class="diff-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Character</th>
-                    <th scope="col">Local</th>
-                    <th scope="col">{otherLabel}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each diffs as row (row.name_id)}
-                    <tr>
-                      <th scope="row" class="diff-char">
-                        <div class="diff-char-inner">
-                          <span class="diff-portrait">
-                            <CharacterIcon
-                              character={row.portrait}
-                              loading="lazy"
-                            />
-                          </span>
-                          <span class="diff-name">{row.name}</span>
-                        </div>
-                      </th>
-                      <td class="diff-side-cell" data-label="Local">
-                        {@render sideCell({
-                          owned: row.localOwned,
-                          ownedChanged: row.ownedChanged,
-                          bits: row.localProgress,
-                          other: row.cloudProgress,
-                          progressChanged: row.progressChanged,
-                        })}
-                      </td>
-                      <td class="diff-side-cell" data-label={otherLabel}>
-                        {@render sideCell({
-                          owned: row.cloudOwned,
-                          ownedChanged: row.ownedChanged,
-                          bits: row.cloudProgress,
-                          other: row.localProgress,
-                          progressChanged: row.progressChanged,
-                        })}
-                      </td>
-                    </tr>
-                  {/each}
-                </tbody>
-              </table>
-            {/if}
-          </div>
-        {/if}
-      {/if}
-
-      <div class="popup-actions">
+    {#if !uploadRetry}
+      <div class="diff-toggle-row">
         <Button
           variant="secondary"
-          disabled={busy}
-          onclick={() => choose("upload-local")}
+          class="diff-toggle"
+          disabled={busy || diffs.length === 0}
+          onclick={() => (showDiffs = !showDiffs)}
+          aria-expanded={showDiffs}
         >
-          {uploadRetry && $rosterSyncConflict.error
-            ? "Retry upload"
-            : savedCopy
-              ? "Keep my edits"
-              : "Upload local"}
+          {showDiffs ? "Hide diffs" : "Show diffs"}
+          {#if diffs.length > 0}
+            ({diffs.length})
+          {/if}
         </Button>
-        {#if !uploadRetry}
-          <Button
-            variant="primary"
-            disabled={busy}
-            onclick={() => choose("use-cloud")}
-          >
-            {savedCopy ? "Use saved" : "Use cloud"}
-          </Button>
-        {/if}
       </div>
+
+      {#if showDiffs}
+        <div class="diff-panel">
+          {#if diffs.length === 0}
+            <p class="diff-empty">No field-level differences found.</p>
+          {:else}
+            <table class="diff-table">
+              <thead>
+                <tr>
+                  <th scope="col">Character</th>
+                  <th scope="col">Local</th>
+                  <th scope="col">{otherLabel}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each diffs as row (row.name_id)}
+                  <tr>
+                    <th scope="row" class="diff-char">
+                      <div class="diff-char-inner">
+                        <span class="diff-portrait">
+                          <CharacterIcon
+                            character={row.portrait}
+                            loading="lazy"
+                          />
+                        </span>
+                        <span class="diff-name">{row.name}</span>
+                      </div>
+                    </th>
+                    <td class="diff-side-cell" data-label="Local">
+                      {@render sideCell({
+                        owned: row.localOwned,
+                        ownedChanged: row.ownedChanged,
+                        bits: row.localProgress,
+                        other: row.cloudProgress,
+                        progressChanged: row.progressChanged,
+                      })}
+                    </td>
+                    <td class="diff-side-cell" data-label={otherLabel}>
+                      {@render sideCell({
+                        owned: row.cloudOwned,
+                        ownedChanged: row.ownedChanged,
+                        bits: row.cloudProgress,
+                        other: row.localProgress,
+                        progressChanged: row.progressChanged,
+                      })}
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {/if}
+        </div>
+      {/if}
+    {/if}
+
+    <div class="popup-actions">
+      <Button
+        variant="secondary"
+        disabled={busy}
+        onclick={() => choose("upload-local")}
+      >
+        {uploadRetry && $rosterSyncConflict.error
+          ? "Retry upload"
+          : savedCopy
+            ? "Keep my edits"
+            : "Upload local"}
+      </Button>
+      {#if !uploadRetry}
+        <Button
+          variant="primary"
+          disabled={busy}
+          onclick={() => choose("use-cloud")}
+        >
+          {savedCopy ? "Use saved" : "Use cloud"}
+        </Button>
+      {/if}
     </div>
-  </div>
-{/if}
+  {/if}
+</ModalSheet>
 
 <style>
-  .popup-root {
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    display: grid;
-    place-items: center;
-    padding: 1.25rem;
-    pointer-events: none;
-  }
-
-  .popup-backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    background: color-mix(in oklab, black 55%, transparent);
-    backdrop-filter: blur(2px);
-    pointer-events: auto;
-    animation: popup-fade-in 180ms ease-out;
-  }
-
-  .popup-backdrop:disabled {
-    cursor: default;
-  }
-
-  @keyframes popup-fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .popup-backdrop {
-      animation: none;
-    }
-  }
-
-  .popup-panel {
-    position: relative;
-    z-index: 1;
-    width: min(100%, 26rem);
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    padding: 1.15rem 1.2rem 1.1rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 18%, transparent);
-    background: var(--background-color);
-    box-shadow: 0 18px 48px color-mix(in oklab, black 45%, transparent);
-    pointer-events: auto;
-  }
-
-  .popup-close {
-    position: absolute;
-    top: 0.7rem;
-    right: 0.7rem;
-    width: 1.85rem;
-    height: 1.85rem;
-    display: grid;
-    place-items: center;
-    border: none;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-    transition: var(--control-transition);
-  }
-
-  .popup-close:hover:not(:disabled) {
-    color: var(--foreground-color);
-    background: color-mix(in srgb, var(--foreground-color) 10%, transparent);
-  }
-
-  .popup-close:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .popup-panel-wide {
-    width: min(100%, 40rem);
-  }
-
   .popup-eyebrow {
     margin: 0;
     font-size: 0.68rem;
