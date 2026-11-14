@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { get } from "svelte/store";
+  import { charactersOwned, charactersHydrated } from "#lib/stores/roster.js";
   import {
-    charactersOwned,
-    charactersHydrated,
     abyssVersionNumber,
     stygianVersionNumber,
-    staticBoardsPhase,
+  } from "#lib/stores/versions.js";
+  import { staticBoardsPhase } from "#lib/stores/boards.js";
+  import {
     teamsOwnedStatus,
     nearMissStygianTeams,
     nearMissPairTeams,
@@ -15,13 +16,15 @@
     ensureTeamsOwned,
     invalidateNearMissTeams,
     invalidateTeamsOwned,
+  } from "#lib/stores/teams.js";
+  import {
     tierList,
     tierListLoaded,
     tierListError,
     ensureTierList,
     invalidateTierList,
-    animationsEnabled,
-  } from "#lib/stores.js";
+  } from "#lib/stores/tierlist.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import { ownedNameIds } from "#lib/utils.js";
   import {
     computePullSuggestions,

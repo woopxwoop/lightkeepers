@@ -9,10 +9,9 @@
     staticBoardsPhase,
     staticBoardsView,
     ensureStaticBoards,
-    isIconCompact,
-    charactersOwned,
-    hasSavedRoster,
-  } from "#lib/stores.js";
+  } from "#lib/stores/boards.js";
+  import { isIconCompact } from "#lib/stores/preferences.js";
+  import { charactersOwned, hasSavedRoster } from "#lib/stores/roster.js";
   import {
     orderMembersLeadFirst,
     pickTopMainDpsGroups,

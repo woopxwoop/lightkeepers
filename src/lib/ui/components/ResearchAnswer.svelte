@@ -43,7 +43,7 @@
     ResearchTeamLineup,
     ResearchView,
   } from "#lib/research-types.js";
-  import { charactersOwned } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import BuildPanel from "#lib/ui/components/BuildPanel.svelte";
   import ResearchEntityMention from "#lib/ui/components/ResearchEntityMention.svelte";
   import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";

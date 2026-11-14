@@ -3,7 +3,7 @@
    * One-character investment build card (weapon, sheet stats, talents, sets).
    * Shared by team-config pages and character build examples.
    */
-  import { displayPreferences } from "#lib/stores.js";
+  import { displayPreferences } from "#lib/stores/preferences.js";
   import {
     translateStatKey,
     statIconUrl,

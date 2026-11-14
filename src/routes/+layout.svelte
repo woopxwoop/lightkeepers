@@ -37,10 +37,10 @@
   import {
     displayPreferences,
     initDisplayPreferences,
-    setVersionNumbers,
     backgroundVisible,
     syncBackgroundToPath,
-  } from "#lib/stores.js";
+  } from "#lib/stores/preferences.js";
+  import { setVersionNumbers } from "#lib/stores/boards.js";
   import NavBar from "#lib/ui/NavBar.svelte";
   import PatchNotesPopup from "#lib/ui/components/PatchNotesPopup.svelte";
   import LoadOnFirstOpen from "#lib/ui/components/LoadOnFirstOpen.svelte";

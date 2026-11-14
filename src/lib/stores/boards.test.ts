@@ -2,7 +2,7 @@
  * Static boards publish one phase. A stale cycle stays visible, and a
  * failed refetch does not pretend the previous teams were never loaded.
  *
- * Run: pnpm exec tsx --test src/lib/stores.static-boards.test.ts
+ * Run: pnpm exec tsx --test src/lib/stores/boards.test.ts
  */
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
@@ -11,11 +11,11 @@ import {
   allTeamsAbyss,
   ensureStaticBoards,
   resetStaticBoards,
-  setVersionNumbers,
   staticBoardsPhase,
   staticBoardsView,
   type StaticBoardsPhase,
-} from "./stores.ts";
+} from "./boards.ts";
+import { setVersionNumbers } from "./boards.ts";
 
 function payload(abyss: number, stygian: number) {
   return {

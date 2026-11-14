@@ -9,7 +9,10 @@
   import NavDesktopLinks from "#lib/ui/components/NavDesktopLinks.svelte";
   import NavMobileDrawer from "#lib/ui/components/NavMobileDrawer.svelte";
   import { authClient } from "#lib/auth-client.js";
-  import { backgroundVisible, toggleBackgroundVisible } from "#lib/stores.js";
+  import {
+    backgroundVisible,
+    toggleBackgroundVisible,
+  } from "#lib/stores/preferences.js";
   import { plannerItineraryOpen } from "#lib/planner-itinerary-open.js";
   import { researchChatOpen } from "#lib/research-chat-open.js";
   import { accountSettingsOpen } from "#lib/account-settings-open.js";

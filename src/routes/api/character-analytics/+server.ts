@@ -12,9 +12,9 @@ import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   assertNoDbError,
-  requireAnalyticsMode,
   requireCharacterNameId,
-} from "#lib/server/request-validation.js";
+} from "#lib/server/validation/core.js";
+import { requireAnalyticsMode } from "#lib/server/validation/stygian.js";
 import { TOP_TEAMS_LIMIT } from "#lib/character-teams.js";
 import type { CharacterAnalyticsPayload } from "#lib/definitions.js";
 import { e2eCharacterAnalyticsPayload } from "#lib/e2e/fixtures.js";

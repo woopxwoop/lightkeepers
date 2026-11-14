@@ -9,10 +9,16 @@
     class: className = "",
     /** Accessible name for the detail sheet. */
     label = "Details",
+    onopen,
   }: {
     children: Snippet;
     class?: string;
     label?: string;
+    /**
+     * Runs when the tip or detail sheet opens. The body is always mounted (for
+     * measuring), so start on-demand loads for tip-only content here.
+     */
+    onopen?: () => void;
   } = $props();
 
   const EDGE = 8;
@@ -138,6 +144,7 @@
     if (detailOpen) return;
     tipTriggerEl = trigger;
     open = true;
+    onopen?.();
     updateTriggerDescription(trigger, true);
     requestAnimationFrame(() => {
       place(trigger);
@@ -181,6 +188,7 @@
     truncated = false;
     updateTriggerDescription(trigger, false);
     detailOpen = true;
+    onopen?.();
     await tick();
     if (sheetRootEl && sheetRootEl.parentElement !== document.body) {
       document.body.appendChild(sheetRootEl);

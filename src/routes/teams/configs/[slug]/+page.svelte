@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import {
     buildGoodKeyMap,
     humanizeTeamName,

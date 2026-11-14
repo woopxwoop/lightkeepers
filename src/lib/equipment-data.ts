@@ -11,7 +11,12 @@
  * Base-stat tables (character/weapon bases + level curves, artifact mains)
  * are a second, on-demand group: `ensureBaseStatData()`. Never auto-started;
  * only stat-sheet views (`useEquipmentData({ baseStats: true })`) pay for them.
- * Both groups bump the same `equipmentVersion`.
+ *
+ * Weapon refinement text (~80% of the raw weapon data) is a third on-demand
+ * group: `ensureWeaponRefinements()`. Never auto-started; WeaponTooltip
+ * starts it when a tip first opens (`HoverTooltip` `onopen`), and reads it
+ * through `weaponRefinements()`.
+ * All groups bump the same `equipmentVersion`.
  */
 import { writable } from "svelte/store";
 import {
@@ -38,9 +43,9 @@ export interface WeaponData {
     value: number;
     isPercent: boolean;
   } | null;
-  /** Text refinements R1–R5 (empty when none). */
-  refinements: { rank: number; description: string }[];
 }
+
+export type WeaponRefinement = { rank: number; description: string };
 
 export interface ArtifactSetData {
   id: number;
@@ -67,7 +72,7 @@ export const equipmentVersion = writable(0);
  */
 export const equipmentLoadFailed = writable(false);
 
-type LoadGroup = "equipment" | "baseStats";
+type LoadGroup = "equipment" | "baseStats" | "refinements";
 const failedGroups = new Set<LoadGroup>();
 
 /** One group's retry succeeding must not clear the other group's failure. */
@@ -96,7 +101,7 @@ export function ensureEquipmentData(): Promise<void> {
 
   loadPromise = (async () => {
     const [weaponsMod, artifactsMod] = await Promise.all([
-      import("#lib/data/weapons.json"),
+      import("#lib/data/weapon-index.json"),
       // Descriptions are copied from game files (Hoyoverse wording as-is,
       // including awkward clauses like Scarlet Proof’s Stellar Swirl 4pc).
       import("#lib/data/artifact-sets.json"),
@@ -260,6 +265,43 @@ export function ensureBaseStatData(): Promise<void> {
   return baseStatPromise;
 }
 
+// ---------------------------------------------------------------------------
+// Weapon refinement text (on demand — see module doc)
+// ---------------------------------------------------------------------------
+
+/** Populated in place after `ensureWeaponRefinements()` resolves. */
+const weaponRefinementsById = new Map<number, WeaponRefinement[]>();
+
+let refinementsPromise: Promise<void> | null = null;
+
+/**
+ * Load weapon refinement JSON into the shared table (idempotent / coalesced).
+ * Until it resolves, `weaponRefinements()` returns `[]`.
+ */
+export function ensureWeaponRefinements(): Promise<void> {
+  if (weaponRefinementsById.size > 0) return Promise.resolve();
+  if (refinementsPromise) return refinementsPromise;
+
+  refinementsPromise = (async () => {
+    const mod = await import("#lib/data/weapon-refinements.json");
+
+    weaponRefinementsById.clear();
+    for (const [id, ranks] of Object.entries(
+      jsonDefault<Record<string, WeaponRefinement[]>>(mod),
+    )) {
+      weaponRefinementsById.set(Number(id), ranks);
+    }
+    markLoadFailed("refinements", false);
+    equipmentVersion.update((n) => n + 1);
+  })().catch((err) => {
+    refinementsPromise = null;
+    markLoadFailed("refinements", true);
+    throw err;
+  });
+
+  return refinementsPromise;
+}
+
 // Server: load once per process at import so SSR can render weapon names and
 // icons (component hooks only start the load in onMount, which never runs on
 // the server). Browser: on demand only — useEquipmentData() / useWeapon() /
@@ -280,6 +322,14 @@ export function weaponIconSrc(weaponKey: string): string | null {
   const weapon = weaponByKey.get(weaponKey);
   if (!weapon?.awakenIcon) return null;
   return weaponIconUrl(weapon.awakenIcon);
+}
+
+/** Refinement ranks R1–R5 for a weapon; `[]` while loading or when none. */
+export function weaponRefinements(
+  weapon: WeaponData | null | undefined,
+): WeaponRefinement[] {
+  if (!weapon) return [];
+  return weaponRefinementsById.get(weapon.id) ?? [];
 }
 
 /** Display name for a GOOD weapon key; null while loading or unknown. */

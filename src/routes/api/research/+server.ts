@@ -14,10 +14,8 @@ import {
 } from "#lib/e2e/fixtures.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
-import {
-  requireJsonObject,
-  requireResearchRequest,
-} from "#lib/server/request-validation.js";
+import { requireJsonObject } from "#lib/server/validation/core.js";
+import { requireResearchRequest } from "#lib/server/validation/research.js";
 import {
   ResearchAgentError,
   fetchResearch,

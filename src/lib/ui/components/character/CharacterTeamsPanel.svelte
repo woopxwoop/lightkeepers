@@ -6,7 +6,7 @@
     staticBoardsPhase,
     staticBoardsView,
     ensureStaticBoards,
-  } from "#lib/stores.js";
+  } from "#lib/stores/boards.js";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import Button from "#lib/ui/components/Button.svelte";

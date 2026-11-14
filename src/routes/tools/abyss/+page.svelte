@@ -1,19 +1,25 @@
 <script lang="ts">
   import {
     teamsOwned,
-    allTeamsAbyss,
-    abyssEnemiesBoard,
-    abyssVersionNumber,
-    stygianVersionNumber,
-    staticBoardsPhase,
-    staticBoardsView,
-    charactersOwned,
-    charactersHydrated,
     teamsOwnedStatus,
     ensureTeamsOwned,
+  } from "#lib/stores/teams.js";
+  import {
+    allTeamsAbyss,
+    abyssEnemiesBoard,
+    staticBoardsPhase,
+    staticBoardsView,
     ensureStaticBoards,
+  } from "#lib/stores/boards.js";
+  import {
+    abyssVersionNumber,
+    stygianVersionNumber,
+  } from "#lib/stores/versions.js";
+  import {
+    charactersOwned,
+    charactersHydrated,
     hasSavedRoster,
-  } from "#lib/stores.js";
+  } from "#lib/stores/roster.js";
   import { solveAbyssWithFallback, SOLVER_REVISION } from "#lib/solver.js";
   import {
     SOLUTIONS_COUNT,

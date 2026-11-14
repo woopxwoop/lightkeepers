@@ -16,7 +16,7 @@ import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "#lib/server/supabaseServer.js";
 import { LRUCache } from "#lib/server/cache.js";
-import { assertNoDbError } from "#lib/server/request-validation.js";
+import { assertNoDbError } from "#lib/server/validation/core.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { e2eStaticPayload } from "#lib/e2e/fixtures.js";
 import type { Tables } from "#lib/types/database.types.js";

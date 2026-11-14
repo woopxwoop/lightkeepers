@@ -12,7 +12,7 @@
   } from "#lib/app/roster-inventory.js";
   import { assetUrl } from "#lib/asset-urls.js";
   import { ownedNameIds } from "#lib/utils.js";
-  import { charactersOwned } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import {
     expItemsNeeded,
     formatMaterialSourceLine,

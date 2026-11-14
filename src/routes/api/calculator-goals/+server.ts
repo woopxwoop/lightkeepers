@@ -15,13 +15,15 @@ import {
 } from "#lib/server/account-doc-tables.js";
 import {
   assertNoDbError,
+  requireJsonObject,
+  requireUser,
+} from "#lib/server/validation/core.js";
+import { requireCalculatorGoals } from "#lib/server/validation/goals.js";
+import {
   requireBaseRev,
   requireExpectedAccount,
-  requireCalculatorGoals,
-  requireJsonObject,
   requireMatchingAccount,
-  requireUser,
-} from "#lib/server/request-validation.js";
+} from "#lib/server/validation/roster.js";
 
 export const GET: RequestHandler = async ({
   locals,

@@ -5,7 +5,7 @@
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import IconGoogle from "#lib/ui/icons/IconGoogle.svelte";
   import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";
-  import { charactersHydrated, charactersOwned } from "#lib/stores.js";
+  import { charactersHydrated, charactersOwned } from "#lib/stores/roster.js";
   import { rosterSync } from "#lib/app/roster-sync.js";
   import { rosterDocOf } from "#lib/sync/roster-doc.js";
   import { applyGoodRoster, parseGoodText } from "#lib/good-import.js";

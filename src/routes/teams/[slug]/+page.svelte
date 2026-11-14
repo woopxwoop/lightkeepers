@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
-  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import {
     buildGoodKeyMap,
     humanizeTeamName,

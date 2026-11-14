@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { animationsEnabled } from "#lib/stores.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";

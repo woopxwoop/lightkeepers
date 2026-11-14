@@ -2,7 +2,8 @@
   import { onMount, tick } from "svelte";
   import { resolve } from "$app/paths";
   import { dev } from "$app/env";
-  import { animationsEnabled, charactersOwned } from "#lib/stores.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";

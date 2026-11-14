@@ -4,7 +4,8 @@
   import { browser } from "$app/env";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import { buildGoodKeyMap, ownedGoodKeys } from "#lib/utils.js";
   import TeamCardHand from "#lib/ui/components/TeamCardHand.svelte";
   import CharacterTagSearch from "#lib/ui/components/CharacterTagSearch.svelte";

@@ -11,11 +11,7 @@
    * Used by Planner / itinerary (+ Character / + Weapon) and demos.
    */
   import type { Snippet } from "svelte";
-  import { tick } from "svelte";
-  import { fade, scale } from "svelte/transition";
-  import { prefersReducedMotion } from "svelte/motion";
-  import IconX from "#lib/ui/icons/IconX.svelte";
-  import { trapTabKey } from "#lib/ui/focus-trap.js";
+  import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
 
   let {
     open = false,
@@ -49,9 +45,6 @@
     filters?: Snippet;
   } = $props();
 
-  let searchEl: HTMLInputElement | null = $state(null);
-  let panelEl: HTMLDivElement | null = $state(null);
-
   let filtered = $derived.by(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
@@ -60,160 +53,61 @@
         o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q),
     );
   });
-
-  $effect(() => {
-    if (!open) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    let active = true;
-    void tick().then(() => {
-      if (!active || !open) return;
-      searchEl?.focus();
-    });
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        onClose();
-        return;
-      }
-      if (panelEl) trapTabKey(e, panelEl);
-    }
-    window.addEventListener("keydown", onKey, true);
-    return () => {
-      active = false;
-      window.removeEventListener("keydown", onKey, true);
-      if (previous?.isConnected) previous.focus();
-    };
-  });
-
-  const motion = $derived(prefersReducedMotion.current ? 0 : undefined);
 </script>
 
-{#if open}
-  <div class="pick-root" data-art={art}>
-    <button
-      type="button"
-      class="pick-backdrop"
-      tabindex="-1"
-      aria-label="Close"
-      onclick={onClose}
-      transition:fade={{ duration: motion ?? 160 }}
-    ></button>
-    <div
-      class="pick-panel"
-      bind:this={panelEl}
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      transition:scale={{ duration: motion ?? 200, start: 0.98 }}
-    >
-      <header class="pick-head">
-        <h2 class="section-title pick-title">{title}</h2>
-        {#if toolbar}
-          <div class="pick-toolbar">
-            {@render toolbar()}
-          </div>
-        {/if}
-        <button
-          type="button"
-          class="pick-close"
-          onclick={onClose}
-          aria-label="Close"
-        >
-          <IconX size={18} />
-        </button>
-      </header>
-
-      <input
-        class="pick-search"
-        type="search"
-        bind:this={searchEl}
-        bind:value={query}
-        placeholder={searchPlaceholder}
-        aria-label={searchPlaceholder}
-      />
-
-      {#if filters}
-        <div class="pick-filters">
-          {@render filters()}
-        </div>
-      {/if}
-
-      <div class="pick-grid">
-        {#each filtered as opt (opt.value)}
-          <button
-            type="button"
-            class="pick-tile"
-            title={opt.label}
-            onclick={() => onChoose(opt.value)}
-          >
-            <span class="pick-tile-art">
-              {@render tile(opt)}
-              {#if showNames}
-                <span class="pick-tile-name">{opt.label}</span>
-              {/if}
-            </span>
-          </button>
-        {:else}
-          <p class="section-lede pick-empty">No matches.</p>
-        {/each}
+<ModalSheet
+  {open}
+  onclose={onClose}
+  label={title}
+  nested
+  initialFocus=".pick-search"
+  size="sheet"
+>
+  {#snippet head()}
+    <h2 class="section-title pick-title">{title}</h2>
+    {#if toolbar}
+      <div class="pick-toolbar">
+        {@render toolbar()}
       </div>
+    {/if}
+  {/snippet}
+
+  <input
+    class="pick-search"
+    type="search"
+    bind:value={query}
+    placeholder={searchPlaceholder}
+    aria-label={searchPlaceholder}
+  />
+
+  {#if filters}
+    <div class="pick-filters">
+      {@render filters()}
     </div>
+  {/if}
+
+  <div class="pick-grid" data-art={art}>
+    {#each filtered as opt (opt.value)}
+      <button
+        type="button"
+        class="pick-tile"
+        title={opt.label}
+        onclick={() => onChoose(opt.value)}
+      >
+        <span class="pick-tile-art">
+          {@render tile(opt)}
+          {#if showNames}
+            <span class="pick-tile-name">{opt.label}</span>
+          {/if}
+        </span>
+      </button>
+    {:else}
+      <p class="section-lede pick-empty">No matches.</p>
+    {/each}
   </div>
-{/if}
+</ModalSheet>
 
 <style>
-  .pick-root {
-    /* Above itinerary sheet (z-120) and goals picker (z-130). */
-    position: fixed;
-    inset: 0;
-    z-index: 140;
-    display: grid;
-    place-items: center;
-    padding: clamp(0.75rem, 2vw, 1.25rem);
-    pointer-events: none;
-  }
-
-  .pick-backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    background: color-mix(in oklab, black 62%, transparent);
-    backdrop-filter: blur(4px);
-    pointer-events: auto;
-  }
-
-  .pick-panel {
-    position: relative;
-    z-index: 1;
-    width: min(90vw, 64rem);
-    height: min(88vh, 48rem);
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    padding: 0.75rem 0.85rem 0.85rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 14%, transparent);
-    background: var(--background-color);
-    box-shadow: 0 22px 56px color-mix(in oklab, black 50%, transparent);
-    pointer-events: auto;
-  }
-
-  .pick-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-shrink: 0;
-  }
-
   .pick-title {
     margin: 0;
     flex: 1;
@@ -222,26 +116,6 @@
 
   .pick-toolbar {
     flex-shrink: 0;
-  }
-
-  .pick-close {
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    padding: 0;
-    border-radius: var(--radius-md);
-    border: var(--border-width) solid
-      color-mix(in srgb, var(--foreground-color) 12%, transparent);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-  }
-
-  .pick-close:hover {
-    color: var(--foreground-color);
-    border-color: color-mix(in srgb, var(--foreground-color) 26%, transparent);
   }
 
   .pick-search {
@@ -275,37 +149,9 @@
     gap: 0.5rem;
     align-content: start;
     padding: 0.05rem 0.15rem 0.2rem 0;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(
-        in srgb,
-        var(--foreground-color) 22%,
-        transparent
-      )
-      transparent;
   }
 
-  .pick-grid::-webkit-scrollbar {
-    width: 0.55rem;
-  }
-
-  .pick-grid::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .pick-grid::-webkit-scrollbar-thumb {
-    border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--foreground-color) 22%, transparent);
-    border: 2px solid transparent;
-    background-clip: padding-box;
-  }
-
-  .pick-grid::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in srgb, var(--foreground-color) 36%, transparent);
-    border: 2px solid transparent;
-    background-clip: padding-box;
-  }
-
-  .pick-root[data-art="square"] .pick-grid {
+  .pick-grid[data-art="square"] {
     grid-template-columns: repeat(auto-fill, minmax(5.75rem, 1fr));
   }
 
@@ -335,7 +181,7 @@
       box-shadow 140ms ease;
   }
 
-  .pick-root[data-art="square"] .pick-tile-art {
+  .pick-grid[data-art="square"] .pick-tile-art {
     aspect-ratio: 1;
   }
 

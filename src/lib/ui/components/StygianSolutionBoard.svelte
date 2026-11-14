@@ -2,22 +2,30 @@
   import { untrack } from "svelte";
   import {
     teamsOwnedStygian,
+    teamsOwnedStatus,
+    ensureTeamsOwned,
+  } from "#lib/stores/teams.js";
+  import {
     allTeamsStygian,
     stygianEnemiesBoard,
     staticBoardsPhase,
     staticBoardsView,
+    ensureStaticBoards,
+    rosterBoardVersions,
+  } from "#lib/stores/boards.js";
+  import {
     charactersOwned,
     charactersHydrated,
-    teamsOwnedStatus,
-    ensureTeamsOwned,
-    ensureStaticBoards,
+    hasSavedRoster,
+  } from "#lib/stores/roster.js";
+  import {
     displayPreferences,
     setDisplayPreferences,
+  } from "#lib/stores/preferences.js";
+  import {
     stygianVersionNumber,
     abyssVersionNumber,
-    rosterBoardVersions,
-    hasSavedRoster,
-  } from "#lib/stores.js";
+  } from "#lib/stores/versions.js";
   import { stygianSlotLabel } from "#lib/slotLabels.js";
   import {
     solveStygianWithFallback,

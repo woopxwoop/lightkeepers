@@ -3,7 +3,7 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { charactersOwned } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import { authClient } from "#lib/auth-client.js";
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";

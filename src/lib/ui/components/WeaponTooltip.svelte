@@ -1,6 +1,10 @@
 <script lang="ts">
-  import { useWeapon } from "#lib/equipment-data.svelte.js";
-  import type { WeaponData } from "#lib/equipment-data.js";
+  import { useEquipmentData, useWeapon } from "#lib/equipment-data.svelte.js";
+  import {
+    ensureWeaponRefinements,
+    weaponRefinements,
+    type WeaponData,
+  } from "#lib/equipment-data.js";
   import { weaponTypeLabel } from "#lib/utils.js";
   import GameText from "#lib/ui/components/GameText.svelte";
   import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
@@ -18,16 +22,23 @@
   } = $props();
 
   const lookup = useWeapon(() => weaponKey ?? "");
+  // Refinement text (~80% of weapon data) loads on first open, not mount:
+  // HoverTooltip keeps its body mounted on every page with a weapon.
+  const equipment = useEquipmentData();
+  function loadPassive() {
+    void ensureWeaponRefinements().catch((error) => {
+      console.error("[equipment-data] refinements load failed:", error);
+    });
+  }
 
   let resolved = $derived(weapon ?? lookup.weapon);
 
   let passive = $derived.by(() => {
-    if (!resolved?.refinements.length) return null;
+    void equipment.version;
+    const ranks = weaponRefinements(resolved);
+    if (!ranks.length) return null;
     const rank = refinement ?? 1;
-    return (
-      resolved.refinements.find((r) => r.rank === rank) ??
-      resolved.refinements[0]
-    );
+    return ranks.find((r) => r.rank === rank) ?? ranks[0];
   });
 
   function formatSubStat(sub: NonNullable<WeaponData["subStat"]>): string {
@@ -39,7 +50,7 @@
 </script>
 
 {#if resolved}
-  <HoverTooltip class="max-w-72" label={resolved.name}>
+  <HoverTooltip class="max-w-72" label={resolved.name} onopen={loadPassive}>
     <div class="tip-detail-text font-medium">{resolved.name}</div>
     <div class="tip-detail-text tip-detail-text--small mt-0.5 opacity-85">
       {resolved.stars}★ · {weaponTypeLabel(resolved.weaponType)}

@@ -3,11 +3,8 @@
   import { browser } from "$app/env";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import {
-    charactersOwned,
-    charactersHydrated,
-    animationsEnabled,
-  } from "#lib/stores.js";
+  import { charactersOwned, charactersHydrated } from "#lib/stores/roster.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import BrowseFlipCard from "#lib/ui/components/BrowseFlipCard.svelte";
   import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";

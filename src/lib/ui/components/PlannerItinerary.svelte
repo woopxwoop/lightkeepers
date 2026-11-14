@@ -47,7 +47,7 @@
     type FarmPlaceMaterial,
   } from "#lib/planner-itinerary.js";
   import { assetUrl } from "#lib/asset-urls.js";
-  import { charactersOwned } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import { ownedNameIds } from "#lib/utils.js";
   import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
   import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";

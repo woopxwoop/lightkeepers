@@ -5,25 +5,24 @@
  * started before the roster is seeded, or joined across two different
  * rosters, must not stick as the owned-team list.
  *
- * Run: pnpm exec tsx --test src/lib/stores.teams-owned.test.ts
+ * Run: pnpm exec tsx --test src/lib/stores/teams.test.ts
  */
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { get } from "svelte/store";
-import type { CharacterOwned } from "./definitions.ts";
+import type { CharacterOwned } from "../definitions.ts";
 import {
-  charactersOwned,
   ensureNearMissTeams,
-  ensureStaticBoards,
   ensureTeamsOwned,
   invalidateNearMissTeams,
   invalidateTeamsOwned,
   nearMissStatus,
-  resetStaticBoards,
-  setVersionNumbers,
   teamsOwned,
   teamsOwnedStatus,
-} from "./stores.ts";
+} from "./teams.ts";
+import { ensureStaticBoards, resetStaticBoards } from "./boards.ts";
+import { charactersOwned } from "./roster.ts";
+import { setVersionNumbers } from "./boards.ts";
 
 function row(name_id: string, isOwned: boolean): CharacterOwned {
   return { name_id, isOwned } as CharacterOwned;

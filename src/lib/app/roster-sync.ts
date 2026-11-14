@@ -15,7 +15,7 @@ import {
   charactersHydrated,
   charactersOwned,
   hasSavedRoster,
-} from "#lib/stores.js";
+} from "#lib/stores/roster.js";
 import {
   parseRosterDoc,
   rosterDocSpec,

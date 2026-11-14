@@ -12,8 +12,8 @@ import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import {
   assertNoDbError,
   requireJsonObject,
-  requireTeamEnemyPairs,
-} from "#lib/server/request-validation.js";
+} from "#lib/server/validation/core.js";
+import { requireTeamEnemyPairs } from "#lib/server/validation/stygian.js";
 import type { StygianClearVideosPayload } from "#lib/definitions.js";
 
 function pairKey(teamKey: string, enemyId: number): string {
