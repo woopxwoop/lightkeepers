@@ -43,6 +43,14 @@ A new module goes in its domain folder with its test beside it
 (`foo.ts` + `foo.test.ts`). File names keep their domain prefix
 (`#lib/equipment/equipment-data.js`), so they stay greppable.
 
+When a component grows past ~500 lines, split it: child components go in a
+kebab-case folder named after it (`ui/components/roster-build-card/`), or beside
+the route for page files (`routes/tools/pulls/LedgerRow.svelte`); pure logic
+moves to a tested module in the domain folder. The parent keeps its path and
+props, so callers don't change. `RosterBuildCard`, `StygianSolutionBoard`,
+`SummaryTool`, `CharacterBuildsPanel`, `ResearchAnswer`, and the pulls and
+planner pages follow this shape.
+
 ## Data flow
 
 ```
@@ -78,7 +86,7 @@ bug even if it works — it's how caches, versions, and stores drift apart.
 | Static game JSON (`src/lib/data/`) | only through `equipment/equipment-data.ts`                                                                   |
 | Roster reads/saves                 | read `charactersOwned`; save via `rosterSync().commit()` (`app/roster-sync.ts`)                              |
 | Planner goals                      | `goalsSync()` (`app/goals-sync.ts`)                                                                          |
-| GOOD inventory                     | `loadRosterWeapons()` / `loadRosterArtifacts()` (`roster/roster-inventory.ts`), on demand                    |
+| GOOD inventory                     | `loadRosterWeapons()` / `loadRosterArtifacts()` (`app/roster-inventory.ts`), on demand                       |
 | Roster-keyed DB reads (server)     | `require*` validators → `cachedRosterRpc()`                                                                  |
 | Public CDN JSON (server)           | a `#lib/server/*` loader → `loadFromCdn()`                                                                   |
 | Signed-in DB access (server)       | `requireUser()` + `assertNoDbError()`                                                                        |
