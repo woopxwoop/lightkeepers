@@ -409,8 +409,6 @@ function importanceRowFromSlot(
 
 // ── Guide vs sim section selection ──────────────────────────────────────────
 
-export type BuildsSectionSource = "sim" | "guide";
-
 export type GuideTalentRow = {
   slot: TalentSlot;
   label: string;
@@ -648,8 +646,6 @@ export function formatReactionFingerprint(
     .map((part) => formatReactionName(part.trim()))
     .join(" + ");
 }
-
-export type LiquidRollChip = { key: string; rolls: number };
 
 export type ExampleRollTier = "mid" | "high";
 

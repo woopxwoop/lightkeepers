@@ -19,6 +19,9 @@
     "src/lib/ui/components/ResearchChatSheet.svelte",
     "src/lib/ui/components/BuildResearchSheet.svelte",
   ],
+  // A type used by its own module's exports (a parameter/return/property type)
+  // is public API even when no caller imports it by name yet.
+  "ignoreExportsUsedInFile": { "type": true, "interface": true },
   "project": ["src/**/*.{ts,js,svelte}", "*.mjs", "tests/**/*.ts"],
   // SvelteKit virtual modules ($app/env, $app/state, …) have no file on disk.
   "ignoreUnresolved": ["^\\$app/"],

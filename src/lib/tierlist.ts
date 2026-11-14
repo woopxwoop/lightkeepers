@@ -41,6 +41,7 @@ const STANDARD_BANNER_5STAR_IDS = new Set([
   "Mizuki",
 ]);
 
+/** Re-exported from `definitions.ts` (domain catalog). @public */
 export type TierBoard = "fiveStar" | "fourStar";
 
 export type TierListEntry = {

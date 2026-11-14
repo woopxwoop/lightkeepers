@@ -7,8 +7,6 @@ import { teamSlotFieldRate } from "#lib/slot-fields.js";
 
 export const SOLUTIONS_COUNT = 6;
 
-export type BoardSlot = "top" | "middle" | "bottom";
-
 type SlotRateTeam = {
   usage_rate?: number | null;
   field_1_rate?: number | null;

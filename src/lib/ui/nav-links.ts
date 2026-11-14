@@ -66,7 +66,6 @@ export const mainLinks = [
 ] as const;
 
 export type ToolsLink = (typeof toolsLinks)[number];
-export type SettingsLink = (typeof settingsLinks)[number];
 export type MainLink = (typeof mainLinks)[number];
 
 export function isPathActive(

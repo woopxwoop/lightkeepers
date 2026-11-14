@@ -8,7 +8,7 @@ const SLOT_FIELD_RATE_KEYS = {
   middle: "field_3_rate",
 } as const;
 
-export type SlotWithFieldRate = keyof typeof SLOT_FIELD_RATE_KEYS;
+type SlotWithFieldRate = keyof typeof SLOT_FIELD_RATE_KEYS;
 
 type FieldRateTeam = {
   field_1_rate?: number | null;

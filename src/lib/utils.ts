@@ -200,8 +200,6 @@ const TRAVELER_ELEMENTS = [
   "Pyro",
 ] as const;
 
-export type TravelerElement = (typeof TRAVELER_ELEMENTS)[number];
-
 /**
  * Every Traveler resonance we surface kits / guides for. Superset of the
  * gcsim list — Cryo has guides and CDN kits before sims exist for it.
