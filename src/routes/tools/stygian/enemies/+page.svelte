@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { animationsEnabled } from "#lib/stores.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
@@ -108,15 +108,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-  }
-
-  .page-title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3vw, 2rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--foreground-color);
   }
 
   .page-lede {

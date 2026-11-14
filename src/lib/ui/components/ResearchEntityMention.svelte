@@ -4,8 +4,8 @@
    * When href is available the root is a link; otherwise a button so HoverTooltip
    * stays keyboard-focusable. Tip body stays non-interactive.
    */
-  import { entityHref, entityIconUrl } from "#lib/research-answer.js";
-  import type { ResearchEntity } from "#lib/research-types.js";
+  import { entityHref, entityIconUrl } from "#lib/research/research-answer.js";
+  import type { ResearchEntity } from "#lib/research/research-types.js";
   import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
   import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
   import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";

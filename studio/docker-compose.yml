@@ -1,54 +1,59 @@
-# Table browser for prod Postgres. Bound to loopback on the database server.
-# Reach it with `pnpm studio`, which forwards that port to the laptop.
+# Table browser for the prod or staging Postgres. Bound to loopback on the
+# database server. Reach it with `pnpm studio` (prod) or
+# `pnpm studio --staging`, which forward that port to the laptop over SSH.
+#
+# studio.mjs writes the per-target values into .env beside this file:
+# STUDIO_PORT, STUDIO_NAME, STUDIO_PROJECT, DB_HOST, DB_NETWORK, GATEWAY_URL,
+# plus the credentials.
 
 services:
   meta:
     image: supabase/postgres-meta:v0.95.2
-    container_name: lightkeepers-studio-meta
+    container_name: ${STUDIO_NAME}-meta
     restart: unless-stopped
     environment:
       PG_META_PORT: 8080
-      PG_META_DB_HOST: prod-postgres
+      PG_META_DB_HOST: ${DB_HOST}
       PG_META_DB_PORT: 5432
       PG_META_DB_NAME: lightkeepers
       PG_META_DB_USER: lightkeepers
       PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
       CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
     networks:
-      - prod
+      - db
     mem_limit: 256m
 
   studio:
     image: supabase/studio:2026.03.16-sha-5528817
-    container_name: lightkeepers-studio
+    container_name: ${STUDIO_NAME}
     restart: unless-stopped
     depends_on:
       - meta
     ports:
-      - "127.0.0.1:18080:3000"
+      - "127.0.0.1:${STUDIO_PORT}:3000"
     environment:
       HOSTNAME: 0.0.0.0
       STUDIO_PG_META_URL: http://meta:8080
-      POSTGRES_HOST: prod-postgres
+      POSTGRES_HOST: ${DB_HOST}
       POSTGRES_PORT: 5432
       POSTGRES_DB: lightkeepers
       POSTGRES_USER_READ_WRITE: lightkeepers
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PG_META_CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
       DEFAULT_ORGANIZATION_NAME: Lightkeepers
-      DEFAULT_PROJECT_NAME: Prod
-      SUPABASE_URL: http://prod-postgrest-gateway:3001
-      SUPABASE_PUBLIC_URL: http://127.0.0.1:18080
-      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:18080
+      DEFAULT_PROJECT_NAME: ${STUDIO_PROJECT}
+      SUPABASE_URL: ${GATEWAY_URL}
+      SUPABASE_PUBLIC_URL: http://127.0.0.1:${STUDIO_PORT}
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:${STUDIO_PORT}
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
       AUTH_JWT_SECRET: ${JWT_SECRET}
       NEXT_PUBLIC_ENABLE_LOGS: "false"
     networks:
-      - prod
+      - db
     mem_limit: 768m
 
 networks:
-  prod:
+  db:
     external: true
-    name: prod-postgres_default
+    name: ${DB_NETWORK}

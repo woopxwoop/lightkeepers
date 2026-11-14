@@ -8,20 +8,18 @@
  * Independent of roster — cache hard like /api/static.
  */
 
-import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { serverDb } from "#lib/server/supabaseServer.js";
-import { LRUCache, charactersCache } from "#lib/server/cache.js";
+import { LRUCache } from "#lib/server/cache.js";
+import { loadCharacters } from "#lib/server/characters.js";
+import { assertNoDbError } from "#lib/server/validation/core.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { e2eTierListPayload } from "#lib/e2e/fixtures.js";
 import {
   computeTierList,
-  type CharacterUsageRow,
+  usageRowsFromView,
   type TierListPayload,
-} from "#lib/tierlist.js";
-import type { Tables } from "#lib/types/database.types.js";
-
-type Character = Tables<"characters">;
+} from "#lib/boards/tierlist.js";
 
 const tierListCache = new LRUCache<TierListPayload>(1, 15 * 60 * 1000, {
   redisNamespace: "tierlist",
@@ -34,45 +32,12 @@ async function fetchTierList(): Promise<TierListPayload> {
     serverDb
       .from("character_usage_avg_stygian")
       .select("character_id, avg_usage_rate, cycles"),
-    charactersCache.getOrSet("characters", async () => {
-      const { data, error: err } = await serverDb
-        .from("characters")
-        .select("*");
-      if (err) {
-        console.error("[tierlist] characters error:", err);
-        throw new Error(err.message);
-      }
-      return (data ?? []) as Character[];
-    }),
+    loadCharacters(),
   ]);
 
-  if (usageRes.error) {
-    console.error(
-      "[tierlist] character_usage_avg_stygian error:",
-      usageRes.error,
-    );
-    throw error(500, "Failed to fetch character usage averages");
-  }
+  assertNoDbError("tierlist character_usage_avg_stygian", usageRes.error);
 
-  const usageRows: CharacterUsageRow[] = (usageRes.data ?? []).flatMap(
-    (row) => {
-      if (
-        typeof row.character_id !== "number" ||
-        typeof row.avg_usage_rate !== "number"
-      ) {
-        return [];
-      }
-      return [
-        {
-          character_id: row.character_id,
-          avg_usage_rate: row.avg_usage_rate,
-          cycles: typeof row.cycles === "number" ? row.cycles : 0,
-        },
-      ];
-    },
-  );
-
-  return computeTierList(usageRows, characters);
+  return computeTierList(usageRowsFromView(usageRes.data), characters);
 }
 
 export const GET: RequestHandler = async () => {

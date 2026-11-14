@@ -7,7 +7,7 @@ import { resolve } from "$app/paths";
 import {
   kitIconsFromCharacterKit,
   type InvestmentBuildKitIcons,
-} from "#lib/investment-build-card.js";
+} from "#lib/investment/investment-build-card.js";
 import type { CharacterKit } from "#lib/types/character-kit.js";
 
 const cache = new Map<string, InvestmentBuildKitIcons>();

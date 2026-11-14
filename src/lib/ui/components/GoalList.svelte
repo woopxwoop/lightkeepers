@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { goalRowIcon, goalRowSummary } from "#lib/goal-row.js";
-  import { itineraryGoalLabel } from "#lib/planner-itinerary.js";
+  import { goalRowIcon, goalRowSummary } from "#lib/planner/goal-row.js";
+  import { itineraryGoalLabel } from "#lib/planner/planner-itinerary.js";
   import type { CalculatorGoal } from "#lib/types/calculator-goals.js";
   import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
   import IconCog from "#lib/ui/icons/IconCog.svelte";

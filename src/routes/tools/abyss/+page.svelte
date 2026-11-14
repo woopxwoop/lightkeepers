@@ -1,29 +1,41 @@
 <script lang="ts">
   import {
     teamsOwned,
+    teamsOwnedStatus,
+    ensureTeamsOwned,
+  } from "#lib/stores/teams.js";
+  import {
     allTeamsAbyss,
     abyssEnemiesBoard,
-    staticBoardsLoaded,
-    staticBoardsError,
+    staticBoardsPhase,
+    staticBoardsView,
+    ensureStaticBoards,
+  } from "#lib/stores/boards.js";
+  import {
+    abyssVersionNumber,
+    stygianVersionNumber,
+  } from "#lib/stores/versions.js";
+  import {
     charactersOwned,
     charactersHydrated,
-    teamsOwnedLoaded,
-    ensureTeamsOwned,
-    ensureStaticBoards,
     hasSavedRoster,
-  } from "#lib/stores.js";
-  import { solveAbyssWithFallback, SOLVER_REVISION } from "#lib/solver.js";
+  } from "#lib/stores/roster.js";
+  import {
+    solveAbyssWithFallback,
+    SOLVER_REVISION,
+  } from "#lib/boards/solver.js";
   import {
     SOLUTIONS_COUNT,
     boardSlotRate,
     filterDisplaySolutions,
+    boardOutcome,
     clampSolutionIndex,
     stepSolutionIndex,
     assignmentKeyFor,
     createMemo,
     rosterFingerprint,
     teamsFingerprint,
-  } from "#lib/board-solutions.js";
+  } from "#lib/boards/board-solutions.js";
   import { ownedNameIds } from "#lib/utils.js";
   import Team from "#lib/ui/components/Team.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
@@ -38,7 +50,7 @@
   import { resolve } from "$app/paths";
   import { settingsPath } from "#lib/ui/nav-links.js";
   import { authClient } from "#lib/auth-client.js";
-  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
 
   const SLOTS = ["top", "bottom"] as const;
   type Slot = (typeof SLOTS)[number];
@@ -59,8 +71,15 @@
   );
 
   // Meta boards + owned subset — warmed from bootstrap when possible.
+  // Child effects can run before the layout seeds the roster. Fetching then
+  // posts an empty character list, which the teams RPC treats as "all teams".
   $effect(() => {
     ensureStaticBoards().catch(() => {});
+    // Re-subscribe when boards settle so a new cycle refetches owned teams.
+    // Versions are module state; don't POST /api/teams with the -1 sentinel.
+    void $staticBoardsPhase;
+    if (!$charactersHydrated) return;
+    if (abyssVersionNumber < 0 || stygianVersionNumber < 0) return;
     ensureTeamsOwned($charactersOwned).catch(console.error);
   });
 
@@ -68,7 +87,15 @@
     try {
       await ensureStaticBoards({ force: true });
     } catch {
-      // staticBoardsError already set
+      // staticBoardsPhase already set
+    }
+  }
+
+  async function retryTeamsOwned() {
+    try {
+      await ensureTeamsOwned($charactersOwned);
+    } catch {
+      // teamsOwnedStatus already set
     }
   }
 
@@ -86,7 +113,7 @@
   );
 
   let solutions = $derived.by(() => {
-    if (hasOwnedCharacters && !$teamsOwnedLoaded) return [];
+    if (hasOwnedCharacters && $teamsOwnedStatus !== "ready") return [];
     const owned = $charactersOwned;
     const teams = $teamsOwned;
     const all = $allTeamsAbyss;
@@ -102,6 +129,7 @@
   });
 
   let displaySolutions = $derived(filterDisplaySolutions(solutions));
+  let outcome = $derived(boardOutcome(solutions));
 
   let safeIndex = $derived(
     clampSolutionIndex(selectedIndex, displaySolutions.length),
@@ -112,13 +140,15 @@
   });
 
   let solution = $derived(displaySolutions[safeIndex]);
-  let loading = $derived(
-    !$charactersHydrated ||
-      (!$staticBoardsError &&
-        !$staticBoardsLoaded &&
-        $allTeamsAbyss.length === 0),
+  let boards = $derived(staticBoardsView($staticBoardsPhase));
+  let loading = $derived(!$charactersHydrated || boards.kind === "loading");
+  let waitingForOwned = $derived(
+    hasOwnedCharacters &&
+      ($teamsOwnedStatus === "idle" || $teamsOwnedStatus === "loading"),
   );
-  let waitingForOwned = $derived(hasOwnedCharacters && !$teamsOwnedLoaded);
+  let ownedTeamsFailed = $derived(
+    hasOwnedCharacters && $teamsOwnedStatus === "error",
+  );
 
   let updatedLabel = $derived.by(() => {
     if (!abyssEnemies?.openTime) return "";
@@ -236,12 +266,20 @@
 
         <a class="back-link" href={resolve("tools/abyss/summary")}>Summary</a>
       </p>
+      {#if boards.kind === "board" && boards.notice && !loading}
+        {#if boards.notice === "stale"}
+          <p class="page-meta">Showing the previous cycle.</p>
+        {/if}
+        <Button variant="secondary" onclick={retryStaticBoards}
+          >Try again</Button
+        >
+      {/if}
     </div>
   </header>
 
   {#if loading}
     <LoadingState />
-  {:else if $staticBoardsError && $allTeamsAbyss.length === 0}
+  {:else if boards.kind === "empty-error"}
     <EmptyState message="Could not load Abyss teams right now.">
       {#snippet action()}
         <Button variant="secondary" onclick={retryStaticBoards}
@@ -251,6 +289,12 @@
     </EmptyState>
   {:else if waitingForOwned}
     <LoadingState variant="pulse" message="Matching your roster…" />
+  {:else if ownedTeamsFailed}
+    <EmptyState message="Could not match your roster right now.">
+      {#snippet action()}
+        <Button variant="secondary" onclick={retryTeamsOwned}>Try again</Button>
+      {/snippet}
+    </EmptyState>
   {:else if showRosterSetup}
     <EmptyState
       message="Set up your roster to find Abyss clears that match what you own."
@@ -259,7 +303,7 @@
         <a class="pulls-cta" href={settingsPath}>Configure roster</a>
       {/snippet}
     </EmptyState>
-  {:else if displaySolutions.length === 0}
+  {:else if outcome === "none"}
     <EmptyState message="No viable clears for your roster right now.">
       {#snippet action()}
         <a class="pulls-cta" href={resolve("tools/pulls")}

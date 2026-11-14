@@ -8,7 +8,7 @@ import {
   mergeTcgCardNameIds,
   tcgCardsPayloadFromCdn,
   type TcgCardsFile,
-} from "#lib/tcg-cards.js";
+} from "#lib/characters/tcg-cards.js";
 
 const CDN_TCG_CARDS = "https://api.lightkeepers.moe/characters/tcg-cards.json";
 

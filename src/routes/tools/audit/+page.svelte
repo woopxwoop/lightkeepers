@@ -2,6 +2,7 @@
   import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
+  import { get } from "svelte/store";
   import { loadAuditGrades } from "#lib/app/audit-grades.js";
   import { getRosterWeaponsCached } from "#lib/app/roster-inventory.js";
   import { loadUpgradeCosts } from "#lib/app/upgrade-costs.js";
@@ -11,29 +12,28 @@
     auditUngradedNote,
     buildNextRows,
     type AuditRow,
-  } from "#lib/audit-grades.js";
+  } from "#lib/roster/audit-grades.js";
   import {
     appendAuditSuggestions,
     auditRowPlannerState,
     type AuditPlannerState,
-  } from "#lib/audit-planner-goals.js";
-  import { authClient } from "#lib/auth-client.js";
-  import {
-    hydrateGoalsState,
-    readGoalsIfChanged,
-    saveGoalsState,
-  } from "#lib/calculator-goals-lifecycle.js";
-  import { goalsLocalRevision } from "#lib/calculator-goals-snapshot.js";
+  } from "#lib/planner/audit-planner-goals.js";
+  import { goalsSync } from "#lib/app/goals-sync.js";
+  import { useGoalsDraft } from "#lib/app/goals-draft.svelte.js";
   import {
     charactersHydrated,
     charactersOwned,
+    hasSavedRoster,
+  } from "#lib/stores/roster.js";
+  import { authClient } from "#lib/auth-client.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
+  import {
     ensureTierList,
     tierList,
     tierListError,
     tierListLoaded,
-  } from "#lib/stores.js";
-  import { stygianUsageByNameId } from "#lib/tierlist.js";
-  import type { CalculatorGoalsState } from "#lib/types/calculator-goals.js";
+  } from "#lib/stores/tierlist.js";
+  import { stygianUsageByNameId } from "#lib/boards/tierlist.js";
   import type { UpgradeCostsCatalog } from "#lib/types/upgrade-costs.js";
   import { settingsPath } from "#lib/ui/nav-links.js";
   import AuditQueueRow from "#lib/ui/components/AuditQueueRow.svelte";
@@ -43,24 +43,32 @@
   import LoadingState from "#lib/ui/components/LoadingState.svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
 
-  const session = authClient.useSession();
-
   let grades = $state<AuditRow[] | null>(null);
   let loading = $state(true);
   let loadError = $state(false);
   let gradeRetry = $state(0);
 
   let plannerCatalog = $state<UpgradeCostsCatalog | null>(null);
-  let plannerGoals = $state<CalculatorGoalsState | null>(null);
-  let plannerSnapshot = $state("");
+  /** Planner goals: follows storage, merges on Save (`goals-draft`). */
+  const goals = useGoalsDraft();
+  let plannerGoals = $derived(goals.hydrated ? goals.state : null);
+  /** Why the last goals read or send failed. */
+  let plannerSyncError = $derived(goals.error ?? "");
   let plannerBusy = $state(false);
   let plannerError = $state<string | null>(null);
-  /** Shared hydrate so a slower cloud read cannot overwrite a newer save. */
-  let plannerInit: Promise<{
-    catalog: UpgradeCostsCatalog;
-    state: CalculatorGoalsState;
-    snapshot: string;
-  }> | null = null;
+
+  const session = authClient.useSession();
+  /**
+   * Same gate as Abyss and the home-page card. A new guest's default roster
+   * owns nearly everyone, so `owned` alone is never empty for them.
+   */
+  let showRosterSetup = $derived(
+    needsRosterSetup({
+      sessionPending: $session.isPending,
+      hasSavedRoster: $hasSavedRoster,
+      sessionData: $session.data,
+    }),
+  );
 
   let owned = $derived($charactersOwned.filter((c) => c.isOwned));
   /** Regrade when ids or the progress those grades read changes, not on array identity. */
@@ -78,7 +86,7 @@
   /** Wait for usage too so the ranking doesn't reshuffle; a usage failure just loses the ordering. */
   let view = $derived.by((): PageView => {
     if (!$charactersHydrated) return "loading";
-    if (owned.length === 0) return "no_roster";
+    if (showRosterSetup || owned.length === 0) return "no_roster";
     if (loadError) return "error";
     if (loading || !grades) return "loading";
     if (!$tierListLoaded && !$tierListError) return "loading";
@@ -100,58 +108,12 @@
     gradeRetry += 1;
   }
 
-  async function loadPlanner(): Promise<{
-    catalog: UpgradeCostsCatalog;
-    state: CalculatorGoalsState;
-    snapshot: string;
-  }> {
-    const [catalog, { data: sess }] = await Promise.all([
-      loadUpgradeCosts(),
-      authClient.getSession(),
-    ]);
-    const pending = await hydrateGoalsState(Boolean(sess));
-    plannerCatalog = catalog;
-    plannerGoals = pending.state;
-    plannerSnapshot = pending.json;
-    return {
-      catalog,
-      state: pending.state,
-      snapshot: pending.json,
-    };
-  }
-
-  /**
-   * Planner goals + catalog. The first load is single-flight: Add and the
-   * background warm-up share one hydrate, so an older cloud response cannot
-   * write back over goals the click just saved. An itinerary save during
-   * that read bumps `goalsLocalRevision`; hydrate keeps the save.
-   */
-  async function readyPlanner(): Promise<{
-    catalog: UpgradeCostsCatalog;
-    state: CalculatorGoalsState;
-    snapshot: string;
-  } | null> {
+  /** Catalog for Add / In Planner. Goals come from `goals`. */
+  async function readyCatalog(): Promise<UpgradeCostsCatalog | null> {
+    if (plannerCatalog) return plannerCatalog;
     try {
-      if (plannerCatalog && plannerGoals) {
-        const pending = readGoalsIfChanged(plannerSnapshot);
-        if (pending) {
-          plannerGoals = pending.state;
-          plannerSnapshot = pending.json;
-        }
-        return {
-          catalog: plannerCatalog,
-          state: plannerGoals,
-          snapshot: plannerSnapshot,
-        };
-      }
-
-      if (!plannerInit) {
-        const run = loadPlanner().finally(() => {
-          if (plannerInit === run) plannerInit = null;
-        });
-        plannerInit = run;
-      }
-      return await plannerInit;
+      plannerCatalog = await loadUpgradeCosts();
+      return plannerCatalog;
     } catch {
       return null;
     }
@@ -161,29 +123,28 @@
     if (plannerBusy || rows.length === 0) return;
     plannerBusy = true;
     plannerError = null;
+    const goalsAccount = get(goalsSync().view).account;
     try {
-      const ready = await readyPlanner();
-      if (!ready) {
+      const catalog = await readyCatalog();
+      if (get(goalsSync().view).account !== goalsAccount) return;
+      if (!catalog || !goals.hydrated) {
         plannerError = "Couldn’t load the Planner right now";
         return;
       }
-      const result = appendAuditSuggestions(ready.state, ready.catalog, rows, {
+      const result = appendAuditSuggestions(goals.state, catalog, rows, {
         owned: untrack(() => $charactersOwned),
         weapons: getRosterWeaponsCached(),
       });
       if (result.added === 0) return;
-      const save = await saveGoalsState({
-        state: result.state,
-        pendingRemoveIds: new Set(),
-        savedSnapshot: ready.snapshot,
-        cloud: Boolean($session.data),
-      });
-      if (!save.ok) {
-        plannerError = save.message;
+      let saved: Awaited<ReturnType<typeof goals.apply>> = null;
+      try {
+        saved = await goals.apply(result.state);
+      } catch {
+        plannerError = "Couldn't add those to the Planner — try again";
         return;
       }
-      plannerGoals = save.capture.state;
-      plannerSnapshot = save.capture.json;
+      if (!saved || saved.kept) return;
+      plannerError = "Couldn't add those to the Planner — try again";
     } finally {
       plannerBusy = false;
     }
@@ -193,21 +154,9 @@
     if (browser) ensureTierList().catch(() => {});
   });
 
-  /** Warm planner state so rows show Add / In Planner before any click. */
+  /** Warm the catalog so rows show Add / In Planner before any click. */
   $effect(() => {
-    if (browser) untrack(() => void readyPlanner());
-  });
-
-  /** Same-tab sync when Planner (or another surface) persists goals. */
-  $effect(() => {
-    void $goalsLocalRevision;
-    untrack(() => {
-      if (!plannerSnapshot) return;
-      const pending = readGoalsIfChanged(plannerSnapshot);
-      if (!pending) return;
-      plannerGoals = pending.state;
-      plannerSnapshot = pending.json;
-    });
+    if (browser) untrack(() => void readyCatalog());
   });
 
   $effect(() => {
@@ -239,7 +188,7 @@
     <div class="page-head-text">
       <h1 class="page-title">Build Audit</h1>
       <p class="page-meta">
-        {#if owned.length > 0}
+        {#if view !== "no_roster"}
           Based on your {owned.length} characters · level and talent targets from
           Builds
         {:else}
@@ -268,6 +217,9 @@
     </EmptyState>
   {:else}
     <section class="audit-section">
+      {#if plannerSyncError}
+        <p class="planner-error" role="status">{plannerSyncError}</p>
+      {/if}
       <div class="section-head">
         <h2 class="section-title">
           <InfoPopover label="Build next" align="start">

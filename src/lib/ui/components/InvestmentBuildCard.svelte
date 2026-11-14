@@ -3,14 +3,17 @@
    * One-character investment build card (weapon, sheet stats, talents, sets).
    * Shared by team-config pages and character build examples.
    */
-  import { displayPreferences } from "#lib/stores.js";
+  import { displayPreferences } from "#lib/stores/preferences.js";
   import {
     translateStatKey,
     statIconUrl,
     artifactSlotIconUrl,
   } from "#lib/utils.js";
-  import { useWeapon, useArtifactSet } from "#lib/equipment-data.svelte.js";
-  import { artifactIconUrl, weaponIconUrl } from "#lib/asset-urls.js";
+  import {
+    useArtifactSet,
+    useEquipmentData,
+    useWeapon,
+  } from "#lib/equipment/equipment-data.svelte.js";
   import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
   import ArtifactTooltip from "#lib/ui/components/ArtifactTooltip.svelte";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
@@ -20,14 +23,14 @@
     computeBuildSheetStats,
     formatSheetStat,
     type SheetStatBag,
-  } from "#lib/build-stats.js";
+  } from "#lib/equipment/build-stats.js";
   import {
     MAIN_STAT_SLOTS,
     normalizeSetPieceCount,
-  } from "#lib/character-builds.js";
+  } from "#lib/characters/character-builds.js";
   import type { CharacterBuild } from "#lib/types/investment.js";
   import type { Character } from "#lib/definitions.js";
-  import type { InvestmentBuildKitIcons } from "#lib/investment-build-card.js";
+  import type { InvestmentBuildKitIcons } from "#lib/investment/investment-build-card.js";
 
   let {
     build,
@@ -49,6 +52,7 @@
 
   let iconStyle = $derived($displayPreferences.iconStyle);
 
+  const equipment = useEquipmentData({ baseStats: true });
   const weaponLookup = useWeapon(() => build.weapon.key);
   const setLookup = useArtifactSet(() => build.set.key);
   const set2Lookup = useArtifactSet(() => build.set2 ?? "");
@@ -60,10 +64,13 @@
   let set2Count = $derived(
     build.set2 ? normalizeSetPieceCount(build.set2_count ?? 2) : null,
   );
-  let sheet = $derived(computeBuildSheetStats(build));
-  let wIcon = $derived(weapon ? weaponIconUrl(weapon.awakenIcon) : null);
-  let sIcon = $derived(set ? artifactIconUrl(set.icon) : null);
-  let s2Icon = $derived(set2 ? artifactIconUrl(set2.icon) : null);
+  let sheet = $derived.by(() => {
+    void equipment.version;
+    return computeBuildSheetStats(build);
+  });
+  let wIcon = $derived(weaponLookup.icon);
+  let sIcon = $derived(setLookup.icon);
+  let s2Icon = $derived(build.set2 ? set2Lookup.icon : null);
   let relevantKeySet = $derived.by(() => {
     if (relevantKeys == null) return null;
     return relevantKeys instanceof Set ? relevantKeys : new Set(relevantKeys);

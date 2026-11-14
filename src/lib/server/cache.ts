@@ -27,7 +27,15 @@ export type LRUCacheOptions = {
    * Defaults to `ttlMs` (one extra TTL window of stale serving).
    */
   maxStaleMs?: number;
+  /**
+   * A cache fill (Valkey lookup + compute) slower than this logs a warning
+   * with the per-step timings, so a stall in production says which step hung.
+   * Default 5 s.
+   */
+  slowFillMs?: number;
 };
+
+const DEFAULT_SLOW_FILL_MS = 5_000;
 
 type RefreshFailure = {
   failures: number;
@@ -43,6 +51,7 @@ export class LRUCache<T> {
   private readonly redisNamespace: string | undefined;
   private readonly staleWhileRevalidate: boolean;
   private readonly maxStaleMs: number;
+  private readonly slowFillMs: number;
 
   constructor(
     private readonly maxSize: number,
@@ -52,6 +61,7 @@ export class LRUCache<T> {
     this.redisNamespace = options?.redisNamespace;
     this.staleWhileRevalidate = options?.staleWhileRevalidate ?? false;
     this.maxStaleMs = options?.maxStaleMs ?? ttlMs;
+    this.slowFillMs = options?.slowFillMs ?? DEFAULT_SLOW_FILL_MS;
   }
 
   private redisKey(key: string): string | null {
@@ -154,31 +164,74 @@ export class LRUCache<T> {
         const again = this.get(key);
         if (again !== undefined) return again;
 
-        const rKey = this.redisKey(key);
-        if (rKey) {
-          const { valkeyGetJsonWithTtl } =
-            await import("#lib/server/valkey.js");
-          const remote = await valkeyGetJsonWithTtl<T>(rKey);
-          if (remote !== undefined) {
-            const ttl = Math.min(this.ttlMs, remote.ttlMs);
-            if (ttl > 0) {
-              this.set(key, remote.value, ttl);
-              return remote.value;
+        const timing = this.startFillTiming(key);
+        try {
+          const rKey = this.redisKey(key);
+          if (rKey) {
+            timing.phase = "valkey";
+            const { valkeyGetJsonWithTtl } =
+              await import("#lib/server/valkey.js");
+            const remote = await valkeyGetJsonWithTtl<T>(rKey);
+            if (remote !== undefined) {
+              const ttl = Math.min(this.ttlMs, remote.ttlMs);
+              if (ttl > 0) {
+                this.set(key, remote.value, ttl);
+                return remote.value;
+              }
             }
           }
-        }
 
-        const value = await fn();
-        this.set(key, value);
-        if (rKey) {
-          const { valkeySetJson } = await import("#lib/server/valkey.js");
-          void valkeySetJson(rKey, value, this.ttlMs);
+          timing.phase = "compute";
+          timing.computeStarted = performance.now();
+          const value = await fn();
+          this.set(key, value);
+          if (rKey) {
+            const { valkeySetJson } = await import("#lib/server/valkey.js");
+            void valkeySetJson(rKey, value, this.ttlMs);
+          }
+          return value;
+        } finally {
+          timing.finish();
         }
-        return value;
       })
       .finally(() => {
         this.inflight.delete(key);
       });
+  }
+
+  /**
+   * Fill timing for slow-fill diagnostics. While a fill runs past slowFillMs
+   * it warns once with the step it's stuck in (a true hang never finishes, so
+   * this is the only signal); `finish()` — success or failure — then logs the
+   * total split into Valkey vs compute time if it was slow.
+   */
+  private startFillTiming(key: string) {
+    const label = this.redisKey(key) ?? key;
+    const started = performance.now();
+    const timing = {
+      phase: "start" as "start" | "valkey" | "compute",
+      computeStarted: null as number | null,
+      finish: () => {
+        clearTimeout(pendingTimer);
+        const end = performance.now();
+        if (end - started < this.slowFillMs) return;
+        const valkeyMs = Math.round((timing.computeStarted ?? end) - started);
+        const steps =
+          timing.computeStarted == null
+            ? `valkey ${valkeyMs} ms, no compute`
+            : `valkey ${valkeyMs} ms, compute ${Math.round(end - timing.computeStarted)} ms`;
+        console.warn(
+          `[cache] slow fill ${label}: ${Math.round(end - started)} ms (${steps})`,
+        );
+      },
+    };
+    const pendingTimer = setTimeout(() => {
+      console.warn(
+        `[cache] fill ${label} still pending after ${this.slowFillMs} ms (in ${timing.phase})`,
+      );
+    }, this.slowFillMs);
+    (pendingTimer as { unref?: () => void }).unref?.();
+    return timing;
   }
 
   invalidate(key: string): void {
@@ -207,7 +260,7 @@ type RateWindow = {
  * @param maxRequests — allowed requests per window
  * @param windowMs    — window duration in milliseconds
  */
-export class RateLimiter {
+class RateLimiter {
   private windows = new Map<string, RateWindow>();
 
   constructor(
@@ -278,7 +331,7 @@ const API_RATE_WINDOW_MS = 60_000;
  * In-process fallback when Valkey is unset / unreachable.
  * (Still per-process — used only as fallback.)
  */
-export const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
+const apiRateLimiter = new RateLimiter(API_RATE_MAX, API_RATE_WINDOW_MS);
 
 /**
  * Shared API rate limit (60/min/IP) via Valkey when configured; otherwise
@@ -319,6 +372,9 @@ export function getClientIp(
   const cf = request.headers.get("cf-connecting-ip")?.trim();
   if (cf) return cf;
   // vite dev / non-production only — XFF is not trustworthy on a public bind.
+  // process.env, not `$app/env`: this module runs under plain tsx in
+  // cache.test.ts, where Kit's virtual modules don't resolve (same as e2e.ts).
+  // Production images set NODE_ENV=production (dockerfile).
   if (process.env.NODE_ENV !== "production") {
     return (
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

@@ -26,7 +26,7 @@ import {
   requireCharacterNameIds,
   requireFiniteInteger,
   requireJsonObject,
-} from "#lib/server/request-validation.js";
+} from "#lib/server/validation/core.js";
 import { requireSupportedAbyssAndStygianVersions } from "#lib/server/version-validation.js";
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
@@ -54,6 +54,12 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   );
 
   await requireSupportedAbyssAndStygianVersions(abyssVersion, stygianVersion);
+
+  // Empty p_name_ids is the all-teams sentinel used by /api/static. An owned
+  // roster with nobody selected must not receive that list.
+  if (characters.length === 0) {
+    return Response.json({ abyssTeams: [], stygianTeams: [] });
+  }
 
   // ── Cache lookup ─────────────────────────────────────────────────────────
   const [abyssTeams, stygianTeams] = await Promise.all([

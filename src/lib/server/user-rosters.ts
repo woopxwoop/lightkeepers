@@ -7,12 +7,13 @@
 
 import { serverDb } from "#lib/server/supabaseServer.js";
 import type { InventoryArtifact, InventoryWeapon } from "#lib/definitions.js";
-import type { RosterEntry } from "#lib/server/request-validation.js";
+import type { RosterEntry } from "#lib/server/validation/roster.js";
+import type { AccountDocWrite, BaseRev } from "#lib/server/account-doc.js";
+import { rosterDoc } from "#lib/server/account-doc-tables.js";
 
-export type RosterInventoryRow = {
+export type RosterWriteRow = {
   user_id: string;
   roster: RosterEntry[];
-  updated_at: string;
   weapons?: InventoryWeapon[] | null;
   artifacts?: InventoryArtifact[] | null;
 };
@@ -42,52 +43,44 @@ type RosterQuery = {
       }>;
     };
   };
-  upsert: (
-    row: Record<string, unknown>,
-    opts: { onConflict: string },
-  ) => Promise<{ error: unknown }>;
 };
 
 function rosterTable(): RosterQuery {
   return serverDb.from("user_rosters") as unknown as RosterQuery;
 }
 
-export type UpsertUserRosterResult = {
-  error: unknown;
+export type WriteUserRosterResult = AccountDocWrite & {
   inventoryOmitted?: boolean;
 };
 
-/** Upsert roster; include inventory slices only when provided. Retry without them if the columns are missing. */
-export async function upsertUserRoster(
-  row: RosterInventoryRow,
-): Promise<UpsertUserRosterResult> {
-  const payload: Record<string, unknown> = {
-    user_id: row.user_id,
-    roster: row.roster,
-    updated_at: row.updated_at,
-  };
-  if (row.weapons !== undefined) payload.weapons = row.weapons;
-  if (row.artifacts !== undefined) payload.artifacts = row.artifacts;
+/**
+ * Write the roster under the `baseRev` rule (`#lib/server/account-doc.js`).
+ * Inventory slices are included only when provided. If those columns are
+ * missing, the same conditional write is retried with the roster only.
+ */
+export async function writeUserRoster(
+  row: RosterWriteRow,
+  baseRev: BaseRev,
+): Promise<WriteUserRosterResult> {
+  const columns: Record<string, unknown> = { roster: row.roster };
+  if (row.weapons !== undefined) columns.weapons = row.weapons;
+  if (row.artifacts !== undefined) columns.artifacts = row.artifacts;
 
-  const table = rosterTable();
-  const first = await table.upsert(payload, { onConflict: "user_id" });
+  const first = await rosterDoc.write(row.user_id, columns, baseRev);
   if (
-    first.error &&
+    first.status === "error" &&
     (row.weapons !== undefined || row.artifacts !== undefined) &&
     isMissingInventoryColumn(first.error)
   ) {
     console.warn(
       "POST /api/roster: weapons/artifacts columns missing; saving roster only",
     );
-    const retry = await table.upsert(
-      {
-        user_id: row.user_id,
-        roster: row.roster,
-        updated_at: row.updated_at,
-      },
-      { onConflict: "user_id" },
+    const retry = await rosterDoc.write(
+      row.user_id,
+      { roster: row.roster },
+      baseRev,
     );
-    return { error: retry.error, inventoryOmitted: true };
+    return { ...retry, inventoryOmitted: true };
   }
   return first;
 }

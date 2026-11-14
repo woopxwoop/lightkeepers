@@ -5,7 +5,7 @@ import type {
   NearMissStygianTeam,
   StygianTeam,
 } from "../src/lib/definitions";
-import type { TierListPayload } from "../src/lib/tierlist";
+import type { TierListPayload } from "../src/lib/boards/tierlist";
 import {
   E2E_ABYSS_TEAM_BOTTOM,
   E2E_ABYSS_TEAM_TOP,
@@ -81,10 +81,18 @@ export async function installApiMocks(
   const nearMissPairs = options.nearMissPairs ?? [];
   const tierList = options.tierList ?? e2eTierListPayload();
 
-  // Abyss/Stygian hide the board behind "Configure roster" when hasSavedRoster
-  // is unset (same gate as the home nudge). E2E fixtures already own characters.
+  // Abyss/Stygian hide the board behind "Configure roster" until a roster is
+  // saved (same gate as the home nudge). A saved guest roster with one entry
+  // counts; every other character keeps its default (owned) flag. Seeded via
+  // the pre-slot key so a spec's own `charactersOwned` init script (which runs
+  // after this one) replaces it before the app migrates it into the slot.
   await page.addInitScript(() => {
-    localStorage.setItem("hasSavedRoster", "true");
+    if (localStorage.getItem("lk:roster:guest")) return;
+    if (localStorage.getItem("charactersOwned")) return;
+    localStorage.setItem(
+      "charactersOwned",
+      JSON.stringify([{ name_id: "Furina", isOwned: true }]),
+    );
   });
 
   await page.route("**/api/roster/weapons", async (route: Route) => {

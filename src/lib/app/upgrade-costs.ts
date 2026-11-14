@@ -10,10 +10,6 @@ const API_URL = "/api/upgrade-costs";
 let cached: UpgradeCostsCatalog | null = null;
 let pending: Promise<UpgradeCostsCatalog> | null = null;
 
-export function getUpgradeCostsCached(): UpgradeCostsCatalog | null {
-  return cached;
-}
-
 export function loadUpgradeCosts(): Promise<UpgradeCostsCatalog> {
   if (cached) return Promise.resolve(cached);
   if (pending) return pending;
@@ -31,10 +27,4 @@ export function loadUpgradeCosts(): Promise<UpgradeCostsCatalog> {
   });
 
   return pending;
-}
-
-export function prefetchUpgradeCosts(): void {
-  loadUpgradeCosts().catch(() => {
-    /* page retries on demand */
-  });
 }

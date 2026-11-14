@@ -7,9 +7,9 @@
     CharacterOwned,
     CharacterPortraitRef,
   } from "#lib/definitions.js";
-  import { weaponById } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
-  import type { OwnershipFilter } from "#lib/character-filter.js";
+  import { weaponById } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
+  import type { OwnershipFilter } from "#lib/characters/character-filter.js";
   import type {
     UpgradeCostsCatalog,
     WeaponUpgradeCosts,
@@ -24,8 +24,8 @@
     filterPlannerCharacterPickOptions,
     filterPlannerWeaponPickOptions,
     type PlannerPickOption,
-  } from "#lib/planner-goal-edits.js";
-  import { defaultWeaponRarityFilter } from "#lib/weapon-filter.js";
+  } from "#lib/planner/planner-goal-edits.js";
+  import { defaultWeaponRarityFilter } from "#lib/equipment/weapon-filter.js";
 
   let {
     open = false,

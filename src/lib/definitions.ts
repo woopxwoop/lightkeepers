@@ -145,7 +145,6 @@ export type {
   CharacterKitIndex,
   CharacterKitIndexEntry,
 } from "#lib/types/character-kit.js";
-export type { EnemyIndex, EnemyIndexEntry } from "#lib/types/enemy.js";
 
 // ── Shared payload shapes used by /api/static, layout data, and consumers ────
 
@@ -237,7 +236,7 @@ export type StygianClearDifficulty = "Fearless" | "Dire";
 export const STYGIAN_CHEAP_CLEARS_DIFFICULTY =
   "Fearless" as const satisfies StygianClearDifficulty;
 
-export const STYGIAN_CLEAR_DIFFICULTY_OPTIONS: ReadonlyArray<{
+const STYGIAN_CLEAR_DIFFICULTY_OPTIONS: ReadonlyArray<{
   value: StygianClearDifficulty;
   label: string;
 }> = [
@@ -269,7 +268,7 @@ export type StygianSolverMode = "yshelper" | "hybrid" | "video" | "video-c0r0";
 export type StygianSolverModeRelease = Exclude<StygianSolverMode, "video">;
 
 /** Full mode set for prefs validation (`video` maps to release default). */
-export const STYGIAN_SOLVER_MODE_OPTIONS: ReadonlyArray<{
+const STYGIAN_SOLVER_MODE_OPTIONS: ReadonlyArray<{
   value: StygianSolverMode;
   label: string;
 }> = [
@@ -312,7 +311,7 @@ export function isStygianSolverMode(
   return STYGIAN_SOLVER_MODE_OPTIONS.some((option) => option.value === value);
 }
 
-export function isStygianSolverModeRelease(
+function isStygianSolverModeRelease(
   value: unknown,
 ): value is StygianSolverModeRelease {
   return STYGIAN_SOLVER_MODE_OPTIONS_RELEASE.some(
@@ -333,4 +332,4 @@ export type {
   TierBoard,
   TierListEntry,
   TierListPayload,
-} from "#lib/tierlist.js";
+} from "#lib/boards/tierlist.js";

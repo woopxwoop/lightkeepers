@@ -2,12 +2,15 @@
   import { onMount, tick } from "svelte";
   import GameText from "#lib/ui/components/GameText.svelte";
   import Select from "#lib/ui/components/Select.svelte";
-  import { elementColor } from "#lib/element-colors.js";
+  import { elementColor } from "#lib/characters/element-colors.js";
   import {
     availableTravelerElements,
     defaultTravelerElement,
-  } from "#lib/traveler-kits.js";
-  import { enhanceExtra, type EnhanceExtra } from "#lib/character-kit-text.js";
+  } from "#lib/characters/traveler-kits.js";
+  import {
+    enhanceExtra,
+    type EnhanceExtra,
+  } from "#lib/characters/character-kit-text.js";
   import { getUiAssetUrl } from "#lib/utils.js";
   import { skillIconUrl, talentIconUrl } from "#lib/asset-urls.js";
   import type { CharacterKit } from "#lib/types/character-kit.js";
@@ -496,14 +499,6 @@
   .kit-index-link:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
-  }
-
-  .section-title {
-    margin-bottom: var(--space-3);
-  }
-
-  .board-section {
-    padding: var(--space-4);
   }
 
   .card-title {

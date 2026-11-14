@@ -12,7 +12,7 @@ import { raceAbort } from "#lib/app/race-abort.js";
 
 const API_URL = "/api/stygian-clear-videos";
 const FETCH_TIMEOUT_MS = 15_000;
-/** Keep in sync with MAX_TEAM_ENEMY_PAIRS in request-validation. */
+/** Keep in sync with MAX_TEAM_ENEMY_PAIRS in server/validation/stygian. */
 const MAX_PAIRS_PER_REQUEST = 12;
 
 function pairKey(teamKey: string, enemyId: number): string {
@@ -22,10 +22,6 @@ function pairKey(teamKey: string, enemyId: number): string {
 /** Cached clears keyed by team_key|enemy_id (empty array = known miss). */
 const cache = new Map<string, StygianClearVideo[]>();
 const inflight = new Map<string, Promise<void>>();
-
-export function clearVideosCacheKey(teamKey: string, enemyId: number): string {
-  return pairKey(teamKey, enemyId);
-}
 
 /** YouTube video id from a watch / youtu.be / Shorts URL, or null. */
 function youtubeVideoId(videoUrl: string): string | null {

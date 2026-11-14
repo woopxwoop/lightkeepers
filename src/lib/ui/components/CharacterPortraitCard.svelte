@@ -2,7 +2,7 @@
   import type { Snippet } from "svelte";
   import type { CharacterPortraitRef } from "#lib/definitions.js";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
-  import { elementBg, elementColor } from "#lib/element-colors.js";
+  import { elementBg, elementColor } from "#lib/characters/element-colors.js";
 
   let {
     character,

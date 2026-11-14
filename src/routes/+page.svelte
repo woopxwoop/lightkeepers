@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { hasSavedRoster } from "#lib/stores.js";
-  import { needsRosterSetup } from "#lib/roster-setup.js";
+  import { hasSavedRoster } from "#lib/stores/roster.js";
+  import { needsRosterSetup } from "#lib/roster/roster-setup.js";
   import { authClient } from "#lib/auth-client.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";
@@ -104,7 +104,7 @@
 
 <PageShell class="home-page gap-10">
   <header class="hero">
-    <p class="eyebrow hero-eyebrow">Genshin Impact meta resources</p>
+    <p class="eyebrow">Genshin Impact meta resources</p>
     <h1 class="hook">
       Find your best<br />
       <span class="hook-accent">teams, builds, and pulls.</span>
@@ -162,10 +162,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-  }
-
-  .hero-eyebrow {
-    color: var(--accent-1);
   }
 
   .hook {

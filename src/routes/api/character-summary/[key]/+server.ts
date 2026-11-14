@@ -6,6 +6,10 @@
 import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getCharacterSummary } from "#lib/server/character-summary.js";
+import {
+  PUBLIC_CDN_CACHE_HEADERS,
+  loadFromCdn,
+} from "#lib/server/cdn-proxy.js";
 import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 
 export const GET: RequestHandler = async ({
@@ -15,20 +19,14 @@ export const GET: RequestHandler = async ({
 }) => {
   await enforceApiRateLimit({ request, getClientAddress });
   const key = params.key?.trim();
-  if (!key) throw error(400, "Missing character key");
+  if (!key) error(400, "Missing character key");
 
-  let summary;
-  try {
-    summary = await getCharacterSummary(key);
-  } catch (err) {
-    console.error(`/api/character-summary/${JSON.stringify(key)}:`, err);
-    throw error(502, "Failed to fetch character summary from CDN");
-  }
-  if (!summary) throw error(404, `No Builds summary for ${key}`);
-
-  return Response.json(summary, {
-    headers: {
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
-    },
+  const summary = await loadFromCdn({
+    route: `/api/character-summary/${JSON.stringify(key)}`,
+    what: "character summary",
+    load: () => getCharacterSummary(key),
   });
+  if (!summary) error(404, `No Builds summary for ${key}`);
+
+  return Response.json(summary, { headers: PUBLIC_CDN_CACHE_HEADERS });
 };

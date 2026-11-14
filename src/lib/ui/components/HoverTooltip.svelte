@@ -2,17 +2,23 @@
   import { onMount, tick } from "svelte";
   import type { Snippet } from "svelte";
   import { acquireBodyScrollLock } from "#lib/ui/body-scroll-lock.js";
-  import IconX from "../icons/IconX.svelte";
+  import IconX from "#lib/ui/icons/IconX.svelte";
 
   let {
     children,
     class: className = "",
     /** Accessible name for the detail sheet. */
     label = "Details",
+    onopen,
   }: {
     children: Snippet;
     class?: string;
     label?: string;
+    /**
+     * Runs when the tip or detail sheet opens. The body is always mounted (for
+     * measuring), so start on-demand loads for tip-only content here.
+     */
+    onopen?: () => void;
   } = $props();
 
   const EDGE = 8;
@@ -20,6 +26,7 @@
   const tooltipId = $props.id();
 
   let tipEl: HTMLDivElement | undefined = $state();
+  let tipBodyEl: HTMLDivElement | undefined = $state();
   let sheetRootEl: HTMLDivElement | undefined = $state();
   let sheetEl: HTMLDivElement | undefined = $state();
   let tipTriggerEl: HTMLElement | null = null;
@@ -27,6 +34,7 @@
   let open = $state(false);
   let detailOpen = $state(false);
   let truncated = $state(false);
+  let bodyObserver: ResizeObserver | null = null;
 
   function updateTriggerDescription(trigger: HTMLElement | null, add: boolean) {
     if (!trigger) return;
@@ -134,20 +142,28 @@
     truncated = tip.scrollHeight > tip.clientHeight + 2;
   }
 
+  function remeasure(trigger: HTMLElement) {
+    const wasTruncated = truncated;
+    place(trigger);
+    measureTruncation();
+    // Truncation toggles a footer; re-place once layout settles.
+    if (truncated !== wasTruncated) requestAnimationFrame(() => place(trigger));
+  }
+
   function showTip(trigger: HTMLElement) {
     if (detailOpen) return;
     tipTriggerEl = trigger;
     open = true;
+    onopen?.();
     updateTriggerDescription(trigger, true);
-    requestAnimationFrame(() => {
-      place(trigger);
-      measureTruncation();
-      // Truncation adds a footer; re-place once layout settles.
-      if (truncated) requestAnimationFrame(() => place(trigger));
-    });
+    // Async tip content (onopen loads) can grow the body after the first frame.
+    bodyObserver?.disconnect();
+    if (tipBodyEl) bodyObserver?.observe(tipBodyEl);
+    requestAnimationFrame(() => remeasure(trigger));
   }
 
   function hideTip() {
+    bodyObserver?.disconnect();
     open = false;
     truncated = false;
     if (!detailOpen) updateTriggerDescription(tipTriggerEl, false);
@@ -181,6 +197,7 @@
     truncated = false;
     updateTriggerDescription(trigger, false);
     detailOpen = true;
+    onopen?.();
     await tick();
     if (sheetRootEl && sheetRootEl.parentElement !== document.body) {
       document.body.appendChild(sheetRootEl);
@@ -208,6 +225,12 @@
     // overflow:hidden ancestors otherwise clip the tip or become the containing
     // block so viewport coords from getBoundingClientRect land wrong.
     document.body.appendChild(tip);
+
+    if (typeof ResizeObserver !== "undefined") {
+      bodyObserver = new ResizeObserver(() => {
+        if (open && tipTriggerEl) remeasure(tipTriggerEl);
+      });
+    }
 
     let pointerActive = false;
     let focusActive = false;
@@ -270,6 +293,8 @@
     window.addEventListener("keydown", onKey);
 
     return () => {
+      bodyObserver?.disconnect();
+      bodyObserver = null;
       updateTriggerDescription(tipTriggerEl, false);
       updateTriggerDescription(activeTriggerEl, false);
       tipTriggerEl = null;
@@ -308,7 +333,7 @@
   role="tooltip"
 >
   {#if !detailOpen}
-    <div class="hover-tooltip-body">
+    <div class="hover-tooltip-body" bind:this={tipBodyEl}>
       {@render children()}
     </div>
     {#if truncated}
