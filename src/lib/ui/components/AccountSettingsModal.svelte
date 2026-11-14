@@ -67,7 +67,7 @@
       tabindex="-1"
       aria-label="Close"
       onclick={close}
-      transition:fade={{ duration: motion ?? 160 }}
+      transition:fade|global={{ duration: motion ?? 160 }}
     ></button>
     <div
       class="account-panel-wrap"
@@ -76,7 +76,7 @@
       aria-modal="true"
       aria-labelledby="account-settings-title"
       tabindex="-1"
-      transition:scale={{ duration: motion ?? 200, start: 0.98 }}
+      transition:scale|global={{ duration: motion ?? 200, start: 0.98 }}
     >
       <header class="account-head">
         <h2 id="account-settings-title" class="section-title">Account</h2>

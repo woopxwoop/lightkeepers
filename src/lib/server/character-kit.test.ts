@@ -82,4 +82,18 @@ describe("getCharacterKitResult", () => {
     const stale = await getCharacterKitResult("KitStale");
     assert.equal(stale, fresh, "stale copy returned instead of throwing");
   });
+
+  it("refetches a cached miss after the TTL instead of serving it stale", async () => {
+    let released = false;
+    stubFetch(() =>
+      released ? { status: 200, body: kit("KitLate") } : { status: 404 },
+    );
+    assert.equal(await getCharacterKitResult("KitLate"), null);
+
+    released = true;
+    mock.timers.tick(16 * MIN);
+    const late = await getCharacterKitResult("KitLate");
+    assert.equal(late?.kit.name_id, "KitLate");
+    assert.equal(late?.channel, "live");
+  });
 });

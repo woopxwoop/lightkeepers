@@ -2,14 +2,15 @@
  * Weapon / artifact static tables.
  *
  * JSON is loaded via dynamic import so layout / home chunks do not pay for
- * ~400KB of weapons data. Call `ensureEquipmentData()` (or rely on the
- * auto-start when this module is first imported) before reading the maps.
+ * ~400KB of weapons data. In the browser nothing loads until a reader asks:
+ * components use `useEquipmentData()` / `useWeapon()` / `useArtifactSet()`,
+ * plain modules call `ensureEquipmentData()` before reading the maps. (The
+ * server auto-starts the load at import for SSR — see the bottom of the file.)
  * `equipmentVersion` bumps after load so Svelte dependents can re-derive.
  *
  * Base-stat tables (character/weapon bases + level curves, artifact mains)
- * are a second, on-demand group: `ensureBaseStatData()`. They are NOT
- * auto-started — the root layout imports this module, and only stat-sheet
- * views (`useEquipmentData({ baseStats: true })`) should pay for them.
+ * are a second, on-demand group: `ensureBaseStatData()`. Never auto-started;
+ * only stat-sheet views (`useEquipmentData({ baseStats: true })`) pay for them.
  * Both groups bump the same `equipmentVersion`.
  */
 import { writable } from "svelte/store";
@@ -259,10 +260,16 @@ export function ensureBaseStatData(): Promise<void> {
   return baseStatPromise;
 }
 
-// Start loading as soon as any consumer imports this module (code-split JSON).
-void ensureEquipmentData().catch(() => {
-  /* page / tooltip will retry via ensureEquipmentData() */
-});
+// Server: load once per process at import so SSR can render weapon names and
+// icons (component hooks only start the load in onMount, which never runs on
+// the server). Browser: on demand only — useEquipmentData() / useWeapon() /
+// useArtifactSet() / ensureEquipmentData() trigger it, so pages that show no
+// equipment never download the weapon/artifact JSON.
+if (typeof window === "undefined") {
+  void ensureEquipmentData().catch(() => {
+    /* an SSR render or the next caller retries via ensureEquipmentData() */
+  });
+}
 
 /**
  * Displayable icon URL for a GOOD weapon key.

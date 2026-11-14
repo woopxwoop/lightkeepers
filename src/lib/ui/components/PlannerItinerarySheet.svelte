@@ -67,7 +67,7 @@
       tabindex="-1"
       aria-label="Close"
       onclick={close}
-      transition:fade={{ duration: motion ?? 160 }}
+      transition:fade|global={{ duration: motion ?? 160 }}
     ></button>
     <div
       class="sheet-panel"
@@ -76,7 +76,7 @@
       aria-modal="true"
       aria-label="Farming itinerary"
       tabindex="-1"
-      transition:scale={{ duration: motion ?? 200, start: 0.98 }}
+      transition:scale|global={{ duration: motion ?? 200, start: 0.98 }}
     >
       <div class="sheet-head">
         <a class="back-link sheet-planner" href={plannerPath}

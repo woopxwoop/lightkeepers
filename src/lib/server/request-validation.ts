@@ -872,7 +872,8 @@ function optionalOneOf<T extends string>(
   allowed: readonly T[],
   message: string,
 ): T | undefined {
-  if (value === undefined) return undefined;
+  // JSON clients often send unset options as null.
+  if (value === undefined || value === null) return undefined;
   if (!allowed.includes(value as T)) throw error(400, message);
   return value as T;
 }

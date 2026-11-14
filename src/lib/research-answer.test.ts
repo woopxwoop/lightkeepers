@@ -347,4 +347,11 @@ describe("resolveGearEntity", () => {
     assert.equal(resolveGearEntity(index, "set", ["Favonius Sword"]), null);
     assert.equal(resolveGearEntity(index, "weapon", ["Mistsplitter"]), null);
   });
+
+  it("never matches a key-less entity through a punctuation-only candidate", () => {
+    const keyless = indexResearchEntities([
+      { key: "weapon:x", type: "weapon", label: "Some Bow" },
+    ] as ResearchEntity[]);
+    assert.equal(resolveGearEntity(keyless, "weapon", ["—", "★★"]), null);
+  });
 });

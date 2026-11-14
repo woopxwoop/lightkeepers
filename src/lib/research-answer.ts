@@ -385,13 +385,16 @@ export function resolveGearEntity(
       if (!candidate) continue;
       const lower = candidate.toLowerCase();
       const fold = foldGoodKey(candidate);
+      // A punctuation-only candidate folds to "", which would equal any
+      // entity without a GOOD key — only compare folds that carry letters.
       const hit =
         map.get(lower) ??
-        map.get(fold) ??
+        (fold ? map.get(fold) : undefined) ??
         [...map.values()].find(
           (e) =>
             e.label.toLowerCase() === lower ||
-            foldGoodKey(e.weapon_key ?? e.set_key ?? "") === fold,
+            (fold !== "" &&
+              foldGoodKey(e.weapon_key ?? e.set_key ?? "") === fold),
         );
       if (hit) return hit;
     }

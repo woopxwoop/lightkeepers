@@ -836,6 +836,20 @@ describe("request validation", () => {
     );
   });
 
+  it("requireResearchRequest treats null options as absent", () => {
+    const research = requireResearchRequest({
+      topic: "build",
+      focus_name_ids: ["Xingqiu", "", "  ", 3],
+      question_kind: "how_to_play",
+      mode: null,
+      llm_provider: null,
+      answer_style: null,
+    });
+    assert.equal(research.mode, undefined);
+    assert.equal(research.llm_provider, undefined);
+    assert.equal(research.answer_style, undefined);
+  });
+
   it("requireResearchRequest bounds the question and focus list", () => {
     assert.throws(() => requireResearchRequest({}), isBadRequest);
     assert.throws(
@@ -906,7 +920,6 @@ describe("request validation", () => {
       ["mode", "simulated"],
       ["answer_style", "terse"],
       ["question_kind", "chat"],
-      ["llm_provider", null],
     ] as const) {
       assert.throws(
         () => requireResearchRequest({ question: "x", [key]: value }),

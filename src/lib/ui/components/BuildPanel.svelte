@@ -178,7 +178,7 @@
     return list.map((row, idx) => {
       const entity = resolveGearEntity(entityIndex, "weapon", [row.key]);
       const gearKey =
-        entity?.weapon_key ?? resolveWeaponKey(row.key) ?? row.key;
+        entity?.weapon_key || (resolveWeaponKey(row.key) ?? row.key);
       return {
         key: `weapon-${idx}-${row.rank}-${row.key}`,
         rank: row.rank,
@@ -204,7 +204,7 @@
     return list.map((row, idx) => {
       const entity = resolveGearEntity(entityIndex, "set", [row.key]);
       const gearKey =
-        entity?.set_key ?? resolveArtifactSetKey(row.key) ?? row.key;
+        entity?.set_key || (resolveArtifactSetKey(row.key) ?? row.key);
       const rank = "rank" in row ? row.rank : undefined;
       return {
         key: `${prefix}-${idx}-${rank ?? "opt"}-${row.key}`,

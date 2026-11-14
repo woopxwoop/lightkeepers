@@ -184,10 +184,12 @@
   <LoadOnFirstOpen
     when={$plannerItineraryOpen}
     load={() => import("#lib/ui/components/PlannerItinerarySheet.svelte")}
+    onfail={() => plannerItineraryOpen.set(false)}
   />
   <LoadOnFirstOpen
     when={$accountSettingsOpen}
     load={() => import("#lib/ui/components/AccountSettingsModal.svelte")}
+    onfail={() => accountSettingsOpen.set(false)}
   />
   <!-- Dev-only: dynamic import keeps research out of production chunks. -->
   <LoadOnFirstOpen
