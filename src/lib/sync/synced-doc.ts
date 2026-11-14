@@ -111,8 +111,13 @@ export type SyncView<T> = {
  * compare it with the account it sees now instead of one captured beforehand.
  */
 export type CommitResult =
-  /** Guest: stored on this device only. */
-  | { status: "local" }
+  /**
+   * Guest: stored on this device only. `stored` is false when browser
+   * storage refused the write (full, blocked): the edit lives in this tab
+   * only and is lost on reload. The view's `error` says so until a write
+   * succeeds.
+   */
+  | { status: "local"; stored: boolean }
   /**
    * The server accepted this save. `attachmentOmitted` means the document
    * was stored and the attachment on that write was not.
@@ -124,6 +129,10 @@ export type CommitResult =
   | { status: "ask" }
   /** Nothing to send. */
   | { status: "unchanged" };
+
+/** View error for a guest save that browser storage refused. */
+export const GUEST_STORAGE_ERROR =
+  "Couldn't save to this browser (storage full or blocked) — changes will be lost on reload. Free up space and save again.";
 
 export type CommitOutcome = CommitResult & { account: string | null };
 
@@ -789,9 +798,11 @@ export function createSyncedDoc<T>(
       if (account !== null && attachments.has(account)) {
         saved.attach = attachments.get(account);
       }
-      storeSlot(account, saved);
-      if (account === null)
-        return Promise.resolve({ status: "local", account });
+      const stored = storeSlot(account, saved);
+      if (account === null) {
+        setState(account, { error: stored ? null : GUEST_STORAGE_ERROR });
+        return Promise.resolve({ status: "local", stored, account });
+      }
       if (!dirty) return Promise.resolve({ status: "unchanged", account });
       setState(account, { error: null });
       return send(account);
@@ -822,11 +833,13 @@ export function createSyncedDoc<T>(
       const answered = answerAsk(slotOf(account), ask, choice);
       if (account !== null && !answered.attach) attachments.delete(account);
       if (account === null) {
-        storeSlot(account, { ...answered, dirty: false });
-        return Promise.resolve({
-          status: choice === "local" ? "local" : "unchanged",
-          account,
-        });
+        const stored = storeSlot(account, { ...answered, dirty: false });
+        setState(account, { error: stored ? null : GUEST_STORAGE_ERROR });
+        return Promise.resolve(
+          choice === "local"
+            ? { status: "local", stored, account }
+            : { status: "unchanged", account },
+        );
       }
       storeSlot(account, answered);
       if (choice === "remote") {

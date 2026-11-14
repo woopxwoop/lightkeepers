@@ -142,15 +142,14 @@
       switch (result.status) {
         case "sent":
         case "local":
-          flashSaved();
+          // A guest save storage refused is not saved; the view says why.
+          if (result.status === "sent" || result.stored) flashSaved();
+          else rosterError = roster.error ?? "";
           break;
         case "unsent":
           rosterError = result.error
             ? `Saved on this device — not synced: ${result.error}`
             : "Saved on this device — not synced";
-          break;
-        case "ask":
-        case "unchanged":
           break;
       }
     } catch (e) {

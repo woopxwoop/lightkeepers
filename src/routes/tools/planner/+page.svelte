@@ -144,7 +144,12 @@
 
   async function saveGoals() {
     const result = await goals.save();
-    if (result.status === "sent" || result.status === "local") flashSaved();
+    // A guest save storage refused is not saved; `goals.error` explains.
+    if (
+      result.status === "sent" ||
+      (result.status === "local" && result.stored)
+    )
+      flashSaved();
   }
 
   let selectedGoal = $derived(findGoal(goals.state, goals.state.selectedId));

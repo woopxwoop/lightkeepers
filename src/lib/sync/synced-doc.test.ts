@@ -10,7 +10,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { get } from "svelte/store";
-import { createSyncedDoc, defineSyncedDocSpec } from "./synced-doc.ts";
+import {
+  createSyncedDoc,
+  defineSyncedDocSpec,
+  GUEST_STORAGE_ERROR,
+} from "./synced-doc.ts";
 import { memorySlotStorage } from "./storage.ts";
 import {
   doc,
@@ -285,6 +289,26 @@ describe("failures", () => {
     signIn(null);
     await synced.commit(doc("memory-only"));
     assert.deepEqual(view().data.items, ["memory-only"]);
+  });
+
+  it("a guest save storage refused is reported, not saved", async () => {
+    const { synced, signIn, storage, view } = setup();
+    storage.failWrites = true;
+    signIn(null);
+    assert.deepEqual(await synced.commit(doc("memory-only")), {
+      status: "local",
+      stored: false,
+      account: null,
+    });
+    assert.equal(view().error, GUEST_STORAGE_ERROR);
+    // Saving again once storage works clears the warning.
+    storage.failWrites = false;
+    assert.deepEqual(await synced.commit(doc("memory-only")), {
+      status: "local",
+      stored: true,
+      account: null,
+    });
+    assert.equal(view().error, null);
   });
 });
 
@@ -738,6 +762,7 @@ describe("commit result", () => {
     signIn(null);
     assert.deepEqual(await synced.commit(doc("a")), {
       status: "local",
+      stored: true,
       account: null,
     });
   });

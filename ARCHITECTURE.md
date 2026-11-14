@@ -69,10 +69,13 @@ CDN (api.lightkeepers.moe) → kits, builds, investment sims, images
   └─ proxied by /api/investment, /api/character-*, /api/tcg-cards, /api/upgrade-costs
 ```
 
-On the client, `bootstrapClient` seeds the version numbers and roster, warms the
-meta boards, and starts roster sync. Everything heavier loads on demand from
-the page that needs it (owned teams, investment data, GOOD inventory, equipment
-tables).
+On the client, `bootstrapClient` only seeds the version numbers and starts
+`ensureStaticBoards()` to warm the meta boards. The roster is not bootstrapped
+there: the root layout (`src/routes/+layout.svelte`) points `rosterSync()` at
+the session with `setAccount` and fills the roster stores from its view with
+`feedRosterStores()` — start there when tracing sign-in or changing roster
+behavior. Everything heavier loads on demand from the page that needs it (owned
+teams, investment data, GOOD inventory, equipment tables).
 
 ## Lanes: one entry point per concern
 
