@@ -18,13 +18,13 @@ import {
   loadRosterArtifacts,
   loadRosterWeapons,
 } from "#lib/app/roster-inventory.js";
-import { gradeAuditRoster, type AuditRow } from "#lib/audit-grades.js";
+import { gradeAuditRoster, type AuditRow } from "#lib/roster/audit-grades.js";
 import type { CharacterOwned } from "#lib/definitions.js";
 import {
   artifactSetByKey,
   ensureEquipmentData,
   weaponByKey,
-} from "#lib/equipment-data.js";
+} from "#lib/equipment/equipment-data.js";
 import { translateStatKey } from "#lib/utils.js";
 
 export async function loadAuditGrades(

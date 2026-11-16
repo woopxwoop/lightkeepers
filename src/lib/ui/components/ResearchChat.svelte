@@ -14,7 +14,7 @@
   import type {
     ResearchLlmProvider,
     ResearchResponse,
-  } from "#lib/research-types.js";
+  } from "#lib/research/research-types.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import Button from "#lib/ui/components/Button.svelte";
   import CharacterSearchSelect from "#lib/ui/components/CharacterSearchSelect.svelte";

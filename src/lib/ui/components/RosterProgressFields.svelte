@@ -9,13 +9,13 @@
     cloneRosterProgress,
     DEFAULT_ROSTER_PROGRESS,
     MAX_CONSTELLATION,
-  } from "#lib/roster-progress.js";
+  } from "#lib/roster/roster-progress.js";
   import {
     MAX_ASCENSION,
     MAX_LEVEL,
     MAX_TALENT,
     clampLevelToAscension,
-  } from "#lib/upgrade-costs.js";
+  } from "#lib/planner/upgrade-costs.js";
 
   let {
     progress = null,

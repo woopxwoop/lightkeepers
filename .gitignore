@@ -22,15 +22,21 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-.claude
-.cursor
 __pycache__/
 .pytest_cache/
-DOCKER.md
 cache
-CLAUDE.md
-AGENTS.md
 scripts/archive
+
+# worktree:carry — local-only paths. `pnpm worktree <name>` copies them into
+# the new worktree; `pnpm worktree remove <name>` brings them back here.
+# Plain root paths only (no globs or `!`).
+AGENTS.md
+CLAUDE.md
+DOCKER.md
+.claude
+.cursor
+/docs
+# worktree:end
 
 # Sentry Config File
 .env.sentry-build-plugin
@@ -48,3 +54,4 @@ scripts/archive
 /Me_*.json
 
 /scripts/
+/docs

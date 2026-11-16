@@ -1,14 +1,6 @@
 <script lang="ts">
-  import { tick } from "svelte";
-  import { fade, scale } from "svelte/transition";
-  import { prefersReducedMotion } from "svelte/motion";
-  import {
-    charactersOwned,
-    charactersHydrated,
-    setHasSavedRoster,
-    invalidateNearMissTeams,
-    invalidateTeamsOwned,
-  } from "#lib/stores.js";
+  import { page } from "$app/state";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import { authClient } from "#lib/auth-client.js";
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import CharacterFilterBar from "#lib/ui/components/CharacterFilterBar.svelte";
@@ -17,18 +9,19 @@
   import Button from "#lib/ui/components/Button.svelte";
   import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
   import IconCog from "#lib/ui/icons/IconCog.svelte";
-  import IconX from "#lib/ui/icons/IconX.svelte";
+  import ModalSheet from "#lib/ui/components/ModalSheet.svelte";
   import RosterBuildCard from "#lib/ui/components/RosterBuildCard.svelte";
   import RosterProgressFields from "#lib/ui/components/RosterProgressFields.svelte";
   import Toggle from "#lib/ui/components/Toggle.svelte";
   import type {
+    Character,
     CharacterOwned,
     InventoryArtifact,
     InventoryWeapon,
     RosterProgress,
   } from "#lib/definitions.js";
-  import { cloneRosterProgress } from "#lib/roster-progress.js";
-  import { rosterBuildViewFromOwned } from "#lib/roster-build-card.js";
+  import { cloneRosterProgress } from "#lib/roster/roster-progress.js";
+  import { rosterBuildViewFromOwned } from "#lib/roster/roster-build-card.js";
   import {
     getRosterArtifactsCached,
     getRosterWeaponsCached,
@@ -36,34 +29,44 @@
     loadRosterWeapons,
   } from "#lib/app/roster-inventory.js";
   import { weaponTypeLabel, ownedNameIds } from "#lib/utils.js";
-  import { isNewCharacter } from "#lib/is-new-character.js";
+  import { isNewCharacter } from "#lib/characters/is-new-character.js";
   import {
     filterAndSortCharacters,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "#lib/character-filter.js";
+  } from "#lib/characters/character-filter.js";
+  import { rosterSync } from "#lib/app/roster-sync.js";
+  import { useSyncedDraft } from "#lib/sync/draft.svelte.js";
+  import { isSaved } from "#lib/sync/synced-doc.js";
   import {
-    captureRoster,
-    postRoster,
-    rosterDiffersFromSnapshot,
-    writeRosterLocal,
-    type RosterCapture,
-  } from "#lib/roster-snapshot.js";
-  import { trapTabKey } from "#lib/ui/focus-trap.js";
+    rosterDocOf,
+    rosterDocSpec,
+    rosterOwnedFrom,
+  } from "#lib/sync/roster-doc.js";
   import { resolve } from "$app/paths";
 
   const session = authClient.useSession();
+  const rosterSyncDoc = rosterSync();
+  const rosterView = rosterSyncDoc.view;
+  const characters = $derived((page.data.characters ?? []) as Character[]);
+  /** Editor copy of the roster document. Joined onto the catalog here. */
+  const roster = useSyncedDraft(rosterSyncDoc, {
+    toDraft: (doc) => rosterOwnedFrom(characters, doc),
+    fromDraft: (owned, baseline) => rosterDocOf(owned, baseline),
+    sameContent: (a, b) => rosterDocSpec.equal(rosterDocOf(a), rosterDocOf(b)),
+  });
 
-  let tempCharactersOwned: CharacterOwned[] = $state([]);
-  let synced = $state(false);
   let showSaved = $state(false);
-  let isSaving = $state(false);
+  let savedGeneration = 0;
   let rosterError = $state("");
-  let savedSnapshot = $state("");
-  let hasUnsavedChanges = $derived(
-    synced && rosterDiffersFromSnapshot(tempCharactersOwned, savedSnapshot),
-  );
+  let shownError = $derived(rosterError || (roster.error ?? ""));
+  let hasUnsavedChanges = $derived(roster.unsaved);
   let savedVisible = $derived(showSaved && !hasUnsavedChanges);
+  /** Stored edits the server has not accepted (a failed upload): Save retries. */
+  let unsent = $derived(
+    roster.unsent && roster.status !== "saving" && !hasUnsavedChanges,
+  );
+  let canSave = $derived(hasUnsavedChanges || unsent);
 
   let rarityFilter = $state<Set<string>>(new Set());
   let elementFilter = $state<Set<string>>(new Set());
@@ -79,7 +82,7 @@
   let simpleConfig = $state(false);
 
   let visibleCharacters = $derived(
-    filterAndSortCharacters(tempCharactersOwned, {
+    filterAndSortCharacters(roster.draft, {
       search,
       rarity: rarityFilter,
       elements: elementFilter,
@@ -91,92 +94,70 @@
   );
 
   function toggleOwned(name_id: string) {
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       c.name_id === name_id ? { ...c, isOwned: !c.isOwned } : c,
     );
   }
 
   function selectAll() {
     const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: true } : c,
     );
   }
 
   function deselectAll() {
     const visibleIds = new Set(visibleCharacters.map((v) => v.name_id));
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       visibleIds.has(c.name_id) ? { ...c, isOwned: false } : c,
     );
   }
 
-  function restoreSavedSnapshot() {
-    writeRosterLocal(savedSnapshot);
-  }
-
-  function commitSaved(pending: RosterCapture) {
-    savedSnapshot = pending.json;
-    charactersOwned.set(pending.roster);
-    invalidateTeamsOwned();
-    invalidateNearMissTeams();
+  function flashSaved() {
+    const generation = ++savedGeneration;
     showSaved = true;
-    setHasSavedRoster();
-  }
-
-  async function saveCharacters() {
-    if (isSaving) return;
-    isSaving = true;
-    rosterError = "";
-
-    // Freeze the editor state before any await so concurrent toggles stay unsaved.
-    const pending = captureRoster(tempCharactersOwned);
-
-    try {
-      if (!writeRosterLocal(pending.json)) {
-        console.warn("localStorage unavailable — saving to memory only");
-      }
-
-      if ($session.data) {
-        const result = await postRoster(pending.roster);
-        if (!result.ok) {
-          restoreSavedSnapshot();
-          rosterError = result.message
-            ? `Sync failed (${result.status}): ${result.message}`
-            : `Sync failed (${result.status}) — roster not saved to cloud`;
-          return;
-        }
-        commitSaved(pending);
-      } else {
-        commitSaved(pending);
-      }
-    } catch (e) {
-      restoreSavedSnapshot();
-      console.error("Roster save error:", e);
-      rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
-    } finally {
-      isSaving = false;
-    }
-
     setTimeout(() => {
-      showSaved = false;
+      if (generation === savedGeneration) showSaved = false;
     }, 2000);
   }
 
-  $effect(() => {
-    if ($charactersHydrated && !synced) {
-      const pending = captureRoster($charactersOwned);
-      tempCharactersOwned = pending.roster;
-      savedSnapshot = pending.json;
-      synced = true;
-    } else if ($charactersHydrated && synced && !hasUnsavedChanges) {
-      const storeJson = JSON.stringify($charactersOwned);
-      if (storeJson !== savedSnapshot) {
-        const pending = captureRoster($charactersOwned);
-        tempCharactersOwned = pending.roster;
-        savedSnapshot = pending.json;
+  function cancelEdits() {
+    roster.cancel();
+    rosterError = "";
+  }
+
+  /**
+   * Save through the roster document. A draft started from an older roster
+   * is compared with the newer one (`basedOn`); a difference opens the
+   * "Use cloud / Upload this device" popup instead of overwriting.
+   */
+  async function saveCharacters() {
+    if (roster.saving) return;
+    rosterError = "";
+    // A previous save's "Saved" must not cover this one's result.
+    savedGeneration += 1;
+    showSaved = false;
+
+    try {
+      const result = await roster.save();
+      if (result.account !== $rosterView.account) return;
+      switch (result.status) {
+        case "sent":
+        case "local":
+          // A guest save storage refused is not saved; the view says why.
+          if (isSaved(result)) flashSaved();
+          break;
+        case "unsent":
+          rosterError = result.error
+            ? `Saved on this device — not synced: ${result.error}`
+            : "Saved on this device — not synced";
+          break;
       }
+    } catch (e) {
+      console.error("Roster save error:", e);
+      rosterError = `Something went wrong — your changes may not be saved (${(e as Error)?.name ?? typeof e})`;
     }
-  });
+  }
 
   $effect(() => {
     // After session resolves (and on login/logout), refresh uncached inventory.
@@ -214,19 +195,17 @@
     new Map($charactersOwned.map((c) => [c.name_id, c])),
   );
 
-  let ownedCount = $derived(
-    tempCharactersOwned.filter((c) => c.isOwned).length,
-  );
-  let totalCount = $derived(tempCharactersOwned.length);
+  let ownedCount = $derived(roster.draft.filter((c) => c.isOwned).length);
+  let totalCount = $derived(roster.draft.length);
   let visibleOwnedCount = $derived(
     visibleCharacters.filter((c) => c.isOwned).length,
   );
   let changedCount = $derived(
-    tempCharactersOwned.reduce((count, c) => {
+    roster.draft.reduce((count, c) => {
       const prev = savedById.get(c.name_id);
       if (!prev) return count + 1;
       if (c.isOwned !== prev.isOwned) return count + 1;
-      // Same progress clone as captureRoster / rosterDiffersFromSnapshot.
+      // Same progress clone the snapshot uses for equality.
       if (
         JSON.stringify(cloneRosterProgress(c.progress) ?? null) !==
         JSON.stringify(cloneRosterProgress(prev.progress) ?? null)
@@ -238,7 +217,7 @@
   );
   let configuringId = $state<string | null>(null);
   let configuring = $derived(
-    tempCharactersOwned.find((c) => c.name_id === configuringId) ?? null,
+    roster.draft.find((c) => c.name_id === configuringId) ?? null,
   );
   let configuringView = $derived(
     configuring
@@ -246,16 +225,12 @@
       : null,
   );
 
-  let configPanelEl: HTMLDivElement | null = $state(null);
-  let configCloseEl: HTMLButtonElement | null = $state(null);
-  let reduced = $derived(prefersReducedMotion.current);
-
   function closeConfig() {
     configuringId = null;
   }
 
   function openConfig(nameId: string) {
-    const row = tempCharactersOwned.find((c) => c.name_id === nameId);
+    const row = roster.draft.find((c) => c.name_id === nameId);
     if (!row?.isOwned) return;
     configuringId = nameId;
   }
@@ -263,12 +238,12 @@
   function applyProgress(next: RosterProgress) {
     const id = configuringId;
     if (!id) return;
-    const row = tempCharactersOwned.find((c) => c.name_id === id);
+    const row = roster.draft.find((c) => c.name_id === id);
     if (!row?.isOwned) {
       closeConfig();
       return;
     }
-    tempCharactersOwned = tempCharactersOwned.map((c) =>
+    roster.draft = roster.draft.map((c) =>
       c.name_id === id
         ? { ...c, progress: cloneRosterProgress(next) ?? next }
         : c,
@@ -281,28 +256,6 @@
     }
   });
 
-  $effect(() => {
-    if (!configuringId) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    void tick().then(() => configCloseEl?.focus());
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeConfig();
-        return;
-      }
-      if (configPanelEl) trapTabKey(event, configPanelEl);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      if (previous?.isConnected) previous.focus();
-    };
-  });
-
   let isFiltered = $derived(
     rarityFilter.size > 0 ||
       elementFilter.size > 0 ||
@@ -312,7 +265,7 @@
   );
 </script>
 
-{#if synced}
+{#if roster.hydrated}
   <div class="roster-page">
     <header class="panel-head">
       <div>
@@ -347,37 +300,37 @@
       <span class="owned-count">{ownedCount} / {totalCount}</span>
     </div>
 
-    {#if hasUnsavedChanges || isSaving || savedVisible || rosterError}
+    {#if canSave || roster.saving || savedVisible || shownError}
       <div class="save-bar">
         <div class="save-status">
           <span
             class="save-dot"
-            class:saving={isSaving}
+            class:saving={roster.saving}
             class:saved={savedVisible}
           ></span>
-          <span class="save-label">
-            {isSaving
+          <span
+            class="save-label"
+            class:save-error={!!shownError && !roster.saving && !savedVisible}
+          >
+            {roster.saving
               ? "Saving..."
               : savedVisible
                 ? "Saved"
-                : "Unsaved changes"}
+                : shownError
+                  ? shownError
+                  : unsent
+                    ? "Not synced"
+                    : "Unsaved changes"}
           </span>
           {#if hasUnsavedChanges}
             <span class="save-changed">({changedCount} changed)</span>
           {/if}
         </div>
-        {#if hasUnsavedChanges && !isSaving}
+        {#if canSave && !roster.saving}
           <div class="save-actions">
-            <Button
-              variant="ghost"
-              onclick={() => {
-                const pending = captureRoster($charactersOwned);
-                tempCharactersOwned = pending.roster;
-                savedSnapshot = pending.json;
-              }}
-            >
-              Cancel
-            </Button>
+            {#if hasUnsavedChanges}
+              <Button variant="ghost" onclick={cancelEdits}>Cancel</Button>
+            {/if}
             <Button variant="primary" onclick={saveCharacters}>Save</Button>
             <div class="save-cue" aria-hidden="true">
               <IconChevronDown
@@ -387,9 +340,6 @@
               />
             </div>
           </div>
-        {/if}
-        {#if rosterError}
-          <span class="save-error">{rosterError}</span>
         {/if}
       </div>
     {/if}
@@ -446,64 +396,42 @@
       </div>
     {/if}
 
-    {#if configuringView}
-      <div class="config-root">
-        <button
-          type="button"
-          class="config-backdrop"
-          aria-label="Close"
-          onclick={closeConfig}
-          transition:fade={{ duration: reduced ? 0 : 120 }}
-        ></button>
-        <div
-          class="config-panel"
-          class:config-panel--simple={simpleConfig}
-          role="dialog"
-          aria-modal="true"
-          aria-label={configuring?.name ?? "Character"}
-          tabindex="-1"
-          bind:this={configPanelEl}
-          transition:scale={{ duration: reduced ? 0 : 160, start: 0.98 }}
-        >
-          <div class="config-toolbar">
-            <label class="config-layout-toggle">
-              <Toggle
-                bind:pressed={simpleConfig}
-                aria-label="Simple config layout"
-              />
-              <span>Simple</span>
-            </label>
-            <button
-              type="button"
-              class="config-close"
-              aria-label="Close"
-              bind:this={configCloseEl}
-              onclick={closeConfig}
-            >
-              <IconX size={16} />
-            </button>
-          </div>
-          {#if simpleConfig}
-            <RosterProgressFields
-              progress={configuring?.progress ?? null}
-              onChange={applyProgress}
+    <ModalSheet
+      open={!!configuringView}
+      onclose={closeConfig}
+      label={configuring?.name ?? "Character"}
+      size={simpleConfig ? "dialog" : "sheet"}
+    >
+      {#snippet head()}
+        <label class="config-layout-toggle">
+          <Toggle
+            bind:pressed={simpleConfig}
+            aria-label="Simple config layout"
+          />
+          <span>Simple</span>
+        </label>
+      {/snippet}
+      {#if configuringView}
+        {#if simpleConfig}
+          <RosterProgressFields
+            progress={configuring?.progress ?? null}
+            onChange={applyProgress}
+          />
+        {:else}
+          <div class="config-card-stage">
+            <RosterBuildCard
+              view={configuringView}
+              editing="always"
+              onProgressChange={applyProgress}
             />
-          {:else}
-            <div class="config-card-stage">
-              <RosterBuildCard
-                view={configuringView}
-                editing="always"
-                onProgressChange={applyProgress}
-              />
-            </div>
-            <p class="section-lede">
-              Currently can edit constellation, level, and talents. Weapons and
-              Artifacts can only be imported via GOOD for now.
-            </p>
-          {/if}
-        </div>
-      </div>
-    {/if}
+          </div>
+          <p class="section-lede config-note">
+            Currently can edit constellation, level, and talents. Weapons and
+            Artifacts can only be imported via GOOD for now.
+          </p>
+        {/if}
+      {/if}
+    </ModalSheet>
   </div>
 {:else}
   <LoadingState message="Loading characters…" />
@@ -594,59 +522,6 @@
     background: color-mix(in srgb, var(--background-color) 82%, transparent);
   }
 
-  .config-root {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    display: grid;
-    place-items: center;
-    padding: clamp(0.75rem, 2vw, 1.25rem);
-    pointer-events: none;
-  }
-
-  .config-backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    background: color-mix(in oklab, black 62%, transparent);
-    backdrop-filter: blur(4px);
-    pointer-events: auto;
-  }
-
-  .config-panel {
-    position: relative;
-    z-index: 1;
-    width: min(72rem, 100%);
-    max-height: min(46rem, calc(100vh - 2rem));
-    overflow: auto;
-    padding: 0.25rem 0.75rem 0.5rem;
-    border-radius: var(--radius-lg);
-    border: var(--border-width) solid rgba(255, 255, 255, 0.18);
-    background: var(--background-mid);
-    pointer-events: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .config-panel--simple {
-    width: min(28rem, 100%);
-    max-height: min(40rem, calc(100vh - 2rem));
-    padding: 0.65rem 0.85rem 0.85rem;
-    gap: var(--space-3);
-  }
-
-  .config-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    min-height: 1.85rem;
-  }
-
   .config-layout-toggle {
     display: inline-flex;
     align-items: center;
@@ -658,30 +533,14 @@
     user-select: none;
   }
 
-  .config-panel > .section-lede {
+  .config-note {
     margin: 0;
   }
 
-  .config-close {
-    width: 1.85rem;
-    height: 1.85rem;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    margin-left: auto;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground-mid);
-    cursor: pointer;
-  }
-
-  .config-close:hover {
-    color: var(--foreground-color);
-    background: color-mix(in srgb, var(--foreground-color) 10%, transparent);
-  }
-
   .config-card-stage {
+    /* Keep full height inside ModalSheet's flex body: shrinking it would clip
+       the card's own horizontal scrollbar (overflow-y: hidden). */
+    flex-shrink: 0;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
@@ -692,7 +551,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    /* Beneath .config-root (120) so the dialog stays on top while open. */
+    /* Beneath ModalSheet (120) so the dialog stays on top while open. */
     z-index: 40;
     display: flex;
     flex-wrap: wrap;

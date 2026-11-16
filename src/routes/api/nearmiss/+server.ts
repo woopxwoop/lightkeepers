@@ -21,7 +21,7 @@ import {
   requireFiniteInteger,
   requireJsonObject,
   requireNumberInRange,
-} from "#lib/server/request-validation.js";
+} from "#lib/server/validation/core.js";
 import { requireSupportedStygianVersion } from "#lib/server/version-validation.js";
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {

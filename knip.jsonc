@@ -1,0 +1,39 @@
+// Dead-code audit: `pnpm dlx knip@5`
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    // Kit 3 config lives in vite.config.ts, so knip's SvelteKit plugin doesn't
+    // pick up route/hook entry points on its own.
+    "src/routes/**/+*.{ts,js,svelte}",
+    "src/hooks.{client,server}.ts",
+    "src/instrumentation.server.ts",
+    "src/env.ts",
+    "*.mjs",
+    "src/**/*.test.ts",
+    "tests/**/*.ts",
+    // Shared contract with the (gitignored) scripts/ pipeline, which imports
+    // these types directly — knip can't see that repo, so treat them as public.
+    "src/lib/types/**/*.ts",
+    // Sheets loaded with a dynamic import() in markup (`<LoadOnFirstOpen load=…>`
+    // in +layout.svelte, `{#await import(…)}` in characters/[slug]) — knip
+    // doesn't follow imports written in templates.
+    "src/lib/ui/components/PlannerItinerarySheet.svelte",
+    "src/lib/ui/components/AccountSettingsModal.svelte",
+    "src/lib/ui/components/ResearchChatSheet.svelte",
+    "src/lib/ui/components/BuildResearchSheet.svelte",
+  ],
+  // A type used by its own module's exports (a parameter/return/property type)
+  // is public API even when no caller imports it by name yet.
+  "ignoreExportsUsedInFile": { "type": true, "interface": true },
+  "project": ["src/**/*.{ts,js,svelte}", "*.mjs", "tests/**/*.ts"],
+  // SvelteKit virtual modules ($app/env, $app/state, …) have no file on disk.
+  "ignoreUnresolved": ["^\\$app/"],
+  "ignoreDependencies": [
+    // Imported from CSS (`@import "tailwindcss"`).
+    "tailwindcss",
+    // CLI used by update-types.mjs via its dist path.
+    "supabase",
+    // Used by the local scripts/ image sync.
+    "sharp",
+  ],
+}

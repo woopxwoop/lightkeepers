@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { stygianScheduleBoard } from "#lib/stores.js";
+  import { stygianScheduleBoard } from "#lib/stores/boards.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import StygianSolutionBoard from "#lib/ui/components/StygianSolutionBoard.svelte";
   import { resolve } from "$app/paths";

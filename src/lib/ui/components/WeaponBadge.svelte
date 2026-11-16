@@ -4,8 +4,8 @@
    * Resolves through the shared equipment helper so the lazy JSON load
    * updates it without a caller-side {#key $equipmentVersion} wrapper.
    */
-  import { displayWeaponRefinement } from "#lib/equipment-data.js";
-  import { useWeapon } from "#lib/equipment-data.svelte.js";
+  import { displayWeaponRefinement } from "#lib/equipment/equipment-data.js";
+  import { useWeapon } from "#lib/equipment/equipment-data.svelte.js";
   import WeaponTooltip from "#lib/ui/components/WeaponTooltip.svelte";
 
   let {

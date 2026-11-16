@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import {
     buildGoodKeyMap,
     humanizeTeamName,
@@ -8,8 +9,8 @@
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
-  } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import { onMount } from "svelte";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";

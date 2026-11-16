@@ -1,7 +1,8 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { resolve } from "$app/paths";
-  import { animationsEnabled, charactersOwned } from "#lib/stores.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
   import PageShell from "#lib/ui/components/PageShell.svelte";
   import PageTrail from "#lib/ui/components/PageTrail.svelte";
   import EmptyState from "#lib/ui/components/EmptyState.svelte";
@@ -14,7 +15,7 @@
     isAbortError,
     isTimeoutError,
   } from "#lib/app/stygian-enemy-teams.js";
-  import { stygianSlotIndexLabel } from "#lib/slotLabels.js";
+  import { stygianSlotIndexLabel } from "#lib/boards/slotLabels.js";
   import { getEnemyAsset, ownedNameIds } from "#lib/utils.js";
   import type {
     Character,
@@ -193,7 +194,7 @@
       {/if}
     </header>
 
-    <section class="board-section">
+    <section class="enemy-section">
       {#if teamsLoading && !teamsPayload}
         <LoadingState variant="pulse" message="Loading historical teams…" />
       {:else if teamsError && !teamsPayload}
@@ -307,7 +308,7 @@
     color: var(--foreground-mid);
   }
 
-  .board-section {
+  .enemy-section {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);

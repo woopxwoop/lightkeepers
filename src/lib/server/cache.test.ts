@@ -4,7 +4,7 @@
  * Run: pnpm exec tsx --test src/lib/server/cache.test.ts
  */
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { setImmediate as setImm } from "node:timers";
 import { LRUCache } from "./cache.ts";
 
@@ -232,5 +232,65 @@ describe("LRUCache stale-while-revalidate", () => {
     assert.equal(afterEvict, 1);
     resolveRefresh("v3");
     await settle();
+  });
+});
+
+describe("LRUCache slow-fill diagnostics", () => {
+  afterEach(() => mock.restoreAll());
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  function captureWarnings(): string[] {
+    const lines: string[] = [];
+    mock.method(console, "warn", (...args: unknown[]) => {
+      lines.push(args.map(String).join(" "));
+    });
+    return lines;
+  }
+
+  it("warns while a fill is stuck, then logs the compute time", async () => {
+    const warnings = captureWarnings();
+    const cache = new LRUCache<string>(10, 60_000, { slowFillMs: 20 });
+    const value = await cache.getOrSet("k", async () => {
+      await sleep(60);
+      return "v";
+    });
+    assert.equal(value, "v");
+    assert.ok(
+      warnings.some((w) =>
+        /fill k still pending after 20 ms \(in compute\)/.test(w),
+      ),
+      warnings.join("\n"),
+    );
+    assert.ok(
+      warnings.some((w) =>
+        /slow fill k: \d+ ms \(valkey \d+ ms, compute \d+ ms\)/.test(w),
+      ),
+      warnings.join("\n"),
+    );
+  });
+
+  it("still logs a slow fill that fails", async () => {
+    const warnings = captureWarnings();
+    const cache = new LRUCache<string>(10, 60_000, { slowFillMs: 20 });
+    await assert.rejects(
+      cache.getOrSet("bad", async () => {
+        await sleep(40);
+        throw new Error("upstream timed out");
+      }),
+      /upstream timed out/,
+    );
+    assert.ok(
+      warnings.some((w) => /slow fill bad:/.test(w)),
+      warnings.join("\n"),
+    );
+  });
+
+  it("stays quiet for fast fills", async () => {
+    const warnings = captureWarnings();
+    const cache = new LRUCache<string>(10, 60_000, { slowFillMs: 1_000 });
+    await cache.getOrSet("fast", async () => "v");
+    await sleep(10);
+    assert.deepEqual(warnings, []);
   });
 });

@@ -7,10 +7,7 @@
 
 import type { RequestHandler } from "./$types";
 import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
-import {
-  assertNoDbError,
-  requireUser,
-} from "#lib/server/request-validation.js";
+import { assertNoDbError, requireUser } from "#lib/server/validation/core.js";
 import { selectUserRosterColumn } from "#lib/server/user-rosters.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 

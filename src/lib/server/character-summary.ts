@@ -48,7 +48,7 @@ function cancelUpstreamBody(res: Response): void {
 }
 
 /** No sim/guide body — merge tombstone, not a stale-but-present summary. */
-export function isSummaryTombstone(
+function isSummaryTombstone(
   summary: CharacterIndex | null | undefined,
 ): boolean {
   if (!summary || summary.upToDate !== false) return false;
@@ -102,9 +102,7 @@ function asLiquidMean(value: unknown): Record<string, number> {
 }
 
 /** Fill missing legacy main_stats / liquid shapes so Builds UI can iterate safely. */
-export function normalizeCharacterSummary(
-  summary: CharacterIndex,
-): CharacterIndex {
+function normalizeCharacterSummary(summary: CharacterIndex): CharacterIndex {
   const mains =
     summary.main_stats && typeof summary.main_stats === "object"
       ? summary.main_stats

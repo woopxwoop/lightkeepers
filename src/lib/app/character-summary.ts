@@ -18,21 +18,8 @@ const pending = new Map<string, Promise<CharacterIndex | null>>();
 let indexCached: CharacterIndexFile | null = null;
 let indexPending: Promise<CharacterIndexFile> | null = null;
 
-export function getCharacterSummaryCached(
-  key: string,
-): CharacterIndex | null | undefined {
-  if (!cache.has(key)) return undefined;
-  return cache.get(key) ?? null;
-}
-
-export function getCharacterIndexCached(): CharacterIndexFile | null {
-  return indexCached;
-}
-
 /** Seed the per-key map from an aggregate index (skips later one-off fetches). */
-export function seedCharacterSummariesFromIndex(
-  file: CharacterIndexFile,
-): void {
+function seedCharacterSummariesFromIndex(file: CharacterIndexFile): void {
   for (const [key, summary] of Object.entries(file.characters ?? {})) {
     if (!key) continue;
     cache.set(key, summary);

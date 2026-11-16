@@ -9,17 +9,12 @@
  * Ships `characters` once; `+layout.ts` rebuilds the name_id Map for the client.
  */
 
-import { error } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
-import { serverDb } from "#lib/server/supabaseServer.js";
-import { charactersCache } from "#lib/server/cache.js";
+import { loadCharacters } from "#lib/server/characters.js";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
-import { e2eCharacters, e2eStaticPayload } from "#lib/e2e/fixtures.js";
-import { listPatchNotes } from "#lib/patch-notes-catalog.js";
-import {
-  getLatestAbyssVersionNumber,
-  getLatestStygianVersionNumber,
-} from "#lib/server/version-validation.js";
+import { e2eStaticPayload } from "#lib/e2e/fixtures.js";
+import { listPatchNotes } from "#lib/patch-notes/patch-notes-catalog.js";
+import { getLayoutVersionNumbers } from "#lib/server/version-validation.js";
 
 export const load: LayoutServerLoad = async () => {
   const [versions, characters] = await Promise.all([
@@ -32,36 +27,12 @@ export const load: LayoutServerLoad = async () => {
         };
       }
 
-      const [abyssVersionNumber, stygianVersionNumber] = await Promise.all([
-        getLatestAbyssVersionNumber(),
-        getLatestStygianVersionNumber(),
-      ]);
-
-      // Fail closed — never stamp -1 into client stores from an empty table.
-      if (abyssVersionNumber == null || stygianVersionNumber == null) {
-        console.error("layout: missing latest abyss/stygian version", {
-          abyssVersionNumber,
-          stygianVersionNumber,
-        });
-        throw error(500, "Failed to load version numbers.");
-      }
-
-      return { abyssVersionNumber, stygianVersionNumber };
+      // Null (never -1) when a version table errors or is empty: pages still
+      // render and the client takes versions from /api/static instead.
+      const { abyss, stygian } = await getLayoutVersionNumbers();
+      return { abyssVersionNumber: abyss, stygianVersionNumber: stygian };
     })(),
-    charactersCache.getOrSet("characters", async () => {
-      if (isPlaywrightE2e()) return e2eCharacters();
-      const { data, error: err } = await serverDb
-        .from("characters")
-        .select("*")
-        .order("name", { ascending: true });
-      if (err) {
-        console.error("layout: characters error", err);
-        // Throw so charactersCache does not poison L1 with [] for 15m.
-        // Generic message — never surface PostgREST details to the client.
-        throw error(500, "Failed to load characters.");
-      }
-      return data ?? [];
-    }),
+    loadCharacters(),
   ]);
 
   // Skip in Playwright so the popup never blocks e2e flows.

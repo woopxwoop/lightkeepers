@@ -138,13 +138,6 @@ export async function getInvestmentFile(): Promise<InvestmentFile> {
   return investmentCache.getOrSet("investment", fetchInvestment);
 }
 
-export function findInvestmentTeam(
-  file: InvestmentFile,
-  teamKey: string,
-): InvestmentTeam | null {
-  return file.teams.find((t) => t.team_key === teamKey) ?? null;
-}
-
 /** Resolve a sim by its unique `state_key` (cons + weapons). */
 export function findInvestmentSim(
   file: InvestmentFile,
@@ -157,66 +150,34 @@ export function findInvestmentSim(
   return null;
 }
 
-/** Prefer kind===baseline; else lowest-cost result. */
-export function pickBaselineSim(team: InvestmentTeam): InvestmentSim | null {
-  const baseline = team.results.find((r) => r.kind === "baseline");
-  if (baseline) return baseline;
-  if (!team.results.length) return null;
-  return [...team.results].sort((a, b) => a.cost - b.cost || b.dps - a.dps)[0];
-}
-
 /**
- * Concurrent misses share one request. 404/410 cache as null; transport / 5xx
- * stay uncached (getOrSet would poison L1 on thrown errors — use inflight map).
+ * Through `getOrSet`, so workers share results via Valkey and concurrent
+ * misses share one request. A missing file (404/410) or unusable sample is
+ * a cached `null`; transport / 5xx errors throw, and `getOrSet` never stores
+ * a rejection, so the next request retries.
  */
-const configInflight = new Map<string, Promise<string | null>>();
-
 export async function getSimConfigText(
   stateKey: string,
 ): Promise<string | null> {
-  const cached = configCache.get(stateKey);
-  if (cached !== undefined) return cached;
-
-  const inflight = configInflight.get(stateKey);
-  if (inflight) return inflight;
-
-  const pending = loadSimConfigFromCdn(stateKey).finally(() => {
-    configInflight.delete(stateKey);
-  });
-  configInflight.set(stateKey, pending);
-  return pending;
+  return configCache.getOrSet(stateKey, () => loadSimConfigFromCdn(stateKey));
 }
 
 async function loadSimConfigFromCdn(stateKey: string): Promise<string | null> {
   const res = await fetchWithTimeout(getSimConfigUrl(stateKey));
-  if (res.status === 404 || res.status === 410) {
-    configCache.set(stateKey, null);
-    return null;
-  }
+  if (res.status === 404 || res.status === 410) return null;
   if (!res.ok) {
     throw new Error(`sim config ${stateKey} unavailable: HTTP ${res.status}`);
   }
-  const text = await res.text();
-  configCache.set(stateKey, text);
-  return text;
+  return res.text();
 }
 
-const rotationInflight = new Map<string, Promise<RotationSample | null>>();
-
+/** Same caching as `getSimConfigText`. */
 export async function getSimRotationSample(
   stateKey: string,
 ): Promise<RotationSample | null> {
-  const cached = rotationCache.get(stateKey);
-  if (cached !== undefined) return cached;
-
-  const inflight = rotationInflight.get(stateKey);
-  if (inflight) return inflight;
-
-  const pending = loadSimRotationFromCdn(stateKey).finally(() => {
-    rotationInflight.delete(stateKey);
-  });
-  rotationInflight.set(stateKey, pending);
-  return pending;
+  return rotationCache.getOrSet(stateKey, () =>
+    loadSimRotationFromCdn(stateKey),
+  );
 }
 
 function asRotationAction(value: unknown): RotationAction {
@@ -293,7 +254,6 @@ async function loadSimRotationFromCdn(
 ): Promise<RotationSample | null> {
   const res = await fetchWithTimeout(getSimRotationUrl(stateKey));
   if (res.status === 404 || res.status === 410) {
-    rotationCache.set(stateKey, null);
     return null;
   }
   if (!res.ok) {
@@ -301,7 +261,6 @@ async function loadSimRotationFromCdn(
   }
   const buf = await readBoundedResponseBody(res, MAX_ROTATION_GZIP_BYTES);
   if (!buf) {
-    rotationCache.set(stateKey, null);
     return null;
   }
   let text: string;
@@ -314,21 +273,17 @@ async function loadSimRotationFromCdn(
         ? buf.toString("utf-8")
         : "";
   } catch {
-    rotationCache.set(stateKey, null);
     return null;
   }
   if (!text) {
-    rotationCache.set(stateKey, null);
     return null;
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    rotationCache.set(stateKey, null);
     return null;
   }
   const sample = parseRotationSample(parsed);
-  rotationCache.set(stateKey, sample);
   return sample;
 }

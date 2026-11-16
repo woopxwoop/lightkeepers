@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Character, CharacterOwned } from "#lib/definitions.js";
   import CharacterIcon from "#lib/ui/components/CharacterIcon.svelte";
-  import { elementBg } from "#lib/element-colors.js";
+  import { elementBg } from "#lib/characters/element-colors.js";
   import { weaponTypeLabel } from "#lib/utils.js";
-  import { isNewCharacter } from "#lib/is-new-character.js";
-  import { isBetaCharacter } from "#lib/is-beta-character.js";
+  import { isNewCharacter } from "#lib/characters/is-new-character.js";
+  import { isBetaCharacter } from "#lib/characters/is-beta-character.js";
 
   let {
     character,
@@ -40,8 +40,8 @@
         <CharacterIcon {character} loading="lazy" />
       </span>
       <span class="overlay absolute bottom-0 left-0 right-0 z-10">
-        <span class="meta-name">{character.name}</span>
-        <span class="meta-sub">
+        <span class="meta-name flip-line">{character.name}</span>
+        <span class="meta-sub flip-line">
           {character.rarity}★ · {weaponTypeLabel(character.weapon_type ?? "")}
         </span>
       </span>
@@ -166,8 +166,7 @@
     );
   }
 
-  .meta-name,
-  .meta-sub,
+  .flip-line,
   .back-name,
   .view-label {
     display: block;

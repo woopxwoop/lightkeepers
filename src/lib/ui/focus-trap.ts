@@ -8,7 +8,7 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex^="-"])',
 ].join(", ");
 
-export function getFocusableElements(container: HTMLElement): HTMLElement[] {
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(
     container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
   ).filter((el) => el.getClientRects().length > 0);

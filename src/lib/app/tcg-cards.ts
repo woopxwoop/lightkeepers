@@ -8,7 +8,7 @@ import {
   parseTcgCardsFile,
   stemHasTcgCard,
   type TcgCardsFile,
-} from "#lib/tcg-cards.js";
+} from "#lib/characters/tcg-cards.js";
 import { uiAssetNameId } from "#lib/utils.js";
 
 /** Bumped after index load/failure so icons re-derive. */
@@ -19,10 +19,6 @@ let provisional = false;
 let pending: Promise<ReadonlySet<string>> | null = null;
 /** True after a successful or soft-failed load. */
 let settled = false;
-
-export function getTcgCardIdsCached(): ReadonlySet<string> | null {
-  return cached;
-}
 
 /**
  * `true` / `false` once the full index is known; `null` while unknown or

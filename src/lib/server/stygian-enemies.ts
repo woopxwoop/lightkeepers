@@ -4,7 +4,7 @@
 
 import { error } from "@sveltejs/kit";
 import { serverDb } from "#lib/server/supabaseServer.js";
-import { assertNoDbError } from "#lib/server/request-validation.js";
+import { assertNoDbError } from "#lib/server/validation/core.js";
 import type {
   Enemy,
   StygianEnemyCycleOption,

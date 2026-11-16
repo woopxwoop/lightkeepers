@@ -2,7 +2,7 @@
   import { page } from "$app/state";
   import RosterPanel from "./panels/RosterPanel.svelte";
   import InventoryPanel from "./panels/InventoryPanel.svelte";
-  import AccountPanel from "./panels/AccountPanel.svelte";
+  import AccountPanel from "#lib/ui/components/settings/AccountPanel.svelte";
   import DisplayPanel from "./panels/DisplayPanel.svelte";
 
   const TABS = ["roster", "inventory", "account", "display"] as const;

@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { dev } from "$app/env";
 import type { Database } from "#lib/types/database.types.js";
+import { withDeadline } from "#lib/cdn-fetch.js";
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY } from "$app/env/public";
 import { PRIVATE_SUPABASE_KEY } from "$app/env/private";
 
@@ -22,12 +23,21 @@ function serviceRoleKey(): string {
   );
 }
 
+/**
+ * Ceiling for any single PostgREST request. Cold /api/static loads take ~2 s;
+ * without a deadline a stalled request waits on Node's ~5 min socket limits,
+ * and LRUCache.getOrSet coalesces every caller for that key behind it — one
+ * stuck query becomes a route-wide outage until it settles.
+ */
+const SERVER_DB_TIMEOUT_MS = 20_000;
+
 function createServerDb(): SupabaseClient<Database> {
   return createClient<Database>(PUBLIC_SUPABASE_URL, serviceRoleKey(), {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
+    global: { fetch: withDeadline(fetch, SERVER_DB_TIMEOUT_MS) },
   });
 }
 

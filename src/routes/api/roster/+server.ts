@@ -3,22 +3,33 @@
  *
  * Auth-gated roster sync for logged-in users. Every handler is rate limited,
  * requires a session, and scopes reads/writes to that user's row.
- * GET selects `roster` only. Optional POST `weapons` / `artifacts` write the
+ * GET → { roster, rev, account }. Optional POST `weapons` / `artifacts` write the
  * inventory slices without clearing them on roster-only saves.
+ * POST { roster, baseRev?, account? } → 200 { ok, rev } or 409 { roster, rev } when
+ * `baseRev` is stale (`#lib/server/account-doc.js`).
  */
 
 import type { RequestHandler } from "./$types";
 import { serverDb } from "#lib/server/supabaseServer.js";
 import { enforceApiRateLimit } from "#lib/server/rate-limit.js";
 import {
+  accountDocWriteResponse,
+  rosterDoc,
+} from "#lib/server/account-doc-tables.js";
+import {
   assertNoDbError,
+  requireJsonObject,
+  requireUser,
+} from "#lib/server/validation/core.js";
+import {
+  requireBaseRev,
+  requireExpectedAccount,
   requireInventoryArtifacts,
   requireInventoryWeapons,
-  requireJsonObject,
+  requireMatchingAccount,
   requireRosterEntries,
-  requireUser,
-} from "#lib/server/request-validation.js";
-import { upsertUserRoster } from "#lib/server/user-rosters.js";
+} from "#lib/server/validation/roster.js";
+import { writeUserRoster } from "#lib/server/user-rosters.js";
 
 export const GET: RequestHandler = async ({
   locals,
@@ -28,14 +39,10 @@ export const GET: RequestHandler = async ({
   await enforceApiRateLimit({ request, getClientAddress });
   const user = requireUser(locals);
 
-  const { data, error: err } = await serverDb
-    .from("user_rosters")
-    .select("roster")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const { data, rev, error: err } = await rosterDoc.read(user.id, "roster");
   assertNoDbError("GET /api/roster", err);
 
-  return Response.json({ roster: data?.roster ?? null });
+  return Response.json({ roster: data, rev, account: user.id });
 };
 
 export const POST: RequestHandler = async ({
@@ -57,18 +64,25 @@ export const POST: RequestHandler = async ({
       ? undefined
       : requireInventoryArtifacts(body.artifacts);
 
-  const { error: err, inventoryOmitted } = await upsertUserRoster({
-    user_id: user.id,
-    roster,
-    updated_at: new Date().toISOString(),
-    ...(weapons !== undefined ? { weapons } : {}),
-    ...(artifacts !== undefined ? { artifacts } : {}),
-  });
-  assertNoDbError("POST /api/roster", err);
+  const baseRev = requireBaseRev(body.baseRev);
+  requireExpectedAccount(body.account, user.id);
 
-  return Response.json({
-    ok: true,
-    ...(inventoryOmitted ? { inventoryOmitted: true } : {}),
+  const result = await writeUserRoster(
+    {
+      user_id: user.id,
+      roster,
+      ...(weapons !== undefined ? { weapons } : {}),
+      ...(artifacts !== undefined ? { artifacts } : {}),
+    },
+    baseRev,
+  );
+  return accountDocWriteResponse({
+    label: "POST /api/roster",
+    doc: rosterDoc,
+    userId: user.id,
+    column: "roster",
+    result,
+    extra: result.inventoryOmitted ? { inventoryOmitted: true } : undefined,
   });
 };
 
@@ -79,6 +93,8 @@ export const DELETE: RequestHandler = async ({
 }) => {
   await enforceApiRateLimit({ request, getClientAddress });
   const user = requireUser(locals);
+  const body = await requireJsonObject(request);
+  requireMatchingAccount(body.account, user.id);
 
   const { error: err } = await serverDb
     .from("user_rosters")

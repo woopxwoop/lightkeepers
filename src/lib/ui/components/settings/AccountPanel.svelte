@@ -1,0 +1,568 @@
+<script lang="ts">
+  import { resolve } from "$app/paths";
+  import { authClient } from "#lib/auth-client.js";
+  import Button from "#lib/ui/components/Button.svelte";
+  import LoadingState from "#lib/ui/components/LoadingState.svelte";
+  import IconGoogle from "#lib/ui/icons/IconGoogle.svelte";
+  import IconDiscord from "#lib/ui/icons/IconDiscord.svelte";
+  import { charactersHydrated, charactersOwned } from "#lib/stores/roster.js";
+  import { rosterSync } from "#lib/app/roster-sync.js";
+  import { rosterDocOf } from "#lib/sync/roster-doc.js";
+  import { applyGoodRoster, parseGoodText } from "#lib/roster/good-import.js";
+  import { serializeGoodDocument } from "#lib/roster/good-export.js";
+  import {
+    clearRosterInventory,
+    getRosterArtifactsCached,
+    getRosterWeaponsCached,
+    loadRosterArtifacts,
+    loadRosterWeapons,
+    setRosterInventory,
+  } from "#lib/app/roster-inventory.js";
+  import GoodImportModal from "#lib/ui/components/GoodImportModal.svelte";
+  import {
+    probeCloudRoster,
+    type CloudRosterProbe,
+  } from "#lib/app/cloud-roster-probe.js";
+
+  let {
+    showHeading = true,
+    embed = false,
+    oauthCallbackUrl = "/settings?tab=account",
+  }: {
+    showHeading?: boolean;
+    embed?: boolean;
+    oauthCallbackUrl?: string;
+  } = $props();
+
+  const session = authClient.useSession();
+  const rosterView = rosterSync().view;
+  /** Changes each time the roster finishes syncing, so the probe re-reads. */
+  let rosterSyncedFor = $derived(
+    $rosterView.status === "synced" ? $rosterView.account : null,
+  );
+
+  let probe = $state<CloudRosterProbe>("unknown");
+  let rosterError = $state("");
+  let confirmReset = $state(false);
+  let resetting = $state(false);
+
+  let cloudRosterVersion = 0;
+  /** Changes only when the signed-in account changes, not on a probe refresh. */
+  let accountGeneration = 0;
+  let seenAccountId: string | null | undefined = undefined;
+  let pickingGood = $state(false);
+  let importing = $state(false);
+  let importError = $state("");
+  let importNote = $state("");
+
+  $effect(() => {
+    void rosterSyncedFor;
+    const id = $session.data?.user?.id ?? null;
+    if (id !== seenAccountId) {
+      seenAccountId = id;
+      accountGeneration += 1;
+      confirmReset = false;
+    }
+    if ($session.data) {
+      const version = ++cloudRosterVersion;
+      probe = "checking";
+      void checkCloudRoster(version);
+    } else {
+      cloudRosterVersion += 1;
+      confirmReset = false;
+      probe = "unknown";
+    }
+  });
+
+  async function checkCloudRoster(version: number) {
+    const result = await probeCloudRoster();
+    // A newer probe (or sign-out) started while this one was in flight.
+    if (version === cloudRosterVersion) probe = result;
+  }
+
+  function promptReset() {
+    confirmReset = true;
+  }
+
+  function cancelReset() {
+    confirmReset = false;
+  }
+
+  async function executeReset() {
+    if (resetting) return;
+    const account = accountGeneration;
+    resetting = true;
+    rosterError = "";
+    try {
+      // Queued roster uploads run before the delete. When the row is gone
+      // and this device's copy did not change during the delete, the slot
+      // is detached so that upload is not sent again.
+      const removed = await rosterSync().discardServer();
+      if (account !== accountGeneration) {
+        confirmReset = false;
+        return;
+      }
+      if (removed.removed) {
+        cloudRosterVersion += 1;
+        probe = "empty";
+        confirmReset = false;
+        clearRosterInventory();
+      } else {
+        confirmReset = false;
+        if (removed.message) {
+          rosterError = `${removed.message} — roster not reset`;
+        }
+      }
+    } catch (err) {
+      if (account !== accountGeneration) {
+        confirmReset = false;
+        return;
+      }
+      rosterError = "Network error — could not reset cloud roster";
+      confirmReset = false;
+      console.error("resetCloudRoster: network error", err);
+    } finally {
+      resetting = false;
+    }
+  }
+
+  function openGoodModal() {
+    importError = "";
+    pickingGood = true;
+  }
+
+  function closeGoodModal() {
+    pickingGood = false;
+    importError = "";
+  }
+
+  async function importGoodSource(text: string) {
+    if (importing) return;
+    if (!$charactersHydrated) {
+      importError = "Roster is still loading — try again in a moment.";
+      return;
+    }
+
+    importing = true;
+    importError = "";
+    importNote = "";
+
+    try {
+      const parsed = parseGoodText(text);
+      if (!parsed.ok) {
+        importError = parsed.message;
+        return;
+      }
+
+      const next = applyGoodRoster($charactersOwned, parsed.characters);
+      const ownedCount = next.filter((c) => c.isOwned).length;
+      const inventory = {
+        weapons: parsed.weapons,
+        artifacts: parsed.artifacts,
+      };
+      const countLabel = `${ownedCount} owned character${ownedCount === 1 ? "" : "s"}`;
+
+      // The inventory rides along with this one roster write when signed in.
+      const result = await rosterSync().commit(
+        rosterDocOf(next, $rosterView.data),
+        {
+          attach: $rosterView.account !== null ? inventory : undefined,
+        },
+      );
+      pickingGood = false;
+      // The inventory cache has no account key: never fill it for another.
+      if (result.account !== $rosterView.account) {
+        importError = "Account changed during import — import again.";
+        return;
+      }
+      if (result.status === "local" && !result.stored) {
+        importError = $rosterView.error ?? "Couldn't save to this browser.";
+        importNote = "";
+        return;
+      }
+      const attachmentOmitted =
+        result.status === "sent" && result.attachmentOmitted === true;
+      if (!attachmentOmitted) setRosterInventory(inventory);
+      importNote = attachmentOmitted
+        ? `Imported ${countLabel} — weapons and artifacts were not saved on the server`
+        : result.status === "unsent"
+          ? result.error
+            ? `Imported ${countLabel} on this device — not synced: ${result.error}`
+            : `Imported ${countLabel} on this device — not synced`
+          : result.status === "ask"
+            ? ""
+            : `Imported ${countLabel}.`;
+    } catch (err) {
+      console.error("GOOD import error:", err);
+      importError = "Could not import that GOOD JSON.";
+    } finally {
+      importing = false;
+    }
+  }
+
+  async function downloadGood() {
+    importError = "";
+    try {
+      const [weapons, artifacts] = $session.data
+        ? await Promise.all([
+            loadRosterWeapons().catch(() => getRosterWeaponsCached() ?? []),
+            loadRosterArtifacts().catch(() => getRosterArtifactsCached() ?? []),
+          ])
+        : [getRosterWeaponsCached() ?? [], getRosterArtifactsCached() ?? []];
+      const doc = serializeGoodDocument({
+        roster: $charactersOwned,
+        weapons,
+        artifacts,
+      });
+      const blob = new Blob([JSON.stringify(doc, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "lightkeepers-GOOD.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("GOOD export error:", err);
+      importError = "Could not export GOOD.";
+    }
+  }
+</script>
+
+{#snippet goodImport()}
+  <div class="import-block">
+    <span class="import-label">Import GOOD</span>
+    <p class="import-links">
+      <a
+        class="back-link"
+        href="https://frzyc.github.io/genshin-optimizer/#/scanner"
+        target="_blank"
+        rel="noopener noreferrer">Scanner</a
+      >
+      <a
+        class="back-link"
+        href="https://frzyc.github.io/genshin-optimizer/#/doc"
+        target="_blank"
+        rel="noopener noreferrer">Documentation</a
+      >
+
+      <a class="back-link" href={resolve("settings?tab=inventory")}>Inventory</a
+      >
+    </p>
+    <div class="import-actions">
+      <Button
+        variant="secondary"
+        disabled={importing || !$charactersHydrated}
+        onclick={openGoodModal}
+      >
+        {importing ? "Importing…" : "Upload GOOD"}
+      </Button>
+      <Button
+        variant="ghost"
+        disabled={!$charactersHydrated}
+        onclick={() => void downloadGood()}
+      >
+        Download GOOD
+      </Button>
+    </div>
+    {#if importNote}
+      <p class="status-note">{importNote}</p>
+    {/if}
+    {#if importError && !pickingGood}
+      <p class="error-note">{importError}</p>
+    {/if}
+  </div>
+{/snippet}
+
+<div class="account-panel" class:account-embed={embed}>
+  {#if showHeading}
+    <header class="panel-head">
+      <h2 class="section-title">Account / Sync</h2>
+      <p class="lede">Log in to back up your roster and sync across devices.</p>
+    </header>
+  {:else}
+    <p class="lede">Log in to back up your roster and sync across devices.</p>
+  {/if}
+
+  {#if $session.isPending}
+    <LoadingState message="Loading…" />
+  {:else if $session.data}
+    <div class="panel-body">
+      <div class="user-row">
+        {#if $session.data.user.image}
+          <img
+            src={$session.data.user.image}
+            alt=""
+            width="36"
+            height="36"
+            class="user-avatar"
+          />
+        {/if}
+        <div class="user-copy">
+          <span class="user-name">{$session.data.user.name}</span>
+          <span class="user-email">{$session.data.user.email}</span>
+        </div>
+        <Button
+          variant="secondary"
+          class="sign-out"
+          onclick={() => authClient.signOut()}
+        >
+          Sign out
+        </Button>
+      </div>
+
+      {#if probe === "checking" || probe === "unknown"}
+        <p class="status-note">Checking cloud roster…</p>
+      {:else if probe === "unreachable"}
+        <p class="status-note">Could not reach sync service.</p>
+      {:else if probe === "backed-up"}
+        <div class="sync-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <p class="status-note sync-label">Cloud roster backed up</p>
+          {#if confirmReset}
+            <div class="confirm-row">
+              <span class="status-note">Delete cloud roster?</span>
+              <Button
+                variant="ghost"
+                disabled={resetting}
+                onclick={executeReset}
+              >
+                {resetting ? "Resetting…" : "Yes"}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={resetting}
+                onclick={cancelReset}
+              >
+                No
+              </Button>
+            </div>
+          {:else}
+            <Button variant="secondary" onclick={promptReset}>Reset</Button>
+          {/if}
+        </div>
+      {:else}
+        <p class="status-note">No cloud roster backed up</p>
+      {/if}
+
+      {#if rosterError}
+        <p class="error-note">{rosterError}</p>
+      {/if}
+
+      {@render goodImport()}
+    </div>
+  {:else}
+    <div class="oauth-stack">
+      <button
+        type="button"
+        class="oauth-button"
+        onclick={() =>
+          authClient.signIn.social({
+            provider: "google",
+            callbackURL: oauthCallbackUrl,
+          })}
+      >
+        <IconGoogle size={18} />
+        Continue with Google
+      </button>
+      <button
+        type="button"
+        class="oauth-button"
+        onclick={() =>
+          authClient.signIn.social({
+            provider: "discord",
+            callbackURL: oauthCallbackUrl,
+          })}
+      >
+        <IconDiscord size={18} />
+        Continue with Discord
+      </button>
+    </div>
+    {@render goodImport()}
+  {/if}
+</div>
+
+<GoodImportModal
+  open={pickingGood}
+  {importing}
+  error={importError}
+  disabled={!$charactersHydrated}
+  onClose={closeGoodModal}
+  onImport={(text) => void importGoodSource(text)}
+/>
+
+<style>
+  .account-panel {
+    min-height: 21rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-4);
+  }
+
+  .account-embed {
+    min-height: 0;
+    padding: 0;
+    gap: var(--space-4);
+  }
+
+  .panel-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 42rem;
+  }
+
+  .lede {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--foreground-mid);
+  }
+
+  .panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .user-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .user-avatar {
+    border-radius: 999px;
+    border: var(--border-width) solid rgba(255, 255, 255, 0.28);
+  }
+
+  .user-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .user-name {
+    font-size: var(--text-sm);
+    color: var(--foreground-color);
+  }
+
+  .user-email {
+    font-size: var(--text-xs);
+    color: var(--foreground-mid);
+  }
+
+  .status-note {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--foreground-mid);
+  }
+
+  .sync-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--background-color) 55%, transparent);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.14);
+  }
+
+  .sync-label {
+    flex: 1;
+    min-width: 8rem;
+  }
+
+  .status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.45);
+  }
+
+  .confirm-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .error-note {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--foreground-color);
+  }
+
+  .import-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 42rem;
+  }
+
+  .import-label {
+    font-size: var(--text-sm);
+    color: var(--foreground-color);
+  }
+
+  .import-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .import-links .back-link {
+    margin: 0;
+  }
+
+  .import-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  :global(.sign-out) {
+    width: fit-content;
+  }
+
+  .oauth-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .oauth-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 20rem;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--radius-md);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.24);
+    background: color-mix(in srgb, var(--background-color) 55%, transparent);
+    color: var(--foreground-color);
+    font: inherit;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition:
+      background-color var(--control-duration) var(--control-ease),
+      border-color var(--control-duration) var(--control-ease);
+  }
+
+  .oauth-button:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+</style>

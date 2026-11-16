@@ -19,6 +19,39 @@ import { ownedNameIds } from "#lib/utils.js";
 const API_URL = "/api/stygian-cheap-clears";
 const FETCH_TIMEOUT_MS = 15_000;
 
+export type CheapClearsStatus =
+  "idle" | "loading" | "ready" | "empty" | "error" | "unavailable";
+
+export type CheapClearsFetchPhase = "idle" | "loading" | "settled" | "failed";
+
+/**
+ * Status for one cheap-clear request.
+ * Fewer than three bosses is `unavailable` (no request). A settled payload
+ * with no rows is `empty`. `fetchKey` must match `requestKey` or the
+ * previous result is still in flight for a different roster or attempt.
+ */
+export function cheapClearsStatus(input: {
+  active: boolean;
+  bossCount: number;
+  fetch: CheapClearsFetchPhase;
+  fetchKey: string | null;
+  requestKey: string;
+  rowCount: number;
+}): CheapClearsStatus {
+  if (!input.active) return "idle";
+  if (input.bossCount < 3) return "unavailable";
+  if (
+    input.fetch === "idle" ||
+    input.fetch === "loading" ||
+    input.fetchKey !== input.requestKey
+  ) {
+    return "loading";
+  }
+  if (input.fetch === "failed") return "error";
+  if (input.rowCount === 0) return "empty";
+  return "ready";
+}
+
 type CacheEntry = {
   rows: StygianCheapClearRow[];
 };

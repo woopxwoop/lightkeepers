@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ResearchTrace } from "#lib/research-types.js";
+  import type { ResearchTrace } from "#lib/research/research-types.js";
 
   let { trace }: { trace: ResearchTrace } = $props();
 

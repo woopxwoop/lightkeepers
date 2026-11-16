@@ -1,5 +1,5 @@
 <script lang="ts">
-  import InfoPopover from "./InfoPopover.svelte";
+  import InfoPopover from "#lib/ui/components/InfoPopover.svelte";
 
   let {
     label = "cost",

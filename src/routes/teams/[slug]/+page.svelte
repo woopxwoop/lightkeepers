@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
-  import { charactersOwned, animationsEnabled } from "#lib/stores.js";
+  import { charactersOwned } from "#lib/stores/roster.js";
+  import { animationsEnabled } from "#lib/stores/preferences.js";
   import {
     buildGoodKeyMap,
     humanizeTeamName,
@@ -11,8 +12,8 @@
   import {
     humanizeInvestmentLabel,
     ensureEquipmentData,
-  } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import WeaponBadge from "#lib/ui/components/WeaponBadge.svelte";
   import HoverTooltip from "#lib/ui/components/HoverTooltip.svelte";
@@ -33,7 +34,7 @@
     ownedVariants,
     findInvestmentTeam,
     groupVerticalSimsByCost,
-  } from "#lib/investment-teams.js";
+  } from "#lib/investment/investment-teams.js";
   import type {
     InvestmentFile,
     InvestmentSim,
@@ -256,7 +257,7 @@
       {#if baselineSim}
         <a
           href="/teams/configs/{encodeURIComponent(baselineSim.state_key)}"
-          class="config-link"
+          class="config-link text-link"
         >
           View build config →
         </a>
@@ -457,11 +458,7 @@
     width: fit-content;
     font-size: var(--text-xs);
     font-weight: 500;
-    color: var(--accent-1);
-  }
-
-  .config-link:hover {
-    text-decoration: underline;
+    color: var(--foreground-color);
   }
 
   .empty-actions {

@@ -3,8 +3,8 @@
   import CharacterPortraitCard from "#lib/ui/components/CharacterPortraitCard.svelte";
   import WeaponBadge from "#lib/ui/components/WeaponBadge.svelte";
   import InvestmentCR from "#lib/ui/components/InvestmentCR.svelte";
-  import { weaponIconSrc } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import { weaponIconSrc } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
 
   type BuildBadge = {
     cons: number;

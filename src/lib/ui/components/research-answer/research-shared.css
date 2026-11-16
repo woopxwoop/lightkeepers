@@ -1,0 +1,45 @@
+/*
+  Shared research-answer styles (citations, panel surface, note text).
+  Imported only by ResearchAnswer.svelte and BuildPanel.svelte so it ships in
+  the dev-only research chunk, not app.css. Child panels in this folder render
+  inside ResearchAnswer and rely on that import.
+*/
+
+.research-entity-slot {
+  display: contents;
+}
+
+.research-cite {
+  margin-left: 0.08rem;
+  font-size: 0.65em;
+  line-height: 0;
+  vertical-align: super;
+}
+
+.research-cite a {
+  color: var(--foreground-mid);
+  text-decoration: none;
+  padding: 0 0.1rem;
+  border-radius: 0.15rem;
+  font-weight: 500;
+}
+
+.research-cite a:hover {
+  color: color-mix(in srgb, var(--foreground-color) 78%, transparent);
+  background: color-mix(in srgb, var(--foreground-color) 6%, transparent);
+}
+
+.research-panel {
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-lg);
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--foreground-color) 14%, transparent);
+  background: var(--surface-quiet);
+}
+
+.research-note {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--foreground-color) 72%, transparent);
+}

@@ -6,7 +6,7 @@
     loadTcgCardIds,
     tcgCardIndexVersion,
   } from "#lib/app/tcg-cards.js";
-  import { displayPreferences } from "#lib/stores.js";
+  import { displayPreferences } from "#lib/stores/preferences.js";
   import {
     getCharacterPortrait,
     getCharacterCoop,

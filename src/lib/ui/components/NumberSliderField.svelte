@@ -293,7 +293,9 @@
         <span class="nsf-num nsf-num-static">{origin}</span>
       {/if}
     {/if}
+    <!-- Pointer surface only; the nested range inputs carry keyboard + AT semantics. -->
     <div
+      role="presentation"
       class="nsf-track"
       class:split={splitHandles}
       class:has-origin={hasOrigin}

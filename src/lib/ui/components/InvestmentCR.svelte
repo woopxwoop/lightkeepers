@@ -2,8 +2,8 @@
   /**
    * C#R# string that respects 5★ refinement rules after equipment data loads.
    */
-  import { formatInvestmentCR } from "#lib/equipment-data.js";
-  import { useEquipmentData } from "#lib/equipment-data.svelte.js";
+  import { formatInvestmentCR } from "#lib/equipment/equipment-data.js";
+  import { useEquipmentData } from "#lib/equipment/equipment-data.svelte.js";
 
   let {
     cons,

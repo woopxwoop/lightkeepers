@@ -10,22 +10,18 @@
  *
  * Server L1 + Valkey live in getInvestmentFile() (shared with team-config SSR).
  */
-
-import { error, isHttpError } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import {
+  PUBLIC_CDN_CACHE_HEADERS,
+  loadFromCdn,
+} from "#lib/server/cdn-proxy.js";
 import { getInvestmentFile } from "#lib/server/team-config.js";
 
 export const GET: RequestHandler = async () => {
-  try {
-    const payload = await getInvestmentFile();
-    return Response.json(payload, {
-      headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
-      },
-    });
-  } catch (err) {
-    if (isHttpError(err)) throw err;
-    console.error("/api/investment:", err);
-    throw error(502, "Failed to fetch investment data from CDN");
-  }
+  const payload = await loadFromCdn({
+    route: "/api/investment",
+    what: "investment data",
+    load: getInvestmentFile,
+  });
+  return Response.json(payload, { headers: PUBLIC_CDN_CACHE_HEADERS });
 };

@@ -16,13 +16,12 @@ pnpm check
 pnpm test:unit
 ```
 
-## Layout
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the layout, data flow, the one-entry-point-per-concern "lanes", and recipes for adding routes, modals, and tests.
 
 - `src/routes/` — pages + API
-- `src/lib/app/` — client bootstrap
-- `src/lib/ui/` — shell + components
-- `src/lib/server/` — auth, Supabase, cache, metrics
-- `src/lib/solver.ts` / `board-solutions.ts` — team assignment + board helpers
+- `src/lib/` — domain folders (`boards/`, `roster/`, `equipment/`, …), `server/` (server-only), `ui/`
 - `scripts/` — data sync (separate tooling)
 
 Inspired by [Lunaris](https://lunaris.moe/), [Genshin Optimizer](https://github.com/frzyc/genshin-optimizer), [Akasha](https://akasha.cv/), [Enka](https://enka.network/), [YShelper](https://app.yshelper.com/).

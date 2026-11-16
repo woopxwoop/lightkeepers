@@ -2,7 +2,7 @@ import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { isPlaywrightE2e } from "#lib/server/e2e.js";
 import { E2E_STYGIAN_ENEMY } from "#lib/e2e/fixtures.js";
-import { requireEnemyId } from "#lib/server/request-validation.js";
+import { requireEnemyId } from "#lib/server/validation/stygian.js";
 import { loadStygianEnemy } from "#lib/server/stygian-enemies.js";
 
 export const load: PageServerLoad = async ({ params }) => {

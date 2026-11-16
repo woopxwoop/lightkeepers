@@ -9,7 +9,7 @@ import type { InventoryArtifact, InventoryWeapon } from "#lib/definitions.js";
 import {
   cloneInventoryArtifact,
   cloneInventoryWeapon,
-} from "#lib/roster-inventory.js";
+} from "#lib/roster/roster-inventory.js";
 
 let weaponsCached: InventoryWeapon[] | null = null;
 let artifactsCached: InventoryArtifact[] | null = null;

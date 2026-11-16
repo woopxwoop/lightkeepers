@@ -10,7 +10,7 @@
     normalizeHexColor,
     type IconStyle,
     type ThemeColorKey,
-  } from "#lib/stores.js";
+  } from "#lib/stores/preferences.js";
   import Button from "#lib/ui/components/Button.svelte";
   import Toggle from "#lib/ui/components/Toggle.svelte";
   import IconInfo from "#lib/ui/icons/IconInfo.svelte";

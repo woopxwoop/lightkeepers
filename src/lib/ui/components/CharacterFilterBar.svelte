@@ -1,6 +1,6 @@
 <script lang="ts">
   import { slide } from "svelte/transition";
-  import { ELEMENT_COLORS } from "#lib/element-colors.js";
+  import { ELEMENT_COLORS } from "#lib/characters/element-colors.js";
   import {
     CHARACTER_ELEMENTS,
     CHARACTER_WEAPON_TYPES,
@@ -8,7 +8,7 @@
     toggleFilterSet,
     type CharacterSortKey,
     type OwnershipFilter,
-  } from "#lib/character-filter.js";
+  } from "#lib/characters/character-filter.js";
   import IconFilter from "#lib/ui/icons/IconFilter.svelte";
   import IconChevronDown from "#lib/ui/icons/IconChevronDown.svelte";
   import Select from "#lib/ui/components/Select.svelte";
