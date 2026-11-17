@@ -482,6 +482,51 @@ describe("accounts", () => {
     assert.deepEqual(server.rows.get("a")?.items, ["guest-1"]);
   });
 
+  it("signing out, editing, and signing back in asks about the guest copy", async () => {
+    const { synced, signIn, server, view, storage } = setup({ ask: true });
+    signIn("a");
+    await synced.idle();
+    await synced.commit(doc("saved"));
+    await synced.idle();
+    signIn(null);
+    await synced.commit(doc("signed-out-edit"));
+    signIn("a");
+    await synced.idle();
+    assert.equal(view().status, "ask");
+    assert.deepEqual(view().data.items, ["signed-out-edit"]);
+    assert.deepEqual(view().remote?.items, ["saved"]);
+    assert.deepEqual(
+      (storage.read("lk:t:guest") as { data: Doc }).data.items,
+      [],
+    );
+    // Nothing is sent until the user answers.
+    assert.deepEqual(server.rows.get("a")?.items, ["saved"]);
+    await synced.resolve("local");
+    await synced.idle();
+    assert.deepEqual(server.rows.get("a")?.items, ["signed-out-edit"]);
+  });
+
+  it("guest data waits while the account has unsent edits", async () => {
+    const { synced, signIn, server, view, storage } = setup({ ask: true });
+    signIn("a");
+    await synced.idle();
+    await synced.commit(doc("saved"));
+    await synced.idle();
+    server.failWrites = true;
+    await synced.commit(doc("saved", "unsent"));
+    server.failWrites = false;
+    signIn(null);
+    await synced.commit(doc("guest-1"));
+    signIn("a");
+    await synced.idle();
+    assert.deepEqual(view().data.items, ["saved", "unsent"]);
+    assert.equal(view().status, "dirty");
+    assert.deepEqual(
+      (storage.read("lk:t:guest") as { data: Doc }).data.items,
+      ["guest-1"],
+    );
+  });
+
   it("explicit adoption replaces the account's copy", async () => {
     const { synced, signIn, server } = setup();
     server.put("a", ["server"]);
@@ -489,8 +534,11 @@ describe("accounts", () => {
     await synced.idle();
     signIn(null);
     await synced.commit(doc("guest-1"));
+    // The sign-in read fails, so the guest copy is still waiting.
+    server.failReads = true;
     signIn("a");
     await synced.idle();
+    server.failReads = false;
     await synced.adoptGuest();
     await synced.idle();
     assert.deepEqual(server.rows.get("a")?.items, ["guest-1"]);
@@ -503,8 +551,10 @@ describe("accounts", () => {
     await synced.idle();
     signIn(null);
     await synced.commit(doc("guest-1"));
+    server.failReads = true;
     signIn("a");
     await synced.idle();
+    server.failReads = false;
     await synced.adoptGuest();
     await synced.idle();
     await synced.adoptGuest();

@@ -191,8 +191,15 @@
   }
 
   let savedOwnedSet = $derived(ownedNameIds($charactersOwned));
+  /**
+   * What the draft is counted against: its own baseline, the same base
+   * `hasUnsavedChanges` uses. Not `$charactersOwned`, which a Save updates
+   * before the request returns (the count would read 0 while saving).
+   */
   let savedById = $derived(
-    new Map($charactersOwned.map((c) => [c.name_id, c])),
+    new Map(
+      rosterOwnedFrom(characters, roster.baseline).map((c) => [c.name_id, c]),
+    ),
   );
 
   let ownedCount = $derived(roster.draft.filter((c) => c.isOwned).length);

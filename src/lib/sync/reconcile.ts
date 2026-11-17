@@ -14,7 +14,7 @@
  *     first-upload           never had a server copy, data here → send it
  *     no-server-copy         keep data unsent; an agreed copy is `detached`
  *   server copy
- *     guest-asks / guest-merged  untouched account meets guest data
+ *     guest-asks / guest-merged  account with no unsent edits meets guest data
  *     attachment-owed        data matches but an attachment is unsent
  *     take-server            nothing unsent, or unsent edits match
  *     server-unmoved         the server is still at our base
@@ -88,12 +88,18 @@ export function decideReconcile<T>(
     spec.equal(slot.data, spec.empty());
   // A guest slot with an open question holds two copies. Offering it would
   // empty the slot and drop the other one, so it waits until answered.
-  const offerGuest =
+  const guestOffered =
     guest !== null &&
     !guest.ask &&
     continueSave === null &&
-    untouched &&
     !spec.equal(guest.data, spec.empty());
+  // Adoption empties the guest slot, so guest data here was edited while
+  // signed out. With no server copy it is sent unasked, so only into an
+  // untouched account. Against a server copy the spec merges or asks, so
+  // any account with no unsent edits of its own may be offered it (signed
+  // out, edited, signed back in on the same device).
+  const offerGuest =
+    guestOffered && (wire === null || rev === null ? untouched : !slot.dirty);
 
   const plan = (
     rule: ReconcileRule,
